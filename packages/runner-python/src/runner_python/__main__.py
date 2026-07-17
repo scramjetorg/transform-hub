@@ -66,15 +66,19 @@ logger = logging.getLogger("runner_python")
 _STDIO_GUARDS: list[Any] = []
 
 
-def _serialize_exception(exc: BaseException | None) -> Any:
+def _serialize_exception(exc: BaseException | None, depth: int = 0) -> Any:
     if exc is None:
         return None
 
+    if depth >= 3:
+        return {"name": exc.__class__.__name__, "message": str(exc)[:512]}
     return {
         "name": exc.__class__.__name__,
-        "message": str(exc),
-        "stack": "".join(traceback.format_exception(type(exc), exc, exc.__traceback__)),
-        "cause": _serialize_exception(exc.__cause__),
+        "message": str(exc)[:512],
+        "stack": "".join(traceback.format_exception(type(exc), exc, exc.__traceback__))[
+            :4096
+        ],
+        "cause": _serialize_exception(exc.__cause__, depth + 1),
     }
 
 

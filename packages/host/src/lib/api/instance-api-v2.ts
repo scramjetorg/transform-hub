@@ -1,13 +1,13 @@
-import { IObjectLogger } from "@scramjet/runtime-types";
-import { RouterDefinition, bindRoutes, routeBinding } from "@scramjet/api-router";
-import { RestAPI2, RestAPI2RouteSets } from "@scramjet/rest-api2";
+import { bindRoutes, RouterDefinition, routeBinding } from "@scramjet/api-router";
 import { summarizeHealth } from "@scramjet/load-check";
 import { HostError } from "@scramjet/model";
-import { IncomingHttpHeaders } from "http";
+import { RestAPI2, RestAPI2RouteSets } from "@scramjet/rest-api2";
+import { IObjectLogger } from "@scramjet/runtime-types";
 import EventEmitter from "events";
+import { IncomingHttpHeaders } from "http";
 
-import { ICSI } from "../types";
 import { normalizeRpcForwardPath, stripRpcExposePath } from "../rpc-path";
+import { ICSI } from "../types";
 
 export class InstanceAPIV2 {
     constructor(
@@ -25,11 +25,20 @@ export class InstanceAPIV2 {
             deleteInstance: ({ body }) => this.handleDelete(body),
             patchInstance: ({ body }) => this.handlePatch(body),
             stdio: () => this.handleStdio(),
-            health: (): RestAPI2.HealthCheckInfo<RestAPI2.Instance> => summarizeHealth(
-                { id: this.csi.id, status: this.csi.status },
-                [{ name: "instance", healthy: this.csi.isRunning, status: this.csi.isRunning ? "healthy" : "unhealthy", scope: { id: this.csi.id, status: this.csi.status }, details: this.csi.lastStats }],
-                this.csi.lastStats
-            ),
+            health: (): RestAPI2.HealthCheckInfo<RestAPI2.Instance> =>
+                summarizeHealth(
+                    { id: this.csi.id, status: this.csi.status },
+                    [
+                        {
+                            name: "instance",
+                            healthy: this.csi.isRunning && this.csi.lastHealth.healthy,
+                            status: this.csi.isRunning && this.csi.lastHealth.healthy ? "healthy" : "unhealthy",
+                            scope: { id: this.csi.id, status: this.csi.status },
+                            details: this.csi.lastStats
+                        }
+                    ],
+                    this.csi.lastHealth.details
+                ),
             output: () => this.csi.getOutputStream(),
             logs: () => this.csi.getLogStream(),
             monitoring: () => this.csi.getMonitoringStream(),
@@ -59,10 +68,7 @@ export class InstanceAPIV2 {
 
         const rpcPath = rawReq.url?.startsWith("/rpc") ? rawReq.url.slice("/rpc".length) || "/" : rawReq.url || "/";
         const apiVersion = this.csi.expose?.path?.startsWith("/api/v1") ? "v1" : undefined;
-        const path = stripRpcExposePath(
-            normalizeRpcForwardPath(rpcPath, this.csi.expose?.path, apiVersion),
-            this.csi.expose?.path
-        );
+        const path = stripRpcExposePath(normalizeRpcForwardPath(rpcPath, this.csi.expose?.path, apiVersion), this.csi.expose?.path);
         const handled = await this.csi.forwardRpcRequest(rawReq, rawRes, path);
 
         if (!handled && !rawRes.headersSent) {
@@ -72,10 +78,7 @@ export class InstanceAPIV2 {
     }
 
     private isHeaderRecord(value: unknown): value is IncomingHttpHeaders {
-        return !!value
-            && typeof value === "object"
-            && !("writeHead" in value)
-            && !("end" in value);
+        return !!value && typeof value === "object" && !("writeHead" in value) && !("end" in value);
     }
 
     private handleInfo(): RestAPI2.InstanceResponse {
@@ -94,13 +97,15 @@ export class InstanceAPIV2 {
                 hubId: seqLoc,
                 location: seqLoc,
                 apiBase: `${this.apiBase}/instances/${id}`,
-                sequence: seqId ? {
-                    id: seqId,
-                    name: seqName,
-                    hubId: seqLoc,
-                    location: seqLoc,
-                    apiBase: `${this.apiBase}/sequences/${seqId}`,
-                } : undefined,
+                sequence: seqId
+                    ? {
+                          id: seqId,
+                          name: seqName,
+                          hubId: seqLoc,
+                          location: seqLoc,
+                          apiBase: `${this.apiBase}/sequences/${seqId}`
+                      }
+                    : undefined
             }
         };
     }
@@ -113,16 +118,20 @@ export class InstanceAPIV2 {
             return this.failedOperation("INVALID_DELETE_MODE", `Unsupported delete mode: ${mode}`);
         }
 
-        if (payload.timeout !== undefined && typeof payload.timeout !== "number") {
+        if (payload.timeout !== undefined && (typeof payload.timeout !== "number" || !Number.isFinite(payload.timeout) || payload.timeout < 0)) {
             return this.failedOperation("INVALID_TIMEOUT", "Delete timeout must be a number");
         }
 
         this.logger.debug("Instance v2 delete", this.csi.id, mode);
 
-        if (mode === "kill") {
-            await this.csi.kill({ removeImmediately: true });
-        } else {
-            await this.csi.stop({ timeout: payload.timeout || 7000, canCallKeepalive: false });
+        try {
+            if (mode === "kill") {
+                await this.csi.kill({ removeImmediately: true });
+            } else {
+                await this.csi.stop({ timeout: payload.timeout === undefined ? 7000 : payload.timeout, canCallKeepalive: false });
+            }
+        } catch (error) {
+            return this.failedControlOperation(mode, error);
         }
 
         return {
@@ -133,7 +142,7 @@ export class InstanceAPIV2 {
 
     private async handlePatch(body: RestAPI2.InstanceParametersPatch): Promise<RestAPI2.OpResponse<RestAPI2.InstanceParametersResponse>> {
         const patch = (body || {}) as RestAPI2.InstanceParametersPatch;
-        const parameters = { ...patch.parameters || {} };
+        const parameters = { ...(patch.parameters || {}) };
 
         if (patch.monitoringRate !== undefined && typeof patch.monitoringRate !== "number") {
             return this.failedOperation("INVALID_MONITORING_RATE", "Monitoring rate must be a number");
@@ -176,10 +185,7 @@ export class InstanceAPIV2 {
         } catch (error) {
             const hostError = error as HostError;
 
-            return this.failedInputResponse(
-                hostError.code || "INVALID_INPUT",
-                hostError.message || "Invalid input stream request"
-            );
+            return this.failedInputResponse(hostError.code || "INVALID_INPUT", hostError.message || "Invalid input stream request");
         }
     }
 
@@ -212,6 +218,14 @@ export class InstanceAPIV2 {
             operation: { id: this.csi.id, status: "failed" },
             error: { code, message }
         };
+    }
+
+    private failedControlOperation(mode: "stop" | "kill", error: unknown): RestAPI2.OpResponse<RestAPI2.DeleteInstanceResponse> {
+        const classified = error as { code?: unknown; message?: unknown };
+        const code = typeof classified?.code === "string" && classified.code ? classified.code : `INSTANCE_${mode.toUpperCase()}_FAILED`;
+        const message = typeof classified?.message === "string" && classified.message ? classified.message : `Instance ${mode} failed`;
+
+        return this.failedOperation(code, message);
     }
 
     private async handleEvent(name: string, waitForNext: boolean): Promise<RestAPI2.EventResponse | RestAPI2.NextEventResponse> {

@@ -11,18 +11,12 @@ import {
     LogLevel,
     MonitoringHandler,
     MonitoringMessageFromRunnerData,
+    mergeHealthOutputs,
     StopHandler,
-    WritableStream,
+    WritableStream
 } from "@scramjet/runtime-types";
-import type {
-    EventMessageData,
-    KeepAliveMessageData,
-} from "@scramjet/runtime-types";
-import type {
-    APIExpose,
-    HostClient,
-    ManagerClient,
-} from "@scramjet/api-types";
+import type { EventMessageData, KeepAliveMessageData } from "@scramjet/runtime-types";
+import type { APIExpose, HostClient, ManagerClient } from "@scramjet/api-types";
 import { EventEmitter } from "events";
 
 /**
@@ -53,7 +47,8 @@ export interface RunnerProxy {
  * for the sequence-facing surface, but with tightened typing.
  */
 export class RunnerAppContext<AppConfigType extends AppConfig, State, HubClientType = unknown, SpaceClientType = unknown>
-implements BaseAppContext<AppConfigType, State, HubClientType, SpaceClientType> {
+    implements BaseAppContext<AppConfigType, State, HubClientType, SpaceClientType>
+{
     private runner: RunnerProxy;
 
     config: AppConfigType;
@@ -141,18 +136,10 @@ implements BaseAppContext<AppConfigType, State, HubClientType, SpaceClientType> 
 
     private _monitoringHandlers: MonitoringHandler[] = [];
 
-    async monitor(
-        initialMessage: MonitoringMessageFromRunnerData = { healthy: true }
-    ): Promise<MonitoringMessageFromRunnerData> {
-        let message = initialMessage;
-
-        for (const handler of this._monitoringHandlers) {
-            const { healthy } = await handler(message);
-
-            message = { healthy: message.healthy && healthy };
-        }
-
-        return message;
+    async monitor(initialMessage: MonitoringMessageFromRunnerData = { healthy: true }): Promise<MonitoringMessageFromRunnerData> {
+        const outputs: unknown[] = [initialMessage];
+        for (const handler of this._monitoringHandlers) outputs.push(await handler(initialMessage));
+        return mergeHealthOutputs(outputs) as MonitoringMessageFromRunnerData;
     }
 
     addMonitoringHandler(handler: MonitoringHandler): this {

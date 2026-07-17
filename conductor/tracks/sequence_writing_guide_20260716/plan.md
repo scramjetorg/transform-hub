@@ -128,17 +128,32 @@
 
 ## Phase 3: Health and control contracts
 
-- [ ] Task: Write failing synthetic tests first for `healthy` plus namespaced
+- [x] Task: Write failing synthetic tests first for `healthy` plus namespaced
   `details`, reserved fields, namespace-key grammar, concrete size bound,
   deterministic merging, malformed handler output, stop/timeout, kill, errors,
   and terminal lifecycle state.
-- [ ] Task: Implement and test detailed-health propagation through runtime
+  - ADR fixed the 16384-byte details budget and namespace grammar. Added
+    `test/contracts/health-control.contract.spec.ts`; its nine expected red
+    assertions await the next named implementation task's facade and runtime
+    propagation work.
+- [x] Task: Implement and test detailed-health propagation through runtime
   monitoring frames, Hub, Manager, API/client contracts, and CLI output.
-- [ ] Task: Implement and test direct-Hub and Manager-routed control conformance
+  - Implemented bounded namespaced details merging, Node/Python monitoring
+    propagation, retained Host health, and v2 instance health output while
+    preserving v1. The guarded synthetic contract suite passes all 9 tests.
+- [x] Task: Implement and test direct-Hub and Manager-routed control conformance
   for the same health, stop, kill, error, and terminal-state operations.
-- [ ] Task: Run focused runtime, API/client, CLI, and Manager integration tests;
+  - Added focused Hub and Manager forwarding conformance for health/control
+    semantics, classified errors, and timeout behavior; Manager API regression
+    verification passes.
+- [x] Task: Run focused runtime, API/client, CLI, and Manager integration tests;
   perform deduplication, record validation/memory evidence, commit, push, and
   update the draft PR.
+  - Guarded validation passed: synthetic health/control contract (9), direct
+    real-CSI Hub API conformance (11), Manager-routed real-CSI conformance (14),
+    Python health tests, focused API/client checks, typings/runtime checks, builds,
+    and changed-file lint. Shared TypeScript merge logic is centralized in
+    `runtime-types`; Python mirrors its contract as cross-language parity code.
 - [ ] Task: Conductor - Phase Completion 'Health and control contracts' (Protocol in workflow.md)
 
 ## Phase 4: Hub and Space topic contracts

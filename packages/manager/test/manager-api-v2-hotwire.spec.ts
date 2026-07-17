@@ -3,8 +3,11 @@ import { ObjLogger } from "@scramjet/obj-logger";
 import { PassThrough } from "stream";
 
 import { Manager } from "../src/lib/manager";
-import { ManagerAPIHandler } from "../src/lib/api/manager-api";
+import { ManagerAPIHandler, ManagerAPIV2Handler } from "../src/lib/api/manager-api";
 import { RouteRecorder } from "@scramjet/api-server/test/lib/route-recorder";
+import { CSIController } from "../../host/src/lib/csi-controller";
+import { InstanceStatus, RunnerMessageCode } from "@scramjet/symbols";
+import { registerHttpRoutes } from "@scramjet/api-router";
 
 function createManagerStub(recorder: RouteRecorder) {
     return {
@@ -52,6 +55,104 @@ function createManagerStub(recorder: RouteRecorder) {
         handleRequestToSTH: () => undefined
     };
 }
+
+function createRealLifecycleCsi(control: (code: RunnerMessageCode, payload: unknown) => void) {
+    let resolveTerminal!: (result: { message: string; exitcode: number; status: InstanceStatus }) => void;
+    const terminal = new Promise<{ message: string; exitcode: number; status: InstanceStatus }>(resolve => {
+        resolveTerminal = resolve;
+    });
+    const csi = new CSIController(
+        {
+            id: "real-lifecycle-1",
+            sequenceInfo: { id: "seq-1", name: "seq-1", config: {}, location: "local" },
+            payload: { system: {}, appConfig: {}, args: [], limits: {} }
+        } as any,
+        { sendControlMessage: async (code: RunnerMessageCode, payload: unknown) => control(code, payload), addMonitoringHandler: () => undefined } as any,
+        { runtimeAdapter: "process", docker: { runner: { maxMem: 128 } }, timings: { instanceLifetimeExtensionDelay: 0 }, host: { apiBase: "/api/v1" } } as any,
+        {} as any,
+        "process",
+        {} as any,
+        { getAllItems: async () => ({}) } as any
+    );
+    csi.status = InstanceStatus.RUNNING;
+    csi.instancePromise = terminal;
+    (csi as any)._instanceAdapter = { remove: async () => undefined };
+    return { csi, resolveTerminal };
+}
+
+test("real Manager-routed CSI control preserves direct Hub semantics", async t => {
+    const scenarios = [
+        { body: { mode: "stop", timeout: 0 }, controls: [RunnerMessageCode.STOP, RunnerMessageCode.KILL] },
+        { body: { mode: "kill" }, controls: [RunnerMessageCode.KILL] },
+        { body: { mode: "stop", timeout: 0 }, controls: [RunnerMessageCode.STOP], error: Object.assign(new Error("runner unavailable"), { code: "RUNNER_UNAVAILABLE" }) }
+    ];
+
+    for (const scenario of scenarios) {
+        const recorder = new RouteRecorder();
+        const controls: Array<{ code: RunnerMessageCode; payload: unknown }> = [];
+        let completeTerminal: (() => void) | undefined;
+        const { csi, resolveTerminal } = createRealLifecycleCsi((code, _payload) => {
+            controls.push({ code, payload: _payload });
+            if (scenario.error) throw scenario.error;
+            if (code === RunnerMessageCode.KILL) completeTerminal?.();
+        });
+        completeTerminal = () => resolveTerminal({ message: "stopped", exitcode: 0, status: InstanceStatus.COMPLETED });
+        const instanceRecorder = new RouteRecorder();
+        const instanceRouter = csi.apiV2.createRouter();
+        const instanceRoutes = instanceRecorder.asApiRoute();
+        registerHttpRoutes(instanceRoutes, instanceRouter);
+        const deleteHandler = instanceRecorder.require("op", "/", "delete").handler as Function;
+        const manager = createManagerStub(recorder) as any;
+        manager.forwardRequestToSTH = async (_sth: any, req: any, res: any, targetPath: string) => {
+            const chunks: Buffer[] = [];
+            for await (const chunk of req) chunks.push(Buffer.from(chunk));
+            const result = await deleteHandler({ body: JSON.parse(Buffer.concat(chunks).toString("utf8")) });
+            res.writeHead(result.operation.status === "completed" ? 202 : 500, { "content-type": "application/json" });
+            res.end(JSON.stringify(result));
+            t.is(targetPath, "/api/v2/instances/real-lifecycle-1");
+        };
+        await new ManagerAPIHandler(manager).attach();
+        const resolver = new ManagerAPIV2Handler(manager).createV2Router().resolvers()[0];
+        const target = await (resolver.handler as Function)({
+            params: { hubId: "sth-1" },
+            path: "/api/v2/hubs/sth-1/instances/real-lifecycle-1",
+            remainingPath: "/instances/real-lifecycle-1"
+        });
+        const req: any = new PassThrough();
+        req.method = "DELETE";
+        req.url = "/api/v2/hubs/sth-1/instances/real-lifecycle-1?trace=control";
+        req.headers = { "content-type": "application/json" };
+        const res: any = new PassThrough();
+        res.writeHead = function(statusCode: number, headers: Record<string, string>) { this.statusCode = statusCode; this.headers = headers; };
+        const chunks: Buffer[] = [];
+        res.on("data", (chunk: Buffer) => chunks.push(chunk));
+        const ended = new Promise<void>(resolve => res.on("end", resolve));
+        const forwarding = target.local.lookup(req, res, () => undefined);
+        req.end(JSON.stringify(scenario.body));
+        await forwarding;
+        await ended;
+
+        t.deepEqual(controls.map(control => control.code), scenario.controls);
+        t.deepEqual(controls.map(control => control.payload), scenario.controls.map(code => code === RunnerMessageCode.STOP
+            ? { timeout: scenario.body.timeout, canCallKeepalive: false }
+            : {}));
+        const result = JSON.parse(Buffer.concat(chunks).toString("utf8"));
+        if (scenario.error) {
+            t.deepEqual(result, {
+                operation: { id: "real-lifecycle-1", status: "failed" },
+                error: { code: "RUNNER_UNAVAILABLE", message: "runner unavailable" }
+            });
+            continue;
+        }
+        t.is(res.statusCode, 202);
+        t.deepEqual(result, {
+            operation: { id: "real-lifecycle-1", status: "completed" },
+            result: { instanceId: "real-lifecycle-1", mode: scenario.body.mode, accepted: true }
+        });
+        await new Promise<void>(resolve => setImmediate(resolve));
+        t.is(csi.status, InstanceStatus.COMPLETED);
+    }
+});
 
 test("ManagerAPIHandler registers the v2 Manager API route surface separately", async t => {
     const recorder = new RouteRecorder();
@@ -176,6 +277,81 @@ test("ManagerAPIHandler v2 read handlers return Manager data", async t => {
     t.deepEqual(await (recorder.require("get", "/api/v2/topics").handler as Function)({}), { items: [{ name: "topic-1", contentType: "application/x-ndjson", direction: undefined }] });
     t.deepEqual(await (recorder.require("get", "/api/v2/storage/sequences").handler as Function)({}), { items: [{ path: "seq.tar.gz", size: 123 }] });
     t.deepEqual(await (recorder.require("op", "/api/v2/storage", "delete").handler as Function)({}), { cleared: true });
+});
+
+test("ManagerAPIHandler resolves Hub instance health and control routes to the selected Hub", async t => {
+    const recorder = new RouteRecorder();
+    const manager = createManagerStub(recorder) as any;
+    const forwarded: any[] = [];
+
+    manager.forwardRequestToSTH = async (...args: any[]) => forwarded.push(args);
+    const resolver = new ManagerAPIV2Handler(manager).createV2Router().resolvers()[0];
+    for (const [method, remainingPath] of [
+        ["GET", "/instances/inst-1/health"],
+        ["DELETE", "/instances/inst-1"]
+    ] as const) {
+        const target = await (resolver.handler as Function)({ params: { hubId: "sth-1" }, remainingPath });
+        t.truthy(target?.local?.lookup);
+        await target.local.lookup({ method, url: "/ignored", params: {} } as any, {} as any);
+    }
+
+    t.is(forwarded.length, 2);
+    t.true(forwarded.every((args) => args[0].id === "sth-1"));
+    t.deepEqual(forwarded.map((args) => args[3]), ["/api/v2/instances/inst-1/health", "/api/v2/instances/inst-1"]);
+});
+
+test("ManagerAPIHandler preserves Hub control query and request body through the real resolver", async t => {
+    const recorder = new RouteRecorder();
+    const manager = createManagerStub(recorder) as any;
+    const forwarded: any[] = [];
+
+    manager.forwardRequestToSTH = async (sth: any, req: any, res: any, targetPath: string) => {
+        const chunks: Buffer[] = [];
+        for await (const chunk of req) chunks.push(Buffer.from(chunk));
+        forwarded.push({ sthId: sth.id, method: req.method, targetPath, body: Buffer.concat(chunks).toString("utf8") });
+        res.writeHead(202, { "content-type": "application/json", "x-control": "preserved" });
+        res.end(JSON.stringify({ operation: { id: "inst-1", status: "completed" }, result: { accepted: true } }));
+    };
+
+    await new ManagerAPIHandler(manager).attach();
+    const resolver = new ManagerAPIV2Handler(manager).createV2Router().resolvers()[0];
+    const target = await (resolver.handler as Function)({
+        params: { hubId: "sth-1" },
+        path: "/api/v2/hubs/sth-1/instances/inst-1?trace=control",
+        remainingPath: "/instances/inst-1"
+    });
+    const req: any = new PassThrough();
+    req.method = "DELETE";
+    req.url = "/api/v2/hubs/sth-1/instances/inst-1?trace=control";
+    req.headers = { "content-type": "application/json" };
+    const response = new PassThrough() as any;
+    response.writeHead = function(statusCode: number, headers: Record<string, string>) {
+        this.statusCode = statusCode;
+        this.headers = headers;
+    };
+    response.flushHeaders = () => undefined;
+    response.statusCode = 200;
+    const responseChunks: Buffer[] = [];
+    response.on("data", (chunk: Buffer) => responseChunks.push(chunk));
+    const responseEnded = new Promise<void>(resolve => response.on("end", resolve));
+
+    const forwardingPromise = target.local.lookup(req, response, () => undefined);
+    req.end(JSON.stringify({ mode: "stop", timeout: 25 }));
+    await forwardingPromise;
+    await responseEnded;
+
+    t.deepEqual(forwarded, [{
+        sthId: "sth-1",
+        method: "DELETE",
+        targetPath: "/api/v2/instances/inst-1?trace=control",
+        body: JSON.stringify({ mode: "stop", timeout: 25 })
+    }]);
+    t.is(response.statusCode, 202);
+    t.is(response.headers["x-control"], "preserved");
+    t.deepEqual(JSON.parse(Buffer.concat(responseChunks).toString("utf8")), {
+        operation: { id: "inst-1", status: "completed" },
+        result: { accepted: true }
+    });
 });
 
 test("ManagerAPIHandler all_sequences does not mis-identify stored sequences as hub sequences", async t => {

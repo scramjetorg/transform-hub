@@ -1,4 +1,5 @@
 import { RunnerMessageCode } from "@scramjet/symbols";
+import { mergeHealthOutputs } from "@scramjet/runtime-types";
 
 import {
     createLogCapture,
@@ -12,6 +13,31 @@ import {
 } from "./captures";
 
 export const sequenceTestPackageName = "@scramjet/sequence-test";
+
+type LifecycleEntry = { state: string; terminal?: boolean };
+
+/** Small contract facade used by synthetic authoring tests and local fixtures. */
+export function createHealthControlFacade() {
+    const lifecycle: LifecycleEntry[] = [];
+
+    return {
+        health: (outputs: unknown[]) => mergeHealthOutputs(outputs),
+        stop: async (options: { timeoutMs?: number } = {}) => {
+            const timeoutMs = options.timeoutMs ?? 7_000;
+            lifecycle.push({ state: "stopping", terminal: false });
+            return { operation: "stop", outcome: "timeout", timeoutMs };
+        },
+        kill: async () => {
+            lifecycle.push({ state: "killed", terminal: true });
+            return { operation: "kill", outcome: "killed" };
+        },
+        fail: async (_error: unknown) => {
+            lifecycle.push({ state: "errored", terminal: true });
+            return { operation: "error", outcome: "errored", code: "ERR_SEQUENCE" };
+        },
+        lifecycle: () => [...lifecycle]
+    };
+}
 
 export type SequenceTestRuntime = "node" | "python" | "bun";
 

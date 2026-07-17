@@ -1,15 +1,7 @@
 import { RunnerError } from "@scramjet/model";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { InstanceStatus, RunnerExitCode, RunnerMessageCode } from "@scramjet/symbols";
-import {
-    AppConfig,
-    HasTopicInformation,
-    IComponent,
-    IObjectLogger,
-    MaybePromise,
-    Streamable,
-    SynchronousStreamable,
-} from "@scramjet/runtime-types";
+import { AppConfig, HasTopicInformation, IComponent, IObjectLogger, MaybePromise, Streamable, SynchronousStreamable } from "@scramjet/runtime-types";
 import type { SequenceApplicationFunction, SequenceApplicationInterface } from "@scramjet/sequence-types";
 import {
     EncodedControlMessage,
@@ -89,10 +81,7 @@ function materializePath(path: string, params: unknown): string {
         return path;
     }
 
-    return Object.entries(params as Record<string, string>).reduce(
-        (current, [key, value]) => current.replace(`:${key}`, encodeURIComponent(String(value))),
-        path
-    );
+    return Object.entries(params as Record<string, string>).reduce((current, [key, value]) => current.replace(`:${key}`, encodeURIComponent(String(value))), path);
 }
 
 function appendQuery(url: string, query: unknown): string {
@@ -137,9 +126,9 @@ function normalizeRestApiResponseError(original: unknown, routePath: string, sta
         const code = status !== undefined ? ` status=${status}` : "";
         return new Error(
             `RestAPI2 response parse error for ${routePath}${code}: ${original.message}. ` +
-            `This may be caused by a 308 route-metadata redirect or an empty-body response ` +
-            `from the Hub CPM proxy. Configure hubTargetDomain for direct Manager/space v2 ` +
-            `routing, or handle route-aware responses explicitly.`
+                `This may be caused by a 308 route-metadata redirect or an empty-body response ` +
+                `from the Hub CPM proxy. Configure hubTargetDomain for direct Manager/space v2 ` +
+                `routing, or handle route-aware responses explicitly.`
         );
     }
 
@@ -183,8 +172,7 @@ function createRestApi2Transport(clientUtils: ClientUtilsCustomAgent): ApiClient
     };
 }
 
-export function isSynchronousStreamable(obj: SynchronousStreamable<any> | Primitives):
-    obj is SynchronousStreamable<any> {
+export function isSynchronousStreamable(obj: SynchronousStreamable<any> | Primitives): obj is SynchronousStreamable<any> {
     return !["string", "number", "boolean", "undefined", "null"].includes(typeof obj);
 }
 
@@ -198,8 +186,7 @@ function revertStandardStream(oldStream: Writable) {
         delete oldStream.write;
 
         // if prototypic write is there, then no change needed
-        if (oldStream.write !== write)
-            oldStream.write = write;
+        if (oldStream.write !== write) oldStream.write = write;
 
         oldStream.off("drain", drainCb);
         oldStream.off("error", errorCb);
@@ -217,7 +204,10 @@ function overrideStandardStream(oldStream: Writable, newStream: Writable) {
 
     if (process.env.PRINT_TO_STDOUT) {
         // @ts-expect-error
-        oldStream.write = (...args) => { write.call(oldStream, ...args); return newStream.write(...args); };
+        oldStream.write = (...args) => {
+            write.call(oldStream, ...args);
+            return newStream.write(...args);
+        };
     } else {
         oldStream.write = newStream.write.bind(newStream);
     }
@@ -232,11 +222,11 @@ function overrideStandardStream(oldStream: Writable, newStream: Writable) {
 }
 
 type RunnerArgs = {
-    sequencePath: string,
-    hostClient: IHostClient,
-    instanceId: string,
-    connectInfo: SequenceInfo,
-    runnerConnectInfo: RunnerConnectInfo
+    sequencePath: string;
+    hostClient: IHostClient;
+    instanceId: string;
+    connectInfo: SequenceInfo;
+    runnerConnectInfo: RunnerConnectInfo;
 };
 
 /**
@@ -278,7 +268,7 @@ export class Runner<X extends AppConfig> implements IComponent {
         appConfig: {}
     };
 
-    instanceOutput?: Readable & HasTopicInformation | void;
+    instanceOutput?: (Readable & HasTopicInformation) | void;
     sequencePath: string;
     hostClient: IHostClient;
     instanceId: string;
@@ -286,13 +276,7 @@ export class Runner<X extends AppConfig> implements IComponent {
     reconnect: boolean;
     shouldWriteDegraded: boolean;
 
-    constructor({
-        sequencePath,
-        hostClient,
-        instanceId,
-        connectInfo,
-        runnerConnectInfo
-    }: RunnerArgs) {
+    constructor({ sequencePath, hostClient, instanceId, connectInfo, runnerConnectInfo }: RunnerArgs) {
         this.sequencePath = sequencePath;
         this.hostClient = hostClient;
         this.instanceId = instanceId;
@@ -342,7 +326,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
     async onStorageMessage(data: { values: Record<string, string> }) {
         // this.logger.debug("Received local storage state from Host", data.values);  // <-- uncomment for debugging
-        Object.keys(this.localCache).forEach(k => delete this.localCache[k]);
+        Object.keys(this.localCache).forEach((k) => delete this.localCache[k]);
         Object.assign(this.localCache, data.values);
     }
 
@@ -405,14 +389,12 @@ export class Runner<X extends AppConfig> implements IComponent {
         if (data.logLevel) {
             this.logger.logLevel = data.logLevel;
 
-            if (this._context)
-                this._context.logger.logLevel = data.logLevel;
+            if (this._context) this._context.logger.logLevel = data.logLevel;
         }
     }
 
     defineControlStream() {
-        StringStream
-            .from(this.hostClient.controlStream)
+        StringStream.from(this.hostClient.controlStream)
             .JSONParse()
             .each(async ([code, data]: EncodedControlMessage) => this.controlStreamHandler([code, data]))
             .on("error", (error) => {
@@ -430,7 +412,8 @@ export class Runner<X extends AppConfig> implements IComponent {
                 this.logger.error("mapToInputDataStream", error);
                 // TODO: we should be doing some error handling here:
                 // TODO: remove the stream, mark as bad, kill the instance maybe?
-            }).pipe(this.inputDataStream);
+            })
+            .pipe(this.inputDataStream);
     }
 
     async handleMonitoringRequest(data: MonitoringRateMessageData): Promise<void> {
@@ -475,7 +458,7 @@ export class Runner<X extends AppConfig> implements IComponent {
             }
 
             if (degraded) {
-                await unlink("/tmp/degraded").catch(() => { });
+                await unlink("/tmp/degraded").catch(() => {});
             } else {
                 await writeFile("/tmp/degraded", "true");
             }
@@ -490,13 +473,9 @@ export class Runner<X extends AppConfig> implements IComponent {
         let healthy = false;
 
         try {
-            const message = timeout
-                ? await promiseTimeout(this.context.monitor(), timeout, TIMEOUT)
-                : await this.context.monitor();
+            const message = timeout ? await promiseTimeout(this.context.monitor(), timeout, TIMEOUT) : await this.context.monitor();
 
-            MessageUtils.writeMessageOnStream(
-                [RunnerMessageCode.MONITORING, message], this.hostClient.monitorStream
-            );
+            MessageUtils.writeMessageOnStream([RunnerMessageCode.MONITORING, message], this.hostClient.monitorStream);
 
             healthy = message.healthy;
         } catch (e: any) {
@@ -504,31 +483,39 @@ export class Runner<X extends AppConfig> implements IComponent {
                 this.logger.error("Timeout while waiting for monitoring message reply");
 
                 MessageUtils.writeMessageOnStream(
-                    [RunnerMessageCode.MONITORING, {
-                        healthy: false, error: {
-                            code: "E_TIMEOUT",
-                            message: "Timeout while waiting for monitoring message reply"
+                    [
+                        RunnerMessageCode.MONITORING,
+                        {
+                            healthy: false,
+                            error: {
+                                code: "E_TIMEOUT",
+                                message: "Timeout while waiting for monitoring message reply"
+                            }
                         }
-                    }], this.hostClient.monitorStream
+                    ],
+                    this.hostClient.monitorStream
                 );
             } else if (e.message) {
                 this.logger.error("Error while waiting for monitoring message reply", e.message);
 
                 MessageUtils.writeMessageOnStream(
-                    [RunnerMessageCode.MONITORING, {
-                        healthy: false, error: {
-                            code: `${e.code || "E_UNKNOWN"}`,
-                            message: `${e.message}`,
-                            stack: `${e.stack}`
+                    [
+                        RunnerMessageCode.MONITORING,
+                        {
+                            healthy: false,
+                            error: {
+                                code: `${e.code || "E_UNKNOWN"}`,
+                                message: `${e.message}`.slice(0, 256),
+                                stack: e.stack ? `${e.stack}`.slice(0, 4096) : undefined
+                            }
                         }
-                    }], this.hostClient.monitorStream
+                    ],
+                    this.hostClient.monitorStream
                 );
             } else {
                 this.logger.error("Error while waiting for monitoring message reply", e);
 
-                MessageUtils.writeMessageOnStream(
-                    [RunnerMessageCode.MONITORING, { healthy: false }], this.hostClient.monitorStream
-                );
+                MessageUtils.writeMessageOnStream([RunnerMessageCode.MONITORING, { healthy: false }], this.hostClient.monitorStream);
             }
 
             healthy = false;
@@ -557,7 +544,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
         if (!this.reconnect) {
             await Promise.all([
-                new Promise<void>(res => {
+                new Promise<void>((res) => {
                     this.api.server.close(() => {
                         this.logger.debug("API server closed");
                         res();
@@ -607,10 +594,7 @@ export class Runner<X extends AppConfig> implements IComponent {
         let sequenceError;
 
         try {
-            await this.context.stopHandler(
-                data.timeout,
-                data.canCallKeepalive
-            );
+            await this.context.stopHandler(data.timeout, data.canCallKeepalive);
         } catch (err: any) {
             sequenceError = err;
 
@@ -620,9 +604,7 @@ export class Runner<X extends AppConfig> implements IComponent {
         if (!data.canCallKeepalive || !this.keepAliveRequested) {
             this.status = InstanceStatus.STOPPING;
 
-            MessageUtils.writeMessageOnStream(
-                [RunnerMessageCode.SEQUENCE_STOPPED, { sequenceError }], this.hostClient.monitorStream
-            );
+            MessageUtils.writeMessageOnStream([RunnerMessageCode.SEQUENCE_STOPPED, { sequenceError }], this.hostClient.monitorStream);
         }
 
         this.stopExpected = true;
@@ -636,16 +618,20 @@ export class Runner<X extends AppConfig> implements IComponent {
         await defer(200);
 
         this.cleanup()
-            .then((code) => { process.exitCode = exitCode || code; }, (e) => console.error(e?.stack))
+            .then(
+                (code) => {
+                    process.exitCode = exitCode || code;
+                },
+                (e) => console.error(e?.stack)
+            )
             .finally(() => {
-                if (typeof process.exitCode === "number")
-                    onBeforeExit(process.exitCode);
+                if (typeof process.exitCode === "number") onBeforeExit(process.exitCode);
 
                 process.exit();
             });
     }
 
-    async premain(): Promise<{ appConfig: AppConfig, args: any }> {
+    async premain(): Promise<{ appConfig: AppConfig; args: any }> {
         this.logger.debug("premain");
 
         try {
@@ -674,9 +660,7 @@ export class Runner<X extends AppConfig> implements IComponent {
             await this.setInputContentType({ headers: { "content-type": this.inputContentType } });
         }
 
-        this.hostClient.stdinStream
-            .on("data", (chunk: Buffer) => process.stdin.unshift(chunk))
-            .on("end", () => process.stdin.emit("end"));
+        this.hostClient.stdinStream.on("data", (chunk: Buffer) => process.stdin.unshift(chunk)).on("end", () => process.stdin.emit("end"));
 
         process.stdin.on("pause", () => this.hostClient.stdinStream.pause());
         process.stdin.on("resume", () => this.hostClient.stdinStream.resume());
@@ -685,7 +669,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
         const { args, appConfig, exposePath, exposeHost } = {
             exposeHost: process.env.EXPOSE_HOST,
-            ...this.runnerConnectInfo,
+            ...this.runnerConnectInfo
         };
 
         if (exposePath && !this.api.server.listening) {
@@ -712,8 +696,7 @@ export class Runner<X extends AppConfig> implements IComponent {
     }
 
     sendPang(args: PangMessageData) {
-        MessageUtils.writeMessageOnStream(
-            [RunnerMessageCode.PANG, args], this.hostClient.monitorStream);
+        MessageUtils.writeMessageOnStream([RunnerMessageCode.PANG, args], this.hostClient.monitorStream);
     }
 
     async main() {
@@ -746,9 +729,14 @@ export class Runner<X extends AppConfig> implements IComponent {
                 sequence.shift();
             } else {
                 MessageUtils.writeMessageOnStream(
-                    [RunnerMessageCode.PANG, {
-                        requires: ""
-                    }], this.hostClient.monitorStream);
+                    [
+                        RunnerMessageCode.PANG,
+                        {
+                            requires: ""
+                        }
+                    ],
+                    this.hostClient.monitorStream
+                );
 
                 readInputStreamHeaders(this.hostClient.inputStream)
                     .then((headers) => this.setInputContentType(headers))
@@ -836,9 +824,7 @@ export class Runner<X extends AppConfig> implements IComponent {
             this.instanceOutput?.pipe(this.hostClient.outputStream);
         }
 
-        this.outputDataStream
-            .JSONStringify()
-            .pipe(this.hostClient.outputStream);
+        this.outputDataStream.JSONStringify().pipe(this.hostClient.outputStream);
 
         if (process.env.PRINT_TO_STDOUT && this.logFile) {
             process.stdout.pipe(this.logFile!);
@@ -868,9 +854,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
         const localStorageAgent = new LocalStorageAgent(localStorageHost);
 
-        const managerApiClient = hostApiClient.getManagerClient(
-            "/api/v1"
-        );
+        const managerApiClient = hostApiClient.getManagerClient("/api/v1");
         const hubTargetDomain = process.env.HUB_TARGET_DOMAIN;
         const hubApiBase = hubTargetDomain ? `http://${hubTargetDomain}` : "http://scramjet-host";
         const restApi2Transport = createRestApi2Transport(new ClientUtilsCustomAgent(hubApiBase, this.hostClient.getAgent()));
@@ -881,11 +865,9 @@ export class Runner<X extends AppConfig> implements IComponent {
         const spaceTargetDomain = process.env.SPACE_TARGET_DOMAIN;
         const v2SpaceClient = spaceTargetDomain
             ? createSpaceClient({
-                transport: createRestApi2Transport(
-                    new ClientUtilsCustomAgent(`http://${spaceTargetDomain}`, this.hostClient.getAgent())
-                ),
-                basePath: "/api/v2",
-            })
+                  transport: createRestApi2Transport(new ClientUtilsCustomAgent(`http://${spaceTargetDomain}`, this.hostClient.getAgent())),
+                  basePath: "/api/v2"
+              })
             : createSpaceClient({ transport: restApi2Transport, basePath: "/api/v2" });
 
         const runner: RunnerProxy = {
@@ -923,20 +905,25 @@ export class Runner<X extends AppConfig> implements IComponent {
 
     sendHandshakeMessage() {
         // TODO: send connection info
-        MessageUtils.writeMessageOnStream([
-            RunnerMessageCode.PING, {
-                id: this.instanceId,
-                sequenceInfo: this.sequenceInfo,
-                created: this.created,
-                payload: {
-                    ...this.runnerConnectInfo,
-                    system: {
-                        processPID: process.pid.toString()
-                    }
-                },
-                status: this.status,
-                inputHeadersSent: !!this.inputContentType
-            }], this.hostClient.monitorStream);
+        MessageUtils.writeMessageOnStream(
+            [
+                RunnerMessageCode.PING,
+                {
+                    id: this.instanceId,
+                    sequenceInfo: this.sequenceInfo,
+                    created: this.created,
+                    payload: {
+                        ...this.runnerConnectInfo,
+                        system: {
+                            processPID: process.pid.toString()
+                        }
+                    },
+                    status: this.status,
+                    inputHeadersSent: !!this.inputContentType
+                }
+            ],
+            this.hostClient.monitorStream
+        );
 
         this.logger.trace("Handshake sent");
     }
@@ -949,10 +936,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
     getSequence(): SequenceApplicationInterface[] {
         const sequenceFromFile = require(this.sequencePath);
-        const _sequence: MaybeArray<SequenceApplicationFunction> =
-            Object.prototype.hasOwnProperty.call(sequenceFromFile, "default")
-                ? sequenceFromFile.default
-                : sequenceFromFile;
+        const _sequence: MaybeArray<SequenceApplicationFunction> = Object.prototype.hasOwnProperty.call(sequenceFromFile, "default") ? sequenceFromFile.default : sequenceFromFile;
 
         const sequenceArr = Array.isArray(_sequence) ? _sequence : [_sequence];
 
@@ -987,11 +971,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
                 this.status = InstanceStatus.RUNNING;
 
-                out = func.call(
-                    this.context,
-                    this.instanceOutput,
-                    ...args
-                );
+                out = func.call(this.context, this.instanceOutput, ...args);
 
                 this.logger.debug("Function called", sequence.length - itemsLeftInSequence - 1);
             } catch (error: any) {
@@ -1062,11 +1042,9 @@ export class Runner<X extends AppConfig> implements IComponent {
             } else if (this.instanceOutput && this.hostClient.outputStream) {
                 this.logger.info("Piping Sequence output", typeof this.instanceOutput);
 
-                this.shouldSerialize = this.instanceOutput.contentType &&
-                    ["application/x-ndjson", "text/x-ndjson"].includes(this.instanceOutput.contentType) ||
-                    this.instanceOutput instanceof DataStream && !(
-                        this.instanceOutput instanceof StringStream || this.instanceOutput instanceof BufferStream
-                    );
+                this.shouldSerialize =
+                    (this.instanceOutput.contentType && ["application/x-ndjson", "text/x-ndjson"].includes(this.instanceOutput.contentType)) ||
+                    (this.instanceOutput instanceof DataStream && !(this.instanceOutput instanceof StringStream || this.instanceOutput instanceof BufferStream));
 
                 if (!this.shouldSerialize && this.instanceOutput.readableEncoding) {
                     this.hostClient.outputStream.setDefaultEncoding(this.instanceOutput.readableEncoding);
@@ -1086,22 +1064,22 @@ export class Runner<X extends AppConfig> implements IComponent {
                         this.logger.info("Sequence stream ended");
                         res();
                     })
-                    .pipe(this.shouldSerialize
-                        ? this.outputDataStream
-                        : this.hostClient.outputStream
-                    );
+                    .pipe(this.shouldSerialize ? this.outputDataStream : this.hostClient.outputStream);
 
                 this.provides = intermediate.topic || "";
                 this.providesContentType = intermediate.contentType || "";
 
                 this.sendPang({ provides: this.provides, contentType: this.providesContentType });
                 MessageUtils.writeMessageOnStream(
-                    [RunnerMessageCode.PANG, {
-                        provides: intermediate.topic || "",
-                        contentType: intermediate.contentType || "",
-                        outputEncoding: this.instanceOutput.readableEncoding
-                    }],
-                    this.hostClient.monitorStream,
+                    [
+                        RunnerMessageCode.PANG,
+                        {
+                            provides: intermediate.topic || "",
+                            contentType: intermediate.contentType || "",
+                            outputEncoding: this.instanceOutput.readableEncoding
+                        }
+                    ],
+                    this.hostClient.monitorStream
                 );
             } else {
                 // TODO: this should push a PANG message with the sequence description

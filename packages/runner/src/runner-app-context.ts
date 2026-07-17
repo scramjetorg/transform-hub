@@ -1,4 +1,3 @@
-
 import { ObjLogger } from "@scramjet/obj-logger";
 import {
     AppConfig,
@@ -12,18 +11,12 @@ import {
     LogLevel,
     MonitoringHandler,
     MonitoringMessageFromRunnerData,
+    mergeHealthOutputs,
     StopHandler,
-    WritableStream,
+    WritableStream
 } from "@scramjet/runtime-types";
-import type {
-    EventMessageData,
-    KeepAliveMessageData,
-} from "@scramjet/runtime-types";
-import type {
-    APIExpose,
-    HostClient,
-    ManagerClient,
-} from "@scramjet/api-types";
+import type { EventMessageData, KeepAliveMessageData } from "@scramjet/runtime-types";
+import type { APIExpose, HostClient, ManagerClient } from "@scramjet/api-types";
 import { EventEmitter } from "events";
 
 function assertFunction(handler: any | Function): handler is Function {
@@ -42,7 +35,8 @@ export interface RunnerProxy {
 }
 
 export class RunnerAppContext<AppConfigType extends AppConfig, State extends any, HubClientType = unknown, SpaceClientType = unknown>
-implements BaseAppContext<AppConfigType, State, HubClientType, SpaceClientType> {
+    implements BaseAppContext<AppConfigType, State, HubClientType, SpaceClientType>
+{
     private runner;
     config: AppConfigType;
     AppError!: AppErrorConstructor;
@@ -61,10 +55,20 @@ implements BaseAppContext<AppConfigType, State, HubClientType, SpaceClientType> 
     api: APIExpose;
     localStorage: ILocalStorage;
 
-    constructor(config: AppConfigType, monitorStream: WritableStream<any>,
-        emitter: EventEmitter, runner: RunnerProxy, hostClient: HostClient,
-        spaceClient: ManagerClient, v2HubClient: HubClientType, v2SpaceClient: SpaceClientType,
-        id: string, logLevel: LogLevel, api: APIExpose, localStorage: ILocalStorage) {
+    constructor(
+        config: AppConfigType,
+        monitorStream: WritableStream<any>,
+        emitter: EventEmitter,
+        runner: RunnerProxy,
+        hostClient: HostClient,
+        spaceClient: ManagerClient,
+        v2HubClient: HubClientType,
+        v2SpaceClient: SpaceClientType,
+        id: string,
+        logLevel: LogLevel,
+        api: APIExpose,
+        localStorage: ILocalStorage
+    ) {
         this.config = config;
         this.monitorStream = monitorStream;
         this.emitter = emitter;
@@ -124,20 +128,10 @@ implements BaseAppContext<AppConfigType, State, HubClientType, SpaceClientType> 
 
     private _monitoringHandlers: MonitoringHandler[] = [];
 
-    async monitor(
-        initialMessage: MonitoringMessageFromRunnerData = { healthy: true }
-    ): Promise<MonitoringMessageFromRunnerData> {
-        let message = initialMessage;
-
-        for (const handler of this._monitoringHandlers) {
-            //TODO add sequences const { healthy, sequences } = await handler(message);
-            const { healthy } = await handler(message);
-
-            //if any of handlers returns false then healthy is false
-            message = { healthy: message.healthy && healthy };
-        }
-
-        return message;
+    async monitor(initialMessage: MonitoringMessageFromRunnerData = { healthy: true }): Promise<MonitoringMessageFromRunnerData> {
+        const outputs: unknown[] = [initialMessage];
+        for (const handler of this._monitoringHandlers) outputs.push(await handler(initialMessage));
+        return mergeHealthOutputs(outputs) as MonitoringMessageFromRunnerData;
     }
 
     addMonitoringHandler(handler: MonitoringHandler): this {

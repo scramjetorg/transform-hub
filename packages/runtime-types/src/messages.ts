@@ -101,6 +101,7 @@ export type StorageMessageData = {
 export type MonitoringMessageData = {
     sequences?: any[];
     healthy: boolean;
+    details?: Record<string, unknown>;
     error?: any;
     cpuTotalUsage?: number;
     memoryUsage?: number;

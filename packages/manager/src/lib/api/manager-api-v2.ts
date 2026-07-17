@@ -69,7 +69,7 @@ export class ManagerAPIV2Handler {
         }, Router.create({ basePath: this.v2ApiBase }));
         const resolver = RestAPI2RouteSets.space.resolvers(this.v2ApiBase).hub;
 
-        return bindResolver(resolver, resolverBinding.handler(({ params, remainingPath }) => {
+        return bindResolver(resolver, resolverBinding.handler(({ params, path, remainingPath }) => {
             const hubId = params.hubId;
             const sth = manager.apiSthConnectionStore.getById(hubId);
 
@@ -83,7 +83,7 @@ export class ManagerAPIV2Handler {
                         sth,
                         req,
                         res,
-                        this.toImplementerPath(remainingPath)
+                        this.toImplementerPath(remainingPath, path)
                     )
                 }
             };
@@ -370,8 +370,11 @@ export class ManagerAPIV2Handler {
         };
     }
 
-    private toImplementerPath(remainingPath: string): string {
-        return remainingPath === "/" ? this.v2ApiBase : `${this.v2ApiBase}${remainingPath}`;
+    private toImplementerPath(remainingPath: string, requestUrl?: string): string {
+        const path = remainingPath === "/" ? this.v2ApiBase : `${this.v2ApiBase}${remainingPath}`;
+        const query = requestUrl?.includes("?") ? requestUrl.slice(requestUrl.indexOf("?")) : "";
+
+        return path.includes("?") || !query ? path : `${path}${query}`;
     }
 
     private disconnectReason(reason?: string): DisconnectReason {

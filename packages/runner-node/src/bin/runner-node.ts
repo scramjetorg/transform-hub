@@ -51,23 +51,29 @@ async function startApiServer(api: APIExpose, exposePath: string, exposeHost: st
     });
 }
 
-function serializeError(error: unknown): unknown {
+function serializeError(error: unknown, depth = 0): unknown {
     if (!(error instanceof Error)) return error;
+    if (depth >= 3) return { name: error.name, message: error.message.slice(0, 512) };
 
     const data = (error as Error & { data?: unknown }).data;
 
     return {
         name: error.name,
-        message: error.message,
-        stack: error.stack,
-        data: serializeError(data)
+        message: error.message.slice(0, 512),
+        stack: error.stack?.slice(0, 4096),
+        data: serializeError(data, depth + 1)
     };
 }
 
 function formatErrorMessage(error: unknown): string {
     if (error instanceof Error) return error.message;
     if (typeof error === "string") return error;
-    return JSON.stringify(error);
+    try {
+        const encoded = JSON.stringify(error);
+        return (encoded === undefined ? "unknown error" : encoded).slice(0, 512);
+    } catch {
+        return "unserializable error";
+    }
 }
 
 /**
@@ -126,6 +132,7 @@ export async function bootstrap(overrides: BootstrapOverrides = {}): Promise<num
     let api: APIExpose | undefined;
     let context: LifecycleContext & {
         localStorage: { handleBroadcastUpdate(data: { key: string; value: string | null }): void };
+        monitor: () => Promise<{ healthy: boolean; details?: Record<string, unknown> }>;
     };
     const outputDataStream = new DataStream();
 
@@ -294,6 +301,27 @@ export async function bootstrap(overrides: BootstrapOverrides = {}): Promise<num
     });
 
     lifecycleRef.current = lifecycle;
+
+    // runner-node owns the active child runtime, so it must evaluate author
+    // monitoring handlers itself. Runtime telemetry is appended after the
+    // author payload and is never part of the author-controlled merge.
+    const reportHealth = async (): Promise<void> => {
+        try {
+            const health = await context.monitor();
+            writeMonitoring(streams.monitoringOut, [RunnerMessageCode.MONITORING, { ...health, ...getMemoryUsage() }]);
+        } catch (error) {
+            const message = formatErrorMessage(error).slice(0, 256);
+            writeMonitoring(streams.monitoringOut, [
+                RunnerMessageCode.MONITORING,
+                { healthy: false, error: { code: (error as { code?: string })?.code || "ERR_HEALTH_EVALUATION", message }, ...getMemoryUsage() }
+            ]);
+        }
+    };
+    const monitoringInterval = setInterval(() => {
+        reportHealth().catch(() => undefined);
+    }, 1_000);
+    monitoringInterval.unref();
+    lifecycle.setMonitoringInterval(monitoringInterval);
 
     let killed = false;
     let resolveKilled!: () => void;

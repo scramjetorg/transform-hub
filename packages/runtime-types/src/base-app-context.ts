@@ -4,6 +4,7 @@ import { IObjectLogger } from "./object-logger";
 import { MaybePromise } from "./utils";
 import { ILocalStorage } from "./local-storage";
 import { FunctionStatus } from "./runtime";
+import { HealthPayload } from "./health";
 
 // ---------------------------------------------------------------------------
 // Minimal runtime-neutral types that were previously in the shared types
@@ -30,6 +31,7 @@ export type FunctionDefinition = {
 export type MonitoringMessageFromRunnerData = {
     sequences?: FunctionStatus[];
     healthy: boolean;
+    details?: HealthPayload["details"];
     error?: {
         stack?: string;
         message: string;
@@ -51,8 +53,7 @@ export type KillHandler = () => void;
 /**
  * A handler for the monitoring message.
  */
-export type MonitoringHandler =
-    (resp: MonitoringMessageFromRunnerData) => MaybePromise<MonitoringMessageFromRunnerData>;
+export type MonitoringHandler = (resp: MonitoringMessageFromRunnerData) => MaybePromise<MonitoringMessageFromRunnerData>;
 
 // ---------------------------------------------------------------------------
 // BaseAppContext — runtime-neutral minimum AppContext surface
@@ -71,12 +72,7 @@ export type MonitoringHandler =
  *   HubClientType  — opaque hub client type (defaults to unknown)
  *   SpaceClientType — opaque space client type (defaults to unknown)
  */
-export interface BaseAppContext<
-    AppConfigType extends AppConfig,
-    State extends any,
-    HubClientType = unknown,
-    SpaceClientType = unknown
-> {
+export interface BaseAppContext<AppConfigType extends AppConfig, State extends any, HubClientType = unknown, SpaceClientType = unknown> {
     logger: IObjectLogger;
 
     addMonitoringHandler(handler: MonitoringHandler): this;

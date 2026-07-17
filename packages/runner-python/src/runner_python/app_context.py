@@ -36,6 +36,7 @@ class AppContext:
         self._keep_alive_timeout: int = 0
         self._kill_handlers: list[Callable] = []
         self._monitoring_handlers: list[Callable] = []
+        self._legacy_health_mode = False
         self._ended: bool = False
         self._destroyed: bool = False
         self._destroy_error: BaseException | None = None
@@ -78,7 +79,7 @@ class AppContext:
 
     # --- Monitoring / health ---
 
-    def set_health_check(self, health_check: Callable[[], dict]) -> "AppContext":
+    def set_health_check(self, health_check: Callable[[], Any]) -> "AppContext":
         """Override the default health check function.
 
         Legacy alias - adapted to populate ``_monitoring_handlers`` so
@@ -86,6 +87,7 @@ class AppContext:
         handlers and registers ``health_check`` as the sole handler.
         """
         self._health_check = health_check
+        self._legacy_health_mode = True
         self._monitoring_handlers.clear()
         self._monitoring_handlers.append(health_check)
         return self
@@ -96,6 +98,7 @@ class AppContext:
         Each handler is called every heartbeat cycle; results are merged in
         registration order (bool → ``{"healthy": <bool>}``, dict → shallow merge).
         """
+        self._legacy_health_mode = False
         self._monitoring_handlers.append(handler)
         return self
 
@@ -123,7 +126,9 @@ class AppContext:
 
     # --- Lifecycle ---
 
-    async def keep_alive(self, timeout: int = 0, *, milliseconds: int = 0) -> "AppContext":
+    async def keep_alive(
+        self, timeout: int = 0, *, milliseconds: int = 0
+    ) -> "AppContext":
         """Reset the stop timer with a new timeout in milliseconds.
 
         Accepts ``timeout`` (positional, legacy compat) or ``milliseconds``

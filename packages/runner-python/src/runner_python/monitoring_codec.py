@@ -20,7 +20,24 @@ def encode_monitoring_frame(code: int, payload: Any) -> bytes:
     ``ensure_ascii=False`` so the output matches Node's ``JSON.stringify``
     byte-for-byte (no inter-token whitespace, raw UTF-8 for non-ASCII).
     """
-    frame = json.dumps([code, payload], separators=(",", ":"), ensure_ascii=False)
+    try:
+        frame = json.dumps(
+            [code, payload], separators=(",", ":"), ensure_ascii=False, allow_nan=False
+        )
+    except (TypeError, ValueError) as error:
+        # A sequence must never be able to break the monitoring carrier with
+        # an unserializable health value. Keep the diagnostic bounded and
+        # classified so the Host can mark the instance unhealthy.
+        diagnostic = {
+            "healthy": False,
+            "error": {
+                "code": "ERR_MONITORING_SERIALIZATION",
+                "message": str(error)[:256],
+            },
+        }
+        frame = json.dumps(
+            [code, diagnostic], separators=(",", ":"), ensure_ascii=False
+        )
     return frame.encode("utf-8") + b"\r\n"
 
 

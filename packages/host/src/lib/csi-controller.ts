@@ -21,6 +21,7 @@ import {
 } from "@scramjet/runtime-types";
 import { APIRoute, STHConfiguration, STHRestAPI } from "@scramjet/api-types";
 import { EncodedMessage, HandshakeAcknowledgeMessage, ICommunicationHandler, MessageDataType, MonitoringMessageData } from "./types/from-types";
+import { HealthPayload } from "@scramjet/runtime-types";
 import { RunnerTransport } from "./types/from-types";
 import { CommunicationChannel as CC, InstanceStatus, RunnerMessageCode, StorageActionCode } from "@scramjet/symbols";
 import { PassThrough, Readable } from "stream";
@@ -79,6 +80,7 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
 
     private keepAliveRequested?: boolean;
     private _lastStats?: MonitoringMessageData;
+    private _lastHealth: HealthPayload = { healthy: true, details: {} };
     private runnerTransport?: RunnerTransport;
     expose?: { path: string | undefined; host: string | undefined; port: number | undefined };
     private inputContentType: string | undefined;
@@ -98,6 +100,10 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
                 memory: this._lastStats?.memoryUsage
             }
         };
+    }
+
+    get lastHealth(): HealthPayload {
+        return { healthy: this._lastHealth.healthy, details: { ...this._lastHealth.details } };
     }
 
     limits: InstanceLimits = {};
@@ -494,6 +500,10 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
         }
 
         this._lastStats = stats;
+        this._lastHealth = {
+            healthy: stats?.healthy !== false,
+            details: stats?.details && typeof stats.details === "object" && !Array.isArray(stats.details) ? stats.details : {}
+        };
 
         this.heartBeatTick();
 
