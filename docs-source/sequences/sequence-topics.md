@@ -8,22 +8,21 @@ title: Topics, data routing, and sequence metadata
 
 ## Topics
 
-Topics are named data channels that sequences can publish to or subscribe from independently of the main input/output stream. They enable decoupled data flows between sequences and external systems.
+Topics are named live data channels that sequences can publish to or subscribe from independently of the main input/output stream. They enable decoupled data flows between sequences and external systems, but they are not a durable queue: topics are not persisted and cannot be replayed after a disconnect.
 
-HTTP route examples on this page use legacy v1 compatibility paths. The v1 API remains supported; v2 topic documentation will be generated from the v2 route tree in a later phase.
+Topic operations have a Hub or Space scope, a name/origin, and a declared content type. Content type must be preserved by publishers and consumers. The route applies backpressure where the active stream supports it; a connection loss is reported as a disconnect error and reconnect does not recover missed messages. There is no exactly-once guarantee.
+
+The v2 route tree is canonical. Hub topic operations use `/api/v2/topics`; Space operations are routed through the Manager/Space prefix, for example `/api/v1/cpm/api/v2/topics` in the current compatibility bridge. The v1 routes remain supported compatibility paths, not a separate topic store.
 
 ### Creating a topic
 
 Topics are created through the Hub API or programmatically:
 
 ```
-POST /api/v1/topic
+POST /api/v2/topics
 Content-Type: application/json
 
-{
-  "name": "sensor-readings",
-  "contentType": "application/x-ndjson"
-}
+{"topic":{"name":"sensor-readings","contentType":"application/x-ndjson"}}
 ```
 
 ### Publishing to a topic
@@ -31,21 +30,32 @@ Content-Type: application/json
 Sequences can send data to a topic using the `AppContext` hub client:
 
 ```typescript
-await this.hub.sendTopic("sensor-readings", {
-  sensor: "temperature",
-  value: 22.5,
-  unit: "celsius",
-});
+import { Readable } from "node:stream";
+import type { AppConfig, SequenceAppContext } from "@scramjet/sequence-types";
+import type { HubClient } from "@scramjet/rest-api2";
+
+type Context = SequenceAppContext<AppConfig, unknown, HubClient, unknown>;
+
+async function publish(this: Context) {
+  await this.hubClient().createTopic.post({
+  body: { topic: { name: "sensor-readings", contentType: "application/x-ndjson" } }
+  });
+  await this.hubClient().topicWrite.post({
+  params: { name: "sensor-readings" },
+  headers: { "content-type": "application/x-ndjson" },
+  body: Readable.from([Buffer.from('{"sensor":"temperature","value":22.5}\n')])
+  });
+}
 ```
 
 In Python:
 
 ```python
-await context.hub.send_topic("sensor-readings", {
-    "sensor": "temperature",
-    "value": 22.5,
-    "unit": "celsius",
-})
+await context.hub.post(
+    "/topics/sensor-readings/stream",
+    headers={"content-type": "application/json"},
+    body=b'{"sensor":"temperature","value":22.5,"unit":"celsius"}\n',
+)
 ```
 
 ### Subscribing to a topic
@@ -70,6 +80,8 @@ Topics have associated metadata:
 - **`name`**: Unique topic identifier within the Hub scope
 - **`contentType`**: MIME type for the topic data
 - **`created`**: ISO timestamp of creation
+
+The v2 Hub route is the canonical topic contract. `hubClient().topicWrite.post()` is the typed Node Hub-scoped stream operation. Python exposes the wrapper's scoped `context.hub.post()` method; it does not expose the Node `@scramjet/rest-api2` fluent client or a generic Python REST SDK. Existing v1 compatibility paths remain available. A same-named topic in another Hub or Space is not automatically the same topic.
 
 ## Sequence metadata
 
@@ -165,3 +177,5 @@ Sequence output can go to:
 1. **API response** — retrieved by the caller
 2. **Topic publication** — explicitly sent via `hub.sendTopic()`
 3. **Another sequence** — via topic subscription chains
+
+See [Customer-site topic probe pipeline](../examples/customer-site-topic-probe-pipeline.md) for a case-led Hub/Space example and its exact focused validation boundary.

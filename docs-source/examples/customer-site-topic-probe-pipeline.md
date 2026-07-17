@@ -1,0 +1,41 @@
+---
+id: example-customer-site-topic-probe-pipeline
+slug: /examples/customer-site-topic-probe-pipeline
+title: Customer-site topic probe pipeline
+---
+
+# Customer-site topic probe pipeline
+
+This walkthrough is motivated by the public [Server Fault remote-site monitoring question](https://serverfault.com/questions/96468/how-to-monitor-multiple-remote-sites-over-the-internet). A probe can publish a small measurement while another sequence consumes it, without coupling their main streams. This is illustrative documentation, not a hosted monitoring service.
+
+Use the [topics dry guide](../sequences/sequence-topics.md) for the operation contract.
+
+Prerequisites: a running Hub (or connected Manager), two sequence instances in the same permitted topic scope, and a topic with a declared content type. Topic names and origins are scoped; the creator must not assume that a same-named topic in another Hub or Space is the same route.
+
+```typescript
+import { Readable } from "node:stream";
+import type { SequenceAppContext } from "@scramjet/sequence-types";
+import type { HubClient } from "@scramjet/rest-api2";
+
+type Context = SequenceAppContext<any, unknown, HubClient, unknown>;
+
+export default async function (this: Context) {
+  const topic = "customer-site-probes";
+  const probe = { site: String(this.config.siteName), ok: true, at: new Date().toISOString() };
+  await this.hubClient().createTopic.post({
+    body: { topic: { name: topic, contentType: "application/json" } }
+  });
+  // The typed v2 stream route is scoped to this Hub.
+  await this.hubClient().topicWrite.post({
+    params: { name: topic },
+    headers: { "content-type": "application/json" },
+    body: Readable.from([Buffer.from(JSON.stringify(probe) + "\n")])
+  });
+  this.emitToSpace("probe.published", { topic, site: probe.site });
+  return probe;
+}
+```
+
+Create the topic, route its input/output as appropriate, and verify content type on both sides. Topic delivery is live and backpressure/disconnect errors are observable; topics are not persisted and cannot be replayed after a connection loss. Reconnect requires an application decision about missed measurements. Authentication and authorization for Hub, Manager, and Space remain outside this snippet.
+
+The v2 stream equivalent is `POST /api/v2/topics/:name/stream`; the `createTopic.post` and `topicWrite.post` calls above are typed Hub-scoped operations. Python uses the wrapper's scoped `context.hub.post()` method. Existing `/api/v1/topic` callers remain compatibility paths. Smallest validation: run `npm run test:sequence-appcontext`, then `npm run test:bdd-ci-api-topic` for the live Hub/Space topic path when Docker prerequisites are available. Do not substitute a fixed sleep for route readiness.

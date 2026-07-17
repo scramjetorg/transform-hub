@@ -7,7 +7,11 @@
 ## Contents
 
 - [packaging-deploying.md](packaging-deploying.md)
+- [sequence-api-exposure.md](sequence-api-exposure.md)
+- [sequence-app-context.md](sequence-app-context.md)
+- [sequence-communication.md](sequence-communication.md)
 - [sequence-configuration-resources-state.md](sequence-configuration-resources-state.md)
+- [sequence-control.md](sequence-control.md)
 - [sequence-lifecycle.md](sequence-lifecycle.md)
 - [sequence-monitoring.md](sequence-monitoring.md)
 - [sequence-topics.md](sequence-topics.md)

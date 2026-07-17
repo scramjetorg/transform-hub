@@ -1,0 +1,21 @@
+---
+id: sequences-api-exposure
+slug: /sequences/api-exposure
+title: Exposing a sequence HTTP API
+---
+
+# Exposing a sequence HTTP API
+
+## Readiness before exposure
+
+Use `this.api.use(path, handler)` for a sequence-local HTTP surface. Validate packaged resources and required configuration before registering routes or entering a long-running stream/promise. The listener is deferred until validation succeeds. On validation failure, emit structured diagnostics, leave no route listener active, and end the instance as errored; callers must start a fresh instance.
+
+Readiness is separate from liveness. Poll the Hub or Manager readiness signal and verify the instance route is available. Do not replace readiness polling with a fixed sleep. Return small JSON values, stream large bodies, or provide a configured artifact/reference; the platform does not impose a new universal payload limit for this guide.
+
+The sequence API is not an MCP server. It owns the route and its sequence-level authorization assumptions. An external MCP bridge may call it, but it owns its own MCP authentication, authorization, ingress, and lifecycle.
+
+See [Bridging job status to MCP](../examples/mcp-bridged-job-status.md) for the inline Node MCP SDK bridge, fixture cursor, and private Compose topology. The bridge is a separate process and is not supplied by STH.
+
+## Limits and boundaries
+
+The process, Docker, and Kubernetes adapters expose the route according to their configured network boundaries. The route is transient runtime service state: it is not a durable job queue, does not replay requests after disconnect, and does not imply exactly-once processing. Choose authentication and authorization at the deployment boundary; never treat instance identity as a secret.

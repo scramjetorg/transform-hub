@@ -131,7 +131,9 @@ services:
     image: scramjetorg/sth:0.28.1
     command: ["scramjet-transform-hub", "--config", "/etc/scramjet/sth.yaml"]
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
+    networks:
+      - hub-internal
     volumes:
       - ./sth.yaml:/etc/scramjet/sth.yaml:ro
       - ./startup-config.yaml:/etc/scramjet/startup-config.yaml:ro
@@ -141,6 +143,9 @@ services:
       interval: 2s
       timeout: 2s
       retries: 30
+networks:
+  hub-internal:
+    internal: true
 ```
 
 Start the one service with `docker compose -f compose.yaml up -d`, then poll the readiness
@@ -161,6 +166,10 @@ Docker socket. It also does not define sequence storage, secret management, auth
 or tunnel/MCP ownership for production deployments.
 
 For the authoritative configuration schema, refer to the generated curated reference for `@scramjet/config` and `@scramjet/types`.
+
+The file-loaded sequence example is intentionally separate from the MCP boundary. STH owns sequence startup, readiness, and the exposed sequence route; an external MCP bridge owns MCP authentication, authorization, public ingress, and any private-network or tunnel lifecycle. STH does not provide a generic MCP gateway.
+
+The published port is loopback-only and the Compose network is internal by default. Add a separately secured reverse proxy or tunnel only when its authentication, authorization, ingress, and lifecycle are owned outside STH. Do not change the binding to `0.0.0.0` merely to make an external MCP client connect.
 
 ## Hub identification
 

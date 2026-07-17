@@ -214,27 +214,36 @@
 
 ## Phase 6: Capability-dependent documentation and final alignment
 
-- [ ] Task: Write or update synthetic progression tests first for lifecycle,
+- [x] Task: Write or update synthetic progression tests first for lifecycle,
   control, API, communication, topics, and AppContext wet-guide behavior, plus
   extraction/compilation validation for inline TypeScript, Python, and Compose.
-- [ ] Task: Write the lifecycle dry/wet pair from the Server Fault diagnostics
+  - `test/phase6-guide-contracts.spec.ts` now passes seven guarded progression,
+    claim-evidence, and inline-snippet validation tests.
+- [x] Task: Write the lifecycle dry/wet pair from the Server Fault diagnostics
   case, documenting validation-before-listener, structured failures, and active
   long-running behavior.
-- [ ] Task: Write the control dry/wet pair from the remote-site case,
+- [x] Task: Write the control dry/wet pair from the remote-site case,
   documenting detailed health and direct Hub versus Manager control flows.
-- [ ] Task: Write the HTTP API dry guide and MCP wet guide from the Galaxy/Loom
+- [x] Task: Write the HTTP API dry guide and MCP wet guide from the Galaxy/Loom
   case, keeping the sequence API, Node MCP SDK bridge, and tunnel/private
   network ownership boundaries distinct.
-- [ ] Task: Write the communication and topics dry/wet pairs, documenting
+- [x] Task: Write the communication and topics dry/wet pairs, documenting
   streams, events, API calls, Hub/Space topics, connection loss, and no replay.
-- [ ] Task: Write the AppContext/runtime-parity dry/wet pair and conformance
+- [x] Task: Write the AppContext/runtime-parity dry/wet pair and conformance
   matrix, marking every intentional runtime limitation.
-- [ ] Task: Update collateral sequence, monitoring, packaging, API/client, CLI,
+- [x] Task: Update collateral sequence, monitoring, packaging, API/client, CLI,
   Manager, Host, runner, runtime-wrapper, configuration, and sequence-test docs;
   regenerate references, sidebars, indexes, compatibility notes, and output.
-- [ ] Task: Verify every capability-dependent claim has a passing focused test;
+- [x] Task: Verify every capability-dependent claim has a passing focused test;
   perform final deduplication, record validation/memory evidence, commit, push,
   and update the draft PR.
+  - Guarded Phase 6 evidence tests pass (8), including strict type-checking for
+    all wet-guide contract snippets. Runtime invariants (8), typings split,
+    changed-file lint, generated documentation, and docs parity pass. Existing
+    full-package build failure remains confined to known `packages/runner/src/
+    runner.ts` TypeScript errors; no guide claim depends on that blocked surface.
+    Compiler extraction allowances are 786432 bytes and 2097152 bytes with
+    cleanup; no phase-specific skips apply.
 - [ ] Task: Conductor - Phase Completion 'Capability-dependent documentation and final alignment' (Protocol in workflow.md)
 
 ## Track completion

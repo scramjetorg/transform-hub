@@ -1,0 +1,28 @@
+---
+id: sequences-communication
+slug: /sequences/communication
+title: Choosing a sequence communication path
+---
+
+# Choosing a sequence communication path
+
+Choose the narrowest path that matches delivery needs:
+
+| Need | Use | Contract |
+|---|---|---|
+| Transform a bounded or continuous payload | input/output stream | Backpressure and content type are part of the stream contract. |
+| Ask the Hub or Space for current state | `hubClient()` or `spaceClient()` | Request/response; Hub and Space scopes remain distinct. |
+| Notify observers | `emit()` or `emitToSpace()` | Transient event; not durable and not proof of delivery. |
+| Decouple producers and consumers | Hub/Space topic | Named live route; no persistence or replay. |
+
+## Streams
+
+Streams carry data through the sequence pipeline and can be streamed, paged, or represented by a configured artifact/reference when the result is large. Preserve the declared content type. A consumer disconnect can end the stream; the platform does not provide exactly-once delivery.
+
+## API calls and events
+
+Use the v2 fluent `hubClient()` for current-Hub operations and `spaceClient()` for Manager/Space operations. The legacy `this.hub` and `this.space` properties remain for compatibility. Events are notifications over the monitoring/control path. They are scoped to an instance or Space, transient, and may be lost on disconnect; do not use them as a checkpoint or command queue.
+
+The sequence owns its payload and route policy. The Hub/Manager owns transport and routing. Authentication, authorization, TLS, and public ingress remain deployment responsibilities.
+
+The case-led companion is [Filtering local object data for a consumer](../examples/local-object-filter-to-consumer.md). Validate the local progression with `npm run test:sequence-appcontext`; this does not prove adapter visibility or consumer durability.

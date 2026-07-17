@@ -33,7 +33,7 @@ The platform auto-detects the runtime by inspecting `package.json` engine keys v
 
 ### Node.js / TypeScript sequences
 
-Node.js sequences are the most common. Export a function (or an array of functions) from the module entry point. TypeScript is fully supported — the runner compiles or loads via `ts-node` in development mode.
+Node.js sequences are the most common. Export a function (or an array of functions) from the module entry point. An optional exported `initialize` function runs before the sequence function and is the readiness hook for local validation and API route registration. TypeScript is fully supported — the runner compiles or loads via `ts-node` in development mode.
 
 **Minimal Node.js sequence:**
 
@@ -58,7 +58,7 @@ import type { SequenceAppContext } from "@scramjet/sequence-types";
 export default [
   async function (this: SequenceAppContext, input: Readable) {
     // Transform input, return a stream or value
-    return input.pipe(new Transform({ objectMode: true, transform(chunk, _, cb) { cb(null, chunk.toString().toUpperCase()); } }));
+    return input.pipe(new Transform({ objectMode: true, transform(chunk: any, _: any, cb: (error: Error | null, value?: string) => void) { cb(null, chunk.toString().toUpperCase()); } }));
   },
   async function (this: SequenceAppContext, input: Readable) {
     const lines = [];
@@ -70,21 +70,21 @@ export default [
 
 ### Bun sequences
 
-Bun sequences use the canonical `SequenceAppContext` surface from `@scramjet/sequence-types`. When host channels are required (IN, OUT, LOG), `runner-bun` delegates to the Node runtime. In headless mode (no `instancesServerPort` configured), Bun runs the sequence directly.
+Bun sequences use the canonical `SequenceAppContext` surface from `@scramjet/sequence-types`. When host channels are required (IN, OUT, LOG), `runner-bun` delegates to the Node runtime. Direct Bun execution has no bound host context, so a sequence that uses `SequenceAppContext` must not treat direct Bun as a supported AppContext mode.
 
-**Bun sequence:**
+**Bun sequence (direct mode — no host channels):**
 
 ```typescript
-import type { SequenceAppContext } from "@scramjet/sequence-types";
-
-// bun-sequence.ts
-export default async function (this: SequenceAppContext, input: Readable) {
+// bun-sequence.ts — direct Bun execution has no bound SequenceAppContext
+export default async function (input: Readable) {
   for await (const chunk of input) {
-    // direct Bun API available here
+    // process chunk
   }
   return { status: "done" };
 }
 ```
+
+When host channels (IN, OUT, LOG) are required, `runner-bun` delegates to the Node runtime and the sequence can use the `SequenceAppContext` typing as in the Node examples above.
 
 Package the sequence with `"engines": { "bun": ">=1.0" }` in `package.json`.
 
@@ -94,9 +94,10 @@ Python sequences export a `main()` or `run()` function. The function signature i
 
 ```python
 def main(context, input_stream, *args):
+    pass
 ```
 
-The `context` object mirrors the `AppContext` interface. The `input_stream` is an async iterable of bytes.
+The `context` object is the hosted Python wrapper context. Its `hub` and `space` attributes are scoped Broker-backed request clients (not Node-fluent equivalents, not a generic Python REST SDK); use their `get()`/`post()` methods for routes available to the sequence. The `input_stream` is an async iterable of bytes.
 
 **Python sequence:**
 
@@ -171,3 +172,5 @@ Sequences receive input through the first argument after the context. The input 
 - `void` / `undefined` — no output
 
 See [Sequence lifecycle](sequence-lifecycle.md) for stream and content-type details.
+
+For the complete readiness example, see [Start a local validation service safely](../examples/lifecycle-local-validation-service.md). For runtime limits, see the [AppContext conformance matrix](sequence-app-context.md#runtime-conformance-matrix).

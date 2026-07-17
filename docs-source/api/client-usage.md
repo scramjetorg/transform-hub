@@ -77,7 +77,12 @@ const health = await instance.health.get();
 Node.js sequences can access the same v2 fluent route contracts from the runtime `AppContext`:
 
 ```typescript
-export default async function () {
+import type { AppConfig, SequenceAppContext } from "@scramjet/sequence-types";
+import type { HubClient, SpaceClient } from "@scramjet/rest-api2";
+
+type Context = SequenceAppContext<AppConfig, unknown, HubClient, SpaceClient>;
+
+export default async function (this: Context) {
   const hubHealth = await this.hubClient().health.get();
   const hubs = await this.spaceClient().hubs.get();
 
@@ -97,6 +102,10 @@ Hub health is canonical at `GET /api/v2/health`. `GET /api/v1/health` remains av
 Manager health is canonical at `GET /api/v2/health`. Its response details include aggregation readiness information for connected Hubs, including active Hub counts, aggregated sequence/instance counts, and per-Hub inventory readiness. This signal is intended for polling instead of arbitrary sleeps when waiting for Manager aggregation to settle. Manager and MultiManager v1 health routes remain compatibility endpoints.
 
 MultiManager health is canonical at `GET /api/v2/health` on the MultiManager API surface. It reports root-level control-plane health and scope details for the managed spaces/Managers. `GET /api/v1/health` remains available for backwards-compatible MultiManager callers.
+
+For a sequence-exposed route, readiness is a separate contract: validation completes before the listener becomes active. Poll the relevant health/readiness response and handle an unavailable route as not ready. An HTTP listener or process response alone is not proof that the sequence has passed validation.
+
+The API clients expose Hub and Manager/Space operations; they do not include MCP. An external MCP bridge, if used, owns MCP authentication, authorization, ingress, and tunnel lifecycle.
 
 ### Transport options
 
