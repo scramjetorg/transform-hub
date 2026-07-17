@@ -12,8 +12,9 @@
     `packages/sequence-test/test/harness/{captures,hub-harness}.spec.ts` cover
     the relevant synthetic patterns. `createSequenceFixture` and the capture
     APIs are existing exports; no file-backed cursor helper exists.
-- [ ] Task: Create or update the draft PR from the implementation branch using
+- [x] Task: Create or update the draft PR from the implementation branch using
   `spec.md` as its description after the first phase checkpoint.
+  - Draft PR: https://github.com/0rail/transform-hub/pull/56
 
 ## Phase 1: Documentation that needs no platform changes
 
