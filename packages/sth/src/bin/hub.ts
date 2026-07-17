@@ -11,11 +11,11 @@ import {
     sthOutboundVerser2Options,
     z,
     ConfigService,
-    getRuntimeAdapterOption,
+    getRuntimeAdapterOption
 } from "@scramjet/config";
 import { DeepPartial, StorageAdapterType } from "@scramjet/runtime-types";
 import { STHCommandOptions, STHConfiguration } from "@scramjet/api-types";
-import { resolve } from "path";
+import { dirname, resolve } from "path";
 import { HostError } from "@scramjet/model";
 import { inspect } from "util";
 import { getValidStorageAdapters, Host } from "@scramjet/host";
@@ -23,7 +23,7 @@ import { FileBuilder, processCommanderRunnerEnvs } from "@scramjet/utility";
 import { constants } from "os";
 import { augmentOptions, registerRuntimeAdapterOption } from "@scramjet/adapters";
 
-const stringToIntSanitizer = (str : string) => {
+const stringToIntSanitizer = (str: string) => {
     const parsedValue = parseInt(str, 10);
 
     if (Number.isNaN(parsedValue)) {
@@ -35,7 +35,7 @@ const stringToIntSanitizer = (str : string) => {
 const commonOptions: ConfigOptionDescriptor[] = [
     { name: "description", flag: "description", short: "desc", type: "string", description: "Specify sth description" },
     { name: "customName", flag: "custom-name", type: "string", description: "Specify custom name" },
-    { name: "tags", flag: "tags", type: "string", description: "Specifies tags in the format \"tag1, tag2\"", defaultValue: "" },
+    { name: "tags", flag: "tags", type: "string", description: 'Specifies tags in the format "tag1, tag2"', defaultValue: "" },
     { name: "config", flag: "config", short: "c", type: "string", description: "Specifies path to config" },
     { name: "logLevel", flag: "log-level", short: "L", type: "string", description: "Specify log level" },
     { name: "colors", flag: "colors", type: "boolean", description: "Enable colors in output", defaultValue: true },
@@ -52,7 +52,13 @@ const commonOptions: ConfigOptionDescriptor[] = [
     { name: "id", flag: "id", short: "I", type: "string", description: "The id assigned to this server" },
     { name: "exitWithLastInstance", flag: "exit-with-last-instance", short: "X", type: "boolean", description: "Exits host when no more instances exist." },
     { name: "startupConfig", flag: "startup-config", short: "S", type: "string", description: "Only works with process adapter. The configuration of startup sequences." },
-    { name: "sequencesRoot", flag: "sequences-root", short: "D", type: "string", description: "Works with --runtime-adapter='process' or --runtime-adapter='kubernetes' options. Specifies a location where the Sequence Adapter saves new Sequences." },
+    {
+        name: "sequencesRoot",
+        flag: "sequences-root",
+        short: "D",
+        type: "string",
+        description: "Works with --runtime-adapter='process' or --runtime-adapter='kubernetes' options. Specifies a location where the Sequence Adapter saves new Sequences."
+    },
     { name: "runnerDebug", flag: "runner-debug", type: "boolean", description: "Runners are spawned with debuggers" },
     { name: "docker", flag: "docker", type: "boolean", description: "Use docker runtime adapter shorthand", defaultValue: true, negatable: true },
     { name: "instanceLifetimeExtensionDelay", flag: "instance-lifetime-extension-delay", type: "number", description: "Instance lifetime extension delay in ms" },
@@ -62,11 +68,16 @@ const commonOptions: ConfigOptionDescriptor[] = [
     { name: "cpmId", flag: "cpm-id", type: "string" },
     { name: "cpmMaxReconnections", flag: "cpm-max-reconnections", type: "number", description: "Maximum reconnection attempts (-1 no limit)" },
     { name: "cpmReconnectionDelay", flag: "cpm-reconnection-delay", type: "number", description: "Time to wait before next reconnection attempt" },
-    { name: "environmentName", flag: "environment-name", type: "string", description: "Sets the environment name for telemetry reporting (defaults to SCP_ENV_VALUE env var or 'not-set')" },
+    {
+        name: "environmentName",
+        flag: "environment-name",
+        type: "string",
+        description: "Sets the environment name for telemetry reporting (defaults to SCP_ENV_VALUE env var or 'not-set')"
+    },
     { name: "telemetry", flag: "telemetry", type: "boolean", description: "Enables telemetry" },
     { name: "federationControl", flag: "federation-control", type: "boolean", description: "Enables federation control", negatable: true },
     { name: "healtzPort", flag: "healtz-port", type: "string", description: "Starts monitoring sever on a selected port" },
-    { name: "healtzHost", flag: "healtz-host", type: "string", description: "Starts monitoring sever on a specified interface e.g [\"0.0.0.0\"]. Requires --healtz-port" },
+    { name: "healtzHost", flag: "healtz-host", type: "string", description: 'Starts monitoring sever on a specified interface e.g ["0.0.0.0"]. Requires --healtz-port' },
     { name: "healtzPath", flag: "healtz-path", type: "string", description: "Exposes monitoring endpoint on specified path. Requires --healtz-port" },
     { name: "runnerEnvs", flag: "runner-envs", type: "string", description: "Additional ENVs for Runners. e.g ENV1=1;ENV2=2" },
     { name: "couchdbUrl", flag: "couchdb-url", type: "string", description: "URL to CouchDB localStorage instance" },
@@ -81,13 +92,13 @@ const commonOptions: ConfigOptionDescriptor[] = [
 const createBaseRegistry = () => {
     const registry = createOptionRegistry();
 
-    commonOptions.forEach(option => registry.option(option));
+    commonOptions.forEach((option) => registry.option(option));
     registerRuntimeAdapterOption(registry);
     registry.option({
         name: "localStorageAdapter",
         flag: "localstorage-adapter",
         type: "string",
-        description: `LocalStorage adapter to use (${getValidStorageAdapters().map(x => JSON.stringify(x))},"file")`,
+        description: `LocalStorage adapter to use (${getValidStorageAdapters().map((x) => JSON.stringify(x))},"file")`,
         choices: getValidStorageAdapters()
     });
 
@@ -99,9 +110,7 @@ const runtimeAdapterHelpOption = (argv: readonly string[]) => {
 
     for (let i = 0; i < argv.length; i++) {
         const token = argv[i];
-        const value = token.startsWith("--runtime-adapter=")
-            ? token.slice("--runtime-adapter=".length)
-            : (token === "--runtime-adapter" || token === "-a") ? argv[i + 1] : undefined;
+        const value = token.startsWith("--runtime-adapter=") ? token.slice("--runtime-adapter=".length) : token === "--runtime-adapter" || token === "-a" ? argv[i + 1] : undefined;
 
         if (value && valid.has(value)) return value;
     }
@@ -112,10 +121,10 @@ const runtimeAdapterHelpOption = (argv: readonly string[]) => {
 const helpRequested = isHelpRequested(process.argv);
 const preliminaryOptions = helpRequested
     ? {}
-    : parseCliOptions({
-        argv: process.argv,
-        options: createBaseRegistry().getOptions()
-    }) as Partial<STHCommandOptions>;
+    : (parseCliOptions({
+          argv: process.argv,
+          options: createBaseRegistry().getOptions()
+      }) as Partial<STHCommandOptions>);
 
 const finalRegistry = augmentOptions(
     createBaseRegistry(),
@@ -149,6 +158,10 @@ const options = parseCliOptions({ argv: process.argv, options: finalRegistry.get
         if (!(configFile.exists() && configFile.isReadable())) throw new Error("Unable to read config file");
         const configContents = configFile.read() as DeepPartial<STHConfiguration>;
 
+        if (configContents.startupConfig && !options.startupConfig && typeof configContents.startupConfig === "string") {
+            (configContents as any).startupConfig = resolve(dirname(resolve(process.cwd(), options.config)), configContents.startupConfig);
+        }
+
         configService.update(configContents);
     }
     if (options.runnerEnvs) {
@@ -159,7 +172,7 @@ const options = parseCliOptions({ argv: process.argv, options: finalRegistry.get
         configService.update({ tags: options.tags.split(",") });
     }
 
-    if (!configService.getConfig().tags?.every((t:string) => t.length)) {
+    if (!configService.getConfig().tags?.every((t: string) => t.length)) {
         throw new Error("Tags cannot be empty");
     }
     configService.update({
@@ -206,7 +219,7 @@ const options = parseCliOptions({ argv: process.argv, options: finalRegistry.get
         localStorageAdapter: options.localStorageAdapter as StorageAdapterType,
         localStoragePath: resolveFile(options.localStoragePath),
         sequencesRoot: resolveFile(options.sequencesRoot),
-        startupConfig: resolveFile(options.startupConfig),
+        ...(options.startupConfig ? { startupConfig: resolveFile(options.startupConfig) } : {}),
         identifyExisting: options.identifyExisting,
         killOnExit: options.killOnExit,
         exitWithLastInstance: options.exitWithLastInstance,
@@ -223,8 +236,7 @@ const options = parseCliOptions({ argv: process.argv, options: finalRegistry.get
                 python3: options.k8sRunnerPyImage,
                 bun: options.k8sRunnerBunImage
             },
-            sequencesRoot:
-                options.sequencesRoot ? resolveFile(options.sequencesRoot) : resolveFile(options.k8sSequencesRoot),
+            sequencesRoot: options.sequencesRoot ? resolveFile(options.sequencesRoot) : resolveFile(options.k8sSequencesRoot),
             timeout: isNaN(+options.k8sRunnerCleanupTimeout) ? 0 : parseInt(options.k8sRunnerCleanupTimeout, 10),
             runnerResourcesRequestsCpu: options.k8sRunnerResourcesRequestsCpu,
             runnerResourcesRequestsMemory: options.k8sRunnerResourcesRequestsMemory,
@@ -238,11 +250,14 @@ const options = parseCliOptions({ argv: process.argv, options: finalRegistry.get
             status: options.telemetry,
             environment: options.environmentName || process.env.SCP_ENV_VALUE || "not-set"
         },
-        monitorgingServer: options.healtzPort || options.healtzHost || options.healtzPath ? {
-            port: options.healtzPort ? parseInt(options.healtzPort, 10) : undefined,
-            host: options.healtzHost,
-            path: options.healtzPath
-        } : undefined,
+        monitorgingServer:
+            options.healtzPort || options.healtzHost || options.healtzPath
+                ? {
+                      port: options.healtzPort ? parseInt(options.healtzPort, 10) : undefined,
+                      host: options.healtzHost,
+                      path: options.healtzPath
+                  }
+                : undefined,
         couchdb: {
             url: options.couchdbUrl,
             dbName: options.couchdbName,
@@ -259,9 +274,13 @@ const options = parseCliOptions({ argv: process.argv, options: finalRegistry.get
 
     // before here we actually load the host and we have the config imported elsewhere
     // so the config is changed before compile time, not in runtime.
-    return require("@scramjet/host").startHost({
-        verbose: ["DEBUG", "TRACE"].includes(config.logLevel),
-    }, config)
+    return require("@scramjet/host")
+        .startHost(
+            {
+                verbose: ["DEBUG", "TRACE"].includes(config.logLevel)
+            },
+            config
+        )
         .then(async (host: Host) => {
             // Host..main is done, so we can now wait until all sequences exited.
             // If no sequences started, we exit as well...
@@ -305,16 +324,15 @@ const options = parseCliOptions({ argv: process.argv, options: finalRegistry.get
             process.on("SIGINT", kill);
             process.on("SIGTERM", kill);
         });
-})()
-    .catch((e: (Error | HostError) & { exitCode?: number }) => {
-        if ((e as HostError).code) {
-            const hostError = e as HostError;
+})().catch((e: (Error | HostError) & { exitCode?: number }) => {
+    if ((e as HostError).code) {
+        const hostError = e as HostError;
 
-            console.error(`Error occured with code: ${hostError.code}\nData:${inspect(hostError.data)}\n${e.stack}`);
-        } else {
-            console.error(e.stack);
-        }
+        console.error(`Error occured with code: ${hostError.code}\nData:${inspect(hostError.data)}\n${e.stack}`);
+    } else {
+        console.error(e.stack);
+    }
 
-        process.exitCode = e.exitCode || 1;
-        process.exit();
-    });
+    process.exitCode = e.exitCode || 1;
+    process.exit();
+});

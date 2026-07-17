@@ -2,24 +2,16 @@ import { closeSync, constants as fsConstants, openSync, writeSync } from "fs";
 import { PassThrough, Readable, Writable } from "stream";
 
 import type { ObjLogger } from "@scramjet/obj-logger";
-import type {
-    EncodedControlMessage,
-    EncodedMonitoringMessage,
-    EventMessageData,
-    StopSequenceMessageData,
-    StorageUpdateMessageData,
-} from "@scramjet/runtime-types";
+import type { EncodedControlMessage, EncodedMonitoringMessage, EventMessageData, StopSequenceMessageData, StorageUpdateMessageData } from "@scramjet/runtime-types";
 import { RunnerMessageCode, CommunicationChannel as CC } from "@scramjet/symbols";
 
 import { MessageUtils } from "./message-utils";
 import type { RunSequenceHostClient } from "./run-sequence";
-import type { ControlDispatch, SequenceFunction, SequenceModule } from "./types";
+import type { ControlDispatch, ResolvedSequenceFunctions, SequenceFunction, SequenceInitializer, SequenceModule } from "./types";
 
 let exitFileWritten = false;
 
-export const RUNNER_NODE_CHANNELS: ReadonlySet<CC> = new Set<CC>([
-    CC.IN, CC.OUT, CC.LOG, CC.REQUESTS,
-]);
+export const RUNNER_NODE_CHANNELS: ReadonlySet<CC> = new Set<CC>([CC.IN, CC.OUT, CC.LOG, CC.REQUESTS]);
 
 export function isObject(value: unknown): value is Record<string, unknown> {
     return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -29,14 +21,8 @@ export function legacyExitFilePath(pid: number = process.pid): string {
     return `/tmp/runner-${pid.toString()}`;
 }
 
-export function writeLegacyExitFileSecure(
-    path: string,
-    code: number,
-    logger?: { warn: (...args: unknown[]) => void }
-): boolean {
-    const noFollow = typeof (fsConstants as { O_NOFOLLOW?: number }).O_NOFOLLOW === "number"
-        ? (fsConstants as { O_NOFOLLOW: number }).O_NOFOLLOW
-        : 0;
+export function writeLegacyExitFileSecure(path: string, code: number, logger?: { warn: (...args: unknown[]) => void }): boolean {
+    const noFollow = typeof (fsConstants as { O_NOFOLLOW?: number }).O_NOFOLLOW === "number" ? (fsConstants as { O_NOFOLLOW: number }).O_NOFOLLOW : 0;
     const flags = fsConstants.O_WRONLY | fsConstants.O_CREAT | fsConstants.O_EXCL | noFollow;
 
     let fd: number | undefined;
@@ -85,10 +71,19 @@ export function resolveSequenceFunctions(mod: SequenceModule): SequenceFunction[
     return [];
 }
 
-export function loadSequenceModule(sequencePath: string): SequenceFunction[] {
+export function loadSequenceModule(sequencePath: string): ResolvedSequenceFunctions {
     const loaded: SequenceModule = require(sequencePath);
+    const functions = resolveSequenceFunctions(loaded) as ResolvedSequenceFunctions;
+    const record = isObject(loaded) ? loaded : undefined;
+    const defaultExport = record && "default" in record ? record.default : undefined;
+    const initializer = record?.initialize ?? (isObject(defaultExport) ? defaultExport.initialize : undefined);
 
-    return resolveSequenceFunctions(loaded);
+    if (initializer !== undefined && typeof initializer !== "function") {
+        throw new Error("Sequence initialize export must be a function when provided");
+    }
+
+    if (initializer) functions.initialize = initializer as SequenceInitializer;
+    return functions;
 }
 
 let memoryMaxUsage = 0;
@@ -108,15 +103,11 @@ export function writeMonitoring(monitor: Writable, msg: EncodedMonitoringMessage
     MessageUtils.writeMessageOnStream(msg, monitor);
 }
 
-export function wireControlStream(
-    controlIn: Readable,
-    dispatch: ControlDispatch,
-    logger?: ObjLogger
-): void {
+export function wireControlStream(controlIn: Readable, dispatch: ControlDispatch, logger?: ObjLogger): void {
     let buffer = "";
 
     controlIn.setEncoding("utf8");
-    controlIn.on("data", chunk => {
+    controlIn.on("data", (chunk) => {
         buffer += chunk;
 
         let nlIndex = buffer.indexOf("\n");
@@ -161,7 +152,7 @@ export function wireControlStream(
             }
         }
     });
-    controlIn.on("error", err => logger?.warn("control: stream error", err));
+    controlIn.on("error", (err) => logger?.warn("control: stream error", err));
 }
 
 export function makeOutputDiscard(): RunSequenceHostClient["outputStream"] {

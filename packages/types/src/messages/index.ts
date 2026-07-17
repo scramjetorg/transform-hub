@@ -2,7 +2,16 @@ export { AcknowledgeMessage, AcknowledgeMessageData } from "./acknowledge";
 export { FunctionDefinition, DescribeSequenceMessage, DescribeSequenceMessageData } from "./describe-sequence";
 export { StatusMessageData, StatusMessage } from "./status";
 export { ErrorMessage, ErrorMessageData } from "./error";
-export { SpaceEventMessageData, SpaceEventMessage, EventMessage, EventMessageData, StorageMessage, StorageMessageData, StorageUpdateMessage, StorageUpdateMessageData } from "./event";
+export {
+    SpaceEventMessageData,
+    SpaceEventMessage,
+    EventMessage,
+    EventMessageData,
+    StorageMessage,
+    StorageMessageData,
+    StorageUpdateMessage,
+    StorageUpdateMessageData
+} from "./event";
 export { PangMessageData, PingMessageData, HandshakeMessage } from "./handshake";
 export { HandshakeAcknowledgeMessage, HandshakeAcknowledgeMessageData } from "./handshake-acknowledge";
 export { SetMessage, SetMessageData } from "./set";
@@ -20,5 +29,6 @@ export { STHIDMessageData, CPMMessageSTHID } from "./sth-id";
 export { InstanceBulkMessage, InstanceMessage, InstanceMessageData } from "./instance";
 export { SequenceBulkMessage, SequenceMessage, SequenceMessageData } from "./sequence";
 export { SequenceStoppedMessageData } from "./sequence-stopped";
+export { ReadinessMessageData, ReadinessDiagnostic } from "./readiness";
 export { OpRecord } from "./op-record";
 export * from "./sth-topic";

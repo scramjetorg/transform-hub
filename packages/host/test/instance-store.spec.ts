@@ -73,6 +73,15 @@ test("InstancesStore: getByInstanceId is an alias for Map.get", t => {
     t.is(store.getByInstanceId("inst-2"), inst);
 });
 
+test("InstancesStore: RPC exposure is revoked independently of instance cleanup", t => {
+    const store = new InstancesStore();
+    store.set("inst-3", mockInstance("inst-3"));
+    store.registerRpc("/api", "inst-3");
+    t.is(store.getByExposePath("/api").length, 1);
+    store.unregisterRpc("/api", "inst-3");
+    t.deepEqual(store.getByExposePath("/api"), []);
+});
+
 // ── map() ───────────────────────────────────────────────────────
 
 test("InstancesStore map: returns an empty array for empty store", t => {

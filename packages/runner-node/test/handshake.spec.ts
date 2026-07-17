@@ -63,3 +63,7 @@ test("buildPing omits exposed API metadata when no server was started", t => {
     t.false("exposeHost" in message.payload);
     t.false("exposePort" in message.payload);
 });
+
+test("readiness uses the shared READY monitoring boundary", t => {
+    t.is(RunnerMessageCode.READY, 3014);
+});

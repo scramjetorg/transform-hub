@@ -48,9 +48,7 @@ function runRunnerNode(bootConfigPath: string): Promise<number> {
     delete env.RUNNER_CONNECT_INFO;
 
     if (resolved.needsTsNode) {
-        env.NODE_OPTIONS = [env.NODE_OPTIONS, "--require ts-node/register/transpile-only"]
-            .filter(Boolean)
-            .join(" ");
+        env.NODE_OPTIONS = [env.NODE_OPTIONS, "--require ts-node/register/transpile-only"].filter(Boolean).join(" ");
     }
 
     const child = spawn(process.env.NODE_BIN || "node", [resolved.entry, bootConfigPath], {
@@ -122,6 +120,17 @@ export async function bootstrap(): Promise<number> {
         }
 
         const candidate = (loaded as { default?: unknown })?.default ?? loaded;
+        const initializer =
+            typeof loaded === "object" && loaded !== null
+                ? ((loaded as { initialize?: unknown }).initialize ??
+                  (typeof candidate === "object" && candidate !== null ? (candidate as { initialize?: unknown }).initialize : undefined))
+                : undefined;
+        if (initializer !== undefined && typeof initializer !== "function") {
+            throw new Error("runner-bun: sequence initialize export must be a function when provided");
+        }
+        if (initializer) {
+            await initializer(candidate);
+        }
         const fns = Array.isArray(candidate) ? candidate : [candidate];
         const input = Readable.from([]);
         const sequenceArgs = bootConfig.sequenceArgs ?? [];
@@ -150,11 +159,11 @@ export async function bootstrap(): Promise<number> {
 
 if (require.main === module) {
     bootstrap()
-        .then(code => {
+        .then((code) => {
             process.exitCode = code;
         })
-        .catch(err => {
-            console.error("runner-bun failed:", err instanceof Error ? err.stack ?? err.message : err);
+        .catch((err) => {
+            console.error("runner-bun failed:", err instanceof Error ? (err.stack ?? err.message) : err);
             process.exitCode = 1;
         });
 }

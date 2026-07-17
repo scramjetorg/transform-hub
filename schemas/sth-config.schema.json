@@ -269,7 +269,8 @@
       "properties": {
         "heartBeatInterval": { "type": "number", "description": "Heartbeat interval in milliseconds.", "default": 10000 },
         "instanceAdapterExitDelay": { "type": "number", "description": "Delay after runner exit during which Instance API remains available, in milliseconds.", "default": 9000 },
-        "instanceLifetimeExtensionDelay": { "type": "number", "description": "Delay before CSIController emits end, in milliseconds.", "default": 180000 }
+        "instanceLifetimeExtensionDelay": { "type": "number", "description": "Delay before CSIController emits end, in milliseconds.", "default": 180000 },
+        "startupTimeout": { "type": "number", "minimum": 1, "description": "Maximum time to wait for a configured startup entry, in milliseconds.", "default": 30000 }
       }
     },
     "telemetry": {

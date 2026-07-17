@@ -155,6 +155,11 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
     private removalPromise?: Promise<void>;
     private removalCompleted = false;
     private endEmitted = false;
+    private readinessResolver?: () => void;
+    private readinessRejecter?: (error: Error) => void;
+    private readinessTimer?: NodeJS.Timeout;
+    private readinessState: "pending" | "ready" | "errored" = "pending";
+    private readinessFailure?: Promise<void>;
     private terminalTransition?: Promise<void>;
     finalizingPromise?: CancellablePromise;
 
@@ -281,6 +286,87 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
             });
 
         return initialized;
+    }
+
+    waitForReady(timeout: number): Promise<void> {
+        if (this.readinessState === "ready") return Promise.resolve();
+        if (this.readinessState === "errored") {
+            return (this.readinessFailure || Promise.resolve()).then(() => {
+                throw new Error("Runner initialization rejected");
+            });
+        }
+        return new Promise<void>((resolve, reject) => {
+            this.readinessResolver = resolve;
+            this.readinessRejecter = reject;
+            this.readinessTimer = setTimeout(() => {
+                const error = new Error(`Instance readiness timed out after ${timeout}ms`);
+                this.readinessState = "errored";
+                this.readinessFailure = this.failReadiness(error);
+                this.readinessFailure.then(() => reject(error), reject);
+            }, timeout);
+            this.readinessTimer.unref();
+        });
+    }
+
+    private async failReadiness(error: Error): Promise<void> {
+        const exposedPath = this.expose?.path;
+
+        if (exposedPath) {
+            this.hostProxy.onRPCExposeRevoked?.(exposedPath, this.id);
+            this.expose = undefined;
+        }
+
+        await this.kill({ removeImmediately: true }).catch((killError) => {
+            this.logger.error("Failed to kill runner after readiness failure", killError);
+        });
+
+        if (this.terminalTransition) {
+            await this.terminalTransition;
+        } else if (!this.endEmitted) {
+            await Promise.race([once(this, "end").then(() => undefined), new Promise<void>((resolve) => setTimeout(resolve, runnerExitDelay).unref())]);
+        }
+
+        this.status = InstanceStatus.ERRORED;
+        this.logger.error("Runner readiness failed", error);
+    }
+
+    private handleReadinessMessage(readiness: {
+        state?: "initialized" | "ready" | "errored";
+        exposePath?: string;
+        exposeHost?: string;
+        exposePort?: number;
+        diagnostic?: { code: string; phase: "initialize"; message: string };
+    }) {
+        // A timed-out/failed runner owns no routes. READY can arrive after the
+        // timeout while the adapter is being killed; never resurrect it.
+        if (this.readinessState === "errored" || this.endEmitted) return;
+
+        if (readiness.state === "ready" && readiness.exposePath) {
+            this.expose = {
+                path: readiness.exposePath,
+                host: readiness.exposeHost,
+                port: readiness.exposePort
+            };
+            this.hostProxy.onRPCExpose(readiness.exposePath, this.id);
+        }
+
+        if (readiness.state === "ready") {
+            this.readinessState = "ready";
+            if (this.readinessTimer) clearTimeout(this.readinessTimer);
+            this.readinessResolver?.();
+        }
+
+        if (readiness.state === "errored") {
+            this.logger.error("Runner initialization rejected", readiness.diagnostic);
+            this.readinessState = "errored";
+            if (this.readinessTimer) clearTimeout(this.readinessTimer);
+            const error = new Error(readiness.diagnostic?.message || "Runner initialization rejected");
+            this.readinessFailure = this.failReadiness(error);
+            this.readinessFailure.then(
+                () => this.readinessRejecter?.(error),
+                (failure) => this.readinessRejecter?.(failure)
+            );
+        }
     }
 
     async main() {
@@ -542,6 +628,11 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
             return null;
         });
 
+        this.communicationHandler.addMonitoringHandler(RunnerMessageCode.READY, async (message) => {
+            this.handleReadinessMessage(message[1]);
+            return null;
+        });
+
         this.communicationHandler.addMonitoringHandler(RunnerMessageCode.PANG, async (message) => {
             const pangData = message[1];
 
@@ -674,16 +765,6 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
         this.inputTopic = message[1].payload?.inputTopic;
         this.outputTopic = message[1].payload?.outputTopic;
         // TODO: add message to initiate the instance adapter
-
-        if (message[1].payload.exposePath) {
-            this.expose = {
-                path: message[1].payload.exposePath,
-                host: message[1].payload.exposeHost,
-                port: message[1].payload.exposePort
-            };
-
-            this.hostProxy.onRPCExpose(message[1].payload.exposePath, this.id);
-        }
 
         if (this.controlDataStream) {
             const pongMsg: HandshakeAcknowledgeMessage = {

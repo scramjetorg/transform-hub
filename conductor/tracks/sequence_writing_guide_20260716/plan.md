@@ -87,18 +87,42 @@
 
 ## Phase 2: Readiness and autostart contracts
 
-- [ ] Task: Write failing synthetic tests first for resource validation, deferred
+- [x] Task: Write failing synthetic tests first for resource validation, deferred
   listener registration, validation failure with no listener, readiness after
   success, file loading, and configuration-driven autostart.
-    - [ ] Specify the readiness state machine and restart behavior before
+    - [x] Specify the readiness state machine and restart behavior before
       implementation.
-- [ ] Task: Implement and test readiness across runtime wrappers, host routing,
+      - ADR recorded: optional `initialize` hook, READY protocol boundary,
+        deferred exposure registration, fresh-process restart through existing
+        `required`/`restartLimit`, and a bounded startup timeout.
+  - `test/readiness/readiness-progression.spec.ts` establishes the synthetic
+    contract. Four red assertions are expected until the next named readiness
+    implementation task supplies `validate`, `initialize`, route activation,
+    and fresh restart semantics; the fixture-data assertion passes.
+- [x] Task: Implement and test readiness across runtime wrappers, host routing,
   and sequence-test fixtures.
-- [ ] Task: Implement file-loaded/autostarted sequence configuration and the
+  - Implemented READY signaling, optional initialization, deferred exposure,
+    host READY routing, and Node/Bun/Python readiness handling. Focused guarded
+    sequence-test progression verification passes (5 tests); targeted runtime,
+    host, and Python checks are recorded for the phase validation task.
+- [x] Task: Implement file-loaded/autostarted sequence configuration and the
   smallest Compose-ready startup/readiness contract needed by the MCP guide.
-- [ ] Task: Run targeted runtime, API/client, config, and Compose smoke tests;
+  - Added startup manifest validation, relative-path resolution, stable-ID
+    coverage, bounded readiness waiting, status readiness reporting, and
+    polling guidance; focused config and host startup tests pass.
+- [x] Task: Run targeted runtime, API/client, config, and Compose smoke tests;
   perform deduplication, record validation/memory evidence, commit, push, and
   update the draft PR.
+  - Guarded focused checks passed: sequence-test readiness (5), host readiness
+    and restart cleanup (27), runner-node readiness/handshake (18), Python suite
+    (287), Compose contract/live-smoke definitions (2), typings split, runtime
+    invariants, builds, docs validation, and changed-file Biome lint. Startup
+    parsing remains centralized in `host/src/lib/startup-config.ts`.
+  - Live Compose exercised the current image to Hub readiness and HTTP 200 route
+    exposure, but the opt-in AVA execution exceeded this host's Docker/Node
+    resource capacity; the reproducible command is deferred in `td.md` for a
+    better-provisioned validation host. No Phase 2 implementation failure
+    remains after Oracle re-review.
 - [ ] Task: Conductor - Phase Completion 'Readiness and autostart contracts' (Protocol in workflow.md)
 
 ## Phase 3: Health and control contracts

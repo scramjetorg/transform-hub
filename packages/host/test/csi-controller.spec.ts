@@ -549,3 +549,38 @@ test("MONITORING handler recovers from enrichment failure — _lastStats, heartb
     t.deepEqual(controller._lastStats, { status: "healthy", enriched: true, load: 0.5 }, "_lastStats has enriched data");
     t.deepEqual(lastItem, { status: "healthy" }, "health handler received latest raw data");
 });
+
+test("readiness timeout kills and waits for terminal cleanup before rejecting", async t => {
+    let killed = false;
+    const keepAlive = setInterval(() => undefined, 10);
+    const controller = createController({
+        status: InstanceStatus.RUNNING,
+        logger: { trace: () => undefined, error: () => undefined },
+        kill: async () => { killed = true; controller.endEmitted = true; },
+        endEmitted: false
+    });
+
+    try {
+        await t.throwsAsync(controller.waitForReady(1), { message: "Instance readiness timed out after 1ms" });
+    } finally {
+        clearInterval(keepAlive);
+    }
+
+    t.true(killed);
+    t.is(controller.readinessState, "errored");
+});
+
+test("late READY after readiness failure cannot register an RPC route", t => {
+    const exposed: string[] = [];
+    const controller = createController({
+        hostProxy: {
+            onRPCExpose: (path: string) => exposed.push(path),
+            onRPCExposeRevoked: () => undefined
+        },
+        readinessState: "errored"
+    });
+
+    (controller as any).handleReadinessMessage({ state: "ready", exposePath: "/late" });
+
+    t.deepEqual(exposed, []);
+});

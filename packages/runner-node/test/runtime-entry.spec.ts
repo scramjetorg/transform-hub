@@ -4,6 +4,7 @@ import { mkdtempSync, writeFileSync, readFileSync } from "fs";
 import { tmpdir } from "os";
 import { join, resolve } from "path";
 import { Readable } from "stream";
+import net from "net";
 
 import { RunnerMessageCode } from "@scramjet/symbols";
 
@@ -145,6 +146,65 @@ test("runner-node child logs instance-runtime error context", async t => {
     const stopped = frames.find(([code]) => code === RunnerMessageCode.SEQUENCE_STOPPED);
 
     t.truthy(stopped, `expected SEQUENCE_STOPPED; frames=${result.monitoring}`);
+});
+
+test("runner-node child emits READY after host initialize without exposure metadata", async t => {
+    const dir = mkdtempSync(join(tmpdir(), "runner-node-initialize-ready-"));
+    const fixturePath = join(dir, "initialize-ready.js");
+
+    writeFileSync(fixturePath, [
+        "module.exports = {",
+        "    initialize: function () {},",
+        "    default: function () {}",
+        "};",
+        ""
+    ].join("\n"));
+
+    const server = net.createServer(socket => {
+        let handshake = Buffer.alloc(0);
+
+        socket.on("data", chunk => {
+            handshake = Buffer.concat([handshake, chunk]);
+
+            if (handshake.length < 37) return;
+
+            const channel = handshake[36];
+
+            if (channel === 5) {
+                socket.write("\r\n\r\n");
+                socket.end();
+            }
+        });
+    });
+
+    await new Promise<void>((resolveListen, rejectListen) => {
+        server.once("error", rejectListen);
+        server.listen(0, "127.0.0.1", () => resolveListen());
+    });
+
+    try {
+        const address = server.address();
+        if (!address || typeof address === "string") throw new Error("test host server did not expose a port");
+
+        const bootPath = makeBootConfig(fixturePath, {
+            sequenceInfo: { id: "initialize-ready" },
+            instancesServerPort: address.port,
+            instancesServerHost: "127.0.0.1",
+            requestsUnsupported: "test host does not provide requests",
+            exitTimeout: 1
+        });
+
+        const result = await runRunnerNodeChild(bootPath);
+
+        t.is(result.exitCode, 0, `expected clean exit, stderr=${result.stderr}`);
+
+        const frames = parseFrames(result.monitoring);
+        const ready = frames.find(([code]) => code === RunnerMessageCode.READY);
+
+        t.deepEqual(ready, [RunnerMessageCode.READY, { state: "ready" }]);
+    } finally {
+        await new Promise<void>(resolveClose => server.close(() => resolveClose()));
+    }
 });
 
 test("buildSequenceContext: keepAlive issues monitoring frame and triggers onKeepAliveIssued", t => {

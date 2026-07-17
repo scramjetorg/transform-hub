@@ -40,6 +40,24 @@ export interface SequenceTestHarness {
     logs: CallableLogCapture;
     monitoring: CallableMonitoringCapture;
     assert: CallableSequenceAssertions;
+    validate: () => Promise<void>;
+    initialize: () => Promise<void>;
+    activateRoute: (path: string) => Promise<void>;
+    state: () => SequenceReadinessState;
+    activeRoutes: () => string[];
+    events: () => SequenceReadinessEvent[];
+    restart: () => Promise<SequenceTestHarness>;
+}
+
+export type SequenceReadinessState = "created" | "validated" | "initialized" | "ready" | "errored";
+export interface SequenceReadinessDiagnostic {
+    code: string;
+    phase: "initialize";
+    message: string;
+}
+export interface SequenceReadinessEvent {
+    type: "readiness.diagnostic";
+    diagnostic: SequenceReadinessDiagnostic;
 }
 
 export type SequenceTestResult = SequenceTestHarness;
@@ -66,6 +84,38 @@ export async function createSequenceTest(options: SequenceTestOptions): Promise<
     const assertions = createSequenceAssertions({ monitoring: monitoringCapture });
 
     let started = false;
+    let readinessState: SequenceReadinessState = "created";
+    const activeRoutePaths: string[] = [];
+    const readinessEvents: SequenceReadinessEvent[] = [];
+
+    const validate = async () => {
+        readinessState = "validated";
+    };
+
+    const initialize = async () => {
+        if (readinessState !== "validated") {
+            const error = new Error("sequence readiness requires validation before initialize");
+            readinessState = "errored";
+            readinessEvents.push({
+                type: "readiness.diagnostic",
+                diagnostic: { code: "INITIALIZE_REJECTED", phase: "initialize", message: error.message }
+            });
+            throw error;
+        }
+
+        readinessState = "initialized";
+    };
+
+    const activateRoute = async (path: string) => {
+        if (readinessState !== "initialized") {
+            throw new Error("sequence readiness requires initialization before route activation");
+        }
+
+        activeRoutePaths.push(path);
+        readinessState = "ready";
+    };
+
+    const restart = () => createSequenceTest(options);
 
     const start = () => {
         started = true;
@@ -106,7 +156,14 @@ export async function createSequenceTest(options: SequenceTestOptions): Promise<
         output,
         logs,
         monitoring,
-        assert
+        assert,
+        validate,
+        initialize,
+        activateRoute,
+        state: () => readinessState,
+        activeRoutes: () => [...activeRoutePaths],
+        events: () => [...readinessEvents],
+        restart
     };
 }
 

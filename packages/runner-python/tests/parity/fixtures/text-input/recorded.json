@@ -50,6 +50,11 @@
       },
       {
         "direction": "host-recv",
+        "bytes_b64": "WzMwMTQsIHsic3RhdGUiOiAicmVhZHkifV0NCg==",
+        "ts_ms_relative": 0
+      },
+      {
+        "direction": "host-recv",
         "bytes_b64": "WzMwMDEsIHsiaGVhbHRoeSI6IHRydWV9XQ0K",
         "ts_ms_relative": 83
       }

@@ -33,14 +33,18 @@ from runner_python.boot_config import load_boot_config
 from runner_python.control_codec import ControlFrameDecoder
 from runner_python.control_loop import EVENT, HardKillSignal, control_loop
 from runner_python.fd_streams import FdStreams, open_fd_streams
-from runner_python.handshake import MONITORING, PING, perform_handshake
+from runner_python.handshake import MONITORING, PING, READY, perform_handshake
 from runner_python.heartbeat import run_heartbeat
 from runner_python.host_channels import HostChannels, connect_host_channels
 from runner_python.input_stream import is_ndjson_content_type
 from runner_python.lifecycle import perform_shutdown
 from runner_python.monitoring_codec import MonitoringWriter
 from runner_python.output_stream import PANG, forward_output_stream
-from runner_python.sequence_loader import SequenceLoadError, SequenceModule, load_sequence
+from runner_python.sequence_loader import (
+    SequenceLoadError,
+    SequenceModule,
+    load_sequence,
+)
 from runner_python.utils import (
     as_output_stream,
     build_input_stream,
@@ -165,7 +169,9 @@ class JsonLogHandler(logging.Handler):
 
 
 class RuntimeTerminator:
-    def __init__(self, app_context: AppContext, monitoring_writer: MonitoringWriter) -> None:
+    def __init__(
+        self, app_context: AppContext, monitoring_writer: MonitoringWriter
+    ) -> None:
         self._app_context = app_context
         self._monitoring_writer = monitoring_writer
         self._stopped = asyncio.Event()
@@ -182,7 +188,9 @@ class RuntimeTerminator:
         timeout_seconds = payload.get("timeout", 0)
         timeout_ms = 0
 
-        if isinstance(timeout_seconds, (int, float)) and not isinstance(timeout_seconds, bool):
+        if isinstance(timeout_seconds, (int, float)) and not isinstance(
+            timeout_seconds, bool
+        ):
             timeout_ms = max(0, int(timeout_seconds * 1000))
 
         await perform_shutdown(
@@ -201,7 +209,9 @@ def _write_boot_error(message: str) -> None:
     sys.stderr.flush()
 
 
-def _configure_logging(log_writer: asyncio.StreamWriter, level_name: str) -> logging.Logger:
+def _configure_logging(
+    log_writer: asyncio.StreamWriter, level_name: str
+) -> logging.Logger:
     level = getattr(logging, level_name.upper(), logging.INFO)
     handler = JsonLogHandler(log_writer)
     runtime_logger = logging.getLogger("runner_python.runtime")
@@ -278,7 +288,9 @@ def _build_sequence_context(
     app_context.instance_id = instance_id
 
     def emit(event_name: str, message: Any = "") -> AppContext:
-        monitoring_writer.write_frame(EVENT, {"eventName": event_name, "message": message})
+        monitoring_writer.write_frame(
+            EVENT, {"eventName": event_name, "message": message}
+        )
         return app_context
 
     def emit_to_space(event_name: str, message: Any = "") -> AppContext:
@@ -299,7 +311,9 @@ def _build_sequence_context(
     return app_context
 
 
-def _build_control_context(shared_context: AppContext, control_logger: logging.Logger) -> AppContext:
+def _build_control_context(
+    shared_context: AppContext, control_logger: logging.Logger
+) -> AppContext:
     control_context = AppContext()
     control_context._emitter = shared_context._emitter
     control_context.config = shared_context.config
@@ -320,8 +334,12 @@ def _build_control_context(shared_context: AppContext, control_logger: logging.L
 
 
 async def _open_host_streams(host_channels: HostChannels):
-    input_reader, input_writer = await asyncio.open_connection(sock=host_channels.input_sock)
-    _output_reader, output_writer = await asyncio.open_connection(sock=host_channels.output_sock)
+    input_reader, input_writer = await asyncio.open_connection(
+        sock=host_channels.input_sock
+    )
+    _output_reader, output_writer = await asyncio.open_connection(
+        sock=host_channels.output_sock
+    )
     _log_reader, log_writer = await asyncio.open_connection(sock=host_channels.log_sock)
     return input_reader, input_writer, output_writer, log_writer
 
@@ -353,7 +371,10 @@ async def _run_sequence_output(
     if is_ndjson_content_type(content_type):
         async for item in output_stream:
             output_writer.write(
-                json.dumps(item, separators=(",", ":"), ensure_ascii=False).encode("utf-8") + b"\n"
+                json.dumps(item, separators=(",", ":"), ensure_ascii=False).encode(
+                    "utf-8"
+                )
+                + b"\n"
             )
             await output_writer.drain()
         return
@@ -411,7 +432,12 @@ async def main() -> int:
     try:
         try:
             host_channels = await connect_host_channels(boot_config)
-            input_reader, input_writer, output_writer, log_writer = await _open_host_streams(host_channels)
+            (
+                input_reader,
+                input_writer,
+                output_writer,
+                log_writer,
+            ) = await _open_host_streams(host_channels)
         except Exception as exc:
             _write_boot_error(f"Host channel error: {exc}")
             return 2
@@ -427,14 +453,27 @@ async def main() -> int:
         control_decoder = LiveControlDecoder(streams)
 
         try:
-            handshake_result = await perform_handshake(handshake_writer, control_decoder, boot_config)
+            sequence = load_sequence(boot_config.sequencePath, boot_config.pythonPath)
+            setattr(
+                boot_config,
+                "_has_initialize",
+                callable(getattr(sequence.module, "initialize", None)),
+            )
+        except SequenceLoadError as exc:
+            _log_sth_runtime_error("sequence-load", boot_config, exc)
+            logger.error("Sequence load error: %s", exc)
+            return 1
+
+        try:
+            handshake_result = await perform_handshake(
+                handshake_writer, control_decoder, boot_config
+            )
         except Exception as exc:
             logger.error("Handshake error: %s", exc)
             return 2
 
         try:
             hub_client = await create_python_hub_client(boot_config.verser2Runtime)
-            sequence = load_sequence(boot_config.sequencePath, boot_config.pythonPath)
         except SequenceLoadError as exc:
             _log_sth_runtime_error("sequence-load", boot_config, exc)
             logger.error("Sequence load error: %s", exc)
@@ -443,7 +482,11 @@ async def main() -> int:
             _write_boot_error(f"Verser2 runtime error: {exc}")
             return 2
 
-        api_exposure = PythonSequenceApiExposure() if boot_config.exposePath and boot_config.verser2Runtime else None
+        api_exposure = (
+            PythonSequenceApiExposure()
+            if boot_config.exposePath and boot_config.verser2Runtime
+            else None
+        )
         sequence_context = _build_sequence_context(
             monitoring_writer,
             runtime_logger,
@@ -455,12 +498,52 @@ async def main() -> int:
         )
         control_context = _build_control_context(sequence_context, control_logger)
         terminator = RuntimeTerminator(sequence_context, monitoring_writer)
-        input_stream = build_input_stream(input_reader, get_input_content_type(sequence))
+        input_stream = build_input_stream(
+            input_reader, get_input_content_type(sequence)
+        )
+
+        initializer = getattr(sequence.module, "initialize", None)
+        if initializer is not None and not callable(initializer):
+            error = SequenceLoadError(
+                "sequence initialize export must be callable when provided"
+            )
+            monitoring_writer.write_frame(
+                READY,
+                {
+                    "state": "errored",
+                    "diagnostic": {
+                        "code": "INITIALIZE_REJECTED",
+                        "phase": "initialize",
+                        "message": str(error),
+                    },
+                },
+            )
+            return 1
+
+        if initializer is not None:
+            try:
+                await maybe_await(initializer(sequence_context))
+            except Exception as exc:
+                monitoring_writer.write_frame(
+                    READY,
+                    {
+                        "state": "errored",
+                        "diagnostic": {
+                            "code": "INITIALIZE_REJECTED",
+                            "phase": "initialize",
+                            "message": str(exc),
+                        },
+                    },
+                )
+                _log_sth_runtime_error("initialize", boot_config, exc)
+                return 1
 
         monitoring_writer.write_frame(PANG, {"requires": "", "contentType": ""})
 
         try:
-            raw_result = sequence.run(sequence_context, input_stream, *handshake_result.args)
+            raw_result = sequence.run(
+                sequence_context, input_stream, *handshake_result.args
+            )
         except Exception as exc:
             handshake_writer.flush()
             with contextlib.suppress(Exception):
@@ -475,15 +558,33 @@ async def main() -> int:
             monitoring_writer.write_frame(PANG, payload)
 
         try:
-            sequence_guest = await start_python_sequence_guest(boot_config.verser2Runtime, api_exposure)
+            sequence_guest = await start_python_sequence_guest(
+                boot_config.verser2Runtime, api_exposure
+            )
         except Exception as exc:
             _write_boot_error(f"Verser2 sequence API Guest error: {exc}")
             return 2
 
+        monitoring_writer.write_frame(
+            READY,
+            {
+                "state": "ready",
+                **(
+                    {"exposePath": boot_config.exposePath}
+                    if boot_config.exposePath and sequence_guest is not None
+                    else {}
+                ),
+            },
+        )
+
         handshake_writer.flush()
 
-        control_task = asyncio.create_task(control_loop(control_decoder, control_context, terminator))
-        heartbeat_task = asyncio.create_task(run_heartbeat(monitoring_writer, sequence_context))
+        control_task = asyncio.create_task(
+            control_loop(control_decoder, control_context, terminator)
+        )
+        heartbeat_task = asyncio.create_task(
+            run_heartbeat(monitoring_writer, sequence_context)
+        )
         sequence_task = asyncio.create_task(
             _run_sequence_output(raw_result, sequence, output_writer, monitoring_writer)
         )
@@ -512,7 +613,9 @@ async def main() -> int:
                         sys.stdout.flush()
                     with contextlib.suppress(Exception):
                         sys.stderr.flush()
-                    _log_sth_runtime_error("instance-runtime", boot_config, sequence_exception)
+                    _log_sth_runtime_error(
+                        "instance-runtime", boot_config, sequence_exception
+                    )
                     traceback.print_exception(sequence_exception)
                     return 1
                 if terminator.is_set() and not control_task.done():

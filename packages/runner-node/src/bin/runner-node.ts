@@ -22,7 +22,7 @@ import type { LifecycleContext } from "../lifecycle";
 import { MessageUtils } from "../message-utils";
 import { runSequence } from "../run-sequence";
 import type { RunSequenceHostClient } from "../run-sequence";
-import type { BootstrapOverrides } from "../types";
+import type { BootstrapOverrides, ResolvedSequenceFunctions } from "../types";
 import {
     getMemoryUsage,
     legacyExitFilePath,
@@ -33,27 +33,14 @@ import {
     wireControlStream,
     writeLegacyExitFileSecure,
     writeMonitoring,
-    writeProcessExitFile,
+    writeProcessExitFile
 } from "../utils";
 
-export {
-    buildAppContext,
-    buildSequenceContext,
-    legacyExitFilePath,
-    loadSequenceModule,
-    resolveSequenceFunctions,
-    wireControlStream,
-    writeLegacyExitFileSecure,
-};
+export { buildAppContext, buildSequenceContext, legacyExitFilePath, loadSequenceModule, resolveSequenceFunctions, wireControlStream, writeLegacyExitFileSecure };
 
 export type { BootstrapOverrides, ControlDispatch, SequenceLocalContext } from "../types";
 
-async function startApiServer(
-    api: APIExpose,
-    exposePath: string,
-    exposeHost: string | undefined,
-    logger: ObjLogger
-): Promise<{ port: number; host: string }> {
+async function startApiServer(api: APIExpose, exposePath: string, exposeHost: string | undefined, logger: ObjLogger): Promise<{ port: number; host: string }> {
     return new Promise((res) => {
         api.server.listen(0, exposeHost || "localhost", () => {
             const address = api.server.address() as AddressInfo;
@@ -88,19 +75,11 @@ function formatErrorMessage(error: unknown): string {
  * context.exitTimeout. The hub target default is retained only for contexts
  * that do not expose an exitTimeout value (for example, older local contexts).
  */
-export function resolveCompletionExitTimeout(
-    context: { exitTimeout?: number },
-    bootConfig: { verser2Runtime?: { hubTargetDomain?: string } }
-): number {
+export function resolveCompletionExitTimeout(context: { exitTimeout?: number }, bootConfig: { verser2Runtime?: { hubTargetDomain?: string } }): number {
     return context.exitTimeout ?? (bootConfig.verser2Runtime?.hubTargetDomain ? 10_000 : 5_000);
 }
 
-function logRuntimeError(
-    logger: ObjLogger,
-    phase: "sequence-load" | "instance-runtime",
-    bootConfig: RunnerNodeBootConfig,
-    error: unknown
-): void {
+function logRuntimeError(logger: ObjLogger, phase: "sequence-load" | "instance-runtime", bootConfig: RunnerNodeBootConfig, error: unknown): void {
     const message = `STH runtime error phase=${phase} runtime=node sequenceId=${bootConfig.sequenceInfo?.id} instanceId=${bootConfig.instanceId} error=${formatErrorMessage(error)}`;
     const details = {
         phase,
@@ -122,12 +101,19 @@ export async function bootstrap(overrides: BootstrapOverrides = {}): Promise<num
     const logger = new ObjLogger(`runner-node:${bootConfig.instanceId ?? "unknown"}`, {}, bootConfig.logLevel ?? "DEBUG");
 
     const loader = overrides.loadSequence ?? loadSequenceModule;
-    let sequenceFns: ReturnType<typeof loadSequenceModule>;
+    let sequenceFns: ResolvedSequenceFunctions;
 
     try {
         sequenceFns = loader(bootConfig.sequencePath);
     } catch (err) {
         logRuntimeError(logger, "sequence-load", bootConfig, err);
+        writeMonitoring(streams.monitoringOut, [
+            RunnerMessageCode.READY,
+            {
+                state: "errored",
+                diagnostic: { code: "INITIALIZE_REJECTED", phase: "initialize", message: formatErrorMessage(err) }
+            }
+        ]);
         throw err;
     }
 
@@ -143,9 +129,7 @@ export async function bootstrap(overrides: BootstrapOverrides = {}): Promise<num
     };
     const outputDataStream = new DataStream();
 
-    const hasHost =
-        typeof bootConfig.instancesServerPort === "number" &&
-        typeof bootConfig.instancesServerHost === "string";
+    const hasHost = typeof bootConfig.instancesServerPort === "number" && typeof bootConfig.instancesServerHost === "string";
 
     const appConfig: AppConfig = bootConfig.appConfig ?? {};
     const args = bootConfig.sequenceArgs ?? [];
@@ -157,15 +141,11 @@ export async function bootstrap(overrides: BootstrapOverrides = {}): Promise<num
 
         const sequenceInfo = bootConfig.sequenceInfo;
 
-        hostClient = new HostClient(
-            bootConfig.instancesServerPort!,
-            bootConfig.instancesServerHost!,
-            bootConfig.requestsUnsupported,
-            bootConfig.verser2Runtime
-        );
-        const channels = bootConfig.requestsUnsupported || bootConfig.verser2Runtime
-            ? new Set(Array.from(RUNNER_NODE_CHANNELS).filter(channel => channel !== CC.REQUESTS))
-            : RUNNER_NODE_CHANNELS;
+        hostClient = new HostClient(bootConfig.instancesServerPort!, bootConfig.instancesServerHost!, bootConfig.requestsUnsupported, bootConfig.verser2Runtime);
+        const channels =
+            bootConfig.requestsUnsupported || bootConfig.verser2Runtime
+                ? new Set(Array.from(RUNNER_NODE_CHANNELS).filter((channel) => channel !== CC.REQUESTS))
+                : RUNNER_NODE_CHANNELS;
 
         try {
             await hostClient.init(bootConfig.instanceId, channels);
@@ -180,23 +160,34 @@ export async function bootstrap(overrides: BootstrapOverrides = {}): Promise<num
             emitter,
             logger,
             hostClient,
-            onKeepAliveIssued: () => lifecycleRef.current?.keepAliveIssued(),
+            onKeepAliveIssued: () => lifecycleRef.current?.keepAliveIssued()
         });
 
         api = built.api;
         context = built.context as unknown as typeof context;
 
-        const exposed = bootConfig.exposePath
-            ? await startApiServer(built.api, bootConfig.exposePath, bootConfig.exposeHost, logger)
-            : undefined;
+        if (sequenceFns.initialize) {
+            try {
+                await sequenceFns.initialize.call(context, context);
+            } catch (error) {
+                writeMonitoring(streams.monitoringOut, [
+                    RunnerMessageCode.READY,
+                    {
+                        state: "errored",
+                        diagnostic: { code: "INITIALIZE_REJECTED", phase: "initialize", message: formatErrorMessage(error) }
+                    }
+                ]);
+                throw error;
+            }
+        }
 
-        outputDataStream
-            .JSONStringify()
-            .pipe(hostClient.outputStream as unknown as Writable);
+        const exposed = bootConfig.exposePath ? await startApiServer(built.api, bootConfig.exposePath, bootConfig.exposeHost, logger) : undefined;
+
+        outputDataStream.JSONStringify().pipe(hostClient.outputStream as unknown as Writable);
 
         hostAdapter = {
             outputStream: hostClient.outputStream as unknown as RunSequenceHostClient["outputStream"],
-            monitorStream: streams.monitoringOut,
+            monitorStream: streams.monitoringOut
         };
 
         inputDataStream = new DataStream();
@@ -236,9 +227,9 @@ export async function bootstrap(overrides: BootstrapOverrides = {}): Promise<num
                     instanceName: bootConfig.instanceName,
                     inputTopic: bootConfig.inputTopic,
                     outputTopic: bootConfig.outputTopic,
-                    exposePath: bootConfig.exposePath,
+                    exposePath: undefined,
                     exposeHost: exposed?.host,
-                    exposePort: exposed?.port,
+                    exposePort: exposed?.port
                 }) as EncodedMonitoringMessage,
                 streams.monitoringOut
             );
@@ -246,22 +237,47 @@ export async function bootstrap(overrides: BootstrapOverrides = {}): Promise<num
         });
 
         writeMonitoring(streams.monitoringOut, [RunnerMessageCode.MONITORING, { healthy: true, ...getMemoryUsage() }]);
+
+        writeMonitoring(streams.monitoringOut, [
+            RunnerMessageCode.READY,
+            {
+                state: "ready",
+                ...(bootConfig.exposePath ? { exposePath: bootConfig.exposePath, exposeHost: exposed?.host, exposePort: exposed?.port } : {})
+            }
+        ]);
     } else {
         const built = buildSequenceContext({
             bootConfig,
             streams,
             emitter,
             logger,
-            onKeepAliveIssued: () => lifecycleRef.current?.keepAliveIssued(),
+            onKeepAliveIssued: () => lifecycleRef.current?.keepAliveIssued()
         });
 
         context = built.context as unknown as typeof context;
         hostAdapter = {
             outputStream: makeOutputDiscard(),
-            monitorStream: streams.monitoringOut,
+            monitorStream: streams.monitoringOut
         };
         inputDataStream = new DataStream();
         inputDataStream.end();
+
+        if (sequenceFns.initialize) {
+            try {
+                await sequenceFns.initialize.call(context, context);
+            } catch (error) {
+                writeMonitoring(streams.monitoringOut, [
+                    RunnerMessageCode.READY,
+                    {
+                        state: "errored",
+                        diagnostic: { code: "INITIALIZE_REJECTED", phase: "initialize", message: formatErrorMessage(error) }
+                    }
+                ]);
+                throw error;
+            }
+        }
+
+        writeMonitoring(streams.monitoringOut, [RunnerMessageCode.READY, { state: "ready" }]);
     }
 
     const lifecycle = new RunnerLifecycle({
@@ -274,38 +290,42 @@ export async function bootstrap(overrides: BootstrapOverrides = {}): Promise<num
         onTerminalStop: () => {
             terminalStop = true;
             resolveTerminalStop();
-        },
+        }
     });
 
     lifecycleRef.current = lifecycle;
 
     let killed = false;
     let resolveKilled!: () => void;
-    const killedPromise = new Promise<void>(resolve => {
+    const killedPromise = new Promise<void>((resolve) => {
         resolveKilled = resolve;
     });
 
     let terminalStop = false;
     let resolveTerminalStop!: () => void;
-    const terminalStopPromise = new Promise<void>(resolve => {
+    const terminalStopPromise = new Promise<void>((resolve) => {
         resolveTerminalStop = resolve;
     });
 
-    wireControlStream(streams.controlIn, {
-        onStop: (data) => lifecycle.handleStopRequest(data),
-        onKill: async () => {
-            await lifecycle.handleKillRequest();
-            killed = true;
-            resolveKilled();
+    wireControlStream(
+        streams.controlIn,
+        {
+            onStop: (data) => lifecycle.handleStopRequest(data),
+            onKill: async () => {
+                await lifecycle.handleKillRequest();
+                killed = true;
+                resolveKilled();
+            },
+            onEvent: (data) => emitter.emit(data.eventName, data.message),
+            onStorage: (data) => {
+                for (const [key, value] of Object.entries(data.values)) {
+                    context.localStorage.handleBroadcastUpdate({ key, value });
+                }
+            },
+            onStorageUpdate: (data) => context.localStorage.handleBroadcastUpdate(data)
         },
-        onEvent: (data) => emitter.emit(data.eventName, data.message),
-        onStorage: (data) => {
-            for (const [key, value] of Object.entries(data.values)) {
-                context.localStorage.handleBroadcastUpdate({ key, value });
-            }
-        },
-        onStorageUpdate: (data) => context.localStorage.handleBroadcastUpdate(data),
-    }, logger);
+        logger
+    );
 
     try {
         const sequenceRun = runSequence(sequenceFns, {
@@ -314,17 +334,17 @@ export async function bootstrap(overrides: BootstrapOverrides = {}): Promise<num
             outputDataStream,
             hostClient: hostAdapter,
             args,
-            logger,
+            logger
         });
 
         await Promise.race([sequenceRun, killedPromise, terminalStopPromise]);
 
         if (killed) {
             logger.warn("Sequence execution interrupted by KILL");
-            sequenceRun.catch(error => logger.debug("Sequence rejected after KILL", error));
+            sequenceRun.catch((error) => logger.debug("Sequence rejected after KILL", error));
         } else if (terminalStop) {
             logger.info("Sequence execution interrupted by terminal STOP");
-            sequenceRun.catch(error => logger.debug("Sequence rejected after terminal STOP", error));
+            sequenceRun.catch((error) => logger.debug("Sequence rejected after terminal STOP", error));
         } else {
             await sequenceRun;
 
@@ -332,24 +352,14 @@ export async function bootstrap(overrides: BootstrapOverrides = {}): Promise<num
             // so post-return control messages (events, storage updates) are
             // still processed before writing SEQUENCE_COMPLETED.
             const exitTimeout = resolveCompletionExitTimeout(context, bootConfig);
-            await Promise.race([
-                defer(exitTimeout),
-                killedPromise,
-                terminalStopPromise,
-            ]);
+            await Promise.race([defer(exitTimeout), killedPromise, terminalStopPromise]);
 
-            writeMonitoring(streams.monitoringOut, [
-                RunnerMessageCode.SEQUENCE_COMPLETED,
-                { timeout: 0 },
-            ]);
+            writeMonitoring(streams.monitoringOut, [RunnerMessageCode.SEQUENCE_COMPLETED, { timeout: 0 }]);
         }
     } catch (err) {
         logRuntimeError(logger, "instance-runtime", bootConfig, err);
         logger.error("Sequence failed", err);
-        writeMonitoring(streams.monitoringOut, [
-            RunnerMessageCode.SEQUENCE_STOPPED,
-            { sequenceError: serializeError(err) },
-        ]);
+        writeMonitoring(streams.monitoringOut, [RunnerMessageCode.SEQUENCE_STOPPED, { sequenceError: serializeError(err) }]);
         exitCode = RunnerExitCode.SEQUENCE_FAILED_DURING_EXECUTION;
     } finally {
         lifecycle.cleanup();
@@ -364,7 +374,7 @@ export async function bootstrap(overrides: BootstrapOverrides = {}): Promise<num
             await hostClient.disconnect(exitCode !== RunnerExitCode.SUCCESS).catch(() => undefined);
         }
 
-        await new Promise<void>(resolveEnd => {
+        await new Promise<void>((resolveEnd) => {
             streams.monitoringOut.end(() => resolveEnd());
         });
 
@@ -380,15 +390,12 @@ export async function bootstrap(overrides: BootstrapOverrides = {}): Promise<num
 
 if (require.main === module) {
     bootstrap()
-        .then(code => {
+        .then((code) => {
             process.exitCode = code;
             process.exit(code);
         })
-        .catch(err => {
-            console.error(
-                "runner-node bootstrap failed:",
-                err instanceof Error ? err.stack ?? err.message : err
-            );
+        .catch((err) => {
+            console.error("runner-node bootstrap failed:", err instanceof Error ? (err.stack ?? err.message) : err);
             writeProcessExitFile(RunnerExitCode.SEQUENCE_FAILED_DURING_EXECUTION);
             process.exit(RunnerExitCode.SEQUENCE_FAILED_DURING_EXECUTION);
         });

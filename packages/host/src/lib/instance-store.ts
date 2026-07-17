@@ -21,6 +21,13 @@ export class InstancesStore extends Map<string, ICSI> {
         this.exposePathMap.get(path)?.add(instanceId);
     }
 
+    unregisterRpc(path: string, instanceId: string) {
+        const set = this.exposePathMap.get(path);
+        if (!set) return;
+        set.delete(instanceId);
+        if (!set.size) this.exposePathMap.delete(path);
+    }
+
     map<X>(mapper: (csiController: ICSI) => X): X[] {
         const values = this.values();
 
@@ -128,7 +135,7 @@ export class InstancesStore extends Map<string, ICSI> {
         }
 
         return Array.from(set)
-            .map(instanceId => this.get(instanceId))
+            .map((instanceId) => this.get(instanceId))
             .filter((instance): instance is ICSI => !!instance);
     }
 
