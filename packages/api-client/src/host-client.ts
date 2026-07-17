@@ -275,6 +275,38 @@ export class HostClient implements ClientProvider {
         return this.client.get("topics");
     }
 
+    async getTopicsV2(): Promise<{ items: Array<{ name: string; contentType: string; origin?: { type: "hub" | "space"; id: string } }> }> {
+        return this.#_v2Client.get("topics");
+    }
+
+    async createTopicV2(topic: {
+        name: string;
+        contentType: string;
+        origin?: { type: "hub" | "space"; id: string };
+    }): Promise<{ operation: { id: string; status: string }; result?: { topic: typeof topic }; error?: { code: string; message: string } }> {
+        return this.#_v2Client.post("topics", { topic }, undefined, { json: true, parse: "json" });
+    }
+
+    async deleteTopicV2(
+        topic: string
+    ): Promise<{ operation: { id: string; status: string }; result?: { topic: string; deleted: boolean }; error?: { code: string; message: string } }> {
+        return this.#_v2Client.delete(`topics/${topic}`);
+    }
+
+    async getTopicV2(topic: string, requestInit?: RequestInit, contentType: string = "application/x-ndjson") {
+        return this.#_v2Client.getStream(`topics/${topic}/stream`, requestInit, { type: contentType });
+    }
+
+    async sendTopicV2<T>(
+        topic: string,
+        stream: Parameters<HttpClient["sendStream"]>[1],
+        requestInit: RequestInit = {},
+        contentType: string = "application/x-ndjson",
+        end?: boolean
+    ) {
+        return this.#_v2Client.sendStream<T>(`topics/${topic}/stream`, stream, requestInit, { type: contentType, end });
+    }
+
     /**
      * Creates InstanceClient based on current HostClient and instance id.
      *

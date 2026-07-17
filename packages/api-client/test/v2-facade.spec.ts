@@ -7,6 +7,8 @@ type RecordedClient = {
     agent: Agent;
     calls: string[];
     get<T>(path: string): Promise<T>;
+    post<T>(path: string, body?: unknown): Promise<T>;
+    delete<T>(path: string): Promise<T>;
 };
 
 function client(responses: Record<string, unknown>): RecordedClient {
@@ -16,6 +18,14 @@ function client(responses: Record<string, unknown>): RecordedClient {
         async get<T>(path: string): Promise<T> {
             this.calls.push(path);
             return responses[path] as T;
+        },
+        async post<T>(path: string): Promise<T> {
+            this.calls.push(`POST ${path}`);
+            return responses[`POST ${path}`] as T;
+        },
+        async delete<T>(path: string): Promise<T> {
+            this.calls.push(`DELETE ${path}`);
+            return responses[`DELETE ${path}`] as T;
         }
     };
 }
@@ -67,4 +77,20 @@ test("ManagerClient host factory preserves custom agent transport", t => {
 
     t.is(host.apiBase, "http://manager/api/v1/sth/sth-1/api/v1");
     t.is(host.utils.agent, legacy.agent);
+});
+
+test("v2 Host topic clients preserve operation failure envelopes", async t => {
+    const legacy = client({});
+    const v2 = client({
+        "POST topics": { operation: { id: "orders", status: "failed" }, error: { code: "TOPIC_CONTENT_TYPE_MISMATCH", message: "Content-type mismatch" } },
+        "DELETE topics/orders": { operation: { id: "orders", status: "completed" }, result: { topic: "orders", deleted: true } }
+    });
+    const host = new HostClient("http://host/api/v1", legacy as any, v2 as any);
+
+    t.deepEqual(await host.createTopicV2({ name: "orders", contentType: "application/x-ndjson" }) as any, {
+        operation: { id: "orders", status: "failed" },
+        error: { code: "TOPIC_CONTENT_TYPE_MISMATCH", message: "Content-type mismatch" }
+    });
+    t.deepEqual(await host.deleteTopicV2("orders") as any, { operation: { id: "orders", status: "completed" }, result: { topic: "orders", deleted: true } });
+    t.deepEqual(v2.calls, ["POST topics", "DELETE topics/orders"]);
 });

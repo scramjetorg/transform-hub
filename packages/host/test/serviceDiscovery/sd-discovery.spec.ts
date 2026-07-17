@@ -66,6 +66,21 @@ test("ServiceDiscovery getByTopic: get existing topic", t => {
     t.is(returnedTopic!.contentType, testConfig.contentType);
 });
 
+test("ServiceDiscovery topics have canonical hub origin and reject content-type drift", t => {
+    const serviceDiscovery = new ServiceDiscovery(new ObjLogger({}), "MockHost");
+    const topic = serviceDiscovery.createTopicIfNotExist(testConfig);
+    const duplicate = serviceDiscovery.createTopicIfNotExist(testConfig);
+
+    t.is(duplicate, topic);
+    t.deepEqual(topic.origin(), { type: "hub", id: "MockHost" });
+
+    const error = t.throws(() => serviceDiscovery.createTopicIfNotExist({
+        topic: testUUID,
+        contentType: "application/x-ndjson"
+    }));
+    t.is((error as Error & { code?: string }).code, "TOPIC_CONTENT_TYPE_MISMATCH");
+});
+
 test("ServiceDiscovery getByTopic: get not existing topic", t => {
     const mockLogger = new ObjLogger({});
     const serviceDiscovery = new ServiceDiscovery(mockLogger, "MockHost");

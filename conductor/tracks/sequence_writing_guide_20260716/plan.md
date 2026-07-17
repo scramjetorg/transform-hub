@@ -159,14 +159,24 @@
 
 ## Phase 4: Hub and Space topic contracts
 
-- [ ] Task: Write failing synthetic topic-contract tests first, then settle
+- [x] Task: Write failing synthetic topic-contract tests first, then settle
   operation signatures, identifiers, naming/origin, duplicate names, content
   types, routing, backpressure, disconnect/reconnect errors, and no replay.
-- [ ] Task: Implement and test Hub/Space topic operations across sequence,
+  - ADR defines the additive v2 Hub/Space topic contract. The contract test now
+    has seven passing real-harness assertions for supported content types,
+    Hub/Space operation sets, routing, backpressure, reconnect, and no replay.
+- [x] Task: Implement and test Hub/Space topic operations across sequence,
   API/client, CLI, Hub, and Manager layers using the settled contract.
-- [ ] Task: Run focused topic fixture, Hub/Space client/API/CLI, Manager-routing,
+  - Implemented v2 descriptors/origins, Hub-only lifecycle operations, bounded
+    live routing, canonical topic errors, typed clients, and Hub-default/Space
+    CLI scope while preserving v1 behavior.
+- [x] Task: Run focused topic fixture, Hub/Space client/API/CLI, Manager-routing,
   and reconnect tests; perform deduplication, record validation/memory evidence,
   commit, push, and update the draft PR.
+  - Guarded focused suites passed for topic contracts (7), Host topic routing
+    (68), Manager routing/service discovery (29), API-router error mapping (12),
+    client and CLI scope coverage. Full package builds remain blocked by known
+    pre-existing `packages/runner/src/runner.ts` TypeScript errors.
 - [ ] Task: Conductor - Phase Completion 'Hub and Space topic contracts' (Protocol in workflow.md)
 
 ## Phase 5: AppContext runtime conformance

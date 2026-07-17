@@ -1,4 +1,15 @@
-import { RawHttpRouteRequest, RouteRequest, Router, RouterDefinition, bindResolver, bindRoutes, registerHttpRoutes, replacePathVersion, resolverBinding, routeBinding } from "@scramjet/api-router";
+import {
+    RawHttpRouteRequest,
+    RouteRequest,
+    Router,
+    RouterDefinition,
+    bindResolver,
+    bindRoutes,
+    registerHttpRoutes,
+    replacePathVersion,
+    resolverBinding,
+    routeBinding
+} from "@scramjet/api-router";
 import { RestAPI2, RestAPI2RouteSets } from "@scramjet/rest-api2";
 import { ParsedMessage } from "@scramjet/api-types";
 import { DisconnectReason } from "@scramjet/api-types";
@@ -30,67 +41,98 @@ export class ManagerAPIV2Handler {
     createV2Router(): RouterDefinition {
         const manager = this.manager;
         const routes = RestAPI2RouteSets.space.routes();
-        const router = bindRoutes(routes, {
-            version: routeBinding.handler<typeof routes.version>(() => ({
-                version: manager.version
-            }), { id: "space.v2.version" }),
-            config: routeBinding.handler<typeof routes.config>(() => ({ config: manager.publicConfig }), { id: "space.v2.config" }),
-            trust: routeBinding.handler<typeof routes.trust>(() => getManagerVerser2TrustExport(manager.config), { id: "space.v2.verser2.trust" }),
-            load: routeBinding.handler<typeof routes.load>(async (): Promise<RestAPI2.LoadResponse<RestAPI2.Space>> => {
-                const load = await manager.apiLoadCheck.getLoadCheck();
+        const router = bindRoutes(
+            routes,
+            {
+                version: routeBinding.handler<typeof routes.version>(
+                    () => ({
+                        version: manager.version
+                    }),
+                    { id: "space.v2.version" }
+                ),
+                config: routeBinding.handler<typeof routes.config>(() => ({ config: manager.publicConfig }), { id: "space.v2.config" }),
+                trust: routeBinding.handler<typeof routes.trust>(() => getManagerVerser2TrustExport(manager.config), { id: "space.v2.verser2.trust" }),
+                load: routeBinding.handler<typeof routes.load>(
+                    async (): Promise<RestAPI2.LoadResponse<RestAPI2.Space>> => {
+                        const load = await manager.apiLoadCheck.getLoadCheck();
 
-                return { load: (load as { load?: number }).load ?? 0 };
-            }, { id: "space.v2.load" }),
-            health: routeBinding.handler<typeof routes.health>(() => manager.getV2HealthCheckInfo(), { id: "space.v2.health" }),
-            list: routeBinding.handler<typeof routes.list>(req => this.listResponse<RestAPI2.Hub>(this.getPaginated(req, manager.getList.bind(manager)), "hosts", id => ({ id })), { id: "space.v2.list" }),
-            hubs: routeBinding.handler<typeof routes.hubs>(req => this.listResponse<RestAPI2.Hub>(this.getPaginated(req, manager.getList.bind(manager)), "hosts", id => ({ id })), { id: "space.v2.hubs" }),
-            instances: routeBinding.handler<typeof routes.instances>(req => ({
-                items: this.mapManagerInstances(this.getPaginated(req, manager.getInstances.bind(manager)))
-            }), { id: "space.v2.instances" }),
-            sequences: routeBinding.handler<typeof routes.sequences>(() => ({
-                items: manager.getSequencesIds().map((id: any) => ({ id: String(id) }))
-            }), { id: "space.v2.sequences" }),
-            allSequences: routeBinding.handler<typeof routes.allSequences>(req => ({
-                items: this.mapManagerSequences(this.getPaginated(req, manager.getSequences.bind(manager)))
-            }), { id: "space.v2.all_sequences" }),
-            entities: routeBinding.handler<typeof routes.entities>(() => this.entityListResponse(manager.getEntities()), { id: "space.v2.entities" }),
-            topics: routeBinding.handler<typeof routes.topics>(() => this.topicListResponse(manager.apiServiceDiscovery.list()), { id: "space.v2.topics" }),
-            topicInfo: routeBinding.handler<typeof routes.topicInfo>(({ params }) => this.topicInfo(params.name), { id: "space.v2.topic.info" }),
-            topicRead: routeBinding.handler<typeof routes.topicRead>(req => manager.handleTopicUpstreamRequest(this.rawRequest(req), this.rawResponse(req)), { id: "space.v2.topic.read" }),
-            topicWrite: routeBinding.handler<typeof routes.topicWrite>(req => manager.handleTopicDownstreamRequest(this.rawRequest(req), this.rawResponse(req)), { id: "space.v2.topic.write" }),
-            logs: routeBinding.handler<typeof routes.logs>(() => manager.apiCommonLogsPipe.getOut(), { id: "space.v2.logs" }),
-            audit: routeBinding.handler<typeof routes.audit>(req => this.handleAuditRequest(req), { id: "space.v2.audit" }),
-            deleteHub: routeBinding.handler<typeof routes.deleteHub>(req => this.handleInventoryHubDelete(req), { id: "space.v2.inventory.hub.delete" }),
-            storageSequences: routeBinding.handler<typeof routes.storageSequences>(() => this.storageSequenceList(), { id: "space.v2.storage.sequences" }),
-            storageObjectRead: routeBinding.skip("Storage object read requires storage service extraction; do not proxy v2 through legacy v1 storage router."),
-            storageObjectWrite: routeBinding.skip("Storage object write requires storage service extraction; do not proxy v2 through legacy v1 storage router."),
-            storageObjectDelete: routeBinding.skip("Storage object delete requires storage service extraction; do not proxy v2 through legacy v1 storage router."),
-            storageClear: routeBinding.handler<typeof routes.storageClear>(() => this.clearStorage(), { id: "space.v2.storage.clear" })
-        }, Router.create({ basePath: this.v2ApiBase }));
+                        return { load: (load as { load?: number }).load ?? 0 };
+                    },
+                    { id: "space.v2.load" }
+                ),
+                health: routeBinding.handler<typeof routes.health>(() => manager.getV2HealthCheckInfo(), { id: "space.v2.health" }),
+                list: routeBinding.handler<typeof routes.list>(
+                    (req) => this.listResponse<RestAPI2.Hub>(this.getPaginated(req, manager.getList.bind(manager)), "hosts", (id) => ({ id })),
+                    { id: "space.v2.list" }
+                ),
+                hubs: routeBinding.handler<typeof routes.hubs>(
+                    (req) => this.listResponse<RestAPI2.Hub>(this.getPaginated(req, manager.getList.bind(manager)), "hosts", (id) => ({ id })),
+                    { id: "space.v2.hubs" }
+                ),
+                instances: routeBinding.handler<typeof routes.instances>(
+                    (req) => ({
+                        items: this.mapManagerInstances(this.getPaginated(req, manager.getInstances.bind(manager)))
+                    }),
+                    { id: "space.v2.instances" }
+                ),
+                sequences: routeBinding.handler<typeof routes.sequences>(
+                    () => ({
+                        items: manager.getSequencesIds().map((id: any) => ({ id: String(id) }))
+                    }),
+                    { id: "space.v2.sequences" }
+                ),
+                allSequences: routeBinding.handler<typeof routes.allSequences>(
+                    (req) => ({
+                        items: this.mapManagerSequences(this.getPaginated(req, manager.getSequences.bind(manager)))
+                    }),
+                    { id: "space.v2.all_sequences" }
+                ),
+                entities: routeBinding.handler<typeof routes.entities>(() => this.entityListResponse(manager.getEntities()), { id: "space.v2.entities" }),
+                topics: routeBinding.handler<typeof routes.topics>(() => this.topicListResponse(manager.apiServiceDiscovery.list()), { id: "space.v2.topics" }),
+                topicInfo: routeBinding.handler<typeof routes.topicInfo>(({ params }) => this.topicInfo(params.name), { id: "space.v2.topic.info" }),
+                topicRead: routeBinding.handler<typeof routes.topicRead>((req) => manager.handleTopicUpstreamRequest(this.rawRequest(req), this.rawResponse(req)), {
+                    id: "space.v2.topic.read"
+                }),
+                topicWrite: routeBinding.handler<typeof routes.topicWrite>((req) => manager.handleTopicDownstreamRequest(this.rawRequest(req), this.rawResponse(req)), {
+                    id: "space.v2.topic.write"
+                }),
+                logs: routeBinding.handler<typeof routes.logs>(() => manager.apiCommonLogsPipe.getOut(), { id: "space.v2.logs" }),
+                audit: routeBinding.handler<typeof routes.audit>((req) => this.handleAuditRequest(req), { id: "space.v2.audit" }),
+                deleteHub: routeBinding.handler<typeof routes.deleteHub>((req) => this.handleInventoryHubDelete(req), { id: "space.v2.inventory.hub.delete" }),
+                storageSequences: routeBinding.handler<typeof routes.storageSequences>(() => this.storageSequenceList(), { id: "space.v2.storage.sequences" }),
+                storageObjectRead: routeBinding.skip("Storage object read requires storage service extraction; do not proxy v2 through legacy v1 storage router."),
+                storageObjectWrite: routeBinding.skip("Storage object write requires storage service extraction; do not proxy v2 through legacy v1 storage router."),
+                storageObjectDelete: routeBinding.skip("Storage object delete requires storage service extraction; do not proxy v2 through legacy v1 storage router."),
+                storageClear: routeBinding.handler<typeof routes.storageClear>(() => this.clearStorage(), { id: "space.v2.storage.clear" })
+            },
+            Router.create({ basePath: this.v2ApiBase })
+        );
         const resolver = RestAPI2RouteSets.space.resolvers(this.v2ApiBase).hub;
 
-        return bindResolver(resolver, resolverBinding.handler(({ params, path, remainingPath }) => {
-            const hubId = params.hubId;
-            const sth = manager.apiSthConnectionStore.getById(hubId);
+        return bindResolver(
+            resolver,
+            resolverBinding.handler(
+                ({ params, path, remainingPath }) => {
+                    const hubId = params.hubId;
+                    const sth = manager.apiSthConnectionStore.getById(hubId);
 
-            if (!sth || !sth.isConnectionActive || !sth.routeDomain) {
-                return undefined;
-            }
+                    if (!sth || !sth.isConnectionActive || !sth.routeDomain) {
+                        return undefined;
+                    }
 
-            return {
-                local: {
-                    lookup: (req: ParsedMessage, res: ServerResponse) => manager.forwardRequestToSTH(
-                        sth,
-                        req,
-                        res,
-                        this.toImplementerPath(remainingPath, path)
-                    )
+                    return {
+                        local: {
+                            lookup: (req: ParsedMessage, res: ServerResponse) => manager.forwardRequestToSTH(sth, req, res, this.toImplementerPath(remainingPath, path))
+                        }
+                    };
+                },
+                {
+                    id: "space.v2.hub.forward",
+                    description: "Resolve a selected Hub to its verser2 route domain for Hub-owned v2 routes."
                 }
-            };
-        }, {
-            id: "space.v2.hub.forward",
-            description: "Resolve a selected Hub to its verser2 route domain for Hub-owned v2 routes."
-        }), router);
+            ),
+            router
+        );
     }
 
     attach() {
@@ -175,19 +217,25 @@ export class ManagerAPIV2Handler {
         const items = Array.isArray(value) ? value : [];
 
         return {
-            items: items.map(item => this.toListItem<TItem>(item, fromString))
+            items: items.map((item) => this.toListItem<TItem>(item, fromString))
         };
     }
 
     private entityListResponse(source: unknown): RestAPI2.ListResponse<RestAPI2.Entity> {
         const record = source as Record<string, unknown> | undefined;
         const explicit = record && Array.isArray(record.entities) ? record.entities : undefined;
-        const sequences = record && Array.isArray(record.sequences) ? record.sequences.map(item => ({ ...this.toListItem<Record<string, unknown>>(item, id => ({ id })), type: "sequence" })) : [];
-        const instances = record && Array.isArray(record.instances) ? record.instances.map(item => ({ ...this.toListItem<Record<string, unknown>>(item, id => ({ id })), type: "instance" })) : [];
+        const sequences =
+            record && Array.isArray(record.sequences)
+                ? record.sequences.map((item) => ({ ...this.toListItem<Record<string, unknown>>(item, (id) => ({ id })), type: "sequence" }))
+                : [];
+        const instances =
+            record && Array.isArray(record.instances)
+                ? record.instances.map((item) => ({ ...this.toListItem<Record<string, unknown>>(item, (id) => ({ id })), type: "instance" }))
+                : [];
         const items = explicit || [...sequences, ...instances];
 
         return {
-            items: items.map(item => this.toListItem<RestAPI2.Entity>(item, id => ({ id })))
+            items: items.map((item) => this.toListItem<RestAPI2.Entity>(item, (id) => ({ id })))
         };
     }
 
@@ -195,13 +243,17 @@ export class ManagerAPIV2Handler {
         const items = Array.isArray(source) ? source : (source as { topics?: unknown[] } | undefined)?.topics || [];
 
         return {
-            items: items.map(item => this.toTopicItem(item))
+            items: items.map((item) => this.toTopicItem(item))
         };
     }
 
     private toTopicItem(item: unknown): RestAPI2.Topic {
         if (typeof item === "string") {
-            return { name: item, contentType: "" };
+            return {
+                name: item,
+                contentType: "application/x-ndjson",
+                ...(this.manager.config.id ? { origin: { type: "space" as const, id: String(this.manager.config.id) } } : {})
+            };
         }
 
         const record = item as Record<string, unknown> | undefined;
@@ -209,6 +261,11 @@ export class ManagerAPIV2Handler {
         return {
             name: String(record?.name || record?.topic || record?.topicName || ""),
             contentType: String(record?.contentType || ""),
+            ...(record?.origin
+                ? { origin: record.origin as RestAPI2.Topic["origin"] }
+                : this.manager.config.id
+                  ? { origin: { type: "space" as const, id: String(this.manager.config.id) } }
+                  : {}),
             direction: record?.direction as RestAPI2.Topic["direction"] | undefined
         };
     }
@@ -223,11 +280,20 @@ export class ManagerAPIV2Handler {
 
     private topicInfo(name: string): RestAPI2.Topic {
         const topics = this.manager.apiServiceDiscovery.list() as Array<Record<string, unknown>>;
-        const topic = topics.find(item => item.name === name || item.topic === name || item.topicName === name);
+        const topic = topics.find((item) => item.name === name || item.topic === name || item.topicName === name);
+
+        if (!topic) {
+            throw Object.assign(new Error(`Topic ${name} not found`), { code: "TOPIC_NOT_FOUND" });
+        }
 
         return {
             name,
             contentType: String(topic?.contentType || ""),
+            ...(topic?.origin
+                ? { origin: topic.origin as RestAPI2.Topic["origin"] }
+                : this.manager.config.id
+                  ? { origin: { type: "space" as const, id: String(this.manager.config.id) } }
+                  : {}),
             direction: topic?.direction as RestAPI2.Topic["direction"] | undefined
         };
     }
@@ -259,7 +325,7 @@ export class ManagerAPIV2Handler {
                 result: { hubId, deleted: true, disconnected: true }
             };
         } catch (error: any) {
-            return this.failedOperation("DELETE_HUB_FAILED", error?.message || "Hub delete failed", hubId);
+            return this.failedOperation(this.deleteErrorCode(error), error?.message || "Hub delete failed", hubId);
         }
     }
 
@@ -279,7 +345,11 @@ export class ManagerAPIV2Handler {
         }
 
         if (hub.isConnectionActive) {
-            await hub.disconnect(this.disconnectReason(reason));
+            try {
+                await hub.disconnect(this.disconnectReason(reason));
+            } catch (error) {
+                return this.failedOperation("HUB_DISCONNECT_FAILED", error instanceof Error ? error.message : String(error), hubId);
+            }
         }
 
         return {
@@ -292,7 +362,7 @@ export class ManagerAPIV2Handler {
         const sequences: StoredSequenceInfo[] = this.manager.apiS3Middleware?.index?.sequences || [];
 
         return {
-            items: sequences.map(sequence => ({
+            items: sequences.map((sequence) => ({
                 path: String(sequence._filename || sequence.id || ""),
                 size: typeof sequence.packageSize === "number" ? sequence.packageSize : undefined
             }))
@@ -310,7 +380,7 @@ export class ManagerAPIV2Handler {
     }
 
     private mapManagerInstances(source: unknown): RestAPI2.Instance[] {
-        const items = Array.isArray(source) ? source : (source as Record<string, unknown> | undefined)?.["instances"] ?? [];
+        const items = Array.isArray(source) ? source : ((source as Record<string, unknown> | undefined)?.["instances"] ?? []);
         const instancesArray = Array.isArray(items) ? items : [];
 
         return instancesArray.map((inst: any) => {
@@ -318,13 +388,15 @@ export class ManagerAPIV2Handler {
             const instanceId = String(inst.id || "");
             const seqId = inst.sequenceId || inst.sequence?.id;
             const seqName = inst.sequence?.name ?? inst.sequence?.config?.name ?? inst.sequence?.config?.id ?? inst.sequenceName ?? seqId;
-            const seqInfo: RestAPI2.Instance["sequence"] = seqId ? {
-                id: seqId,
-                name: seqName,
-                hubId: hubId || seqId,
-                location: inst.sequence?.location || hubId || seqId,
-                apiBase: hubId ? `${this.v2ApiBase}/hubs/${hubId}/sequences/${seqId}` : `${this.v2ApiBase}/sequences/${seqId}`,
-            } : undefined;
+            const seqInfo: RestAPI2.Instance["sequence"] = seqId
+                ? {
+                      id: seqId,
+                      name: seqName,
+                      hubId: hubId || seqId,
+                      location: inst.sequence?.location || hubId || seqId,
+                      apiBase: hubId ? `${this.v2ApiBase}/hubs/${hubId}/sequences/${seqId}` : `${this.v2ApiBase}/sequences/${seqId}`
+                  }
+                : undefined;
 
             const item: RestAPI2.Instance = {
                 id: instanceId,
@@ -334,7 +406,7 @@ export class ManagerAPIV2Handler {
                 hubId,
                 location: inst.location || hubId,
                 apiBase: hubId ? `${this.v2ApiBase}/hubs/${hubId}/instances/${instanceId}` : `${this.v2ApiBase}/instances/${instanceId}`,
-                sequence: seqInfo,
+                sequence: seqInfo
             };
 
             return item;
@@ -342,7 +414,7 @@ export class ManagerAPIV2Handler {
     }
 
     private mapManagerSequences(source: unknown): RestAPI2.Sequence[] {
-        const items = Array.isArray(source) ? source : (source as Record<string, unknown> | undefined)?.["sequences"] ?? [];
+        const items = Array.isArray(source) ? source : ((source as Record<string, unknown> | undefined)?.["sequences"] ?? []);
         const seqArray = Array.isArray(items) ? items : [];
 
         return seqArray.map((seq: any) => {
@@ -356,7 +428,7 @@ export class ManagerAPIV2Handler {
                 hubId,
                 location: seq.location,
                 apiBase: hubId ? `${this.v2ApiBase}/hubs/${hubId}/sequences/${seqId}` : `${this.v2ApiBase}/sequences/${seqId}`,
-                instances: seq.instances,
+                instances: seq.instances
             };
 
             return item;
@@ -366,7 +438,18 @@ export class ManagerAPIV2Handler {
     private failedOperation<TOutput>(code: string, message: string, id: string): RestAPI2.OpResponse<TOutput> {
         return {
             operation: { id: id || code, status: "failed" },
-            error: { code, message }
+            error: { code, message },
+            ...(code === "TOPIC_NOT_FOUND"
+                ? { opStatus: "Not Found" }
+                : code === "TOPIC_CONTENT_TYPE_MISMATCH"
+                  ? { opStatus: "Conflict" }
+                  : code === "INVALID_CONTENT_TYPE"
+                    ? { opStatus: "Unsupported Media Type" }
+                    : code === "TOPIC_DISCONNECTED"
+                      ? { opStatus: "Service Unavailable" }
+                      : code === "TOPIC_DELETED"
+                        ? { opStatus: "Gone" }
+                        : {})
         };
     }
 
@@ -379,5 +462,23 @@ export class ManagerAPIV2Handler {
 
     private disconnectReason(reason?: string): DisconnectReason {
         return reason && isDisconnectReason(reason) ? reason : "id_drop";
+    }
+
+    private deleteErrorCode(error: unknown): string {
+        const message = error instanceof Error ? error.message : String(error);
+        switch (message) {
+            case "ID_NOT_FOUND":
+                return "HUB_NOT_FOUND";
+            case "NATIVE_HUB":
+                return "NATIVE_HUB";
+            case "CONNECTED":
+                return "HUB_CONNECTED";
+            case "ID_NOT_PROVIDED":
+                return "MISSING_HUB_ID";
+            case "CONFLICT":
+                return "HUB_DELETE_CONFLICT";
+            default:
+                return "DELETE_HUB_FAILED";
+        }
     }
 }

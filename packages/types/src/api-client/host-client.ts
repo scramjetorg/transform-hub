@@ -9,6 +9,11 @@ import { ClientUtils, HttpClient, SendStreamOptions } from "../client-utils";
 
 export type InstanceInputStream = "stdin" | "input";
 export type InstanceOutputStream = "stdout" | "stderr" | "output" | "log";
+export type TopicOperationResponse = {
+    operation: { id: string; status: string };
+    result?: { topic?: { name: string; contentType: string; origin?: { type: "hub" | "space"; id: string } }; deleted?: boolean };
+    error?: { code: string; message: string };
+};
 
 export declare class ClientProvider {
     client: HttpClient;
@@ -76,6 +81,11 @@ export declare class HostClient implements ClientProvider {
     createTopic(topic: string, contentType: string): Promise<{ topicName: string }>;
     deleteTopic(topic: string): Promise<{ message: string }>;
     getTopics(): Promise<STHRestAPI.GetTopicsResponse>;
+    getTopicsV2(): Promise<{ items: Array<{ name: string; contentType: string; origin?: { type: "hub" | "space"; id: string } }> }>;
+    createTopicV2(topic: { name: string; contentType: string; origin?: { type: "hub" | "space"; id: string } }): Promise<TopicOperationResponse>;
+    deleteTopicV2(topic: string): Promise<TopicOperationResponse>;
+    getTopicV2(topic: string, requestInit?: RequestInit, contentType?: string): ReturnType<HttpClient["getStream"]>;
+    sendTopicV2<T>(topic: string, stream: Parameters<HttpClient["sendStream"]>[1], requestInit?: RequestInit, contentType?: string, end?: boolean): Promise<T>;
     /** Reuses the existing client name; selector may be an instance ID or stable instance name. */
     getInstanceClient(id: string): InstanceClient;
     /** Reuses the existing client name; selector may be a sequence ID or stable sequence name. */

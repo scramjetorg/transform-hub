@@ -1,4 +1,3 @@
-
 import { Duplex, Readable, Writable } from "stream";
 import { CPMConnector } from "../cpm-connector";
 import { ObjLogger } from "@scramjet/obj-logger";
@@ -7,11 +6,12 @@ import TopicsMap from "./topicsController";
 import { Topic } from "./topic";
 import { IObjectLogger } from "@scramjet/runtime-types";
 import { ContentType, STHTopicEventData, StreamOrigin } from "../types/from-types";
+import { TOPIC_CONTENT_TYPE_MISMATCH, topicError } from "./topic-errors";
 
 export type DataType = {
-    topic: TopicId,
-    contentType: ContentType
-}
+    topic: TopicId;
+    contentType: ContentType;
+};
 
 /**
  * Topic stream type definition.
@@ -19,17 +19,17 @@ export type DataType = {
 export type StreamType = {
     contentType: string;
     stream: Duplex;
-}
+};
 
 /**
  * Topic details type definition.
  */
 export type TopicDataType = {
-    contentType: string,
-    stream: Duplex,
-    localProvider?: string,
-    cpmRequest?: boolean
-}
+    contentType: string;
+    stream: Duplex;
+    localProvider?: string;
+    cpmRequest?: boolean;
+};
 
 /**
  * Service Discovery provides methods to manage topics.
@@ -56,12 +56,14 @@ export class ServiceDiscovery {
         const deleted = this.topicsController.delete(id);
 
         if (deleted) {
-            this.cpmConnector?.sendTopicInfo({
-                topicName: id.toString(),
-                status: "remove"
-            }).catch(() => {
-                this.logger.error("Error sending topic remove message");
-            });
+            this.cpmConnector
+                ?.sendTopicInfo({
+                    topicName: id.toString(),
+                    status: "remove"
+                })
+                .catch(() => {
+                    this.logger.error("Error sending topic remove message");
+                });
         }
 
         return deleted;
@@ -91,7 +93,7 @@ export class ServiceDiscovery {
 
             if (topic.contentType !== config.contentType) {
                 this.logger.error("Content-type mismatch, existing and requested ", topic.contentType, config.contentType);
-                throw new Error("Content-type mismatch");
+                throw topicError(TOPIC_CONTENT_TYPE_MISMATCH, "Content-type mismatch");
             }
             this.logger.debug("Topic routed:", config);
 

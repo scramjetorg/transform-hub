@@ -9,9 +9,7 @@ import type { HostClient } from "./host-client";
 function createV2Client(apiBase: string, utils: ClientUtils): ClientUtils {
     const v2ApiBase = apiBase.replace(/\/api\/v1\/?$/, "/api/v2");
 
-    return utils instanceof ClientUtilsCustomAgent
-        ? new ClientUtilsCustomAgent(v2ApiBase, utils.agent)
-        : new ClientUtils(v2ApiBase);
+    return utils instanceof ClientUtilsCustomAgent ? new ClientUtilsCustomAgent(v2ApiBase, utils.agent) : new ClientUtils(v2ApiBase);
 }
 
 export class ManagerClient<THostClient = HostClient> implements ClientProvider {
@@ -67,7 +65,7 @@ export class ManagerClient<THostClient = HostClient> implements ClientProvider {
      * @param {string} hostTag host tag.
      * @returns {Promise<STHRestAPI.GetEntitiesResponse>} Promise resolving to list of entities.
      */
-    async listHostsWithFilter(sequenceUrl : string, hostTag: string) {
+    async listHostsWithFilter(sequenceUrl: string, hostTag: string) {
         return this.client.get<MRestAPI.GetHostInfoResponse[]>(`${sequenceUrl}/${hostTag}/hosts`);
     }
 
@@ -79,13 +77,7 @@ export class ManagerClient<THostClient = HostClient> implements ClientProvider {
         return this.client.get<LoadCheckStat>("load");
     }
 
-    async sendNamedData<T>(
-        topic: string,
-        stream: Parameters<HttpClient["sendStream"]>[1],
-        requestInit?: RequestInit,
-        contentType?: string,
-        end?: boolean
-    ) {
+    async sendNamedData<T>(topic: string, stream: Parameters<HttpClient["sendStream"]>[1], requestInit?: RequestInit, contentType?: string, end?: boolean) {
         return this.client.sendStream<T>(`topic/${topic}`, stream, requestInit, { type: contentType, end: end });
     }
 
@@ -104,51 +96,68 @@ export class ManagerClient<THostClient = HostClient> implements ClientProvider {
     async getConfig(): Promise<MRestAPI.GetConfigResponse> {
         const response = await this.#_v2Client.get<{ config?: any } | any>("config");
 
-        return response && typeof response === "object" && "config" in response
-            ? response as MRestAPI.GetConfigResponse
-            : { config: response } as MRestAPI.GetConfigResponse;
+        return response && typeof response === "object" && "config" in response ? (response as MRestAPI.GetConfigResponse) : ({ config: response } as MRestAPI.GetConfigResponse);
     }
 
     async getAllSequences(): Promise<MRestAPI.GetSequencesResponse> {
         const response = await this.#_v2Client.get<{ items?: MRestAPI.GetSequencesResponse } | MRestAPI.GetSequencesResponse>("all_sequences");
 
-        return response && typeof response === "object" && "items" in response
-            ? response.items ?? []
-            : response as MRestAPI.GetSequencesResponse;
+        return response && typeof response === "object" && "items" in response ? (response.items ?? []) : (response as MRestAPI.GetSequencesResponse);
     }
 
     async getSequences(): Promise<MRestAPI.GetSequenceIDSResponse> {
         const response = await this.#_v2Client.get<{ items?: Array<{ id: string } | string> } | MRestAPI.GetSequencesResponse>("sequences");
 
         return response && typeof response === "object" && "items" in response
-            ? response.items?.map((item: any) => typeof item === "string" ? item : item.id) || []
-            : (response as MRestAPI.GetSequenceIDSResponse | MRestAPI.GetSequencesResponse)
-                .map((item: any) => typeof item === "string" ? item : item.id);
+            ? response.items?.map((item: any) => (typeof item === "string" ? item : item.id)) || []
+            : (response as MRestAPI.GetSequenceIDSResponse | MRestAPI.GetSequencesResponse).map((item: any) => (typeof item === "string" ? item : item.id));
     }
 
     async getInstances(): Promise<MRestAPI.GetInstancesResponse> {
         const response = await this.#_v2Client.get<{ items?: MRestAPI.GetInstancesResponse } | MRestAPI.GetInstancesResponse>("instances");
 
-        return response && typeof response === "object" && "items" in response
-            ? response.items ?? []
-            : response as MRestAPI.GetInstancesResponse;
+        return response && typeof response === "object" && "items" in response ? (response.items ?? []) : (response as MRestAPI.GetInstancesResponse);
     }
 
     async getTopics() {
         return this.client.get<MRestAPI.GetTopicsResponse>("topics");
     }
 
+    async getTopicsV2(): Promise<{ items: Array<{ name: string; contentType: string; origin?: { type: "hub" | "space"; id: string } }> }> {
+        return this.#_v2Client.get("topics");
+    }
+
+    async getTopicInfoV2(topic: string): Promise<{ name: string; contentType: string; origin?: { type: "hub" | "space"; id: string } }> {
+        return this.#_v2Client.get(`topics/${topic}`);
+    }
+
+    async getTopicV2(topic: string, requestInit?: RequestInit, contentType: string = "application/x-ndjson") {
+        return this.#_v2Client.getStream(`topics/${topic}/stream`, requestInit, { type: contentType });
+    }
+
+    async sendTopicV2<T>(
+        topic: string,
+        stream: Parameters<HttpClient["sendStream"]>[1],
+        requestInit: RequestInit = {},
+        contentType: string = "application/x-ndjson",
+        end?: boolean
+    ) {
+        return this.#_v2Client.sendStream<T>(`topics/${topic}/stream`, stream, requestInit, { type: contentType, end });
+    }
+
     async getStoreItems(): Promise<MRestAPI.GetStoreItemsResponse> {
         return this.client.get<MRestAPI.GetStoreItemsResponse>("s3");
     }
 
-    async putStoreItem(
-        sequencePackage: Readable,
-        id: string = ""
-    ): Promise<MRestAPI.PutStoreItemResponse> {
-        return this.client.sendStream<MRestAPI.PutStoreItemResponse>(`s3/${id}`, sequencePackage, { method: "put" }, {
-            parseResponse: "json"
-        });
+    async putStoreItem(sequencePackage: Readable, id: string = ""): Promise<MRestAPI.PutStoreItemResponse> {
+        return this.client.sendStream<MRestAPI.PutStoreItemResponse>(
+            `s3/${id}`,
+            sequencePackage,
+            { method: "put" },
+            {
+                parseResponse: "json"
+            }
+        );
     }
 
     async deleteStoreItem(id: string): Promise<void> {

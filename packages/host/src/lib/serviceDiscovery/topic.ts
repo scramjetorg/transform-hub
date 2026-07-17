@@ -3,12 +3,13 @@ import { ParsedMessage } from "@scramjet/api-types";
 import { ContentType, StreamOrigin, TopicHandler, TopicOptions, TopicState } from "../types/from-types";
 import TopicId from "./topicId";
 import { ReadableState, StreamType, WorkState, WritableState } from "@scramjet/symbols";
+import { TOPIC_DELETED, topicError } from "./topic-errors";
 
 export enum TopicEvent {
-    StateChanged = "stateChanged",
+    StateChanged = "stateChanged"
 }
 
-export type TopicStreamOptions = Pick<TransformOptions, "encoding">
+export type TopicStreamOptions = Pick<TransformOptions, "encoding">;
 
 export class Topic extends Transform implements TopicHandler {
     protected _id: TopicId;
@@ -18,8 +19,9 @@ export class Topic extends Transform implements TopicHandler {
     protected _errored?: Error;
     protected needDrain: boolean;
 
-    private _pipeQueue: (Readable)[] = [];
+    private _pipeQueue: Readable[] = [];
     private _consuming: Promise<any> | undefined;
+    private _pendingTransform?: (error?: Error | null) => void;
 
     constructor(id: TopicId, contentType: ContentType, origin: StreamOrigin, options?: TopicStreamOptions) {
         super({ ...options, highWaterMark: 65536, writableHighWaterMark: 0, readableHighWaterMark: 65536 });
@@ -31,6 +33,10 @@ export class Topic extends Transform implements TopicHandler {
         this.needDrain = false;
 
         this.attachEventListeners();
+        // Deletion/disconnect errors are also delivered to active stream
+        // consumers. Keep a local listener so deleting an unused topic cannot
+        // become an uncaught process-level exception.
+        this.on("error", () => undefined);
     }
 
     get contentType() {
@@ -41,16 +47,24 @@ export class Topic extends Transform implements TopicHandler {
         return `${this._id.toString()}.${this.contentType}`;
     }
 
-    id() { return this._id.toString(); }
-    options() { return this._options; }
-    type() { return StreamType.Topic; }
+    id() {
+        return this._id.toString();
+    }
+    options() {
+        return this._options;
+    }
+    type() {
+        return StreamType.Topic;
+    }
     state(): TopicState {
         if (this._errored) return WorkState.Error;
         if (this.isPaused()) return ReadableState.Pause;
         if (this.needDrain) return WritableState.Drain;
         return WorkState.Flowing;
     }
-    origin() { return this._origin; }
+    origin() {
+        return this._origin;
+    }
 
     acceptPipe(rdble: Readable) {
         this._pipeQueue.push(rdble);
@@ -70,25 +84,46 @@ export class Topic extends Transform implements TopicHandler {
 
                 pipe.pipe(this, { end: false });
 
-                await new Promise<void>(res => {
-                    pipe
-                        .once("close", res)
-                        .once("end", res)
-                        .once("error", res);
+                await new Promise<void>((res) => {
+                    pipe.once("close", res).once("end", res).once("error", res);
                 });
 
                 pipe.unpipe();
             }
 
             this._consuming = undefined;
-        })()
-            .catch(() => 0);
+        })().catch(() => 0);
     }
 
     _transform(chunk: any, encoding: BufferEncoding, callback: (error?: Error | null | undefined) => void): void {
+        // Topics are live routes, not queues. A provider may publish before a
+        // consumer is attached; discard that payload instead of retaining it
+        // in Transform's readable buffer for a later subscriber.
+        const state = (this as unknown as { _readableState?: { pipesCount?: number } })._readableState;
+        if (!state?.pipesCount && this.listenerCount("data") === 0 && this.listenerCount("readable") === 0) {
+            this.needDrain = false;
+            callback();
+            return;
+        }
+
         this.needDrain = !this.push(chunk, encoding);
+        if (this.needDrain) {
+            this._pendingTransform = callback;
+            return;
+        }
         callback();
         this.updateState();
+    }
+
+    _read(size: number): void {
+        super._read(size);
+        if (this._pendingTransform) {
+            this.needDrain = false;
+            const callback = this._pendingTransform;
+            this._pendingTransform = undefined;
+            callback();
+            this.updateState();
+        }
     }
 
     end(cb?: (() => void) | undefined): this;
@@ -118,6 +153,10 @@ export class Topic extends Transform implements TopicHandler {
         return this;
     }
 
+    delete(): this {
+        return this.destroy(topicError(TOPIC_DELETED, `Topic ${this.id()} was deleted`));
+    }
+
     protected attachEventListeners() {
         this.on("pipe", (_source: Readable) => {
             if (this._options.contentType !== "application/x-ndjson") return;
@@ -125,7 +164,7 @@ export class Topic extends Transform implements TopicHandler {
         });
     }
 
-    pipe<T extends NodeJS.WritableStream>(destination: T, options?: { end?: boolean; }): T {
+    pipe<T extends NodeJS.WritableStream>(destination: T, options?: { end?: boolean }): T {
         return super.pipe(destination, options);
     }
 
@@ -147,7 +186,9 @@ export class Topic extends Transform implements TopicHandler {
         let lastChunk = Buffer.from("");
 
         source
-            .on("data", (chunk) => { lastChunk = chunk as Buffer; })
+            .on("data", (chunk) => {
+                lastChunk = chunk as Buffer;
+            })
             .on("end", () => {
                 const lastByte = lastChunk[lastChunk.length - 1];
 

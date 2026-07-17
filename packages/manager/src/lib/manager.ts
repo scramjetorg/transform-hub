@@ -29,6 +29,10 @@ import { PassThrough, Readable } from "stream";
 import { ServerResponse } from "http";
 import { InstanceStatus, SequenceMessageCode } from "@scramjet/symbols";
 
+const validTopicName = (value: unknown): value is string => typeof value === "string" && /^[A-Za-z0-9_.+-]+$/.test(value);
+const validTopicContentType = (value: unknown): value is string => ["text/x-ndjson", "application/x-ndjson", "text/plain", "application/octet-stream"].includes(String(value));
+const topicIngressError = (code: string, message: string) => Object.assign(new Error(message), { code });
+
 import { CommonLogsPipe } from "./common-logs-pipe";
 import { IDProvider } from "@scramjet/model";
 import { LoadCheck, LoadCheckConfig, createDefaultHealthComponents, summarizeHealth } from "@scramjet/load-check";
@@ -428,7 +432,9 @@ export class Manager implements IComponent {
     handleTopicUpstreamRequest(req: ParsedMessage, _res: ServerResponse) {
         const ps = new PassThrough({ emitClose: true });
         const params = req.params || {};
-        const contentType = ((req.headers || {}).contentType as string) || "";
+        const contentType = ((req.headers || {})["content-type"] as string) || ((req.headers || {}).contentType as string) || "";
+        if (!validTopicName(params.name)) throw topicIngressError("INVALID_TOPIC", "Topic id incorrect format");
+        if (!validTopicContentType(contentType)) throw topicIngressError("INVALID_CONTENT_TYPE", "Unsupported content-type");
 
         this.logger.debug("GET topic ", req.url);
 
@@ -455,6 +461,8 @@ export class Manager implements IComponent {
         try {
             const params = req.params || {};
             const contentType = req.headers["content-type"] || "application/x-ndjson";
+            if (!validTopicName(params.name)) throw topicIngressError("INVALID_TOPIC", "Topic id incorrect format");
+            if (!validTopicContentType(contentType)) throw topicIngressError("INVALID_CONTENT_TYPE", "Unsupported content-type");
             const topicActor = new TopicActor(params.name, ActorRole.PROVIDER, ActorType.API, contentType, undefined);
 
             this.logger.debug("Topic downstream request", req.method, params.name, req.url);
@@ -472,8 +480,10 @@ export class Manager implements IComponent {
             this.logger.debug("Topic downstream request registered", params.name);
         } catch (e) {
             this.logger.error("Error handling topic downstream request", e);
-            res.statusCode = 500;
+            const code = e && typeof e === "object" ? (e as { code?: unknown }).code : undefined;
+            res.statusCode = code === "INVALID_CONTENT_TYPE" ? 415 : 400;
             res.end();
+            ps.destroy(e instanceof Error ? e : new Error(String(e)));
         }
 
         return ps;

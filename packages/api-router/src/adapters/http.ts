@@ -42,12 +42,31 @@ function streamOptions(route: RouteDefinition): StreamConfig | undefined {
     return route.method === "put" ? { method: "put" } : undefined;
 }
 
-function writeResolverError(res: ServerResponse, statusCode: number, message: string) {
-    if (!res.headersSent) {
-        res.writeHead(statusCode, { "content-type": "application/json" });
+function writeResolverError(res: ServerResponse, statusCode: number, message: string, error?: unknown) {
+    // Once headers are committed there is no safe HTTP error response left to
+    // write. Destroying the response is the only way to prevent a second body
+    // from being appended after a disconnect or stream write failure.
+    if (res.headersSent) {
+        res.destroy(error instanceof Error ? error : undefined);
+        return;
     }
 
-    res.end(JSON.stringify({ error: { message } }));
+    res.writeHead(statusCode, { "content-type": "application/json" });
+    const code = error && typeof error === "object" ? (error as { code?: unknown }).code : undefined;
+    res.end(JSON.stringify({ error: { ...(typeof code === "string" ? { code } : {}), message } }));
+}
+
+function errorStatus(error: unknown): number {
+    const code = error && typeof error === "object" ? (error as { code?: unknown }).code : undefined;
+    if (typeof code === "number" && code >= 400 && code < 600) return code;
+    if (code === "INVALID_TOPIC") return 400;
+    if (code === "TOPIC_NOT_FOUND") return 404;
+    if (code === "TOPIC_CONTENT_TYPE_MISMATCH") return 409;
+    if (code === "INVALID_CONTENT_TYPE" || code === "UNSUPPORTED_MEDIA_TYPE") return 415;
+    if (code === "TOPIC_DISCONNECTED") return 503;
+    if (code === "TOPIC_DELETED") return 410;
+    if (code === "ECONNRESET" || code === "EPIPE") return 503;
+    return 500;
 }
 
 function writeVerser2Redirect(res: ServerResponse, redirect: ResolverRedirectTarget) {
@@ -130,7 +149,11 @@ async function dispatchResolvedTarget(
     req.params = { ...params, ...existingParams };
 
     try {
-        await target.local.lookup(req, res, next);
+        try {
+            await target.local.lookup(req, res, next);
+        } catch (error) {
+            writeResolverError(res, errorStatus(error), error instanceof Error ? error.message : String(error), error);
+        }
     } finally {
         req.url = originalUrl;
         req.params = originalParams;
@@ -151,11 +174,17 @@ function createResolverMiddleware(resolver: ResolverDefinition, fullPath: string
             ...mapRouteRequest(req),
             params: { ...matched.params, ...existingParams }
         });
-        const target = await resolver.handler({
-            ...request,
-            path: req.url || fullPath,
-            remainingPath: matched.remainingPath
-        });
+        let target: ResolverTarget | undefined;
+        try {
+            target = await resolver.handler({
+                ...request,
+                path: req.url || fullPath,
+                remainingPath: matched.remainingPath
+            });
+        } catch (error) {
+            writeResolverError(res, errorStatus(error), error instanceof Error ? error.message : String(error), error);
+            return;
+        }
 
         await dispatchResolvedTarget(target, req, res, next, matched.remainingPath, matched.params);
     };
@@ -192,7 +221,7 @@ export function registerHttpRoutes(api: HttpRouteTarget, router: RouterDefinitio
         }
 
         if (route.method === "get") {
-            api.get(entry.fullPath, req => executeHttpRoute(route, req));
+            api.get(entry.fullPath, (req) => executeHttpRoute(route, req));
         } else if (isOpMethod(route.method)) {
             api.op(route.method, entry.fullPath, (req, res) => executeHttpRoute(route, req, res));
         }

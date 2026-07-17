@@ -25,12 +25,7 @@ export const StreamInfo = z.object({
 
 export const Operation = z.object({
     id: z.string(),
-    status: z.union([
-        z.literal("pending"),
-        z.literal("running"),
-        z.literal("completed"),
-        z.literal("failed")
-    ])
+    status: z.union([z.literal("pending"), z.literal("running"), z.literal("completed"), z.literal("failed")])
 });
 
 export const ErrorBody = z.object({
@@ -67,14 +62,16 @@ export const Instance = z.object({
     hubId: z.string().optional(),
     location: z.string().optional(),
     apiBase: z.string().optional(),
-    sequence: z.object({
-        id: z.string(),
-        name: z.string().optional(),
-        status: z.string().optional(),
-        hubId: z.string().optional(),
-        location: z.string().optional(),
-        apiBase: z.string().optional()
-    }).optional()
+    sequence: z
+        .object({
+            id: z.string(),
+            name: z.string().optional(),
+            status: z.string().optional(),
+            hubId: z.string().optional(),
+            location: z.string().optional(),
+            apiBase: z.string().optional()
+        })
+        .optional()
 });
 
 export const Entity = z.object({
@@ -83,11 +80,15 @@ export const Entity = z.object({
 });
 
 export const Topic = z.object({
-    name: z.string(),
+    name: z.string().refine((value) => /^[A-Za-z0-9_.+-]+$/.test(value), "Invalid topic name"),
     contentType: z.string(),
-    direction: z
-        .union([z.literal("input"), z.literal("output"), z.literal("duplex")])
-        .optional()
+    origin: z
+        .object({
+            type: z.union([z.literal("hub"), z.literal("space")]),
+            id: z.string().min(1)
+        })
+        .optional(),
+    direction: z.union([z.literal("input"), z.literal("output"), z.literal("duplex")]).optional()
 });
 
 export const StoreItem = z.object({
@@ -204,13 +205,12 @@ function coerceFd(allowed: readonly [number, ...number[]]) {
         return z.coerce.number().int().pipe(z.literal(allowed[0]));
     }
 
-    const [first, second, ...rest] = allowed.map((v) => z.literal(v)) as [
-        z.ZodLiteral<number>,
-        z.ZodLiteral<number>,
-        ...z.ZodLiteral<number>[]
-    ];
+    const [first, second, ...rest] = allowed.map((v) => z.literal(v)) as [z.ZodLiteral<number>, z.ZodLiteral<number>, ...z.ZodLiteral<number>[]];
 
-    return z.coerce.number().int().pipe(z.union([first, second, ...rest]));
+    return z.coerce
+        .number()
+        .int()
+        .pipe(z.union([first, second, ...rest]));
 }
 
 export const readableFdParam = z.object({ fd: coerceFd([1, 2]) });
@@ -271,7 +271,7 @@ export const InstanceParametersResponse = z.object({
     parameters: z.record(z.string(), z.unknown())
 });
 
-const queryBoolean = z.preprocess(value => {
+const queryBoolean = z.preprocess((value) => {
     if (value === "true" || value === "1") return true;
     if (value === "false" || value === "0") return false;
 
@@ -291,22 +291,38 @@ export const DeleteHubResponse = z.object({
     disconnected: z.boolean().optional()
 });
 
-export const StoreItemPayload = z.object({
-    path: z.string().optional(),
-    directory: z.string().optional(),
-    filename: z.string().optional()
-}).passthrough();
+export const StoreItemPayload = z
+    .object({
+        path: z.string().optional(),
+        directory: z.string().optional(),
+        filename: z.string().optional()
+    })
+    .passthrough();
 
-export const StoreClearQuery = z.object({
-    force: queryBoolean.optional()
-}).passthrough();
+export const StoreClearQuery = z
+    .object({
+        force: queryBoolean.optional()
+    })
+    .passthrough();
 
 export const StoreClearResponse = z.object({
     cleared: z.boolean()
 });
 
+// Keep ingress content types syntactically broad so handlers can distinguish
+// malformed names (400) from unsupported media types (415). Response topics
+// remain strict through `Topic` above.
 export const TopicCreatePayload = z.object({
-    topic: Topic
+    topic: z.object({
+        name: z.string().refine((value) => /^[A-Za-z0-9_.+-]+$/.test(value), "Invalid topic name"),
+        contentType: z.string(),
+        origin: z
+            .object({
+                type: z.union([z.literal("hub"), z.literal("space")]),
+                id: z.string().min(1)
+            })
+            .optional()
+    })
 });
 
 export const TopicCreateResponse = z.object({
@@ -370,7 +386,8 @@ export function opResponse<T extends z.ZodTypeAny>(resultSchema: T) {
     return z.object({
         operation: Operation,
         result: resultSchema.optional(),
-        error: ErrorBody.optional()
+        error: ErrorBody.optional(),
+        opStatus: z.string().optional()
     });
 }
 

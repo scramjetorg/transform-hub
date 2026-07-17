@@ -3,6 +3,8 @@ import { ObjLogger } from "@scramjet/obj-logger";
 import { PassThrough } from "stream";
 
 import { HostAPIHandler } from "../src/lib/api/host-api";
+import { Topic } from "../src/lib/serviceDiscovery/topic";
+import TopicId from "../src/lib/serviceDiscovery/topicId";
 import { RouteRecorder } from "@scramjet/api-server/test/lib/route-recorder";
 
 const logger = new ObjLogger("api-v2-hotwire-test");
@@ -174,4 +176,16 @@ test("HostAPIHandler local v2 Sequence handlers adapt existing Host behavior", a
     t.is(seqInstResult.items[0].id, "inst-1");
     t.is(seqInstResult.items[0].sequenceId, "seq-1");
     t.is(seqInstResult.items[0].status, "running");
+});
+
+test("HostAPIHandler v2 topic descriptor supports Topic prototype methods", async (t) => {
+    const recorder = new RouteRecorder();
+    const topic = new Topic(new TopicId("descriptor-topic"), "text/plain", { type: "hub", id: "hub-1" });
+    const host = { ...createHostStub(), serviceDiscovery: { getTopics: () => [topic] } };
+
+    new HostAPIHandler(recorder.asApiExpose(), host, "1.2.3", "test-build").attach();
+
+    const result = await (recorder.require("get", "/api/v2/topics").handler as Function)({});
+    t.deepEqual(result.items, [{ name: "descriptor-topic", contentType: "text/plain", origin: { type: "hub", id: "hub-1" } }]);
+    topic.destroy();
 });

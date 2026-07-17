@@ -123,3 +123,15 @@ test("Manager v2 expanded manifest includes shared Host paths without Host impor
     t.false(source.includes("@scramjet/host"));
     t.false(source.includes("packages/host"));
 });
+
+test("direct Manager topic info maps TOPIC_NOT_FOUND to 404 with the canonical code body", async t => {
+    const manager = createManagerStub(new RouteRecorder()) as any;
+    const registrations: any[] = [];
+    registerVerser2Routes({ register: registration => registrations.push(registration) }, new ManagerAPIV2Handler(manager).createV2Router());
+
+    const info = registrations.find(registration => registration.fullPath === "/api/v2/topics/:name");
+    t.deepEqual(await info.handle({ method: "GET", path: "/api/v2/topics/orders", params: { name: "orders" } }), {
+        status: 404,
+        body: { error: { code: "TOPIC_NOT_FOUND", message: "Topic orders not found" } }
+    });
+});

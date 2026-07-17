@@ -97,8 +97,14 @@ function hubRouteSet() {
         topics: Router.get("/topics", { schemas: { response: listResponse(Topic) } }),
         createTopic: Router.post("/topics", { schemas: { headers: RestAPI2Schemas.headers.http, body: TopicCreatePayload, response: opResponse(TopicCreateResponse) } }),
         deleteTopic: Router.route("delete", "/topics/:name", { schemas: { params: RestAPI2Schemas.params.topic, response: opResponse(TopicDeleteResponse) } }),
-        topicRead: Router.get("/topics/:name/stream", { kind: "upstream", schemas: { params: RestAPI2Schemas.params.topic, headers: RestAPI2Schemas.headers.http, response: RestAPI2Schemas.stream } }),
-        topicWrite: Router.post("/topics/:name/stream", { kind: "downstream", schemas: { params: RestAPI2Schemas.params.topic, headers: RestAPI2Schemas.headers.http, response: opResponse(TopicStreamResponse) } }),
+        topicRead: Router.get("/topics/:name/stream", {
+            kind: "upstream",
+            schemas: { params: RestAPI2Schemas.params.topic, headers: RestAPI2Schemas.headers.http, response: RestAPI2Schemas.stream }
+        }),
+        topicWrite: Router.post("/topics/:name/stream", {
+            kind: "downstream",
+            schemas: { params: RestAPI2Schemas.params.topic, headers: RestAPI2Schemas.headers.http, response: opResponse(TopicStreamResponse) }
+        }),
         logs: Router.get("/logs", { kind: "upstream", schemas: { response: LogRecord } }),
         audit: Router.get("/audit", { kind: "upstream", schemas: { response: RestAPI2Schemas.stream } })
     } as const;
@@ -107,9 +113,14 @@ function hubRouteSet() {
 function sequenceRouteSet() {
     return {
         sendSequence: Router.route("post", "/", { kind: "downstream", schemas: { body: SendSequencePayload, response: opResponse(SequenceResponse) } }),
-        updateSequence: Router.route("put", "/:sequenceId", { kind: "downstream", schemas: { params: RestAPI2Schemas.params.sequence, body: SendSequencePayload, response: opResponse(SequenceResponse) } }),
+        updateSequence: Router.route("put", "/:sequenceId", {
+            kind: "downstream",
+            schemas: { params: RestAPI2Schemas.params.sequence, body: SendSequencePayload, response: opResponse(SequenceResponse) }
+        }),
         deleteSequence: Router.route("delete", "/:sequenceId", { schemas: { params: RestAPI2Schemas.params.sequence, response: opResponse(DeleteSequenceResponse) } }),
-        startSequence: Router.post("/:sequenceId/instances", { schemas: { params: RestAPI2Schemas.params.sequence, body: StartSequencePayload, response: opResponse(StartSequenceResponse) } }),
+        startSequence: Router.post("/:sequenceId/instances", {
+            schemas: { params: RestAPI2Schemas.params.sequence, body: StartSequencePayload, response: opResponse(StartSequenceResponse) }
+        }),
         getSequence: Router.get("/:sequenceId", { schemas: { params: RestAPI2Schemas.params.sequence, response: SequenceResponse } }),
         getSequenceInstances: Router.get("/:sequenceId/instances", { schemas: { params: RestAPI2Schemas.params.sequence, response: listResponse(Instance) } })
     } as const;
@@ -160,11 +171,19 @@ function spaceRouteSet() {
         entities: Router.get("/entities", { schemas: { response: listResponse(Entity) } }),
         topics: Router.get("/topics", { schemas: { response: listResponse(Topic) } }),
         topicInfo: Router.get("/topics/:name", { schemas: { params: RestAPI2Schemas.params.topic, response: Topic } }),
-        topicRead: Router.get("/topics/:name/stream", { kind: "upstream", schemas: { params: RestAPI2Schemas.params.topic, headers: RestAPI2Schemas.headers.http, response: RestAPI2Schemas.stream } }),
-        topicWrite: Router.post("/topics/:name/stream", { kind: "downstream", schemas: { params: RestAPI2Schemas.params.topic, headers: RestAPI2Schemas.headers.http, response: opResponse(TopicStreamResponse) } }),
+        topicRead: Router.get("/topics/:name/stream", {
+            kind: "upstream",
+            schemas: { params: RestAPI2Schemas.params.topic, headers: RestAPI2Schemas.headers.http, response: RestAPI2Schemas.stream }
+        }),
+        topicWrite: Router.post("/topics/:name/stream", {
+            kind: "downstream",
+            schemas: { params: RestAPI2Schemas.params.topic, headers: RestAPI2Schemas.headers.http, response: opResponse(TopicStreamResponse) }
+        }),
         logs: Router.get("/logs", { kind: "upstream", schemas: { response: LogRecord } }),
         audit: Router.get("/audit", { kind: "upstream", schemas: { response: RestAPI2Schemas.stream } }),
-        deleteHub: Router.route("delete", "/inventory/hubs/:hubId", { schemas: { params: RestAPI2Schemas.params.hub, query: DeleteHubQuery.optional(), response: opResponse(DeleteHubResponse) } }),
+        deleteHub: Router.route("delete", "/inventory/hubs/:hubId", {
+            schemas: { params: RestAPI2Schemas.params.hub, query: DeleteHubQuery.optional(), response: opResponse(DeleteHubResponse) }
+        }),
         storageSequences: Router.get("/storage/sequences", { schemas: { response: listResponse(StoreItem) } }),
         storageObjectRead: Router.get("/storage/objects/:directory/:filename?", { kind: "upstream", schemas: { params: StoreItemPayload, response: RestAPI2Schemas.stream } }),
         storageObjectWrite: Router.route("put", "/storage/objects/:filename?", { kind: "downstream", schemas: { params: StoreItemPayload, response: StoreItem } }),
@@ -231,7 +250,7 @@ export const RestAPI2RouteTree = {
         resolvers: hubResolverSet,
         groups: {
             sequence: { node: "sequence", routes: sequenceRouteSet },
-            topics: { routeKeys: ["topics", "createTopic", "deleteTopic", "topicRead", "topicWrite"] },
+            topics: { routeKeys: ["topics", "topicRead", "topicWrite"] },
             logs: { routeKeys: ["logs"] },
             audit: { routeKeys: ["audit"] }
         },
@@ -273,24 +292,19 @@ function instanceRouter(): RouterDefinition {
 function hubRouter(basePath = "/api/v2"): RouterDefinition {
     const resolver = RestAPI2RouteTree.hub.resolvers().instance;
 
-    return Router.create({ basePath })
-        .mount("/", hubRoutesRouter())
-        .mount("/sequences", sequenceRouter())
-        .resolve(resolver.path, resolver);
+    return Router.create({ basePath }).mount("/", hubRoutesRouter()).mount("/sequences", sequenceRouter()).resolve(resolver.path, resolver);
 }
 
 function spaceRouter(basePath = "/api/v2"): RouterDefinition {
     const resolver = RestAPI2RouteTree.space.resolvers(basePath).hub;
 
-    return routerFromRouteSet(RestAPI2RouteTree.space.routes(), basePath)
-        .resolve(resolver.path, resolver);
+    return routerFromRouteSet(RestAPI2RouteTree.space.routes(), basePath).resolve(resolver.path, resolver);
 }
 
 function rootRouter(basePath = "/api/v2"): RouterDefinition {
     const resolver = RestAPI2RouteTree.root.resolvers(basePath).space;
 
-    return routerFromRouteSet(RestAPI2RouteTree.root.routes(), basePath)
-        .resolve(resolver.path, resolver);
+    return routerFromRouteSet(RestAPI2RouteTree.root.routes(), basePath).resolve(resolver.path, resolver);
 }
 
 export const RestAPI2RouteSets = {
@@ -318,12 +332,12 @@ export function getOpaqueRouteKeys<TRoutes extends Record<string, RouteDefinitio
     node: RestAPI2RouteTreeRouteNode<string, string, TRoutes>
 ): Array<Extract<keyof TRoutes, string>> {
     return Object.values(node.groups || {})
-        .filter(group => group.opaque)
-        .flatMap(group => group.routeKeys ? [...group.routeKeys] : []) as Array<Extract<keyof TRoutes, string>>;
+        .filter((group) => group.opaque)
+        .flatMap((group) => (group.routeKeys ? [...group.routeKeys] : [])) as Array<Extract<keyof TRoutes, string>>;
 }
 
 export function getRestAPI2Route(router: RouterDefinition, method: HttpMethod, path: string): RouteDefinition {
-    const route = router.definitions().find(definition => definition.method === method && definition.path === path);
+    const route = router.definitions().find((definition) => definition.method === method && definition.path === path);
 
     if (!route) {
         throw new Error(`Missing RestAPI2 route contract: ${method.toUpperCase()} ${path}`);
