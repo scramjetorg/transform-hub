@@ -209,6 +209,7 @@
     per-scenario allowances. Focused Python (49), Bun (2), Node (4), and stream
     capture (4) tests passed; no skips or exceptions remain. Documentation
     matrix generation and `npm run docs:check` passed.
+  - Phase checkpoint commit: `6cc76f77`; draft PR verification comment updated.
 - [ ] Task: Conductor - Phase Completion 'AppContext runtime conformance' (Protocol in workflow.md)
 
 ## Phase 6: Capability-dependent documentation and final alignment
