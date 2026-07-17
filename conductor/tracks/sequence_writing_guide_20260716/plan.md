@@ -244,6 +244,8 @@
     runner.ts` TypeScript errors; no guide claim depends on that blocked surface.
     Compiler extraction allowances are 786432 bytes and 2097152 bytes with
     cleanup; no phase-specific skips apply.
+  - Phase checkpoint commits: `cff418d7`, `fcb447d3`; draft PR verification
+    comment updated.
 - [ ] Task: Conductor - Phase Completion 'Capability-dependent documentation and final alignment' (Protocol in workflow.md)
 
 ## Track completion
