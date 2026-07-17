@@ -14,7 +14,7 @@ Readiness is separate from liveness. Poll the Hub or Manager readiness signal an
 
 The sequence API is not an MCP server. It owns the route and its sequence-level authorization assumptions. An external MCP bridge may call it, but it owns its own MCP authentication, authorization, ingress, and lifecycle.
 
-See [Bridging job status to MCP](../examples/mcp-bridged-job-status.md) for the inline Node MCP SDK bridge, fixture cursor, and private Compose topology. The bridge is a separate process and is not supplied by STH.
+See [Bridging job status to MCP](../examples/mcp-bridged-job-status.md) for the inline Node MCP SDK bridge and fixture cursor. The private Compose topology contains the Hub only; the MCP bridge is a separate process that connects to that private Hub and is not supplied by STH.
 
 ## Limits and boundaries
 

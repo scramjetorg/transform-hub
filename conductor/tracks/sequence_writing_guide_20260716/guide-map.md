@@ -20,9 +20,10 @@ capability work, and synthetic test evidence.
   packages. Contract-bearing TypeScript/Python snippets are compiled or
   extraction-tested; Compose YAML is extracted to temporary test files for the
   MCP smoke only.
-- The MCP walkthrough uses STH, a file-loaded/autostarted sequence, and a Node
-  MCP SDK bridge in inline Compose. Private-network/tunnel, MCP bridge,
-  and sequence API ownership/security boundaries remain separate.
+- The MCP walkthrough uses a private Hub-only Compose topology with a
+  file-loaded/autostarted sequence; the Node MCP SDK bridge runs separately
+  against that private Hub. Private-network/tunnel, MCP bridge, and sequence
+  API ownership/security boundaries remain separate.
 - The file-backed mock cursor is fixture- and documentation-only, requires no
   external service, and is an ordinary sequence-local temporary file rather than
   a Compose service, container, or production recommendation. Guides state its

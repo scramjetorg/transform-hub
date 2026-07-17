@@ -28,7 +28,7 @@ export function createHealthControlFacade() {
             return { operation: "stop", outcome: "timeout", timeoutMs };
         },
         kill: async () => {
-            lifecycle.push({ state: "killed", terminal: true });
+            lifecycle.push({ state: "killing", terminal: true });
             return { operation: "kill", outcome: "killed" };
         },
         fail: async (_error: unknown) => {

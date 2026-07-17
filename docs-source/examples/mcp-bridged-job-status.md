@@ -12,7 +12,7 @@ Read [exposing a sequence HTTP API](../sequences/sequence-api-exposure.md) first
 
 ## Sequence endpoint
 
-Prerequisites: Node.js 18+, a packaged sequence, a process-adapter Hub, and the Node MCP SDK in the separately run bridge. A file-backed cursor below is a documentation/fixture-only temporary file; it is not a Compose service or production store.
+Prerequisites: Node.js 18+, a packaged sequence, a process-adapter Hub, and the Node MCP SDK in the separately run bridge. The private Compose example runs the Hub; the bridge is a separate process attached to that private network (or reached through an independently secured tunnel). A file-backed cursor below is a documentation/fixture-only temporary file; it is not a Compose service or production store.
 
 ```typescript
 import { readFile } from "node:fs/promises";
@@ -74,4 +74,4 @@ The fixture file is intentionally ordinary JSON: create it with `{ "instanceId":
 
 The trust boundary is sequence API → MCP bridge → caller. Validate caller identity at the bridge, authorize each tool, and keep the sequence route private unless an independently secured gateway protects it. A dropped HTTP or MCP connection loses the in-flight observation; neither topics nor events provide replay.
 
-For the smallest validation, run `npm run docs:check`, then run `cd packages/sequence-test && ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" SCRAMJET_AVA_MEMORY_GUARD=1 node ../../scripts/run-ava.js test/phase6-guide-contracts.spec.ts`. For a live bridge, start the Compose file from the configuration guide and poll `GET /api/v1/status` until `ready: true`; do not claim MCP readiness from an arbitrary sleep or from an HTTP listener that has not passed sequence validation.
+For the smallest validation, run `npm run docs:check`, then run `cd packages/sequence-test && ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" SCRAMJET_AVA_MEMORY_GUARD=1 node ../../scripts/run-ava.js test/phase6-guide-contracts.spec.ts --match="*API and MCP evidence keeps sequence exposure separate from the external bridge*"`. For a live bridge, start the Hub-only Compose file from the configuration guide and poll `GET /api/v1/status` until `ready: true`; do not claim MCP readiness from an arbitrary sleep or from an HTTP listener that has not passed sequence validation.

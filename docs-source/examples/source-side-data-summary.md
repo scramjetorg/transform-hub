@@ -59,8 +59,20 @@ the source data:
 ```typescript
 import type { ReadableStream, SequenceApplication, SequenceAppContext } from "@scramjet/sequence-types";
 
-type SourceSummary = { files: Array<{ file: string; bytes: number }> };
+type SourceSummaryItem = { file: string; bytes: number };
+type SourceSummary = { files: SourceSummaryItem[] };
 type SummaryTotals = { files: number; bytes: number };
+
+function isSourceSummary(value: unknown): value is SourceSummary {
+  if (typeof value !== "object" || value === null || !Array.isArray((value as { files?: unknown }).files)) return false;
+  return (value as { files: unknown[] }).files.every(item =>
+    typeof item === "object" && item !== null &&
+    typeof (item as { file?: unknown }).file === "string" &&
+    typeof (item as { bytes?: unknown }).bytes === "number" &&
+    Number.isFinite((item as { bytes: number }).bytes) &&
+    (item as { bytes: number }).bytes >= 0
+  );
+}
 
 const application: SequenceApplication<SourceSummary, SummaryTotals> = async function (
   this: SequenceAppContext,
@@ -69,6 +81,7 @@ const application: SequenceApplication<SourceSummary, SummaryTotals> = async fun
   let files = 0;
   let bytes = 0;
   for await (const summary of input) {
+    if (!isSourceSummary(summary)) throw new Error("invalid source summary shape");
     for (const item of summary.files) {
       if (item.file.includes("..") || item.file.startsWith("/")) throw new Error("invalid source-relative file");
       files++;

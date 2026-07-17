@@ -123,11 +123,11 @@ test("stop timeout reports timeout without skipping terminal conformance", async
     t.deepEqual(facade.lifecycle().at(-1), { state: "stopping", terminal: false });
 });
 
-test("kill is distinct from graceful stop and reaches terminal killed state", async t => {
+test("kill is distinct from graceful stop and reaches terminal killing state", async t => {
     const facade = createFacade();
 
     t.deepEqual(await facade.kill(), { operation: "kill", outcome: "killed" });
-    t.deepEqual(facade.lifecycle().at(-1), { state: "killed", terminal: true });
+    t.deepEqual(facade.lifecycle().at(-1), { state: "killing", terminal: true });
 });
 
 test("errors are classified and terminal lifecycle state is observable", async t => {

@@ -123,7 +123,26 @@ test("control progression preserves health details and distinguishes stop, kill,
     t.deepEqual(await control.fail(new Error("site unavailable")), {
         operation: "error", outcome: "errored", code: "ERR_SEQUENCE"
     });
-    t.deepEqual(control.lifecycle().map(entry => entry.state), ["stopping", "killed", "errored"]);
+    t.deepEqual(control.lifecycle().map(entry => entry.state), ["stopping", "killing", "errored"]);
+});
+
+test("direct Hub and Manager-routed control flow is documented with terminal outcomes", t => {
+    const controlGuide = docs("sequences", "sequence-control.md");
+    const wetGuide = docs("examples", "customer-site-health-control.md");
+    t.regex(controlGuide, /direct:\s+caller -> Hub -> instance -> terminal state/);
+    t.regex(controlGuide, /routed:\s+caller -> Manager -> connected Hub -> instance -> terminal state/);
+    t.regex(controlGuide, /health[\s\S]*stop[\s\S]*kill[\s\S]*timeout[\s\S]*errored/);
+    t.regex(controlGuide, /`stopping`[\s\S]*`killing`[\s\S]*`completed`[\s\S]*`errored`[\s\S]*`gone`/);
+
+    // Real Manager-routed control conformance test validates direct Hub semantics
+    const conformanceTest = readFileSync(
+        path.join(repoRoot, "packages/manager/test/manager-api-v2-hotwire.spec.ts"), "utf8"
+    );
+    t.regex(conformanceTest, /real Manager-routed CSI control preserves direct Hub semantics/);
+    t.regex(conformanceTest, /InstanceStatus\.COMPLETED/);
+    t.regex(conformanceTest, /RunnerMessageCode\.(STOP|KILL)/);
+
+    t.regex(wetGuide, /bounded timeout[\s\S]*kill/);
 });
 
 test("API and MCP evidence keeps sequence exposure separate from the external bridge", async t => {
@@ -284,4 +303,11 @@ test("Phase 6 lifecycle, control, API/MCP, communication, topics, and AppContext
     t.regex(communicationGuide, /Hub\/Space|events/);
     t.regex(topicsGuide, /topic|content type/);
     t.regex(appContextGuide, /sequence-types|parity|runtime wrapper/);
+
+    const sourceSummary = docs("examples", "source-side-data-summary.md");
+    t.regex(sourceSummary, /function isSourceSummary\(value: unknown\): value is SourceSummary/);
+    t.regex(sourceSummary, /Array\.isArray/);
+    t.regex(sourceSummary, /Number\.isFinite/);
+    t.regex(sourceSummary, /bytes: number \}\)\.bytes >= 0/);
+    t.regex(sourceSummary, /invalid source summary shape/);
 });

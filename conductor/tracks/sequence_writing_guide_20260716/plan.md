@@ -246,17 +246,24 @@
     cleanup; no phase-specific skips apply.
   - Phase checkpoint commits: `cff418d7`, `fcb447d3`; draft PR verification
     comment updated.
-- [ ] Task: Conductor - Phase Completion 'Capability-dependent documentation and final alignment' (Protocol in workflow.md)
+- [x] Task: Conductor - Phase Completion 'Capability-dependent documentation and final alignment' (Protocol in workflow.md)
 
 ## Track completion
 
-- [ ] Task: Review all eight guide pairs, the guide map, generated output, and
+- [x] Task: Review all eight guide pairs, the guide map, generated output, and
   collateral documentation against the specification.
-- [ ] Task: Reconcile deferred review findings against `td.md`, documenting
+- [x] Task: Reconcile deferred review findings against `td.md`, documenting
   accepted or rejected candidates with rationale.
-- [ ] Task: Run the final narrowest sufficient validation suite and record exact
+- [x] Task: Run the final narrowest sufficient validation suite and record exact
   memory-guarded commands, effective thresholds, skips/exceptions, and deferred
   follow-ups.
+  - `SCRAMJET_AVA_MEMORY_GUARD=1` focused AVA command passed 25 guide/health/
+    topic tests under `ulimit -v 1835008` and `NODE_OPTIONS="--max-old-space-size=1024"`.
+    Effective parent threshold: 524288 bytes; Phase 6 compiler tests use
+    documented 786432/2097152-byte allowances. `npm run docs:check`, runtime
+    invariants (8), typings split (4), and changed-file Biome lint passed.
+    Deferred live-Compose validation requires a better-provisioned CI host;
+    owner recorded in `td.md`.
 - [ ] Task: Push the final phase checkpoint, update the draft PR, and mark it
   ready for review only after final verification succeeds.
 - [ ] Task: Conductor - Track Completion 'sequence_writing_guide_20260716' (Protocol in workflow.md)
