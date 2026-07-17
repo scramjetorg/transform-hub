@@ -182,14 +182,33 @@
 
 ## Phase 5: AppContext runtime conformance
 
-- [ ] Task: Write failing conformance tests first for health/details, lifecycle
+- [x] Task: Write failing conformance tests first for health/details, lifecycle
   handlers, logs, events, Hub/Space clients, and exposed APIs in Node, Python,
   and Bun.
-- [ ] Task: Implement runtime wrapper and shared-contract changes required for
+  - ADR freezes observable parity and intentional differences. Focused Python
+    Hub/Space/API and Bun propagation tests are red for missing runtime support;
+    Node baseline tests pass.
+- [x] Task: Implement runtime wrapper and shared-contract changes required for
   parity; record every intentional runtime difference explicitly.
-- [ ] Task: Run actual multi-runtime integration coverage where sequence-test
+  - Python now provides scoped Hub/Space transport views, boot-config target
+    propagation, effective lifecycle callbacks, and ASGI attachment. Hosted Bun
+    forwards to Node; direct Bun rejects AppContext conformance. Local storage,
+    save persistence, and a native Bun context remain intentional exclusions.
+- [x] Task: Run actual multi-runtime integration coverage where sequence-test
   cannot execute a runtime; perform deduplication, record validation/memory
   evidence, commit, push, and update the draft PR.
+  - Real hosted integration passed serial Docker BDD scenarios `APPCONTEXT-002
+    TC-001` (Python) and `APPCONTEXT-002 TC-002` (Bun), each 13/13 steps with
+    no leaked repository processes. They cover health, lifecycle, LOG/stdout,
+    Hub/Space routing, exposed API, and scoped events. Direct Bun remains an
+    explicit unsupported AppContext mode; hosted Bun delegates to Node.
+  - Memory evidence: `SCRAMJET_BDD_MEMORY_GUARD=1 node scripts/run-bdd.js --
+    --name="APPCONTEXT-002 TC-001"` and the corresponding TC-002 command use
+    Docker's supported 1536m/2-CPU runner limit, a 524288-byte parent growth
+    threshold, 104857600-byte child RSS/working-set thresholds, and documented
+    per-scenario allowances. Focused Python (49), Bun (2), Node (4), and stream
+    capture (4) tests passed; no skips or exceptions remain. Documentation
+    matrix generation and `npm run docs:check` passed.
 - [ ] Task: Conductor - Phase Completion 'AppContext runtime conformance' (Protocol in workflow.md)
 
 ## Phase 6: Capability-dependent documentation and final alignment

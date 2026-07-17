@@ -27,6 +27,7 @@ export interface RunnerBunVerser2RuntimeConfig {
     runnerRouteDomain: string;
     hubBrokerId: string;
     hubTargetDomain?: string;
+    spaceTargetDomain?: string;
     tls?: Record<string, unknown>;
     leaseAcquireTimeoutMs?: number;
     minWaitingStreams?: number;
@@ -51,8 +52,21 @@ export function validateBootConfig(value: unknown): RunnerBunBootConfig {
         throw new Error("runner-bun: boot config must be a JSON object");
     }
 
-    const { sequencePath, sequenceArgs, instanceId, instancesServerPort, instancesServerHost,
-        appConfig, sequenceInfo, instanceName, logLevel, exposePath, exposeHost, requestsUnsupported, verser2Runtime } = value;
+    const {
+        sequencePath,
+        sequenceArgs,
+        instanceId,
+        instancesServerPort,
+        instancesServerHost,
+        appConfig,
+        sequenceInfo,
+        instanceName,
+        logLevel,
+        exposePath,
+        exposeHost,
+        requestsUnsupported,
+        verser2Runtime
+    } = value;
 
     if (typeof sequencePath !== "string" || sequencePath.length === 0) {
         throw new Error("runner-bun: boot config field 'sequencePath' must be a non-empty string");
@@ -66,8 +80,7 @@ export function validateBootConfig(value: unknown): RunnerBunBootConfig {
         throw new Error("runner-bun: boot config field 'instanceId' must be a non-empty string");
     }
 
-    if (instancesServerPort !== undefined &&
-        (typeof instancesServerPort !== "number" || !Number.isInteger(instancesServerPort) || instancesServerPort <= 0)) {
+    if (instancesServerPort !== undefined && (typeof instancesServerPort !== "number" || !Number.isInteger(instancesServerPort) || instancesServerPort <= 0)) {
         throw new Error("runner-bun: boot config field 'instancesServerPort' must be a positive integer when provided");
     }
 
@@ -172,6 +185,10 @@ function validateVerser2RuntimeConfig(value: unknown): RunnerBunVerser2RuntimeCo
 
     if (value.hubTargetDomain !== undefined) {
         config.hubTargetDomain = requireNonEmptyString(value.hubTargetDomain, "verser2Runtime.hubTargetDomain");
+    }
+
+    if (value.spaceTargetDomain !== undefined) {
+        config.spaceTargetDomain = requireNonEmptyString(value.spaceTargetDomain, "verser2Runtime.spaceTargetDomain");
     }
 
     if (value.tls !== undefined) {

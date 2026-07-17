@@ -8,6 +8,9 @@ from runner_python.verser2_runtime import (
     PythonSequenceApiExposure,
     create_python_hub_client,
     create_python_sequence_guest,
+    python_guest_id,
+    python_rpc_route_domain,
+    python_rpc_url,
     start_python_sequence_guest,
 )
 
@@ -35,8 +38,8 @@ class FakeGuest:
         self.closed = False
         self.attached = []
 
-    def attach(self, app):
-        self.attached.append(app)
+    def attach(self, app, domain=None):
+        self.attached.append((app, domain))
         return self
 
     async def connect(self) -> None:
@@ -53,13 +56,28 @@ def config(**overrides) -> Verser2RuntimeConfig:
         "runnerRouteDomain": "runner.inst.scramjet.internal",
         "hubBrokerId": "runner.inst.hub.broker",
         "hubTargetDomain": "sth.local.scramjet.internal",
-        "tls": {"caFile": "/ca.pem", "certFile": "/client.crt", "keyFile": "/client.key", "passphrase": "secret"},
+        "tls": {
+            "caFile": "/ca.pem",
+            "certFile": "/client.crt",
+            "keyFile": "/client.key",
+            "passphrase": "secret",
+        },
         "leaseAcquireTimeoutMs": 1234,
         "minWaitingStreams": 3,
         **overrides,
     }
 
     return Verser2RuntimeConfig(**values)
+
+
+def test_python_guest_identity_and_rpc_route_are_canonical() -> None:
+    assert python_guest_id("runner.inst.guest") == "runner.inst.guest.python"
+    assert python_rpc_route_domain("runner.inst.scramjet.internal") == (
+        "runner.inst.scramjet.internal.rpc"
+    )
+    assert python_rpc_url("runner.inst.scramjet.internal") == (
+        "http://runner.inst.scramjet.internal.rpc"
+    )
 
 
 @pytest.mark.asyncio
@@ -75,19 +93,24 @@ async def test_create_python_hub_client_connects_broker_with_tls_options() -> No
 
     assert hub is not None
     assert broker.connected is True
-    assert calls == [{
-        "host_url": "https://verser2.example",
-        "broker_id": "runner.inst.hub.broker",
-        "tls_ca_file": "/ca.pem",
-        "tls_cert_file": "/client.crt",
-        "tls_key_file": "/client.key",
-        "tls_key_password": "secret",
-    }]
+    assert calls == [
+        {
+            "host_url": "https://verser2.example",
+            "broker_id": "runner.inst.hub.broker",
+            "tls_ca_file": "/ca.pem",
+            "tls_cert_file": "/client.crt",
+            "tls_key_file": "/client.key",
+            "tls_key_password": "secret",
+        }
+    ]
 
 
 @pytest.mark.asyncio
 async def test_create_python_hub_client_returns_none_without_verser2_config() -> None:
-    assert await create_python_hub_client(None, broker_factory=lambda **_: FakeBroker()) is None
+    assert (
+        await create_python_hub_client(None, broker_factory=lambda **_: FakeBroker())
+        is None
+    )
 
 
 @pytest.mark.asyncio
@@ -98,12 +121,14 @@ async def test_python_hub_client_routes_requests_to_sth_api_domain() -> None:
     response = await client.post("/sequence", headers={"x-test": "1"}, body=b"payload")
 
     assert response == {"status": 200}
-    assert broker.requests == [{
-        "method": "POST",
-        "url": "http://sth.local.scramjet.internal/api/v1/sequence",
-        "headers": {"x-test": "1"},
-        "body": b"payload",
-    }]
+    assert broker.requests == [
+        {
+            "method": "POST",
+            "url": "http://sth.local.scramjet.internal/api/v1/sequence",
+            "headers": {"x-test": "1"},
+            "body": b"payload",
+        }
+    ]
 
 
 @pytest.mark.asyncio
@@ -116,7 +141,9 @@ async def test_python_hub_client_closes_underlying_broker() -> None:
     assert broker.closed is True
 
 
-def test_create_python_sequence_guest_uses_explicit_routed_domain_and_waiting_streams() -> None:
+def test_create_python_sequence_guest_uses_explicit_routed_domain_and_waiting_streams() -> (
+    None
+):
     calls = []
     app = object()
 
@@ -127,17 +154,19 @@ def test_create_python_sequence_guest_uses_explicit_routed_domain_and_waiting_st
     guest = create_python_sequence_guest(config(), app, guest_factory=guest_factory)
 
     assert guest == "guest"
-    assert calls == [{
-        "host_url": "https://verser2.example",
-        "guest_id": "runner.inst.guest",
-        "app": app,
-        "routed_domains": ["runner.inst.scramjet.internal"],
-        "min_waiting_streams": 3,
-        "tls_ca_file": "/ca.pem",
-        "tls_cert_file": "/client.crt",
-        "tls_key_file": "/client.key",
-        "tls_key_password": "secret",
-    }]
+    assert calls == [
+        {
+            "host_url": "https://verser2.example",
+            "guest_id": "runner.inst.guest.python",
+            "app": app,
+            "routed_domains": ["runner.inst.scramjet.internal.rpc"],
+            "min_waiting_streams": 3,
+            "tls_ca_file": "/ca.pem",
+            "tls_cert_file": "/client.crt",
+            "tls_key_file": "/client.key",
+            "tls_key_password": "secret",
+        }
+    ]
 
 
 def test_create_python_sequence_guest_maps_pfx_passphrase() -> None:
@@ -148,7 +177,9 @@ def test_create_python_sequence_guest_maps_pfx_passphrase() -> None:
         return "guest"
 
     create_python_sequence_guest(
-        config(tls={"caFile": "/ca.pem", "pfxFile": "/client.p12", "passphrase": "secret"}),
+        config(
+            tls={"caFile": "/ca.pem", "pfxFile": "/client.p12", "passphrase": "secret"}
+        ),
         object(),
         guest_factory=guest_factory,
     )
@@ -168,11 +199,11 @@ def test_python_sequence_api_exposure_attaches_app_to_bound_guest() -> None:
 
     exposure.bind_guest(guest)
     assert exposure.guest is guest
-    assert guest.attached == [first_app]
+    assert guest.attached == [(first_app, None)]
 
     assert exposure.use(second_app) is second_app
     assert exposure.app is second_app
-    assert guest.attached == [first_app, second_app]
+    assert guest.attached == [(first_app, None), (second_app, None)]
 
 
 @pytest.mark.asyncio
@@ -186,19 +217,31 @@ async def test_start_python_sequence_guest_connects_and_binds_exposure() -> None
         calls.append(kwargs)
         return guest
 
-    started = await start_python_sequence_guest(config(), exposure, guest_factory=guest_factory)
+    started = await start_python_sequence_guest(
+        config(), exposure, guest_factory=guest_factory
+    )
 
     assert started is guest
     assert guest.connected is True
     assert exposure.guest is guest
-    assert guest.attached == [app]
+    assert guest.attached == [(app, "runner.inst.scramjet.internal.rpc")]
     assert calls[0]["app"] is app
-    assert calls[0]["routed_domains"] == ["runner.inst.scramjet.internal"]
+    assert calls[0]["routed_domains"] == ["runner.inst.scramjet.internal.rpc"]
 
 
 @pytest.mark.asyncio
 async def test_start_python_sequence_guest_skips_without_config_or_exposure() -> None:
     exposure = PythonSequenceApiExposure()
 
-    assert await start_python_sequence_guest(None, exposure, guest_factory=lambda **_: FakeGuest()) is None
-    assert await start_python_sequence_guest(config(), None, guest_factory=lambda **_: FakeGuest()) is None
+    assert (
+        await start_python_sequence_guest(
+            None, exposure, guest_factory=lambda **_: FakeGuest()
+        )
+        is None
+    )
+    assert (
+        await start_python_sequence_guest(
+            config(), None, guest_factory=lambda **_: FakeGuest()
+        )
+        is None
+    )

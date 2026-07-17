@@ -43,12 +43,14 @@ class AppContext:
         self._last_definition: Any = None
         self._last_saved_state: Any = None
         self._sequence_logger: logging.Logger | None = None
+        self._request_stop: Callable[[dict[str, Any]], Any] | None = None
 
         # Public fields
         self.config: dict[str, Any] = {}
         self._app_config = self.config
         self.instance_id: str | None = None
         self.hub: Any | None = None
+        self.space: Any | None = None
         self.api: Any | None = None
         self.initial_state: Any = None
         self.local_storage: None = None
@@ -147,6 +149,8 @@ class AppContext:
         from sequence code; consumers may check ``_ended``.
         """
         self._ended = True
+        if self._request_stop is not None:
+            self._request_stop({"outcome": "ended"})
         return self
 
     def destroy(self, error: BaseException | None = None) -> "AppContext":
@@ -158,6 +162,20 @@ class AppContext:
         """
         self._destroyed = True
         self._destroy_error = error
+        if self._request_stop is not None:
+            self._request_stop(
+                {
+                    "outcome": "errored" if error is not None else "destroyed",
+                    "error": error,
+                }
+            )
+        return self
+
+    def bind_terminator(
+        self, request_stop: Callable[[dict[str, Any]], Any]
+    ) -> "AppContext":
+        """Bind end/destroy to the externally visible runtime terminator."""
+        self._request_stop = request_stop
         return self
 
     # --- Describe / Save ---

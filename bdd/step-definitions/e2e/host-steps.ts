@@ -74,6 +74,7 @@ let actualApiResponse: any;
 let containerId: string;
 let processId: number;
 let streams: { [key: string]: Promise<string | undefined> } = {};
+let streamContains: { [key: string]: Promise<Readable> } = {};
 let runnerEnded: Promise<void> = Promise.resolve();
 let signalRunnerEnded: () => void = () => undefined;
 
@@ -321,6 +322,7 @@ Before(() => {
     actualHealthResponse = "";
     actualStatusResponse = "";
     streams = {};
+    streamContains = {};
     runnerEnded = new Promise<void>(resolve => {
         signalRunnerEnded = resolve;
     });
@@ -383,6 +385,7 @@ After({}, async function (this: any) {
         }
         // Module state is outside CustomWorld and must be released explicitly.
         streams = {};
+        streamContains = {};
         actualHealthResponse = undefined;
         actualStatusResponse = undefined;
         actualApiResponse = undefined;
@@ -981,9 +984,21 @@ When("keep instance streams {string}", async function(this: CustomWorld, streamN
     streamNames.split(",").map((streamName: InstanceOutputStream) => {
         if (!this.resources.instance) assert.fail("Instance not existent");
 
-        streams[streamName] = this.resources.instance
-            .getStream(streamName)
-            .then(data => collectStreamUntilEndOrSignal(data, runnerEnded));
+        const dataPromise = this.resources.instance.getStream(streamName);
+        // The response stream has one producer owner. Tee it immediately so
+        // the live "contains" assertion can observe bytes before the runner
+        // ends, while the kept-stream assertion independently drains a buffer.
+        // Attaching two readers to the broker response itself races teardown
+        // and can cause ERR_STREAM_PREMATURE_CLOSE.
+        const tee = dataPromise.then(data => {
+            const live = new PassThrough();
+            const buffered = new PassThrough();
+            data.pipe(live);
+            data.pipe(buffered);
+            return { live, buffered };
+        });
+        streams[streamName] = tee.then(({ buffered }) => collectStreamUntilEndOrSignal(buffered, runnerEnded));
+        streamContains[streamName] = tee.then(({ live }) => live);
     });
 });
 
@@ -1155,6 +1170,12 @@ Then("{string} will be data named {string}", async function(this: CustomWorld, s
 });
 
 Then("{string} contains {string}", async function(this: CustomWorld, stream, text) {
+    if (Object.prototype.hasOwnProperty.call(streamContains, stream)) {
+        const data = await streamContains[stream];
+        if (!data) assert.fail("No output!");
+        await waitUntilStreamContains(data, text);
+        return;
+    }
     const output = (await this.resources.instance?.getStream(stream))?.pipe(new PassThrough({ encoding: "utf-8" }));
 
     if (!output) assert.fail("No output!");

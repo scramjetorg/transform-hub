@@ -80,7 +80,8 @@ export class RunnerAppContext<AppConfigType extends AppConfig, State, HubClientT
         id: string,
         logLevel: LogLevel,
         api: APIExpose,
-        localStorage: ILocalStorage
+        localStorage: ILocalStorage,
+        logger: IObjectLogger = new ObjLogger(`App:${id}`, {}, logLevel)
     ) {
         this.config = config;
         this.monitorStream = monitorStream;
@@ -93,7 +94,7 @@ export class RunnerAppContext<AppConfigType extends AppConfig, State, HubClientT
         this.instanceId = id;
         this.api = api;
         this.localStorage = localStorage;
-        this.logger = new ObjLogger(`App:${this.instanceId}`, {}, logLevel);
+        this.logger = logger;
     }
 
     hubClient(): HubClientType {

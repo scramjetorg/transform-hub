@@ -26,10 +26,13 @@ function resolveRunnerNodeEntry(): RunnerNodeEntry {
         // Fall through to compiled/source probing.
     }
 
-    const compiled = resolve(pkgRoot, "dist/bin/runner-node.js");
+    // Published/prebuilt workspace packages expose the compiled bin directly
+    // from their package root (`dist/runner-node/bin/...`), while a source
+    // checkout may resolve the package root to `packages/runner-node`.
+    const compiledCandidates = [resolve(pkgRoot, "bin/runner-node.js"), resolve(pkgRoot, "dist/bin/runner-node.js")];
 
-    if (existsSync(compiled)) {
-        return { entry: compiled, needsTsNode: false };
+    for (const compiled of compiledCandidates) {
+        if (existsSync(compiled)) return { entry: compiled, needsTsNode: false };
     }
 
     if (existsSync(srcEntry)) {
@@ -56,11 +59,23 @@ function runRunnerNode(bootConfigPath: string): Promise<number> {
         stdio: ["inherit", "inherit", "inherit", "ipc", "inherit", "inherit"]
     });
 
-    child.channel?.unref?.();
-
     return new Promise((resolveCode, reject) => {
-        child.once("error", reject);
-        child.once("exit", (code, signal) => {
+        const forwardSignal = (signal: NodeJS.Signals) => {
+            child.kill(signal);
+        };
+        const cleanupSignals = () => {
+            process.off("SIGINT", forwardSignal);
+            process.off("SIGTERM", forwardSignal);
+        };
+
+        process.on("SIGINT", forwardSignal);
+        process.on("SIGTERM", forwardSignal);
+        child.once("error", (error) => {
+            cleanupSignals();
+            reject(error);
+        });
+        child.once("close", (code, signal) => {
+            cleanupSignals();
             if (typeof code === "number") {
                 resolveCode(code);
                 return;
@@ -110,6 +125,10 @@ export async function bootstrap(): Promise<number> {
     const bootConfig = readBootConfig(bootConfigPath);
 
     if (bootConfig.instancesServerPort === undefined && bootConfig.instancesServerHost === undefined) {
+        if ((bootConfig.appConfig as Record<string, unknown> | undefined)?.requiresAppContext === true) {
+            throw new Error("runner-bun: direct Bun cannot provide AppContext; hosted Bun delegates to runner-node");
+        }
+
         let loaded: unknown;
 
         try {

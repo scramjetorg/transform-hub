@@ -29,5 +29,5 @@ module.exports = async function appcontextLifecycleSequence(_input) {
         }) + "\n"
     );
 
-    return { lifecycle: ["keepAlive", "end"], handled: true };
+    // Lifecycle conformance is exercised by the monitoring calls above.
 };

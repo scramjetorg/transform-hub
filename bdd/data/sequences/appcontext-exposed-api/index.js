@@ -31,5 +31,5 @@ module.exports = async function appcontextExposedApiSequence(_input) {
     await handled;
     this.end();
 
-    return { apiRoute: "/health", handled: true };
+    // The registered route is the observable result of this fixture.
 };

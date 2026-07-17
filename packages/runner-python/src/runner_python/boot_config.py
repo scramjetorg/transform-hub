@@ -32,6 +32,7 @@ class Verser2RuntimeConfig:
     runnerRouteDomain: str
     hubBrokerId: str
     hubTargetDomain: str | None = None
+    spaceTargetDomain: str | None = None
     tls: dict | None = None
     leaseAcquireTimeoutMs: int | None = None
     minWaitingStreams: int | None = None
@@ -117,6 +118,12 @@ def _validate_verser2_runtime(value: Any) -> Verser2RuntimeConfig | None:
             hub_target_domain, "verser2Runtime.hubTargetDomain"
         )
 
+    space_target_domain = data.get("spaceTargetDomain")
+    if space_target_domain is not None:
+        space_target_domain = _require_non_empty_string(
+            space_target_domain, "verser2Runtime.spaceTargetDomain"
+        )
+
     tls = data.get("tls")
     if tls is not None:
         tls = _require_object(tls, "verser2Runtime.tls")
@@ -127,6 +134,7 @@ def _validate_verser2_runtime(value: Any) -> Verser2RuntimeConfig | None:
         runnerRouteDomain=runner_route_domain,
         hubBrokerId=hub_broker_id,
         hubTargetDomain=hub_target_domain,
+        spaceTargetDomain=space_target_domain,
         tls=tls,
         leaseAcquireTimeoutMs=_validate_optional_positive_int(
             data.get("leaseAcquireTimeoutMs"), "verser2Runtime.leaseAcquireTimeoutMs"

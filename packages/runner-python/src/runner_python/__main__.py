@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import io
 import inspect
 import json
 import logging
@@ -58,6 +59,8 @@ from runner_python.verser2_runtime import (
     PythonHubClient,
     PythonSequenceApiExposure,
     create_python_hub_client,
+    create_python_space_client,
+    python_rpc_url,
     start_python_sequence_guest,
 )
 
@@ -179,7 +182,9 @@ class RuntimeTerminator:
         self._app_context = app_context
         self._monitoring_writer = monitoring_writer
         self._stopped = asyncio.Event()
+        self._completed = asyncio.Event()
         self.exit_code: int | None = None
+        self.outcome: str | None = None
 
     def is_set(self) -> bool:
         return self._stopped.is_set()
@@ -189,6 +194,12 @@ class RuntimeTerminator:
             return
 
         self._stopped.set()
+        outcome = payload.get("outcome")
+        error = payload.get("error")
+        errored = outcome == "errored" or isinstance(error, BaseException)
+        self.outcome = (
+            "errored" if errored else (str(outcome) if outcome else "stopped")
+        )
         timeout_seconds = payload.get("timeout", 0)
         timeout_ms = 0
 
@@ -204,8 +215,24 @@ class RuntimeTerminator:
                 "timeout": timeout_ms,
                 "canCallKeepalive": payload.get("canCallKeepalive", True),
             },
+            (
+                {
+                    "outcome": "errored" if errored else self.outcome,
+                    **(
+                        {"sequenceError": _serialize_exception(error)}
+                        if errored and isinstance(error, BaseException)
+                        else {}
+                    ),
+                }
+                if outcome is not None or errored
+                else {}
+            ),
         )
-        self.exit_code = 0
+        self.exit_code = 1 if errored else 0
+        self._completed.set()
+
+    async def wait(self) -> None:
+        await self._completed.wait()
 
 
 def _write_boot_error(message: str) -> None:
@@ -278,6 +305,7 @@ def _build_sequence_context(
     app_config: dict[str, Any],
     log_level: str,
     hub_client: PythonHubClient | None = None,
+    space_client: Any | None = None,
     api_exposure: PythonSequenceApiExposure | None = None,
     instance_id: str = "",
 ) -> AppContext:
@@ -288,6 +316,7 @@ def _build_sequence_context(
     app_context.config.update(app_config)
     app_context._app_config = app_context.config
     app_context.hub = hub_client
+    app_context.space = space_client
     app_context.api = api_exposure
     app_context.instance_id = instance_id
 
@@ -405,19 +434,25 @@ async def main() -> int:
         detach_stdout = getattr(streams.stdout, "detach", None)
         if callable(detach_stdout):
             with contextlib.suppress(Exception):
-                _STDIO_GUARDS.append(detach_stdout())
+                raw_stdout: Any = detach_stdout()
+                _STDIO_GUARDS.append(raw_stdout)
+                sys.stdout = io.TextIOWrapper(
+                    raw_stdout,
+                    encoding="utf-8",
+                    line_buffering=True,
+                    write_through=True,
+                )
         detach_stderr = getattr(streams.stderr, "detach", None)
         if callable(detach_stderr):
             with contextlib.suppress(Exception):
-                _STDIO_GUARDS.append(detach_stderr())
-        reconfigure_stdout = getattr(sys.stdout, "reconfigure", None)
-        if callable(reconfigure_stdout):
-            with contextlib.suppress(Exception):
-                reconfigure_stdout(line_buffering=True, write_through=True)
-        reconfigure_stderr = getattr(sys.stderr, "reconfigure", None)
-        if callable(reconfigure_stderr):
-            with contextlib.suppress(Exception):
-                reconfigure_stderr(line_buffering=True, write_through=True)
+                raw_stderr: Any = detach_stderr()
+                _STDIO_GUARDS.append(raw_stderr)
+                sys.stderr = io.TextIOWrapper(
+                    raw_stderr,
+                    encoding="utf-8",
+                    line_buffering=True,
+                    write_through=True,
+                )
     except Exception as exc:
         _write_boot_error(f"FD stream error: {exc}")
         return 2
@@ -430,7 +465,9 @@ async def main() -> int:
     heartbeat_task: asyncio.Task[None] | None = None
     control_task: asyncio.Task[None] | None = None
     sequence_task: asyncio.Task[None] | None = None
+    terminal_task: asyncio.Task[None] | None = None
     hub_client: PythonHubClient | None = None
+    space_client: Any | None = None
     sequence_guest: Any | None = None
 
     try:
@@ -478,6 +515,9 @@ async def main() -> int:
 
         try:
             hub_client = await create_python_hub_client(boot_config.verser2Runtime)
+            space_client = create_python_space_client(
+                hub_client, boot_config.verser2Runtime
+            )
         except SequenceLoadError as exc:
             _log_sth_runtime_error("sequence-load", boot_config, exc)
             logger.error("Sequence load error: %s", exc)
@@ -497,11 +537,15 @@ async def main() -> int:
             dict(handshake_result.appConfig),
             handshake_result.logLevel,
             hub_client,
+            space_client,
             api_exposure,
             instance_id=boot_config.instanceId,
         )
         control_context = _build_control_context(sequence_context, control_logger)
         terminator = RuntimeTerminator(sequence_context, monitoring_writer)
+        sequence_context.bind_terminator(
+            lambda payload: asyncio.create_task(terminator.stop(payload))
+        )
         input_stream = build_input_stream(
             input_reader, get_input_content_type(sequence)
         )
@@ -578,6 +622,17 @@ async def main() -> int:
                     if boot_config.exposePath and sequence_guest is not None
                     else {}
                 ),
+                **(
+                    {
+                        "rpcUrl": python_rpc_url(
+                            boot_config.verser2Runtime.runnerRouteDomain
+                        )
+                    }
+                    if boot_config.exposePath
+                    and sequence_guest is not None
+                    and boot_config.verser2Runtime
+                    else {}
+                ),
             },
         )
 
@@ -592,8 +647,16 @@ async def main() -> int:
         sequence_task = asyncio.create_task(
             _run_sequence_output(raw_result, sequence, output_writer, monitoring_writer)
         )
+        # A sequence may intentionally never return after calling end() or
+        # destroy(). Wait on the runtime termination outcome as a first-class
+        # task instead of relying on the output/control tasks to finish.
+        terminal_task = asyncio.create_task(terminator.wait())
 
-        active_tasks: set[asyncio.Task[Any]] = {control_task, sequence_task}
+        active_tasks: set[asyncio.Task[Any]] = {
+            control_task,
+            sequence_task,
+            terminal_task,
+        }
 
         while active_tasks:
             done, active_tasks = await asyncio.wait(
@@ -607,8 +670,9 @@ async def main() -> int:
                     return 137
                 if control_exception is not None:
                     raise control_exception
-                if sequence_task.done() and terminator.exit_code is not None:
-                    return terminator.exit_code
+
+            if terminal_task in done:
+                return terminator.exit_code or 0
 
             if sequence_task in done:
                 sequence_exception = sequence_task.exception()
@@ -652,6 +716,13 @@ async def main() -> int:
             control_task.cancel()
             try:
                 await control_task
+            except (asyncio.CancelledError, Exception):
+                pass
+
+        if terminal_task is not None and not terminal_task.done():
+            terminal_task.cancel()
+            try:
+                await terminal_task
             except (asyncio.CancelledError, Exception):
                 pass
 

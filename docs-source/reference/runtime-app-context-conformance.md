@@ -1,0 +1,24 @@
+# Runtime AppContext conformance
+
+This matrix is the source of truth for the runtime-wrapper surface. “Hosted”
+means boot config contains the instance-server address, so the wrapper is
+connected to the real Hub instance channels (`IN`, `OUT`, `LOG`, and control /
+`MONITORING`). Hosted Python uses the Python verser2 Broker/Guest; hosted Bun
+delegates to the Node wrapper. Direct Bun deliberately has no host channels.
+
+| Capability | Node | Hosted Python | Hosted Bun | Direct Bun |
+| --- | --- | --- | --- | --- |
+| Health and namespaced details | `MONITORING`; `healthy` plus bounded `details` | Same `MONITORING` frame contract; Python handlers merge into `healthy` / `details` | Node delegation | Unsupported |
+| Lifecycle | `keepAlive`, `end`, `destroy(error)` and stop/kill handlers | Same lifecycle through control frames; errored destroy emits structured `sequenceError` | Node delegation | Unsupported |
+| Logger shape and LOG channel | Console-style `trace/debug/info/warn/error` logger; records go to host `LOG` | Python `logging.Logger` with the same level methods and structured `extra`; records go to host `LOG` | Node delegation | Local process logger only |
+| Events | Instance-scoped `on` / `emit`; `emitToSpace` adds `scope: "space"` | Same instance and space scopes over `MONITORING` event frames | Node delegation | Unsupported |
+| Hub client | `hubClient()` with typed resource depth (for example `status.get()`) | `context.hub` Broker view with request/path depth equivalent to the Node client | Node delegation and verser2 transport | Unsupported |
+| Space client | `spaceClient()` with typed resource depth | `context.space`, a scoped Broker view; it falls back to the Hub target when no space target is configured | Node delegation and verser2 transport | Unsupported |
+| API registration and `exposePath` | `this.api.use(path, handler)` mounted below `exposePath` | `context.api.attach(asgi_app)` mounted through the Python verser2 Guest below `exposePath` | Node delegation; uses Node registration | Unsupported |
+| Local storage | `localStorage` is an instance-local storage API | Not exposed by this wrapper | Node delegation | Unsupported |
+| `save` persistence | Unsupported as persistence; `save` must not be described as durable state | Unsupported as persistence; `save` must not be described as durable state | Node delegation (unsupported as persistence) | Unsupported as persistence |
+
+The real hosted-runtime fixture `APPCONTEXT-002` exercises instance/host
+channels, monitoring, LOG, scoped events, Hub/Space requests, and
+`exposePath` for Python and Bun. The focused wrapper tests remain useful for
+shape and bootstrap checks, but do not replace that integration fixture.

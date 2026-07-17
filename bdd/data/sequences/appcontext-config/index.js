@@ -21,5 +21,6 @@ module.exports = async function appcontextConfigSequence(_input) {
         }) + "\n"
     );
 
-    return { config, instanceId, handled: true };
+    // AppContext conformance is exercised by the side effects above.  A
+    // sequence must still return a stream (or void), not an arbitrary object.
 };

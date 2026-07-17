@@ -41,7 +41,9 @@ def _wrap_close_with_cleanup(handle: Any, cleanup: Callable[[], None]) -> Any:
     return handle
 
 
-def _tls_kwargs(config: Verser2RuntimeConfig) -> tuple[dict[str, Any], Callable[[], None], bool]:
+def _tls_kwargs(
+    config: Verser2RuntimeConfig,
+) -> tuple[dict[str, Any], Callable[[], None], bool]:
     tls = config.tls or {}
     kwargs: dict[str, Any] = {}
     cleanup_paths: list[str] = []
@@ -56,7 +58,9 @@ def _tls_kwargs(config: Verser2RuntimeConfig) -> tuple[dict[str, Any], Callable[
 
     ca = tls.get("ca")
     if isinstance(ca, str) and ca.strip():
-        with tempfile.NamedTemporaryFile("w", encoding="utf-8", delete=False) as ca_file:
+        with tempfile.NamedTemporaryFile(
+            "w", encoding="utf-8", delete=False
+        ) as ca_file:
             ca_file.write(ca)
             ca_file.flush()
             cleanup_paths.append(ca_file.name)
@@ -133,6 +137,18 @@ class PythonHubClient:
     ) -> Any:
         return await self.request("POST", path, headers=headers, body=body)
 
+    def scoped(self, target_domain: str | None) -> "PythonSpaceClient":
+        """Return a second scoped view over the same connected broker."""
+        return PythonSpaceClient(self._broker, target_domain)
+
+
+class PythonSpaceClient(PythonHubClient):
+    """Space-scoped v2 request view over the same connected broker."""
+
+    @property
+    def api_base(self) -> str:
+        return f"http://{self._target_domain}/api/v2"
+
 
 class PythonSequenceApiExposure:
     """Sequence-facing ASGI exposure handle backed by a verser2 Guest."""
@@ -159,13 +175,31 @@ class PythonSequenceApiExposure:
     def use(self, app: Any) -> Any:
         return self.attach(app)
 
-    def bind_guest(self, guest: Any) -> Any:
+    def bind_guest(self, guest: Any, domain: str | None = None) -> Any:
         self._guest = guest
         if self._app is not None:
             attach = getattr(guest, "attach", None)
             if callable(attach):
-                attach(self._app)
+                if domain is None:
+                    attach(self._app)
+                else:
+                    attach(self._app, domain)
         return guest
+
+
+def python_guest_id(runner_guest_id: str) -> str:
+    """Return the stable identity reserved for the Python API Guest."""
+    return f"{runner_guest_id}.python"
+
+
+def python_rpc_route_domain(runner_route_domain: str) -> str:
+    """Return the stable route reserved for the Python API Guest."""
+    return f"{runner_route_domain}.rpc"
+
+
+def python_rpc_url(runner_route_domain: str) -> str:
+    """Return the URL advertised by READY for the Python API Guest."""
+    return f"http://{python_rpc_route_domain(runner_route_domain)}"
 
 
 async def create_python_hub_client(
@@ -180,6 +214,7 @@ async def create_python_hub_client(
 
     if broker_factory is None:
         from verser2_guest_python import create_verser_broker as default_broker_factory  # type: ignore[import-not-found]
+
         factory = default_broker_factory
     else:
         factory = broker_factory
@@ -200,16 +235,37 @@ async def create_python_hub_client(
     return PythonHubClient(broker, config.hubTargetDomain)
 
 
+def create_python_space_client(
+    hub_client: PythonHubClient | None,
+    config: Verser2RuntimeConfig | None,
+) -> PythonSpaceClient | None:
+    """Create a Space view without opening another broker connection."""
+    if hub_client is None or config is None:
+        return None
+    # Match runner-node's space fallback when no explicit Manager route is
+    # configured: retain the Hub target instead of using a generic domain.
+    return PythonSpaceClient(
+        hub_client._broker,
+        config.spaceTargetDomain or config.hubTargetDomain,
+    )
+
+
 def create_python_sequence_guest(
     config: Verser2RuntimeConfig,
     app: Any | None,
     *,
     guest_factory: Callable[..., Any] | None = None,
 ) -> Any:
-    """Create a Python ASGI Guest with explicit route domains from boot config."""
+    """Create a Python ASGI Guest on its own RPC route domain.
+
+    The outer runner owns ``runnerRouteDomain``.  The ASGI exposure is a
+    second peer and must not register on that same route, otherwise the two
+    guests race for the same route registration.
+    """
 
     if guest_factory is None:
         from verser2_guest_python import create_verser_guest as default_guest_factory  # type: ignore[import-not-found]
+
         factory = default_guest_factory
     else:
         factory = guest_factory
@@ -218,9 +274,13 @@ def create_python_sequence_guest(
     try:
         guest = factory(
             host_url=config.hostUrl,
-            guest_id=config.runnerGuestId,
+            # The outer runner already registers runnerGuestId for its host
+            # transport. Python's ASGI Guest is a second peer on that route;
+            # keep its identity distinct so the Host does not reject the
+            # registration as a duplicate.
+            guest_id=python_guest_id(config.runnerGuestId),
             app=app,
-            routed_domains=[config.runnerRouteDomain],
+            routed_domains=[python_rpc_route_domain(config.runnerRouteDomain)],
             min_waiting_streams=config.minWaitingStreams or 1,
             **tls_kwargs,
         )
@@ -243,8 +303,10 @@ async def start_python_sequence_guest(
     if config is None or exposure is None:
         return None
 
-    guest = create_python_sequence_guest(config, exposure.app, guest_factory=guest_factory)
-    exposure.bind_guest(guest)
+    guest = create_python_sequence_guest(
+        config, exposure.app, guest_factory=guest_factory
+    )
+    exposure.bind_guest(guest, python_rpc_route_domain(config.runnerRouteDomain))
     try:
         await guest.connect()
     except Exception:

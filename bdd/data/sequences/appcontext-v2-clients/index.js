@@ -47,5 +47,5 @@ module.exports = async function appcontextV2ClientsSequence(input) {
         }) + "\n"
     );
 
-    return { v2ClientsHandled: true };
+    // Client conformance is exercised by the successful calls and marker.
 };

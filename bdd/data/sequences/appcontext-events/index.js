@@ -36,5 +36,6 @@ module.exports = async function appcontextEventsSequence(_input) {
 
     this.end();
 
-    return { events: ["emit", "on"], handled: true, event };
+    // Event conformance is exercised by the emitted response.  Do not return
+    // the diagnostic object: sequence results are streamable values or void.
 };

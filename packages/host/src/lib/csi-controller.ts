@@ -82,13 +82,14 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
     private _lastStats?: MonitoringMessageData;
     private _lastHealth: HealthPayload = { healthy: true, details: {} };
     private runnerTransport?: RunnerTransport;
-    expose?: { path: string | undefined; host: string | undefined; port: number | undefined };
+    private readinessRpcDomain?: string;
+    expose?: { path: string | undefined; host: string | undefined; port: number | undefined; rpcUrl?: string };
     private inputContentType: string | undefined;
     api: InstanceAPI;
     apiV2: InstanceAPIV2;
 
     get rpcUrl(): string {
-        return `http://${this.expose?.host}:${this.expose?.port}`;
+        return this.expose?.rpcUrl || `http://${this.expose?.host}:${this.expose?.port}`;
     }
 
     get lastStats(): InstanceStats {
@@ -341,6 +342,7 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
         exposePath?: string;
         exposeHost?: string;
         exposePort?: number;
+        rpcUrl?: string;
         diagnostic?: { code: string; phase: "initialize"; message: string };
     }) {
         // A timed-out/failed runner owns no routes. READY can arrive after the
@@ -348,10 +350,14 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
         if (this.readinessState === "errored" || this.endEmitted) return;
 
         if (readiness.state === "ready" && readiness.exposePath) {
+            if (readiness.rpcUrl) {
+                this.readinessRpcDomain = new URL(readiness.rpcUrl).hostname;
+            }
             this.expose = {
                 path: readiness.exposePath,
                 host: readiness.exposeHost,
-                port: readiness.exposePort
+                port: readiness.exposePort,
+                rpcUrl: readiness.rpcUrl
             };
             this.hostProxy.onRPCExpose(readiness.exposePath, this.id);
         }
@@ -812,9 +818,17 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
             return false;
         }
 
+        // Python's API Guest is a second guest on the canonical `.rpc` route.
+        // Older/outer-runner READY frames may not carry its rpcUrl, so use the
+        // advertised Python route when it is already present instead of
+        // forwarding the request to the outer runner's legacy route.
+        const runnerDomain = Verser2RunnerTransport.getRouteDomain(this.id);
+        const pythonRpcDomain = `${runnerDomain}.rpc`;
+        const domain = this.readinessRpcDomain || (broker.getRoutes().some((route) => route.domain === pythonRpcDomain) ? pythonRpcDomain : runnerDomain);
+
         await forwardRoutedRequest({
             transport: createRunnerBrokerRpcTransport(broker),
-            domain: Verser2RunnerTransport.getRouteDomain(this.id),
+            domain,
             req,
             res,
             path,

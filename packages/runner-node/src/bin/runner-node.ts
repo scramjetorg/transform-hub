@@ -172,6 +172,7 @@ export async function bootstrap(overrides: BootstrapOverrides = {}): Promise<num
 
         api = built.api;
         context = built.context as unknown as typeof context;
+        logger.pipe(hostClient.logStream, { stringified: true });
 
         if (sequenceFns.initialize) {
             try {
@@ -399,8 +400,11 @@ export async function bootstrap(overrides: BootstrapOverrides = {}): Promise<num
         }
 
         if (hostClient) {
+            logger.unpipe(hostClient.logStream, { stringified: true });
             await hostClient.disconnect(exitCode !== RunnerExitCode.SUCCESS).catch(() => undefined);
         }
+
+        logger.end();
 
         await new Promise<void>((resolveEnd) => {
             streams.monitoringOut.end(() => resolveEnd());

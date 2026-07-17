@@ -25,11 +25,16 @@ function collectStreamUntilEndOrSignal(stream, completion, drainGraceMs = DEFAUL
         const finish = () => {
             if (settled) return;
             settled = true;
-            cleanup();
+            if (drainTimer) clearTimeout(drainTimer);
+            stream.off("data", onData);
+            stream.off("end", onEnd);
             const result = Buffer.concat(chunks).toString("utf8");
             chunks.length = 0;
-            stream.pause?.();
-            if (!stream.destroyed) stream.destroy?.();
+            // Drain rather than destroying a node-fetch IncomingMessage. Its
+            // socket reports ERR_STREAM_PREMATURE_CLOSE when a live data
+            // listener is torn down before the owning runner closes it.
+            stream.resume?.();
+            stream.once("close", () => stream.off("error", onError));
             resolve(result);
         };
 
