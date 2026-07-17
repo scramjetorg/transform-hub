@@ -2,44 +2,86 @@
 
 ## Implementation setup
 
-- [ ] Task: Capture the current branch as the PR base and create
+- [x] Task: Capture the current branch as the PR base and create
   `conductor/sequence_writing_guide_20260716` from its current HEAD.
-- [ ] Task: Read the package codemaps and existing test surfaces named in
+- [x] Task: Read the package codemaps and existing test surfaces named in
   `guide-map.md`; record exact test files, public route/client contracts, and
   shared exports before editing implementation code.
+  - Inventory: `packages/sequence-test/test/harness/fixtures-helper.spec.ts`,
+    `packages/sequence-test/test/fixtures/sequence-fixtures.spec.ts`, and
+    `packages/sequence-test/test/harness/{captures,hub-harness}.spec.ts` cover
+    the relevant synthetic patterns. `createSequenceFixture` and the capture
+    APIs are existing exports; no file-backed cursor helper exists.
 - [ ] Task: Create or update the draft PR from the implementation branch using
   `spec.md` as its description after the first phase checkpoint.
 
 ## Phase 1: Documentation that needs no platform changes
 
-- [ ] Task: Write synthetic tests first for packaged-resource resolution,
+- [x] Task: Write synthetic tests first for packaged-resource resolution,
   fixture-local source-file summaries, file-backed mock cursor reads/writes, and classified cursor
   store failures using `@scramjet/sequence-test` fakes/captures only.
-    - [ ] Confirm the tests model progression rather than a full wet example.
-    - [ ] Define the file-backed mock boundary, including fixture-local path,
+    - [x] Confirm the tests model progression rather than a full wet example.
+    - [x] Define the file-backed mock boundary, including fixture-local path,
       cleanup, failure handling, and non-transactional cursor semantics.
-- [ ] Task: Implement only the fixture/harness additions needed for those tests,
+  - Added `test/harness/file-backed-mock-cursor.spec.ts`. It specifies
+    `createFileBackedMockCursor({ directory, fileName })` returning `filePath`,
+    `read`, `write`, and explicit `cleanup`. The supported runner recorded two
+    expected red failures for the absent export; the next named task implemented
+    that helper and the focused test now passes.
+- [x] Task: Implement only the fixture/harness additions needed for those tests,
   then run the focused sequence-test/package validation under the supported
   memory guard.
-- [ ] Task: Write `sequence-configuration-resources-state.md` and
+  - Added `src/file-backed-mock-cursor.ts` and its public exports. Focused
+    validation passed: `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024"
+    SCRAMJET_AVA_MEMORY_GUARD=1 node ../../scripts/run-ava.js
+    test/harness/file-backed-mock-cursor.spec.ts` from `packages/sequence-test`
+    (7 tests). The effective strict parent growth threshold was 524288 bytes;
+    no exceptions or skips apply.
+- [x] Task: Write `sequence-configuration-resources-state.md` and
   `source-side-data-summary.md` from the Open Energy Platform case.
-    - [ ] Explain packaged versus configured external resources, adapter
+    - [x] Explain packaged versus configured external resources, adapter
       visibility boundaries, data-local summarization, and no runtime-managed
       checkpointing.
-    - [ ] Keep code inline; compile or extract-test contract-bearing snippets.
-- [ ] Task: Update `testing-sequences.md` and
+    - [x] Keep code inline; compile or extract-test contract-bearing snippets.
+      `test/harness/source-side-data-summary.spec.ts` extracts and type-checks
+      all three TypeScript blocks. It passed under `SCRAMJET_AVA_MEMORY_GUARD=1`
+      with a documented 786432-byte per-test allowance for TypeScript compiler
+      metadata; temporary files and compiler references are explicitly cleaned.
+- [x] Task: Update `testing-sequences.md` and
   `tested-incremental-log-aggregator.md` from the DVC case.
-    - [ ] Explain synthetic progression and file-backed mock cursors; require
+    - [x] Explain synthetic progression and file-backed mock cursors; require
       file-fixture and snippet validation only, with no cursor-store integration
       or external-service smoke test.
-    - [ ] State that `this.save()` is not the persistence approach.
-- [ ] Task: Update navigation, examples indexes, and cross-links for the Phase 1
+    - [x] State that `this.save()` is not the persistence approach.
+- [x] Task: Update navigation, examples indexes, and cross-links for the Phase 1
   pages; regenerate documentation and validate generated output.
-- [ ] Task: Perform Phase 1 deduplication and documentation-code validation;
+  - `npm run docs:generate` regenerated `docs/` navigation and content; guarded
+    `npm run docs:check` passed source, link, frontmatter, and output-parity
+    validation.
+- [x] Task: Perform Phase 1 deduplication and documentation-code validation;
   record memory-guard applicability, skipped surfaces, and validation results in
   the plan.
-- [ ] Task: Commit the completed Phase 1 work, push the implementation branch,
+  - Deduplication: added one public fixture-only cursor helper and reused it in
+    both guides; no shared runtime, adapter, or persistence API was introduced.
+    Oracle review repaired fixture-path symlink safety and streamable guide
+    output, then passed revalidation.
+  - Memory-guarded validation: from `packages/sequence-test`,
+    `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024"
+    SCRAMJET_AVA_MEMORY_GUARD=1 node ../../scripts/run-ava.js
+    test/harness/file-backed-mock-cursor.spec.ts
+    test/harness/source-side-data-summary.spec.ts
+    test/harness/documentation-cursor-snippets.spec.ts` passed 11 tests.
+    Effective default parent-growth threshold: 524288 bytes. Each TypeScript
+    extraction test has a documented 786432-byte per-test allowance for
+    compiler metadata, with registered cleanup; no skips apply.
+  - Documentation validation: guarded `npm run docs:generate` and `npm run
+    docs:check` passed. Docker/Kubernetes, external-store, and full wet-example
+    smoke tests are intentionally not applicable to this fixture/documentation
+    scope. Deferred P2 input-validation wording is recorded in `td.md` for
+    final reconciliation.
+- [x] Task: Commit the completed Phase 1 work, push the implementation branch,
   and update or create the draft PR.
+  - Phase checkpoint commit: `373bad0368d796a10ab6c630e242c626e1ef734a`.
 - [ ] Task: Conductor - Phase Completion 'Documentation that needs no platform changes' (Protocol in workflow.md)
 
 ## Phase 2: Readiness and autostart contracts

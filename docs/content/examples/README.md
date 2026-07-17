@@ -8,4 +8,6 @@
 
 - [python-log-processor.md](python-log-processor.md)
 - [simple-transform.md](simple-transform.md)
+- [source-side-data-summary.md](source-side-data-summary.md)
+- [tested-incremental-log-aggregator.md](tested-incremental-log-aggregator.md)
 

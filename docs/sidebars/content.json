@@ -77,6 +77,13 @@
     "output": "sequences/packaging-deploying.md"
   },
   {
+    "id": "sequences-configuration-resources-state",
+    "title": "Sequence configuration, resources, and state",
+    "slug": "/sequences/configuration-resources-state",
+    "source": "docs-source/sequences/sequence-configuration-resources-state.md",
+    "output": "sequences/sequence-configuration-resources-state.md"
+  },
+  {
     "id": "sequences-lifecycle",
     "title": "Sequence lifecycle, input/output streams, and content types",
     "slug": "/sequences/lifecycle",
@@ -180,5 +187,19 @@
     "slug": "/examples/simple-transform",
     "source": "docs-source/examples/simple-transform.md",
     "output": "examples/simple-transform.md"
+  },
+  {
+    "id": "examples-source-side-data-summary",
+    "title": "Summarize source-side data before a sequence",
+    "slug": "/examples/source-side-data-summary",
+    "source": "docs-source/examples/source-side-data-summary.md",
+    "output": "examples/source-side-data-summary.md"
+  },
+  {
+    "id": "examples-tested-incremental-log-aggregator",
+    "title": "Test an incremental log aggregator",
+    "slug": "/examples/tested-incremental-log-aggregator",
+    "source": "docs-source/examples/tested-incremental-log-aggregator.md",
+    "output": "examples/tested-incremental-log-aggregator.md"
   }
 ]

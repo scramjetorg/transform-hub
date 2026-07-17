@@ -7,6 +7,7 @@
 ## Contents
 
 - [packaging-deploying.md](packaging-deploying.md)
+- [sequence-configuration-resources-state.md](sequence-configuration-resources-state.md)
 - [sequence-lifecycle.md](sequence-lifecycle.md)
 - [sequence-monitoring.md](sequence-monitoring.md)
 - [sequence-topics.md](sequence-topics.md)

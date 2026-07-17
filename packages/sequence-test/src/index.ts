@@ -144,6 +144,8 @@ export {
 
 export { resolveSequenceFixtureMetadata } from "./fixtures";
 
+export { createFileBackedMockCursor } from "./file-backed-mock-cursor";
+
 export type {
     RunnerConnectInfoOptions,
     RunnerEnvOptions,
@@ -187,6 +189,11 @@ export type {
     ResolvedSequenceFixtureMetadata,
     SequenceFixtureMetadata
 } from "./fixtures";
+
+export type {
+    FileBackedMockCursor,
+    FileBackedMockCursorOptions
+} from "./file-backed-mock-cursor";
 
 export async function runSequence(options: SequenceTestOptions): Promise<SequenceTestResult> {
     const harness = await createSequenceTest(options);
