@@ -155,7 +155,7 @@
     and changed-file lint. Shared TypeScript merge logic is centralized in
     `runtime-types`; Python mirrors its contract as cross-language parity code.
   - Phase checkpoint commit: `facae5c0`; draft PR verification comment updated.
-- [ ] Task: Conductor - Phase Completion 'Health and control contracts' (Protocol in workflow.md)
+- [x] Task: Conductor - Phase Completion 'Health and control contracts' (Protocol in workflow.md)
 
 ## Phase 4: Hub and Space topic contracts
 
