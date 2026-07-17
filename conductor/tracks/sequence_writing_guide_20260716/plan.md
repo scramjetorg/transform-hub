@@ -124,7 +124,7 @@
     better-provisioned validation host. No Phase 2 implementation failure
     remains after Oracle re-review.
   - Phase checkpoint commit: `7c26e759`; draft PR verification comment updated.
-- [ ] Task: Conductor - Phase Completion 'Readiness and autostart contracts' (Protocol in workflow.md)
+- [x] Task: Conductor - Phase Completion 'Readiness and autostart contracts' (Protocol in workflow.md)
 
 ## Phase 3: Health and control contracts
 
