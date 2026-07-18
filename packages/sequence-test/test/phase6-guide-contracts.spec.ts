@@ -145,7 +145,7 @@ test("direct Hub and Manager-routed control flow is documented with terminal out
     t.regex(wetGuide, /bounded timeout[\s\S]*kill/);
 });
 
-test("API and MCP evidence keeps sequence exposure separate from the external bridge", async t => {
+test("API exposure routes are sequence-scoped; MCP example remains standalone", async t => {
     const harness = createHubHarness();
     harness.context.api.use("/status", () => ({ status: "ok" }));
     const hubStatus = await harness.context.hubClient().status.get();
@@ -154,8 +154,7 @@ test("API and MCP evidence keeps sequence exposure separate from the external br
     t.truthy(hubStatus.body);
     t.truthy(spaceHubs.body);
     t.deepEqual(harness.apiRoutes().map(route => route.path), ["/status"]);
-    t.regex(docs("api", "client-usage.md"), /does not include MCP/);
-    t.regex(docs("transform-hub", "configuration.md"), /tunnel\/MCP ownership/);
+    t.notRegex(docs("sequences", "sequence-api-exposure.md"), /MCP/);
     t.regex(docs("examples", "mcp-bridged-job-status.md"), /McpServer/);
     t.regex(docs("examples", "mcp-bridged-job-status.md"), /z\.string\(\)\.regex/);
     t.regex(docs("examples", "mcp-bridged-job-status.md"), /source of truth/);
@@ -270,13 +269,17 @@ test("Phase 6 lifecycle, control, API/MCP, communication, topics, and AppContext
     t.truthy(lifecycleGuide.length);
     t.regex(lifecycleGuide, /Validate before serving/);
 
+    // Lifecycle states section must appear before validation/readiness guidance.
+    t.regex(lifecycleGuide, /## Lifecycle states[\s\S]*## Validate before serving/,
+        "Lifecycle states section precedes Validate before serving");
+
     const controlGuide = docs("sequences", "sequence-control.md");
     t.truthy(controlGuide.length);
     t.regex(controlGuide, /Health is an observation/);
 
     const apiMCPGuide = docs("sequences", "sequence-api-exposure.md");
     t.truthy(apiMCPGuide.length);
-    t.regex(apiMCPGuide, /sequence API is not an MCP server/);
+    t.regex(apiMCPGuide, /sequence API owns its route/);
 
     const communicationGuide = docs("sequences", "sequence-communication.md");
     t.truthy(communicationGuide.length);
@@ -299,7 +302,7 @@ test("Phase 6 lifecycle, control, API/MCP, communication, topics, and AppContext
     t.regex(lifecycleGuide, /validation|local validation service|docs-source/);
     t.regex(lifecycleGuide, /initialize/);
     t.regex(controlGuide, /sequence monitoring|monitoring/);
-    t.regex(apiMCPGuide, /MCP bridge|MCP/);
+    t.regex(apiMCPGuide, /owns its route|authorization assumptions/);
     t.regex(communicationGuide, /Hub\/Space|events/);
     t.regex(topicsGuide, /topic|content type/);
     t.regex(appContextGuide, /sequence-types|parity|runtime wrapper/);
@@ -323,4 +326,25 @@ test("Phase 6 lifecycle, control, API/MCP, communication, topics, and AppContext
     t.regex(sourceSummary, /await readiness\.initialize\(\)/);
     t.regex(sourceSummary, /await readiness\.activateRoute\("\/health"\)/);
     t.regex(sourceSummary, /if \(readiness\.state\(\) !== "ready"\) throw new Error\("Sequence did not become ready"\);/);
+});
+
+test("configuration-resources-state guide describes the canonical source-summary model and forbids the old precompute/send-as-input model", t => {
+    const configGuide = docs("sequences", "sequence-configuration-resources-state.md");
+
+    // Canonical model: run where source is accessible, validate/open once, stream incrementally
+    t.regex(configGuide, /where the source is accessible/i);
+    t.regex(configGuide, /validate and open the source once/i);
+    t.regex(configGuide, /stream summaries incrementally/i);
+    t.regex(configGuide, /There is no separate producer/);
+    t.regex(configGuide, /model containing precomputed results/);
+
+    // Forbid the old precompute-and-send-as-input model (not the word
+    // "precomputed" which appears legitimately in the canonical model).
+    t.notRegex(configGuide, /send the summary as normal Sequence input/);
+    t.notRegex(configGuide, /then send the summary as/);
+    t.notRegex(configGuide, /precompute.*input/);
+
+    // Adapter visibility and durable-state caveats preserved
+    t.regex(configGuide, /## What the adapter can see/);
+    t.regex(configGuide, /## State is application-owned/);
 });

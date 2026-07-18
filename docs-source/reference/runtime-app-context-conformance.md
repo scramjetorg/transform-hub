@@ -8,7 +8,7 @@ uses the hosted wrapper and delegates to the Node wrapper. There is no separate
 author-visible direct/headless Bun mode.
 
 | Capability | Node | Hosted Python | Hosted Bun |
-| --- | --- | --- | --- | --- |
+| --- | --- | --- | --- |
 | Health and namespaced details | `MONITORING`; author `healthy` plus bounded `details`, with runner telemetry at top level | Same `MONITORING` frame contract; Python handlers merge into `healthy` / `details` | Node delegation |
 | Lifecycle | `keepAlive`, `end`, `destroy(error)` and stop/kill handlers | Same lifecycle through control frames; errored destroy emits structured `sequenceError` | Node delegation |
 | Logger shape and LOG channel | Console-style `trace/debug/info/warn/error` logger; records go to host `LOG` | Python `logging.Logger` with the same level methods and structured `extra`; records go to host `LOG` | Node delegation |

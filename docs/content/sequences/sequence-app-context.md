@@ -22,7 +22,7 @@ Import the author-facing contract from `@scramjet/sequence-types`. The parity su
 ## Runtime conformance matrix
 
 | Capability | Node | Hosted Python | Hosted Bun |
-|---|---|---|---|---|
+|---|---|---|---|
 | Health/details | `MONITORING`; bounded `{ healthy, details }` | Same frame contract; `add_monitoring_handler` | Delegates to Node |
 | Lifecycle, logs, events | Full sequence surface and host channels | Wrapper parity with Python naming | Delegates to Node |
 | Hub/Space clients | Typed v2 `hubClient()` / `spaceClient()` | `context.hub` / `context.space` Broker views; no generic Node `@scramjet/rest-api2` client | Delegates to Node and verser2 |

@@ -289,6 +289,80 @@ test("legacy dist-docs cleanup refuses an unmarked root", t => {
     }
 });
 
+test("validateTableColumns passes a well-formed 3-column table", t => {
+    t.notThrows(() => docs.validateTableColumns("test.md", [
+        "| A | B | C |",
+        "|---|---|---|",
+        "| 1 | 2 | 3 |",
+    ].join("\n")));
+});
+
+test("validateTableColumns passes a well-formed 4-column table", t => {
+    t.notThrows(() => docs.validateTableColumns("test.md", [
+        "| Capability | Node | Python | Bun |",
+        "|---|---|---|---|",
+        "| Health | yes | yes | no |",
+    ].join("\n")));
+});
+
+test("validateTableColumns rejects header/separator column mismatch (4 header vs 5 separator)", t => {
+    const err = t.throws(() => docs.validateTableColumns("test.md", [
+        "| Capability | Node | Python | Bun |",
+        "|---|---|---|---|---|",
+        "| Health | yes | yes | no |",
+    ].join("\n")));
+    t.regex(err.message, /line 1: table header has 4 columns but separator \(line 2\) has 5 columns/);
+});
+
+test("validateTableColumns rejects header/separator column mismatch (3 header vs 4 separator)", t => {
+    const err = t.throws(() => docs.validateTableColumns("test.md", [
+        "| A | B | C |",
+        "|---|---|---|---|",
+        "| 1 | 2 | 3 |",
+    ].join("\n")));
+    t.regex(err.message, /line 1: table header has 3 columns but separator \(line 2\) has 4 columns/);
+});
+
+test("validateTableColumns rejects header/separator column mismatch with spaces inside pipes", t => {
+    const err = t.throws(() => docs.validateTableColumns("test.md", [
+        "| Capability | Node | Hosted Python | Hosted Bun |",
+        "| --- | --- | --- | --- | --- |",
+        "| Health | yes | yes | no |",
+    ].join("\n")));
+    t.regex(err.message, /line 1: table header has 4 columns but separator \(line 2\) has 5 columns/);
+});
+
+test("validateTableColumns passes a file with no tables", t => {
+    t.notThrows(() => docs.validateTableColumns("test.md", [
+        "# Heading",
+        "",
+        "Some text without any table.",
+    ].join("\n")));
+});
+
+test("validateTableColumns passes a file with a table inside a code block", t => {
+    t.notThrows(() => docs.validateTableColumns("test.md", [
+        "```",
+        "| fake | table | header |",
+        "|------|-------|-------|",
+        "| a    | b     | c     |",
+        "```",
+    ].join("\n")));
+});
+
+test("validateTableColumns passes a 3-column table inside a code block and a real 4-column table outside", t => {
+    t.notThrows(() => docs.validateTableColumns("test.md", [
+        "```",
+        "| fake | table | header | extra |",
+        "|------|-------|-------|------|",
+        "```",
+        "",
+        "| Real | Table | Here |",
+        "|------|-------|------|",
+        "| a    | b     | c    |",
+    ].join("\n")));
+});
+
 test("package README synchronization is explicit", t => {
     const dir = tempDir("scramjet-docs-sync-");
     const packageReadmes = [...fs.readdirSync(path.join(repoRoot, "packages"), { withFileTypes: true })]

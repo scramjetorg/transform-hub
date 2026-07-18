@@ -318,3 +318,40 @@
       contract validation passes (9 tests).
     - Final formal review passes; only the accepted out-of-scope live-Compose
       capacity follow-up remains in `td.md`.
+
+## Manual verification remediation
+
+- [x] Task: Reconcile all current PR review comments with an Oracle review,
+  distinguishing addressed, unaddressed, and newly introduced findings.
+  - Oracle identified five distinct actionable themes: lifecycle ordering, API
+    guide MCP scope, deployable archive dependencies, source-summary conceptual
+    consistency, and AppContext table syntax.
+- [x] Task: For each distinct actionable comment, use Explorer to identify
+  analogous repository surfaces, then use Fixer to apply the scoped remediation
+  consistently and validate it.
+  - [x] Lifecycle ordering.
+    - Reordered the lifecycle guide and added a focused relative-heading-order
+      assertion under the guarded Phase 6 contract test.
+  - [x] Sequence HTTP API guide MCP scope.
+    - Removed MCP material from the API guide, retained the standalone MCP
+      walkthrough, and decoupled the guide map.
+  - [x] Deployable package dependencies and isolated archive validation.
+    - Documented install-before-pack and `.siignore` rules, with an isolated
+      archive load test that proves no source-project dependency fallback.
+  - [x] Sequence-owned source-summary consistency.
+    - Aligned the conceptual guide with the sequence-owned streaming model and
+      added a cross-page regression assertion against precomputed-input advice.
+  - [x] AppContext conformance table syntax.
+    - Corrected malformed source tables and added docs-source table-column
+      validation with focused coverage.
+  - [x] Canonical archive filename consistency.
+    - Standardized deploy and send commands on the `si sequence pack` output
+      filename, with focused regression coverage.
+  - [x] Isolated archive fixture module compatibility.
+    - Switched the isolated archive fixture to the CommonJS-compatible module
+      version required by its `require()` execution proof.
+- [x] Task: Re-run focused review validation, obtain final Oracle review, and
+  checkpoint/push the remediation for manual review.
+  - Live PR comment audit reports every actionable theme addressed. Guarded
+    Phase 6 contracts (10), source-summary evidence (1), canonical guide
+    coverage (3), docs generator tests (28), and docs generation/check pass.

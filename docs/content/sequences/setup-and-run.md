@@ -56,10 +56,55 @@ npm run build
 npm test
 ```
 
-The build must leave the file named by `main` at `dist/index.js`. To produce a package archive
-from the built project, run `npm pack`; the resulting `.tgz` is the artifact deployed below.
-Alternatively, `si sequence pack ./sequence-project -o hello-sequence.tar.gz` uses the CLI
-packager for a Sequence directory.
+The build must leave the file named by `main` at `dist/index.js`.
+
+### Install production dependencies before archiving
+
+The Hub does **not** install dependencies. The package archive must include the production
+`node_modules/` directory. After the build, install only runtime dependencies:
+
+```bash
+npm install --production
+# or, for Bun:
+# bun install --production
+```
+
+This creates or updates `node_modules/` with only the packages listed under `dependencies`
+in `package.json`.
+
+### Create the deployable archive
+
+Use the CLI packager to create the archive. The packager includes every file and directory
+in the project folder, including `node_modules/`, subject to `.siignore` rules (see below):
+
+```bash
+si sequence pack . -o hello-sequence.tar.gz
+```
+
+The equivalent `npm pack` command also produces a `.tgz`, but npm excludes `node_modules/`
+by default. To use `npm pack`, list bundled dependencies explicitly in `package.json` with
+the [`"files"`](https://docs.npmjs.com/cli/v10/configuring-npm/package-json#files) field or
+[`"bundledDependencies"`](https://docs.npmjs.com/cli/v10/configuring-npm/package-json#bundleddependencies).
+The CLI packager (`si sequence pack`) is the recommended tool because it includes
+`node_modules/` without extra configuration.
+
+### Ignoring files with `.siignore`
+
+The CLI respects a `.siignore` file in the package root, using the same glob syntax as
+`.gitignore`. Exclude build artifacts, source maps, and test fixtures to reduce archive size:
+
+```gitignore
+# .siignore
+src/
+tsconfig.json
+node_modules/.cache
+test/
+*.map
+```
+
+**Do not exclude the `node_modules/` directory itself.** The Hub does not install
+dependencies, so the entire production `node_modules/` must be present in the archive at
+deploy time.
 
 ## 2. Install the Hub and CLI
 
@@ -112,13 +157,13 @@ two operations must be separate.
 
 ```bash
 si config set apiUrl http://127.0.0.1:8000
-si sequence deploy ./hello-sequence-1.0.0.tgz
+si sequence deploy ./hello-sequence.tar.gz
 ```
 
 For separate upload/start:
 
 ```bash
-si sequence send ./hello-sequence-1.0.0.tgz
+si sequence send ./hello-sequence.tar.gz
 si sequence start <sequence-id>
 ```
 

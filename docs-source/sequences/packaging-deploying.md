@@ -7,9 +7,10 @@ title: Packaging and deploying sequences
 # Packaging and deploying sequences
 
 For an end-to-end installed/package-projected workflow, use [Set up and run an installed Sequence](setup-and-run.md).
-That guide is the source of truth for `npm install`, `npm pack`, the installed `sth`/`si` commands,
-local readiness, upload/start, and direct versus Manager-routed deployment. The examples below
-only describe package shape and API alternatives; they do not repeat Hub setup.
+That guide is the source of truth for `npm install`, `npm install --production`, `si sequence pack`,
+the installed `sth`/`si` commands, local readiness, upload/start, and direct versus Manager-routed
+deployment. The examples below only describe package shape and API alternatives; they do not repeat
+Hub setup.
 
 ## Sequence package structure
 
@@ -110,6 +111,13 @@ si instance stop <instance-id> <timeout>
 - **Node.js**: Install production dependencies (`npm install --production`) in the package directory before creating the tarball
 - **Python**: List dependencies in `requirements.txt`; the Python runner installs them at startup if the file is present
 - **Bun**: Same as Node.js; dependencies are resolved by Bun at runtime
+
+### Ignoring files with `.siignore`
+
+The CLI packager (`si sequence pack`) respects a `.siignore` file in the package root using the
+same glob syntax as `.gitignore`. Exclude test fixtures, source maps, and build intermediates.
+**Do not exclude `node_modules/`** — the Hub does not install dependencies, so the production
+`node_modules/` must be present in the archive. See the [setup guide](setup-and-run.md#ignoring-files-with-siignore) for details.
 
 ### Size limits
 

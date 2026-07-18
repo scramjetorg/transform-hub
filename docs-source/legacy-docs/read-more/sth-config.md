@@ -163,7 +163,7 @@ timings:
 
 
 | Config name | CMD Parameter | Default | Description | Example |
-|-|-|-|-|-|-|
+|-|-|-|-|-|
 | N/A | `-c, --config <path>` | `null` | Specifies path to config
 | `logLevel` | `-L, --log-level <level>` | `trace` | Specify log level
 | `host.id` | `-I, --id <id>` | Random | The id assigned to this server

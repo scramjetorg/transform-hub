@@ -47,14 +47,15 @@ inaccessible in the selected adapter.
 
 ## Summarize data at the source side
 
-When the useful result is a compact description of a large local dataset, read
-and summarize it where the data already lives, then send the summary as normal
-Sequence input or configuration. A summary might contain relative file names,
-row counts, byte counts, or schema information; it should not imply that the
-Hub has copied or indexed the source dataset.
+When the useful result is a compact description of a large local dataset, run
+the Sequence where the source is accessible, validate and open the source once,
+then stream summaries incrementally. There is no separate producer and no input
+model containing precomputed results. A summary might contain relative file
+names, row counts, byte counts, or schema information; it should not imply that
+the Hub has copied or indexed the source dataset.
 
 This pattern keeps source access and credentials at the source boundary. The
-Sequence still needs access to the summary, and any later read of the original
+Sequence still needs access to the source, and any later read of the original
 data remains subject to the selected adapter's visibility and permissions.
 
 ## State is application-owned

@@ -7,7 +7,7 @@ capability work, and synthetic test evidence.
 |---|---|---|---|---|---|---|
 | Lifecycle | 2, 6 | `docs-source/sequences/sequence-lifecycle.md` | `docs-source/examples/lifecycle-local-validation-service.md` | [Server Fault](https://serverfault.com/questions/412134/server-unreachable-best-way-to-find-out-the-cause) | validate → deferred listener → active; failure → log/event → errored | readiness |
 | Control | 3, 6 | `docs-source/sequences/sequence-control.md` | `docs-source/examples/customer-site-health-control.md` | [Server Fault](https://serverfault.com/questions/96468/how-to-monitor-multiple-remote-sites-over-the-internet) | health → Hub/Manager; stop → flush; kill → cleanup | health and control conformance |
-| API exposure | 2, 6 | `docs-source/sequences/sequence-api-exposure.md` | `docs-source/examples/mcp-bridged-job-status.md` | [Galaxy/Loom #74](https://github.com/galaxyproject/loom/issues/74) | deferred listener → bounded API/stream | readiness and autostart |
+| API exposure | 2, 6 | `docs-source/sequences/sequence-api-exposure.md` | — | [Galaxy/Loom #74](https://github.com/galaxyproject/loom/issues/74) | deferred listener → bounded API/stream | readiness and autostart |
 | Communication | 4, 6 | `docs-source/sequences/sequence-communication.md` | `docs-source/examples/local-object-filter-to-consumer.md` | [NVIDIA AIStore #305](https://github.com/NVIDIA/aistore/issues/305) | source → filter → consumer; event transient | Hub/Space contract |
 | Topics | 4, 6 | `docs-source/sequences/sequence-topics.md` | `docs-source/examples/customer-site-topic-probe-pipeline.md` | [Server Fault](https://serverfault.com/questions/96468/how-to-monitor-multiple-remote-sites-over-the-internet) | create → publish → input/output route; disconnect | Hub/Space topic parity |
 | Testing | 1, 6 | `docs-source/testing/testing-sequences.md` | `docs-source/examples/tested-incremental-log-aggregator.md` | [DVC #829](https://github.com/treeverse/dvc/issues/829) | input → sequence-owned aggregation state → aggregate; failure handling | fixture extensions only |
@@ -22,8 +22,9 @@ capability work, and synthetic test evidence.
   MCP smoke only.
 - The MCP walkthrough uses a private Hub-only Compose topology with a
   file-loaded/autostarted sequence; the Node MCP SDK bridge runs separately
-  against that private Hub. Private-network/tunnel, MCP bridge, and sequence
-  API ownership/security boundaries remain separate.
+  against that private Hub. It is a standalone walkthrough, not part of the
+  sequence HTTP API guide. Private-network/tunnel, MCP bridge, and sequence API
+  ownership/security boundaries remain separate.
 - Examples use sequence-owned state only where needed to explain progression;
   durable correlation or checkpointing is application-owned and outside the
   runtime contract. `this.save()` is not documented as checkpointing.

@@ -9,30 +9,6 @@ title: Sequence lifecycle, readiness, input/output streams, and content types
 
 # Sequence lifecycle, readiness, input/output streams, and content types
 
-## Validate before serving
-
-A sequence validates packaged resources and required local configuration before it registers an exposed API route or enters a long-running stream or promise. The listener is deferred until validation succeeds. A failed validation emits structured diagnostics and events, leaves no active service route, and ends the instance as `ERRORED`; recovery requires a fresh instance start rather than an in-process retry.
-
-Readiness is different from an HTTP process being alive. Callers should poll the Hub or Manager readiness signal and then verify the required instance route. See the [local validation service walkthrough](../examples/lifecycle-local-validation-service.md) for the case-led version.
-
-For Node sequences, the lifecycle order is validation, initialization, route activation, and then the long-running sequence function. Put prerequisite checks in the exported `initialize` hook. The runner calls it before the main function; route registration belongs after the checks succeed:
-
-```typescript
-import { access } from "node:fs/promises";
-import type { SequenceAppContext } from "@scramjet/sequence-types";
-
-export async function initialize(this: SequenceAppContext) {
-  await access(this.config.dataFile as string);
-  this.api.use("/status", () => ({ ready: true, instanceId: this.instanceId }));
-}
-
-export default async function (this: SequenceAppContext) {
-  await new Promise(() => {});
-}
-```
-
-An initializer rejection emits `INITIALIZE_REJECTED`, leaves the route inactive, and ends the instance as errored. Start a fresh instance after fixing the resource; do not retry initialization in the failed process.
-
 ## Lifecycle states
 
 A sequence instance progresses through these states, as defined in `InstanceStatus` from `@scramjet/symbols`:
@@ -59,6 +35,30 @@ flowchart LR
 | `COMPLETED` | Sequence finished normally |
 | `ERRORED` | Sequence terminated with an error |
 | `GONE` | Instance is no longer present on the Hub |
+
+## Validate before serving
+
+A sequence validates packaged resources and required local configuration before it registers an exposed API route or enters a long-running stream or promise. The listener is deferred until validation succeeds. A failed validation emits structured diagnostics and events, leaves no active service route, and ends the instance as `ERRORED`; recovery requires a fresh instance start rather than an in-process retry.
+
+Readiness is different from an HTTP process being alive. Callers should poll the Hub or Manager readiness signal and then verify the required instance route. See the [local validation service walkthrough](../examples/lifecycle-local-validation-service.md) for the case-led version.
+
+For Node sequences, the lifecycle order is validation, initialization, route activation, and then the long-running sequence function. Put prerequisite checks in the exported `initialize` hook. The runner calls it before the main function; route registration belongs after the checks succeed:
+
+```typescript
+import { access } from "node:fs/promises";
+import type { SequenceAppContext } from "@scramjet/sequence-types";
+
+export async function initialize(this: SequenceAppContext) {
+  await access(this.config.dataFile as string);
+  this.api.use("/status", () => ({ ready: true, instanceId: this.instanceId }));
+}
+
+export default async function (this: SequenceAppContext) {
+  await new Promise(() => {});
+}
+```
+
+An initializer rejection emits `INITIALIZE_REJECTED`, leaves the route inactive, and ends the instance as errored. Start a fresh instance after fixing the resource; do not retry initialization in the failed process.
 
 ## Stream architecture
 

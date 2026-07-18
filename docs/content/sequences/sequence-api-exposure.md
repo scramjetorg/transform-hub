@@ -15,9 +15,7 @@ Use `this.api.use(path, handler)` for a sequence-local HTTP surface. Validate pa
 
 Readiness is separate from liveness. Poll the Hub or Manager readiness signal and verify the instance route is available. Do not replace readiness polling with a fixed sleep. Return small JSON values, stream large bodies, or provide a configured artifact/reference; the platform does not impose a new universal payload limit for this guide.
 
-The sequence API is not an MCP server. It owns the route and its sequence-level authorization assumptions. An external MCP bridge may call it, but it owns its own MCP authentication, authorization, ingress, and lifecycle.
-
-See [Bridging job status to MCP](../examples/mcp-bridged-job-status.md) for the inline Node MCP SDK bridge, which validates an instance id against the sequence status route. The private Compose topology contains the Hub only; the MCP bridge is a separate process that connects to that private Hub and is not supplied by STH.
+The sequence API owns its route and its own authorization assumptions. External services may call it, but each such service manages its own authentication, authorization, and lifecycle.
 
 ## Limits and boundaries
 
