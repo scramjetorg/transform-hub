@@ -66,8 +66,4 @@ If progress must survive a restart, choose and operate an external durable store
 with the required consistency and recovery guarantees. `this.save()` is not a
 documented persistence mechanism and must not be presented as one.
 
-Use `@scramjet/sequence-test` to validate real Sequence loading and execution
-against synthetic summaries. This can prove that a Sequence validates and
-consumes its source-side summary, but it does not provide persistence or
-adapter-independent storage. Operate any durable store separately and test its
-consistency and recovery contract directly.
+For installed execution of the source-summary pattern, use the [source-side data summary Process Adapter workflow](../examples/source-side-data-summary.md#installed-process-adapter-workflow), then refer to the [canonical installed Process Adapter example baseline](setup-and-run.md#installed-process-adapter-example-baseline). Maintainers may use `@scramjet/sequence-test` for optional local loading and execution evidence; it does not provide persistence or adapter-independent storage. Operate any durable store separately and test its consistency and recovery contract directly.

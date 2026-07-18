@@ -50,4 +50,53 @@ export default async function (this: SequenceAppContext) {
 
 The trust boundary is explicit: `siteUrl` and the remote response are external inputs; health details are operator-visible and must be sanitized. The sequence does not own Hub or Manager authentication, TLS, ingress, or site credentials.
 
-Validate the control flow with `cd packages/sequence-test && ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" SCRAMJET_AVA_MEMORY_GUARD=1 node ../../scripts/run-ava.js test/phase6-guide-contracts.spec.ts --match="*direct Hub and Manager-routed control flow*"`. The evidence test checks the architecture description and the real Manager-routed conformance test (`packages/manager/test/manager-api-v2-hotwire.spec.ts`), which exercises `stopping`, `killing`, `completed`, `errored`, and `gone` InstanceStatus transitions through the Hub. Test `stop` with a bounded timeout and `kill` separately. A disconnected control path is an error, not proof of successful cleanup.
+Maintainers may use the sequence-test and Manager conformance tests as optional evidence. Authors should verify the installed artifact and live lifecycle below; a disconnected control path is not proof of successful cleanup.
+
+## Install and exercise the deliverable with the Process Adapter
+
+Use the canonical [installed Sequence setup and run guide](../sequences/setup-and-run.md), then build the package with its configured `siteUrl`, install runtime dependencies, and pack it:
+
+### Packaging terminal
+
+```sh
+npm install
+npm run build
+npm install --production
+si sequence pack . -o site-health.tar.gz
+```
+
+### Hub terminal
+
+```sh
+mkdir -p sequence-store
+sth --runtime-adapter process --hostname 127.0.0.1 --port 8000 --sequences-root "$PWD/sequence-store"
+```
+
+### Readiness terminal
+
+```sh
+timeout 60s sh -c '
+  until curl --fail --silent http://127.0.0.1:8000/api/v1/status |
+    node -e "let s=\"\"; process.stdin.on(\"data\", c => s += c).on(\"end\", () => process.exit(JSON.parse(s).ready === true ? 0 : 1))";
+  do :; done
+'
+```
+
+Deploy with the actual startup configuration and observe the probe:
+
+### Deploy/start terminal
+
+```sh
+si config set apiUrl http://127.0.0.1:8000
+si sequence deploy ./site-health.tar.gz --config-string '{"siteUrl":"https://example.com/health"}'
+# Or separate upload and start:
+si sequence send ./site-health.tar.gz
+si sequence start <sequence-id> --config-string '{"siteUrl":"https://example.com/health"}'
+si instance info <instance-id>
+si instance log <instance-id>
+# stop uses a bounded timeout (10000ms) — the instance drains then stops
+si instance stop <instance-id> 10000
+si instance info <instance-id>
+```
+
+Success is a running instance whose monitoring output reports `healthy: true` after a successful probe, followed by the `site probe draining` log and a stopped/completed lifecycle after the `stop` bounded timeout. Use `si instance kill <instance-id>` only to verify forced termination separately (not part of the graceful-stop workflow). The Process Adapter provides no container CPU/memory or filesystem isolation and child lifecycles are tied to the Hub. A Manager does not run the process itself: after the Hub is connected with the deployment's Manager configuration, set `si config set apiUrl http://manager-host:8200`; the Manager routes upload/control requests to that Hub. Configure TLS, authentication, and remote-site access outside this sequence.

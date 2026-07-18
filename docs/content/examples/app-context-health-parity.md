@@ -30,6 +30,53 @@ export default function (this: SequenceAppContext) {
 }
 ```
 
-The Python equivalent uses `add_monitoring_handler`, `add_stop_handler`, `context.logger`, and the same health/details and event meaning. Compare monitoring frames, lifecycle outcome, logs, event scope, Hub/Space requests, and API response—not source spelling. Run `npm run test:bdd-appcontext` for hosted runtime conformance; Python uses the wrapper's scoped clients rather than a generic REST client. Also run `npm run docs:check` after editing.
+The Python equivalent uses `add_monitoring_handler`, `add_stop_handler`, `context.logger`, and the same health/details and event meaning. Compare monitoring frames, lifecycle outcome, logs, event scope, Hub/Space requests, and API response—not source spelling. Python uses the wrapper's scoped clients rather than a generic REST client. Maintainers may run `npm run test:bdd-appcontext` and `npm run docs:check` as optional conformance evidence.
 
 The trust boundary is the runtime wrapper and its configured Hub connection. AppContext does not grant filesystem, network, or secret access, does not provide durable event delivery, and does not turn health into authorization. A failed or disconnected runtime must be observed through lifecycle status and restarted according to deployment policy.
+
+## Install and verify a runtime deliverable with the Process Adapter
+
+Use the canonical [installed Sequence setup and run guide](../sequences/setup-and-run.md). For the Node example, build and package the deployable artifact with production dependencies included:
+
+### Packaging terminal
+
+```sh
+npm install
+npm run build
+npm install --production
+si sequence pack . -o app-context-health.tar.gz
+```
+
+### Hub terminal
+
+```sh
+mkdir -p sequence-store
+sth --runtime-adapter process --hostname 127.0.0.1 --port 8000 --sequences-root "$PWD/sequence-store"
+```
+
+### Readiness terminal
+
+```sh
+timeout 60s sh -c '
+  until curl --fail --silent http://127.0.0.1:8000/api/v1/status |
+    node -e "let s=\"\"; process.stdin.on(\"data\", c => s += c).on(\"end\", () => process.exit(JSON.parse(s).ready === true ? 0 : 1))";
+  do :; done
+'
+```
+
+Deploy the Node artifact (the example has no required config or arguments), inspect its live instance, and stop it cleanly:
+
+### Deploy/start terminal
+
+```sh
+si config set apiUrl http://127.0.0.1:8000
+si sequence deploy ./app-context-health.tar.gz
+# Or separate upload and start:
+si sequence send ./app-context-health.tar.gz
+si sequence start <sequence-id>
+si instance info <instance-id>
+si instance log <instance-id>
+si instance stop <instance-id> 10000
+```
+
+Success is `ready: true` from the Hub, the `probe ready` log, a healthy monitoring frame with `runtime: "node"`, and the `probe.ready` event before the stopped lifecycle. Build and pack the Python equivalent using its Python project workflow and use the resulting archive with the same `si sequence deploy` command; its runtime-specific config and arguments must match that package's entrypoint. The Process Adapter runs the selected Runner as a host child process, so it does not isolate resources or filesystem access and the Hub owns child cleanup. For Manager routing, connect the Hub using the deployment's verified Manager configuration, then target the Manager with `si config set apiUrl http://manager-host:8200`; Manager routes to the connected Hub, while the adapter still launches the Runner there.

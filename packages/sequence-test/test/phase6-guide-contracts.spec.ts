@@ -348,3 +348,69 @@ test("configuration-resources-state guide describes the canonical source-summary
     t.regex(configGuide, /## What the adapter can see/);
     t.regex(configGuide, /## State is application-owned/);
 });
+
+test("every example page ships a complete installed-adapter workflow with all required sections", t => {
+    allowAvaMemoryGrowth(t, {
+        threshold: 1024 * 1024,
+        reason: "String matching across ten full documentation pages retains page content in memory until the test completes."
+    });
+    const examplePages = [
+        "simple-transform.md",
+        "lifecycle-local-validation-service.md",
+        "customer-site-health-control.md",
+        "mcp-bridged-job-status.md",
+        "local-object-filter-to-consumer.md",
+        "customer-site-topic-probe-pipeline.md",
+        "tested-incremental-log-aggregator.md",
+        "app-context-health-parity.md",
+        "source-side-data-summary.md",
+        "python-log-processor.md",
+    ];
+
+    for (const page of examplePages) {
+        const md = docs("examples", page);
+
+        // Required: canonical setup-and-run baseline link
+        t.regex(md, /\]\(\.\.\/sequences\/setup-and-run\.md\)/,
+            `${page} links to the canonical setup-and-run guide`);
+
+        // Required: Process Adapter startup with sth --runtime-adapter process
+        t.regex(md, /sth --runtime-adapter process/,
+            `${page} includes sth --runtime-adapter process startup`);
+
+        // Required: readiness check polling the Hub status endpoint
+        t.regex(md, /curl.*127\.0\.0\.1:8000\/api\/v1\/status/,
+            `${page} includes a readiness check`);
+
+        // Required: si sequence pack command
+        t.regex(md, /si sequence pack/,
+            `${page} includes si sequence pack`);
+
+        // Required: deploy or send/start command
+        t.regex(md, /si sequence deploy|si sequence send/,
+            `${page} includes si sequence deploy or si sequence send`);
+
+        // Required: observable success check
+        t.regex(md, /(?:observable\s+)?(?:Live\s+)?[Ss]uccess(?:ful)?(?:\s+\S+){0,5}\s+(?:is|shows|result)/,
+            `${page} includes an observable success check`);
+
+        // Forbidden patterns in terminal bash/shell fenced blocks
+        const bashBlocks = fenced(md, "bash");
+        const shellBlocks = fenced(md, "shell");
+        const terminalBlocks = [...bashBlocks, ...shellBlocks];
+
+        for (const block of terminalBlocks) {
+            t.notRegex(block, /cd packages\/sequence-test/,
+                `${page} terminal block does not contain repo-relative cd path`);
+            t.notRegex(block, /npm run docs:check/,
+                `${page} terminal block does not contain docs:check command`);
+            t.notRegex(block, /\b(?:npx\s+)?ava\b|npm run test:(?:packages|bdd|sequence-appcontext)/,
+                `${page} terminal block does not contain AVA or BDD test commands`);
+        }
+
+        // Forbidden: deployment-deferral text as the author-facing path
+        // (deferring deployment to another guide without providing concrete commands)
+        t.notRegex(md, /deployment\s+is\s+(?:deferred|outside|not\s+covered|beyond)/i,
+            `${page} does not contain deployment-deferral text`);
+    }
+});

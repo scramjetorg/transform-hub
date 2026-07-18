@@ -121,9 +121,12 @@ export default async function (this: Context, input: Readable) {
 ```
 
 Start this package with the existing input-topic routing option and pass the local port as normal
-Sequence configuration. With the local Process Adapter from the [installed Sequence setup and run guide](../sequences/setup-and-run.md), the dashboard is available at `http://127.0.0.1:8787/`:
+Sequence configuration. The complete installed-deliverable workflow is below; the dashboard binds
+to loopback at `http://127.0.0.1:8787/`.
 
-```bash
+### Dashboard start terminal
+
+```sh
 si sequence start <dashboard-sequence-id> \
   --input-topic customer-site-probes \
   --config-string '{"dashboardPort":8787}'
@@ -135,4 +138,74 @@ existing `--output-topic <topic-name>` option if that output should be routed to
 The dashboard binds only to loopback. For Docker, Kubernetes, or a remote Hub, configure that
 environment's normal port exposure before expecting the local URL to be reachable.
 
-The v2 stream equivalent is `POST /api/v2/topics/:name/stream`; the `createTopic.post` and `topicWrite.post` calls above are typed Hub-scoped operations. Python uses the wrapper's scoped `context.hub.post()` method. Existing `/api/v1/topic` callers remain compatibility paths. Run `npm run test:sequence-appcontext`, then `npm run test:bdd-ci-api-topic` for the live Hub/Space topic path when Docker prerequisites are available. Poll route readiness instead of using a fixed sleep.
+## Optional maintainer evidence
+
+The v2 stream equivalent is `POST /api/v2/topics/:name/stream`; the `createTopic.post` and
+`topicWrite.post` calls above are typed Hub-scoped operations. Python uses the wrapper's scoped
+`context.hub.post()` method. Existing `/api/v1/topic` callers remain compatibility paths. Maintainers
+may run the AppContext and live topic checks when their Docker prerequisites are available; those
+checks are not required for an author to deploy this package. Poll route readiness instead of using
+a fixed sleep.
+
+## Installed Process Adapter workflow
+
+Follow the canonical [Set up and run an installed Sequence](../sequences/setup-and-run.md) guide.
+For this two-sequence pipeline, use Node.js `>=18`, published `sth`/`si`, Hub API port `8000` on
+`127.0.0.1`, and a separate `sequence-store/` directory. The Process Adapter has no container
+mounts. The probe sequence needs config `siteName`, creates the exact topic
+`customer-site-probes` with content type `application/json`, and the dashboard sequence needs
+`dashboardPort: 8787`; expose port `8787` only if the dashboard must be reached beyond loopback.
+
+### Packaging terminal
+
+Each directory is a standalone Sequence project with its own `package.json`, build output,
+and production `node_modules` included in its archive.
+
+```sh
+cd probe-sequence && npm install && npm run build && npm install --production && cd ..
+si sequence pack ./probe-sequence -o customer-site-probe.tar.gz
+
+cd dashboard-sequence && npm install && npm run build && npm install --production && cd ..
+si sequence pack ./dashboard-sequence -o customer-site-dashboard.tar.gz
+```
+
+### Hub terminal
+
+```sh
+mkdir -p sequence-store
+sth --runtime-adapter process --hostname 127.0.0.1 --port 8000 \
+  --sequences-root "$PWD/sequence-store"
+```
+
+### Readiness terminal
+
+```sh
+timeout 60s sh -c '
+  until curl --fail --silent http://127.0.0.1:8000/api/v1/status |
+    node -e "let s=\"\"; process.stdin.on(\"data\", c => s += c).on(\"end\", () => process.exit(JSON.parse(s).ready === true ? 0 : 1))";
+  do :; done
+'
+```
+
+### Deploy/start terminal
+
+```sh
+si config set apiUrl http://127.0.0.1:8000
+si sequence deploy ./customer-site-probe.tar.gz \
+  --config-string '{"siteName":"customer-a"}'
+si sequence deploy ./customer-site-dashboard.tar.gz \
+  --input-topic customer-site-probes \
+  --config-string '{"dashboardPort":8787}'
+si instance list
+si instance info <probe-instance-id>
+si instance info <dashboard-instance-id>
+si instance log <probe-instance-id>
+```
+
+Success is a `probe.published` event and a JSON measurement containing `site: "customer-a"`, the
+dashboard responding with HTTP 200 at `http://127.0.0.1:8787/`, and `/api/probes` containing that
+measurement. Both instances must be visible in `si instance list` and report started in
+`si instance info`. For Docker or Kubernetes, deploy the two archives with the selected adapter,
+declare the shared topic in the permitted scope, and configure runner networking plus port exposure
+for `8787`; do not assume the process adapter's loopback binding or host filesystem behavior carries
+over.

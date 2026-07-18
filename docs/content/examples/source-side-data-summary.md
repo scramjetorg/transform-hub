@@ -82,7 +82,7 @@ Sequence does not claim ownership of the files or persist scan progress. If the
 source needs durable progression, use an explicitly operated durable store; do
 not use `this.save()` as evidence of persistence.
 
-## Validate the real Sequence
+## Optional maintainer evidence: validate the real Sequence
 
 This focused check loads the packaged entry point, executes it against a local
 fixture directory, consumes its incremental output, and checks readiness and
@@ -128,3 +128,69 @@ registration only. It is not a Docker, Kubernetes, external-store, or
 source-system smoke test. If validation or `opendir` fails, the application
 rejects before registering `/health`; treat that rejected load as an errored
 Sequence outcome rather than exposing a health route for an unusable source.
+
+## Installed Process Adapter workflow
+
+For an actionable installed-deliverable run, follow the canonical [Set up and run an installed
+Sequence](../sequences/setup-and-run.md) guide. The following values apply to this example:
+
+- Runtime prerequisite: Node.js `>=18`, published `@scramjet/sth` and `@scramjet/cli`, and a
+  readable source directory such as `/opt/example/source-data`.
+- Package prerequisite: compile the example to the `main` file, install production dependencies
+  in the sequence directory, and pack that directory with `si sequence pack`; the archive must
+  contain `node_modules/` because this process workflow does not use the source checkout.
+- Hub: create a separate store directory and run `sth --runtime-adapter process` on
+  `127.0.0.1:8000`; the store is not the source directory and Process Adapter has no container
+  mount. The runner reads `/opt/example/source-data` directly from the host.
+
+### Packaging terminal
+
+```sh
+npm install
+npm run build
+npm install --production
+si sequence pack . -o source-side-data-summary.tar.gz
+```
+
+### Hub terminal
+
+```sh
+mkdir -p sequence-store
+sth --runtime-adapter process --hostname 127.0.0.1 --port 8000 \
+  --sequences-root "$PWD/sequence-store"
+```
+
+### Readiness terminal
+
+```sh
+timeout 60s sh -c '
+  until curl --fail --silent http://127.0.0.1:8000/api/v1/status |
+    node -e "let s=\"\"; process.stdin.on(\"data\", c => s += c).on(\"end\", () => process.exit(JSON.parse(s).ready === true ? 0 : 1))";
+  do :; done
+'
+```
+
+### Deploy/start terminal
+
+```sh
+si config set apiUrl http://127.0.0.1:8000
+si sequence deploy ./source-side-data-summary.tar.gz \
+  --config-string '{"sourceDirectory":"/opt/example/source-data"}'
+si instance list
+si instance info <instance-id>
+si instance output <instance-id>
+si instance log <instance-id>
+```
+
+Success is one summary object per regular file in the async generator output. Run
+`si instance output <instance-id>` to receive the yielded `{file, bytes, modifiedAt}` objects as
+newline-delimited JSON — one per source file. This is the concrete retrieval command for the
+async-generator output. Do not use `si instance log` for this purpose: **output** contains the
+Sequence's yielded data, while **logs** contain `console.log` or `process.stdout` text and are
+retrieved with `si instance log <instance-id>`. Both commands are shown in the terminal block
+above.
+
+An instance is visible in `si instance list`, and `si instance info` reports its started state.
+The example's `/health` route returns `{"status":"ok"}` when the instance is ready. For Docker or
+Kubernetes, deploy the same archive with that adapter and explicitly provide the source directory
+as its environment-specific bind mount or volume; a host path alone is not a mount.

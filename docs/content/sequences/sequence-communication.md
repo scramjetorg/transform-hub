@@ -61,4 +61,4 @@ curl --fail --request POST \
 This is ordinary request/response traffic. It is not event delivery, topic publication, or a
 durable command queue.
 
-The case-led companion is [Filtering local object data for a consumer](../examples/local-object-filter-to-consumer.md). Validate the local progression with `npm run test:sequence-appcontext`; this does not prove adapter visibility or consumer durability.
+For installed execution, use the [Filtering local object data for a consumer Process Adapter workflow](../examples/local-object-filter-to-consumer.md#install-and-connect-the-deliverable-with-the-process-adapter), then refer to the [canonical installed Process Adapter example baseline](setup-and-run.md#installed-process-adapter-example-baseline). Maintainers may use `npm run test:sequence-appcontext` as optional local AppContext evidence; it does not replace the installed workflow or prove adapter visibility and consumer durability.

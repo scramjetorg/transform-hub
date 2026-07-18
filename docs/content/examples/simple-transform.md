@@ -80,9 +80,7 @@ export default async function (
 }
 ```
 
-## Running the example
-
-The HTTP commands below use legacy `/api/v1` compatibility routes. They remain supported for backwards compatibility; generated v2 API examples will be documented separately.
+## Package the example
 
 **package.json:**
 
@@ -97,34 +95,57 @@ The HTTP commands below use legacy `/api/v1` compatibility routes. They remain s
 }
 ```
 
-**Send and start:**
+The package has `main: "dist/simple-transform.js"`; build it and include production dependencies
+before creating the archive. The installed workflow below is the author-facing path.
 
-```bash
-# Package the sequence directory as a tarball
-tar czf simple-transform.tar.gz --transform='s|^\./||' -C ./simple-transform .
+## Installed Process Adapter workflow
 
-# Upload to Hub
-curl -X POST http://localhost:8000/api/v1/sequence \
-  -F "package=@simple-transform.tar.gz"
+Follow [Set up and run an installed Sequence](../sequences/setup-and-run.md) for the canonical
+installation and readiness loop. This example uses Node.js `>=18`, Hub/API port `8000`, loopback
+binding, a separate `sequence-store/` directory, config `{"multiplier":5}`, and two JSON input
+records. It needs no source or data mount.
 
-# Start with custom config
-curl -X POST http://localhost:8000/api/v1/sequence/<id>/start \
-  -H "Content-Type: application/json" \
-  -d '{"appConfig": {"multiplier": 5}}'
+### Packaging terminal
 
-# Send input data
-curl -X POST http://localhost:8000/api/v1/instance/<instanceId>/input \
-  -H "Content-Type: application/x-ndjson" \
-  -d '{"id":"a","value":10}
-{"id":"b","value":20}'
-
-# Read output
-curl http://localhost:8000/api/v1/instance/<instanceId>/output
+```sh
+npm install
+npm run build
+npm install --production
+si sequence pack . -o simple-transform.tar.gz
 ```
 
-Expected output:
+### Hub terminal
 
+```sh
+mkdir -p sequence-store
+sth --runtime-adapter process --hostname 127.0.0.1 --port 8000 \
+  --sequences-root "$PWD/sequence-store"
 ```
-{"id":"a","doubled":50,"processedAt":"2026-06-21T..."}
-{"id":"b","doubled":100,"processedAt":"2026-06-21T..."}
+
+### Readiness terminal
+
+```sh
+timeout 60s sh -c '
+  until curl --fail --silent http://127.0.0.1:8000/api/v1/status |
+    node -e "let s=\"\"; process.stdin.on(\"data\", c => s += c).on(\"end\", () => process.exit(JSON.parse(s).ready === true ? 0 : 1))";
+  do :; done
+'
 ```
+
+### Deploy/start terminal
+
+```sh
+si config set apiUrl http://127.0.0.1:8000
+si sequence deploy ./simple-transform.tar.gz --config-string '{"multiplier":5}'
+printf '%s\n' '{"id":"a","value":10}' '{"id":"b","value":20}' | \
+  si instance input <instance-id>
+si instance list
+si instance info <instance-id>
+si instance stdout <instance-id>
+si instance log <instance-id>
+```
+
+Success is output with `doubled: 50` for `a` and `doubled: 100` for `b`, the instance visible in
+`si instance list`, and the multiplier visible in instance logs. For Docker or Kubernetes, deploy
+the same archive with the selected adapter and configure its required image, storage, network, and
+port exposure; Process Adapter runs directly on the host and has no container mount.

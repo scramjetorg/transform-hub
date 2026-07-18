@@ -67,9 +67,65 @@ This verifies that the packaged entry point loads, the synthetic batch executes,
 completion is reported, and the Sequence registers `/health`. It does not prove
 durable progression or checkpointing.
 
-## Deployment boundary
+## Optional maintainer evidence: sequence-test harness
 
-Packaging and running the Sequence against a Hub or adapter requires a separate
-deployment validation. The focused sequence-test suite validates local loading,
-execution, readiness, and health behavior as described in the
-[testing guide](../testing/testing-sequences.md).
+The focused sequence-test suite validates local loading, execution, readiness, and health behavior
+as described in the [testing guide](../testing/testing-sequences.md). It is maintainer evidence,
+not the author-facing deployment workflow: it does not prove a running Hub, adapter behavior,
+restart behavior, or durable progression.
+
+## Installed Process Adapter workflow
+
+Package and run the deliverable through the canonical [Set up and run an installed
+Sequence](../sequences/setup-and-run.md) workflow. Use these concrete values for this example:
+
+- Runtime prerequisite: Node.js `>=18`, published `@scramjet/sth` and `@scramjet/cli`, and the
+  sequence's production dependencies included in the archive.
+- Input: `application/x-ndjson`, with one JSON log batch per input value. The sample batch is
+  `[ {"level":"info"}, {"level":"error"} ]`.
+- Hub: Process Adapter on loopback `127.0.0.1:8000`, with uploaded sequences stored in the separate
+  `sequence-store/` directory. No source mount is needed for this example.
+
+### Packaging terminal
+
+```sh
+npm install
+npm run build
+npm install --production
+si sequence pack . -o incremental-log-aggregator.tar.gz
+```
+
+### Hub terminal
+
+```sh
+mkdir -p sequence-store
+sth --runtime-adapter process --hostname 127.0.0.1 --port 8000 \
+  --sequences-root "$PWD/sequence-store"
+```
+
+### Readiness terminal
+
+```sh
+timeout 60s sh -c '
+  until curl --fail --silent http://127.0.0.1:8000/api/v1/status |
+    node -e "let s=\"\"; process.stdin.on(\"data\", c => s += c).on(\"end\", () => process.exit(JSON.parse(s).ready === true ? 0 : 1))";
+  do :; done
+'
+```
+
+### Deploy/start terminal
+
+```sh
+si config set apiUrl http://127.0.0.1:8000
+si sequence deploy ./incremental-log-aggregator.tar.gz
+echo '[{"level":"info"},{"level":"error"}]' | si instance input <instance-id>
+si instance info <instance-id>
+si instance stdout <instance-id>
+si instance log <instance-id>
+```
+
+The observable success result is `processed: 2` and `errors: 1` in instance output, the instance
+appearing in `si instance list`, and `/health` returning `{"status":"ok"}` while it runs. For a
+Docker or Kubernetes deployment, use the same packed artifact but select that adapter and provide
+its required runner image, storage, and network configuration; the Process Adapter command above
+does not provide container isolation.

@@ -17,3 +17,5 @@ The sequence API owns its route and its own authorization assumptions. External 
 ## Limits and boundaries
 
 The process, Docker, and Kubernetes adapters expose the route according to their configured network boundaries. The route is transient runtime service state: it is not a durable job queue, does not replay requests after disconnect, and does not imply exactly-once processing. Choose authentication and authorization at the deployment boundary; never treat instance identity as a secret.
+
+For installed execution, use the [local validation service Process Adapter workflow](../examples/lifecycle-local-validation-service.md#install-and-verify-the-deliverable-with-the-process-adapter), then refer to the [canonical installed Process Adapter example baseline](setup-and-run.md#installed-process-adapter-example-baseline). Maintainers may use repository lifecycle checks as optional evidence; they are not an author prerequisite or terminal validation step.

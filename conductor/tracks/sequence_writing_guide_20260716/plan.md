@@ -355,3 +355,51 @@
   - Live PR comment audit reports every actionable theme addressed. Guarded
     Phase 6 contracts (10), source-summary evidence (1), canonical guide
     coverage (3), docs generator tests (28), and docs generation/check pass.
+
+## Example execution-path remediation
+
+- [x] Task: Reassess every example for an actionable installed-deliverable
+  execution path and deployment information; replace repository-only validation
+  endings with example-facing start commands or canonical-guide links.
+  - [x] Reassess the requirement and enumerate affected example endings.
+    - Oracle found that none of the ten example pages satisfies the installed
+      execution-path requirement; repository-only test endings remain across
+      examples and related conceptual guides.
+  - [x] Discover analogous repository-only validation endings and remediate each
+    consistently with installed `sth` commands and deployment context.
+    - [x] Add the installed Hub/deploy/observable-result path to lifecycle,
+      health/control, AppContext, MCP, and local-object examples.
+      - Added installed process-adapter Hub startup, readiness, deploy/start,
+        observable-result, and optional-maintainer-evidence sections.
+    - [x] Add the installed Hub/deploy/observable-result path to source summary,
+      log aggregation, Python log processing, simple transform, and topic probe
+      examples.
+      - Added installed process-adapter Hub startup, readiness, deploy/start,
+        observable-result, and optional-maintainer-evidence sections.
+    - [x] Replace repository-only ending handoffs in the related sequence guides
+      and establish a stable canonical setup-guide deployment anchor.
+      - Added the canonical installed-process-adapter baseline anchor and
+        replaced guide-ending repository validation handoffs with example links.
+    - [x] Add regression coverage requiring executable installed-deliverable
+      paths and prohibiting repository-only endings.
+      - Focused guarded coverage now enforces the complete installed-adapter
+        workflow and disallows terminal repository-only validation instructions
+        across all ten examples.
+    - [x] Make every embedded Hub startup workflow executable across terminals
+      or with managed background lifecycle/cleanup.
+      - Standardized foreground Hub startup as a two-line terminal block and
+        moved readiness, deployment, and Manager operations into separate
+        labelled terminal blocks.
+    - [x] Correct the MCP status route exposure and bridge URL workflow.
+      - Configured route mounting and switched the bridge to the supported
+        instance-RPC status URL with an explicit deployed instance ID.
+    - [x] Retrieve source-summary sequence output in its live success path.
+      - Added the yielded-data `si instance output` command and distinguished it
+        from structured logs and process stdout.
+    - [x] Make producer and dashboard package build contexts explicit.
+      - Documented each as an independently installed, built, production-pruned,
+        and packed Sequence project.
+  - [x] Regenerate docs, re-run focused validation, and obtain final review.
+    - `npm run docs:generate`, `npm run docs:check`, and guarded Phase 6
+      execution-path contracts (11) pass; final Oracle review passes all four
+      formerly blocked execution-path findings and generated-doc parity.

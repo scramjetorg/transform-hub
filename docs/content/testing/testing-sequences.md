@@ -255,3 +255,5 @@ The trust boundary is intentional: the test owns synthetic input and a
 temporary fixture, while adapter deployment and production state remain
 outside this test. Use the focused sequence-test suite for local loading,
 execution, readiness, and health-route coverage.
+
+For installed execution, use the [incremental log aggregator Process Adapter workflow](../examples/tested-incremental-log-aggregator.md#installed-process-adapter-workflow), then refer to the [canonical installed Process Adapter example baseline](../sequences/setup-and-run.md#installed-process-adapter-example-baseline). Repository package tests and other maintainer checks are optional follow-up evidence, not the terminal validation path for an installed Sequence.

@@ -31,4 +31,51 @@ export default async function (this: SequenceAppContext) {
 }
 ```
 
-The returned object is a request/output result; the event is a transient notification. For large inventories, stream or page the result, or write an application-owned artifact and return its reference. A consumer or event connection can disconnect without replay. Validate locally with the sequence-test fixture/harness using `npm run test:sequence-appcontext`.
+The returned object is a request/output result; the event is a transient notification. For large inventories, stream or page the result, or write an application-owned artifact and return its reference. A consumer or event connection can disconnect without replay. Maintainers may use `npm run test:sequence-appcontext` as optional AppContext evidence.
+
+## Install and connect the deliverable with the Process Adapter
+
+Use the canonical [installed Sequence setup and run guide](../sequences/setup-and-run.md). Build the package, install production dependencies into the package, and create the archive:
+
+### Packaging terminal
+
+```sh
+npm install
+npm run build
+npm install --production
+si sequence pack . -o object-filter.tar.gz
+```
+
+### Hub terminal
+
+```sh
+mkdir -p sequence-store
+sth --runtime-adapter process --hostname 127.0.0.1 --port 8000 --sequences-root "$PWD/sequence-store"
+```
+
+### Readiness terminal
+
+```sh
+timeout 60s sh -c '
+  until curl --fail --silent http://127.0.0.1:8000/api/v1/status |
+    node -e "let s=\"\"; process.stdin.on(\"data\", c => s += c).on(\"end\", () => process.exit(JSON.parse(s).ready === true ? 0 : 1))";
+  do :; done
+'
+```
+
+Deploy with the required source configuration, then observe the result and hand it to the NDJSON consumer:
+
+### Deploy/start terminal
+
+```sh
+si config set apiUrl http://127.0.0.1:8000
+si sequence deploy ./object-filter.tar.gz --config-string '{"sourceDirectory":"/path/visible-to-the-runner/source"}'
+# Or separate upload and start:
+si sequence send ./object-filter.tar.gz
+si sequence start <sequence-id> --config-string '{"sourceDirectory":"/path/visible-to-the-runner/source"}'
+si instance info <instance-id>
+si instance log <instance-id>
+si instance stdout <instance-id>
+```
+
+Live success is a completed instance whose result reports the filtered JSON count/names and whose logs or output show `source.summary`; the consumer receives that result or the transient event only while connected. The Process Adapter shares the host filesystem and process namespace, has no container resource isolation, and ties Runner cleanup to Hub lifecycle. For a Manager-routed deployment, connect the Hub to the Manager first and target its endpoint with `si config set apiUrl http://manager-host:8200`; Manager routes the upload/start request to the connected Hub, while the Process Adapter still reads only the path visible on that Hub host.

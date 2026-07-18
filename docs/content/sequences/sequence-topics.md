@@ -198,4 +198,4 @@ Sequence output can go to:
 2. **Topic publication** — explicitly sent via `hubClient().topicWrite.post()` (or `si topic send`)
 3. **Another sequence** — via topic subscription chains
 
-See [Customer-site topic probe pipeline](../examples/customer-site-topic-probe-pipeline.md) for a case-led Hub/Space example and its exact focused validation boundary.
+For installed execution, use the [Customer-site topic probe pipeline Process Adapter workflow](../examples/customer-site-topic-probe-pipeline.md#installed-process-adapter-workflow), then refer to the [canonical installed Process Adapter example baseline](setup-and-run.md#installed-process-adapter-example-baseline). The example's maintainer checks are optional and do not replace the installed workflow.

@@ -50,7 +50,7 @@ export default async function (this: SequenceAppContext, input: Readable) {
 
 The corresponding project-local workflow is:
 
-```bash
+```sh
 npm install
 npm run build
 npm test
@@ -63,7 +63,7 @@ The build must leave the file named by `main` at `dist/index.js`.
 The Hub does **not** install dependencies. The package archive must include the production
 `node_modules/` directory. After the build, install only runtime dependencies:
 
-```bash
+```sh
 npm install --production
 # or, for Bun:
 # bun install --production
@@ -77,7 +77,7 @@ in `package.json`.
 Use the CLI packager to create the archive. The packager includes every file and directory
 in the project folder, including `node_modules/`, subject to `.siignore` rules (see below):
 
-```bash
+```sh
 si sequence pack . -o hello-sequence.tar.gz
 ```
 
@@ -110,7 +110,7 @@ deploy time.
 
 Install the published runtime and CLI on the host/operator machine:
 
-```bash
+```sh
 npm install -g @scramjet/sth @scramjet/cli
 sth --help
 si --version
@@ -121,10 +121,16 @@ test command is not required to deploy the package artifact.
 
 ## 3. Start a minimal local Hub
 
+<a id="installed-process-adapter-example-baseline"></a>
+
 Create the local storage directory and start a standalone Hub with the Process Adapter bound to
 loopback:
 
-```bash
+### Hub terminal
+
+Run the Hub in the foreground and leave this terminal attached to it:
+
+```sh
 mkdir -p sequence-store
 sth \
   --runtime-adapter process \
@@ -141,7 +147,11 @@ uploaded Sequences; it is not the source project directory.
 Do not replace readiness with a fixed sleep. The compatibility status route reports the Hub's
 startup contract as `ready: true`:
 
-```bash
+### Readiness terminal
+
+In a second terminal, wait for the Hub's readiness response:
+
+```sh
 timeout 60s sh -c '
   until curl --fail --silent http://127.0.0.1:8000/api/v1/status |
     node -e "let s=\"\"; process.stdin.on(\"data\", c => s += c).on(\"end\", () => process.exit(JSON.parse(s).ready === true ? 0 : 1))";
@@ -155,14 +165,18 @@ Point `si` at the local Hub (this is also its default target), then deploy the p
 `sequence deploy` uploads and starts; use `sequence send` followed by `sequence start` when the
 two operations must be separate.
 
-```bash
+### Deploy/start terminal
+
+In the terminal used for CLI operations, point `si` at the local Hub and deploy:
+
+```sh
 si config set apiUrl http://127.0.0.1:8000
 si sequence deploy ./hello-sequence.tar.gz
 ```
 
 For separate upload/start:
 
-```bash
+```sh
 si sequence send ./hello-sequence.tar.gz
 si sequence start <sequence-id>
 ```
@@ -170,7 +184,11 @@ si sequence start <sequence-id>
 The deploy/start response contains the Instance ID. Inspect and control that Instance with the
 installed CLI:
 
-```bash
+### Instance API terminal
+
+Use the returned Instance ID to inspect and control the running Instance:
+
+```sh
 si instance list
 si instance info <instance-id>
 si instance log <instance-id>

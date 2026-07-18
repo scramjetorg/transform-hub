@@ -36,4 +36,4 @@ The statuses follow the canonical InstanceStatus terms: `stopping` during a grac
 
 See [sequence monitoring](sequence-monitoring.md) for frames, logs, events, and exit behavior.
 
-The case-led companion is [Customer-site health and control](../examples/customer-site-health-control.md). Run the focused evidence test with `cd packages/sequence-test && ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" SCRAMJET_AVA_MEMORY_GUARD=1 node ../../scripts/run-ava.js test/phase6-guide-contracts.spec.ts --match="*direct Hub and Manager-routed control flow*"`. It checks the documented direct and Manager-routed control paths and InstanceStatus outcomes.
+For installed execution, use the [Customer-site health and control Process Adapter workflow](../examples/customer-site-health-control.md#install-and-exercise-the-deliverable-with-the-process-adapter), then refer to the [canonical installed Process Adapter example baseline](setup-and-run.md#installed-process-adapter-example-baseline). Maintainers may use repository conformance tests as optional evidence after the installed workflow; they are not an author prerequisite or terminal validation step.

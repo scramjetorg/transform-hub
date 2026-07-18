@@ -26,7 +26,7 @@ Import the author-facing contract from `@scramjet/sequence-types`. The parity su
 | Exposed API | `this.api.use()` below `exposePath` | `context.api.attach(asgi_app)` below `exposePath` | Delegates to Node |
 | Durable save/checkpoint | Not provided | Not provided | Not provided |
 
-Hosted means the wrapper has the instance-server address and host channels. Python's wrapper clients are not a promise of a generic Python REST SDK. See the [health parity walkthrough](../examples/app-context-health-parity.md) for a case-led comparison; the repository's detailed conformance evidence remains in `docs-source/reference/runtime-app-context-conformance.md`.
+Hosted means the wrapper has the instance-server address and host channels. Python's wrapper clients are not a promise of a generic Python REST SDK. For installed execution, use the [AppContext health parity Process Adapter workflow](../examples/app-context-health-parity.md#install-and-verify-a-runtime-deliverable-with-the-process-adapter), then refer to the [canonical installed Process Adapter example baseline](setup-and-run.md#installed-process-adapter-example-baseline). Repository conformance evidence is maintainer-only and optional after the installed workflow.
 
 `hubClient()` is Hub-scoped. `spaceClient()` is Manager/Space-scoped and routed through the connected Hub proxy. Legacy `hub` and `space` remain compatibility surfaces. Python uses its wrapper `context.hub` and `context.space` views rather than importing the Node `@scramjet/rest-api2` generic client. These are intentional differences in naming, not permission to assume a different security boundary.
 

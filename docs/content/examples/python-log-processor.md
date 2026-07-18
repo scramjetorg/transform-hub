@@ -70,7 +70,7 @@ async def main(context, input_stream):
     return stats
 ```
 
-## Running the Python example
+## Package the Python example
 
 **package.json:**
 
@@ -91,36 +91,13 @@ async def main(context, input_stream):
 pyee>=12,<13
 ```
 
-**Send and test:**
+Build and pack the directory containing `log_processor.py`, `package.json`, and
+`requirements.txt`. The Process Adapter requires Python `>=3.9` on the Hub host and the Python
+runtime dependency (`pyee>=12,<13`) available to the deployed sequence. Install the dependency
+according to the Python packaging workflow used by the target installation before packing; do not
+rely on an operator's source checkout.
 
-The HTTP commands below use legacy `/api/v1` compatibility routes. They remain supported for backwards compatibility; generated v2 API examples will be documented separately.
-
-```bash
-# Upload to Hub
-curl -X POST http://localhost:8000/api/v1/sequence \
-  -F "package=@log-processor-pkg.tar.gz"
-
-# Start instance
-curl -X POST http://localhost:8000/api/v1/sequence/<id>/start
-
-# Send log lines
-curl -X POST http://localhost:8000/api/v1/instance/<instanceId>/input \
-  -H "Content-Type: application/x-ndjson" \
-  -d '{"severity":"INFO","message":"request started"}
-{"severity":"ERROR","message":"connection refused"}
-{"severity":"WARN","message":"retry attempt 1"}'
-
-# Read output
-curl http://localhost:8000/api/v1/instance/<instanceId>/output
-```
-
-Expected output:
-
-```json
-{"total_lines":3,"by_severity":{"DEBUG":0,"INFO":1,"WARN":1,"ERROR":1,"FATAL":0},"error_samples":[{"message":"connection refused","timestamp":"..."}],"min_severity":"INFO","max_severity":"ERROR"}
-```
-
-## Testing with the hub harness
+## Optional maintainer evidence: hub harness
 
 ```python
 """test_log_processor.py"""
@@ -151,3 +128,58 @@ async def test_log_processor():
 
     harness.close()
 ```
+
+## Installed Process Adapter workflow
+
+Use the canonical [Set up and run an installed Sequence](../sequences/setup-and-run.md) guide for
+CLI installation, Hub readiness, and the package lifecycle. This example uses a loopback Hub at
+`127.0.0.1:8000`, a separate `sequence-store/` directory, no source or data mount, and
+`application/x-ndjson` input:
+
+### Packaging terminal
+
+```sh
+npm install -g @scramjet/sth @scramjet/cli
+# Ensure Python >=3.9 and the requirements.txt dependency are available to the runner host.
+python3 -m pip install -r requirements.txt
+si sequence pack . -o log-processor.tar.gz
+```
+
+### Hub terminal
+
+```sh
+mkdir -p sequence-store
+sth --runtime-adapter process --hostname 127.0.0.1 --port 8000 \
+  --sequences-root "$PWD/sequence-store"
+```
+
+### Readiness terminal
+
+```sh
+timeout 60s sh -c '
+  until curl --fail --silent http://127.0.0.1:8000/api/v1/status |
+    node -e "let s=\"\"; process.stdin.on(\"data\", c => s += c).on(\"end\", () => process.exit(JSON.parse(s).ready === true ? 0 : 1))";
+  do :; done
+'
+```
+
+### Deploy/start terminal
+
+```sh
+si config set apiUrl http://127.0.0.1:8000
+si sequence deploy ./log-processor.tar.gz
+printf '%s\n' \
+  '{"severity":"INFO","message":"request started"}' \
+  '{"severity":"ERROR","message":"connection refused"}' \
+  '{"severity":"WARN","message":"retry attempt 1"}' | \
+  si instance input <instance-id>
+si instance info <instance-id>
+si instance stdout <instance-id>
+si instance log <instance-id>
+```
+
+Success is an instance listed by `si instance list` and output containing `total_lines: 3`,
+`INFO: 1`, `WARN: 1`, `ERROR: 1`, `min_severity: "INFO"`, and `max_severity: "ERROR"`; the
+`processing-complete` event is also logged by the sequence. For Docker or Kubernetes, select the
+corresponding adapter and provide its runner image, network, storage, and Python runtime setup;
+the process workflow runs the Runner as a host child process and has no container mounts.
