@@ -11,6 +11,54 @@ const docs = require("../docs.js");
 const repoRoot = path.resolve(__dirname, "../..");
 const docsScript = path.join(repoRoot, "scripts/docs.js");
 
+const readSourceDoc = (...parts) => fs.readFileSync(path.join(repoRoot, "docs-source", ...parts), "utf8");
+
+function fenced(markdown, language) {
+    return [...markdown.matchAll(new RegExp("```" + language + "\\n([\\s\\S]*?)```", "g"))]
+        .map(match => match[1]);
+}
+
+function typeCheckTypeScriptSnippets(snippets, name) {
+    const ts = require("typescript");
+    const directory = tempDir(`scramjet-${name}-ts-`);
+    const sourcePaths = snippets.map((snippet, index) => {
+        const sourcePath = path.join(directory, `${name}-${index}.ts`);
+        const prelude = `${snippet.includes('from "node:stream"') || snippet.includes('from "stream"') ? "" : "type Readable = any;\n"}declare const Transform: any;\ndeclare const transform: any;\ndeclare const through2: any;\n${snippet.includes("const fixture") ? "" : "declare const fixture: any;\n"}`;
+        fs.writeFileSync(sourcePath, `${prelude}${snippet}`);
+        return sourcePath;
+    });
+    const shimPath = path.join(directory, "documentation-modules.d.ts");
+    fs.writeFileSync(shimPath, `
+declare module "@modelcontextprotocol/sdk/server/mcp.js" {
+  export class McpServer {
+    constructor(options: { name: string; version: string });
+    registerTool(name: string, config: { description: string; inputSchema: unknown }, handler: (input: any) => Promise<any>): void;
+    connect(transport: unknown): Promise<void>;
+  }
+}
+declare module "@modelcontextprotocol/sdk/server/stdio.js" { export class StdioServerTransport {} }
+declare module "through2" { const through2: any; export default through2; }
+`);
+
+    try {
+        const options = {
+            strict: true,
+            target: ts.ScriptTarget.ES2019,
+            module: ts.ModuleKind.ESNext,
+            moduleResolution: ts.ModuleResolutionKind.NodeJs,
+            esModuleInterop: true,
+            skipLibCheck: true,
+            noUnusedLocals: false,
+            baseUrl: repoRoot,
+            paths: { "@scramjet/*": ["packages/*/src/index.ts"], zod: ["node_modules/zod/index.d.ts"] },
+        };
+        const program = ts.createProgram([...sourcePaths, shimPath], options);
+        return ts.getPreEmitDiagnostics(program).map(diagnostic => ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n"));
+    } finally {
+        fs.rmSync(directory, { recursive: true, force: true });
+    }
+}
+
 function tempDir(prefix = "scramjet-docs-test-") {
     return fs.mkdtempSync(path.join(os.tmpdir(), prefix));
 }
@@ -173,6 +221,161 @@ test("guide-pair sources contain installed API and routing evidence", t => {
     t.regex(topics, /hubClient\(\)\.topicWrite\.post/);
     t.regex(packaging, /setup-and-run\.md/);
     t.notRegex(topics, /this\.(?:consumes|produces)\s*\(/);
+});
+
+test("control guides document direct and Manager-routed terminal outcomes", t => {
+    const control = readSourceDoc("sequences", "sequence-control.md");
+    const wet = readSourceDoc("examples", "customer-site-health-control.md");
+    t.regex(control, /direct:\s+caller -> Hub -> instance -> terminal state/);
+    t.regex(control, /routed:\s+caller -> Manager -> connected Hub -> instance -> terminal state/);
+    t.regex(control, /health[\s\S]*stop[\s\S]*kill[\s\S]*timeout[\s\S]*errored/);
+    t.regex(control, /`stopping`[\s\S]*`killing`[\s\S]*`completed`[\s\S]*`errored`[\s\S]*`gone`/);
+    t.regex(wet, /bounded timeout[\s\S]*kill/);
+    const conformance = fs.readFileSync(path.join(repoRoot, "packages/manager/test/manager-api-v2-hotwire.spec.ts"), "utf8");
+    t.regex(conformance, /real Manager-routed CSI control preserves direct Hub semantics/);
+    t.regex(conformance, /InstanceStatus\.COMPLETED/);
+    t.regex(conformance, /RunnerMessageCode\.(STOP|KILL)/);
+});
+
+test("API and MCP guides keep sequence exposure scoped and standalone", t => {
+    t.notRegex(readSourceDoc("sequences", "sequence-api-exposure.md"), /MCP/);
+    const mcp = readSourceDoc("examples", "mcp-bridged-job-status.md");
+    t.regex(mcp, /McpServer/);
+    t.regex(mcp, /z\.string\(\)\.regex/);
+    t.regex(mcp, /source of truth/);
+    t.notRegex(mcp, /cursor|CURSOR_FILE|cursorFile/i);
+});
+
+test("communication and topic guides preserve live-event and route-boundary claims", t => {
+    t.regex(readSourceDoc("manager", "overview.md"), /not persisted and cannot be replayed/);
+    const topics = readSourceDoc("sequences", "sequence-topics.md");
+    t.regex(topics, /v1 compatibility/);
+    t.regex(topics, /api\/v2\/topics/);
+    t.regex(topics, /body: Readable\.from/);
+});
+
+test("AppContext guides name the canonical type and intentional runtime limits", t => {
+    const writing = readSourceDoc("sequences", "writing-sequences.md");
+    const parity = readSourceDoc("reference", "runtime-app-context-conformance.md");
+    t.regex(writing, /@scramjet\/sequence-types/);
+    t.regex(writing, /hubClient\(\)/);
+    t.regex(writing, /spaceClient\(\)/);
+    t.regex(parity, /Hosted Bun delegates to Node|Node delegation/);
+    t.regex(parity, /Unsupported/);
+    t.regex(parity, /generic Python REST SDK/);
+});
+
+test("all contract guides have extractable, type-checkable TypeScript and valid Python/Compose snippets", t => {
+    const wetPages = [
+        "lifecycle-local-validation-service.md", "customer-site-health-control.md", "mcp-bridged-job-status.md",
+        "local-object-filter-to-consumer.md", "customer-site-topic-probe-pipeline.md", "tested-incremental-log-aggregator.md",
+        "app-context-health-parity.md", "source-side-data-summary.md",
+    ];
+    const markdown = [
+        ...wetPages.map(page => readSourceDoc("examples", page)),
+        readSourceDoc("sequences", "sequence-lifecycle.md"), readSourceDoc("sequences", "sequence-control.md"),
+        readSourceDoc("sequences", "sequence-api-exposure.md"), readSourceDoc("sequences", "sequence-communication.md"),
+        readSourceDoc("sequences", "sequence-topics.md"), readSourceDoc("sequences", "sequence-app-context.md"),
+        readSourceDoc("sequences", "writing-sequences.md"), readSourceDoc("transform-hub", "configuration.md"),
+    ];
+    for (const page of wetPages) t.regex(readSourceDoc("examples", page), /\]\(\.\.\/[^)]*\.md(?:#[^)]*)?\)/, `${page} links to its dry guide`);
+    const typescript = markdown.flatMap(page => fenced(page, "typescript"));
+    t.true(typescript.length > 0);
+    t.deepEqual(typeCheckTypeScriptSnippets(typescript, "contract"), []);
+    for (const snippet of markdown.flatMap(page => fenced(page, "python"))) {
+        const result = spawnSync("python3", ["-c", "import ast, sys; ast.parse(sys.stdin.read())"], { input: snippet, encoding: "utf8" });
+        t.is(result.status, 0, result.stderr);
+    }
+    const mcp = fenced(readSourceDoc("examples", "mcp-bridged-job-status.md"), "typescript").filter(snippet => snippet.includes("McpServer"));
+    t.is(mcp.length, 1);
+    t.deepEqual(typeCheckTypeScriptSnippets(mcp, "mcp-bridge"), []);
+    t.regex(mcp[0], /@modelcontextprotocol\/sdk\/server\/mcp\.js/);
+    t.regex(mcp[0], /@modelcontextprotocol\/sdk\/server\/stdio\.js/);
+    t.regex(mcp[0], /from "zod"/);
+    const yaml = require("yaml");
+    const compose = fenced(readSourceDoc("transform-hub", "configuration.md"), "yaml").find(snippet => snippet.includes("services:"));
+    t.truthy(compose);
+    t.truthy(yaml.parse(compose));
+    t.regex(compose, /healthcheck:/);
+    t.regex(compose, /127\.0\.0\.1:8000:8000/);
+    t.regex(compose, /internal: true/);
+});
+
+test("runtime evidence matches lifecycle and monitoring documentation", t => {
+    const nodeRunner = fs.readFileSync(path.join(repoRoot, "packages/runner-node/src/bin/runner-node.ts"), "utf8");
+    const pythonRunner = fs.readFileSync(path.join(repoRoot, "packages/runner-python/src/runner_python/__main__.py"), "utf8");
+    t.regex(nodeRunner, /INITIALIZE_REJECTED[\s\S]*throw error/);
+    t.regex(nodeRunner, /\{ \.\.\.health, \.\.\.getMemoryUsage\(\) \}/);
+    t.regex(nodeRunner, /\{ healthy: true, \.\.\.getMemoryUsage\(\) \}/);
+    t.regex(pythonRunner, /INITIALIZE_REJECTED[\s\S]*return 1/);
+    const monitoring = readSourceDoc("sequences", "sequence-monitoring.md");
+    t.regex(monitoring, /"memoryUsage": 12345678/);
+    t.regex(monitoring, /"memoryMaxUsage": 23456789/);
+    t.regex(monitoring, /runtime telemetry[\s\S]*not placed inside/);
+    t.regex(readSourceDoc("reference", "runtime-app-context-conformance.md"), /runner telemetry at top level/);
+});
+
+test("lifecycle, control, API, communication, topics, and AppContext guides link claims to evidence", t => {
+    const guides = {
+        lifecycle: readSourceDoc("sequences", "sequence-lifecycle.md"),
+        control: readSourceDoc("sequences", "sequence-control.md"),
+        api: readSourceDoc("sequences", "sequence-api-exposure.md"),
+        communication: readSourceDoc("sequences", "sequence-communication.md"),
+        topics: readSourceDoc("sequences", "sequence-topics.md"),
+        appContext: readSourceDoc("sequences", "sequence-app-context.md"),
+    };
+    t.regex(guides.lifecycle, /## Lifecycle states[\s\S]*## Validate before serving/);
+    t.regex(guides.lifecycle, /Validate before serving/);
+    t.regex(guides.control, /Health is an observation/);
+    t.regex(guides.api, /sequence API owns its route/);
+    t.regex(guides.communication, /narrowest path/);
+    t.regex(guides.topics, /Topics are named live data channels/);
+    t.regex(guides.appContext, /@scramjet\/sequence-types/);
+    const testing = readSourceDoc("testing", "testing-sequences.md");
+    t.regex(testing, /@scramjet\/sequence-test/);
+    for (const guide of Object.values(guides)) t.regex(guide, /validation|monitoring|events|topic|parity|runtime wrapper/i);
+});
+
+test("source-summary and configuration guides describe the canonical safe models", t => {
+    const source = readSourceDoc("examples", "source-side-data-summary.md");
+    for (const expression of [
+        /async function validateDirectory\(value: unknown\): Promise<string>/,
+        /if \(typeof value !== "string" \|\| !path\.isAbsolute\(value\)\)/,
+        /if \(!info\.isDirectory\(\)\) throw new Error\("sourceDirectory must be a directory"\);/,
+        /import \{ opendir, stat \} from "node:fs\/promises"/,
+        /for await \(const entry of directory\)/,
+        /Number\.isSafeInteger\(info\.size\)/,
+        /throw new Error\("directory entry escaped sourceDirectory"\);/,
+        /export async function validateSourceSummary\(sequenceDirectory: string, sourceDirectory: string\): Promise<void>/,
+        /await readiness\.validate\(\)/, /await readiness\.initialize\(\)/, /await readiness\.activateRoute\("\/health"\)/,
+    ]) t.regex(source, expression);
+    const config = readSourceDoc("sequences", "sequence-configuration-resources-state.md");
+    t.regex(config, /where the source is accessible/i);
+    t.regex(config, /validate and open the source once/i);
+    t.regex(config, /stream summaries incrementally/i);
+    t.regex(config, /There is no separate producer/);
+    t.regex(config, /model containing precomputed results/);
+    t.notRegex(config, /send the summary as normal Sequence input/);
+    t.notRegex(config, /precompute.*input/);
+    t.regex(config, /## What the adapter can see/);
+    t.regex(config, /## State is application-owned/);
+});
+
+test("every example page documents the complete installed-adapter workflow", t => {
+    const pages = ["simple-transform.md", "lifecycle-local-validation-service.md", "customer-site-health-control.md", "mcp-bridged-job-status.md", "local-object-filter-to-consumer.md", "customer-site-topic-probe-pipeline.md", "tested-incremental-log-aggregator.md", "app-context-health-parity.md", "source-side-data-summary.md", "python-log-processor.md"];
+    for (const page of pages) {
+        const markdown = readSourceDoc("examples", page);
+        t.regex(markdown, /\]\(\.\.\/sequences\/setup-and-run\.md\)/, `${page} has setup-and-run`);
+        t.regex(markdown, /sth --runtime-adapter process/, `${page} starts the process adapter`);
+        t.regex(markdown, /curl.*127\.0\.0\.1:8000\/api\/v1\/status/, `${page} checks readiness`);
+        t.regex(markdown, /si sequence pack/, `${page} packs a sequence`);
+        t.regex(markdown, /si sequence deploy|si sequence send/, `${page} deploys or sends`);
+        t.regex(markdown, /(?:observable\s+)?(?:Live\s+)?[Ss]uccess(?:ful)?(?:\s+\S+){0,5}\s+(?:is|shows|result)/, `${page} checks success`);
+        for (const block of [...fenced(markdown, "bash"), ...fenced(markdown, "shell")]) {
+            t.notRegex(block, /cd packages\/sequence-test|npm run docs:check|\b(?:npx\s+)?ava\b|npm run test:(?:packages|bdd|sequence-appcontext)/, `${page} terminal block is author-facing`);
+        }
+        t.notRegex(markdown, /deployment\s+is\s+(?:deferred|outside|not\s+covered|beyond)/i, `${page} does not defer deployment`);
+    }
 });
 
 test("generated-output link validation rejects missing relative targets", t => {

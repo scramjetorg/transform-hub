@@ -705,7 +705,13 @@ export function createHubHarness(_options: CreateHubHarnessOptions = {}): HubHar
 
             const v2Topic = payload.topic as Record<string, unknown> | undefined;
             const topicName =
-                typeof v2Topic?.name === "string" && v2Topic.name.length > 0 ? v2Topic.name : typeof payload.id === "string" && payload.id.length > 0 ? payload.id : "";
+                typeof v2Topic?.name === "string" && v2Topic.name.length > 0
+                    ? v2Topic.name
+                    : typeof payload.id === "string" && payload.id.length > 0
+                      ? payload.id
+                      : isV2
+                        ? ""
+                        : `topic-${topics.size + 1}`;
             const contentType =
                 typeof v2Topic?.contentType === "string" ? v2Topic.contentType : typeof payload["content-type"] === "string" ? payload["content-type"] : "text/plain";
 

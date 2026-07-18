@@ -217,8 +217,9 @@
 - [x] Task: Write or update synthetic progression tests first for lifecycle,
   control, API, communication, topics, and AppContext wet-guide behavior, plus
   extraction/compilation validation for inline TypeScript, Python, and Compose.
-  - `test/phase6-guide-contracts.spec.ts` now passes seven guarded progression,
-    claim-evidence, and inline-snippet validation tests.
+  - Root `scripts/test/docs-generator.spec.js` now owns the guarded guide
+    claim-evidence and inline-snippet validation tests; harness behavior remains
+    in its readiness, contracts, and harness suites.
 - [x] Task: Write the lifecycle dry/wet pair from the Server Fault diagnostics
   case, documenting validation-before-listener, structured failures, and active
   long-running behavior.
