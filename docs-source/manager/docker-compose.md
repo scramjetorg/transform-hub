@@ -8,7 +8,7 @@ title: Run a Manager and Hubs with Docker Compose
 
 Work in progress — this guide has been manually verified only. Automated verification is not yet available.
 
-Use this guide when you have a Docker Compose topology that starts a Manager and one or more connected STH/Hubs. You point the installed `si` CLI at the Manager API; the Manager then routes deployment and Instance control requests to a connected Hub, where the Runner executes the Sequence.
+Use this guide when you have a Docker Compose topology that starts a Manager and one or more connected STH/Hubs. Manager-level CLI routing and Hub discovery are not available in this open topology — those capabilities are deferred to Middleware.
 
 This is not a new Compose stack. You must supply or adapt the Compose file and the Manager/Hub configuration that you have manually verified for your environment. The checked-in BDD Compose fixture at `scripts/test/fixtures/compose-live/compose.yaml` starts a Hub only. It does not provide a Manager service or a host-published Manager API, so it is not sufficient for this guide by itself.
 
@@ -31,7 +31,7 @@ The following inline source illustrates the repository's MultiManager and STH co
 
 Before creating `compose.yaml`, set every required image and identity value. `MANAGER_IMAGE` must contain the repository's `multi-manager` executable; `HUB_IMAGE` must contain `scramjet-transform-hub` and the process-adapter runtime dependencies.
 
-`CPM_URL` is an operator-supplied CPM API base URL that is reachable from the Hub containers. It is deliberately not `http://manager:8200`: verify the externally reachable address, API path, TLS trust, and routing for your deployment. `CPM_ID` is the Manager/CPM identifier expected by that endpoint. Your host-installed `si` CLI also targets the operator-selected `CPM_URL`; it does not reach Compose service names.
+`CPM_URL` is an operator-supplied CPM API base URL that is reachable from the Hub containers. It is deliberately not `http://manager:8200`: verify the externally reachable address, API path, TLS trust, and routing for your deployment. `CPM_ID` is the Manager/CPM identifier expected by that endpoint. Manager-level CLI routing through the CPM URL is not available in this open topology — those capabilities are deferred to Middleware.
 
 ```sh
 export MANAGER_IMAGE=<image-containing-multi-manager>      # deployment-specific
@@ -159,13 +159,7 @@ docker compose -f "$COMPOSE_FILE" up -d
 docker compose -f "$COMPOSE_FILE" ps
 ```
 
-The control port is not the `si` endpoint. `si` runs on your host and must use the externally supplied CPM URL that you verified as reachable from both the host and Hub containers.
-
-```sh
-printf '%s\n' "$CPM_URL"
-```
-
-If your selected CPM endpoint has a different address, API path, or TLS policy, update `CPM_URL` before starting the stack. Do not use Compose-only hostnames such as `manager` from the host shell or from the `si` configuration.
+The control port is not an `si` endpoint. Manager-level CLI routing and Hub discovery through the CPM URL are not available in this open topology — those capabilities are deferred to Middleware. To use `si` with an individual Hub, you must first ensure that Hub's API port is host-accessible (for example, by adding a host port mapping to that Hub service). The topology template above keeps Hub API ports private to `manager-network`; adapt it if you need host-side `si` access.
 
 ## Check readiness and Hub connections
 
@@ -188,18 +182,20 @@ The Manager keeps the connected-Hub registry and routes control requests over ea
 
 ## Use the installed CLI
 
-Configure the installed CLI on your host with the externally supplied CPM URL, then inspect the current value:
+Manager-level CLI routing and Hub discovery are not available in this open topology — those capabilities are deferred to Middleware.
+
+To use `si` for deployment and Instance control against a selected Hub, verify that the Hub's API port is host-accessible (for example, by mapping it in `compose.yaml`). Then configure `si` with that Hub endpoint:
 
 ```sh
-si config set apiUrl "$CPM_URL"
+si config set apiUrl "http://127.0.0.1:8000"
 si config print
 ```
 
-Use the selected CPM endpoint, not an individual Hub endpoint or the Compose control port, for deployment and Instance control.
+Using a Hub endpoint directly bypasses Manager-level CLI routing. The `si` operations that follow are directed to that specific Hub only.
 
 ## Deploy and control an Instance
 
-Package a Sequence according to the [canonical installed Sequence run guide](../sequences/setup-and-run.md), then deploy it through the Manager. Save the returned Instance ID for later commands.
+Package a Sequence according to the [canonical installed Sequence run guide](../sequences/setup-and-run.md), then deploy it through the Hub endpoint that `si` is configured to target. Save the returned Instance ID for later commands.
 
 ```sh
 si sequence pack ./my-sequence -o my-sequence.tar.gz
@@ -213,7 +209,7 @@ printf 'input\n' | si instance input <instance-id> --end
 si instance stop <instance-id> 10000
 ```
 
-The CPM routes these requests to the Hub that owns the Instance. If an operation fails, first confirm the CPM health response and the Manager and Hub logs. The [CLI usage guide](../cli/usage.md) lists the available Instance commands.
+These commands target the selected Hub directly and bypass Manager-level CLI routing. If an operation fails, first confirm that the Hub is reachable and check the Manager and Hub logs. The [CLI usage guide](../cli/usage.md) lists the available Instance commands.
 
 ## Stop and clean up
 
