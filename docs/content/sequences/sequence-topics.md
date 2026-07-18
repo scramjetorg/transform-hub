@@ -11,22 +11,21 @@ title: Topics, data routing, and sequence metadata
 
 ## Topics
 
-Topics are named data channels that sequences can publish to or subscribe from independently of the main input/output stream. They enable decoupled data flows between sequences and external systems.
+Topics are named live data channels that sequences can publish to or subscribe from independently of the main input/output stream. They enable decoupled data flows between sequences and external systems, but they are not a durable queue: topics are not persisted and cannot be replayed after a disconnect.
 
-HTTP route examples on this page use legacy v1 compatibility paths. The v1 API remains supported; v2 topic documentation will be generated from the v2 route tree in a later phase.
+Topic operations have a Hub or Space scope, a name/origin, and a declared content type. Content type must be preserved by publishers and consumers. The route applies backpressure where the active stream supports it; a connection loss is reported as a disconnect error and reconnect does not recover missed messages. There is no exactly-once guarantee.
+
+The v2 route tree is canonical. Hub topic operations use `/api/v2/topics`; Space operations are routed through the Manager/Space prefix, for example `/api/v1/cpm/api/v2/topics` in the current compatibility bridge. The v1 routes remain supported compatibility paths, not a separate topic store.
 
 ### Creating a topic
 
 Topics are created through the Hub API or programmatically:
 
 ```
-POST /api/v1/topic
+POST /api/v2/topics
 Content-Type: application/json
 
-{
-  "name": "sensor-readings",
-  "contentType": "application/x-ndjson"
-}
+{"topic":{"name":"sensor-readings","contentType":"application/x-ndjson"}}
 ```
 
 ### Publishing to a topic
@@ -34,21 +33,32 @@ Content-Type: application/json
 Sequences can send data to a topic using the `AppContext` hub client:
 
 ```typescript
-await this.hub.sendTopic("sensor-readings", {
-  sensor: "temperature",
-  value: 22.5,
-  unit: "celsius",
-});
+import { Readable } from "node:stream";
+import type { AppConfig, SequenceAppContext } from "@scramjet/sequence-types";
+import type { HubClient } from "@scramjet/rest-api2";
+
+type Context = SequenceAppContext<AppConfig, unknown, HubClient, unknown>;
+
+async function publish(this: Context) {
+  await this.hubClient().createTopic.post({
+  body: { topic: { name: "sensor-readings", contentType: "application/x-ndjson" } }
+  });
+  await this.hubClient().topicWrite.post({
+  params: { name: "sensor-readings" },
+  headers: { "content-type": "application/x-ndjson" },
+  body: Readable.from([Buffer.from('{"sensor":"temperature","value":22.5}\n')])
+  });
+}
 ```
 
 In Python:
 
 ```python
-await context.hub.send_topic("sensor-readings", {
-    "sensor": "temperature",
-    "value": 22.5,
-    "unit": "celsius",
-})
+await context.hub.post(
+    "/topics/sensor-readings/stream",
+    headers={"content-type": "application/json"},
+    body=b'{"sensor":"temperature","value":22.5,"unit":"celsius"}\n',
+)
 ```
 
 ### Subscribing to a topic
@@ -66,6 +76,23 @@ Content-Type: application/json
 
 When started with a topic subscription, the sequence input stream contains the topic messages.
 
+For the installed CLI workflow, create and route the topic with the existing commands and start
+the instance with input/output topic options:
+
+```bash
+si topic create sensor-readings --content-type application/x-ndjson
+si sequence start <sequence-id> \
+  --input-topic sensor-readings \
+  --output-topic normalized-readings
+printf '{"sensor":"temperature","value":22.5}\n' | si topic send sensor-readings
+si topic get normalized-readings
+```
+
+`--input-topic` feeds the instance input stream and `--output-topic` publishes its output stream.
+These are startup routing options, not package metadata helpers. A sequence that publishes an
+independent topic uses the existing `hubClient().topicWrite.post()` operation shown above; do not
+invent `consumes` or `produces` AppContext methods.
+
 ### Topic metadata
 
 Topics have associated metadata:
@@ -73,6 +100,8 @@ Topics have associated metadata:
 - **`name`**: Unique topic identifier within the Hub scope
 - **`contentType`**: MIME type for the topic data
 - **`created`**: ISO timestamp of creation
+
+The v2 Hub route is the canonical topic contract. `hubClient().topicWrite.post()` is the typed Node Hub-scoped stream operation. Python exposes the wrapper's scoped `context.hub.post()` method; it does not expose the Node `@scramjet/rest-api2` fluent client or a generic Python REST SDK. Existing v1 compatibility paths remain available. A same-named topic in another Hub or Space is not automatically the same topic.
 
 ## Sequence metadata
 
@@ -166,5 +195,7 @@ A sequence input can originate from:
 Sequence output can go to:
 
 1. **API response** — retrieved by the caller
-2. **Topic publication** — explicitly sent via `hub.sendTopic()`
+2. **Topic publication** — explicitly sent via `hubClient().topicWrite.post()` (or `si topic send`)
 3. **Another sequence** — via topic subscription chains
+
+For installed execution, use the [Customer-site topic probe pipeline Process Adapter workflow](../examples/customer-site-topic-probe-pipeline.md#installed-process-adapter-workflow), then refer to the [canonical installed Process Adapter example baseline](setup-and-run.md#installed-process-adapter-example-baseline). The example's maintainer checks are optional and do not replace the installed workflow.

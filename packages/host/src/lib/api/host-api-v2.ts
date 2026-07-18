@@ -1,5 +1,15 @@
 import { APIExpose } from "@scramjet/api-types";
-import { RawHttpRouteRequest, Router, RouterDefinition, bindResolver, bindRoutes, registerHttpRoutes, replacePathVersion, routeBinding, resolverBinding } from "@scramjet/api-router";
+import {
+    RawHttpRouteRequest,
+    Router,
+    RouterDefinition,
+    bindResolver,
+    bindRoutes,
+    registerHttpRoutes,
+    replacePathVersion,
+    routeBinding,
+    resolverBinding
+} from "@scramjet/api-router";
 import { RestAPI2, RestAPI2RouteSets } from "@scramjet/rest-api2";
 import { onRequestDisconnect } from "@scramjet/utility";
 import { createDefaultHealthComponents, degradedComponent, summarizeHealth } from "@scramjet/load-check";
@@ -8,6 +18,7 @@ import { PassThrough, Readable } from "stream";
 import { IHost } from "../types";
 import TopicId from "../serviceDiscovery/topicId";
 import { isContentType } from "../serviceDiscovery/contentType";
+import { TOPIC_CONTENT_TYPE_MISMATCH, topicError } from "../serviceDiscovery/topic-errors";
 
 type HostTopicListItem = {
     id?: unknown;
@@ -15,6 +26,7 @@ type HostTopicListItem = {
     topic?: unknown;
     topicName?: unknown;
     contentType?: unknown;
+    origin?: unknown;
 };
 
 type HasIdMethod = {
@@ -22,7 +34,7 @@ type HasIdMethod = {
 };
 
 function hasIdMethod(value: unknown): value is HasIdMethod {
-    return Boolean(value && typeof value === "object" && "id" in value && typeof Object.getOwnPropertyDescriptor(value, "id")?.value === "function");
+    return Boolean(value && typeof value === "object" && "id" in value && typeof (value as { id?: unknown }).id === "function");
 }
 
 export class HostAPIV2Handler {
@@ -67,7 +79,7 @@ export class HostAPIV2Handler {
                 details: host.getStatus()
             }),
             sequences: (): RestAPI2.ListResponse<RestAPI2.Sequence> => ({
-                items: (host.getSequences() as any[]).map(sequence => {
+                items: (host.getSequences() as any[]).map((sequence) => {
                     const id = String(sequence.id);
                     const hostId = (host as any).config?.host?.id;
 
@@ -78,12 +90,12 @@ export class HostAPIV2Handler {
                         hubId: sequence.hubId || hostId,
                         location: sequence.location,
                         apiBase: `${this.v2ApiBase}/sequences/${id}`,
-                        instances: sequence.instances,
+                        instances: sequence.instances
                     };
                 })
             }),
             instances: (): RestAPI2.ListResponse<RestAPI2.Instance> => ({
-                items: (host.getInstances() as any[]).map(instance => {
+                items: (host.getInstances() as any[]).map((instance) => {
                     const id = String(instance.id);
                     const seqId = instance.sequenceId || instance.sequence?.id;
                     const hostId = (host as any).config?.host?.id;
@@ -97,32 +109,36 @@ export class HostAPIV2Handler {
                         hubId,
                         location: instance.location || hubId,
                         apiBase: `${this.v2ApiBase}/instances/${id}`,
-                        sequence: instance.sequence ? {
-                            id: instance.sequence.id,
-                            name: instance.sequence.name ?? instance.sequence.config?.name ?? instance.sequence.config?.id ?? instance.sequence.id,
-                            status: instance.sequence.status,
-                            hubId: instance.sequence.hubId || hubId,
-                            location: instance.sequence.location,
-                            apiBase: `${this.v2ApiBase}/sequences/${instance.sequence.id}`,
-                        } : seqId ? { id: seqId } : undefined,
+                        sequence: instance.sequence
+                            ? {
+                                  id: instance.sequence.id,
+                                  name: instance.sequence.name ?? instance.sequence.config?.name ?? instance.sequence.config?.id ?? instance.sequence.id,
+                                  status: instance.sequence.status,
+                                  hubId: instance.sequence.hubId || hubId,
+                                  location: instance.sequence.location,
+                                  apiBase: `${this.v2ApiBase}/sequences/${instance.sequence.id}`
+                              }
+                            : seqId
+                              ? { id: seqId }
+                              : undefined
                     };
                 })
             }),
             entities: (): RestAPI2.ListResponse<RestAPI2.Entity> => ({
                 items: [
-                    ...(host.getSequences() as any[]).map(sequence => ({ id: String(sequence.id), type: "sequence" })),
-                    ...(host.getInstances() as any[]).map(instance => ({ id: String(instance.id), type: "instance" }))
+                    ...(host.getSequences() as any[]).map((sequence) => ({ id: String(sequence.id), type: "sequence" })),
+                    ...(host.getInstances() as any[]).map((instance) => ({ id: String(instance.id), type: "instance" }))
                 ]
             }),
             topics: (): RestAPI2.ListResponse<RestAPI2.Topic> => ({
-                items: this.hostTopics().map(topic => this.hostTopic(topic))
+                items: this.hostTopics().map((topic) => this.hostTopic(topic))
             }),
             createTopic: routeBinding.handler<typeof routes.createTopic>(({ body, headers }) => this.createTopic(body, headers)),
             deleteTopic: routeBinding.handler<typeof routes.deleteTopic>(({ params }) => this.deleteTopic(params.name)),
-            topicRead: routeBinding.handler<typeof routes.topicRead>(req => this.topicRead(req.params.name, req.headers)),
-            topicWrite: routeBinding.handler<typeof routes.topicWrite>(req => this.topicWrite(req.params.name, this.rawReadable(req), req.headers)),
+            topicRead: routeBinding.handler<typeof routes.topicRead>((req) => this.topicRead(req.params.name, req.headers)),
+            topicWrite: routeBinding.handler<typeof routes.topicWrite>((req) => this.topicWrite(req.params.name, this.rawReadable(req), req.headers)),
             logs: () => host.commonLogsPipe.getOut(),
-            audit: routeBinding.handler<typeof routes.audit>(req => this.handleAuditRequest(req), { id: "hub.v2.audit" })
+            audit: routeBinding.handler<typeof routes.audit>((req) => this.handleAuditRequest(req), { id: "hub.v2.audit" })
         });
     }
 
@@ -173,7 +189,7 @@ export class HostAPIV2Handler {
                 return { sequence: { id: String(sequence?.id || id), status: sequence?.status } };
             },
             getSequenceInstances: ({ params }): RestAPI2.ListResponse<RestAPI2.Instance> => ({
-                items: (host.getSequenceInstances(sequenceId(params)) as any[]).map(instance => ({
+                items: (host.getSequenceInstances(sequenceId(params)) as any[]).map((instance) => ({
                     id: String(instance.id),
                     sequenceId: instance.sequenceId,
                     status: instance.status
@@ -183,25 +199,32 @@ export class HostAPIV2Handler {
     }
 
     createV2Router(): RouterDefinition {
-        const router = Router.create({ basePath: this.v2ApiBase })
-            .mount("/", this.createHubRouter())
-            .mount("/sequences", this.createSequenceRouter());
+        const router = Router.create({ basePath: this.v2ApiBase }).mount("/", this.createHubRouter()).mount("/sequences", this.createSequenceRouter());
         const resolver = RestAPI2RouteSets.hub.resolvers().instance;
 
-        return bindResolver(resolver, resolverBinding.handler(({ params }) => {
-            const instance = this.host.instancesStore.getByNameOrId(params.instanceId);
+        return bindResolver(
+            resolver,
+            resolverBinding.handler(({ params }) => {
+                const instance = this.host.instancesStore.getByNameOrId(params.instanceId);
 
-            return instance?.v2Router ? { local: instance.v2Router } : undefined;
-        }), router);
+                return instance?.v2Router ? { local: instance.v2Router } : undefined;
+            }),
+            router
+        );
     }
 
     attach() {
-        this.api.get(`${this.v2ApiBase}/hubs`, (): RestAPI2.ListResponse<RestAPI2.Hub> => ({
-            items: [{
-                id: String((this.host as any).config?.host?.id || "hub"),
-                status: "ok"
-            }]
-        }));
+        this.api.get(
+            `${this.v2ApiBase}/hubs`,
+            (): RestAPI2.ListResponse<RestAPI2.Hub> => ({
+                items: [
+                    {
+                        id: String((this.host as any).config?.host?.id || "hub"),
+                        status: "ok"
+                    }
+                ]
+            })
+        );
 
         registerHttpRoutes(this.api, this.createV2Router());
     }
@@ -239,9 +262,11 @@ export class HostAPIV2Handler {
     }
 
     private hostTopic(topic: unknown): RestAPI2.Topic {
+        const origin = this.hostTopicOrigin(topic);
         return {
             name: this.hostTopicName(topic),
-            contentType: this.hostTopicContentType(topic)
+            contentType: this.hostTopicContentType(topic),
+            origin
         };
     }
 
@@ -252,7 +277,9 @@ export class HostAPIV2Handler {
 
         const item = topic as HostTopicListItem;
 
-        return String(this.topicValue(item.id) || item.name || item.topicName || item.topic || topic);
+        const methodId = hasIdMethod(topic) ? topic.id() : undefined;
+
+        return String(methodId || item.name || item.topicName || item.topic || this.topicValue(item.id) || topic);
     }
 
     private hostTopicContentType(topic: unknown): string {
@@ -263,6 +290,31 @@ export class HostAPIV2Handler {
         const item = topic as HostTopicListItem;
 
         return item.contentType === undefined ? "" : String(item.contentType);
+    }
+
+    private hostTopicOrigin(topic: unknown): RestAPI2.Topic["origin"] {
+        if (typeof topic !== "object" || topic === null) {
+            return { type: "hub", id: String((this.host as any).config?.host?.id || "hub") };
+        }
+
+        const item = topic as HostTopicListItem;
+        const origin = item.origin;
+        if (origin && typeof origin === "object" && "type" in origin && "id" in origin) {
+            const value = origin as { type?: unknown; id?: unknown };
+            if ((value.type === "hub" || value.type === "space") && typeof value.id === "string") {
+                return { type: value.type, id: value.id };
+            }
+        }
+
+        const value = topic as { origin?: () => { type?: unknown; id?: unknown } };
+        if (typeof value.origin === "function") {
+            const resolved = value.origin.call(topic);
+            if (resolved && (resolved.type === "hub" || resolved.type === "space") && typeof resolved.id === "string") {
+                return { type: resolved.type, id: resolved.id };
+            }
+        }
+
+        return { type: "hub", id: String((this.host as any).config?.host?.id || "hub") };
     }
 
     private topicValue(value: unknown): unknown {
@@ -279,14 +331,22 @@ export class HostAPIV2Handler {
 
     private createTopic(body: RestAPI2.TopicCreatePayload, headers?: Record<string, unknown>): RestAPI2.OpResponse<RestAPI2.TopicCreateResponse> {
         const name = body?.topic?.name || "";
-        const contentType = this.headerValue(headers, "content-type") || "application/x-ndjson";
+        const contentType = body?.topic?.contentType || this.headerValue(headers, "content-type") || "application/x-ndjson";
 
         if (!TopicId.validate(name)) return this.failedOperation("INVALID_TOPIC", "Topic id incorrect format", name);
         if (!isContentType(contentType)) return this.failedOperation("INVALID_CONTENT_TYPE", "Unsupported content-type", name);
+        if (body?.topic?.origin && body.topic.origin.type !== "hub") {
+            return this.failedOperation("INVALID_TOPIC_ORIGIN", "Hub topics must have hub origin", name);
+        }
 
-        this.host.serviceDiscovery.createTopicIfNotExist({ topic: new TopicId(name), contentType });
+        try {
+            const topic = this.host.serviceDiscovery.createTopicIfNotExist({ topic: new TopicId(name), contentType });
+            const origin = this.hostTopicOrigin(topic);
 
-        return this.completedOperation(name, { topic: { name, contentType } });
+            return this.completedOperation(name, { topic: { name, contentType, origin } });
+        } catch (error) {
+            return this.failedOperation((error as { code?: string }).code || "TOPIC_CREATE_FAILED", this.errorMessage(error), name);
+        }
     }
 
     private deleteTopic(name: string): RestAPI2.OpResponse<RestAPI2.TopicDeleteResponse> {
@@ -306,6 +366,7 @@ export class HostAPIV2Handler {
         if (!isContentType(contentType)) return this.failedOperation("INVALID_CONTENT_TYPE", "Unsupported content-type", name);
 
         const topic = this.host.serviceDiscovery.createTopicIfNotExist({ topic: new TopicId(name), contentType });
+        if (topic.contentType !== contentType) throw topicError(TOPIC_CONTENT_TYPE_MISMATCH, "Content-type mismatch");
 
         await this.host.serviceDiscovery.update({
             requires: name,
@@ -324,6 +385,7 @@ export class HostAPIV2Handler {
         if (!isContentType(contentType)) return this.failedOperation("INVALID_CONTENT_TYPE", "Unsupported content-type", name);
 
         const topic = this.host.serviceDiscovery.createTopicIfNotExist({ topic: new TopicId(name), contentType });
+        if (topic.contentType !== contentType) return this.failedOperation(TOPIC_CONTENT_TYPE_MISMATCH, "Content-type mismatch", name);
 
         topic.acceptPipe(request);
         await this.host.serviceDiscovery.update({
@@ -332,7 +394,11 @@ export class HostAPIV2Handler {
             topicName: name,
             status: "add"
         });
-        await this.waitForStreamEnd(request);
+        const streamError = await this.waitForStreamEnd(request);
+        if (streamError) {
+            const code = (streamError as { code?: string }).code;
+            return this.failedOperation(code === "TOPIC_DISCONNECTED" || code === "TOPIC_DELETED" ? code : "TOPIC_WRITE_FAILED", this.errorMessage(streamError), name);
+        }
 
         return this.completedOperation(name, { accepted: true });
     }
@@ -355,20 +421,47 @@ export class HostAPIV2Handler {
         return value === undefined ? undefined : String(value);
     }
 
-    private async waitForStreamEnd(stream: Readable): Promise<void> {
+    private async waitForStreamEnd(stream: Readable): Promise<Error | undefined> {
         if ((stream as { readableEnded?: boolean }).readableEnded) return;
 
-        await new Promise<void>(resolve => {
-            stream.once("close", resolve);
-            stream.once("end", resolve);
-            stream.once("error", resolve);
+        return await new Promise<Error | undefined>((resolve) => {
+            let settled = false;
+            const finish = (error?: Error) => {
+                if (settled) return;
+                settled = true;
+                stream.removeListener("close", onClose);
+                stream.removeListener("end", onEnd);
+                stream.removeListener("error", onError);
+                resolve(error);
+            };
+            const onClose = () => {
+                // A close without end is a disconnect, not a successful write.
+                finish((stream as { readableEnded?: boolean }).readableEnded ? undefined : topicError("TOPIC_DISCONNECTED", "Topic request disconnected"));
+            };
+            const onEnd = () => finish();
+            const onError = (error: unknown) => finish(error instanceof Error ? error : new Error(String(error)));
+
+            stream.once("close", onClose);
+            stream.once("end", onEnd);
+            stream.once("error", onError);
         });
     }
 
     private failedOperation<TOutput>(code: string, message: string, id: string): RestAPI2.OpResponse<TOutput> {
         return {
             operation: { id: id || code, status: "failed" },
-            error: { code, message }
+            error: { code, message },
+            ...(code === "TOPIC_NOT_FOUND"
+                ? { opStatus: "Not Found" }
+                : code === "TOPIC_CONTENT_TYPE_MISMATCH"
+                  ? { opStatus: "Conflict" }
+                  : code === "INVALID_CONTENT_TYPE"
+                    ? { opStatus: "Unsupported Media Type" }
+                    : code === "TOPIC_DISCONNECTED"
+                      ? { opStatus: "Service Unavailable" }
+                      : code === "TOPIC_DELETED"
+                        ? { opStatus: "Gone" }
+                        : {})
         };
     }
 

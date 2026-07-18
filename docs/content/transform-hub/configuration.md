@@ -90,7 +90,89 @@ For the separate, controlled-deployment CSR enrollment helper, see [Controlled C
 
 The Hub reads JSON/YAML/JSONC configuration through the `@scramjet/config` loader. The generated schema for STH configuration is `schemas/sth-config.schema.json`; sequence startup config is described by `schemas/startup-config.schema.json`.
 
+### File-loaded autostart
+
+The Compose-ready setup uses the process adapter, a file-loaded Hub config, and a
+startup manifest that refers to a sequence already present in `sequencesRoot`. Set
+`identifyExisting: true` so the Hub indexes that mounted sequence before processing the
+startup manifest. The `id`, `sequenceName`, and `instanceName` values below are stable
+deployment identifiers; replace them consistently if you use a different sequence.
+
+Place the packaged sequence at `./sequence-store/status-service` next to these files. The
+directory must contain the normal stored-sequence files, including its runtime metadata.
+This example contains no credentials: pass secrets through the environment or
+an application-owned secret store instead of either YAML file.
+
+```yaml
+# sth.yaml
+runtimeAdapter: process
+identifyExisting: true
+sequencesRoot: /var/lib/scramjet/sequences
+startupConfig: /etc/scramjet/startup-config.yaml
+host:
+  hostname: 0.0.0.0
+  port: 8000
+timings:
+  startupTimeout: 30000
+```
+
+```yaml
+# startup-config.yaml
+sequences:
+  - id: status-service
+    sequenceName: status-service
+    instanceName: status-service-prod
+    required: true
+    restartLimit: 3
+    exposePath: /status
+```
+
+```yaml
+# compose.yaml
+services:
+  hub:
+    image: scramjetorg/sth:0.28.1
+    command: ["scramjet-transform-hub", "--config", "/etc/scramjet/sth.yaml"]
+    ports:
+      - "127.0.0.1:8000:8000"
+    networks:
+      - hub-internal
+    volumes:
+      - ./sth.yaml:/etc/scramjet/sth.yaml:ro
+      - ./startup-config.yaml:/etc/scramjet/startup-config.yaml:ro
+      - ./sequence-store:/var/lib/scramjet/sequences:ro
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail --silent http://127.0.0.1:8000/api/v1/status >/dev/null"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+networks:
+  hub-internal:
+    internal: true
+```
+
+Start the one service with `docker compose -f compose.yaml up -d`, then poll the readiness
+field rather than sleeping for a presumed startup duration. This bounded loop exits as soon
+as the Hub reports ready (and fails after 60 seconds):
+
+```bash
+timeout 60s sh -c '
+  until curl --fail --silent http://127.0.0.1:8000/api/v1/status |
+    node -e "let s=\"\"; process.stdin.on(\"data\", c => s += c).on(\"end\", () => process.exit(JSON.parse(s).ready === true ? 0 : 1))";
+  do :; done
+'
+```
+
+The healthcheck only proves that the HTTP endpoint responds; the explicit `ready` poll is the
+startup contract for callers. This is a process-adapter example and does not require the
+Docker socket. It also does not define sequence storage, secret management, authentication,
+or tunnel/MCP ownership for production deployments.
+
 For the authoritative configuration schema, refer to the generated curated reference for `@scramjet/config` and `@scramjet/types`.
+
+The file-loaded sequence example is intentionally separate from the MCP boundary. STH owns sequence startup, readiness, and the exposed sequence route; an external MCP bridge owns MCP authentication, authorization, public ingress, and any private-network or tunnel lifecycle. STH does not provide a generic MCP gateway.
+
+The published port is loopback-only and the Compose network is internal by default. Add a separately secured reverse proxy or tunnel only when its authentication, authorization, ingress, and lifecycle are owned outside STH. Keep the binding off `0.0.0.0` unless the external MCP client's secured ingress is configured separately.
 
 ## Hub identification
 

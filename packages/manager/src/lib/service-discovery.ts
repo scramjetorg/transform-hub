@@ -2,15 +2,7 @@ import { ObjLogger } from "@scramjet/obj-logger";
 import { IObjectLogger, ReadableStream, WritableStream } from "@scramjet/runtime-types";
 import { MRestAPI } from "@scramjet/api-types";
 import { Readable } from "stream";
-import {
-    ActorRole,
-    ActorType,
-    ActorStreamType,
-    IServiceDiscovery,
-    ISTHController,
-    ITopicActor,
-    Topic,
-} from "./types/from-types";
+import { ActorRole, ActorType, ActorStreamType, IServiceDiscovery, ISTHController, ITopicActor, Topic } from "./types/from-types";
 import { TypedEmitter } from "@scramjet/utility";
 
 type TopicActorEvents = {
@@ -18,9 +10,10 @@ type TopicActorEvents = {
     error: (e: any) => void;
 };
 
-export class TopicActor<T extends ActorType, R extends ActorRole>
-    extends TypedEmitter<TopicActorEvents>
-    implements ITopicActor<T, R> {
+const TOPIC_CONTENT_TYPE_MISMATCH = "TOPIC_CONTENT_TYPE_MISMATCH";
+const topicError = (code: string, message: string) => Object.assign(new Error(message), { code });
+
+export class TopicActor<T extends ActorType, R extends ActorRole> extends TypedEmitter<TopicActorEvents> implements ITopicActor<T, R> {
     topic: string;
     contentType: string;
     type!: T;
@@ -30,14 +23,9 @@ export class TopicActor<T extends ActorType, R extends ActorRole>
     logger: IObjectLogger;
     handled: boolean = false;
     retired: boolean = false;
+    discarding = false;
 
-    constructor(
-        topic: string,
-        role: R,
-        type: T,
-        contentType: string,
-        host: T extends ActorType.HOST ? ISTHController : undefined
-    ) {
+    constructor(topic: string, role: R, type: T, contentType: string, host: T extends ActorType.HOST ? ISTHController : undefined) {
         super();
         this.logger = new ObjLogger("ManagerSD Topic Actor", { id: `${topic}-${role}-${type}${host ? host.id : ""}` });
         this.topic = topic;
@@ -59,7 +47,7 @@ export class TopicActor<T extends ActorType, R extends ActorRole>
             .on("close", () => {
                 this.logger.warn("Actor Stream close", this.role, this.type, this.host?.id);
 
-                if (this.role === ActorRole.PROVIDER) {
+                if (this.role === ActorRole.PROVIDER && this.type === ActorType.HOST) {
                     const readable = this.stream as Readable;
 
                     if (!readable?.readableEnded) {
@@ -91,39 +79,26 @@ export class TopicActor<T extends ActorType, R extends ActorRole>
             if (this.role === ActorRole.CONSUMER) {
                 const consumerActor = this as TopicActor<ActorType.HOST, ActorRole.CONSUMER>;
 
-                consumerActor.addStream(
-                    await this.host!.createDownstreamTopicRequest(targetActor.topic, this.contentType)
-                );
+                consumerActor.addStream(await this.host!.createDownstreamTopicRequest(targetActor.topic, this.contentType));
             } else {
                 const providerActor = this as TopicActor<ActorType.HOST, ActorRole.PROVIDER>;
 
-                providerActor.addStream(
-                    await this.host!.createUpstreamTopicRequest(targetActor.topic, this.contentType)
-                );
+                providerActor.addStream(await this.host!.createUpstreamTopicRequest(targetActor.topic, this.contentType));
             }
         }
 
         if (targetActor.type === "host" && !targetActor.stream) {
             if (targetActor.role === ActorRole.CONSUMER) {
-                targetActor.addStream(
-                    await targetActor.host!.createDownstreamTopicRequest(targetActor.topic, targetActor.contentType)
-                );
+                targetActor.addStream(await targetActor.host!.createDownstreamTopicRequest(targetActor.topic, targetActor.contentType));
             } else {
                 const targetProvider = targetActor as unknown as TopicActor<ActorType.HOST, ActorRole.PROVIDER>;
 
-                targetProvider.addStream(
-                    await targetActor.host!.createUpstreamTopicRequest(targetActor.topic, targetActor.contentType)
-                );
+                targetProvider.addStream(await targetActor.host!.createUpstreamTopicRequest(targetActor.topic, targetActor.contentType));
             }
         }
 
         if (this.stream && targetActor.stream) {
-            this.logger.debug(
-                "Piping",
-                this.role, this.type, this.host?.id,
-                "...to",
-                targetActor.role, targetActor.type, targetActor.host?.id
-            );
+            this.logger.debug("Piping", this.role, this.type, this.host?.id, "...to", targetActor.role, targetActor.type, targetActor.host?.id);
 
             let disconnected = false;
             const disconnect = () => {
@@ -132,22 +107,28 @@ export class TopicActor<T extends ActorType, R extends ActorRole>
                 if (disconnected) return;
 
                 disconnected = true;
-                this.logger.trace(
-                    "Disconnecting",
-                    this.role, this.type, this.host?.id,
-                    "...from",
-                    targetActor.role, targetActor.type, targetActor.host?.id
-                );
+                this.logger.trace("Disconnecting", this.role, this.type, this.host?.id, "...from", targetActor.role, targetActor.type, targetActor.host?.id);
                 (this.stream as ReadableStream<any>).unpipe(targetActor.stream as WritableStream<any>);
             };
 
+            // Providers are replaceable live leases. Losing one pipe must not
+            // end or destroy the shared consumer stream.
+            this.stream.on("close", disconnect);
             targetActor.stream.on("close", () => {
                 disconnect();
                 targetActor.retired = true;
                 this.emit("update");
             });
 
-            this.stream.pipe(targetActor.stream as WritableStream<any>);
+            this.stream.on("error", () => {
+                disconnect();
+                this.retired = true;
+                this.emit("update");
+            });
+
+            // Provider streams are replaceable leases; do not end the shared
+            // consumer when one provider request finishes.
+            this.stream.pipe(targetActor.stream as WritableStream<any>, { end: false });
         } else {
             this.logger.error("Can't connect", this.role, this.type, this.host?.id);
             this.logger.error("...to", targetActor.role, targetActor.type, targetActor.host?.id);
@@ -162,6 +143,17 @@ export class ServiceDiscovery implements IServiceDiscovery {
 
     exists(topicName: string) {
         return this.topics.has(topicName);
+    }
+
+    deleteTopic(topicName: string): boolean {
+        const topic = this.topics.get(topicName);
+        if (!topic) return false;
+        for (const actor of topic.actors) {
+            actor.retired = true;
+            actor.stream?.destroy?.(topicError("TOPIC_DELETED", `Topic ${topicName} was deleted`));
+        }
+        this.onTopicUpdate(topicName);
+        return true;
     }
 
     /**
@@ -182,10 +174,21 @@ export class ServiceDiscovery implements IServiceDiscovery {
      */
     createTopic(topicName: string, opts: { contentType: string }) {
         this.logger.debug("CREATING TOPIC", topicName);
+        const existing = this.topics.get(topicName);
+        if (existing) {
+            if (existing.contentType !== opts.contentType) {
+                throw topicError(TOPIC_CONTENT_TYPE_MISMATCH, "Content-type mismatch");
+            }
+
+            return existing;
+        }
+
         this.topics.set(topicName, {
             contentType: opts.contentType,
-            actors: [],
+            actors: []
         });
+
+        return this.topics.get(topicName);
     }
 
     /**
@@ -209,15 +212,13 @@ export class ServiceDiscovery implements IServiceDiscovery {
      * @param {string} topicName Topic actor to register
      */
     onTopicUpdate(topicName: string) {
-        if (!this.updatedTopics.has(topicName))
-            this.updatedTopics.add(topicName);
+        if (!this.updatedTopics.has(topicName)) this.updatedTopics.add(topicName);
 
         this.runTopicUpdate();
     }
 
     private runTopicUpdate() {
-        if (this.topicUpdateRunning || this.updatedTopics.size === 0)
-            return;
+        if (this.topicUpdateRunning || this.updatedTopics.size === 0) return;
 
         this.topicUpdateRunning = true;
         const topics = this.updatedTopics;
@@ -262,6 +263,8 @@ export class ServiceDiscovery implements IServiceDiscovery {
             return;
         }
 
+        const hadRetiredProvider = topic.actors.some((actor: any) => actor.role === ActorRole.PROVIDER && actor.retired);
+
         topic.actors = topic.actors.filter((actor: any) => {
             if (actor.retired) {
                 this.logger.debug("Dropping out actor", actor.role, actor.type, actor.host?.id);
@@ -281,25 +284,48 @@ export class ServiceDiscovery implements IServiceDiscovery {
         const providers = this.findRole(ActorRole.PROVIDER, topicName);
         const consumers = this.findRole(ActorRole.CONSUMER, topicName);
 
-        await Promise.all(providers.map(async (provider) => {
-            await Promise.all(consumers.map(async (consumer) => {
-                if (provider.handled && consumer.handled) {
-                    return;
+        // Providers are live sources, never queues.  If there is no consumer,
+        // put every already-open source into flowing mode so bytes are dropped
+        // immediately and cannot be replayed when a consumer arrives later.
+        if (consumers.length === 0) {
+            for (const provider of providers) {
+                const stream = provider.stream as unknown as { resume?: () => unknown } | undefined;
+                if (stream && !provider.discarding) {
+                    provider.discarding = true;
+                    (stream as { on?: (event: string, listener: () => void) => unknown }).on?.("data", () => undefined);
                 }
+                stream?.resume?.();
+            }
+        }
 
-                consumer.handled = true;
+        // A retired provider may have left consumers marked as handled. Clear
+        // that lease marker so a replacement provider can be connected.
+        if (hadRetiredProvider) {
+            for (const consumer of consumers) consumer.handled = false;
+        }
 
-                await provider.connectoTo(consumer);
-            }));
+        await Promise.all(
+            providers.map(async (provider) => {
+                await Promise.all(
+                    consumers.map(async (consumer) => {
+                        if (provider.handled && consumer.handled) {
+                            return;
+                        }
 
-            provider.handled = true;
-        }));
+                        consumer.handled = true;
+
+                        await provider.connectoTo(consumer);
+                    })
+                );
+
+                provider.handled = true;
+            })
+        );
     }
 
     onUpdate(reason: string) {
         this.logger.info("Updating, reason", reason);
-        for (const key of this.topics.keys())
-            this.onTopicUpdate(key);
+        for (const key of this.topics.keys()) this.onTopicUpdate(key);
     }
 
     /**
@@ -308,10 +334,7 @@ export class ServiceDiscovery implements IServiceDiscovery {
      * @param {TopicActor} actor Topic actor to register
      * @param opts Topic options
      */
-    register(
-        actor: TopicActor<ActorType, ActorRole>,
-        opts: { contentType: string } = { contentType: "application/json" }
-    ) {
+    register(actor: TopicActor<ActorType, ActorRole>, opts: { contentType: string } = { contentType: "application/json" }) {
         this.logger.debug("Registering topic actor.", {
             topic: actor.topic,
             role: actor.role,
@@ -321,11 +344,9 @@ export class ServiceDiscovery implements IServiceDiscovery {
             contentType: actor.contentType || opts.contentType
         });
 
-        if (!this.exists(actor.topic)) {
-            this.createTopic(actor.topic, {
-                contentType: actor.contentType || opts.contentType
-            });
-        }
+        this.createTopic(actor.topic, {
+            contentType: actor.contentType || opts.contentType
+        });
 
         actor.on("update", () => {
             this.onUpdate("actor onUpdate");
@@ -334,7 +355,7 @@ export class ServiceDiscovery implements IServiceDiscovery {
                 role: actor.role,
                 type: actor.type,
                 hostId: actor.host?.id,
-                exists: this.exists(actor.topic),
+                exists: this.exists(actor.topic)
             });
         });
 
@@ -349,20 +370,13 @@ export class ServiceDiscovery implements IServiceDiscovery {
 
             actor.logger.pipe(this.logger);
         } else {
-            this.logger.warn(
-                "Host is already registered for this role in topic.",
-                actor.role,
-                actor.topic,
-                actor.host?.id
-            );
+            this.logger.warn("Host is already registered for this role in topic.", actor.role, actor.topic, actor.host?.id);
         }
 
         this.onTopicUpdate(actor.topic);
     }
 
-    unregister(
-        actor: ITopicActor<ActorType, ActorRole>
-    ) {
+    unregister(actor: ITopicActor<ActorType, ActorRole>) {
         actor.retired = true;
         this.onTopicUpdate(actor.topic);
     }
@@ -376,8 +390,8 @@ export class ServiceDiscovery implements IServiceDiscovery {
                 type: actor.type,
                 stream: !!actor.stream,
                 hostId: actor.host?.id,
-                retired: actor.retired,
-            })),
+                retired: actor.retired
+            }))
         }));
     }
 }

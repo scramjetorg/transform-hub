@@ -3,7 +3,6 @@
 import { spawn } from "child_process";
 import { existsSync, readFileSync } from "fs";
 import { dirname, resolve } from "path";
-import { Readable } from "stream";
 import { parseBootConfigPathFromArgv, readBootConfig, RunnerBunBootConfig } from "../boot-config";
 
 interface RunnerNodeEntry {
@@ -26,10 +25,13 @@ function resolveRunnerNodeEntry(): RunnerNodeEntry {
         // Fall through to compiled/source probing.
     }
 
-    const compiled = resolve(pkgRoot, "dist/bin/runner-node.js");
+    // Published/prebuilt workspace packages expose the compiled bin directly
+    // from their package root (`dist/runner-node/bin/...`), while a source
+    // checkout may resolve the package root to `packages/runner-node`.
+    const compiledCandidates = [resolve(pkgRoot, "bin/runner-node.js"), resolve(pkgRoot, "dist/bin/runner-node.js")];
 
-    if (existsSync(compiled)) {
-        return { entry: compiled, needsTsNode: false };
+    for (const compiled of compiledCandidates) {
+        if (existsSync(compiled)) return { entry: compiled, needsTsNode: false };
     }
 
     if (existsSync(srcEntry)) {
@@ -48,9 +50,7 @@ function runRunnerNode(bootConfigPath: string): Promise<number> {
     delete env.RUNNER_CONNECT_INFO;
 
     if (resolved.needsTsNode) {
-        env.NODE_OPTIONS = [env.NODE_OPTIONS, "--require ts-node/register/transpile-only"]
-            .filter(Boolean)
-            .join(" ");
+        env.NODE_OPTIONS = [env.NODE_OPTIONS, "--require ts-node/register/transpile-only"].filter(Boolean).join(" ");
     }
 
     const child = spawn(process.env.NODE_BIN || "node", [resolved.entry, bootConfigPath], {
@@ -58,11 +58,23 @@ function runRunnerNode(bootConfigPath: string): Promise<number> {
         stdio: ["inherit", "inherit", "inherit", "ipc", "inherit", "inherit"]
     });
 
-    child.channel?.unref?.();
-
     return new Promise((resolveCode, reject) => {
-        child.once("error", reject);
-        child.once("exit", (code, signal) => {
+        const forwardSignal = (signal: NodeJS.Signals) => {
+            child.kill(signal);
+        };
+        const cleanupSignals = () => {
+            process.off("SIGINT", forwardSignal);
+            process.off("SIGTERM", forwardSignal);
+        };
+
+        process.on("SIGINT", forwardSignal);
+        process.on("SIGTERM", forwardSignal);
+        child.once("error", (error) => {
+            cleanupSignals();
+            reject(error);
+        });
+        child.once("close", (code, signal) => {
+            cleanupSignals();
             if (typeof code === "number") {
                 resolveCode(code);
                 return;
@@ -111,33 +123,8 @@ export async function bootstrap(): Promise<number> {
     // boot contract explicit while allowing Bun to execute the TS runtime entry.
     const bootConfig = readBootConfig(bootConfigPath);
 
-    if (bootConfig.instancesServerPort === undefined && bootConfig.instancesServerHost === undefined) {
-        let loaded: unknown;
-
-        try {
-            loaded = require(bootConfig.sequencePath);
-        } catch (err) {
-            logRuntimeError("sequence-load", bootConfig, err);
-            throw err;
-        }
-
-        const candidate = (loaded as { default?: unknown })?.default ?? loaded;
-        const fns = Array.isArray(candidate) ? candidate : [candidate];
-        const input = Readable.from([]);
-        const sequenceArgs = bootConfig.sequenceArgs ?? [];
-
-        try {
-            for (const fn of fns) {
-                if (typeof fn === "function") {
-                    await fn(input, ...sequenceArgs);
-                }
-            }
-        } catch (err) {
-            logRuntimeError("instance-runtime", bootConfig, err);
-            throw err;
-        }
-
-        return 0;
+    if (bootConfig.instancesServerPort === undefined || bootConfig.instancesServerHost === undefined) {
+        throw new Error("runner-bun: host channels are required; Bun sequences must run through the supported hosted runner path");
     }
 
     try {
@@ -150,11 +137,11 @@ export async function bootstrap(): Promise<number> {
 
 if (require.main === module) {
     bootstrap()
-        .then(code => {
+        .then((code) => {
             process.exitCode = code;
         })
-        .catch(err => {
-            console.error("runner-bun failed:", err instanceof Error ? err.stack ?? err.message : err);
+        .catch((err) => {
+            console.error("runner-bun failed:", err instanceof Error ? (err.stack ?? err.message) : err);
             process.exitCode = 1;
         });
 }

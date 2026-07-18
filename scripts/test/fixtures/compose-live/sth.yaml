@@ -1,0 +1,9 @@
+runtimeAdapter: process
+identifyExisting: true
+sequencesRoot: /var/lib/scramjet/sequences
+startupConfig: /etc/scramjet/startup-config.yaml
+host:
+  hostname: 0.0.0.0
+  port: 8000
+timings:
+  startupTimeout: 30000

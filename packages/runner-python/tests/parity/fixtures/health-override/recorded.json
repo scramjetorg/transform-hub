@@ -38,12 +38,17 @@
       },
       {
         "direction": "host-recv",
+        "bytes_b64": "WzMwMTQsIHsic3RhdGUiOiAicmVhZHkifV0NCg==",
+        "ts_ms_relative": 0
+      },
+      {
+        "direction": "host-recv",
         "bytes_b64": "WzMwMDEsIHsiaGVhbHRoeSI6IHRydWV9XQ0K",
         "ts_ms_relative": 87
       },
       {
         "direction": "host-recv",
-        "bytes_b64": "WzMwMDEsIHsiaGVhbHRoeSI6IGZhbHNlLCAicmVhc29uIjogImZpeHR1cmUifV0NCg==",
+        "bytes_b64": "WzMwMDEsIHsiaGVhbHRoeSI6IGZhbHNlLCAiZGV0YWlscyI6IHsibGVnYWN5IjogeyJyZWFzb24iOiAiZml4dHVyZSJ9fX1dDQo=",
         "ts_ms_relative": 1088
       }
     ],

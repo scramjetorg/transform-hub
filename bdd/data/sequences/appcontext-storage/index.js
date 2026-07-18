@@ -31,5 +31,5 @@ module.exports = async function appcontextStorageSequence(_input) {
         }) + "\n"
     );
 
-    return { storage: "verified" };
+    // Storage conformance is exercised by the set/get round trip above.
 };

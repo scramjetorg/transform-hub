@@ -1,7 +1,7 @@
 {
   "generatedBy": "scripts/docs.js",
   "generatedAt": "1970-01-01T00:00:00.000Z",
-  "sourceIdentifier": "sha256:f59c4248ebbca008129a3646c040d7802734870c553df6d8c61dde5df701c8bd",
+  "sourceIdentifier": "sha256:c65e1d45d73a19d7e61bfddb4132cc0d1fe3644d5f8d048fd974d7af201b610a",
   "outputRoot": {
     "value": "docs",
     "resolvedPath": "docs",
@@ -22,9 +22,15 @@
       "manager/overview.md",
       "manager/running.md",
       "sequences/packaging-deploying.md",
+      "sequences/sequence-api-exposure.md",
+      "sequences/sequence-app-context.md",
+      "sequences/sequence-communication.md",
+      "sequences/sequence-configuration-resources-state.md",
+      "sequences/sequence-control.md",
       "sequences/sequence-lifecycle.md",
       "sequences/sequence-monitoring.md",
       "sequences/sequence-topics.md",
+      "sequences/setup-and-run.md",
       "sequences/writing-sequences.md",
       "testing/testing-sequences.md",
       "cli/usage.md",
@@ -35,8 +41,16 @@
       "deployment/process-adapter.md",
       "development/contributing.md",
       "development/technical-debt.md",
+      "examples/app-context-health-parity.md",
+      "examples/customer-site-health-control.md",
+      "examples/customer-site-topic-probe-pipeline.md",
+      "examples/lifecycle-local-validation-service.md",
+      "examples/local-object-filter-to-consumer.md",
+      "examples/mcp-bridged-job-status.md",
       "examples/python-log-processor.md",
-      "examples/simple-transform.md"
+      "examples/simple-transform.md",
+      "examples/source-side-data-summary.md",
+      "examples/tested-incremental-log-aggregator.md"
     ],
     "reference": [
       "reference/typescript/sth/",

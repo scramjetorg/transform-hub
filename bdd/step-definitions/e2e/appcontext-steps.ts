@@ -2,6 +2,7 @@ import { Then, When } from "@cucumber/cucumber";
 import { strict as assert } from "assert";
 import { CustomWorld } from "../world";
 import http from "http";
+import { isTransientReadinessStatus } from "../../lib/readiness-contract";
 
 /**
  * AppContext-specific step definitions for BDD fixture validation.
@@ -38,15 +39,12 @@ When("I send GET request to instance endpoint {string}", { timeout: 10000 }, asy
     // Construct the expose endpoint URL.
     const exposeUrl = `${apiBase.replace(/\/+$/, "")}/instance/${instId}/rpc${endpointPath.startsWith("/") ? "" : "/"}${endpointPath}`;
 
-    this.resources.appcontextExposeResponse = await new Promise<{ status: number; body: string }>((resolve, reject) => {
+    const request = () => new Promise<{ status: number; body: string }>((resolve, reject) => {
         const req = http.get(exposeUrl, { agent: false }, (res) => {
             let body = "";
 
             res.on("data", (chunk: Buffer) => { body += chunk.toString("utf8"); });
-            res.on("end", () => {
-                const response = { status: res.statusCode ?? 0, body };
-                resolve(response);
-            });
+            res.on("end", () => resolve({ status: res.statusCode ?? 0, body }));
             res.on("error", reject);
         });
 
@@ -55,6 +53,14 @@ When("I send GET request to instance endpoint {string}", { timeout: 10000 }, asy
             req.destroy(new Error(`Request to ${exposeUrl} timed out`));
         });
     });
+
+    const deadline = Date.now() + 5000;
+    let response = await request();
+    while (isTransientReadinessStatus(response.status) && Date.now() < deadline) {
+        await new Promise<void>((resolve) => setTimeout(resolve, 50));
+        response = await request();
+    }
+    this.resources.appcontextExposeResponse = response;
 });
 
 /**

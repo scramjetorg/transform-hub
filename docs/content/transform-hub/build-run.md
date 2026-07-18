@@ -11,6 +11,10 @@ title: Build and run workflows
 
 This page covers the lifecycle of a Sequence from source code to running Instance, including packaging, deployment, monitoring, and cleanup.
 
+For the canonical installed/package-projected setup—including `package.json`, compiled `main`,
+`npm pack`, local Hub readiness, and direct Hub/Manager/Space paths—see [Set up and run an installed
+Sequence](../sequences/setup-and-run.md).
+
 ## Development workflow
 
 During development, iterate quickly by deploying a Sequence directly from source:
@@ -21,7 +25,9 @@ During development, iterate quickly by deploying a Sequence directly from source
 4. Inspect logs and output.
 5. Stop and re-deploy as needed.
 
-See the [getting started guide](getting-started.md) for a walk-through of this cycle.
+See the [installed Sequence setup and run guide](../sequences/setup-and-run.md) for the package,
+local Hub, readiness, upload/start, and local deployment walkthrough. This page intentionally does
+not duplicate that setup.
 
 ## Packaging
 

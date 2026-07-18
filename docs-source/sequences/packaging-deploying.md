@@ -6,6 +6,12 @@ title: Packaging and deploying sequences
 
 # Packaging and deploying sequences
 
+For an end-to-end installed/package-projected workflow, use [Set up and run an installed Sequence](setup-and-run.md).
+That guide is the source of truth for `npm install`, `npm install --production`, `si sequence pack`,
+the installed `sth`/`si` commands, local readiness, upload/start, and direct versus Manager-routed
+deployment. The examples below only describe package shape and API alternatives; they do not repeat
+Hub setup.
+
 ## Sequence package structure
 
 A sequence is distributed as a directory (or tarball) containing at minimum:
@@ -87,7 +93,7 @@ curl http://localhost:8000/api/v1/instance/:instanceId/output
 ### Via CLI
 
 ```bash
-# Package and deploy a sequence
+# Package and deploy a sequence (see setup-and-run.md for installation and Hub startup)
 si sequence pack ./my-sequence/ -o my-sequence.tar.gz
 si sequence deploy my-sequence.tar.gz
 
@@ -105,6 +111,13 @@ si instance stop <instance-id> <timeout>
 - **Node.js**: Install production dependencies (`npm install --production`) in the package directory before creating the tarball
 - **Python**: List dependencies in `requirements.txt`; the Python runner installs them at startup if the file is present
 - **Bun**: Same as Node.js; dependencies are resolved by Bun at runtime
+
+### Ignoring files with `.siignore`
+
+The CLI packager (`si sequence pack`) respects a `.siignore` file in the package root using the
+same glob syntax as `.gitignore`. Exclude test fixtures, source maps, and build intermediates.
+**Do not exclude `node_modules/`** — the Hub does not install dependencies, so the production
+`node_modules/` must be present in the archive. See the [setup guide](setup-and-run.md#ignoring-files-with-siignore) for details.
 
 ### Size limits
 
@@ -140,3 +153,8 @@ The host uses the adapter pattern to deploy sequences:
 | Kubernetes adapter | Kubernetes pod | Sequences run as Kubernetes pods with configurable resources |
 
 The adapter is selected in the STH configuration. See the [deployment documentation](../deployment/process-adapter.md) for adapter-specific setup.
+
+For local Process Adapter deployment, follow [Set up and run an installed Sequence](setup-and-run.md)
+through `si sequence deploy`; for Docker or Kubernetes, keep the same package/upload/start lifecycle
+and change only the adapter configuration. The returned Instance ID is then usable with the CLI,
+the Hub client, or the Manager/Space routes described in [API client usage](../api/client-usage.md).

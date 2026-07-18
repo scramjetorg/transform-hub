@@ -24,10 +24,13 @@ export declare class ManagerClient {
     getSequences(sequenceId?: string): Promise<MRestAPI.GetSequenceIDSResponse>;
     getInstances(): Promise<MRestAPI.GetInstancesResponse>;
     getTopics(): Promise<MRestAPI.GetTopicsResponse>;
-    getStoreItems(): Promise<MRestAPI.GetStoreItemsResponse>
-    deleteStoreItem(id: string): Promise<void>
-    clearStore(): Promise<void>
-    disconnectHubs(opts: MRestAPI.PostDisconnectPayload): Promise<MRestAPI.PostDisconnectResponse>
-    deleteHub(id: string, force?: boolean): Promise<MRestAPI.HubDeleteResponse>
-    putStoreItem(sequencePackage: Readable, id?: string): Promise<MRestAPI.PutStoreItemResponse>
+    getTopicsV2(): Promise<{ items: Array<{ name: string; contentType: string; origin?: { type: "hub" | "space"; id: string } }> }>;
+    getTopicV2(topic: string, requestInit?: RequestInit, contentType?: string): ReturnType<HttpClient["getStream"]>;
+    sendTopicV2<T>(topic: string, stream: Parameters<HttpClient["sendStream"]>[1], requestInit?: RequestInit, contentType?: string, end?: boolean): Promise<T>;
+    getStoreItems(): Promise<MRestAPI.GetStoreItemsResponse>;
+    deleteStoreItem(id: string): Promise<void>;
+    clearStore(): Promise<void>;
+    disconnectHubs(opts: MRestAPI.PostDisconnectPayload): Promise<MRestAPI.PostDisconnectResponse>;
+    deleteHub(id: string, force?: boolean): Promise<MRestAPI.HubDeleteResponse>;
+    putStoreItem(sequencePackage: Readable, id?: string): Promise<MRestAPI.PutStoreItemResponse>;
 }

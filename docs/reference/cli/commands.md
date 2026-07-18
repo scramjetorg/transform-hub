@@ -1396,6 +1396,7 @@ Get data from topic
 
 ### Options
 
+- `--scope <scope>` — Topic scope: hub or space
 - `-t, --content-type [content-type]` — Specifies type of data in topic
 
 ## `si topic send`
@@ -1412,6 +1413,7 @@ Send data on topic from file, directory or directly through the console
 
 ### Options
 
+- `--scope <scope>` — Topic scope: hub or space
 - `-t, --content-type [content-type]` — Specifies type of data in topic
 
 ## `si topic list` (alias: `ls`)
@@ -1427,7 +1429,7 @@ _None._
 
 ### Options
 
-_None._
+- `--scope <scope>` — Topic scope: hub or space
 
 ## `si completion`
 

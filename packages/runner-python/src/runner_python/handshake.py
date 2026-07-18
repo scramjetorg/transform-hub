@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 PING = 3000
 PONG = 4000
 MONITORING = 3001
+READY = 3014
 
 
 class HandshakeTimeoutError(Exception):

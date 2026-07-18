@@ -35,8 +35,22 @@ test("collectStreamUntilEndOrSignal releases the stream after a signal", async t
 	complete();
 
 	t.is((await captured).length, 1024);
-	t.true(stream.destroyed);
+	t.false(stream.destroyed);
 	t.is(stream.listenerCount("data"), 0);
 	t.is(stream.listenerCount("end"), 0);
-	t.is(stream.listenerCount("error"), 0);
+	t.is(stream.listenerCount("error"), 1);
+});
+
+test("a buffered response has one stream owner", async t => {
+
+	const stream = new PassThrough();
+	let complete;
+	const buffered = collectStreamUntilEndOrSignal(stream, new Promise(resolve => { complete = resolve; }), 1);
+
+	stream.write("shared response");
+	complete();
+
+	t.is(await buffered, "shared response");
+	t.is(await buffered, "shared response");
+	t.is(stream.listenerCount("data"), 0);
 });

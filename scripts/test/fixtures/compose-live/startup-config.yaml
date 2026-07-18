@@ -1,0 +1,7 @@
+sequences:
+  - id: status-service
+    sequenceName: status-service
+    instanceName: status-service-prod
+    required: true
+    restartLimit: 3
+    exposePath: /status

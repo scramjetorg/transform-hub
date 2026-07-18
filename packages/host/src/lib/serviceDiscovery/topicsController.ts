@@ -12,7 +12,8 @@ class TopicsMap {
         return Array.from(this.topicsMap, ([, topic]) => ({
             id: topic.id(),
             contentType: topic.options().contentType,
-            state: topic.state(),
+            origin: topic.origin(),
+            state: topic.state()
         }));
     }
 
@@ -30,6 +31,7 @@ class TopicsMap {
 
         if (!topic) return false;
         topic.unpipe();
+        topic.delete();
         return this.topicsMap.delete(id.toString());
     }
 }

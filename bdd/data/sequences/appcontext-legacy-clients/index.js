@@ -52,5 +52,5 @@ module.exports = async function appcontextLegacyClientsSequence(input) {
         );
     }
 
-    return { legacyClients: results.length, handled: true };
+    // Client conformance is exercised by the successful calls and marker.
 };

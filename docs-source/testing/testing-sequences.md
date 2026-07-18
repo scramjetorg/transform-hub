@@ -21,6 +21,55 @@ Where route paths appear in examples, they use legacy v1-compatible Hub mock rou
 - **Assertions**: Helpers for verifying sequence behavior
 - **Runner launchers**: Build environment variables and spawn plans for the outer runner
 
+For a worked example, see [Testing an incremental log aggregator](../examples/tested-incremental-log-aggregator.md).
+
+## Load, execute, and check readiness
+
+Use a real sequence fixture for local behavior checks. Resolve its packaged
+entry point, execute it with `runSequence()`, and assert the output and routes
+registered by the sequence. This validates loading and execution without
+claiming adapter, deployment, or durable-state behavior:
+
+```typescript
+import {
+  createHubHarness,
+  createNodeSequenceFixture,
+  resolveSequenceFixtureMetadata,
+  runSequence,
+} from "@scramjet/sequence-test";
+
+const fixture = await createNodeSequenceFixture({
+  "index.js": `
+    module.exports = function (input) {
+      this.api.use("/health", (_req, res) => res.end("ok"));
+      return input.map(item => ({ ...item, processed: true }));
+    };
+  `,
+});
+
+try {
+  const metadata = await resolveSequenceFixtureMetadata(fixture.directory);
+  const harness = createHubHarness();
+  const result = await runSequence({
+    runtime: metadata.runtimeKind,
+    sequencePath: metadata.mainPath,
+    context: harness.context,
+    input: { contentType: "application/x-ndjson", body: [{ id: 1 }] },
+  });
+
+  result.assert.completed();
+  console.log(result.output.ndjson());
+  console.log(harness.apiRoutes().map(route => route.path)); // ["/health"]
+} finally {
+  await fixture.cleanup();
+}
+```
+
+The harness also exposes the readiness progression used by local lifecycle
+tests. Call `validate()`, `initialize()`, and then `activateRoute("/health")`;
+the state becomes `ready` only after activation. This is a harness lifecycle
+assertion, not a production health-check or deployment probe.
+
 ## Installation
 
 ```bash
@@ -196,4 +245,12 @@ Legacy `@scramjet/types` imports continue to resolve but are deprecated. Interna
 ## Limitations
 
 - `runSequence()` only supports Node sequences; Python and Bun runtimes are not yet wired
+- These fixture helpers run locally and do not validate process, Docker, or Kubernetes adapter visibility, deployment, or restart behavior
 - This package is **supported** for scoped local sequence fixture, hub-harness, and AppContext validation, but is **not a replacement** for package-level AVA tests, BDD tests, adapter tests, or runtime invariant checks
+
+The trust boundary is intentional: the test owns synthetic input and a
+temporary fixture, while adapter deployment and production state remain
+outside this test. Use the focused sequence-test suite for local loading,
+execution, readiness, and health-route coverage.
+
+For installed execution, use the [incremental log aggregator Process Adapter workflow](../examples/tested-incremental-log-aggregator.md#installed-process-adapter-workflow), then refer to the [canonical installed Process Adapter example baseline](../sequences/setup-and-run.md#installed-process-adapter-example-baseline). Repository package tests and other maintainer checks are optional follow-up evidence, not the terminal validation path for an installed Sequence.

@@ -32,7 +32,9 @@ class _KeepAliveState:
         self.updated.set()
 
 
-def _normalize_stop_payload(stop_payload: dict[str, Any]) -> tuple[dict[str, Any], int, bool]:
+def _normalize_stop_payload(
+    stop_payload: dict[str, Any],
+) -> tuple[dict[str, Any], int, bool]:
     payload = dict(stop_payload)
 
     if "timeout" not in payload:
@@ -131,6 +133,7 @@ async def perform_shutdown(
     app_context: Any,
     monitoring_writer: Any,
     stop_payload: dict[str, Any],
+    terminal_payload: dict[str, Any] | None = None,
 ) -> None:
     payload, timeout_ms, can_call_keepalive = _normalize_stop_payload(stop_payload)
     loop = asyncio.get_running_loop()
@@ -143,7 +146,9 @@ async def perform_shutdown(
         effective_timeout = milliseconds if milliseconds else timeout
         result = None
         if callable(original_keep_alive):
-            result = await maybe_await(original_keep_alive(timeout, milliseconds=milliseconds))
+            result = await maybe_await(
+                original_keep_alive(timeout, milliseconds=milliseconds)
+            )
 
         if can_call_keepalive:
             try:
@@ -172,7 +177,7 @@ async def perform_shutdown(
             delattr(app_context, "keep_alive")
 
     try:
-        monitoring_writer.write_frame(SEQUENCE_STOPPED, {})
+        monitoring_writer.write_frame(SEQUENCE_STOPPED, terminal_payload or {})
     except (BrokenPipeError, ConnectionResetError):
         # The host may have already closed the monitoring carrier while the
         # stop handlers were unwinding. Preserve shutdown completion while

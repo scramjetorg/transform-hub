@@ -34,9 +34,9 @@ The `@scramjet/rest-api2` package provides schema-generated TypeScript types and
 - Fluent clients: `createRootClient`, `createSpaceClient`, `createHubClient`, `createInstanceClient`, and `createFluentClientFromRouteTreeNode`.
 - HTTP and verser2 transports exported by `packages/rest-api2/src/client.ts`.
 
-Standalone docs site or server generation from rest-api2 route definitions is a separate concern handled by later documentation phases.
+Standalone docs site or server generation from rest-api2 route definitions is a separate concern from the client and server contracts.
 
-> **Note**: The package is labeled experimental in the curated reference. Its type contracts inform both client and server implementations. The package does not include MCP (Model Context Protocol) features.
+> **Scope**: The package is labeled experimental in the curated reference. Its type contracts inform both client and server implementations. The package does not include MCP (Model Context Protocol); MCP is an external integration.
 
 ### Basic usage
 
@@ -75,12 +75,48 @@ const instance = hub.instance("instance-id");
 const health = await instance.health.get();
 ```
 
+The same clients expose lifecycle and stream methods; the method name is the route-tree
+operation, not a second API abstraction:
+
+```typescript
+const uploaded = await client.request({
+  operationId: "POST /api/v2/sequences",
+  body: { source: packageTarball, config: { threshold: 42 } }
+});
+const started = await client.request({
+  operationId: "POST /api/v2/sequences/:sequenceId/instances",
+  params: { sequenceId: uploaded.body.result?.sequence.id ?? "sequence-id" },
+  body: { args: ["--verbose"], config: { threshold: 42 } }
+});
+const output = await hub.instance(started.body.result?.instance.id ?? "instance-id").output.get();
+```
+
+`sendSequence`, `startSequence`, `output`, `input`, `logs`, and `health` are representative
+typed operations. Check the generated reference for the exact response envelope and use the
+stream body rather than assuming that every response is JSON. `rpc` is an opaque instance route,
+so call it as an HTTP request when an exposed instance endpoint is required:
+
+```bash
+curl --fail --request POST \
+  'http://manager.example/api/v2/spaces/space-1/hubs/hub-2/instances/instance-7/rpc/status' \
+  -H 'content-type: application/json' \
+  --data '{"method":"GET","path":"/status","headers":{"accept":"application/json"}}'
+```
+
+The RPC response is a request/response envelope containing `status`, `headers`, and an optional
+`body`. It is not a durable queue and it does not turn the sequence into an MCP server.
+
 ### Sequence context clients
 
 Node.js sequences can access the same v2 fluent route contracts from the runtime `AppContext`:
 
 ```typescript
-export default async function () {
+import type { AppConfig, SequenceAppContext } from "@scramjet/sequence-types";
+import type { HubClient, SpaceClient } from "@scramjet/rest-api2";
+
+type Context = SequenceAppContext<AppConfig, unknown, HubClient, SpaceClient>;
+
+export default async function (this: Context) {
   const hubHealth = await this.hubClient().health.get();
   const hubs = await this.spaceClient().hubs.get();
 
@@ -93,6 +129,26 @@ export default async function () {
 
 Use `this.hubClient()` for current-Hub operations and `this.spaceClient()` for Manager/Space-level operations. Existing `this.hub` and `this.space` properties remain available as legacy v1-compatible clients.
 
+### Discovering a remote Hub and calling its instance
+
+Space-level discovery is the cross-Hub path. First list Hubs or Instances through the Manager/Space
+client, then select the owning Hub from the returned record; do not assume that an instance is on
+the current Hub:
+
+```typescript
+const space = this.spaceClient();
+const hubs = await space.hubs.get();
+const instances = await space.instances.get();
+const remote = instances.body.items.find(instance => instance.hubId === "hub-2");
+if (!remote?.hubId) throw new Error("remote instance is not available");
+
+const remoteHealth = await space.hub(remote.hubId).instance(remote.id).health.get();
+```
+
+The equivalent HTTP route is nested under `/api/v2/spaces/:spaceId/hubs/:hubId`; Manager routing
+selects the connected Hub. A Hub must be connected and authorized before discovery or RPC can
+succeed. `hubClient()` remains the direct current-Hub surface; it does not discover a fleet.
+
 ### Health and readiness
 
 Hub health is canonical at `GET /api/v2/health`. `GET /api/v1/health` remains available as a compatibility route and returns the same operational health information for legacy callers.
@@ -100,6 +156,10 @@ Hub health is canonical at `GET /api/v2/health`. `GET /api/v1/health` remains av
 Manager health is canonical at `GET /api/v2/health`. Its response details include aggregation readiness information for connected Hubs, including active Hub counts, aggregated sequence/instance counts, and per-Hub inventory readiness. This signal is intended for polling instead of arbitrary sleeps when waiting for Manager aggregation to settle. Manager and MultiManager v1 health routes remain compatibility endpoints.
 
 MultiManager health is canonical at `GET /api/v2/health` on the MultiManager API surface. It reports root-level control-plane health and scope details for the managed spaces/Managers. `GET /api/v1/health` remains available for backwards-compatible MultiManager callers.
+
+For a sequence-exposed route, readiness is a separate contract: validation completes before the listener becomes active. Poll the relevant health/readiness response and handle an unavailable route as not ready. An HTTP listener or process response alone is not proof that the sequence has passed validation.
+
+The API clients expose Hub and Manager/Space operations. MCP is an external integration: its bridge owns MCP authentication, authorization, ingress, and tunnel lifecycle.
 
 ### Transport options
 

@@ -21,6 +21,7 @@ import {
 } from "@scramjet/runtime-types";
 import { APIRoute, STHConfiguration, STHRestAPI } from "@scramjet/api-types";
 import { EncodedMessage, HandshakeAcknowledgeMessage, ICommunicationHandler, MessageDataType, MonitoringMessageData } from "./types/from-types";
+import { HealthPayload } from "@scramjet/runtime-types";
 import { RunnerTransport } from "./types/from-types";
 import { CommunicationChannel as CC, InstanceStatus, RunnerMessageCode, StorageActionCode } from "@scramjet/symbols";
 import { PassThrough, Readable } from "stream";
@@ -79,14 +80,16 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
 
     private keepAliveRequested?: boolean;
     private _lastStats?: MonitoringMessageData;
+    private _lastHealth: HealthPayload = { healthy: true, details: {} };
     private runnerTransport?: RunnerTransport;
-    expose?: { path: string | undefined; host: string | undefined; port: number | undefined };
+    private readinessRpcDomain?: string;
+    expose?: { path: string | undefined; host: string | undefined; port: number | undefined; rpcUrl?: string };
     private inputContentType: string | undefined;
     api: InstanceAPI;
     apiV2: InstanceAPIV2;
 
     get rpcUrl(): string {
-        return `http://${this.expose?.host}:${this.expose?.port}`;
+        return this.expose?.rpcUrl || `http://${this.expose?.host}:${this.expose?.port}`;
     }
 
     get lastStats(): InstanceStats {
@@ -98,6 +101,10 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
                 memory: this._lastStats?.memoryUsage
             }
         };
+    }
+
+    get lastHealth(): HealthPayload {
+        return { healthy: this._lastHealth.healthy, details: { ...this._lastHealth.details } };
     }
 
     limits: InstanceLimits = {};
@@ -155,6 +162,11 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
     private removalPromise?: Promise<void>;
     private removalCompleted = false;
     private endEmitted = false;
+    private readinessResolver?: () => void;
+    private readinessRejecter?: (error: Error) => void;
+    private readinessTimer?: NodeJS.Timeout;
+    private readinessState: "pending" | "ready" | "errored" = "pending";
+    private readinessFailure?: Promise<void>;
     private terminalTransition?: Promise<void>;
     finalizingPromise?: CancellablePromise;
 
@@ -283,6 +295,92 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
         return initialized;
     }
 
+    waitForReady(timeout: number): Promise<void> {
+        if (this.readinessState === "ready") return Promise.resolve();
+        if (this.readinessState === "errored") {
+            return (this.readinessFailure || Promise.resolve()).then(() => {
+                throw new Error("Runner initialization rejected");
+            });
+        }
+        return new Promise<void>((resolve, reject) => {
+            this.readinessResolver = resolve;
+            this.readinessRejecter = reject;
+            this.readinessTimer = setTimeout(() => {
+                const error = new Error(`Instance readiness timed out after ${timeout}ms`);
+                this.readinessState = "errored";
+                this.readinessFailure = this.failReadiness(error);
+                this.readinessFailure.then(() => reject(error), reject);
+            }, timeout);
+            this.readinessTimer.unref();
+        });
+    }
+
+    private async failReadiness(error: Error): Promise<void> {
+        const exposedPath = this.expose?.path;
+
+        if (exposedPath) {
+            this.hostProxy.onRPCExposeRevoked?.(exposedPath, this.id);
+            this.expose = undefined;
+        }
+
+        await this.kill({ removeImmediately: true }).catch((killError) => {
+            this.logger.error("Failed to kill runner after readiness failure", killError);
+        });
+
+        if (this.terminalTransition) {
+            await this.terminalTransition;
+        } else if (!this.endEmitted) {
+            await Promise.race([once(this, "end").then(() => undefined), new Promise<void>((resolve) => setTimeout(resolve, runnerExitDelay).unref())]);
+        }
+
+        this.status = InstanceStatus.ERRORED;
+        this.logger.error("Runner readiness failed", error);
+    }
+
+    private handleReadinessMessage(readiness: {
+        state?: "initialized" | "ready" | "errored";
+        exposePath?: string;
+        exposeHost?: string;
+        exposePort?: number;
+        rpcUrl?: string;
+        diagnostic?: { code: string; phase: "initialize"; message: string };
+    }) {
+        // A timed-out/failed runner owns no routes. READY can arrive after the
+        // timeout while the adapter is being killed; never resurrect it.
+        if (this.readinessState === "errored" || this.endEmitted) return;
+
+        if (readiness.state === "ready" && readiness.exposePath) {
+            if (readiness.rpcUrl) {
+                this.readinessRpcDomain = new URL(readiness.rpcUrl).hostname;
+            }
+            this.expose = {
+                path: readiness.exposePath,
+                host: readiness.exposeHost,
+                port: readiness.exposePort,
+                rpcUrl: readiness.rpcUrl
+            };
+            this.hostProxy.onRPCExpose(readiness.exposePath, this.id);
+        }
+
+        if (readiness.state === "ready") {
+            this.readinessState = "ready";
+            if (this.readinessTimer) clearTimeout(this.readinessTimer);
+            this.readinessResolver?.();
+        }
+
+        if (readiness.state === "errored") {
+            this.logger.error("Runner initialization rejected", readiness.diagnostic);
+            this.readinessState = "errored";
+            if (this.readinessTimer) clearTimeout(this.readinessTimer);
+            const error = new Error(readiness.diagnostic?.message || "Runner initialization rejected");
+            this.readinessFailure = this.failReadiness(error);
+            this.readinessFailure.then(
+                () => this.readinessRejecter?.(error),
+                (failure) => this.readinessRejecter?.(failure)
+            );
+        }
+    }
+
     async main() {
         this.status = InstanceStatus.RUNNING;
         this.logger.trace("Main. Current status:", this.status);
@@ -408,6 +506,10 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
         }
 
         this._lastStats = stats;
+        this._lastHealth = {
+            healthy: stats?.healthy !== false,
+            details: stats?.details && typeof stats.details === "object" && !Array.isArray(stats.details) ? stats.details : {}
+        };
 
         this.heartBeatTick();
 
@@ -539,6 +641,11 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
 
             this.emit("ping", message[1]);
 
+            return null;
+        });
+
+        this.communicationHandler.addMonitoringHandler(RunnerMessageCode.READY, async (message) => {
+            this.handleReadinessMessage(message[1]);
             return null;
         });
 
@@ -675,16 +782,6 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
         this.outputTopic = message[1].payload?.outputTopic;
         // TODO: add message to initiate the instance adapter
 
-        if (message[1].payload.exposePath) {
-            this.expose = {
-                path: message[1].payload.exposePath,
-                host: message[1].payload.exposeHost,
-                port: message[1].payload.exposePort
-            };
-
-            this.hostProxy.onRPCExpose(message[1].payload.exposePath, this.id);
-        }
-
         if (this.controlDataStream) {
             const pongMsg: HandshakeAcknowledgeMessage = {
                 msgCode: RunnerMessageCode.PONG,
@@ -721,9 +818,17 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
             return false;
         }
 
+        // Python's API Guest is a second guest on the canonical `.rpc` route.
+        // Older/outer-runner READY frames may not carry its rpcUrl, so use the
+        // advertised Python route when it is already present instead of
+        // forwarding the request to the outer runner's legacy route.
+        const runnerDomain = Verser2RunnerTransport.getRouteDomain(this.id);
+        const pythonRpcDomain = `${runnerDomain}.rpc`;
+        const domain = this.readinessRpcDomain || (broker.getRoutes().some((route) => route.domain === pythonRpcDomain) ? pythonRpcDomain : runnerDomain);
+
         await forwardRoutedRequest({
             transport: createRunnerBrokerRpcTransport(broker),
-            domain: Verser2RunnerTransport.getRouteDomain(this.id),
+            domain,
             req,
             res,
             path,

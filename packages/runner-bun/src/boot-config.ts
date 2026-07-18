@@ -12,12 +12,13 @@ export interface RunnerBunBootConfig {
     appConfig?: AppConfig;
     sequenceInfo?: SequenceInfo;
     instanceName?: string;
+    exitTimeout?: number;
     logLevel?: LogLevel;
     exposePath?: string;
+    inputTopic?: string;
+    outputTopic?: string;
     exposeHost?: string;
-    requestsUnsupported?: {
-        reason: string;
-    };
+    requestsUnsupported?: string;
     verser2Runtime?: RunnerBunVerser2RuntimeConfig;
 }
 
@@ -27,6 +28,7 @@ export interface RunnerBunVerser2RuntimeConfig {
     runnerRouteDomain: string;
     hubBrokerId: string;
     hubTargetDomain?: string;
+    spaceTargetDomain?: string;
     tls?: Record<string, unknown>;
     leaseAcquireTimeoutMs?: number;
     minWaitingStreams?: number;
@@ -51,8 +53,24 @@ export function validateBootConfig(value: unknown): RunnerBunBootConfig {
         throw new Error("runner-bun: boot config must be a JSON object");
     }
 
-    const { sequencePath, sequenceArgs, instanceId, instancesServerPort, instancesServerHost,
-        appConfig, sequenceInfo, instanceName, logLevel, exposePath, exposeHost, requestsUnsupported, verser2Runtime } = value;
+    const {
+        sequencePath,
+        sequenceArgs,
+        instanceId,
+        instancesServerPort,
+        instancesServerHost,
+        appConfig,
+        sequenceInfo,
+        instanceName,
+        exitTimeout,
+        logLevel,
+        exposePath,
+        inputTopic,
+        outputTopic,
+        exposeHost,
+        requestsUnsupported,
+        verser2Runtime
+    } = value;
 
     if (typeof sequencePath !== "string" || sequencePath.length === 0) {
         throw new Error("runner-bun: boot config field 'sequencePath' must be a non-empty string");
@@ -62,12 +80,15 @@ export function validateBootConfig(value: unknown): RunnerBunBootConfig {
         throw new Error("runner-bun: boot config field 'sequenceArgs' must be an array when provided");
     }
 
+    if (exitTimeout !== undefined && (typeof exitTimeout !== "number" || !Number.isFinite(exitTimeout) || exitTimeout <= 0)) {
+        throw new Error("runner-bun: boot config field 'exitTimeout' must be a positive finite number when provided");
+    }
+
     if (typeof instanceId !== "string" || instanceId.length === 0) {
         throw new Error("runner-bun: boot config field 'instanceId' must be a non-empty string");
     }
 
-    if (instancesServerPort !== undefined &&
-        (typeof instancesServerPort !== "number" || !Number.isInteger(instancesServerPort) || instancesServerPort <= 0)) {
+    if (instancesServerPort !== undefined && (typeof instancesServerPort !== "number" || !Number.isInteger(instancesServerPort) || instancesServerPort <= 0)) {
         throw new Error("runner-bun: boot config field 'instancesServerPort' must be a positive integer when provided");
     }
 
@@ -103,17 +124,20 @@ export function validateBootConfig(value: unknown): RunnerBunBootConfig {
         throw new Error("runner-bun: boot config field 'exposePath' must be a non-empty string when provided");
     }
 
+    if (inputTopic !== undefined && (typeof inputTopic !== "string" || inputTopic.length === 0)) {
+        throw new Error("runner-bun: boot config field 'inputTopic' must be a non-empty string when provided");
+    }
+
+    if (outputTopic !== undefined && (typeof outputTopic !== "string" || outputTopic.length === 0)) {
+        throw new Error("runner-bun: boot config field 'outputTopic' must be a non-empty string when provided");
+    }
+
     if (exposeHost !== undefined && (typeof exposeHost !== "string" || exposeHost.length === 0)) {
         throw new Error("runner-bun: boot config field 'exposeHost' must be a non-empty string when provided");
     }
 
-    if (requestsUnsupported !== undefined) {
-        if (!isObject(requestsUnsupported)) {
-            throw new Error("runner-bun: boot config field 'requestsUnsupported' must be an object when provided");
-        }
-        if (typeof requestsUnsupported.reason !== "string" || requestsUnsupported.reason.length === 0) {
-            throw new Error("runner-bun: boot config field 'requestsUnsupported.reason' must be a non-empty string");
-        }
+    if (requestsUnsupported !== undefined && (typeof requestsUnsupported !== "string" || requestsUnsupported.length === 0)) {
+        throw new Error("runner-bun: boot config field 'requestsUnsupported' must be a non-empty string when provided");
     }
 
     let validatedVerser2Runtime: RunnerBunVerser2RuntimeConfig | undefined;
@@ -129,10 +153,13 @@ export function validateBootConfig(value: unknown): RunnerBunBootConfig {
     if (appConfig !== undefined) result.appConfig = appConfig as AppConfig;
     if (sequenceInfo !== undefined) result.sequenceInfo = sequenceInfo as unknown as SequenceInfo;
     if (instanceName !== undefined) result.instanceName = instanceName as string;
+    if (exitTimeout !== undefined) result.exitTimeout = exitTimeout;
     if (logLevel !== undefined) result.logLevel = logLevel as LogLevel;
     if (exposePath !== undefined) result.exposePath = exposePath as string;
+    if (inputTopic !== undefined) result.inputTopic = inputTopic as string;
+    if (outputTopic !== undefined) result.outputTopic = outputTopic as string;
     if (exposeHost !== undefined) result.exposeHost = exposeHost as string;
-    if (requestsUnsupported !== undefined) result.requestsUnsupported = requestsUnsupported as { reason: string };
+    if (requestsUnsupported !== undefined) result.requestsUnsupported = requestsUnsupported as string;
     if (validatedVerser2Runtime !== undefined) result.verser2Runtime = validatedVerser2Runtime;
 
     return result;
@@ -172,6 +199,10 @@ function validateVerser2RuntimeConfig(value: unknown): RunnerBunVerser2RuntimeCo
 
     if (value.hubTargetDomain !== undefined) {
         config.hubTargetDomain = requireNonEmptyString(value.hubTargetDomain, "verser2Runtime.hubTargetDomain");
+    }
+
+    if (value.spaceTargetDomain !== undefined) {
+        config.spaceTargetDomain = requireNonEmptyString(value.spaceTargetDomain, "verser2Runtime.spaceTargetDomain");
     }
 
     if (value.tls !== undefined) {

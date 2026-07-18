@@ -6,6 +6,14 @@
 
 ## Contents
 
+- [app-context-health-parity.md](app-context-health-parity.md)
+- [customer-site-health-control.md](customer-site-health-control.md)
+- [customer-site-topic-probe-pipeline.md](customer-site-topic-probe-pipeline.md)
+- [lifecycle-local-validation-service.md](lifecycle-local-validation-service.md)
+- [local-object-filter-to-consumer.md](local-object-filter-to-consumer.md)
+- [mcp-bridged-job-status.md](mcp-bridged-job-status.md)
 - [python-log-processor.md](python-log-processor.md)
 - [simple-transform.md](simple-transform.md)
+- [source-side-data-summary.md](source-side-data-summary.md)
+- [tested-incremental-log-aggregator.md](tested-incremental-log-aggregator.md)
 

@@ -15,25 +15,29 @@ Every sequence instance sends periodic health (MONITORING) frames to the host. T
 ```json
 [3001, {
   "healthy": true,
-  "load": { "cpu": 0.25, "memory": 0.4 },
-  "message": "running"
+  "memoryUsage": 12345678,
+  "memoryMaxUsage": 23456789
 }]
 ```
+
+This is the runner's actual default frame: runtime memory telemetry is emitted at
+the top level. Domain-specific author data appears only when an author monitoring
+handler returns it, as shown below.
 
 ### Custom monitoring handlers
 
 Sequences can register custom monitoring handlers to add domain-specific health data:
 
 ```typescript
-this.addMonitoringHandler((currentHealth) => {
+this.addMonitoringHandler(async (currentHealth) => {
   return {
-    ...currentHealth,
-    custom: { itemsProcessed: this.processedCount, lastError: this.lastError },
+    healthy: currentHealth.healthy,
+    details: { probe: { itemsProcessed: this.processedCount, lastError: this.lastError } },
   };
 });
 ```
 
-The handler receives the monitoring data assembled by the runtime and returns augmented data.
+The handler receives the author health state and returns the canonical `{ healthy, details }` shape. The outer Node runner appends runtime telemetry (`memoryUsage` and `memoryMaxUsage`) after handler evaluation; those fields are not placed inside author `details` and cannot be replaced by an author handler. Author details must be namespaced, serializable, and within the 16 KiB UTF-8 details limit; reserved fields such as `healthy`, `details`, `status`, `scope`, and `components` cannot be replaced.
 
 ### Monitoring rate
 
@@ -72,7 +76,7 @@ Sequences can emit events to the host using `this.emit()`:
 this.emit("user-action", { type: "login", userId: "abc123" });
 ```
 
-Events are sent via the control channel as `EVENT` frames. They are recorded in the instance timeline and can trigger external actions through the Manager.
+Events are sent via the control/monitoring path as `EVENT` frames. They are transient notifications: they may trigger an external action while connected, but they are not durable delivery, a checkpoint, or a replayable queue.
 
 ### Receiving events
 
@@ -95,7 +99,7 @@ When the host sends a `STOP` frame (code 4001), the runtime initiates graceful s
 4. The process exits with code 138 (STOPPED)
 
 ```typescript
-this.addStopHandler((timeout, canCallKeepalive) => {
+this.addStopHandler(async (timeout, canCallKeepalive) => {
   this.logger.info("graceful stop requested, flushing...");
   await this.flushPendingWork();
   // optionally: this.keepAlive(5000) to extend the deadline
@@ -105,7 +109,7 @@ this.addStopHandler((timeout, canCallKeepalive) => {
 Python equivalent:
 
 ```python
-def on_stop(timeout, can_call_keepalive):
+async def on_stop(timeout, can_call_keepalive):
     context.logger.info("graceful stop requested")
     await flush_pending_work()
 
@@ -150,6 +154,8 @@ The monitoring channel carries framed JSON messages. Both the outer runner (`sta
 ## Monitoring in Python
 
 Python sequences use the same protocol. The `MonitoringWriter` class in `runner-python` handles encoding, and the Python heartbeat task (`run_heartbeat`) sends periodic monitoring frames. The Python `AppContext` supports `add_monitoring_handler`, `add_stop_handler`, and `add_kill_handler` with the same semantics as the Node.js AppContext.
+
+See [sequence health and control](sequence-control.md) and [Customer-site health and control](../examples/customer-site-health-control.md) for the control-plane interpretation of these frames.
 
 ## Structured output vs log vs monitoring
 

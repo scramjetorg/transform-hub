@@ -105,12 +105,7 @@ interface HubHarnessSpace {
     host: string;
     port: number;
     timeline?: HubContextSpaceCall[];
-    request(
-        method: string,
-        path: string,
-        body?: unknown,
-        headers?: Record<string, string | string[] | undefined>
-    ): Promise<unknown>;
+    request(method: string, path: string, body?: unknown, headers?: Record<string, string | string[] | undefined>): Promise<unknown>;
     get(path: string): Promise<unknown>;
     post(path: string, body?: unknown, headers?: Record<string, string | string[] | undefined>): Promise<unknown>;
     [key: string]: unknown;
@@ -343,11 +338,11 @@ function collectStreamBody(stream: Readable): Promise<CapturedStreamBody> {
     let totalLength = 0;
 
     return new Promise((resolve, reject) => {
-        stream.on("error", error => {
+        stream.on("error", (error) => {
             reject(error);
         });
 
-        stream.on("data", chunk => {
+        stream.on("data", (chunk) => {
             const value = Buffer.isBuffer(chunk) ? chunk : Buffer.from(String(chunk));
 
             totalLength += value.length;
@@ -452,9 +447,10 @@ export function createHubHarness(_options: CreateHubHarnessOptions = {}): HubHar
     const now = () => Date.now();
 
     const recordLifecycle = (action: HubContextLifecycleAction, value?: number, reason?: unknown): void => {
-        const monitoringPayload = action === "keepAlive"
-            ? [RunnerMessageCode.ALIVE, { keepAlive: value || 0 }]
-            : [RunnerMessageCode.SEQUENCE_STOPPED, { action, reason: serializeErrorPayload(reason), keepAlive: value || 0 }];
+        const monitoringPayload =
+            action === "keepAlive"
+                ? [RunnerMessageCode.ALIVE, { keepAlive: value || 0 }]
+                : [RunnerMessageCode.SEQUENCE_STOPPED, { action, reason: serializeErrorPayload(reason), keepAlive: value || 0 }];
 
         lifecycleTimeline.push({
             sequence: nextContextSequence(),
@@ -489,7 +485,7 @@ export function createHubHarness(_options: CreateHubHarnessOptions = {}): HubHar
     };
 
     const recordStorage = (action: HubContextStorageRecord["action"], key: string | undefined, value?: string | null): void => {
-        const previousValue = key === undefined ? undefined : localStorageState[key] ?? null;
+        const previousValue = key === undefined ? undefined : (localStorageState[key] ?? null);
 
         storageTimeline.push({
             sequence: nextContextSequence(),
@@ -569,7 +565,7 @@ export function createHubHarness(_options: CreateHubHarnessOptions = {}): HubHar
     };
 
     const routeResponse = (method: string, path: string): Route | undefined => {
-        return routes.find(route => {
+        return routes.find((route) => {
             if (route.method !== "*" && route.method !== normalizeMethod(method)) {
                 return false;
             }
@@ -579,14 +575,12 @@ export function createHubHarness(_options: CreateHubHarnessOptions = {}): HubHar
     };
 
     // Route dispatch intentionally mirrors the supported harness endpoint matrix.
-    const defaultResponse = async (
-        method: string,
-        requestPath: string,
-        requestBody: unknown
-    ): Promise<HubMockResponse> => {
+    const defaultResponse = async (method: string, requestPath: string, requestBody: unknown): Promise<HubMockResponse> => {
         const normalized = normalizePath(requestPath);
         const methodUpper = normalizeMethod(method);
         const normalizedBase = normalizePath(basePath);
+        const isV2 = normalizedBase.endsWith("/api/v2");
+        const isSpace = normalizedBase === "/api/v1/cpm/api/v2";
 
         if (normalized === `${normalizedBase}/version` && methodUpper === "GET") {
             return createResponse(200, {
@@ -624,7 +618,10 @@ export function createHubHarness(_options: CreateHubHarnessOptions = {}): HubHar
         }
 
         if (normalized === `${normalizedBase}/sequences` && methodUpper === "GET") {
-            return createResponse(200, Array.from(sequences.entries()).map(([id]) => ({ id, instances: [], config: {} })));
+            return createResponse(
+                200,
+                Array.from(sequences.entries()).map(([id]) => ({ id, instances: [], config: {} }))
+            );
         }
 
         if (normalized === `${normalizedBase}/sequences` && methodUpper === "POST") {
@@ -685,28 +682,78 @@ export function createHubHarness(_options: CreateHubHarnessOptions = {}): HubHar
         }
 
         if (normalized === `${normalizedBase}/topics` && methodUpper === "GET") {
-            return createResponse(200, Array.from(topics.values()));
+            return createResponse(
+                200,
+                isV2
+                    ? {
+                          items: Array.from(topics.values()).map((topic) => ({
+                              name: topic.name,
+                              contentType: topic.contentType,
+                              origin: isSpace ? { type: "space", id: "fixture-space" } : { type: "hub", id: "fixture-hub" }
+                          }))
+                      }
+                    : Array.from(topics.values())
+            );
         }
 
         if (normalized === `${normalizedBase}/topics` && methodUpper === "POST") {
-            const payload = typeof requestBody === "object" && requestBody !== null
-                ? requestBody as Record<string, unknown>
-                : {};
+            if (isV2 && normalizedBase !== "/api/v2") {
+                return createResponse(404, { error: { code: "SPACE_TOPIC_CREATE_UNSUPPORTED", message: "Space topics are not created through the Space API" } });
+            }
 
-            const topicName = typeof payload.id === "string" && payload.id.length > 0
-                ? payload.id
-                : `topic-${topics.size + 1}`;
-            const contentType = typeof payload["content-type"] === "string"
-                ? payload["content-type"]
-                : "text/plain";
+            const payload = typeof requestBody === "object" && requestBody !== null ? (requestBody as Record<string, unknown>) : {};
+
+            const v2Topic = payload.topic as Record<string, unknown> | undefined;
+            const topicName =
+                typeof v2Topic?.name === "string" && v2Topic.name.length > 0
+                    ? v2Topic.name
+                    : typeof payload.id === "string" && payload.id.length > 0
+                      ? payload.id
+                      : isV2
+                        ? ""
+                        : `topic-${topics.size + 1}`;
+            const contentType =
+                typeof v2Topic?.contentType === "string" ? v2Topic.contentType : typeof payload["content-type"] === "string" ? payload["content-type"] : "text/plain";
+
+            if (isV2 && !topicName) {
+                return createResponse(400, { error: { code: "INVALID_TOPIC", message: "Topic name is required" } });
+            }
+            if (isV2 && !["text/x-ndjson", "application/x-ndjson", "text/plain", "application/octet-stream"].includes(contentType)) {
+                return createResponse(415, { error: { code: "INVALID_CONTENT_TYPE", message: "Unsupported content-type" } });
+            }
+
+            const existingTopic = topics.get(topicName);
+            if (existingTopic && existingTopic.contentType !== contentType) {
+                return createResponse(409, {
+                    operation: { id: topicName, status: "failed" },
+                    error: { code: "TOPIC_CONTENT_TYPE_MISMATCH", message: "Content-type mismatch" }
+                });
+            }
 
             topics.set(topicName, { name: topicName, contentType, defaultData: undefined, data: undefined });
 
-            return createResponse(200, {
+            const result = {
                 topicName,
                 id: topicName,
                 contentType
-            });
+            };
+            return createResponse(
+                200,
+                isV2
+                    ? {
+                          operation: { id: topicName, status: "completed" },
+                          result: { topic: { name: topicName, contentType, origin: isSpace ? { type: "space", id: "fixture-space" } : { type: "hub", id: "fixture-hub" } } }
+                      }
+                    : result
+            );
+        }
+
+        if (isV2 && normalizedBase !== "/" && normalized.startsWith(`${normalizedBase}/topics/`) && normalized.endsWith("/stream") && methodUpper === "POST") {
+            const topicName = normalized.slice(`${normalizedBase}/topics/`.length, -"/stream".length);
+            const topic = topics.get(topicName) ?? { name: topicName, contentType: "application/x-ndjson", defaultData: undefined, data: undefined };
+            topic.data = requestBody;
+            topics.set(topicName, topic);
+            return createResponse(200, { operation: { id: topicName, status: "completed" }, result: { accepted: true } });
         }
 
         if (normalizedBase !== "/" && normalized.startsWith(`${normalizedBase}/topics/`) && normalized.endsWith("/stream") && methodUpper === "GET") {
@@ -716,7 +763,7 @@ export function createHubHarness(_options: CreateHubHarnessOptions = {}): HubHar
             return createResponse(
                 200,
                 topic?.defaultData ?? undefined,
-                { "content-type": "text/plain" },
+                { "content-type": topic?.contentType || "application/x-ndjson" },
                 createReadableFromPayload(topic?.defaultData ?? defaultTopicStreamData)
             );
         }
@@ -725,11 +772,16 @@ export function createHubHarness(_options: CreateHubHarnessOptions = {}): HubHar
             const topicName = normalized.slice(`${normalizedBase}/topics/`.length);
             const topic = topics.get(topicName);
 
-            if (!topic) {
+            if (!topic || (isV2 && normalizedBase === "/api/v2")) {
                 return createResponse(404, { error: `topic ${topicName} not found` });
             }
 
-            return createResponse(200, { topicName: topic.name, id: topic.name, contentType: topic.contentType, data: topic.data });
+            return createResponse(
+                200,
+                isV2
+                    ? { name: topic.name, contentType: topic.contentType, origin: isSpace ? { type: "space", id: "fixture-space" } : { type: "hub", id: "fixture-hub" } }
+                    : { topicName: topic.name, id: topic.name, contentType: topic.contentType, data: topic.data }
+            );
         }
 
         if (normalizedBase !== "/" && normalized.startsWith(`${normalizedBase}/topics/`) && methodUpper === "POST") {
@@ -754,11 +806,23 @@ export function createHubHarness(_options: CreateHubHarnessOptions = {}): HubHar
             return createResponse(200, { topicName, id: topicName, opStatus: "OK", data: requestBody });
         }
 
+        if (isV2 && isSpace && normalized.startsWith(`${normalizedBase}/topics/`) && methodUpper === "DELETE") {
+            return createResponse(404, { error: { code: "SPACE_TOPIC_DELETE_UNSUPPORTED", message: "Space topics are not deleted through the Space API" } });
+        }
+
         if (normalizedBase !== "/" && normalized.startsWith(`${normalizedBase}/topics/`) && methodUpper === "DELETE") {
             const topicName = normalized.slice(`${normalizedBase}/topics/`.length);
             const removed = topics.delete(topicName);
 
-            return createResponse(200, { opStatus: removed ? "OK" : "NOT_FOUND" });
+            return createResponse(
+                200,
+                isV2
+                    ? {
+                          operation: { id: topicName, status: removed ? "completed" : "failed" },
+                          ...(removed ? { result: { topic: topicName, deleted: true } } : { error: { code: "TOPIC_NOT_FOUND", message: `Topic ${topicName} not found` } })
+                      }
+                    : { opStatus: removed ? "OK" : "NOT_FOUND" }
+            );
         }
 
         if (normalizedBase !== "/" && normalized.startsWith(`${normalizedBase}/rpc/`) && normalized.endsWith("/stream") && methodUpper === "POST") {
@@ -773,13 +837,14 @@ export function createHubHarness(_options: CreateHubHarnessOptions = {}): HubHar
             return createResponse(200, { rpc: rpcName, scope: "host", method: methodUpper, body: requestBody });
         }
 
-        if (normalizedBase !== "/" && normalized.includes(`${normalizedBase}/instance/`) && normalized.includes("/rpc/") && normalized.endsWith("/stream") && methodUpper === "POST") {
-            return createResponse(
-                200,
-                "instance-stream",
-                { "content-type": "text/plain" },
-                createReadableFromPayload(defaultRpcStreamData)
-            );
+        if (
+            normalizedBase !== "/" &&
+            normalized.includes(`${normalizedBase}/instance/`) &&
+            normalized.includes("/rpc/") &&
+            normalized.endsWith("/stream") &&
+            methodUpper === "POST"
+        ) {
+            return createResponse(200, "instance-stream", { "content-type": "text/plain" }, createReadableFromPayload(defaultRpcStreamData));
         }
 
         if (normalizedBase !== "/" && normalized.includes(`${normalizedBase}/instance/`) && normalized.includes("/rpc/") && methodUpper === "POST") {
@@ -816,9 +881,10 @@ export function createHubHarness(_options: CreateHubHarnessOptions = {}): HubHar
             const responseFromRoute = routeResponse(normalizedMethod, normalizedPath);
 
             if (responseFromRoute) {
-                const response = responseFromRoute.body instanceof Readable
-                    ? createResponse(responseFromRoute.status, undefined, responseFromRoute.headers, responseFromRoute.body)
-                    : createResponse(responseFromRoute.status, responseFromRoute.body, responseFromRoute.headers);
+                const response =
+                    responseFromRoute.body instanceof Readable
+                        ? createResponse(responseFromRoute.status, undefined, responseFromRoute.headers, responseFromRoute.body)
+                        : createResponse(responseFromRoute.status, responseFromRoute.body, responseFromRoute.headers);
 
                 await recordCall(normalizedMethod, normalizedPath, normalizedBody, normalizedHeaders, response);
 
@@ -836,54 +902,78 @@ export function createHubHarness(_options: CreateHubHarnessOptions = {}): HubHar
         getConfig: async () => parseJson(await hub.handle({ method: "GET", path: `${basePath}/config`, headers: {}, body: undefined })),
         getLoadCheck: async () => parseJson(await hub.handle({ method: "GET", path: `${basePath}/load-check`, headers: {}, body: undefined })),
         listSequences: async () => parseJson(await hub.handle({ method: "GET", path: `${basePath}/sequences`, headers: {}, body: undefined })),
-        sendSequence: async (sequencePackage: unknown) => parseJson(await hub.handle({
-            method: "POST",
-            path: `${basePath}/sequences`,
-            headers: { "content-type": "application/json" },
-            body: sequencePackage
-        })),
-        getSequence: async (sequenceId: string) => parseJson(await hub.handle({
-            method: "GET",
-            path: `${basePath}/sequence/${sequenceId}`,
-            headers: {},
-            body: undefined
-        })),
-        deleteSequence: async (sequenceId: string) => parseJson(await hub.handle({
-            method: "DELETE",
-            path: `${basePath}/sequence/${sequenceId}`,
-            headers: {},
-            body: undefined
-        })),
-        startSequence: async (sequenceId: string, body?: unknown) => parseJson(await hub.handle({
-            method: "POST",
-            path: `${basePath}/sequence/${sequenceId}/start`,
-            headers: { "content-type": "application/json" },
-            body
-        })),
-        listInstances: async () => parseJson(await hub.handle({
-            method: "GET",
-            path: `${basePath}/instances`,
-            headers: {},
-            body: undefined
-        })),
-        getInstanceInfo: async (instanceId: string) => parseJson(await hub.handle({
-            method: "GET",
-            path: `${basePath}/instance/${instanceId}`,
-            headers: {},
-            body: undefined
-        })),
-        callHostRpc: async <T>(name: string, body?: unknown): Promise<T> => parseJson(await hub.handle({
-            method: "POST",
-            path: `${basePath}/rpc/${name}`,
-            headers: { "content-type": inferContentType(body) },
-            body
-        })) as Promise<T>,
-        callInstanceRpc: async <T>(instanceId: string, name: string, body?: unknown): Promise<T> => parseJson(await hub.handle({
-            method: "POST",
-            path: `${basePath}/instance/${instanceId}/rpc/${name}`,
-            headers: { "content-type": inferContentType(body) },
-            body
-        })) as Promise<T>,
+        sendSequence: async (sequencePackage: unknown) =>
+            parseJson(
+                await hub.handle({
+                    method: "POST",
+                    path: `${basePath}/sequences`,
+                    headers: { "content-type": "application/json" },
+                    body: sequencePackage
+                })
+            ),
+        getSequence: async (sequenceId: string) =>
+            parseJson(
+                await hub.handle({
+                    method: "GET",
+                    path: `${basePath}/sequence/${sequenceId}`,
+                    headers: {},
+                    body: undefined
+                })
+            ),
+        deleteSequence: async (sequenceId: string) =>
+            parseJson(
+                await hub.handle({
+                    method: "DELETE",
+                    path: `${basePath}/sequence/${sequenceId}`,
+                    headers: {},
+                    body: undefined
+                })
+            ),
+        startSequence: async (sequenceId: string, body?: unknown) =>
+            parseJson(
+                await hub.handle({
+                    method: "POST",
+                    path: `${basePath}/sequence/${sequenceId}/start`,
+                    headers: { "content-type": "application/json" },
+                    body
+                })
+            ),
+        listInstances: async () =>
+            parseJson(
+                await hub.handle({
+                    method: "GET",
+                    path: `${basePath}/instances`,
+                    headers: {},
+                    body: undefined
+                })
+            ),
+        getInstanceInfo: async (instanceId: string) =>
+            parseJson(
+                await hub.handle({
+                    method: "GET",
+                    path: `${basePath}/instance/${instanceId}`,
+                    headers: {},
+                    body: undefined
+                })
+            ),
+        callHostRpc: async <T>(name: string, body?: unknown): Promise<T> =>
+            parseJson(
+                await hub.handle({
+                    method: "POST",
+                    path: `${basePath}/rpc/${name}`,
+                    headers: { "content-type": inferContentType(body) },
+                    body
+                })
+            ) as Promise<T>,
+        callInstanceRpc: async <T>(instanceId: string, name: string, body?: unknown): Promise<T> =>
+            parseJson(
+                await hub.handle({
+                    method: "POST",
+                    path: `${basePath}/instance/${instanceId}/rpc/${name}`,
+                    headers: { "content-type": inferContentType(body) },
+                    body
+                })
+            ) as Promise<T>,
         callHostRpcStream: async (name: string, body?: unknown): Promise<Readable> => {
             const response = await hub.handle({
                 method: "POST",
@@ -904,36 +994,51 @@ export function createHubHarness(_options: CreateHubHarnessOptions = {}): HubHar
 
             return response.stream ?? createReadableFromPayload("{}");
         },
-        createTopic: async (name?: string, contentType = "text/plain") => parseJson(await hub.handle({
-            method: "POST",
-            path: `${basePath}/topics`,
-            headers: { "content-type": "application/json" },
-            body: { id: name, "content-type": contentType }
-        })),
-        listTopics: async () => parseJson(await hub.handle({
-            method: "GET",
-            path: `${basePath}/topics`,
-            headers: {},
-            body: undefined
-        })),
-        deleteTopic: async (name: string) => parseJson(await hub.handle({
-            method: "DELETE",
-            path: `${basePath}/topics/${name}`,
-            headers: {},
-            body: undefined
-        })),
-        sendTopic: async (name: string, data?: unknown) => parseJson(await hub.handle({
-            method: "POST",
-            path: `${basePath}/topics/${name}`,
-            headers: { "content-type": inferContentType(data) },
-            body: data
-        })),
-        getTopic: async (name: string) => parseJson(await hub.handle({
-            method: "GET",
-            path: `${basePath}/topics/${name}`,
-            headers: {},
-            body: undefined
-        })),
+        createTopic: async (name?: string, contentType = "text/plain") =>
+            parseJson(
+                await hub.handle({
+                    method: "POST",
+                    path: `${basePath}/topics`,
+                    headers: { "content-type": "application/json" },
+                    body: { id: name, "content-type": contentType }
+                })
+            ),
+        listTopics: async () =>
+            parseJson(
+                await hub.handle({
+                    method: "GET",
+                    path: `${basePath}/topics`,
+                    headers: {},
+                    body: undefined
+                })
+            ),
+        deleteTopic: async (name: string) =>
+            parseJson(
+                await hub.handle({
+                    method: "DELETE",
+                    path: `${basePath}/topics/${name}`,
+                    headers: {},
+                    body: undefined
+                })
+            ),
+        sendTopic: async (name: string, data?: unknown) =>
+            parseJson(
+                await hub.handle({
+                    method: "POST",
+                    path: `${basePath}/topics/${name}`,
+                    headers: { "content-type": inferContentType(data) },
+                    body: data
+                })
+            ),
+        getTopic: async (name: string) =>
+            parseJson(
+                await hub.handle({
+                    method: "GET",
+                    path: `${basePath}/topics/${name}`,
+                    headers: {},
+                    body: undefined
+                })
+            ),
         sendNamedData: (name: string, data?: unknown) => hub.sendTopic(name, data),
         getNamedData: async (name: string): Promise<Readable> => {
             const response = await hub.handle({
@@ -945,63 +1050,73 @@ export function createHubHarness(_options: CreateHubHarnessOptions = {}): HubHar
 
             return response.stream ?? createReadableFromPayload("{}");
         },
-        requests: () => timeline.map((entry) => ({
-            method: entry.method,
-            path: entry.path,
-            headers: cloneHeaders(entry.headers),
-            body: entry.body
-        } as HubMockRequest)),
-        assertCalled: (method: string, path: string): Promise<void> => Promise.resolve().then(() => {
-            if (!timeline.some(entry => normalizeMethod(entry.method) === normalizeMethod(method) && normalizePath(entry.path) === normalizePath(path))) {
-                throw new Error(`Expected Hub request ${normalizeMethod(method)} ${normalizePath(path)} was not captured`);
-            }
-        }),
+        requests: () =>
+            timeline.map(
+                (entry) =>
+                    ({
+                        method: entry.method,
+                        path: entry.path,
+                        headers: cloneHeaders(entry.headers),
+                        body: entry.body
+                    }) as HubMockRequest
+            ),
+        assertCalled: (method: string, path: string): Promise<void> =>
+            Promise.resolve().then(() => {
+                if (!timeline.some((entry) => normalizeMethod(entry.method) === normalizeMethod(method) && normalizePath(entry.path) === normalizePath(path))) {
+                    throw new Error(`Expected Hub request ${normalizeMethod(method)} ${normalizePath(path)} was not captured`);
+                }
+            }),
         assert: {
             called: (method: string, path: string): Promise<void> => {
                 return hub.assertCalled(method, path);
             },
-            calledMatch: (match: HubCallMatch): Promise<void> => Promise.resolve().then(() => {
-                if (!timeline.some(entry => makeMatch(match, entry))) {
-                    throw new Error(`Expected Hub request not captured: ${JSON.stringify(match)}`);
-                }
-            }),
-            callCount: (match: HubCallMatch, count: number): Promise<void> => Promise.resolve().then(() => {
-                const actual = timeline.filter(entry => makeMatch(match, entry)).length;
-
-                if (actual !== count) {
-                    throw new Error(`Expected ${count} calls matching ${JSON.stringify(match)}, got ${actual}`);
-                }
-            }),
-            body: (match: HubCallMatch, expected: unknown | ((body: unknown) => boolean)): Promise<void> => Promise.resolve().then(() => {
-                const expectedFn = typeof expected === "function"
-                    ? expected as (body: unknown) => boolean
-                    : (body: unknown) => body === expected || JSON.stringify(body) === JSON.stringify(expected);
-
-                const hasBodyMatch = timeline.some(entry => {
-                    if (!makeMatch(match, entry)) {
-                        return false;
+            calledMatch: (match: HubCallMatch): Promise<void> =>
+                Promise.resolve().then(() => {
+                    if (!timeline.some((entry) => makeMatch(match, entry))) {
+                        throw new Error(`Expected Hub request not captured: ${JSON.stringify(match)}`);
                     }
+                }),
+            callCount: (match: HubCallMatch, count: number): Promise<void> =>
+                Promise.resolve().then(() => {
+                    const actual = timeline.filter((entry) => makeMatch(match, entry)).length;
 
-                    return expectedFn(entry.body);
-                });
-
-                if (!hasBodyMatch) {
-                    throw new Error(`Expected request body match not found for ${JSON.stringify(match)}`);
-                }
-            }),
-            order: (matches: HubCallMatch[]): Promise<void> => Promise.resolve().then(() => {
-                let cursor = 0;
-
-                for (const match of matches) {
-                    const index = timeline.slice(cursor).findIndex(entry => makeMatch(match, entry));
-
-                    if (index < 0) {
-                        throw new Error(`Expected ordered call not found: ${JSON.stringify(match)}`);
+                    if (actual !== count) {
+                        throw new Error(`Expected ${count} calls matching ${JSON.stringify(match)}, got ${actual}`);
                     }
+                }),
+            body: (match: HubCallMatch, expected: unknown | ((body: unknown) => boolean)): Promise<void> =>
+                Promise.resolve().then(() => {
+                    const expectedFn =
+                        typeof expected === "function"
+                            ? (expected as (body: unknown) => boolean)
+                            : (body: unknown) => body === expected || JSON.stringify(body) === JSON.stringify(expected);
 
-                    cursor += index + 1;
-                }
-            })
+                    const hasBodyMatch = timeline.some((entry) => {
+                        if (!makeMatch(match, entry)) {
+                            return false;
+                        }
+
+                        return expectedFn(entry.body);
+                    });
+
+                    if (!hasBodyMatch) {
+                        throw new Error(`Expected request body match not found for ${JSON.stringify(match)}`);
+                    }
+                }),
+            order: (matches: HubCallMatch[]): Promise<void> =>
+                Promise.resolve().then(() => {
+                    let cursor = 0;
+
+                    for (const match of matches) {
+                        const index = timeline.slice(cursor).findIndex((entry) => makeMatch(match, entry));
+
+                        if (index < 0) {
+                            throw new Error(`Expected ordered call not found: ${JSON.stringify(match)}`);
+                        }
+
+                        cursor += index + 1;
+                    }
+                })
         }
     };
 
@@ -1009,12 +1124,14 @@ export function createHubHarness(_options: CreateHubHarnessOptions = {}): HubHar
         request: async (method: string, path: string, body?: unknown): Promise<unknown> => {
             const normalizedMethod = method.toUpperCase();
 
-            return parseJson(await hub.handle({
-                method: normalizedMethod,
-                path,
-                headers: normalizedMethod === "GET" ? {} : { "content-type": inferContentType(body) },
-                body
-            }));
+            return parseJson(
+                await hub.handle({
+                    method: normalizedMethod,
+                    path,
+                    headers: normalizedMethod === "GET" ? {} : { "content-type": inferContentType(body) },
+                    body
+                })
+            );
         },
         get: async (path: string): Promise<unknown> => contextHub.request("GET", path),
         post: async (path: string, body?: unknown): Promise<unknown> => contextHub.request("POST", path, body),
@@ -1035,11 +1152,9 @@ export function createHubHarness(_options: CreateHubHarnessOptions = {}): HubHar
         listInstances: async () => hub.listInstances(),
         getInstanceInfo: async (instanceId: string) => hub.getInstanceInfo(instanceId),
         callHostRpc: async <T>(name: string, body?: unknown): Promise<T> => hub.callHostRpc<T>(name, body),
-        callInstanceRpc: async <T>(instanceId: string, name: string, body?: unknown): Promise<T> =>
-            hub.callInstanceRpc<T>(instanceId, name, body),
+        callInstanceRpc: async <T>(instanceId: string, name: string, body?: unknown): Promise<T> => hub.callInstanceRpc<T>(instanceId, name, body),
         callHostRpcStream: async (name: string, body?: unknown) => hub.callHostRpcStream(name, body),
-        callInstanceRpcStream: async (instanceId: string, name: string, body?: unknown) =>
-            hub.callInstanceRpcStream(instanceId, name, body),
+        callInstanceRpcStream: async (instanceId: string, name: string, body?: unknown) => hub.callInstanceRpcStream(instanceId, name, body),
         createTopic: async (name?: string, contentType?: string) => hub.createTopic(name, contentType),
         listTopics: async () => hub.listTopics(),
         deleteTopic: async (name: string) => hub.deleteTopic(name),
@@ -1071,23 +1186,24 @@ export function createHubHarness(_options: CreateHubHarnessOptions = {}): HubHar
 
     const assert: HubAssertions = {
         called: (match: HubCallMatch): void => {
-            if (!timeline.some(entry => makeMatch(match, entry))) {
+            if (!timeline.some((entry) => makeMatch(match, entry))) {
                 createMatcherAssertionError(`Expected Hub call ${match.method ?? ""} ${match.path ?? ""} was not captured`);
             }
         },
         callCount: (match: HubCallMatch, count: number): void => {
-            const actual = timeline.filter(entry => makeMatch(match, entry)).length;
+            const actual = timeline.filter((entry) => makeMatch(match, entry)).length;
 
             if (actual !== count) {
                 createMatcherAssertionError(`Expected ${count} calls matching ${JSON.stringify(match)}, got ${actual}`);
             }
         },
         body: (match: HubCallMatch, expected: unknown | ((body: unknown) => boolean)): void => {
-            const expectedFn = typeof expected === "function"
-                ? expected as (body: unknown) => boolean
-                : (body: unknown) => body === expected || JSON.stringify(body) === JSON.stringify(expected);
+            const expectedFn =
+                typeof expected === "function"
+                    ? (expected as (body: unknown) => boolean)
+                    : (body: unknown) => body === expected || JSON.stringify(body) === JSON.stringify(expected);
 
-            const found = timeline.some(entry => {
+            const found = timeline.some((entry) => {
                 if (!makeMatch(match, entry)) {
                     return false;
                 }
@@ -1103,7 +1219,7 @@ export function createHubHarness(_options: CreateHubHarnessOptions = {}): HubHar
             let cursor = 0;
 
             for (const match of matches) {
-                const index = timeline.slice(cursor).findIndex(entry => makeMatch(match, entry));
+                const index = timeline.slice(cursor).findIndex((entry) => makeMatch(match, entry));
 
                 if (index < 0) {
                     createMatcherAssertionError(`Expected ordered call not found: ${JSON.stringify(match)}`);

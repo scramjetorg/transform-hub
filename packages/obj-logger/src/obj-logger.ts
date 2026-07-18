@@ -146,27 +146,25 @@ export class ObjLogger implements IObjectLogger {
                     ...this.baseLog
                 };
 
-                this.write(entry.level!, entry, ...entry.data || []);
+                this.write(entry.level!, entry, ...(entry.data || []));
             });
 
         this.outputLogStream.pipe(this.output);
     }
 
     write(level: LogLevel, entry: LogEntry | string, ...optionalParams: any[]) {
-        if (this.ended)
-            throw new Error("Cannot write to the stream anymore.");
+        if (this.ended) throw new Error("Cannot write to the stream anymore.");
 
         let paramsCopy;
 
         if (optionalParams.length) {
             try {
-                paramsCopy = optionalParams.map(
-                    (x) => x instanceof Error
-                        ? { Error: x.message, stack: x.stack }
-                        : structuredClone(x)
-                );
+                paramsCopy = optionalParams.map((x) => (x instanceof Error ? { Error: x.message, stack: x.stack } : structuredClone(x)));
             } catch {
-                paramsCopy = JSON.parse(JSON.stringify(optionalParams));
+                // Some runtime diagnostics include streams with intentional
+                // back-references.  The structured clone above rejects those
+                // values; the fallback must remain safe for the same input.
+                paramsCopy = JSON.parse(JSON.stringify(optionalParams, getCircularReplacer()));
             }
         }
 
@@ -186,7 +184,7 @@ export class ObjLogger implements IObjectLogger {
             ...this.baseLog
         };
 
-        this.outputs.forEach(output => {
+        this.outputs.forEach((output) => {
             if (output.writableObjectMode) {
                 output.write(a);
             } else {
@@ -234,10 +232,14 @@ export class ObjLogger implements IObjectLogger {
     get stringifiedOutput(): Readable {
         if (!this._stringifiedOutput)
             this._stringifiedOutput = this.output
-                .pipe(new JSONStringifierStream({
-                    stringifier
-                }))
-                .on("error", (e: any) => { console.error(e); });
+                .pipe(
+                    new JSONStringifierStream({
+                        stringifier
+                    })
+                )
+                .on("error", (e: any) => {
+                    console.error(e);
+                });
 
         return this._stringifiedOutput;
     }
@@ -272,10 +274,7 @@ export class ObjLogger implements IObjectLogger {
      * @param options Pipe options. If option `stringified` is set to true, the output will be stringified.
      * @returns {Writable} Piped stream
      */
-    pipe(
-        target: Writable | IObjectLogger,
-        { end = false, stringified }: IObjectLoggerOptions = {}
-    ): typeof target {
+    pipe(target: Writable | IObjectLogger, { end = false, stringified }: IObjectLoggerOptions = {}): typeof target {
         if (target instanceof ObjLogger) {
             this.baseLog.id ||= target.baseLog.id;
             this.logLevel = target.logLevel;

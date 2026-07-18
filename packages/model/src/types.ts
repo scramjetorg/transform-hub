@@ -61,6 +61,13 @@ export type ErrorMessageData = { message: string; stack?: string; exitCode?: num
 export type KillMessageData = { removeImmediately?: boolean };
 export type MonitoringRateMessageData = { monitoringRate: number };
 export type MonitoringMessageFromRunnerData = { sequences?: any[]; healthy: boolean; error?: any };
+export type ReadinessMessageData = {
+    state: "ready" | "errored";
+    exposePath?: string;
+    exposeHost?: string;
+    exposePort?: number;
+    diagnostic?: { code: string; phase: "initialize"; message: string };
+};
 export type MonitoringMessageData = MonitoringMessageFromRunnerData & Record<string, any>;
 export type StopSequenceMessageData = { timeout: number; canCallKeepalive: boolean };
 export type KeepAliveMessageData = { keepAlive: number };

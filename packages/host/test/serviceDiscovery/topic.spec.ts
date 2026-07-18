@@ -125,6 +125,19 @@ test("Topic data flow: piped flow", async t => {
     t.is(readValue, testText);
 });
 
+test("Topic data flow: drops payloads published without a subscriber", async t => {
+    const topic = new Topic(new TopicId("live-only"), "text/plain", testOrigin);
+    topic.write("not replayed");
+
+    const consumer = new PassThrough();
+    topic.pipe(consumer);
+    await new Promise<void>(resolve => setImmediate(resolve));
+
+    t.is(consumer.read(), null);
+    consumer.destroy();
+    topic.destroy();
+});
+
 test("Topic data flow: many providers writing", async t => {
     const testTopic = new Topic(new TopicId("TestTopic"), "text/plain", testOrigin, { encoding: "ascii" });
 

@@ -9,7 +9,7 @@ title: Getting started
 
 # Getting started
 
-This guide walks through installing Transform Hub, writing a simple Sequence, and running it on a local Hub. By the end you will have deployed and inspected your first Sequence.
+For the canonical installed/package-projected workflow, follow [Set up and run an installed Sequence](../sequences/setup-and-run.md). This page remains a short overview of the same local Hub flow.
 
 ## Prerequisites
 
@@ -32,6 +32,9 @@ Verify the installation:
 ```bash
 sth --help
 ```
+
+For the complete package.json, entrypoint, build/test, archive, and readiness steps, continue with
+[Set up and run an installed Sequence](../sequences/setup-and-run.md).
 
 ## Start a local Hub
 

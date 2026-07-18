@@ -10,6 +10,7 @@ export enum RunnerMessageCode {
     SEQUENCE_COMPLETED = 3011,
     PANG = 3012,
     INPUT_CONTENT_TYPE = 3013,
+    READY = 3014,
 
     PONG = 4000,
     STOP = 4001,

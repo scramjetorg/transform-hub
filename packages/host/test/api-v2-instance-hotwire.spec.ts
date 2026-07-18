@@ -1,12 +1,13 @@
 import test from "ava";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { PassThrough } from "stream";
-import { InstanceStatus } from "@scramjet/symbols";
+import { InstanceStatus, RunnerMessageCode } from "@scramjet/symbols";
 import EventEmitter from "events";
 
 import { HostAPIHandler } from "../src/lib/api/host-api";
 import { HostAPIV1Handler } from "../src/lib/api/host-api-v1";
 import { InstanceAPIV2 } from "../src/lib/api/instance-api-v2";
+import { CSIController } from "../src/lib/csi-controller";
 import { RouteRecorder } from "@scramjet/api-server/test/lib/route-recorder";
 import { registerHttpRoutes, RouteValidationError } from "@scramjet/api-router";
 
@@ -50,6 +51,7 @@ function createCsiStub(calls: any[] = []): any {
         id: "inst-1",
         status: InstanceStatus.RUNNING,
         isRunning: true,
+        lastHealth: { healthy: true, details: { current: { memory: 1 } } },
         lastStats: { current: { memory: 1 } },
         apiInputEnabled: true,
         outputEncoding: "utf8",
@@ -296,6 +298,159 @@ test("InstanceAPIV2 custom apiBase is reflected in info response", async t => {
 
     t.is(infoResult.instance.apiBase, "/custom/v2/instances/inst-1");
     t.is(infoResult.instance.sequence!.apiBase, "/custom/v2/sequences/seq-1");
+});
+
+test("InstanceAPIV2 control operations preserve timeout, classify failures, and remain terminal-safe", async t => {
+    const recorder = new RouteRecorder();
+    const calls: any[] = [];
+    const csi = createCsiStub(calls);
+
+    csi.stop = async (payload: unknown) => calls.push({ stop: payload });
+    csi.kill = async (payload: unknown) => calls.push({ kill: payload });
+    registerHttpRoutes(recorder.asApiRoute(), new InstanceAPIV2(csi, logger).createRouter());
+    const deleteRoute = recorder.require("op", "/", "delete").handler as Function;
+
+    t.deepEqual(await deleteRoute({ body: { mode: "stop", timeout: 0 } }), {
+        operation: { id: "inst-1", status: "completed" },
+        result: { instanceId: "inst-1", mode: "stop", accepted: true }
+    });
+    t.deepEqual(calls[0], { stop: { timeout: 0, canCallKeepalive: false } });
+
+    csi.stop = async () => { throw Object.assign(new Error("runner unavailable"), { code: "RUNNER_UNAVAILABLE" }); };
+    t.deepEqual(await deleteRoute({ body: { mode: "stop", timeout: 25 } }), {
+        operation: { id: "inst-1", status: "failed" },
+        error: { code: "RUNNER_UNAVAILABLE", message: "runner unavailable" }
+    });
+
+    csi.kill = async () => { throw new Error("kill transport closed"); };
+    t.deepEqual(await deleteRoute({ body: { mode: "kill" } }), {
+        operation: { id: "inst-1", status: "failed" },
+        error: { code: "INSTANCE_KILL_FAILED", message: "kill transport closed" }
+    });
+
+    await t.throwsAsync(
+        () => deleteRoute({ body: { mode: "stop", timeout: -1 } }),
+        { instanceOf: RouteValidationError, message: "Invalid route body" }
+    );
+});
+
+test("direct Hub v2 health is served by the real CSI controller and preserves canonical fields", async t => {
+    const communication = {
+        sendControlMessage: async () => undefined,
+        addMonitoringHandler: () => undefined
+    };
+    const config: any = {
+        runtimeAdapter: "process",
+        docker: { runner: { maxMem: 128 } },
+        timings: { instanceLifetimeExtensionDelay: 0 },
+        host: { apiBase: "/api/v1" }
+    };
+    const storage = { getAllItems: async () => ({}) };
+    const csi = new CSIController(
+        {
+            id: "real-inst-1",
+            sequenceInfo: { id: "seq-1", name: "seq-1", config: {}, location: "local" },
+            payload: { system: {}, appConfig: {}, args: [], limits: {} }
+        } as any,
+        communication as any,
+        config,
+        {} as any,
+        "process",
+        {} as any,
+        storage as any
+    );
+    csi.status = InstanceStatus.RUNNING;
+    (csi as any)._lastHealth = { healthy: true, details: { "site-a": { load: 0.2 } } };
+
+    const recorder = new RouteRecorder();
+    registerHttpRoutes(recorder.asApiRoute(), csi.apiV2.createRouter());
+    t.deepEqual(await (recorder.require("get", "/health").handler as Function)({}), {
+        scope: { id: "real-inst-1", status: InstanceStatus.RUNNING },
+        healthy: true,
+        status: "healthy",
+        components: [{
+            name: "instance",
+            healthy: true,
+            status: "healthy",
+            scope: { id: "real-inst-1", status: InstanceStatus.RUNNING },
+            details: { limits: { memory: Number.NaN }, current: { memory: undefined } }
+        }],
+        details: { "site-a": { load: 0.2 } }
+    });
+});
+
+function createRealLifecycleCsi(control: (code: RunnerMessageCode, payload: unknown) => void) {
+    let resolveTerminal!: (result: { message: string; exitcode: number; status: InstanceStatus }) => void;
+    const terminal = new Promise<{ message: string; exitcode: number; status: InstanceStatus }>(resolve => {
+        resolveTerminal = resolve;
+    });
+    const communication = {
+        sendControlMessage: async (code: RunnerMessageCode, payload: unknown) => control(code, payload),
+        addMonitoringHandler: () => undefined
+    };
+    const csi = new CSIController(
+        {
+            id: "real-lifecycle-1",
+            sequenceInfo: { id: "seq-1", name: "seq-1", config: {}, location: "local" },
+            payload: { system: {}, appConfig: {}, args: [], limits: {} }
+        } as any,
+        communication as any,
+        {
+            runtimeAdapter: "process",
+            docker: { runner: { maxMem: 128 } },
+            timings: { instanceLifetimeExtensionDelay: 0 },
+            host: { apiBase: "/api/v1" }
+        } as any,
+        {} as any,
+        "process",
+        {} as any,
+        { getAllItems: async () => ({}) } as any
+    );
+    csi.status = InstanceStatus.RUNNING;
+    csi.instancePromise = terminal;
+    (csi as any)._instanceAdapter = { remove: async () => undefined };
+    return { csi, resolveTerminal };
+}
+
+test("real direct Hub CSI control preserves stop/kill request and response semantics", async t => {
+    const scenarios = [
+        { name: "graceful-stop-timeout", body: { mode: "stop", timeout: 0 }, controls: [RunnerMessageCode.STOP, RunnerMessageCode.KILL] },
+        { name: "kill", body: { mode: "kill" }, controls: [RunnerMessageCode.KILL] },
+        { name: "classified-error", body: { mode: "stop", timeout: 0 }, controls: [RunnerMessageCode.STOP], error: Object.assign(new Error("runner unavailable"), { code: "RUNNER_UNAVAILABLE" }) }
+    ];
+
+    for (const scenario of scenarios) {
+        const controls: Array<{ code: RunnerMessageCode; payload: unknown }> = [];
+        let completeTerminal: (() => void) | undefined;
+        const { csi, resolveTerminal } = createRealLifecycleCsi((code, payload) => {
+            controls.push({ code, payload });
+            if (scenario.error) throw scenario.error;
+            if (code === RunnerMessageCode.KILL) completeTerminal?.();
+        });
+        completeTerminal = () => resolveTerminal({ message: "stopped", exitcode: 0, status: InstanceStatus.COMPLETED });
+        const recorder = new RouteRecorder();
+        registerHttpRoutes(recorder.asApiRoute(), csi.apiV2.createRouter());
+        const result = await (recorder.require("op", "/", "delete").handler as Function)({ body: scenario.body });
+
+        t.deepEqual(controls.map(control => control.code), scenario.controls);
+        t.deepEqual(controls.map(control => control.payload), scenario.controls.map(code => code === RunnerMessageCode.STOP
+            ? { timeout: scenario.body.timeout, canCallKeepalive: false }
+            : {}));
+        if (scenario.error) {
+            t.deepEqual(result, {
+                operation: { id: "real-lifecycle-1", status: "failed" },
+                error: { code: "RUNNER_UNAVAILABLE", message: "runner unavailable" }
+            });
+            continue;
+        }
+
+        t.deepEqual(result, {
+            operation: { id: "real-lifecycle-1", status: "completed" },
+            result: { instanceId: "real-lifecycle-1", mode: scenario.body.mode, accepted: true }
+        });
+        await new Promise<void>(resolve => setImmediate(resolve));
+        t.is(csi.status, InstanceStatus.COMPLETED);
+    }
 });
 
 test("HostAPIHandler v2 plural instance resolver dispatches to the v2 CSI router", async t => {

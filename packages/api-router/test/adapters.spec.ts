@@ -129,6 +129,76 @@ test("registerHttpRoutes reports unsupported dynamic resolver targets", async t 
     t.regex(response.body, /not supported/);
 });
 
+test("registerHttpRoutes maps topic resolver errors to canonical HTTP responses", async t => {
+    const uses: { path: string; handler: Function }[] = [];
+    const api = {
+        get() {},
+        op() {},
+        use(path: string, handler: Function) {
+            uses.push({ path, handler });
+        }
+    } as any;
+    const router = createRouter({ basePath: "/api/v2" }).resolve("/topics/:name", {
+        handler: ({ params }) => {
+            throw Object.assign(new Error(`Topic ${params.name} not found`), { code: "TOPIC_NOT_FOUND" });
+        }
+    });
+    const response = {
+        headersSent: false,
+        statusCode: 200,
+        headers: {} as Record<string, string>,
+        body: "",
+        writeHead(statusCode: number, headers: Record<string, string>) {
+            this.statusCode = statusCode;
+            this.headers = headers;
+            this.headersSent = true;
+        },
+        end(body: string) {
+            this.body = body;
+        }
+    };
+
+    registerHttpRoutes(api, router);
+    await uses[0].handler({ url: "/api/v2/topics/orders", headers: {} }, response, () => undefined);
+
+    t.is(response.statusCode, 404);
+    t.deepEqual(JSON.parse(response.body), { error: { code: "TOPIC_NOT_FOUND", message: "Topic orders not found" } });
+});
+
+test("registerHttpRoutes maps content-type conflicts to 409 and preserves the code", async t => {
+    const uses: { path: string; handler: Function }[] = [];
+    const api = {
+        get() {},
+        op() {},
+        use(path: string, handler: Function) {
+            uses.push({ path, handler });
+        }
+    } as any;
+    const router = createRouter({ basePath: "/api/v2" }).resolve("/topics/:name", {
+        handler: () => {
+            throw Object.assign(new Error("Content-type mismatch"), { code: "TOPIC_CONTENT_TYPE_MISMATCH" });
+        }
+    });
+    const response = {
+        headersSent: false,
+        statusCode: 200,
+        body: "",
+        writeHead(statusCode: number) {
+            this.statusCode = statusCode;
+            this.headersSent = true;
+        },
+        end(body: string) {
+            this.body = body;
+        }
+    };
+
+    registerHttpRoutes(api, router);
+    await uses[0].handler({ url: "/api/v2/topics/orders", headers: {} }, response, () => undefined);
+
+    t.is(response.statusCode, 409);
+    t.deepEqual(JSON.parse(response.body), { error: { code: "TOPIC_CONTENT_TYPE_MISMATCH", message: "Content-type mismatch" } });
+});
+
 test("registerHttpRoutes dispatches dynamic resolvers to verser2 redirects", async t => {
     const uses: { path: string; handler: Function }[] = [];
     const api = {

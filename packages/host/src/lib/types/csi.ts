@@ -8,7 +8,8 @@ import {
     InstanceStats,
     DownstreamStreamsConfig,
     InstanceId,
-    SequenceInfo
+    SequenceInfo,
+    HealthPayload
 } from "@scramjet/runtime-types";
 import { STHRestAPI, APIRoute } from "@scramjet/api-types";
 import { MessageDataType } from "./from-types";
@@ -55,6 +56,7 @@ export interface ICSI extends TypedEmitter<CSIEvents> {
 
     readonly status: InstanceStatus;
     readonly lastStats: InstanceStats;
+    readonly lastHealth: HealthPayload;
 
     readonly isRunning: boolean;
     readonly heartBeatPromise?: Promise<InstanceId>;

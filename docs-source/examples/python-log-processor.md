@@ -6,74 +6,46 @@ title: Python log processor sequence
 
 # Python log processor sequence
 
-This example shows a Python sequence that consumes structured log lines, filters by severity, and produces summary statistics. It demonstrates the Python runtime API and topic-based output.
+Build a Python Sequence that accepts newline-delimited JSON (NDJSON) log records and emits an NDJSON summary after its input stream closes.
+
+## Prerequisites
+
+You need Python 3.9 or later, Node.js and npm to install the published Hub and CLI commands, and `curl` plus `node` for the readiness check. Keep the Sequence project separate from the directory where the Hub stores uploaded archives.
+
+Create `log_processor.py` in your Sequence project:
 
 ```python
 """log_processor.py"""
-import json
-from datetime import datetime
+from collections import Counter
 
-SEVERITY_ORDER = {"DEBUG": 0, "INFO": 1, "WARN": 2, "ERROR": 3, "FATAL": 4}
-
-
-def get_severity_value(severity: str) -> int:
-    return SEVERITY_ORDER.get(severity.upper(), -1)
+requires = {"content_type": "application/x-ndjson"}
+provides = {"content_type": "application/x-ndjson"}
 
 
 async def main(context, input_stream):
-    context.logger.info("log processor started")
+    counts = Counter()
+    total = 0
 
-    stats = {
-        "total_lines": 0,
-        "by_severity": {"DEBUG": 0, "INFO": 0, "WARN": 0, "ERROR": 0, "FATAL": 0},
-        "error_samples": [],
-        "min_severity": "DEBUG",
-        "max_severity": "DEBUG",
+    async for record in input_stream:
+        severity = str(record.get("severity", "INFO")).upper()
+        counts[severity] += 1
+        total += 1
+
+    summary = {
+        "total_lines": total,
+        "by_severity": dict(counts),
     }
-    min_val = float("inf")
-    max_val = -1
-
-    async for chunk in input_stream:
-        try:
-            entry = json.loads(chunk.decode().strip())
-        except (json.JSONDecodeError, UnicodeDecodeError) as e:
-            context.logger.warn("skipping malformed entry", {"error": str(e)})
-            continue
-
-        stats["total_lines"] += 1
-        severity = entry.get("severity", "INFO").upper()
-        stats["by_severity"][severity] += 1
-
-        sev_val = get_severity_value(severity)
-        if sev_val < min_val:
-            min_val = sev_val
-            stats["min_severity"] = severity
-        if sev_val > max_val:
-            max_val = sev_val
-            stats["max_severity"] = severity
-
-        # Collect error samples for reporting
-        if severity == "ERROR" and len(stats["error_samples"]) < 5:
-            stats["error_samples"].append({
-                "message": entry.get("message", ""),
-                "timestamp": entry.get("timestamp", datetime.utcnow().isoformat()),
-            })
-
-    context.logger.info("processing complete", {"total": stats["total_lines"]})
-
-    # Emit summary event
-    context.emit("processing-complete", stats)
-
-    return stats
+    context.logger.info("log processing complete", extra={"total": total})
+    return summary
 ```
 
-## Running the Python example
+The Python runtime calls `main(context, input_stream)`. With `application/x-ndjson`, `input_stream` yields parsed JSON values one line at a time. The module metadata declares NDJSON for both input and output, and the returned dictionary is serialized as one NDJSON output record.
 
-**package.json:**
+Create `package.json` beside the Python file:
 
 ```json
 {
-  "name": "@example/log-processor",
+  "name": "log-processor",
   "version": "1.0.0",
   "main": "log_processor.py",
   "engines": {
@@ -82,69 +54,98 @@ async def main(context, input_stream):
 }
 ```
 
-**requirements.txt:**
+Declare only `engines.python3` for this package. The Hub selects `runner-python` from that key; declaring `node` or `bun` as well would select a different runtime.
 
-```
-pyee>=12,<13
-```
+This example uses only the Python standard library. When your Sequence needs third-party packages, add a `requirements.txt` in the package root:
 
-**Send and test:**
-
-The HTTP commands below use legacy `/api/v1` compatibility routes. They remain supported for backwards compatibility; generated v2 API examples will be documented separately.
-
-```bash
-# Upload to Hub
-curl -X POST http://localhost:8000/api/v1/sequence \
-  -F "package=@log-processor-pkg.tar.gz"
-
-# Start instance
-curl -X POST http://localhost:8000/api/v1/sequence/<id>/start
-
-# Send log lines
-curl -X POST http://localhost:8000/api/v1/instance/<instanceId>/input \
-  -H "Content-Type: application/x-ndjson" \
-  -d '{"severity":"INFO","message":"request started"}
-{"severity":"ERROR","message":"connection refused"}
-{"severity":"WARN","message":"retry attempt 1"}'
-
-# Read output
-curl http://localhost:8000/api/v1/instance/<instanceId>/output
+```text
+# Example: requests>=2.32,<3
 ```
 
-Expected output:
+The Python runner installs dependencies from `requirements.txt` at startup when the file is present. Pin the runtime dependencies your Sequence needs and include the file in the archive.
 
-```json
-{"total_lines":3,"by_severity":{"DEBUG":0,"INFO":1,"WARN":1,"ERROR":1,"FATAL":0},"error_samples":[{"message":"connection refused","timestamp":"..."}],"min_severity":"INFO","max_severity":"ERROR"}
+## Package the Sequence
+
+Follow the [installed Sequence setup and run guide](../sequences/setup-and-run.md) for the complete walkthrough.
+
+### Packaging terminal
+
+```sh
+npm install -g @scramjet/sth @scramjet/cli
+si sequence pack . -o log-processor.tar.gz
 ```
 
-## Testing with the hub harness
+Run the command from the Sequence project directory. The archive must contain `package.json`, `log_processor.py`, and `requirements.txt` when you use dependencies.
 
-```python
-"""test_log_processor.py"""
-import pytest
-from scramjet.sequence_test import create_hub_harness
-from io import BytesIO
+## Start the Hub in the foreground
 
+### Foreground Hub terminal
 
-@pytest.mark.asyncio
-async def test_log_processor():
-    harness = create_hub_harness()
-
-    # Load the sequence
-    from log_processor import main
-
-    # Create mock input
-    input_data = (
-        b'{"severity":"INFO","message":"ok"}\n'
-        b'{"severity":"ERROR","message":"fail"}\n'
-    )
-
-    # Run the sequence (adapt for async Python test)
-    await main(harness.context, BytesIO(input_data))
-
-    # Assertions
-    harness.assert.called(method="POST", path="/api/v1/topic")
-    # Inspect lifecycle/capture helpers exposed by the harness version in use.
-
-    harness.close()
+```sh
+mkdir -p sequence-store
+sth --runtime-adapter process \
+  --hostname 127.0.0.1 \
+  --port 8000 \
+  --sequences-root "$PWD/sequence-store"
 ```
+
+Leave this terminal running. The Process Adapter runs the Python runner as a child process on this machine, so Python 3.9 or later and any requirements needed at startup must be available to the Hub host.
+
+## Wait for readiness
+
+### Readiness terminal
+
+```sh
+timeout 60s sh -c '
+  until curl --fail --silent http://127.0.0.1:8000/api/v1/status |
+    node -e "let s=\"\"; process.stdin.on(\"data\", c => s += c).on(\"end\", () => process.exit(JSON.parse(s).ready === true ? 0 : 1))";
+  do :; done
+'
+```
+
+## Deploy and start
+
+### Deploy/start terminal
+
+```sh
+si config set apiUrl http://127.0.0.1:8000
+si sequence deploy ./log-processor.tar.gz
+```
+
+`si sequence deploy` uploads the archive and starts an Instance. Record the returned Instance ID for the next commands.
+
+## Send NDJSON input
+
+### Send-input terminal
+
+```sh
+printf '%s\n' \
+  '{"severity":"INFO","message":"request started"}' \
+  '{"severity":"ERROR","message":"connection refused"}' \
+  '{"severity":"WARN","message":"retry attempt 1"}' | \
+  si instance input <instance-id> --content-type application/x-ndjson --end
+```
+
+`--end` closes the input stream so the Sequence can return its summary.
+
+## Inspect output
+
+### Output terminal
+
+```sh
+si instance stdout <instance-id>
+```
+
+The output is an NDJSON record with `total_lines` and `by_severity` counts.
+
+## Local verification (optional)
+
+Before packaging, you can check that the entry module compiles in your own project:
+
+```sh
+python3 -m py_compile log_processor.py
+```
+
+## What this demonstrates
+
+You can package a Python runtime Sequence, deploy it to an installed Hub, send NDJSON log records to its Instance, and inspect the transformed NDJSON summary on the output stream. A successful run shows the NDJSON summary with line counts and severity breakdown.

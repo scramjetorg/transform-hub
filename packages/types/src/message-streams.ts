@@ -37,7 +37,8 @@ import {
     PingMessageData,
     SequenceStoppedMessageData,
     PangMessageData,
-    EventMessageData
+    EventMessageData,
+    ReadinessMessageData
 } from "./messages";
 import { CPMMessageSTHID, STHIDMessageData } from "./messages/sth-id";
 import { LoadCheckStat } from "./load-check-stat";
@@ -60,6 +61,7 @@ export type MessageType<T> =
     T extends RunnerMessageCode.MONITORING_REPLY ? MonitoringReplyMessage :
     T extends RunnerMessageCode.STOP ? StopSequenceMessage :
     T extends RunnerMessageCode.PING ? HandshakeMessage :
+    T extends RunnerMessageCode.READY ? HandshakeMessage :
     T extends RunnerMessageCode.PONG ? HandshakeAcknowledgeMessage :
     T extends CPMMessageCode.STH_ID ? CPMMessageSTHID :
     T extends CPMMessageCode.LOAD ? LoadCheckStatMessage :
@@ -79,6 +81,7 @@ export type MessageDataType<T> =
     T extends RunnerMessageCode.MONITORING_REPLY ? MonitoringReplyMessageData :
     T extends RunnerMessageCode.STOP ? StopSequenceMessageData :
     T extends RunnerMessageCode.PING ? PingMessageData :
+    T extends RunnerMessageCode.READY ? ReadinessMessageData :
     T extends RunnerMessageCode.PONG ? HandshakeAcknowledgeMessageData :
     T extends RunnerMessageCode.SET ? SetMessageData :
     T extends RunnerMessageCode.PANG ? PangMessageData :
@@ -115,7 +118,7 @@ export type MonitoringMessageCode =
     RunnerMessageCode.ACKNOWLEDGE | RunnerMessageCode.DESCRIBE_SEQUENCE | RunnerMessageCode.STATUS |
     RunnerMessageCode.ALIVE | RunnerMessageCode.ERROR | RunnerMessageCode.MONITORING | RunnerMessageCode.EVENT |
     RunnerMessageCode.PING | RunnerMessageCode.PANG |
-    RunnerMessageCode.SEQUENCE_STOPPED | RunnerMessageCode.SEQUENCE_COMPLETED |
+    RunnerMessageCode.SEQUENCE_STOPPED | RunnerMessageCode.SEQUENCE_COMPLETED | RunnerMessageCode.READY |
     CPMMessageCode.LOAD | CPMMessageCode.NETWORK_INFO | CPMMessageCode.EVENT |
     RunnerMessageCode.STORAGE | RunnerMessageCode.STORAGE_UPDATE;
 

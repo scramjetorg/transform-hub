@@ -146,6 +146,16 @@ test("ServiceDiscovery: createTopic stores contentType", (t) => {
     t.deepEqual(topic!.actors, []);
 });
 
+test("ServiceDiscovery: duplicate topic creation is idempotent and mismatches are classified", (t) => {
+    const sd = new ServiceDiscovery();
+    const first = sd.createTopic("contract-topic", { contentType: "text/plain" });
+    const duplicate = sd.createTopic("contract-topic", { contentType: "text/plain" });
+
+    t.is(duplicate, first);
+    const error = t.throws(() => sd.createTopic("contract-topic", { contentType: "application/json" }));
+    t.is((error as Error & { code?: string }).code, "TOPIC_CONTENT_TYPE_MISMATCH");
+});
+
 test("ServiceDiscovery: findRole returns empty for non-existing topic", (t) => {
     const sd = new ServiceDiscovery();
     const providers = sd.findRole(ActorRole.PROVIDER, "nonexistent");
@@ -428,7 +438,7 @@ test("ServiceDiscovery: host provider to host consumer cross-hub live data flow"
     t.is(await received, "cross-hub-payload");
 });
 
-test("ServiceDiscovery: host provider end closes cross-hub consumer stream", async (t) => {
+test("ServiceDiscovery: host provider end leaves cross-hub consumer stream open for replacement", async (t) => {
     const sd = new ServiceDiscovery();
     const hostCtrl1 = mockHostController("host-1");
     const hostCtrl2 = mockHostController("host-2");
@@ -440,12 +450,31 @@ test("ServiceDiscovery: host provider end closes cross-hub consumer stream", asy
     sd.register(consumer);
     await waitImmediate();
 
-    const ended = new Promise<void>(resolve => hostCtrl2.streams.downstream[0].once("finish", resolve));
-
     hostCtrl1.streams.upstream[0].end("final-payload");
+    await waitImmediate();
+    t.false(hostCtrl2.streams.downstream[0].writableEnded);
+});
 
-    await ended;
-    t.true(hostCtrl2.streams.downstream[0].writableEnded);
+test("ServiceDiscovery: replacement provider is routed to the existing consumer", async (t) => {
+    const sd = new ServiceDiscovery();
+    const firstHost = mockHostController("host-first");
+    const replacementHost = mockHostController("host-replacement");
+    const consumerHost = mockHostController("host-consumer");
+
+    sd.register(new TopicActor("topic-replace", ActorRole.PROVIDER, ActorType.HOST, "text/plain", firstHost as any));
+    const consumer = new TopicActor("topic-replace", ActorRole.CONSUMER, ActorType.HOST, "text/plain", consumerHost as any);
+    sd.register(consumer);
+    await waitImmediate();
+
+    firstHost.streams.upstream[0].destroy();
+    await waitImmediate();
+
+    sd.register(new TopicActor("topic-replace", ActorRole.PROVIDER, ActorType.HOST, "text/plain", replacementHost as any));
+    await waitImmediate();
+
+    t.is(replacementHost.calls.upstream, 1);
+    t.is(consumerHost.calls.downstream, 1);
+    t.false(consumerHost.streams.downstream[0].destroyed);
 });
 
 test("ServiceDiscovery: host provider to host consumer cross-hub cleanup on both stream close", async (t) => {
@@ -516,6 +545,27 @@ test("ServiceDiscovery: api-type provider stream reaches consumer stream", (t) =
                 .catch(reject);
         });
     });
+});
+
+test("ServiceDiscovery: provider bytes are dropped before a consumer arrives", async (t) => {
+    const sd = new ServiceDiscovery();
+    const provider = new TopicActor("topic-no-replay", ActorRole.PROVIDER, ActorType.API, "text/plain", undefined as any);
+    const providerStream = new PassThrough();
+    provider.addStream(providerStream);
+    sd.register(provider);
+
+    await waitImmediate();
+    providerStream.write("dropped");
+
+    const consumer = new TopicActor("topic-no-replay", ActorRole.CONSUMER, ActorType.API, "text/plain", undefined as any);
+    const consumerStream = new PassThrough();
+    consumer.addStream(consumerStream);
+    sd.register(consumer);
+    await waitImmediate();
+
+    t.is(consumerStream.read(), null);
+    providerStream.write("live");
+    t.is(await readChunk(consumerStream), "live");
 });
 
 test("ServiceDiscovery: Manager topic multiplexer routes API provider to STH consumer live", async (t) => {

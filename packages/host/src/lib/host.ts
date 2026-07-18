@@ -18,22 +18,10 @@ import {
     SequenceInfo,
     StartInstanceReturnType,
     IStorageAdapter,
-    InstanceId,
+    InstanceId
 } from "@scramjet/runtime-types";
-import {
-    APIExpose,
-    MonitoringServerConfig,
-    ParsedMessage,
-    PublicSTHConfiguration,
-    STHConfiguration,
-    STHRestAPI,
-} from "@scramjet/api-types";
-import {
-    CPMConnectorOptions,
-    OpResponse,
-    StartSequenceDTO,
-    SpaceEventMessageData
-} from "./types/from-types";
+import { APIExpose, MonitoringServerConfig, ParsedMessage, PublicSTHConfiguration, STHConfiguration, STHRestAPI } from "@scramjet/api-types";
+import { CPMConnectorOptions, OpResponse, StartSequenceDTO, SpaceEventMessageData } from "./types/from-types";
 
 import { getSequenceAdapter, initializeRuntimeAdapters } from "@scramjet/adapters";
 import { HealthComponent, LoadCheck, LoadCheckConfig, degradedComponent } from "@scramjet/load-check";
@@ -44,10 +32,9 @@ import { CPMConnector } from "./cpm-connector";
 import { InstancesStore } from "./instance-store";
 
 import { ConfigService, development } from "@scramjet/config";
-import { isStartSequenceDTO, readJsonFile, defer, FileBuilder, RefCountHandler, attachVerser2ServerStreamBoundary } from "@scramjet/utility";
+import { readJsonFile, defer, RefCountHandler, attachVerser2ServerStreamBoundary } from "@scramjet/utility";
 
 import { DataStream } from "scramjet";
-import { inspect } from "util";
 
 import { Auditor } from "./auditor";
 
@@ -60,16 +47,29 @@ import { existsSync, mkdirSync } from "fs";
 
 import SequenceStore from "./sequence-store";
 
-import { CSIDispatcher, DispatcherChimeEvent as DispatcherChimeEventData, DispatcherErrorEventData, DispatcherInstanceEndEventData, DispatcherInstanceEstablishedEventData, DispatcherInstanceTerminatedEventData } from "./csi-dispatcher";
+import {
+    CSIDispatcher,
+    DispatcherChimeEvent as DispatcherChimeEventData,
+    DispatcherErrorEventData,
+    DispatcherInstanceEndEventData,
+    DispatcherInstanceEstablishedEventData,
+    DispatcherInstanceTerminatedEventData
+} from "./csi-dispatcher";
 
 import { parse } from "path";
 import { HostAPIHandler } from "./api/host-api";
 import { readHostInfoFile, resolveStableHostId, writeHostInfoFile } from "./host-id";
-import { checkSthRunnerVerser2LegacyBrokerPeerId, createSthRunnerVerser2HostOptions, deriveSthRunnerVerser2HostIdentity, resolveSthRunnerVerser2HostConfig } from "./runner-verser2-host-config";
+import {
+    checkSthRunnerVerser2LegacyBrokerPeerId,
+    createSthRunnerVerser2HostOptions,
+    deriveSthRunnerVerser2HostIdentity,
+    resolveSthRunnerVerser2HostConfig
+} from "./runner-verser2-host-config";
 import { Verser2RunnerBroker } from "./runner-transport";
 import { attachSthLocalRunnerVerser2Peers, getRunnerVerser2HostUpstreamParams } from "./runner-verser2-host-peers";
 
 import { getStorageAdapter } from "./local-storage/utils";
+import { readStartupConfig } from "./startup-config";
 import { MemoryStorageAdapter } from "./local-storage/adapters";
 import { MonitoringServer } from "@scramjet/monitoring-server";
 import { ICSI, IHost } from "./types";
@@ -86,6 +86,7 @@ type RequiredStartupEntry = {
     sequenceId: string;
     config: StartSequenceDTO;
     restartAttemptsRemaining: number;
+    stableInstanceId: string;
     currentInstanceId?: string;
     launching: boolean;
 };
@@ -156,6 +157,7 @@ export class Host implements IHost, IComponent {
     instancesStore = new InstancesStore();
     private requiredStartupEntries = new Map<string, RequiredStartupEntry>();
     private requiredStartupEntriesByInstanceId = new Map<string, string>();
+    private startupReady = false;
 
     /**
      * Sequences store.
@@ -195,11 +197,16 @@ export class Host implements IHost, IComponent {
     localStorage: IStorageAdapter;
 
     private instanceProxy: HostProxy = {
-        onInstanceRequest: (socket: Duplex) => { this.api.server.emit("connection", socket); },
+        onInstanceRequest: (socket: Duplex) => {
+            this.api.server.emit("connection", socket);
+        },
         onRPCExpose: (path: string, instanceId: string) => {
             this.instancesStore.registerRpc(path, instanceId);
 
             this.logger.info("RPC exposed", { path, instanceId });
+        },
+        onRPCExposeRevoked: (path: string, instanceId: string) => {
+            this.instancesStore.unregisterRpc(path, instanceId);
         }
     };
 
@@ -248,8 +255,7 @@ export class Host implements IHost, IComponent {
         this.logger = new ObjLogger(
             this,
             {},
-            ObjLogger.levels.find((l: LogLevel) => l.toLowerCase() === sthConfig.logLevel.toLowerCase()) ||
-            ObjLogger.levels[ObjLogger.levels.length - 1]
+            ObjLogger.levels.find((l: LogLevel) => l.toLowerCase() === sthConfig.logLevel.toLowerCase()) || ObjLogger.levels[ObjLogger.levels.length - 1]
         );
 
         const prettyLog = new DataStream().map(prettyPrint({ colors: this.config.logColors }));
@@ -276,11 +282,14 @@ export class Host implements IHost, IComponent {
         }
 
         if (sthConfig.monitorgingServer) {
-            this.startMonitoringServer(sthConfig.monitorgingServer).then((res) => {
-                this.logger.info("MonitoringServer started", res);
-            }, (e) => {
-                throw e;
-            });
+            this.startMonitoringServer(sthConfig.monitorgingServer).then(
+                (res) => {
+                    this.logger.info("MonitoringServer started", res);
+                },
+                (e) => {
+                    throw e;
+                }
+            );
         }
 
         this.auditor = new Auditor();
@@ -298,16 +307,17 @@ export class Host implements IHost, IComponent {
             mkdirSync(this.config.sequencesRoot);
         }
 
-        if (this.config.kubernetes.sequencesRoot && this.config.runtimeAdapter === "kubernetes")
-            fsPaths.push(this.config.kubernetes.sequencesRoot);
+        if (this.config.kubernetes.sequencesRoot && this.config.runtimeAdapter === "kubernetes") fsPaths.push(this.config.kubernetes.sequencesRoot);
 
         this.logger.info("Following path will be examined on load check.", [...new Set(fsPaths)]);
 
-        this.loadCheck = new LoadCheck(new LoadCheckConfig({
-            safeOperationLimit,
-            instanceRequirements,
-            fsPaths: [...new Set(fsPaths)]
-        }));
+        this.loadCheck = new LoadCheck(
+            new LoadCheckConfig({
+                safeOperationLimit,
+                instanceRequirements,
+                fsPaths: [...new Set(fsPaths)]
+            })
+        );
         this.loadCheck.logger.pipe(this.logger);
 
         this.api = apiServer;
@@ -324,7 +334,7 @@ export class Host implements IHost, IComponent {
             STHConfig: sthConfig,
             localStorageAdapter: this.localStorage,
             runnerBrokerProvider: () => this.runnerVerser2Broker,
-            hostProxy: this.instanceProxy,
+            hostProxy: this.instanceProxy
         });
 
         this.csiDispatcher.logger.pipe(this.logger);
@@ -354,7 +364,7 @@ export class Host implements IHost, IComponent {
 
         const monitoringServer = new MonitoringServer({
             ...config,
-            check: async () => !!await this.loadCheck.getLoadCheck()
+            check: async () => !!(await this.loadCheck.getLoadCheck())
         });
 
         return monitoringServer.start();
@@ -424,7 +434,7 @@ export class Host implements IHost, IComponent {
             id: instance.id,
             sequence: instance.sequence,
             instanceName: csiController?.instanceName || (instance as any).instanceName,
-            status: csiController?.status || instance.status,
+            status: csiController?.status || instance.status
         });
 
         this.pushTelemetry("Instance connected", {
@@ -448,6 +458,9 @@ export class Host implements IHost, IComponent {
      * @param {DispatcherInstanceEndEventData} instance Event details.
      */
     async handleDispatcherEndEvent(instance: DispatcherInstanceEndEventData) {
+        if (instance.controller && this.instancesStore.get(instance.id) !== instance.controller) return;
+
+        this.cleanupRequiredStartupInstance(instance.id);
         this.auditor.auditInstance(instance.id, InstanceMessageCode.INSTANCE_ENDED);
 
         await this.cpmConnector?.sendInstanceInfo({
@@ -474,6 +487,10 @@ export class Host implements IHost, IComponent {
     async handleDispatcherTerminatedEvent(eventData: DispatcherInstanceTerminatedEventData) {
         this.logger.debug("handleDispatcherTerminatedEvent", eventData);
 
+        if (eventData.controller && this.instancesStore.get(eventData.id) !== eventData.controller) return;
+
+        this.cleanupRequiredStartupInstance(eventData.id);
+
         this.auditor.auditInstance(eventData.id, InstanceMessageCode.INSTANCE_TERMINATED);
 
         this.pushTelemetry("Instance terminated", {
@@ -483,13 +500,26 @@ export class Host implements IHost, IComponent {
             seqId: eventData.sequence.id
         });
 
-        const instance = this.instancesStore.get(eventData.id);
+        await this.handleRequiredStartupInstanceExit(eventData.id, `required startup instance terminated with code ${eventData.code}`);
+    }
 
-        if (instance?.instanceName) {
-            this.instancesStore.unregisterName(instance.instanceName, eventData.id);
+    /** Remove all local routing/name ownership before a required restart is queued. */
+    private cleanupRequiredStartupInstance(instanceId: string) {
+        if (!this.requiredStartupEntriesByInstanceId.has(instanceId)) return;
+
+        const instance = this.instancesStore.get(instanceId);
+
+        if (!instance) return;
+
+        if (instance.expose?.path) {
+            this.instanceProxy.onRPCExposeRevoked?.(instance.expose.path, instanceId);
         }
 
-        await this.handleRequiredStartupInstanceExit(eventData.id, `required startup instance terminated with code ${eventData.code}`);
+        if (instance.instanceName) {
+            this.instancesStore.unregisterName(instance.instanceName, instanceId);
+        }
+
+        this.instancesStore.delete(instanceId);
     }
 
     private buildStartupRunnerConfig(sequence: SequenceInfo, sequenceConfig: StartSequenceDTO): STHRestAPI.StartSequencePayload {
@@ -515,17 +545,11 @@ export class Host implements IHost, IComponent {
             const namedSequence = this.sequenceStore.getByNameOrId(sequenceConfig.sequenceName);
 
             if (!namedSequence) {
-                throw new HostError(
-                    "SEQUENCE_STARTUP_ERROR",
-                    `Sequence selector not found for startup config: ${sequenceConfig.sequenceName}`
-                );
+                throw new HostError("SEQUENCE_STARTUP_ERROR", `Sequence selector not found for startup config: ${sequenceConfig.sequenceName}`);
             }
 
             if (namedSequence.id !== sequence.id) {
-                throw new HostError(
-                    "SEQUENCE_STARTUP_ERROR",
-                    `Startup sequence selector conflict for ${sequenceConfig.id} and ${sequenceConfig.sequenceName}`
-                );
+                throw new HostError("SEQUENCE_STARTUP_ERROR", `Startup sequence selector conflict for ${sequenceConfig.id} and ${sequenceConfig.sequenceName}`);
             }
         }
 
@@ -552,6 +576,7 @@ export class Host implements IHost, IComponent {
             sequenceId: sequence.id,
             config: { ...sequenceConfig },
             restartAttemptsRemaining: sequenceConfig.restartLimit ?? 0,
+            stableInstanceId: sequenceConfig.instanceId || IDProvider.generate(),
             launching: false
         };
     }
@@ -573,17 +598,11 @@ export class Host implements IHost, IComponent {
         startupConfig.forEach((sequenceConfig, index) => {
             if (sequenceConfig.instanceId) {
                 if (instanceNames.has(sequenceConfig.instanceId)) {
-                    throw new HostError(
-                        "SEQUENCE_STARTUP_ERROR",
-                        `Startup config instanceId conflicts with another instanceName: ${sequenceConfig.instanceId}`
-                    );
+                    throw new HostError("SEQUENCE_STARTUP_ERROR", `Startup config instanceId conflicts with another instanceName: ${sequenceConfig.instanceId}`);
                 }
 
                 if (instanceIds.has(sequenceConfig.instanceId)) {
-                    throw new HostError(
-                        "SEQUENCE_STARTUP_ERROR",
-                        `Duplicate instanceId in startup config: ${sequenceConfig.instanceId}`
-                    );
+                    throw new HostError("SEQUENCE_STARTUP_ERROR", `Duplicate instanceId in startup config: ${sequenceConfig.instanceId}`);
                 }
 
                 instanceIds.add(sequenceConfig.instanceId);
@@ -591,32 +610,21 @@ export class Host implements IHost, IComponent {
 
             if (sequenceConfig.instanceName) {
                 if (instanceIds.has(sequenceConfig.instanceName)) {
-                    throw new HostError(
-                        "SEQUENCE_STARTUP_ERROR",
-                        `Startup config instanceName conflicts with another instanceId: ${sequenceConfig.instanceName}`
-                    );
+                    throw new HostError("SEQUENCE_STARTUP_ERROR", `Startup config instanceName conflicts with another instanceId: ${sequenceConfig.instanceName}`);
                 }
 
                 if (instanceNames.has(sequenceConfig.instanceName)) {
-                    throw new HostError(
-                        "SEQUENCE_STARTUP_ERROR",
-                        `Duplicate instanceName in startup config: ${sequenceConfig.instanceName}`
-                    );
+                    throw new HostError("SEQUENCE_STARTUP_ERROR", `Duplicate instanceName in startup config: ${sequenceConfig.instanceName}`);
                 }
 
                 instanceNames.add(sequenceConfig.instanceName);
             }
 
             if (sequenceConfig.required) {
-                const key = sequenceConfig.instanceName
-                    || sequenceConfig.instanceId
-                    || `required-startup:${sequenceConfig.id}:${index}`;
+                const key = sequenceConfig.instanceName || sequenceConfig.instanceId || `required-startup:${sequenceConfig.id}:${index}`;
 
                 if (requiredKeys.has(key)) {
-                    throw new HostError(
-                        "SEQUENCE_STARTUP_ERROR",
-                        `Duplicate required startup entry key: ${key}`
-                    );
+                    throw new HostError("SEQUENCE_STARTUP_ERROR", `Duplicate required startup entry key: ${key}`);
                 }
 
                 requiredKeys.add(key);
@@ -683,7 +691,7 @@ export class Host implements IHost, IComponent {
                 startupKey: entry.key
             });
 
-            queueMicrotask(() => {
+            setImmediate(() => {
                 this.launchRequiredStartupEntry(entry, reason).catch((e) => {
                     this.logger.error("Error in required startup entry launch", e);
                 });
@@ -707,7 +715,7 @@ export class Host implements IHost, IComponent {
         }
 
         entry.launching = true;
-        const launchInstanceId = entry.config.instanceId || IDProvider.generate();
+        const launchInstanceId = entry.stableInstanceId;
         const launchConfig = { ...entry.config, instanceId: launchInstanceId };
 
         this.trackRequiredStartupInstance(entry, launchInstanceId);
@@ -721,10 +729,7 @@ export class Host implements IHost, IComponent {
 
             if (launchConfig.instanceName) {
                 if (this.instancesStore.hasName(launchConfig.instanceName) || this.instancesStore.has(launchConfig.instanceName)) {
-                    throw new HostError(
-                        "SEQUENCE_STARTUP_ERROR",
-                        `Instance name conflict for startup config: ${launchConfig.instanceName}`
-                    );
+                    throw new HostError("SEQUENCE_STARTUP_ERROR", `Instance name conflict for startup config: ${launchConfig.instanceName}`);
                 }
             }
 
@@ -794,14 +799,7 @@ export class Host implements IHost, IComponent {
 
         this.logger.pipe(this.commonLogsPipe.getIn(), { stringified: true });
 
-        this.api.log
-            .each(({ date, method, url, status }) =>
-                this.logger.debug(
-                    "Request",
-                    { date: new Date(date).toISOString(), method, url, status }
-                )
-            )
-            .resume();
+        this.api.log.each(({ date, method, url, status }) => this.logger.debug("Request", { date: new Date(date).toISOString(), method, url, status })).resume();
 
         this.logger.info("Log Level", this.config.logLevel);
         this.logger.info("Host main called", { version });
@@ -896,15 +894,12 @@ export class Host implements IHost, IComponent {
 
                 await this.connectToCPM();
             } else {
-                await Promise.race([
-                    this.connectToCPM(),
-                    defer(2500)
-                ]);
+                await Promise.race([this.connectToCPM(), defer(2500)]);
             }
 
             this.s3Client = new S3Client({
                 host: `${this.config.cpmUrl}/api/v1`,
-                bucket: `cpm/${this.config.cpmId || (this.config.platform?.space || "").replace(/(.+?):/g, "")}/api/v1/s3`,
+                bucket: `cpm/${this.config.cpmId || (this.config.platform?.space || "").replace(/(.+?):/g, "")}/api/v1/s3`
             });
 
             this.s3Client.logger.pipe(this.logger);
@@ -970,23 +965,16 @@ export class Host implements IHost, IComponent {
             this.logger.warn(legacyWarning);
         }
 
-        const runnerHostConfig = await resolveSthRunnerVerser2HostConfig(
-            deriveSthRunnerVerser2HostIdentity(this.config.verser2.runnerHost, this.config.host.id)
-        );
+        const runnerHostConfig = await resolveSthRunnerVerser2HostConfig(deriveSthRunnerVerser2HostIdentity(this.config.verser2.runnerHost, this.config.host.id));
 
         this.config.verser2.runnerHost = runnerHostConfig;
         this.runnerVerser2Host = createVerserHost(createSthRunnerVerser2HostOptions(runnerHostConfig));
-        this.runnerVerser2Host.onLifecycle(event => this.logger.debug("STH-local runner verser2 Host lifecycle", event));
+        this.runnerVerser2Host.onLifecycle((event) => this.logger.debug("STH-local runner verser2 Host lifecycle", event));
 
         if (this.runnerVerser2Host) {
             await this.runnerVerser2Host.start();
             attachVerser2ServerStreamBoundary((this.runnerVerser2Host as any).server, this.logger);
-            const peers = await attachSthLocalRunnerVerser2Peers(
-                this.runnerVerser2Host,
-                runnerHostConfig,
-                this.config.verser2,
-                this.api.server
-            );
+            const peers = await attachSthLocalRunnerVerser2Peers(this.runnerVerser2Host, runnerHostConfig, this.config.verser2, this.api.server);
 
             this.runnerVerser2Broker = peers.broker;
             this.runnerVerser2Guest = peers.guest;
@@ -1022,37 +1010,21 @@ export class Host implements IHost, IComponent {
     }
 
     async performStartup() {
+        this.startupReady = false;
         if (!this.config.startupConfig) {
             this.logger.info("No startup config provided, skipping startup sequences");
+            this.startupReady = true;
             return;
         }
 
-        let _config;
+        let startupConfig: StartSequenceDTO[];
 
-        // Load the config
         try {
-            const configFile = FileBuilder(this.config.startupConfig);
-
-            _config = configFile.read();
-            this.logger.debug("Sequence config loaded", _config);
-        } catch {
+            startupConfig = readStartupConfig(this.config.startupConfig);
+        } catch (error) {
             this.logger.error("Sequence config cannot be loaded", this.config.startupConfig);
-            throw new HostError("SEQUENCE_STARTUP_CONFIG_READ_ERROR");
+            throw error;
         }
-
-        // Validate the config
-        if (_config && !Array.isArray(_config.sequences))
-            throw new HostError(
-                "SEQUENCE_STARTUP_CONFIG_READ_ERROR",
-                "Startup config doesn't contain array of sequences"
-            );
-
-        for (const seq of _config.sequences) {
-            if (!isStartSequenceDTO(seq))
-                throw new HostError("SEQUENCE_STARTUP_CONFIG_READ_ERROR", `Startup config invalid: ${inspect(seq)}`);
-        }
-
-        const startupConfig: StartSequenceDTO[] = _config.sequences;
 
         this.validateStartupConfigUniqueness(startupConfig);
 
@@ -1070,10 +1042,7 @@ export class Host implements IHost, IComponent {
 
                 if (sequenceConfig.instanceName) {
                     if (this.instancesStore.hasName(sequenceConfig.instanceName) || this.instancesStore.has(sequenceConfig.instanceName)) {
-                        throw new HostError(
-                            "SEQUENCE_STARTUP_ERROR",
-                            `Instance name conflict for startup config: ${sequenceConfig.instanceName}`
-                        );
+                        throw new HostError("SEQUENCE_STARTUP_ERROR", `Instance name conflict for startup config: ${sequenceConfig.instanceName}`);
                     }
                 }
 
@@ -1093,6 +1062,8 @@ export class Host implements IHost, IComponent {
                 throw new HostError("SEQUENCE_STARTUP_ERROR", "Error starting startup sequences");
             })
             .run();
+
+        this.startupReady = true;
     }
 
     /**
@@ -1149,11 +1120,13 @@ export class Host implements IHost, IComponent {
 
             if (instances) {
                 this.logger.info(`Killing Instances from Sequence ${id}...`);
-                await Promise.all([...sequence.instances].map(async (instanceId) => {
-                    await this.instancesStore.get(instanceId)?.kill({ removeImmediately: true });
+                await Promise.all(
+                    [...sequence.instances].map(async (instanceId) => {
+                        await this.instancesStore.get(instanceId)?.kill({ removeImmediately: true });
 
-                    return new Promise((res) => this.instancesStore.get(instanceId)?.once("end", res));
-                }));
+                        return new Promise((res) => this.instancesStore.get(instanceId)?.once("end", res));
+                    })
+                );
             }
         }
 
@@ -1181,12 +1154,10 @@ export class Host implements IHost, IComponent {
         Promise.all(
             this.instancesStore.map((csiController) =>
                 Promise.race([
-                    csiController.heartBeatPromise?.then((id) =>
-                        this.auditor.auditInstanceHeartBeat(id, csiController.lastStats)
-                    ),
+                    csiController.heartBeatPromise?.then((id) => this.auditor.auditInstanceHeartBeat(id, csiController.lastStats)),
                     defer(this.config.timings.heartBeatInterval).then(() => {
                         throw new Error("HeartBeat promise not resolved");
-                    }),
+                    })
                 ]).catch((error) => {
                     this.logger.error("Instance heartbeat error", csiController.id, error.message);
                 })
@@ -1229,12 +1200,7 @@ export class Host implements IHost, IComponent {
         }
     }
 
-    async addSequence(
-        id: string,
-        req: Readable,
-        override: boolean,
-        socket?: Socket
-    ): Promise<STHRestAPI.SendSequenceResponse> {
+    async addSequence(id: string, req: Readable, override: boolean, socket?: Socket): Promise<STHRestAPI.SendSequenceResponse> {
         this.logger.info("New Sequence incoming", { id });
 
         const sequenceAdapter = getSequenceAdapter(this.adapterName, this.config);
@@ -1297,11 +1263,7 @@ export class Host implements IHost, IComponent {
             packageStream = response.data as IncomingMessage;
             packageStream.headers = response.headers;
 
-            const result = (await this.addSequence(
-                id,
-                packageStream as ParsedMessage,
-                true
-            )) as STHRestAPI.SendSequenceResponse;
+            const result = (await this.addSequence(id, packageStream as ParsedMessage, true)) as STHRestAPI.SendSequenceResponse;
 
             return this.sequenceStore.getById(result.id)!;
         } catch (e: any) {
@@ -1360,10 +1322,7 @@ export class Host implements IHost, IComponent {
             }
 
             if (namedSequence.id !== sequence.id) {
-                throw new HostError(
-                    "SEQUENCE_SELECTOR_CONFLICT",
-                    `Conflicting sequence selectors: ${sequenceId} and ${requestConfig.sequenceName}`
-                );
+                throw new HostError("SEQUENCE_SELECTOR_CONFLICT", `Conflicting sequence selectors: ${sequenceId} and ${requestConfig.sequenceName}`);
             }
         }
 
@@ -1372,7 +1331,7 @@ export class Host implements IHost, IComponent {
         try {
             const config = {
                 ...sequence.config,
-                ...requestConfig,
+                ...requestConfig
             };
 
             const runner = await this.csiDispatcher.startRunner(sequence, config);
@@ -1403,7 +1362,7 @@ export class Host implements IHost, IComponent {
         }
     }
 
-    async eventBus(event: EventMessageData & { source: InstanceId, sourceHost?: string }): Promise<void> {
+    async eventBus(event: EventMessageData & { source: InstanceId; sourceHost?: string }): Promise<void> {
         this.logger.debug("Got event", event);
 
         const scope = event.scope || "host";
@@ -1428,20 +1387,21 @@ export class Host implements IHost, IComponent {
                         this.logger.warn("Event for space, but not connected to CPM", event);
                         return;
                     }
-                    this.cpmConnector.sendEvent({
-                        ...event,
-                        scope,
-                        sourceHost: this.config.host.id!,
-                    }).catch((e) => {
-                        this.logger.error("Error sending event to CPM", e);
-                    });
+                    this.cpmConnector
+                        .sendEvent({
+                            ...event,
+                            scope,
+                            sourceHost: this.config.host.id!
+                        })
+                        .catch((e) => {
+                            this.logger.error("Error sending event to CPM", e);
+                        });
                 }
                 // Send the event to all instances except the source of the event.
                 await Promise.all(
-                    this.instancesStore
-                        .map((inst: ICSI) => {
-                            return event.source !== inst.id ? inst.emitEvent(event) : true;
-                        })
+                    this.instancesStore.map((inst: ICSI) => {
+                        return event.source !== inst.id ? inst.emitEvent(event) : true;
+                    })
                 );
                 break;
         }
@@ -1480,7 +1440,7 @@ export class Host implements IHost, IComponent {
             name: sequence.name,
             config: sequence.config,
             location: sequence.location,
-            instances: Array.from(sequence.instances.values()),
+            instances: Array.from(sequence.instances.values())
         };
     }
 
@@ -1521,6 +1481,7 @@ export class Host implements IHost, IComponent {
 
         return {
             cpm: { connected, cpmId },
+            ready: this.startupReady
         };
     }
 
@@ -1538,9 +1499,7 @@ export class Host implements IHost, IComponent {
         this.logger.trace("Stopping instances");
 
         if (this.config.killOnExit) {
-            await Promise.all(
-                this.instancesStore.map(async (csiController) => csiController.kill({ removeImmediately: true }))
-            );
+            await Promise.all(this.instancesStore.map(async (csiController) => csiController.kill({ removeImmediately: true })));
         }
 
         this.logger.info("Instances stopped");
@@ -1615,10 +1574,12 @@ export class Host implements IHost, IComponent {
      * @returns {string} Size
      */
     getSize(): HostSizes {
-        return ["xs", "s", "m", "l", "xl"][Math.min(
-            4, // maximum index in array
-            Math.floor(Math.log2(cpus().length) / 2 + Math.log2(totalmem() / GigaByte) / 4)
-        )] as HostSizes;
+        return ["xs", "s", "m", "l", "xl"][
+            Math.min(
+                4, // maximum index in array
+                Math.floor(Math.log2(cpus().length) / 2 + Math.log2(totalmem() / GigaByte) / 4)
+            )
+        ] as HostSizes;
     }
 
     pushTelemetry(message: string, labels: { [key: string]: string } = {}, level: "info" | "error" = "info") {

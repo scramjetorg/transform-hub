@@ -14,7 +14,7 @@ title: API v2 — Hub routes
 ### Route groups
 
 - **sequence**: sequence (mounted node: `sequence`)
-- **topics**: topics, createTopic, deleteTopic, topicRead, topicWrite
+- **topics**: topics, topicRead, topicWrite
 - **logs**: logs
 - **audit**: audit
 

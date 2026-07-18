@@ -242,7 +242,8 @@ export function buildAppContext(deps: BuildAppContextDeps): BuildAppContextResul
         instanceId,
         logLevel,
         api,
-        localStorage
+        localStorage,
+        logger
     ) as BuildAppContextResult["context"];
     context.exitTimeout = bootConfig.exitTimeout ?? 10_000;
 

@@ -11,3 +11,8 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 - [x] **Track: memory efficient testing**
 *Link: [./tracks/memory_efficient_testing_20260710/](./tracks/memory_efficient_testing_20260710/)*
+
+---
+
+- [x] **Track: sequence writing guide**
+*Link: [./tracks/sequence_writing_guide_20260716/](./tracks/sequence_writing_guide_20260716/)*

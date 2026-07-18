@@ -4,12 +4,7 @@ import type { Writable } from "stream";
 import type { ObjLogger } from "@scramjet/obj-logger";
 import { AppConfig, AppError } from "@scramjet/runtime-types";
 import type { APIExpose } from "@scramjet/api-types";
-import type {
-    EventMessageData,
-    StopSequenceMessageData,
-    StorageUpdateMessageData,
-    SequenceInfo,
-} from "@scramjet/runtime-types";
+import type { EventMessageData, StopSequenceMessageData, StorageUpdateMessageData, SequenceInfo } from "@scramjet/runtime-types";
 
 import type { RunnerNodeBootConfig } from "./boot-config";
 import type { RunnerNodeFdStreams } from "./fd-streams";
@@ -38,11 +33,17 @@ export interface SequenceLocalContext {
 }
 
 export type SequenceFunction = (this: unknown, instanceOutput: unknown, ...args: unknown[]) => unknown;
+export type SequenceInitializer = (this: unknown, context: unknown) => unknown;
 
 export type SequenceModule =
     | SequenceFunction
     | SequenceFunction[]
-    | { default?: SequenceFunction | SequenceFunction[] };
+    | {
+          default?: SequenceFunction | SequenceFunction[];
+          initialize?: SequenceInitializer;
+      };
+
+export type ResolvedSequenceFunctions = SequenceFunction[] & { initialize?: SequenceInitializer };
 
 export interface ControlDispatch {
     onStop(data: StopSequenceMessageData): Promise<void>;
@@ -81,7 +82,7 @@ export interface BuildAppContextResult {
 }
 
 export interface BootstrapOverrides {
-    loadSequence?: (sequencePath: string) => SequenceFunction[];
+    loadSequence?: (sequencePath: string) => ResolvedSequenceFunctions;
 }
 
 export interface RunnerHandshakeInputs {

@@ -1,6 +1,15 @@
 import { InstanceAdapterError } from "@scramjet/model";
 import { IComponent, IObjectLogger } from "@scramjet/runtime-types";
-import { ExitCode, ILifeCycleAdapterMain, ILifeCycleAdapterRun, MonitoringMessageData, InstanceConfig, InstanceLimits, SequenceInfo, RunnerConnectInfo } from "@scramjet/runtime-types";
+import {
+    ExitCode,
+    ILifeCycleAdapterMain,
+    ILifeCycleAdapterRun,
+    MonitoringMessageData,
+    InstanceConfig,
+    InstanceLimits,
+    SequenceInfo,
+    RunnerConnectInfo
+} from "@scramjet/runtime-types";
 import { ContainerConfiguration, ContainerConfigurationWithExposedPorts, RunnerContainerConfiguration, STHConfiguration } from "@scramjet/api-types";
 import path from "path";
 import { DockerodeDockerHelper } from "./dockerode-docker-helper";
@@ -14,10 +23,7 @@ import { Readable } from "stream";
 /**
  * Adapter for running Instance by Runner executed in Docker container.
  */
-class DockerInstanceAdapter implements
-ILifeCycleAdapterMain,
-ILifeCycleAdapterRun,
-IComponent {
+class DockerInstanceAdapter implements ILifeCycleAdapterMain, ILifeCycleAdapterRun, IComponent {
     private dockerHelper: IDockerHelper;
     private _limits?: InstanceLimits = {};
     private resources: DockerAdapterResources = {};
@@ -28,8 +34,12 @@ IComponent {
 
     crashLogStreams?: Promise<string[]>;
 
-    get limits() { return this._limits || {} as InstanceLimits; }
-    private set limits(value: InstanceLimits) { this._limits = value; }
+    get limits() {
+        return this._limits || ({} as InstanceLimits);
+    }
+    private set limits(value: InstanceLimits) {
+        this._limits = value;
+    }
 
     constructor(sthConfig: STHConfiguration, id: string = "") {
         this.sthConfig = sthConfig;
@@ -57,15 +67,14 @@ IComponent {
     private async preparePortBindingsConfig(
         declaredPorts: string[],
         containerConfig: ContainerConfiguration & ContainerConfigurationWithExposedPorts,
-        exposed: boolean = false): Promise<{ [key: string]: string; }> {
-        if (declaredPorts.every(entry => (/^\d{3,5}\/(tcp|udp)$/).test(entry))) {
-            const freePorts = exposed ? [] : await FreePortsFinder.getPorts(
-                declaredPorts.length, ...containerConfig.exposePortsRange
-            );
+        exposed: boolean = false
+    ): Promise<{ [key: string]: string }> {
+        if (declaredPorts.every((entry) => /^\d{3,5}\/(tcp|udp)$/.test(entry))) {
+            const freePorts = exposed ? [] : await FreePortsFinder.getPorts(declaredPorts.length, ...containerConfig.exposePortsRange);
 
-            return declaredPorts.reduce((obj: { [ key: string ]: any }, entry: string) => {
+            return declaredPorts.reduce((obj: { [key: string]: any }, entry: string) => {
                 if (entry) {
-                    const { port, protocol } = entry.match(/^(?<port>\d{3,5})\/(?<protocol>(tcp|udp))$/)?.groups as { port: string, protocol: string };
+                    const { port, protocol } = entry.match(/^(?<port>\d{3,5})\/(?<protocol>(tcp|udp))$/)?.groups as { port: string; protocol: string };
 
                     obj[`${port}/${protocol}`] = exposed ? {} : [{ HostIp: containerConfig.hostIp, HostPort: freePorts?.pop()?.toString() }];
                 }
@@ -85,9 +94,7 @@ IComponent {
      *
      * @returns Configuration for exposing and binding ports in Docker container.
      */
-    private async getPortsConfig(
-        ports: string[], containerConfig: RunnerContainerConfiguration
-    ): Promise<DockerAdapterRunPortsConfig> {
+    private async getPortsConfig(ports: string[], containerConfig: RunnerContainerConfiguration): Promise<DockerAdapterRunPortsConfig> {
         const [ExposedPorts, PortBindings] = await Promise.all([
             this.preparePortBindingsConfig(ports, containerConfig, true),
             this.preparePortBindingsConfig(ports, containerConfig, false)
@@ -110,6 +117,7 @@ IComponent {
         const stats = await this.dockerHelper.stats(this.resources.containerId)!;
 
         return {
+            ...msg,
             cpuTotalUsage: stats.cpu_stats?.cpu_usage?.total_usage,
             healthy: msg.healthy,
             limit: stats.memory_stats?.limit,
@@ -121,9 +129,9 @@ IComponent {
         };
     }
 
-    private async getNetworkSetup(): Promise<{ network: string, host: string }> {
+    private async getNetworkSetup(): Promise<{ network: string; host: string }> {
         const interfaces = await this.dockerHelper.listNetworks();
-        const sthDockerNetwork = interfaces.find(net => net.Name === STH_DOCKER_NETWORK);
+        const sthDockerNetwork = interfaces.find((net) => net.Name === STH_DOCKER_NETWORK);
 
         if (!sthDockerNetwork) {
             // STH docker network should be created in Host initialization
@@ -140,7 +148,7 @@ IComponent {
 
             return {
                 network: STH_DOCKER_NETWORK,
-                host: hostname,
+                host: hostname
             };
         }
         // otherwise STH runs on Host OS so we Runner can just connect to the Gateway
@@ -178,8 +186,7 @@ IComponent {
 
         this.limits = config.limits;
 
-        this.resources.ports =
-            config.config?.ports ? await this.getPortsConfig(config.config.ports, config.container) : undefined;
+        this.resources.ports = config.config?.ports ? await this.getPortsConfig(config.config.ports, config.container) : undefined;
 
         config.container.maxMem = config.limits.memory || config.container.maxMem;
 
@@ -189,26 +196,29 @@ IComponent {
 
         const networkSetup = await this.getNetworkSetup();
 
-        const envs = getRunnerEnvEntries({
-            sequencePath: path.join(config.sequenceDir, config.entrypointPath),
-            instancesServerPort,
-            instancesServerHost: networkSetup.host,
-            instanceId,
-            pipesPath: "",
-            sequenceInfo,
-            payload
-        }, {
-            ...this.sthConfig.runnerEnvs,
-            ...getRunnerTransportEnv(this.sthConfig, instanceId)
-        }).map(([k, v]) => `${k}=${v}`);
+        const envs = getRunnerEnvEntries(
+            {
+                sequencePath: path.join(config.sequenceDir, config.entrypointPath),
+                instancesServerPort,
+                instancesServerHost: networkSetup.host,
+                instanceId,
+                pipesPath: "",
+                sequenceInfo,
+                payload
+            },
+            {
+                ...this.sthConfig.runnerEnvs,
+                ...getRunnerTransportEnv(this.sthConfig, instanceId)
+            }
+        ).map(([k, v]) => `${k}=${v}`);
 
         // BDD ownership is opt-in and additive: production adapters retain
         // their existing labels, while parallel-safe BDD chunks can identify
         // and clean only their own runner containers.
         const ownershipLabels = Object.fromEntries(
             ["SCRAMJET_BDD_RUN_ID", "SCRAMJET_BDD_CHUNK_ID", "SCRAMJET_BDD_OWNER"]
-                .filter(name => process.env[name])
-                .map(name => [`scramjet.bdd.${name.slice("SCRAMJET_BDD_".length).toLowerCase().replace("_", "-")}`, process.env[name]!])
+                .filter((name) => process.env[name])
+                .map((name) => [`scramjet.bdd.${name.slice("SCRAMJET_BDD_".length).toLowerCase().replace("_", "-")}`, process.env[name]!])
         );
         for (const name of ["SCRAMJET_BDD_RUN_ID", "SCRAMJET_BDD_CHUNK_ID", "SCRAMJET_BDD_OWNER"]) {
             if (process.env[name]) envs.push(`${name}=${process.env[name]}`);
@@ -218,10 +228,7 @@ IComponent {
 
         const { containerId, streams } = await this.dockerHelper.run({
             imageName: config.container.image,
-            volumes: [
-                ...extraVolumes,
-                { mountPoint: config.sequenceDir, volume: config.id, writeable: false }
-            ],
+            volumes: [...extraVolumes, { mountPoint: config.sequenceDir, volume: config.id, writeable: false }],
             labels: {
                 "scramjet.sequence.name": config.name,
                 "scramjet.instance.id": instanceId,
@@ -245,9 +252,9 @@ IComponent {
         return 0;
     }
 
-    async waitUntilExit(config: InstanceConfig, instanceId:string, _sequenceInfo: SequenceInfo): Promise<number> {
+    async waitUntilExit(config: InstanceConfig, instanceId: string, _sequenceInfo: SequenceInfo): Promise<number> {
         try {
-            this.resources.containerId = this.resources.containerId || await this.dockerHelper.getContainerIdByLabel("scramjet.instance.id", instanceId);
+            this.resources.containerId = this.resources.containerId || (await this.dockerHelper.getContainerIdByLabel("scramjet.instance.id", instanceId));
 
             this.logger.debug("Wait for container exit...", this.resources.containerId);
 

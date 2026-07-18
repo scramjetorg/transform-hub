@@ -113,7 +113,8 @@ export const defaultConfig: STHConfiguration = {
     timings: {
         heartBeatInterval: 10000,
         instanceLifetimeExtensionDelay: 180e3,
-        instanceAdapterExitDelay: 9000
+        instanceAdapterExitDelay: 9000,
+        startupTimeout: 30000
     },
     telemetry: {
         status: false,

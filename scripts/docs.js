@@ -15,25 +15,14 @@ const GITHUB_TREE_ROOT = "https://github.com/scramjetorg/transform-hub/tree/HEAD
 
 const DESCRIPTION_OVERRIDES = {
     "adapter-kubernetes": "Kubernetes adapter for sequence storage, runner pod execution, CLI/config augmentation, and client initialization.",
-    "adapters": "Legacy adapter re-export barrel; prefer individual adapter packages (adapter-docker, adapter-kubernetes, adapter-process) for new usage.",
+    adapters: "Legacy adapter re-export barrel; prefer individual adapter packages (adapter-docker, adapter-kubernetes, adapter-process) for new usage.",
     "api-server": "HTTP API server for router construction, server setup, REST/stream handlers, middleware, and routed forwarding.",
-    "obj-logger": "Object-mode structured logger with pipeable stream output, log level control, multi-target support, and source aggregation.",
+    "obj-logger": "Object-mode structured logger with pipeable stream output, log level control, multi-target support, and source aggregation."
 };
 
 const SKIP_IMPORT_PACKAGES = new Set(["multi-manager"]);
 
-const routedSections = [
-    "intro",
-    "transform-hub",
-    "manager",
-    "sequences",
-    "testing",
-    "cli",
-    "api",
-    "deployment",
-    "development",
-    "examples"
-];
+const routedSections = ["intro", "transform-hub", "manager", "sequences", "testing", "cli", "api", "deployment", "development", "examples"];
 
 function readJson(file) {
     return JSON.parse(fs.readFileSync(file, "utf8"));
@@ -61,16 +50,17 @@ function outputRoot() {
 function listFiles(dir) {
     if (!fs.existsSync(dir)) return [];
 
-    return fs.readdirSync(dir, { withFileTypes: true })
+    return fs
+        .readdirSync(dir, { withFileTypes: true })
         .sort((left, right) => left.name.localeCompare(right.name))
         .flatMap((entry) => {
-        const fullPath = path.join(dir, entry.name);
+            const fullPath = path.join(dir, entry.name);
 
-        if (entry.isDirectory()) return listFiles(fullPath);
-        if (entry.isFile()) return [fullPath];
+            if (entry.isDirectory()) return listFiles(fullPath);
+            if (entry.isFile()) return [fullPath];
 
-        return [];
-    });
+            return [];
+        });
 }
 
 function relativeToRoot(file) {
@@ -195,7 +185,10 @@ function parseFrontmatter(file, content) {
         if (separator === -1) continue;
 
         const key = line.slice(0, separator).trim();
-        const value = line.slice(separator + 1).trim().replace(/^['"]|['"]$/g, "");
+        const value = line
+            .slice(separator + 1)
+            .trim()
+            .replace(/^['"]|['"]$/g, "");
 
         data[key] = value;
     }
@@ -212,8 +205,7 @@ function parseFrontmatter(file, content) {
 }
 
 function routedMarkdownFiles() {
-    return routedSections.flatMap((section) => listFiles(path.join(sourceRoot, section)))
-        .filter((file) => file.endsWith(".md"));
+    return routedSections.flatMap((section) => listFiles(path.join(sourceRoot, section))).filter((file) => file.endsWith(".md"));
 }
 
 function validateLinks(file, content) {
@@ -232,6 +224,49 @@ function validateLinks(file, content) {
 
         if (!fs.existsSync(resolved)) {
             throw new Error(`${relativeToRoot(file)} links to missing target ${target}`);
+        }
+    }
+}
+
+function isSeparatorCell(cell) {
+    return /^[\s:-]*$/.test(cell);
+}
+
+function isTableSeparatorRow(line) {
+    if (!line.startsWith("|") || !line.endsWith("|")) return false;
+    const cells = line.split("|");
+    const contentCells = cells.slice(1, -1);
+    return contentCells.length >= 2 && contentCells.every(isSeparatorCell);
+}
+
+function validateTableColumns(file, content) {
+    const lines = content.split("\n");
+    let inCodeBlock = false;
+
+    for (let i = 0; i < lines.length - 1; i++) {
+        const line = lines[i];
+
+        if (/^```/.test(line.trim())) {
+            inCodeBlock = !inCodeBlock;
+            continue;
+        }
+        if (inCodeBlock) continue;
+
+        const headerLine = line.trim();
+        if (!headerLine.startsWith("|") || !headerLine.endsWith("|")) continue;
+        if (isTableSeparatorRow(headerLine)) continue;
+
+        const sepLine = lines[i + 1].trim();
+        if (!sepLine.startsWith("|") || !sepLine.endsWith("|")) continue;
+        if (!isTableSeparatorRow(sepLine)) continue;
+
+        const headerCols = headerLine.split("|").length - 2;
+        const sepCols = sepLine.split("|").length - 2;
+
+        if (headerCols < 2) continue;
+
+        if (headerCols !== sepCols) {
+            throw new Error(`${relativeToRoot(file)} line ${i + 1}: table header has ${headerCols} columns but separator (line ${i + 2}) has ${sepCols} columns`);
         }
     }
 }
@@ -338,6 +373,7 @@ function validateSource() {
 
         seenIds.add(frontmatter.id);
         validateLinks(file, content);
+        validateTableColumns(file, content);
         pages.push({ file, frontmatter });
     }
 
@@ -436,12 +472,19 @@ function generateReference(out) {
         generated.push(entry);
     }
 
-    writeFile(path.join(out.path, "sidebars", "reference-typescript.json"), `${JSON.stringify(generated.map((entry) => ({
-        package: entry.package,
-        title: `${entry.package} reference`,
-        stability: entry.stability,
-        outputPath: `${entry.outputPath}README.md`
-    })), null, 2)}\n`);
+    writeFile(
+        path.join(out.path, "sidebars", "reference-typescript.json"),
+        `${JSON.stringify(
+            generated.map((entry) => ({
+                package: entry.package,
+                title: `${entry.package} reference`,
+                stability: entry.stability,
+                outputPath: `${entry.outputPath}README.md`
+            })),
+            null,
+            2
+        )}\n`
+    );
 
     return generated;
 }
@@ -562,7 +605,9 @@ function parseCliCommandCall(call, source) {
     const children = directNestedCmdCalls(call.text).map((child) => parseCliCommandCall(child, source));
     let ownText = call.text;
 
-    for (const child of findCmdCalls(call.text).filter((nested) => nested.start !== 0).sort((a, b) => b.start - a.start)) {
+    for (const child of findCmdCalls(call.text)
+        .filter((nested) => nested.start !== 0)
+        .sort((a, b) => b.start - a.start)) {
         ownText = `${ownText.slice(0, child.start)}${" ".repeat(child.end - child.start)}${ownText.slice(child.end)}`;
     }
 
@@ -574,7 +619,7 @@ function parseCliCommandCall(call, source) {
         arguments: parseChainStringPairs(ownText, "argument"),
         options: parseChainStringPairs(ownText, "option"),
         source,
-        children,
+        children
     };
 }
 
@@ -638,7 +683,9 @@ function parseCliCommandTree() {
             { value: "--progress", description: "Global flag, used to display progress (currently used only in 'si seq send/deploy' command" }
         ],
         source: CLI_ROOT_SOURCE,
-        children: commandSourceOrder().map((name) => byName.get(name)).filter(Boolean),
+        children: commandSourceOrder()
+            .map((name) => byName.get(name))
+            .filter(Boolean)
     };
 }
 
@@ -654,7 +701,10 @@ function flattenCliCommands(command, parent = "") {
 }
 
 function cliCommandAnchor(command) {
-    return command.fullName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    return command.fullName
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "");
 }
 
 function formatCliList(items) {
@@ -667,9 +717,7 @@ function generateCliReference(out) {
     const cliDir = path.join(out.path, "reference", "cli");
     const tree = parseCliCommandTree();
     const commands = flattenCliCommands(tree).filter((command) => command.fullName !== "si");
-    const sidebar = [
-        { id: "reference-cli", title: "CLI Reference", slug: "/reference/cli", output: "reference/cli/index.md" }
-    ];
+    const sidebar = [{ id: "reference-cli", title: "CLI Reference", slug: "/reference/cli", output: "reference/cli/index.md" }];
 
     removeDir(cliDir);
     ensureDir(cliDir);
@@ -694,11 +742,13 @@ function generateCliReference(out) {
         "## Commands",
         "",
         "| Command | Alias | Description | Source |",
-        "|---------|-------|-------------|--------|",
+        "|---------|-------|-------------|--------|"
     ];
 
     for (const command of commands) {
-        indexLines.push(`| [\`${command.fullName}\`](commands.md#${cliCommandAnchor(command)}) | ${command.alias ? `\`${command.alias}\`` : "—"} | ${command.description || "—"} | \`${command.source}\` |`);
+        indexLines.push(
+            `| [\`${command.fullName}\`](commands.md#${cliCommandAnchor(command)}) | ${command.alias ? `\`${command.alias}\`` : "—"} | ${command.description || "—"} | \`${command.source}\` |`
+        );
     }
 
     indexLines.push("");
@@ -714,7 +764,7 @@ function generateCliReference(out) {
         generatedMarker("packages/cli/src/lib/commands/*.ts").trimEnd(),
         "",
         "# CLI Commands",
-        "",
+        ""
     ];
 
     for (const command of commands) {
@@ -729,7 +779,12 @@ function generateCliReference(out) {
             commandLines.push("### Subcommands", "");
             for (const child of command.children) {
                 const fullName = `${command.fullName} ${child.name}`;
-                commandLines.push(`- [\`${fullName}\`](#${fullName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")})`);
+                commandLines.push(
+                    `- [\`${fullName}\`](#${fullName
+                        .toLowerCase()
+                        .replace(/[^a-z0-9]+/g, "-")
+                        .replace(/^-|-$/g, "")})`
+                );
             }
             commandLines.push("");
         }
@@ -752,7 +807,8 @@ function sourceIdentifier() {
         path.join(root, "packages/rest-api2/src/routes.ts"),
         path.join(root, "package.json"),
         path.join(root, "scripts", "docs.js")
-    ].filter((file) => fs.existsSync(file) && fs.statSync(file).isFile())
+    ]
+        .filter((file) => fs.existsSync(file) && fs.statSync(file).isFile())
         .sort();
 
     for (const file of files) {
@@ -768,7 +824,8 @@ function sourceIdentifier() {
 function listPackages() {
     if (!fs.existsSync(packagesDir)) return [];
 
-    return fs.readdirSync(packagesDir, { withFileTypes: true })
+    return fs
+        .readdirSync(packagesDir, { withFileTypes: true })
         .filter((entry) => entry.isDirectory() && fs.existsSync(path.join(packagesDir, entry.name, "package.json")))
         .map((entry) => entry.name)
         .sort((a, b) => a.localeCompare(b));
@@ -835,12 +892,7 @@ function generateRootReadme(out, repoReadmesOutputDir) {
         return `| [${name}](${packageRowLink("repo", pkgDir)}) | ${desc} |`;
     });
 
-    const packageTable = [
-        "| Package | Description |",
-        "|---------|-------------|",
-        ...rows,
-        ""
-    ].join("\n");
+    const packageTable = ["| Package | Description |", "|---------|-------------|", ...rows, ""].join("\n");
 
     content = content.replace("<!-- PACKAGE-LIST -->", packageTable);
 
@@ -849,9 +901,7 @@ function generateRootReadme(out, repoReadmesOutputDir) {
 
     // Write to repo root README when not in check/validation mode
     if (out.writeRepoReadmes !== false) {
-        const target = repoReadmesOutputDir
-            ? path.join(repoReadmesOutputDir, "README.md")
-            : path.join(root, "README.md");
+        const target = repoReadmesOutputDir ? path.join(repoReadmesOutputDir, "README.md") : path.join(root, "README.md");
         writeFile(target, content);
     }
 
@@ -877,12 +927,7 @@ function generateRootReadmeDocs(out) {
         return `| [${name}](${packageRowLink("docs", pkgDir)}) | ${desc} |`;
     });
 
-    const packageTable = [
-        "| Package | Description |",
-        "|---------|-------------|",
-        ...rows,
-        ""
-    ].join("\n");
+    const packageTable = ["| Package | Description |", "|---------|-------------|", ...rows, ""].join("\n");
 
     content = content.replace("<!-- PACKAGE-LIST -->", packageTable);
     content = content
@@ -956,9 +1001,7 @@ function generatePackageReadmeFor(context, out, pkgDir, experimental, refEntryMa
     lines.push(`See the [package docs](${link}) for full documentation.`);
     lines.push("");
 
-    const sourceRelPath = hasOverlay
-        ? readmeSourcePath(overlayFile)
-        : `packages/${pkgDir}/package.json`;
+    const sourceRelPath = hasOverlay ? readmeSourcePath(overlayFile) : `packages/${pkgDir}/package.json`;
     const marker = generatedMarker(sourceRelPath);
 
     lines.push("---");
@@ -970,9 +1013,7 @@ function generatePackageReadmeFor(context, out, pkgDir, experimental, refEntryMa
 
     // Write to repo package README when not in check/validation mode
     if (context === "repo" && out.writeRepoReadmes !== false) {
-        const target = repoReadmesOutputDir
-            ? path.join(repoReadmesOutputDir, relPath)
-            : path.join(packagesDir, pkgDir, "README.md");
+        const target = repoReadmesOutputDir ? path.join(repoReadmesOutputDir, relPath) : path.join(packagesDir, pkgDir, "README.md");
         writeFile(target, content);
     }
 
@@ -1023,7 +1064,6 @@ function generateReadmes(out, repoReadmesOutputDir) {
     return generated;
 }
 
-
 const DIRECTORY_INDEX_START = "<!-- docs-directory-index:start -->";
 const DIRECTORY_INDEX_END = "<!-- docs-directory-index:end -->";
 const DIRECTORY_INDEX_MARKER = "<!-- Generated by scripts/docs.js: directory index. Do not edit this file directly. -->";
@@ -1033,7 +1073,10 @@ function directoryTitle(relative) {
     const name = path.basename(relative);
     const special = { api: "API", cli: "CLI", readmes: "README Mirrors" };
     if (special[name]) return special[name];
-    const words = name.split(/[-_]+/).filter(Boolean).map(word => word.charAt(0).toUpperCase() + word.slice(1));
+    const words = name
+        .split(/[-_]+/)
+        .filter(Boolean)
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1));
     return words.join(" ") || "Documentation";
 }
 
@@ -1057,7 +1100,6 @@ function directoryIndexBody(relative, entries, collision) {
 
     return lines.join("\n");
 }
-
 
 function generatePartials(out) {
     const source = path.join(sourceRoot, "_partials");
@@ -1086,23 +1128,24 @@ function generateDirectoryIndexes(out) {
     };
     visit(out.path);
 
-    const collisions = new Set(directories
-        .filter(({ dir }) => fs.existsSync(path.join(dir, "README.md")))
-        .filter(({ dir }) => !fs.readFileSync(path.join(dir, "README.md"), "utf8").includes("Generated by scripts/docs.js"))
-        .map(({ relative }) => relative));
+    const collisions = new Set(
+        directories
+            .filter(({ dir }) => fs.existsSync(path.join(dir, "README.md")))
+            .filter(({ dir }) => !fs.readFileSync(path.join(dir, "README.md"), "utf8").includes("Generated by scripts/docs.js"))
+            .map(({ relative }) => relative)
+    );
 
     for (const { dir, relative } of directories.sort((left, right) => left.relative.localeCompare(right.relative))) {
-        const entries = fs.readdirSync(dir, { withFileTypes: true })
-            .filter(entry => entry.name !== ".scramjet-docs-output.json" && entry.name !== "README.md" && entry.name !== "README.index.md")
+        const entries = fs
+            .readdirSync(dir, { withFileTypes: true })
+            .filter((entry) => entry.name !== ".scramjet-docs-output.json" && entry.name !== "README.md" && entry.name !== "README.index.md")
             .sort((left, right) => {
                 if (left.isDirectory() !== right.isDirectory()) return left.isDirectory() ? -1 : 1;
                 return left.name.localeCompare(right.name);
             })
-            .map(entry => {
+            .map((entry) => {
                 const childRelative = relative ? `${relative}/${entry.name}` : entry.name;
-                const href = entry.isDirectory()
-                    ? `${entry.name}/${collisions.has(childRelative) ? "README.index.md" : "README.md"}`
-                    : entry.name;
+                const href = entry.isDirectory() ? `${entry.name}/${collisions.has(childRelative) ? "README.index.md" : "README.md"}` : entry.name;
                 return { title: entry.isDirectory() ? directoryTitle(childRelative) : entry.name, href };
             });
         const target = path.join(dir, "README.md");
@@ -1124,9 +1167,8 @@ function generateDirectoryIndexes(out) {
     }
 }
 
-
 function validateGeneratedLinks(dir) {
-    for (const file of listFiles(dir).filter(file => file.endsWith(".md"))) {
+    for (const file of listFiles(dir).filter((file) => file.endsWith(".md"))) {
         const content = fs.readFileSync(file, "utf8");
         const links = /\[[^\]]+\]\(([^)]+)\)/g;
         let match;
@@ -1159,7 +1201,7 @@ function generateMetadata(out, groups) {
             outputPath: entry.outputPath,
             stability: entry.stability,
             audience: entry.audience,
-            reviewers: entry.reviewers,
+            reviewers: entry.reviewers
         })),
         docusaurusHandoff: {
             content: "content/",
@@ -1189,7 +1231,7 @@ const API_V2_BASE_PATHS = {
     space: "/api/v2/spaces/:spaceId",
     hub: "/api/v2/spaces/:spaceId/hubs/:hubId",
     sequence: "/api/v2/spaces/:spaceId/hubs/:hubId/sequences",
-    instance: "/api/v2/spaces/:spaceId/hubs/:hubId/instances/:instanceId",
+    instance: "/api/v2/spaces/:spaceId/hubs/:hubId/instances/:instanceId"
 };
 
 function parseAPIV2RouteSet(source, funcName) {
@@ -1426,7 +1468,7 @@ function parseAPIV2Tree(source) {
             owner: ownerMatch ? ownerMatch[1] : "",
             routesFactory: routesMatch ? routesMatch[1] : null,
             groups: groups,
-            children: children,
+            children: children
         };
     }
 
@@ -1496,7 +1538,10 @@ function parseAPIV2TreeGroups(nodeText) {
         const rkMatch = text.match(/\brouteKeys\s*:\s*\[([^\]]*)\]/);
 
         if (rkMatch) {
-            group.routeKeys = rkMatch[1].split(",").map(s => s.trim().replace(/^"|"$/g, "")).filter(Boolean);
+            group.routeKeys = rkMatch[1]
+                .split(",")
+                .map((s) => s.trim().replace(/^"|"$/g, ""))
+                .filter(Boolean);
         }
 
         const nodeRefMatch = text.match(/\bnode\s*:\s*"([^"]+)"/);
@@ -1535,12 +1580,12 @@ function parseAPIV2FromSource() {
         space: "spaceRouteSet",
         hub: "hubRouteSet",
         sequence: "sequenceRouteSet",
-        instance: "instanceRouteSet",
+        instance: "instanceRouteSet"
     };
     const resolverSetToFuncName = {
         root: "rootResolverSet",
         space: "spaceResolverSet",
-        hub: "hubResolverSet",
+        hub: "hubResolverSet"
     };
 
     const nodes = {};
@@ -1565,7 +1610,7 @@ function parseAPIV2FromSource() {
                     path: parsedResolver.path,
                     schemas: parsedResolver.schemas,
                     targetOwner: parsedResolver.targetOwner,
-                    mountPath: parsedResolver.mountPath,
+                    mountPath: parsedResolver.mountPath
                 };
                 if (parsedResolver.implementerBasePath) {
                     resolver.implementerBasePath = parsedResolver.implementerBasePath;
@@ -1576,7 +1621,7 @@ function parseAPIV2FromSource() {
         }
 
         // Convert groups to array format
-        const nodeGroups = (treeNode.groups || []).map(g => {
+        const nodeGroups = (treeNode.groups || []).map((g) => {
             const group = { name: g.name };
             if (g.routeKeys) group.routeKeys = g.routeKeys;
             if (g.node) group.node = g.node;
@@ -1586,9 +1631,9 @@ function parseAPIV2FromSource() {
         });
 
         // Build children array
-        const nodeChildren = (treeNode.children || []).map(c => ({
+        const nodeChildren = (treeNode.children || []).map((c) => ({
             resolver: c.resolver,
-            node: c.node,
+            node: c.node
         }));
 
         nodes[nodeName] = {
@@ -1597,7 +1642,7 @@ function parseAPIV2FromSource() {
             routes,
             groups: nodeGroups.length > 0 ? nodeGroups : undefined,
             children: nodeChildren.length > 0 ? nodeChildren : undefined,
-            basePath: API_V2_BASE_PATHS[nodeName],
+            basePath: API_V2_BASE_PATHS[nodeName]
         };
 
         if (resolver) {
@@ -1672,7 +1717,7 @@ function generateAPIV2(out) {
         "```",
         "",
         "### Nodes",
-        "",
+        ""
     ];
 
     for (const nodeName of API_V2_NODE_NAMES) {
@@ -1710,7 +1755,7 @@ function generateAPIV2(out) {
             "",
             `- **Concept**: \`${node.concept}\``,
             `- **Owner**: \`${node.owner}\``,
-            "",
+            ""
         ];
 
         // Groups
@@ -1749,7 +1794,7 @@ function generateAPIV2(out) {
 
         // Mounted sub-routers
         if (node.groups) {
-            const mountedGroups = node.groups.filter(g => g.node && g.routes);
+            const mountedGroups = node.groups.filter((g) => g.node && g.routes);
             if (mountedGroups.length > 0) {
                 lines.push("### Mounted sub-routers", "");
                 lines.push("The following sub-routers are mounted under this node:", "");
@@ -1790,7 +1835,9 @@ function generateAPIV2(out) {
                 lines.push(`- **Kind**: \`${route.kind}\``);
             }
             if (route.opaque) {
-                lines.push(`- **Opaque**: This route belongs to an opaque group. The server does not expose its internal structure; the client must use the documented contract directly.`);
+                lines.push(
+                    `- **Opaque**: This route belongs to an opaque group. The server does not expose its internal structure; the client must use the documented contract directly.`
+                );
             }
             const schemas = schemasList(route.schemas);
             if (schemas !== "—") {
@@ -1804,7 +1851,7 @@ function generateAPIV2(out) {
             id: `reference-api-v2-${nodeName}`,
             title: `${nodeName.charAt(0).toUpperCase() + nodeName.slice(1)} routes`,
             slug: `/reference/api/v2/${nodeName}`,
-            output: `reference/api/v2/${nodeName}.md`,
+            output: `reference/api/v2/${nodeName}.md`
         });
     }
 
@@ -1835,27 +1882,24 @@ function generateLegacyV1(out) {
     // Output is at docs/reference/api/legacy/v1/index.md (depth 4 from docs root).
     // We resolve each link against the source file dir and re-emit relative to the output file dir.
     // Use a stepwise approach: find all relative markdown links, resolve, rebase.
-    bodyContent = bodyContent.replace(
-        /\[([^\]]+)\]\(([^)]+)\)/g,
-        (match, text, link) => {
-            // Skip absolute URLs, mailto, anchors, or absolute paths
-            if (/^(https?:|mailto:|#|\/)/.test(link)) return match;
-            const targetPart = link.split("#")[0];
-            if (!targetPart) return match;
-            // Resolve against the source file's directory
-            const resolvedSource = path.resolve(path.dirname(sourceFile), targetPart);
-            // Find the path relative to sourceRoot
-            const relToSourceRoot = path.relative(sourceRoot, resolvedSource).split(path.sep).join("/");
-            // The content mirror lives at docs/content/<relToSourceRoot>
-            // Output is at docs/reference/api/legacy/v1/index.md
-            const contentMirrorPath = path.join("content", relToSourceRoot);
-            // Compute relative path from output file to content mirror
-            const outputDir = path.dirname(apiV1IndexFile);
-            const relLink = path.relative(outputDir, path.join(out.path, contentMirrorPath)).split(path.sep).join("/");
-            const hashPart = link.includes("#") ? "#" + link.split("#")[1] : "";
-            return "[" + text + "](" + relLink + hashPart + ")";
-        }
-    );
+    bodyContent = bodyContent.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, text, link) => {
+        // Skip absolute URLs, mailto, anchors, or absolute paths
+        if (/^(https?:|mailto:|#|\/)/.test(link)) return match;
+        const targetPart = link.split("#")[0];
+        if (!targetPart) return match;
+        // Resolve against the source file's directory
+        const resolvedSource = path.resolve(path.dirname(sourceFile), targetPart);
+        // Find the path relative to sourceRoot
+        const relToSourceRoot = path.relative(sourceRoot, resolvedSource).split(path.sep).join("/");
+        // The content mirror lives at docs/content/<relToSourceRoot>
+        // Output is at docs/reference/api/legacy/v1/index.md
+        const contentMirrorPath = path.join("content", relToSourceRoot);
+        // Compute relative path from output file to content mirror
+        const outputDir = path.dirname(apiV1IndexFile);
+        const relLink = path.relative(outputDir, path.join(out.path, contentMirrorPath)).split(path.sep).join("/");
+        const hashPart = link.includes("#") ? "#" + link.split("#")[1] : "";
+        return "[" + text + "](" + relLink + hashPart + ")";
+    });
 
     const indexLines = [
         "---",
@@ -1873,7 +1917,7 @@ function generateLegacyV1(out) {
         "This page mirrors the content from \`docs-source/api/legacy/v1-api-client.md\`.",
         "",
         bodyContent.trim(),
-        "",
+        ""
     ];
 
     writeFile(path.join(apiV1Dir, "index.md"), indexLines.join("\n"));
@@ -1884,8 +1928,8 @@ function generateLegacyV1(out) {
             id: "reference-api-legacy-v1",
             title: "Legacy v1 API Reference",
             slug: "/reference/api/legacy/v1",
-            output: "reference/api/legacy/v1/index.md",
-        },
+            output: "reference/api/legacy/v1/index.md"
+        }
     ];
     writeFile(path.join(out.path, "sidebars", "reference-api-legacy-v1.json"), `${JSON.stringify(sidebar, null, 2)}\n`);
 
@@ -1984,7 +2028,6 @@ function generateInto(customOut, scope = "all") {
     console.log(`Generated docs export in ${path.relative(root, out.path) || "."}`);
 }
 
-
 function syncPackageReadmes() {
     const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "scramjet-docs-readme-sync-"));
     const repoReadmesOutputDir = path.join(tempRoot, "repo");
@@ -2038,6 +2081,11 @@ function generate(customOut, scope = "all") {
 
 function check() {
     validateSource();
+
+    // Validate tables in all docs-source markdown files (not just routed ones)
+    for (const file of listFiles(sourceRoot).filter((f) => f.endsWith(".md"))) {
+        validateTableColumns(file, fs.readFileSync(file, "utf8"));
+    }
 
     const out = outputRoot();
 
@@ -2139,4 +2187,5 @@ module.exports = {
     outputRoot,
     syncPackageReadmes,
     validateOutputRoot,
+    validateTableColumns
 };

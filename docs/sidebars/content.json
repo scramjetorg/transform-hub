@@ -77,8 +77,43 @@
     "output": "sequences/packaging-deploying.md"
   },
   {
+    "id": "sequences-api-exposure",
+    "title": "Exposing a sequence HTTP API",
+    "slug": "/sequences/api-exposure",
+    "source": "docs-source/sequences/sequence-api-exposure.md",
+    "output": "sequences/sequence-api-exposure.md"
+  },
+  {
+    "id": "sequences-app-context",
+    "title": "SequenceAppContext and runtime parity",
+    "slug": "/sequences/app-context",
+    "source": "docs-source/sequences/sequence-app-context.md",
+    "output": "sequences/sequence-app-context.md"
+  },
+  {
+    "id": "sequences-communication",
+    "title": "Choosing a sequence communication path",
+    "slug": "/sequences/communication",
+    "source": "docs-source/sequences/sequence-communication.md",
+    "output": "sequences/sequence-communication.md"
+  },
+  {
+    "id": "sequences-configuration-resources-state",
+    "title": "Sequence configuration, resources, and state",
+    "slug": "/sequences/configuration-resources-state",
+    "source": "docs-source/sequences/sequence-configuration-resources-state.md",
+    "output": "sequences/sequence-configuration-resources-state.md"
+  },
+  {
+    "id": "sequences-control",
+    "title": "Sequence health and control",
+    "slug": "/sequences/control",
+    "source": "docs-source/sequences/sequence-control.md",
+    "output": "sequences/sequence-control.md"
+  },
+  {
     "id": "sequences-lifecycle",
-    "title": "Sequence lifecycle, input/output streams, and content types",
+    "title": "Sequence lifecycle, readiness, input/output streams, and content types",
     "slug": "/sequences/lifecycle",
     "source": "docs-source/sequences/sequence-lifecycle.md",
     "output": "sequences/sequence-lifecycle.md"
@@ -96,6 +131,13 @@
     "slug": "/sequences/topics",
     "source": "docs-source/sequences/sequence-topics.md",
     "output": "sequences/sequence-topics.md"
+  },
+  {
+    "id": "sequences-setup-and-run",
+    "title": "Set up and run an installed Sequence",
+    "slug": "/sequences/setup-and-run",
+    "source": "docs-source/sequences/setup-and-run.md",
+    "output": "sequences/setup-and-run.md"
   },
   {
     "id": "sequences-writing",
@@ -168,6 +210,48 @@
     "output": "development/technical-debt.md"
   },
   {
+    "id": "example-app-context-health-parity",
+    "title": "AppContext health parity across runtimes",
+    "slug": "/examples/app-context-health-parity",
+    "source": "docs-source/examples/app-context-health-parity.md",
+    "output": "examples/app-context-health-parity.md"
+  },
+  {
+    "id": "example-customer-site-health-control",
+    "title": "Customer-site health and control",
+    "slug": "/examples/customer-site-health-control",
+    "source": "docs-source/examples/customer-site-health-control.md",
+    "output": "examples/customer-site-health-control.md"
+  },
+  {
+    "id": "example-customer-site-topic-probe-pipeline",
+    "title": "Customer-site topic probe pipeline",
+    "slug": "/examples/customer-site-topic-probe-pipeline",
+    "source": "docs-source/examples/customer-site-topic-probe-pipeline.md",
+    "output": "examples/customer-site-topic-probe-pipeline.md"
+  },
+  {
+    "id": "example-lifecycle-local-validation-service",
+    "title": "Start a local validation service safely",
+    "slug": "/examples/lifecycle-local-validation-service",
+    "source": "docs-source/examples/lifecycle-local-validation-service.md",
+    "output": "examples/lifecycle-local-validation-service.md"
+  },
+  {
+    "id": "example-local-object-filter-to-consumer",
+    "title": "Filtering local object data for a consumer",
+    "slug": "/examples/local-object-filter-to-consumer",
+    "source": "docs-source/examples/local-object-filter-to-consumer.md",
+    "output": "examples/local-object-filter-to-consumer.md"
+  },
+  {
+    "id": "example-mcp-bridged-job-status",
+    "title": "Bridging job status to MCP",
+    "slug": "/examples/mcp-bridged-job-status",
+    "source": "docs-source/examples/mcp-bridged-job-status.md",
+    "output": "examples/mcp-bridged-job-status.md"
+  },
+  {
     "id": "examples-python-log-processor",
     "title": "Python log processor sequence",
     "slug": "/examples/python-log-processor",
@@ -180,5 +264,19 @@
     "slug": "/examples/simple-transform",
     "source": "docs-source/examples/simple-transform.md",
     "output": "examples/simple-transform.md"
+  },
+  {
+    "id": "examples-source-side-data-summary",
+    "title": "Read source-side data in a Sequence",
+    "slug": "/examples/source-side-data-summary",
+    "source": "docs-source/examples/source-side-data-summary.md",
+    "output": "examples/source-side-data-summary.md"
+  },
+  {
+    "id": "examples-tested-incremental-log-aggregator",
+    "title": "Build an incremental log aggregator",
+    "slug": "/examples/tested-incremental-log-aggregator",
+    "source": "docs-source/examples/tested-incremental-log-aggregator.md",
+    "output": "examples/tested-incremental-log-aggregator.md"
   }
 ]

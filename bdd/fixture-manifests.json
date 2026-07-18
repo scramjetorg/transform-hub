@@ -14,6 +14,7 @@
     "bdd-process-not-responding"
   ],
   "python-bdd": [
+    "python-bdd-appcontext-hosted",
     "python-bdd-chunk-lengths",
     "python-bdd-exception",
     "python-bdd-gen-async",
@@ -33,6 +34,7 @@
     "appcontext-legacy-clients",
     "appcontext-lifecycle",
     "appcontext-storage",
-    "appcontext-v2-clients"
+    "appcontext-v2-clients",
+    "bun-bdd-appcontext-hosted"
   ]
 }

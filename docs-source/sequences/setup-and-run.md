@@ -1,0 +1,227 @@
+---
+id: sequences-setup-and-run
+slug: /sequences/setup-and-run
+title: Set up and run an installed Sequence
+---
+
+# Set up and run an installed Sequence
+
+This is the canonical installed/package-projected workflow for a Node.js Sequence. It keeps
+the Sequence project separate from the Hub and uses only the published `sth` and `si` command
+surfaces. The Process Adapter is used for the local example.
+
+## 1. Create the Sequence package
+
+A deployable Node.js Sequence needs a `package.json`, an entrypoint in `main`, and a Node engine
+declaration. Keep compiled output and production dependencies in the package that is sent to the
+Hub.
+
+```json
+{
+  "name": "hello-sequence",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@scramjet/sequence-types": "^1.1.0"
+  }
+}
+```
+
+For example, `src/index.ts` can export the application function:
+
+```typescript
+import type { SequenceAppContext } from "@scramjet/sequence-types";
+import type { Readable } from "node:stream";
+
+export default async function (this: SequenceAppContext, input: Readable) {
+  const values: unknown[] = [];
+  for await (const value of input) values.push(value);
+  return { count: values.length };
+}
+```
+
+The corresponding project-local workflow is:
+
+```sh
+npm install
+npm run build
+npm test
+```
+
+The build must leave the file named by `main` at `dist/index.js`.
+
+### Install production dependencies before archiving
+
+The Hub does **not** install dependencies. The package archive must include the production
+`node_modules/` directory. After the build, install only runtime dependencies:
+
+```sh
+npm install --production
+# or, for Bun:
+# bun install --production
+```
+
+This creates or updates `node_modules/` with only the packages listed under `dependencies`
+in `package.json`.
+
+### Create the deployable archive
+
+Use the CLI packager to create the archive. The packager includes every file and directory
+in the project folder, including `node_modules/`, subject to `.siignore` rules (see below):
+
+```sh
+si sequence pack . -o hello-sequence.tar.gz
+```
+
+The equivalent `npm pack` command also produces a `.tgz`, but npm excludes `node_modules/`
+by default. To use `npm pack`, list bundled dependencies explicitly in `package.json` with
+the [`"files"`](https://docs.npmjs.com/cli/v10/configuring-npm/package-json#files) field or
+[`"bundledDependencies"`](https://docs.npmjs.com/cli/v10/configuring-npm/package-json#bundleddependencies).
+The CLI packager (`si sequence pack`) is the recommended tool because it includes
+`node_modules/` without extra configuration.
+
+### Ignoring files with `.siignore`
+
+The CLI respects a `.siignore` file in the package root, using the same glob syntax as
+`.gitignore`. Exclude build artifacts, source maps, and test fixtures to reduce archive size:
+
+```gitignore
+# .siignore
+src/
+tsconfig.json
+node_modules/.cache
+test/
+*.map
+```
+
+**Do not exclude the `node_modules/` directory itself.** The Hub does not install
+dependencies, so the entire production `node_modules/` must be present in the archive at
+deploy time.
+
+## 2. Install the Hub and CLI
+
+Install the published runtime and CLI on the host/operator machine:
+
+```sh
+npm install -g @scramjet/sth @scramjet/cli
+sth --help
+si --version
+```
+
+These are installed command entrypoints. A repository checkout, workspace build, or repository
+test command is not required to deploy the package artifact.
+
+## 3. Start a minimal local Hub
+
+<a id="installed-process-adapter-example-baseline"></a>
+
+Create the local storage directory and start a standalone Hub with the Process Adapter bound to
+loopback:
+
+### Hub terminal
+
+Run the Hub in the foreground and leave this terminal attached to it:
+
+```sh
+mkdir -p sequence-store
+sth \
+  --runtime-adapter process \
+  --hostname 127.0.0.1 \
+  --port 8000 \
+  --sequences-root "$PWD/sequence-store"
+```
+
+The equivalent configuration-file values are `runtimeAdapter: "process"`,
+`host.hostname: "127.0.0.1"`, `host.port: 8000`, and `sequencesRoot` set to the absolute
+`sequence-store` path. The `--sequences-root` directory is where the Process Adapter stores
+uploaded Sequences; it is not the source project directory.
+
+Do not replace readiness with a fixed sleep. The compatibility status route reports the Hub's
+startup contract as `ready: true`:
+
+### Readiness terminal
+
+In a second terminal, wait for the Hub's readiness response:
+
+```sh
+timeout 60s sh -c '
+  until curl --fail --silent http://127.0.0.1:8000/api/v1/status |
+    node -e "let s=\"\"; process.stdin.on(\"data\", c => s += c).on(\"end\", () => process.exit(JSON.parse(s).ready === true ? 0 : 1))";
+  do :; done
+'
+```
+
+## 4. Upload and start
+
+Point `si` at the local Hub (this is also its default target), then deploy the packaged artifact.
+`sequence deploy` uploads and starts; use `sequence send` followed by `sequence start` when the
+two operations must be separate.
+
+### Deploy/start terminal
+
+In the terminal used for CLI operations, point `si` at the local Hub and deploy:
+
+```sh
+si config set apiUrl http://127.0.0.1:8000
+si sequence deploy ./hello-sequence.tar.gz
+```
+
+For separate upload/start:
+
+```sh
+si sequence send ./hello-sequence.tar.gz
+si sequence start <sequence-id>
+```
+
+The deploy/start response contains the Instance ID. Inspect and control that Instance with the
+installed CLI:
+
+### Instance API terminal
+
+Use the returned Instance ID to inspect and control the running Instance:
+
+```sh
+si instance list
+si instance info <instance-id>
+si instance log <instance-id>
+si instance input <instance-id>
+si instance stdout <instance-id>
+si instance stop <instance-id> 10000
+```
+
+Use `--config-file`, `--config-string`, `--args`, `--input-topic`, or `--output-topic` on
+`si sequence start`/`si sequence deploy` when the Sequence needs startup configuration, arguments,
+or topic routing.
+
+## Hub, Manager, and Space paths
+
+There are three distinct execution scopes:
+
+1. **Direct Hub:** `si` targets `http://127.0.0.1:8000`; the Hub stores the package, starts its
+   Runner, and owns the Instance.
+2. **Manager-routed:** point the same installed CLI at the Manager with
+   `si config set apiUrl http://manager-host:8200`. The Manager routes upload/start/control
+   operations to a connected Hub; the Runner still executes on that Hub. The Hub must first be
+   connected using the deployment's verified Manager/verser2 configuration; do not assume that
+   starting a Manager alone connects a Hub.
+3. **Sequence Hub/Space requests:** code running in an Instance uses `this.hubClient()` for the
+   current Hub and `this.spaceClient()` for Manager/Space operations. These are request paths
+   from the Sequence, not alternate local Hub startup commands:
+
+   ```typescript
+   const hubHealth = await this.hubClient().health.get();
+   const spaceHubs = await this.spaceClient().hubs.get();
+   ```
+
+   `spaceClient()` is routed through the connected Hub's Space proxy. Hub and Space scopes remain
+   separate, and a Space path requires a connected Manager/Space deployment and its authentication
+   and TLS configuration.
+
+See [Choosing a sequence communication path](sequence-communication.md) for the scope and
+delivery rules, and [Filtering local object data for a consumer](../examples/local-object-filter-to-consumer.md)
+for a small application example.

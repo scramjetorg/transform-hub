@@ -6,6 +6,7 @@ import { ApiClientRequest, RouterDefinition, createApiClient, registerVerser2Rou
 import { RestAPI2Routes, createRestAPI2Client } from "@scramjet/rest-api2";
 import { HostAPIV1Handler } from "../src/lib/api/host-api-v1";
 import { HostAPIV2Handler } from "../src/lib/api/host-api-v2";
+import { ServiceDiscovery } from "../src/lib/serviceDiscovery/sd-adapter";
 import { RouteRecorder } from "@scramjet/api-server/test/lib/route-recorder";
 
 function createHostStub(): any {
@@ -251,6 +252,33 @@ function collectRegs(router: RouterDefinition): any[] {
     return regs;
 }
 
+test("direct Host topic routes map failed operation codes to HTTP status and retain the code body", async t => {
+    const host = { ...createV2HostStub(), serviceDiscovery: new ServiceDiscovery(new ObjLogger("host-topic-direct"), "test-hub") };
+    const registrations = collectRegs(new HostAPIV2Handler(new RouteRecorder().asApiExpose(), host, "1.2.3").createHubRouter());
+    const create = registrations.find((registration: any) => registration.fullPath === "/topics" && registration.route.method === "post");
+    const remove = registrations.find((registration: any) => registration.fullPath === "/topics/:name" && registration.route.method === "delete");
+
+    await create.handle({ method: "POST", path: "/topics", headers: { "content-type": "application/json" }, body: { topic: { name: "orders", contentType: "text/plain" } } });
+    const conflict = await create.handle({
+        method: "POST",
+        path: "/topics",
+        headers: { "content-type": "application/json" },
+        body: { topic: { name: "orders", contentType: "application/octet-stream" } }
+    });
+    t.is(conflict.status, 409);
+    t.deepEqual(conflict.body, {
+        operation: { id: "orders", status: "failed" },
+        error: { code: "TOPIC_CONTENT_TYPE_MISMATCH", message: "Content-type mismatch" }
+    });
+
+    const missing = await remove.handle({ method: "DELETE", path: "/topics/missing", params: { name: "missing" } });
+    t.is(missing.status, 404);
+    t.deepEqual(missing.body, {
+        operation: { id: "missing", status: "failed" },
+        error: { code: "TOPIC_NOT_FOUND", message: "Topic missing not found" }
+    });
+});
+
 // ---- createHubRouter() handler tests ------------------------------------
 
 test("Host v2 hub load handler returns load value", async t => {
@@ -340,9 +368,9 @@ test("Host v2 hub topics handler maps various topic shapes", async t => {
     t.is(result.status, 200);
     t.deepEqual(result.body, {
         items: [
-            { name: "topic-1", contentType: "application/x-ndjson" },
-            { name: "topic-2", contentType: "text/plain" },
-            { name: "topic-3", contentType: "" }
+            { name: "topic-1", contentType: "application/x-ndjson", origin: { type: "hub", id: "test-hub" } },
+            { name: "topic-2", contentType: "text/plain", origin: { type: "hub", id: "test-hub" } },
+            { name: "topic-3", contentType: "", origin: { type: "hub", id: "test-hub" } }
         ]
     });
 });

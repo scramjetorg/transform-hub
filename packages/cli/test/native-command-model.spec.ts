@@ -26,6 +26,7 @@ test("native command model parses positional args and dashed options", async t =
                 .argument("<topic-name>")
                 .argument("[file]")
                 .option("-t, --content-type [content-type]", "Content-Type")
+                .option("--scope <scope>", "Topic scope")
                 .action((topicName: string, file: string, options: Record<string, unknown>) => {
                     calls.push([topicName, file, options]);
                 })
@@ -33,12 +34,12 @@ test("native command model parses positional args and dashed options", async t =
         ))
     ));
 
-    const resolved = resolveCommandPath(["topic", "send", "orders", "orders.ndjson", "--content-type", "application/x-ndjson"], root);
+    const resolved = resolveCommandPath(["topic", "send", "orders", "orders.ndjson", "--content-type", "application/x-ndjson", "--scope", "space"], root);
     const context = parseCommandContext(resolved);
 
     await executeCommand(context);
 
-    t.deepEqual(calls, [["orders", "orders.ndjson", { contentType: "application/x-ndjson" }]]);
+    t.deepEqual(calls, [["orders", "orders.ndjson", { contentType: "application/x-ndjson", scope: "space" }]]);
 });
 
 test("native command model keeps option values out of positional args", t => {

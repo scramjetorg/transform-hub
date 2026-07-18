@@ -36,18 +36,21 @@ class AppContext:
         self._keep_alive_timeout: int = 0
         self._kill_handlers: list[Callable] = []
         self._monitoring_handlers: list[Callable] = []
+        self._legacy_health_mode = False
         self._ended: bool = False
         self._destroyed: bool = False
         self._destroy_error: BaseException | None = None
         self._last_definition: Any = None
         self._last_saved_state: Any = None
         self._sequence_logger: logging.Logger | None = None
+        self._request_stop: Callable[[dict[str, Any]], Any] | None = None
 
         # Public fields
         self.config: dict[str, Any] = {}
         self._app_config = self.config
         self.instance_id: str | None = None
         self.hub: Any | None = None
+        self.space: Any | None = None
         self.api: Any | None = None
         self.initial_state: Any = None
         self.local_storage: None = None
@@ -78,7 +81,7 @@ class AppContext:
 
     # --- Monitoring / health ---
 
-    def set_health_check(self, health_check: Callable[[], dict]) -> "AppContext":
+    def set_health_check(self, health_check: Callable[[], Any]) -> "AppContext":
         """Override the default health check function.
 
         Legacy alias - adapted to populate ``_monitoring_handlers`` so
@@ -86,6 +89,7 @@ class AppContext:
         handlers and registers ``health_check`` as the sole handler.
         """
         self._health_check = health_check
+        self._legacy_health_mode = True
         self._monitoring_handlers.clear()
         self._monitoring_handlers.append(health_check)
         return self
@@ -96,6 +100,7 @@ class AppContext:
         Each handler is called every heartbeat cycle; results are merged in
         registration order (bool → ``{"healthy": <bool>}``, dict → shallow merge).
         """
+        self._legacy_health_mode = False
         self._monitoring_handlers.append(handler)
         return self
 
@@ -123,7 +128,9 @@ class AppContext:
 
     # --- Lifecycle ---
 
-    async def keep_alive(self, timeout: int = 0, *, milliseconds: int = 0) -> "AppContext":
+    async def keep_alive(
+        self, timeout: int = 0, *, milliseconds: int = 0
+    ) -> "AppContext":
         """Reset the stop timer with a new timeout in milliseconds.
 
         Accepts ``timeout`` (positional, legacy compat) or ``milliseconds``
@@ -142,6 +149,8 @@ class AppContext:
         from sequence code; consumers may check ``_ended``.
         """
         self._ended = True
+        if self._request_stop is not None:
+            self._request_stop({"outcome": "ended"})
         return self
 
     def destroy(self, error: BaseException | None = None) -> "AppContext":
@@ -153,6 +162,20 @@ class AppContext:
         """
         self._destroyed = True
         self._destroy_error = error
+        if self._request_stop is not None:
+            self._request_stop(
+                {
+                    "outcome": "errored" if error is not None else "destroyed",
+                    "error": error,
+                }
+            )
+        return self
+
+    def bind_terminator(
+        self, request_stop: Callable[[dict[str, Any]], Any]
+    ) -> "AppContext":
+        """Bind end/destroy to the externally visible runtime terminator."""
+        self._request_stop = request_stop
         return self
 
     # --- Describe / Save ---
