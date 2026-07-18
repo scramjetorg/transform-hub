@@ -14,5 +14,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [x] **Track: sequence writing guide**
+- [~] **Track: sequence writing guide**
 *Link: [./tracks/sequence_writing_guide_20260716/](./tracks/sequence_writing_guide_20260716/)*

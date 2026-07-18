@@ -269,3 +269,14 @@
   - Final checkpoint `1f3a5ffb` pushed. PR #56 is ready for review and carries
     final validation evidence as a comment.
 - [x] Task: Conductor - Track Completion 'sequence_writing_guide_20260716' (Protocol in workflow.md)
+
+## PR review remediation
+
+- [~] Task: Reconcile the Bun author/runtime model and remove the public
+  file-backed mock cursor feature with replacement sequence evidence.
+- [ ] Task: Add a canonical sequence project/run guide and rewrite source-side
+  summarization as sequence-owned streaming work.
+- [ ] Task: Expand runnable Hub/Manager, API/RPC, topic routing, and dashboard
+  examples across the guide pairs.
+- [ ] Task: Apply global tone and terminology corrections, regenerate docs, and
+  re-run focused review validation.
