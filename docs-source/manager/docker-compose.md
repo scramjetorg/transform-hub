@@ -8,7 +8,7 @@ title: Run a Manager and Hubs with Docker Compose
 
 Work in progress — this guide has been manually verified only. Automated verification is not yet available.
 
-Use this guide when you have a Docker Compose topology that starts a Manager and one or more connected STH/Hubs. Manager-level CLI routing and Hub discovery are not available in this open topology — those capabilities are deferred to Middleware.
+Use this guide when you have a Docker Compose topology that starts a Manager and one or more connected STH/Hubs. Manager-level CLI routing and Hub discovery are not available in this open topology — those capabilities are deferred to the Enterprise Version.
 
 This is not a new Compose stack. You must supply or adapt the Compose file and the Manager/Hub configuration that you have manually verified for your environment. The checked-in BDD Compose fixture at `scripts/test/fixtures/compose-live/compose.yaml` starts a Hub only. It does not provide a Manager service or a host-published Manager API, so it is not sufficient for this guide by itself.
 
@@ -31,7 +31,7 @@ The following inline source illustrates the repository's MultiManager and STH co
 
 Before creating `compose.yaml`, set every required image and identity value. `MANAGER_IMAGE` must contain the repository's `multi-manager` executable; `HUB_IMAGE` must contain `scramjet-transform-hub` and the process-adapter runtime dependencies.
 
-`CPM_URL` is an operator-supplied CPM API base URL that is reachable from the Hub containers. It is deliberately not `http://manager:8200`: verify the externally reachable address, API path, TLS trust, and routing for your deployment. `CPM_ID` is the Manager/CPM identifier expected by that endpoint. Manager-level CLI routing through the CPM URL is not available in this open topology — those capabilities are deferred to Middleware.
+`CPM_URL` is an operator-supplied CPM API base URL that is reachable from the Hub containers. It is deliberately not `http://manager:8200`: verify the externally reachable address, API path, TLS trust, and routing for your deployment. `CPM_ID` is the Manager/CPM identifier expected by that endpoint. Manager-level CLI routing through the CPM URL is not available in this open topology — those capabilities are deferred to the Enterprise Version.
 
 ```sh
 export MANAGER_IMAGE=<image-containing-multi-manager>      # deployment-specific
@@ -159,7 +159,7 @@ docker compose -f "$COMPOSE_FILE" up -d
 docker compose -f "$COMPOSE_FILE" ps
 ```
 
-The control port is not an `si` endpoint. Manager-level CLI routing and Hub discovery through the CPM URL are not available in this open topology — those capabilities are deferred to Middleware. To use `si` with an individual Hub, you must first ensure that Hub's API port is host-accessible (for example, by adding a host port mapping to that Hub service). The topology template above keeps Hub API ports private to `manager-network`; adapt it if you need host-side `si` access.
+The control port is not an `si` endpoint. Manager-level CLI routing and Hub discovery through the CPM URL are not available in this open topology — those capabilities are deferred to the Enterprise Version. To use `si` with an individual Hub, you must first ensure that Hub's API port is host-accessible (for example, by adding a host port mapping to that Hub service). The topology template above keeps Hub API ports private to `manager-network`; adapt it if you need host-side `si` access.
 
 ## Check readiness and Hub connections
 
@@ -182,7 +182,7 @@ The Manager keeps the connected-Hub registry and routes control requests over ea
 
 ## Use the installed CLI
 
-Manager-level CLI routing and Hub discovery are not available in this open topology — those capabilities are deferred to Middleware.
+Manager-level CLI routing and Hub discovery are not available in this open topology — those capabilities are deferred to the Enterprise Version.
 
 To use `si` for deployment and Instance control against a selected Hub, verify that the Hub's API port is host-accessible (for example, by mapping it in `compose.yaml`). Then configure `si` with that Hub endpoint:
 
