@@ -159,6 +159,7 @@ timing-log.ndjson
 /temp
 /conductor/prompts/
 /conductor/active_state.json
+/conductor/sessions.json
 /packages/manager/bucket/
 
 # extra dist dirs
