@@ -2,14 +2,12 @@
 
 ## Responsibility
 
-Bun runtime facade package for the outer runner. Validates Bun boot config (including `verser2Runtime` block), supports direct no-host execution path, delegates host-integrated execution to `runner-node`, and provides verser2 guest/broker connectivity for direct Bun mode.
+Bun runtime facade package for the outer runner. Validates Bun boot config (including `verser2Runtime` block), requires the hosted runner path (throws if host coordinates are absent), and delegates execution to `runner-node`. The `verser2Runtime` block is validated and forwarded to the Node delegate; Bun itself no longer instantiates verser2 guest/broker connectivity.
 
 ## Design / Patterns
 
-- **Path bifurcation by host presence**:
-  - no host channels in boot config → direct sequence require/invocation in Bun (optionally with verser2 guest/broker via `verser2-runtime.ts`);
-  - host channels present → spawn `runner-node` process for protocol compatibility.
-- **Verser2 runtime support in Bun**: `verser2-runtime.ts` provides `createBunSequenceGuest()` (creates `@signicode/verser2-guest-bun` guest with API exposure handler), `startBunSequenceGuest()` (connects a guest), `BunSequenceApiExposure` (deferred handler attachment to guest), and `createBunHubFetch()` (creates verser2 broker for hub API calls).
+- **Single supported execution path**: host channels are required and Bun delegates the sequence to `runner-node` for the complete AppContext contract. Direct/headless sequence invocation in Bun is rejected at startup.
+- **Verser2 runtime block passthrough**: `verser2Runtime` config is validated by the Bun boot-config parser but only forwarded to Node's delegate — Bun does not use verser2 helpers locally anymore.
 - **Strict contract reuse**: Bun runtime reads/writes the same boot config shape as Node (including `verser2Runtime`), reuses the same monitoring/control semantics.
 - **Runtime resolution strategy**: resolves bundled or source `runner-node` entry dynamically for source-tree and package usage.
 - **Bun-native test runner**: uses `bun:test` (not AVA) with `mock.module()` for module mocking and native TypeScript support.
@@ -17,15 +15,12 @@ Bun runtime facade package for the outer runner. Validates Bun boot config (incl
 
 ## Data & Control Flow
 
-`bin/runner-bun.ts` reads `argv[2]`, validates boot config (including `verser2Runtime`), then:
+`bin/runner-bun.ts` reads `argv[2]`, validates boot config (including `verser2Runtime`), requires host coordinates (throws if absent), then spawns Node with the resolved `runner-node` entry and forwarded boot-config path. It uses `stdio: [inherit, inherit, inherit, ipc, inherit, inherit]` and therefore exposes the same hosted AppContext behavior as Node.
 
-- **Direct mode** (no host): `require(sequencePath)`, invoke exported functions with input stream + args. If verser2 config is present, `startBunSequenceGuest()` and `createBunHubFetch()` provide API exposure and hub fetch capability.
-- **Delegation mode**: spawn Node with resolved `runner-node` entry and forwarded boot-config path (including verser2Runtime block). Uses `stdio: [inherit, inherit, inherit, ipc, inherit, inherit]`.
-
-Monitoring and exit behavior follows Node's status model; Bun acts as an execution decision layer with optional verser2 connectivity.
+Monitoring and exit behavior follows Node's status model; Bun acts as an execution decision layer only.
 
 ## Integration Points
 
-Depends on boot-config contract and parser from `@scramjet/runner-bun`, delegate contract to `@scramjet/runner-node`, `@signicode/verser2-guest-bun` for verser2 guest/broker, and runtime symbols/messaging shared with the outer runner stack.
+Depends on boot-config contract and parser from `@scramjet/runner-bun`, delegate contract to `@scramjet/runner-node`, and runtime symbols/messaging shared with the outer runner stack. Verser2 runtime symbols (`BunSequenceApiExposure`, `createBunHubFetch`, `createBunSequenceGuest`, `startBunSequenceGuest`) remain exported from the package `index.ts` for external consumers but are no longer used by the Bun entrypoint.
 
-Test fixtures (7 directories: `direct-marker`, `record-args`, `array-order`, `default-export`, `throwing`, `missing-import`, `bootfile-driven`) exercise both direct and delegated execution modes.
+Tests cover boot-config parity, hosted-delegation rejection of headless config, and boot-config validation (including verser2 block).

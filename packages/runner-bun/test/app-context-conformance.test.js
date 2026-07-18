@@ -27,10 +27,9 @@ describe("Bun AppContext conformance", () => {
         expect(config.verser2Runtime.spaceTargetDomain).toBe("manager.scramjet.internal");
     });
 
-    test("direct Bun execution is unsupported; hosted Bun delegates only", async () => {
-        // Direct Bun has no host transport, so it cannot provide health,
-        // lifecycle, logs, scoped events, Hub/Space requests, or API exposure.
-        // This assertion deliberately fails against the pre-Phase-5 direct path.
+    test("headless Bun execution is rejected; hosted Bun delegates only", async () => {
+        // The wrapper must not expose a second author/runtime contract without
+        // host transport. Hosted Bun remains the Node-equivalent AppContext path.
         const dir = mkdtempSync(join(tmpdir(), "runner-bun-conformance-"));
         const bootPath = join(dir, "boot.json");
         await Bun.write(bootPath, JSON.stringify({
@@ -52,7 +51,7 @@ describe("Bun AppContext conformance", () => {
             });
 
             expect(result.code).not.toBe(0);
-            expect(result.stderr).toMatch(/hosted Bun|delegat|unsupported/i);
+            expect(result.stderr).toMatch(/host channels are required|hosted Bun|delegat|unsupported/i);
         } finally {
             rmSync(dir, { recursive: true, force: true });
         }

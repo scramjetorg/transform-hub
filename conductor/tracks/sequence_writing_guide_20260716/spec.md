@@ -25,7 +25,7 @@ must remain current as the implementation plan is refined.
   3. sequence HTTP API exposure and a trusted MCP bridge;
   4. communication-path selection and local object-data filtering;
   5. topics and a customer-site probe pipeline;
-  6. sequence testing and an incremental aggregator with a file-backed mock cursor;
+  6. sequence testing and an incremental aggregator with explicit sequence-owned state;
   7. `SequenceAppContext` and runtime parity;
   8. configuration/resources/state and source-side data summarization.
 - Write editable sources under `docs-source/`; regenerate corresponding `docs/`
@@ -49,11 +49,11 @@ must remain current as the implementation plan is refined.
 - Define observable validation failure behavior: structured logs and events,
   errored instance outcome, and no active service phase.
 - Document configuration, packaged resources, configured external sources, and
-  a fixture- and documentation-only file-backed mock cursor store. Do not present runtime-managed
-  checkpointing or `this.save()` as the persistence mechanism.
+  application-owned state boundaries. Do not present runtime-managed checkpointing
+  or `this.save()` as the persistence mechanism.
 - Extend synthetic `@scramjet/sequence-test` fixtures to cover progression only:
   initialization, validation failure, readiness, health changes, topic routing,
-  events, API responses, cursor-store interactions, and shutdown. Do not make
+  events, API responses, state transitions, and shutdown. Do not make
   full wet examples the fixture-test subject.
 
 ### Runtime, control, and routing capability fixes
@@ -85,8 +85,8 @@ must remain current as the implementation plan is refined.
 ### API and communication boundaries
 
 - Document sequence HTTP API exposure separately from an external MCP server.
-  The wet walkthrough uses the Node MCP SDK and a file-backed mock cursor store;
-  no additional backing service is required. The MCP bridge is reached through private networking
+  The wet walkthrough uses the Node MCP SDK and the sequence status route as its
+  source of truth; no additional backing service is required. The MCP bridge is reached through private networking
   or an independently configured tunnel URL; STH does not own MCP
   authentication, authorization, public ingress, or tunnel lifecycle.
 - Document streams, topics, events, and Hub/Space API calls as distinct
@@ -103,13 +103,11 @@ must remain current as the implementation plan is refined.
   or a documented manual prerequisite; multi-file executable assets are not
   created for the wet walkthroughs.
 - The MCP walkthrough may show a Compose topology, but its YAML and
-  sequence/MCP/file-store snippets remain inline and are smoke-tested only as the
-  smallest selected composition necessary to prove autostart and readiness.
-- The file-backed cursor mock is a fixture- and documentation-only local
-  temporary file, not a Compose service or production storage prescription.
-  Guides must state its local-path, cleanup, durability/failure, and
-  non-transactional cursor limitations and direct production users to choose an
-  application-owned store separately.
+  sequence/MCP snippets remain inline and are smoke-tested only as the smallest
+  selected composition necessary to prove autostart and readiness.
+- Durable job correlation is outside the sequence API and MCP bridge examples;
+  production users choose an application-owned store or queue separately when
+  their workflow requires it.
 - Phase 2 starts by specifying the Hub/Space topic contract through synthetic
   contract tests: operation shapes, Hub/Space identifiers, naming/origin,
   duplicate-name behavior, content-type propagation, disconnect errors,
@@ -163,6 +161,6 @@ must remain current as the implementation plan is refined.
 
 - Cross-runtime behavior, Hub/Manager forwarding, and Hub/Space routing are
   public contract changes and require compatibility-focused tests.
-- The file-backed cursor mock must have documented local-path, cleanup,
-  durability, and failure semantics; it must not require a network service.
+- Application-owned state and correlation stores remain outside the runtime-managed
+  sequence contract and must not be implied by the guide examples.
 - Generated documentation must not be manually edited.

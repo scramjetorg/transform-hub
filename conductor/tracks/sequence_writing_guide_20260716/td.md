@@ -1,14 +1,3 @@
-## P2-20260716-source-summary-input-validation
-
-- **Finding identity:** source-summary input validation claim
-- **Severity / scope:** P2 / phase 1
-- **Evidence:** `docs-source/examples/source-side-data-summary.md` now
-  validates summary shape, relative file names, finite byte values, and
-  non-negative bytes before aggregation.
-- **Disposition:** rejected as deferred; repaired in-track
-- **Rationale:** Strict snippet evidence covers the repaired validation claim.
-- **Follow-up:** None.
-
 ## P2-20260716-live-compose-resource-capacity
 
 - **Finding identity:** live Compose validation host capacity

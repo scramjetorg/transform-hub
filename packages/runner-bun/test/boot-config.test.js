@@ -76,7 +76,7 @@ describe("runner-bun boot config", () => {
             instancesServerPort: 9000,
             instancesServerHost: "127.0.0.1",
             sequenceInfo: { id: "seq-1" },
-            requestsUnsupported: { reason: "reserved" },
+            requestsUnsupported: "reserved",
             verser2Runtime: {
                 hostUrl: "https://verser2.example",
                 runnerGuestId: "runner.inst.guest",
@@ -98,7 +98,7 @@ describe("runner-bun boot config", () => {
             instancesServerPort: 9000,
             instancesServerHost: "127.0.0.1",
             sequenceInfo: { id: "seq-1" },
-            requestsUnsupported: { reason: "reserved" },
+            requestsUnsupported: "reserved",
             verser2Runtime: {
                 hostUrl: "https://verser2.example",
                 runnerGuestId: "runner.inst.guest",

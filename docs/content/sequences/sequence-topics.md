@@ -76,6 +76,23 @@ Content-Type: application/json
 
 When started with a topic subscription, the sequence input stream contains the topic messages.
 
+For the installed CLI workflow, create and route the topic with the existing commands and start
+the instance with input/output topic options:
+
+```bash
+si topic create sensor-readings --content-type application/x-ndjson
+si sequence start <sequence-id> \
+  --input-topic sensor-readings \
+  --output-topic normalized-readings
+printf '{"sensor":"temperature","value":22.5}\n' | si topic send sensor-readings
+si topic get normalized-readings
+```
+
+`--input-topic` feeds the instance input stream and `--output-topic` publishes its output stream.
+These are startup routing options, not package metadata helpers. A sequence that publishes an
+independent topic uses the existing `hubClient().topicWrite.post()` operation shown above; do not
+invent `consumes` or `produces` AppContext methods.
+
 ### Topic metadata
 
 Topics have associated metadata:
@@ -178,7 +195,7 @@ A sequence input can originate from:
 Sequence output can go to:
 
 1. **API response** — retrieved by the caller
-2. **Topic publication** — explicitly sent via `hub.sendTopic()`
+2. **Topic publication** — explicitly sent via `hubClient().topicWrite.post()` (or `si topic send`)
 3. **Another sequence** — via topic subscription chains
 
 See [Customer-site topic probe pipeline](../examples/customer-site-topic-probe-pipeline.md) for a case-led Hub/Space example and its exact focused validation boundary.

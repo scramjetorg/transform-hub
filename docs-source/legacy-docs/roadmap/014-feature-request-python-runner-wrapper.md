@@ -73,7 +73,7 @@ No breaking changes for sequence authors or host API users. Existing Python sequ
 ### Architecture Decisions
 
 - **Clean-slate package**: Built a new `packages/runner-python/` rather than refactoring the existing `packages/python-runner/`. The old package was deleted after a reference scan confirmed no remaining imports.
-- **RuntimeExecutor interface**: Minimal shape `{ kind, spawn(opts) }` — deliberately no framework abstractions beyond what `child_process.spawn()` needs.
+- **RuntimeExecutor interface**: Minimal shape `{ kind, spawn(opts) }` — no framework abstractions beyond what `child_process.spawn()` needs.
 - **fd layout**: Identical to runner-node: fd 0/1/2 for stdio, fd 3 reserved as unused IPC, fd 4 for control, fd 5 for monitoring.
 - **No Python request channel yet**: Unlike the Node wrapper, the Python runner does not open a request channel. Control and data flow exclusively through the dedicated fd4/fd5 pipes.
 - **Boot config via JSON file**: Python wrapper receives sequence metadata as a JSON file path passed as the last CLI argument, matching the runner-node pattern. No sequence execution data flows through environment variables.

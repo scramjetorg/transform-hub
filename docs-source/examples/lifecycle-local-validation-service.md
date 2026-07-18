@@ -6,11 +6,11 @@ title: Start a local validation service safely
 
 # Start a local validation service safely
 
-This walkthrough is motivated by the public [Server Fault diagnostics question](https://serverfault.com/questions/412134/server-unreachable-best-way-to-find-out-the-cause): before asking a service to answer traffic, prove that its local prerequisites are usable. This is an authoring pattern, not a reproduction of the incident or a production supervisor.
+This walkthrough is motivated by the public [Server Fault diagnostics question](https://serverfault.com/questions/412134/server-unreachable-best-way-to-find-out-the-cause): before a service answers traffic, validate its local prerequisites.
 
 Read [sequence lifecycle and readiness](../sequences/sequence-lifecycle.md) first.
 
-## A small validation-first sequence
+## Validation-first sequence
 
 Prerequisites: Node.js 18+, a packaged sequence, and a Hub using the process adapter. Docker and Kubernetes can run the same sequence, but filesystem visibility and startup timeouts are adapter-specific. The example treats `DATA_FILE` as a packaged or explicitly mounted resource, not as an arbitrary host path.
 
@@ -41,4 +41,4 @@ In a complete application, the validation phase is explicit and route registrati
 
 The trust boundary is the packaged resource, configuration, and adapter mount. Validate paths and permissions without returning file contents. The sequence does not own Hub authentication, public ingress, or secret storage. A dropped client connection does not replay prior requests.
 
-The smallest validation is `cd packages/sequence-test && ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" SCRAMJET_AVA_MEMORY_GUARD=1 node ../../scripts/run-ava.js test/phase6-guide-contracts.spec.ts`; for a deployed setup, start the Hub from the file-loaded configuration and poll readiness rather than sleeping. Run `npm run docs:check` to check this source page and its links.
+Run `cd packages/sequence-test && ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" SCRAMJET_AVA_MEMORY_GUARD=1 node ../../scripts/run-ava.js test/phase6-guide-contracts.spec.ts` to validate the lifecycle contract. For a deployed setup, start the Hub from the file-loaded configuration and poll readiness rather than sleeping. Run `npm run docs:check` to validate this source page and its links.

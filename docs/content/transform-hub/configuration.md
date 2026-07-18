@@ -92,7 +92,7 @@ The Hub reads JSON/YAML/JSONC configuration through the `@scramjet/config` loade
 
 ### File-loaded autostart
 
-The smallest Compose-ready setup uses the process adapter, a file-loaded Hub config, and a
+The Compose-ready setup uses the process adapter, a file-loaded Hub config, and a
 startup manifest that refers to a sequence already present in `sequencesRoot`. Set
 `identifyExisting: true` so the Hub indexes that mounted sequence before processing the
 startup manifest. The `id`, `sequenceName`, and `instanceName` values below are stable
@@ -100,7 +100,7 @@ deployment identifiers; replace them consistently if you use a different sequenc
 
 Place the packaged sequence at `./sequence-store/status-service` next to these files. The
 directory must contain the normal stored-sequence files, including its runtime metadata.
-This example deliberately contains no credentials: pass secrets through the environment or
+This example contains no credentials: pass secrets through the environment or
 an application-owned secret store instead of either YAML file.
 
 ```yaml
@@ -172,7 +172,7 @@ For the authoritative configuration schema, refer to the generated curated refer
 
 The file-loaded sequence example is intentionally separate from the MCP boundary. STH owns sequence startup, readiness, and the exposed sequence route; an external MCP bridge owns MCP authentication, authorization, public ingress, and any private-network or tunnel lifecycle. STH does not provide a generic MCP gateway.
 
-The published port is loopback-only and the Compose network is internal by default. Add a separately secured reverse proxy or tunnel only when its authentication, authorization, ingress, and lifecycle are owned outside STH. Do not change the binding to `0.0.0.0` merely to make an external MCP client connect.
+The published port is loopback-only and the Compose network is internal by default. Add a separately secured reverse proxy or tunnel only when its authentication, authorization, ingress, and lifecycle are owned outside STH. Keep the binding off `0.0.0.0` unless the external MCP client's secured ingress is configured separately.
 
 ## Hub identification
 

@@ -36,4 +36,4 @@ The statuses follow the canonical InstanceStatus terms: `stopping` during a grac
 
 See [sequence monitoring](sequence-monitoring.md) for frames, logs, events, and exit behavior.
 
-The case-led companion is [Customer-site health and control](../examples/customer-site-health-control.md). Run the focused dry/wet evidence test with `cd packages/sequence-test && ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" SCRAMJET_AVA_MEMORY_GUARD=1 node ../../scripts/run-ava.js test/phase6-guide-contracts.spec.ts --match="*direct Hub and Manager-routed control flow*"`; this is not a live-site probe.
+The case-led companion is [Customer-site health and control](../examples/customer-site-health-control.md). Run the focused evidence test with `cd packages/sequence-test && ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" SCRAMJET_AVA_MEMORY_GUARD=1 node ../../scripts/run-ava.js test/phase6-guide-contracts.spec.ts --match="*direct Hub and Manager-routed control flow*"`. It checks the documented direct and Manager-routed control paths and InstanceStatus outcomes.

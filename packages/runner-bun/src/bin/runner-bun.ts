@@ -3,7 +3,6 @@
 import { spawn } from "child_process";
 import { existsSync, readFileSync } from "fs";
 import { dirname, resolve } from "path";
-import { Readable } from "stream";
 import { parseBootConfigPathFromArgv, readBootConfig, RunnerBunBootConfig } from "../boot-config";
 
 interface RunnerNodeEntry {
@@ -124,48 +123,8 @@ export async function bootstrap(): Promise<number> {
     // boot contract explicit while allowing Bun to execute the TS runtime entry.
     const bootConfig = readBootConfig(bootConfigPath);
 
-    if (bootConfig.instancesServerPort === undefined && bootConfig.instancesServerHost === undefined) {
-        if ((bootConfig.appConfig as Record<string, unknown> | undefined)?.requiresAppContext === true) {
-            throw new Error("runner-bun: direct Bun cannot provide AppContext; hosted Bun delegates to runner-node");
-        }
-
-        let loaded: unknown;
-
-        try {
-            loaded = require(bootConfig.sequencePath);
-        } catch (err) {
-            logRuntimeError("sequence-load", bootConfig, err);
-            throw err;
-        }
-
-        const candidate = (loaded as { default?: unknown })?.default ?? loaded;
-        const initializer =
-            typeof loaded === "object" && loaded !== null
-                ? ((loaded as { initialize?: unknown }).initialize ??
-                  (typeof candidate === "object" && candidate !== null ? (candidate as { initialize?: unknown }).initialize : undefined))
-                : undefined;
-        if (initializer !== undefined && typeof initializer !== "function") {
-            throw new Error("runner-bun: sequence initialize export must be a function when provided");
-        }
-        if (initializer) {
-            await initializer(candidate);
-        }
-        const fns = Array.isArray(candidate) ? candidate : [candidate];
-        const input = Readable.from([]);
-        const sequenceArgs = bootConfig.sequenceArgs ?? [];
-
-        try {
-            for (const fn of fns) {
-                if (typeof fn === "function") {
-                    await fn(input, ...sequenceArgs);
-                }
-            }
-        } catch (err) {
-            logRuntimeError("instance-runtime", bootConfig, err);
-            throw err;
-        }
-
-        return 0;
+    if (bootConfig.instancesServerPort === undefined || bootConfig.instancesServerHost === undefined) {
+        throw new Error("runner-bun: host channels are required; Bun sequences must run through the supported hosted runner path");
     }
 
     try {

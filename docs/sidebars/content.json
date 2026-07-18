@@ -133,6 +133,13 @@
     "output": "sequences/sequence-topics.md"
   },
   {
+    "id": "sequences-setup-and-run",
+    "title": "Set up and run an installed Sequence",
+    "slug": "/sequences/setup-and-run",
+    "source": "docs-source/sequences/setup-and-run.md",
+    "output": "sequences/setup-and-run.md"
+  },
+  {
     "id": "sequences-writing",
     "title": "Writing sequences for Transform Hub",
     "slug": "/sequences/writing",
@@ -260,7 +267,7 @@
   },
   {
     "id": "examples-source-side-data-summary",
-    "title": "Summarize source-side data before a sequence",
+    "title": "Read source-side data in a Sequence",
     "slug": "/examples/source-side-data-summary",
     "source": "docs-source/examples/source-side-data-summary.md",
     "output": "examples/source-side-data-summary.md"

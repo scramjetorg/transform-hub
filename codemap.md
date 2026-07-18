@@ -64,9 +64,9 @@ Scramjet Transform Hub is a TypeScript monorepo for supervising sequence deploym
 | `packages/runner-node/` | Node sequence runtime that owns boot-config parsing, host channel setup, lifecycle control, and sequence execution. | [View Map](packages/runner-node/codemap.md) |
 | `packages/runner-node/src/` | Core Node runtime implementation: boot config, fd streams, host client, contexts, handshake, lifecycle, and sequence execution. | [View Map](packages/runner-node/src/codemap.md) |
 | `packages/runner-node/src/bin/` | Executable entrypoint for the Node runtime. | [View Map](packages/runner-node/src/bin/codemap.md) |
-| `packages/runner-bun/` | Bun sequence runtime wrapper for boot-config validation, optional direct execution, and Node runtime delegation when needed. | [View Map](packages/runner-bun/codemap.md) |
+| `packages/runner-bun/` | Bun sequence runtime wrapper for boot-config validation and hosted Node runtime delegation. | [View Map](packages/runner-bun/codemap.md) |
 | `packages/runner-bun/src/` | Bun runtime helpers for boot config parsing/validation, runtime constants, and bootstrap delegation logic. | [View Map](packages/runner-bun/src/codemap.md) |
-| `packages/runner-bun/src/bin/` | Executable Bun runtime entrypoint that loads boot config and either executes locally or hands off to Node runtime bootstrap. | [View Map](packages/runner-bun/src/bin/codemap.md) |
+| `packages/runner-bun/src/bin/` | Executable Bun runtime entrypoint that validates hosted boot config and hands off to Node runtime bootstrap. | [View Map](packages/runner-bun/src/bin/codemap.md) |
 | `packages/runner-python/` | Python sequence runtime and parity reference for host-channel connection, control/monitoring codecs, context, lifecycle, and sequence loading. | [View Map](packages/runner-python/codemap.md) |
 | `packages/sequence-test/` | Supported sequence testing harness for scoped local fixture/hub-harness/AppContext validation with fixtures, fake instance transport, hub mocks, captures, and assertions (not a full Hub/runner parity replacement). | [View Map](packages/sequence-test/codemap.md) |
 | `packages/sequence-test/src/` | Implementation layer for test harness primitives: runner launch plans, fake transport, hub simulation, fixtures, captures, input drivers, and request helpers. | [View Map](packages/sequence-test/src/codemap.md) |

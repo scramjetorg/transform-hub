@@ -38,7 +38,7 @@ function typeCheckTypeScriptSnippets(snippets: string[], name: string): string[]
     const directory = mkdtempSync(path.join(os.tmpdir(), "sth-phase6-ts-"));
     const sourcePaths = snippets.map((snippet, index) => {
         const sourcePath = path.join(directory, `${name}-${index}.ts`);
-        const prelude = `${snippet.includes('from "node:stream"') || snippet.includes('from "stream"') ? "" : "type Readable = any;\n"}declare const Transform: any;\ndeclare const transform: any;\ndeclare const through2: any;\ndeclare const fixture: any;\n`;
+        const prelude = `${snippet.includes('from "node:stream"') || snippet.includes('from "stream"') ? "" : "type Readable = any;\n"}declare const Transform: any;\ndeclare const transform: any;\ndeclare const through2: any;\n${snippet.includes("const fixture") ? "" : "declare const fixture: any;\n"}`;
         writeFileSync(sourcePath, `${prelude}${snippet}`);
         return sourcePath;
     });
@@ -158,8 +158,8 @@ test("API and MCP evidence keeps sequence exposure separate from the external br
     t.regex(docs("transform-hub", "configuration.md"), /tunnel\/MCP ownership/);
     t.regex(docs("examples", "mcp-bridged-job-status.md"), /McpServer/);
     t.regex(docs("examples", "mcp-bridged-job-status.md"), /z\.string\(\)\.regex/);
-    t.regex(docs("examples", "mcp-bridged-job-status.md"), /cursorFile/);
-    t.regex(docs("examples", "mcp-bridged-job-status.md"), /import \{ unlink \} from "node:fs\/promises"/);
+    t.regex(docs("examples", "mcp-bridged-job-status.md"), /source of truth/);
+    t.notRegex(docs("examples", "mcp-bridged-job-status.md"), /cursor|CURSOR_FILE|cursorFile/i);
 });
 
 test("communication and topics evidence preserves transient events and Hub/Space route boundaries", async t => {
@@ -305,9 +305,22 @@ test("Phase 6 lifecycle, control, API/MCP, communication, topics, and AppContext
     t.regex(appContextGuide, /sequence-types|parity|runtime wrapper/);
 
     const sourceSummary = docs("examples", "source-side-data-summary.md");
-    t.regex(sourceSummary, /function isSourceSummary\(value: unknown\): value is SourceSummary/);
-    t.regex(sourceSummary, /Array\.isArray/);
-    t.regex(sourceSummary, /Number\.isFinite/);
-    t.regex(sourceSummary, /bytes: number \}\)\.bytes >= 0/);
-    t.regex(sourceSummary, /invalid source summary shape/);
+    // Directory streaming: validates the configured directory path
+    t.regex(sourceSummary, /async function validateDirectory\(value: unknown\): Promise<string>/);
+    t.regex(sourceSummary, /if \(typeof value !== "string" \|\| !path\.isAbsolute\(value\)\)/);
+    t.regex(sourceSummary, /if \(!info\.isDirectory\(\)\) throw new Error\("sourceDirectory must be a directory"\);/);
+    // Streaming: opens the directory once, validates each entry and its metadata
+    t.regex(sourceSummary, /import \{ opendir, stat \} from "node:fs\/promises"/);
+    t.regex(sourceSummary, /for await \(const entry of directory\)/);
+    t.regex(sourceSummary, /if \(!entry\.isFile\(\) \|\| path\.basename\(entry\.name\) !== entry\.name\) continue;/);
+    t.regex(sourceSummary, /Number\.isSafeInteger\(info\.size\)/);
+    t.regex(sourceSummary, /throw new Error\("directory entry escaped sourceDirectory"\);/);
+    t.regex(sourceSummary, /throw new Error\(`invalid metadata for \$\{entry\.name\}`\);/);
+    t.regex(sourceSummary, /yield \{ file: relative, bytes: info\.size, modifiedAt: info\.mtime\.toISOString\(\) \};/);
+    // Validation snippet: loads, exercises, and checks readiness and health
+    t.regex(sourceSummary, /export async function validateSourceSummary\(sequenceDirectory: string, sourceDirectory: string\): Promise<void>/);
+    t.regex(sourceSummary, /await readiness\.validate\(\)/);
+    t.regex(sourceSummary, /await readiness\.initialize\(\)/);
+    t.regex(sourceSummary, /await readiness\.activateRoute\("\/health"\)/);
+    t.regex(sourceSummary, /if \(readiness\.state\(\) !== "ready"\) throw new Error\("Sequence did not become ready"\);/);
 });

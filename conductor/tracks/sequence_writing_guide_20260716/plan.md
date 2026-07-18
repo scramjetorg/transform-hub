@@ -272,11 +272,49 @@
 
 ## PR review remediation
 
-- [~] Task: Reconcile the Bun author/runtime model and remove the public
+- [x] Task: Reconcile the Bun author/runtime model and remove the public
   file-backed mock cursor feature with replacement sequence evidence.
-- [ ] Task: Add a canonical sequence project/run guide and rewrite source-side
+  - [x] Define and implement the single supported Bun author/runtime path with
+    Node-equivalent hosted AppContext behavior.
+    - Bun now has one supported hosted path that delegates to Node-equivalent
+      AppContext behavior; focused Bun tests pass (19).
+  - [x] Remove the cursor implementation, exports, tests, guide references, and
+    generated output; replace its evidence with sequence execution coverage.
+    - Removed the cursor helper and replaced it with guarded fixture loading,
+      execution, readiness, and health-route coverage (3 tests); docs generation
+      and `npm run docs:check` pass.
+    - Final review confirms remaining cursor references were removed and the
+      specification and guide map are consistent.
+- [x] Task: Add a canonical sequence project/run guide and rewrite source-side
   summarization as sequence-owned streaming work.
-- [ ] Task: Expand runnable Hub/Manager, API/RPC, topic routing, and dashboard
+  - [x] Create one installed/projected sequence setup, local Hub, upload/start,
+    and Hub/Manager execution guide.
+    - Added `docs-source/sequences/setup-and-run.md`; focused guide coverage
+      passes (2 tests).
+  - [x] Rewrite the source-side summary walkthrough as a sequence-owned streaming
+    directory iteration with actual sequence evidence.
+    - The sequence now opens its configured directory once and yields validated
+      summaries incrementally; guarded load/execution/readiness/health evidence
+      passes (3 tests).
+    - Failure-path evidence proves missing and non-directory configuration
+      leaves no health/API route registered.
+- [x] Task: Expand runnable Hub/Manager, API/RPC, topic routing, and dashboard
   examples across the guide pairs.
-- [ ] Task: Apply global tone and terminology corrections, regenerate docs, and
+  - [x] Add API methods, RPC/cross-Hub discovery, upload/start, and topic routing
+    examples using installed or packaged commands.
+    - Added practical installed/package command, API/RPC, cross-Hub, deployment,
+      and input/output topic-routing examples with focused generator evidence.
+  - [x] Add the topic-probe dashboard consumer with local-port API/HTML output.
+    - Added a topic-consuming local dashboard API and monochrome auto-refreshing
+      HTML consumer with `dashboardPort` and local URL guidance.
+- [x] Task: Apply global tone and terminology corrections, regenerate docs, and
   re-run focused review validation.
+  - [x] Remove defensive/apologetic language and dry/wet terminology while
+    preserving necessary operational disclosures.
+    - Applied terminology, lifecycle ordering, and MCP/API-scope corrections
+      across guide sources while retaining concrete operational disclosures.
+  - [x] Regenerate documentation and run focused review validation.
+    - Regenerated docs and passed `npm run docs:check`; guarded Phase 6
+      contract validation passes (9 tests).
+    - Final formal review passes; only the accepted out-of-scope live-Compose
+      capacity follow-up remains in `td.md`.

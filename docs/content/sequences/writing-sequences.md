@@ -70,23 +70,10 @@ export default [
 
 ### Bun sequences
 
-Bun sequences use the canonical `SequenceAppContext` surface from `@scramjet/sequence-types`. When host channels are required (IN, OUT, LOG), `runner-bun` delegates to the Node runtime. Direct Bun execution has no bound host context, so a sequence that uses `SequenceAppContext` must not treat direct Bun as a supported AppContext mode.
+Bun sequences use the same canonical `SequenceAppContext` surface from `@scramjet/sequence-types` as Node sequences. The supported Bun wrapper always enters through the hosted runner path and delegates the host-connected execution to the Node runtime, so health, lifecycle, logging, events, Hub/Space clients, local storage, and API exposure have the Node-equivalent contract. There is no separate author-visible direct/headless Bun mode.
 
-**Bun sequence (direct mode — no host channels):**
+Use the same context-aware sequence shape as the Node example above and package the sequence with `"engines": { "bun": ">=1.0" }`.
 
-```typescript
-// bun-sequence.ts — direct Bun execution has no bound SequenceAppContext
-export default async function (input: Readable) {
-  for await (const chunk of input) {
-    // process chunk
-  }
-  return { status: "done" };
-}
-```
-
-When host channels (IN, OUT, LOG) are required, `runner-bun` delegates to the Node runtime and the sequence can use the `SequenceAppContext` typing as in the Node examples above.
-
-Package the sequence with `"engines": { "bun": ">=1.0" }` in `package.json`.
 
 ### Python sequences
 

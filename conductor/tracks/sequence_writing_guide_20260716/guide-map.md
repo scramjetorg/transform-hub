@@ -10,9 +10,9 @@ capability work, and synthetic test evidence.
 | API exposure | 2, 6 | `docs-source/sequences/sequence-api-exposure.md` | `docs-source/examples/mcp-bridged-job-status.md` | [Galaxy/Loom #74](https://github.com/galaxyproject/loom/issues/74) | deferred listener → bounded API/stream | readiness and autostart |
 | Communication | 4, 6 | `docs-source/sequences/sequence-communication.md` | `docs-source/examples/local-object-filter-to-consumer.md` | [NVIDIA AIStore #305](https://github.com/NVIDIA/aistore/issues/305) | source → filter → consumer; event transient | Hub/Space contract |
 | Topics | 4, 6 | `docs-source/sequences/sequence-topics.md` | `docs-source/examples/customer-site-topic-probe-pipeline.md` | [Server Fault](https://serverfault.com/questions/96468/how-to-monitor-multiple-remote-sites-over-the-internet) | create → publish → input/output route; disconnect | Hub/Space topic parity |
-| Testing | 1, 6 | `docs-source/testing/testing-sequences.md` | `docs-source/examples/tested-incremental-log-aggregator.md` | [DVC #829](https://github.com/treeverse/dvc/issues/829) | input → file-backed mock cursor → aggregate; store failure | fixture extensions only |
+| Testing | 1, 6 | `docs-source/testing/testing-sequences.md` | `docs-source/examples/tested-incremental-log-aggregator.md` | [DVC #829](https://github.com/treeverse/dvc/issues/829) | input → sequence-owned aggregation state → aggregate; failure handling | fixture extensions only |
 | AppContext parity | 5, 6 | `docs-source/sequences/sequence-app-context.md` | `docs-source/examples/app-context-health-parity.md` | [Server Fault](https://serverfault.com/questions/96468/how-to-monitor-multiple-remote-sites-over-the-internet) | equivalent health/details, event, log, lifecycle, clients | runtime conformance |
-| Resources/state | 1 | `docs-source/sequences/sequence-configuration-resources-state.md` | `docs-source/examples/source-side-data-summary.md` | [Open Energy Platform #2362](https://github.com/OpenEnergyPlatform/oeplatform/issues/2362) | rules → source → summary → file-backed mock cursor | resource/store boundaries |
+| Resources/state | 1 | `docs-source/sequences/sequence-configuration-resources-state.md` | `docs-source/examples/source-side-data-summary.md` | [Open Energy Platform #2362](https://github.com/OpenEnergyPlatform/oeplatform/issues/2362) | rules → source → summary → output | resource/store boundaries |
 
 ## Delivery and validation decisions
 
@@ -24,11 +24,9 @@ capability work, and synthetic test evidence.
   file-loaded/autostarted sequence; the Node MCP SDK bridge runs separately
   against that private Hub. Private-network/tunnel, MCP bridge, and sequence
   API ownership/security boundaries remain separate.
-- The file-backed mock cursor is fixture- and documentation-only, requires no
-  external service, and is an ordinary sequence-local temporary file rather than
-  a Compose service, container, or production recommendation. Guides state its
-  local-path, cleanup, durability/failure limitations, and non-transactional
-  semantics; `this.save()` is not documented as checkpointing.
+- Examples use sequence-owned state only where needed to explain progression;
+  durable correlation or checkpointing is application-owned and outside the
+  runtime contract. `this.save()` is not documented as checkpointing.
 - Every phase starts with synthetic fixture tests. Full wet walkthroughs are not
   fixture tests; targeted runtime/API/CLI/Manager/Compose tests prove only
   changed contracts.
@@ -37,7 +35,7 @@ capability work, and synthetic test evidence.
 
 | Phase | First test work | Deliver | Publication gate |
 |---|---|---|---|
-| 1. No-change docs | Resource, source-summary, file-backed mock cursor/store-failure fixtures | Resources/state and testing pairs; navigation/indexes | No unimplemented claim |
+| 1. No-change docs | Resource and source-summary fixtures with explicit failure handling | Resources/state and testing pairs; navigation/indexes | No unimplemented claim |
 | 2. Readiness/autostart | Validation, deferred listener, readiness, file loading, autostart fixtures | Runtime/host/config readiness and Compose startup | Lifecycle/API/MCP claims pass |
 | 3. Health/control | Details merge, malformed handler, stop/kill/error/state fixtures | Health propagation and Hub/Manager control | Control claims pass |
 | 4. Topics | Names, routes, content types, routing, reconnect/no replay fixtures | Settled Hub/Space contract and clients/routing | Communication/topic claims pass |

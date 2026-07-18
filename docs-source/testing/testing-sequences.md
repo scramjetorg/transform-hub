@@ -23,46 +23,52 @@ Where route paths appear in examples, they use legacy v1-compatible Hub mock rou
 
 For a worked example, see [Testing an incremental log aggregator](../examples/tested-incremental-log-aggregator.md).
 
-## Synthetic progression and file-backed cursors
+## Load, execute, and check readiness
 
-Use the testing package to exercise progression with synthetic input: write a
-small value, read it back, process the next synthetic value, and assert the
-result. This is a fixture contract, not a claim that a deployed Sequence can
-checkpoint itself. The full wet example is not the subject of the fixture test;
-the test covers the progression logic around a local fake cursor.
-
-`createFileBackedMockCursor({ directory, fileName })` is a public helper for
-that narrow purpose. Create it with a fixture directory and a relative file
-name, then always call `cleanup()` explicitly:
+Use a real sequence fixture for local behavior checks. Resolve its packaged
+entry point, execute it with `runSequence()`, and assert the output and routes
+registered by the sequence. This validates loading and execution without
+claiming adapter, deployment, or durable-state behavior:
 
 ```typescript
-import { createFileBackedMockCursor } from "@scramjet/sequence-test";
+import {
+  createHubHarness,
+  createNodeSequenceFixture,
+  resolveSequenceFixtureMetadata,
+  runSequence,
+} from "@scramjet/sequence-test";
 
-const cursor = createFileBackedMockCursor({
-  directory: fixture.directory,
-  fileName: "state/progress.json",
+const fixture = await createNodeSequenceFixture({
+  "index.js": `
+    module.exports = function (input) {
+      this.api.use("/health", (_req, res) => res.end("ok"));
+      return input.map(item => ({ ...item, processed: true }));
+    };
+  `,
 });
 
 try {
-  await cursor.write({ offset: 1 });
-  const progress = await cursor.read<{ offset: number }>();
-  console.log(progress.offset);
+  const metadata = await resolveSequenceFixtureMetadata(fixture.directory);
+  const harness = createHubHarness();
+  const result = await runSequence({
+    runtime: metadata.runtimeKind,
+    sequencePath: metadata.mainPath,
+    context: harness.context,
+    input: { contentType: "application/x-ndjson", body: [{ id: 1 }] },
+  });
+
+  result.assert.completed();
+  console.log(result.output.ndjson());
+  console.log(harness.apiRoutes().map(route => route.path)); // ["/health"]
 } finally {
-  await cursor.cleanup();
+  await fixture.cleanup();
 }
 ```
 
-The cursor stays inside the fixture directory. `write()` creates its parent
-directories and overwrites the JSON file; it is non-transactional and provides
-no locking, durability, recovery, or runtime-managed checkpointing. `read()`
-before the first write rejects with the native filesystem `ENOENT` error, and
-other filesystem or JSON failures are not converted into a store guarantee.
-There is no external service or cursor-store integration smoke test in this
-fixture scope.
-
-`this.save()` is not persistence or checkpointing. If progression must survive
-restart, test and operate the real durable store separately, with its own
-consistency and recovery contract.
+The harness also exposes the readiness progression used by local lifecycle
+tests. Call `validate()`, `initialize()`, and then `activateRoute("/health")`;
+the state becomes `ready` only after activation. This is a harness lifecycle
+assertion, not a production health-check or deployment probe.
 
 ## Installation
 
@@ -243,9 +249,6 @@ Legacy `@scramjet/types` imports continue to resolve but are deprecated. Interna
 - This package is **supported** for scoped local sequence fixture, hub-harness, and AppContext validation, but is **not a replacement** for package-level AVA tests, BDD tests, adapter tests, or runtime invariant checks
 
 The trust boundary is intentional: the test owns synthetic input and a
-fixture-local file, while a real Sequence and its production store remain
-outside this test. The narrowest validation for the cursor contract is:
-
-```bash
-cd packages/sequence-test && ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" SCRAMJET_AVA_MEMORY_GUARD=1 node ../../scripts/run-ava.js test/harness/file-backed-mock-cursor.spec.ts
-```
+temporary fixture, while adapter deployment and production state remain
+outside this test. Use the focused sequence-test suite for local loading,
+execution, readiness, and health-route coverage.

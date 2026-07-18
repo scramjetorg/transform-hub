@@ -9,9 +9,12 @@ title: Customer-site topic probe pipeline
 
 # Customer-site topic probe pipeline
 
-This walkthrough is motivated by the public [Server Fault remote-site monitoring question](https://serverfault.com/questions/96468/how-to-monitor-multiple-remote-sites-over-the-internet). A probe can publish a small measurement while another sequence consumes it, without coupling their main streams. This is illustrative documentation, not a hosted monitoring service.
+This walkthrough is motivated by the public [Server Fault remote-site monitoring question](https://serverfault.com/questions/96468/how-to-monitor-multiple-remote-sites-over-the-internet). A probe can publish a measurement while another sequence consumes it without coupling their main streams.
 
-Use the [topics dry guide](../sequences/sequence-topics.md) for the operation contract.
+Use the [topics guide](../sequences/sequence-topics.md) for the operation contract.
+
+Use the [installed Sequence setup and run guide](../sequences/setup-and-run.md) for packaging,
+Hub readiness, and direct or Manager-routed execution.
 
 Prerequisites: a running Hub (or connected Manager), two sequence instances in the same permitted topic scope, and a topic with a declared content type. Topic names and origins are scoped; the creator must not assume that a same-named topic in another Hub or Space is the same route.
 
@@ -41,4 +44,95 @@ export default async function (this: Context) {
 
 Create the topic, route its input/output as appropriate, and verify content type on both sides. Topic delivery is live and backpressure/disconnect errors are observable; topics are not persisted and cannot be replayed after a connection loss. Reconnect requires an application decision about missed measurements. Authentication and authorization for Hub, Manager, and Space remain outside this snippet.
 
-The v2 stream equivalent is `POST /api/v2/topics/:name/stream`; the `createTopic.post` and `topicWrite.post` calls above are typed Hub-scoped operations. Python uses the wrapper's scoped `context.hub.post()` method. Existing `/api/v1/topic` callers remain compatibility paths. Smallest validation: run `npm run test:sequence-appcontext`, then `npm run test:bdd-ci-api-topic` for the live Hub/Space topic path when Docker prerequisites are available. Do not substitute a fixed sleep for route readiness.
+## Consume probes in a local dashboard
+
+The second Sequence consumes the same topic through its normal input stream. It keeps the most
+recent probe for each site, serves that state on a local HTTP port, and returns a small summary
+when its input closes. It does not create another topic or use a separate topic-consumer API.
+
+```typescript
+import { createServer } from "node:http";
+import type { Readable } from "node:stream";
+import type { SequenceAppContext } from "@scramjet/sequence-types";
+
+type Probe = { site: string; ok: boolean; at: string };
+type DashboardConfig = { dashboardPort?: number };
+type Context = SequenceAppContext<DashboardConfig>;
+
+const page = `<!doctype html>
+<meta charset="utf-8">
+<title>Customer-site probes</title>
+<style>
+  body { margin: 2rem; background: #000; color: #fff; font: 16px/1.5 monospace; }
+  pre { white-space: pre-wrap; }
+</style>
+<pre id="probes">loading…</pre>
+<script>
+  const view = document.querySelector("#probes");
+  async function refresh() {
+    const response = await fetch("/api/probes");
+    view.textContent = JSON.stringify(await response.json(), null, 2);
+  }
+  refresh();
+  setInterval(refresh, 2000);
+</script>`;
+
+export default async function (this: Context, input: Readable) {
+  const probes = new Map<string, Probe>();
+  const port = this.config.dashboardPort ?? 8787;
+  const server = createServer((request, response) => {
+    if (request.url === "/api/probes") {
+      response.writeHead(200, { "content-type": "application/json" });
+      response.end(JSON.stringify([...probes.values()]));
+      return;
+    }
+    if (request.url === "/") {
+      response.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+      response.end(page);
+      return;
+    }
+    response.writeHead(404).end();
+  });
+
+  await new Promise<void>((resolve, reject) => {
+    server.once("error", reject);
+    server.listen(port, "127.0.0.1", resolve);
+  });
+
+  let pending = "";
+  let processed = 0;
+  try {
+    for await (const chunk of input) {
+      pending += Buffer.from(chunk).toString("utf8");
+      const lines = pending.split("\n");
+      pending = lines.pop() ?? "";
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        const probe = JSON.parse(line) as Probe;
+        probes.set(probe.site, probe);
+        processed += 1;
+      }
+    }
+    return { processed, sites: probes.size };
+  } finally {
+    await new Promise<void>(resolve => server.close(() => resolve()));
+  }
+}
+```
+
+Start this package with the existing input-topic routing option and pass the local port as normal
+Sequence configuration. With the local Process Adapter from the [installed Sequence setup and run guide](../sequences/setup-and-run.md), the dashboard is available at `http://127.0.0.1:8787/`:
+
+```bash
+si sequence start <dashboard-sequence-id> \
+  --input-topic customer-site-probes \
+  --config-string '{"dashboardPort":8787}'
+```
+
+`--input-topic` makes `customer-site-probes` the `input` stream consumed above. The returned
+`{ processed, sites }` value is the Sequence output when that live input is closed; add the
+existing `--output-topic <topic-name>` option if that output should be routed to another topic.
+The dashboard binds only to loopback. For Docker, Kubernetes, or a remote Hub, configure that
+environment's normal port exposure before expecting the local URL to be reachable.
+
+The v2 stream equivalent is `POST /api/v2/topics/:name/stream`; the `createTopic.post` and `topicWrite.post` calls above are typed Hub-scoped operations. Python uses the wrapper's scoped `context.hub.post()` method. Existing `/api/v1/topic` callers remain compatibility paths. Run `npm run test:sequence-appcontext`, then `npm run test:bdd-ci-api-topic` for the live Hub/Space topic path when Docker prerequisites are available. Poll route readiness instead of using a fixed sleep.

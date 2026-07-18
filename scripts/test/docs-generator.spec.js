@@ -150,6 +150,31 @@ test("runner-python README links are rebased to generated content", t => {
     t.notRegex(generated, /\]\(\.\.\/\.\.\/sequences\//);
 });
 
+test("guide-pair sources contain installed API and routing evidence", t => {
+    const read = relative => fs.readFileSync(path.join(repoRoot, "docs-source", relative), "utf8");
+    const setup = read("sequences/setup-and-run.md");
+    const api = read("api/client-usage.md");
+    const communication = read("sequences/sequence-communication.md");
+    const topics = read("sequences/sequence-topics.md");
+    const packaging = read("sequences/packaging-deploying.md");
+
+    t.regex(setup, /npm install -g @scramjet\/sth @scramjet\/cli/);
+    t.regex(setup, /si sequence deploy/);
+    t.regex(setup, /sequence-communication\.md/);
+    t.regex(api, /createRootClient/);
+    t.regex(api, /sendSequence/);
+    t.regex(api, /\/rpc\/status/);
+    t.regex(api, /space\.hub\(remote\.hubId\)\.instance\(remote\.id\)/);
+    t.regex(communication, /RpcRequest/);
+    t.regex(communication, /RpcResponse/);
+    t.regex(communication, /spaces\/space-1\/hubs\/hub-2/);
+    t.regex(topics, /--input-topic sensor-readings/);
+    t.regex(topics, /--output-topic normalized-readings/);
+    t.regex(topics, /hubClient\(\)\.topicWrite\.post/);
+    t.regex(packaging, /setup-and-run\.md/);
+    t.notRegex(topics, /this\.(?:consumes|produces)\s*\(/);
+});
+
 test("generated-output link validation rejects missing relative targets", t => {
     const dir = tempDir();
     t.context = { dir };

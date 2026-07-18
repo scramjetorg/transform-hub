@@ -11,6 +11,9 @@ title: Simple data transform sequence
 
 This example shows a Node.js sequence that receives JSON data, transforms it, and returns results. It demonstrates input/output handling, logging, monitoring, and graceful stop.
 
+For the canonical installed package, build/test, local Hub readiness, upload, and Manager/Space
+paths, see [Set up and run an installed Sequence](../sequences/setup-and-run.md).
+
 ```typescript
 import { AppContext } from "@scramjet/types";
 import { Readable, Transform } from "stream";

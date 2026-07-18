@@ -9,11 +9,11 @@ title: Customer-site health and control
 
 # Customer-site health and control
 
-This walkthrough is motivated by the public [Server Fault remote-site monitoring question](https://serverfault.com/questions/96468/how-to-monitor-multiple-remote-sites-over-the-internet). The case is useful here because a site probe needs to say what it knows, drain cleanly, and stop quickly when an operator takes it out of service. It is a small documentation example, not a reproduction of that environment.
+This walkthrough is motivated by the public [Server Fault remote-site monitoring question](https://serverfault.com/questions/96468/how-to-monitor-multiple-remote-sites-over-the-internet). A site probe needs to report its state, drain cleanly, and stop quickly when an operator takes it out of service.
 
-Start with the [health and control dry guide](../sequences/sequence-control.md).
+Start with the [health and control guide](../sequences/sequence-control.md).
 
-## Smallest useful sequence
+## Sequence implementation
 
 Prerequisites: a packaged Node sequence, Node.js 18 or newer, and a running Hub. This uses the process adapter. Docker and Kubernetes can supervise the same lifecycle, but their image, network, and shutdown limits are deployment-specific.
 
@@ -50,4 +50,4 @@ export default async function (this: SequenceAppContext) {
 
 The trust boundary is explicit: `siteUrl` and the remote response are external inputs; health details are operator-visible and must be sanitized. The sequence does not own Hub or Manager authentication, TLS, ingress, or site credentials.
 
-Validate the dry/wet control claim with `cd packages/sequence-test && ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" SCRAMJET_AVA_MEMORY_GUARD=1 node ../../scripts/run-ava.js test/phase6-guide-contracts.spec.ts --match="*direct Hub and Manager-routed control flow*"`. The evidence test validates the architecture description and verifies that the real Manager-routed conformance test (`packages/manager/test/manager-api-v2-hotwire.spec.ts`) exercises `stopping`, `killing`, `completed`, `errored`, and `gone` InstanceStatus transitions through the Hub; it is not a live-site probe. Test `stop` with a bounded timeout and `kill` separately. A disconnected control path is an error, not proof of successful cleanup.
+Validate the control flow with `cd packages/sequence-test && ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" SCRAMJET_AVA_MEMORY_GUARD=1 node ../../scripts/run-ava.js test/phase6-guide-contracts.spec.ts --match="*direct Hub and Manager-routed control flow*"`. The evidence test checks the architecture description and the real Manager-routed conformance test (`packages/manager/test/manager-api-v2-hotwire.spec.ts`), which exercises `stopping`, `killing`, `completed`, `errored`, and `gone` InstanceStatus transitions through the Hub. Test `stop` with a bounded timeout and `kill` separately. A disconnected control path is an error, not proof of successful cleanup.

@@ -65,14 +65,8 @@ If progress must survive a restart, choose and operate an external durable store
 with the required consistency and recovery guarantees. `this.save()` is not a
 documented persistence mechanism and must not be presented as one.
 
-For local fixture documentation only, the public
-`createFileBackedMockCursor({ directory, fileName })` helper from
-`@scramjet/sequence-test` models a tiny JSON cursor. Its path must be relative
-and stays inside the fixture directory. `write()` creates parent directories and
-overwrites the file; `read()` parses the current file and rejects with the native
-filesystem error when it does not exist. Call `cleanup()` explicitly. The helper
-is local, non-transactional, and not a checkpoint service: a partial write,
-concurrent writer, filesystem error, or process loss can leave no usable state.
-
-Use it to document or test progression logic, not to claim production durability
-or adapter-independent storage.
+Use `@scramjet/sequence-test` to validate real Sequence loading and execution
+against synthetic summaries. This can prove that a Sequence validates and
+consumes its source-side summary, but it does not provide persistence or
+adapter-independent storage. Operate any durable store separately and test its
+consistency and recovery contract directly.

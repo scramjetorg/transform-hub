@@ -28,4 +28,37 @@ Use the v2 fluent `hubClient()` for current-Hub operations and `spaceClient()` f
 
 The sequence owns its payload and route policy. The Hub/Manager owns transport and routing. Authentication, authorization, TLS, and public ingress remain deployment responsibilities.
 
+### Request/response and RPC
+
+For a typed request/response call, use the fluent client and inspect the returned envelope:
+
+```typescript
+import type { AppConfig, SequenceAppContext } from "@scramjet/sequence-types";
+import type { HubClient, SpaceClient } from "@scramjet/rest-api2";
+
+type Context = SequenceAppContext<AppConfig, unknown, HubClient, SpaceClient>;
+
+export async function request(this: Context) {
+  const health = await this.hubClient().health.get();
+  if (!health.body.healthy) throw new Error("Hub is not ready");
+  const inventory = await this.spaceClient().instances.get();
+  return { hub: health.body, instances: inventory.body.items.length };
+}
+```
+
+An exposed instance endpoint is reached through the instance RPC route. The v2 `RpcRequest` shape
+contains (`method`, `path`, optional `headers` and `body`) and the `RpcResponse` shape returns
+`status`, `headers`, and an optional `body`; use the Manager/Space-prefixed route when the instance
+belongs to another Hub:
+
+```bash
+curl --fail --request POST \
+  'http://manager.example/api/v2/spaces/space-1/hubs/hub-2/instances/instance-7/rpc/health' \
+  -H 'content-type: application/json' \
+  --data '{"method":"GET","path":"/health"}'
+```
+
+This is ordinary request/response traffic. It is not event delivery, topic publication, or a
+durable command queue.
+
 The case-led companion is [Filtering local object data for a consumer](../examples/local-object-filter-to-consumer.md). Validate the local progression with `npm run test:sequence-appcontext`; this does not prove adapter visibility or consumer durability.

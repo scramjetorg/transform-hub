@@ -1,7 +1,7 @@
 {
   "generatedBy": "scripts/docs.js",
   "generatedAt": "1970-01-01T00:00:00.000Z",
-  "sourceIdentifier": "sha256:3de343d4b5977bb1685731fa70672238bc85ce8ad4cf185168a390c0aa11187a",
+  "sourceIdentifier": "sha256:e9d6994b81b118ca771bb1ef8efee6610ee4e36ef0559d212b9f7a0d3c76abb1",
   "outputRoot": {
     "value": "docs",
     "resolvedPath": "docs",
@@ -30,6 +30,7 @@
       "sequences/sequence-lifecycle.md",
       "sequences/sequence-monitoring.md",
       "sequences/sequence-topics.md",
+      "sequences/setup-and-run.md",
       "sequences/writing-sequences.md",
       "testing/testing-sequences.md",
       "cli/usage.md",

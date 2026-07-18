@@ -6,6 +6,11 @@ title: Packaging and deploying sequences
 
 # Packaging and deploying sequences
 
+For an end-to-end installed/package-projected workflow, use [Set up and run an installed Sequence](setup-and-run.md).
+That guide is the source of truth for `npm install`, `npm pack`, the installed `sth`/`si` commands,
+local readiness, upload/start, and direct versus Manager-routed deployment. The examples below
+only describe package shape and API alternatives; they do not repeat Hub setup.
+
 ## Sequence package structure
 
 A sequence is distributed as a directory (or tarball) containing at minimum:
@@ -87,7 +92,7 @@ curl http://localhost:8000/api/v1/instance/:instanceId/output
 ### Via CLI
 
 ```bash
-# Package and deploy a sequence
+# Package and deploy a sequence (see setup-and-run.md for installation and Hub startup)
 si sequence pack ./my-sequence/ -o my-sequence.tar.gz
 si sequence deploy my-sequence.tar.gz
 
@@ -140,3 +145,8 @@ The host uses the adapter pattern to deploy sequences:
 | Kubernetes adapter | Kubernetes pod | Sequences run as Kubernetes pods with configurable resources |
 
 The adapter is selected in the STH configuration. See the [deployment documentation](../deployment/process-adapter.md) for adapter-specific setup.
+
+For local Process Adapter deployment, follow [Set up and run an installed Sequence](setup-and-run.md)
+through `si sequence deploy`; for Docker or Kubernetes, keep the same package/upload/start lifecycle
+and change only the adapter configuration. The returned Instance ID is then usable with the CLI,
+the Hub client, or the Manager/Space routes described in [API client usage](../api/client-usage.md).
