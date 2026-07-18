@@ -404,3 +404,53 @@
     - `npm run docs:generate`, `npm run docs:check`, and guarded Phase 6
       execution-path contracts (11) pass; final Oracle review passes all four
       formerly blocked execution-path findings and generated-doc parity.
+
+## Phase 7: Author-facing standalone example style
+
+- [x] Task: Rewrite each example as a standalone, second-person author guide
+  using the approved style rule; do not address the deferred live-Compose P2.
+  - [x] Rewrite `lifecycle-local-validation-service.md`.
+  - [x] Rewrite `customer-site-health-control.md`.
+  - [x] Rewrite `mcp-bridged-job-status.md`.
+  - [x] Rewrite `local-object-filter-to-consumer.md`.
+  - [x] Rewrite `customer-site-topic-probe-pipeline.md`.
+  - [x] Rewrite `tested-incremental-log-aggregator.md`.
+  - [x] Rewrite `app-context-health-parity.md`.
+  - [x] Rewrite `source-side-data-summary.md`.
+  - [x] Rewrite `python-log-processor.md`.
+  - [x] Rewrite `simple-transform.md`.
+- [x] Task: Regenerate documentation, validate guide contracts, and review the
+  standalone author-guide style across all examples.
+  - Root documentation-guide contracts pass (37) after generated output sync.
+- [x] Task: Conductor - Phase Completion 'Author-facing standalone example style'
+  (Protocol in workflow.md)
+  - [x] Move every `What this demonstrates` section to the actual end of its
+    example, after optional verification.
+  - [x] Repair standalone workflow correctness for topic startup ordering,
+    AppContext lifecycle behavior, MCP bridge build/run, and lifecycle route
+    exposure.
+  - [x] Restore the required motivating-public-case and primary-guide links for
+    every wet guide without reintroducing maintainer-facing language.
+
+## Phase 8: Manager and Hub Docker Compose startup guide
+
+- [x] Task: Document how to start the existing Manager and STH/Hubs through
+  Docker Compose, expose the Manager endpoint for installed `si`, and use the
+  existing BDD Compose topology as verified evidence.
+  - [x] Write the Compose startup guide using existing BDD Compose assets rather
+    than implementing a new Compose stack.
+    - User-directed WIP: document the manually verified Manager/Hub startup
+      path without adding or changing Compose infrastructure.
+    - Uses the approved external-CPM and single-source configuration model;
+      Manager-level CLI routing remains deferred in `td.md`.
+  - [x] Add focused documentation validation and link it from relevant Manager,
+    Hub, and sequence execution pages.
+    - Intentionally not run: user directed this WIP guide to remain manually
+      verified only, without automated checks or generated-output publication.
+  - [x] Regenerate documentation and validate the guide; preserve the deferred
+    live-Compose P2 because this phase documents, rather than reimplements, the
+    existing verified topology.
+    - Intentionally not run: manual verification is the explicit acceptance
+      boundary for this WIP guide; both deferred TD entries remain recorded.
+- [x] Task: Conductor - Phase Completion 'Manager and Hub Docker Compose startup
+  guide' (Protocol in workflow.md)

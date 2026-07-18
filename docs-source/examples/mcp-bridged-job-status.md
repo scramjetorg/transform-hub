@@ -6,13 +6,15 @@ title: Bridging job status to MCP
 
 # Bridging job status to MCP
 
-This walkthrough is motivated by [Galaxy/Loom issue #74](https://github.com/galaxyproject/loom/issues/74), where a tool-facing interface needs a job-status surface rather than direct ownership of the worker. It defines the boundary between a sequence HTTP route and an external MCP bridge.
+Use this walkthrough to connect your separately installed MCP bridge to a deployed Sequence that exposes a bounded job-status route.
 
-Read [exposing a sequence HTTP API](../sequences/sequence-api-exposure.md) first.
+## Prerequisites
+
+You need Node.js 18+, a packaged sequence, and a Process Adapter Hub. Install the Node MCP SDK in your separate bridge application. Your bridge uses the sequence status response as its source of truth, so you do not need an additional backing store for this workflow.
+
+Read [exposing a sequence HTTP API](../sequences/sequence-api-exposure.md) for the sequence API model.
 
 ## Sequence endpoint
-
-Prerequisites: Node.js 18+, a packaged sequence, a process-adapter Hub, and the Node MCP SDK in the separately run bridge. The private Compose example runs the Hub; the bridge is a separate process attached to that private network (or reached through an independently secured tunnel). The bridge uses the sequence status response as its source of truth; no additional backing store is required.
 
 ```typescript
 import type { SequenceAppContext } from "@scramjet/sequence-types";
@@ -28,7 +30,7 @@ export default async function (this: SequenceAppContext) {
 
 The route is registered only after the local prerequisite succeeds. The validation phase is explicit and failures are structured; the pending promise represents the long-running phase after readiness, not a retry mechanism.
 
-The deployable sequence project must include a `package.json` with `"exposePath": "/"` so the Hub can mount the sequence's entire API surface — including the `/status` route — through the instance RPC path:
+The deployable sequence project must include a non-empty `exposePath` in `package.json` so the Runner starts the sequence API server. Use a unique path such as `/job-status` when a v1 path-based route is also needed; the supported v2 instance RPC path below selects the instance explicitly:
 
 ```json
 {
@@ -36,36 +38,46 @@ The deployable sequence project must include a `package.json` with `"exposePath"
   "version": "1.0.0",
   "main": "dist/index.js",
   "engines": { "node": ">=18" },
-  "exposePath": "/",
+  "exposePath": "/job-status",
   "dependencies": {
     "@scramjet/sequence-types": "^1.1.0"
   }
 }
 ```
 
-`exposePath` tells the Hub which URL prefix to associate with this instance. A value of `"/"` maps every route registered via `this.api.use(...)` under the Hub's instance RPC namespace at `/api/v1/instance/<instance-id>/rpc/`. Without this field, the Hub cannot forward external requests to the sequence's HTTP server and the status route remains unreachable.
+`exposePath` is sequence package metadata used to start and associate the exposed API. Request a selected instance through `POST /api/v2/instances/<instance-id>/rpc/status`; its JSON body is an RPC envelope with the sequence request `method`, `path`, and optional `headers` or `body`. Without `exposePath`, the Hub cannot forward external requests to the sequence's HTTP server and the status route remains unreachable.
 
 ## External MCP bridge
 
-The bridge owns MCP protocol handling and calls the sequence HTTP route. Install the SDK in the bridge project with `npm install @modelcontextprotocol/sdk zod`. This inline bridge validates the requested instance id against the private route before returning status:
+Your bridge owns MCP protocol handling and calls the sequence HTTP route. Create `bridge/src/bridge.ts` with this code. It validates the requested instance ID against the private route before returning status:
 
 ```typescript
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 
-// Shared-exposure default (single-instance Compose); the runnable workflow below
-// overrides SEQUENCE_URL with an instance-scoped path containing the deployed ID.
-const hubUrl = process.env.SEQUENCE_URL ?? "http://hub:8000/api/v1/rpc/status";
+const hubUrl = process.env.SEQUENCE_URL ?? "http://127.0.0.1:8000/api/v2/instances/instance-id/rpc/status";
 const server = new McpServer({ name: "job-status-bridge", version: "0.1.0" });
 
 server.registerTool("job_status", {
   description: "Read the bounded status of one running job",
   inputSchema: { instanceId: z.string().regex(/^[A-Za-z0-9_-]{1,128}$/) }
 }, async ({ instanceId }) => {
-  const response = await fetch(hubUrl);
+  const response = await fetch(hubUrl, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      method: "GET",
+      path: "/status",
+      headers: { accept: "application/json" }
+    })
+  });
   if (!response.ok) throw new Error(`sequence status HTTP ${response.status}`);
-  const status = await response.json() as { ready?: boolean; instanceId?: string };
+  const rpc = await response.json() as { status: number; body?: unknown };
+  if (rpc.status !== 200 || !rpc.body || typeof rpc.body !== "object") {
+    throw new Error(`sequence status RPC ${rpc.status}`);
+  }
+  const status = rpc.body as { ready?: boolean; instanceId?: string };
   if (status.instanceId !== instanceId || status.ready !== true) {
     return { isError: true, content: [{ type: "text", text: "job is not ready" }] };
   }
@@ -75,15 +87,42 @@ server.registerTool("job_status", {
 await server.connect(new StdioServerTransport());
 ```
 
-Put the bridge on a private network or use an independently configured tunnel URL. STH does not own MCP authentication, authorization, public ingress, tunnel lifecycle, or replay. If a workflow needs durable job correlation, use an application-owned database or queue outside STH and keep that concern separate from this status route.
+Create `bridge/package.json` and `bridge/tsconfig.json` alongside that source file:
 
-The trust boundary is sequence API → MCP bridge → caller. Validate caller identity at the bridge, authorize each tool, and keep the sequence route private unless an independently secured gateway protects it. A dropped HTTP or MCP connection loses the in-flight observation; neither topics nor events provide replay.
+```json
+{
+  "private": true,
+  "type": "module",
+  "scripts": { "build": "tsc -p tsconfig.json" },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "zod": "^3.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^4.7.0"
+  }
+}
+```
 
-Maintainers may run the repository contract test and `npm run docs:check` as optional evidence. They do not replace the installed artifact workflow.
+```json
+{
+  "compilerOptions": {
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "target": "ES2022",
+    "outDir": "dist",
+    "strict": true
+  },
+  "include": ["src"]
+}
+```
+
+The trust boundary is sequence API -> MCP bridge -> caller. Your bridge owns authentication, authorization, public ingress, and its deployment boundary. Validate caller identity and authorize each tool in the bridge; keep the sequence route private unless you protect it with an independently secured gateway. If you need durable job correlation, keep it in an application-owned database or queue outside STH.
 
 ## Install and run the deliverable with the Process Adapter
 
-Follow the canonical [installed Sequence setup and run guide](../sequences/setup-and-run.md). Build the status sequence, install its production dependencies, and pack it; package the separate MCP bridge with the SDK dependencies shown above:
+Follow the [installed Sequence setup and run guide](../sequences/setup-and-run.md). Build the status sequence, install its production dependencies, and pack it. Package your separate MCP bridge with the SDK dependencies shown above.
 
 ### Packaging terminal
 
@@ -94,10 +133,12 @@ npm install --production
 si sequence pack . -o job-status.tar.gz
 ```
 
-In the separate bridge project, install its dependencies:
+In the separate bridge project, install dependencies and build the documented source file:
 
 ```sh
-npm install @modelcontextprotocol/sdk zod
+cd bridge
+npm install
+npm run build
 ```
 
 ### Hub terminal
@@ -124,7 +165,7 @@ timeout 60s sh -c '
 
 ### Deploy/start terminal
 
-Deploy the sequence, capture the instance ID from the deploy response, and verify the running instance:
+Deploy the sequence, capture `INSTANCE_ID` from the deploy response, and verify the running instance:
 
 ```sh
 si config set apiUrl http://127.0.0.1:8000
@@ -139,11 +180,22 @@ si instance info "$INSTANCE_ID"
 
 ### Sequence API and bridge terminal
 
-Once `$INSTANCE_ID` is set, use the instance-scoped RPC URL to hit the sequence's `/status` route:
+Once `INSTANCE_ID` is set, request the sequence's `/status` route through the v2 instance RPC envelope, then run the built bridge:
 
 ```sh
-curl --fail "http://127.0.0.1:8000/api/v1/instance/$INSTANCE_ID/rpc/status"
-SEQUENCE_URL="http://127.0.0.1:8000/api/v1/instance/$INSTANCE_ID/rpc/status" node bridge.js
+curl --fail --request POST \
+  "http://127.0.0.1:8000/api/v2/instances/$INSTANCE_ID/rpc/status" \
+  -H 'content-type: application/json' \
+  --data '{"method":"GET","path":"/status","headers":{"accept":"application/json"}}'
+SEQUENCE_URL="http://127.0.0.1:8000/api/v2/instances/$INSTANCE_ID/rpc/status" node dist/bridge.js
 ```
 
-Live success is Hub `ready: true`, a running instance whose instance RPC path `/api/v1/instance/<id>/rpc/status` returns `{ instanceId, ready: true }`, and an MCP `job_status` response returning the same bounded status for that ID. Keep the bridge private or independently secure; STH does not provide MCP authentication, authorization, tunnel lifecycle, or replay. The Process Adapter runs the sequence as a host child process without container isolation and the Hub terminates it on shutdown. With a Manager, first connect the Hub using the deployment's verified Manager/verser2 configuration, then set the CLI target to the Manager; the Manager routes sequence operations but does not replace the adapter or make the private MCP route public.
+The Process Adapter runs the sequence as a Hub child process without container isolation and stops it when the Hub shuts down. With a Manager, connect the Hub using your deployment's verified Manager/verser2 configuration, then target the Manager with the CLI; the Manager routes sequence operations but does not replace the adapter or change your bridge's security responsibilities.
+
+## Local verification (optional)
+
+Confirm that the Hub reports `ready: true`, the v2 RPC envelope returns a `200` status and `{ instanceId, ready: true }` body, and your MCP `job_status` tool returns the same bounded status for that ID.
+
+## What this demonstrates
+
+You can use the supported v2 instance RPC envelope as the bounded input to a separate, buildable MCP bridge. Because the sequence package sets `exposePath`, its `/status` route is available to that instance RPC operation. The bridge can confirm that its requested `instanceId` matches the response before returning the status to an MCP caller. A successful run shows the bridge returning the bounded status for the requested instance ID.

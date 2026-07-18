@@ -6,13 +6,17 @@ title: Customer-site health and control
 
 # Customer-site health and control
 
-This walkthrough is motivated by the public [Server Fault remote-site monitoring question](https://serverfault.com/questions/96468/how-to-monitor-multiple-remote-sites-over-the-internet). A site probe needs to report its state, drain cleanly, and stop quickly when an operator takes it out of service.
+This walkthrough is motivated by the public [Server Fault remote-site monitoring question](https://serverfault.com/questions/96468/how-to-monitor-multiple-remote-sites-over-the-internet). Your site probe needs to report its state, drain cleanly, and stop quickly when you take it out of service.
 
 Start with the [health and control guide](../sequences/sequence-control.md).
 
-## Sequence implementation
+## Prerequisites
 
-Prerequisites: a packaged Node sequence, Node.js 18 or newer, and a running Hub. This uses the process adapter. Docker and Kubernetes can supervise the same lifecycle, but their image, network, and shutdown limits are deployment-specific.
+You need a Node sequence project, Node.js 18 or newer, and a terminal for each of the packaging, Hub, readiness, and control steps below. This example uses the process adapter. Docker and Kubernetes can supervise the same lifecycle, but you need to configure their image, network, and shutdown limits for your deployment.
+
+The `siteUrl` and the remote response are external inputs. You should sanitize operator-visible health details, and configure Hub or Manager authentication, TLS, ingress, and site credentials outside the Sequence.
+
+## Sequence implementation
 
 ```typescript
 import type { SequenceAppContext } from "@scramjet/sequence-types";
@@ -45,13 +49,9 @@ export default async function (this: SequenceAppContext) {
 }
 ```
 
-The trust boundary is explicit: `siteUrl` and the remote response are external inputs; health details are operator-visible and must be sanitized. The sequence does not own Hub or Manager authentication, TLS, ingress, or site credentials.
+## Package and run with the Process Adapter
 
-Maintainers may use the sequence-test and Manager conformance tests as optional evidence. Authors should verify the installed artifact and live lifecycle below; a disconnected control path is not proof of successful cleanup.
-
-## Install and exercise the deliverable with the Process Adapter
-
-Use the canonical [installed Sequence setup and run guide](../sequences/setup-and-run.md), then build the package with its configured `siteUrl`, install runtime dependencies, and pack it:
+Use the [installed Sequence setup and run guide](../sequences/setup-and-run.md), then build your package and pack it.
 
 ### Packaging terminal
 
@@ -62,12 +62,14 @@ npm install --production
 si sequence pack . -o site-health.tar.gz
 ```
 
-### Hub terminal
+### Foreground Hub terminal
 
 ```sh
 mkdir -p sequence-store
 sth --runtime-adapter process --hostname 127.0.0.1 --port 8000 --sequences-root "$PWD/sequence-store"
 ```
+
+Keep this terminal running. Run the remaining commands in separate terminals.
 
 ### Readiness terminal
 
@@ -79,9 +81,9 @@ timeout 60s sh -c '
 '
 ```
 
-Deploy with the actual startup configuration and observe the probe:
+### Deploy and control terminal
 
-### Deploy/start terminal
+Point the CLI directly at your Hub, deploy the Sequence with its site URL, and inspect its health and logs:
 
 ```sh
 si config set apiUrl http://127.0.0.1:8000
@@ -91,9 +93,35 @@ si sequence send ./site-health.tar.gz
 si sequence start <sequence-id> --config-string '{"siteUrl":"https://example.com/health"}'
 si instance info <instance-id>
 si instance log <instance-id>
-# stop uses a bounded timeout (10000ms) — the instance drains then stops
+# Stop requests graceful draining and waits at most 10000ms.
 si instance stop <instance-id> 10000
 si instance info <instance-id>
 ```
 
-Success is a running instance whose monitoring output reports `healthy: true` after a successful probe, followed by the `site probe draining` log and a stopped/completed lifecycle after the `stop` bounded timeout. Use `si instance kill <instance-id>` only to verify forced termination separately (not part of the graceful-stop workflow). The Process Adapter provides no container CPU/memory or filesystem isolation and child lifecycles are tied to the Hub. A Manager does not run the process itself: after the Hub is connected with the deployment's Manager configuration, set `si config set apiUrl http://manager-host:8200`; the Manager routes upload/control requests to that Hub. Configure TLS, authentication, and remote-site access outside this sequence.
+When a probe succeeds, monitoring reports `healthy: true`. A failed request is caught, recorded as `ok: false`, and logged as `site probe failed`; it does not terminate the Sequence. A graceful `stop` sets `draining`, writes `site probe draining`, and completes within the bounded timeout when cleanup finishes. If it cannot stop cleanly, you can force termination separately:
+
+```sh
+si instance kill <instance-id>
+```
+
+`kill` does not run the graceful-stop workflow, so use it only when you need forced termination.
+
+### Manager-routed control terminal
+
+After you connect the Hub to your Manager with your deployment's Manager configuration, you can point the CLI at the Manager instead of the Hub:
+
+```sh
+si config set apiUrl http://manager-host:8200
+si instance info <instance-id>
+si instance stop <instance-id> 10000
+```
+
+The Manager routes your upload and control requests to the connected Hub; it does not run the process itself. The Process Adapter provides no container CPU, memory, or filesystem isolation, and its child lifecycles are tied to the Hub.
+
+## Local verification (optional)
+
+You can first deploy to a local Hub using the direct-Hub terminal above, confirm a successful probe reports `healthy: true`, then stop it and confirm the draining log and stopped or completed lifecycle. A reachable control endpoint alone does not prove your cleanup completed.
+
+## What this demonstrates
+
+You can inspect a remote site's health through Sequence monitoring, stop the probe cleanly before killing it when necessary, and use Manager routing to reach a connected Hub. Keep the site URL reachable from the runtime, set a shutdown timeout that fits your cleanup work, and secure the Hub or Manager endpoint for your environment. A successful run shows monitoring data with `healthy: true` during normal operation and clean stop transitions.

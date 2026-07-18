@@ -9,35 +9,50 @@ title: Filtering local object data for a consumer
 
 # Filtering local object data for a consumer
 
-This walkthrough is motivated by [NVIDIA AIStore issue #305](https://github.com/NVIDIA/aistore/issues/305): keep object-data handling near the source and send a useful result onward. The pattern keeps the source directory outside Hub ownership; it does not replace an object store.
+Filter object names where the files are accessible, then publish the useful summary to a consumer Sequence over a Hub topic. The workflow is motivated by [NVIDIA AIStore #305](https://github.com/NVIDIA/aistore/issues/305), a public request for filtering data close to its source.
 
-See [choosing a communication path](../sequences/sequence-communication.md).
+Read the [sequence communication guide](../sequences/sequence-communication.md) for the producer-to-consumer contract.
 
-Use the [installed Sequence setup and run guide](../sequences/setup-and-run.md) for package
-installation, local Hub startup, readiness, and direct or Manager-routed execution.
+## Prerequisites
 
-Prerequisites: Node.js 18+, a process-adapter sequence with access to a configured local source, and a consumer that accepts NDJSON. The source directory is outside Hub ownership; grant the sequence only the intended read access. Do not expose arbitrary paths through an API.
+You need Node.js 18+, the published `sth` and `si` commands, a producer Sequence project, and a consumer Sequence that accepts NDJSON on its input stream. Configure the producer with a source directory that the Runner can read.
+
+With the Process Adapter, `/path/visible-to-the-runner/source` is a path on the Hub host and the Runner has that host's filesystem visibility and permissions. With Docker or Kubernetes, mount the intended source directory into the Runner and configure the mounted container path instead. Do not expose arbitrary host paths through an API.
+
+## Producer Sequence
 
 ```typescript
 import { readdir } from "node:fs/promises";
+import { Readable } from "node:stream";
+import type { HubClient } from "@scramjet/rest-api2";
 import type { SequenceAppContext } from "@scramjet/sequence-types";
 
-export default async function (this: SequenceAppContext) {
-  const source = this.config.sourceDirectory as string;
-  const names = (await readdir(source)).filter(name => name.endsWith(".json"));
+type Config = { sourceDirectory: string };
+type Context = SequenceAppContext<Config, unknown, HubClient, unknown>;
+
+export default async function (this: Context) {
+  const topic = "filtered-local-objects";
+  const names = (await readdir(this.config.sourceDirectory as string))
+    .filter(name => name.endsWith(".json"));
   const summary = { count: names.length, names: names.slice(0, 100) };
-  this.emit("source.summary", summary);
+
+  await this.hubClient().topicWrite.post({
+    params: { name: topic },
+    headers: { "content-type": "application/x-ndjson" },
+    body: Readable.from([Buffer.from(`${JSON.stringify(summary)}\n`)])
+  });
+  this.emit("source.summary", { topic, count: summary.count });
   return summary;
 }
 ```
 
-The returned object is a request/output result; the event is a transient notification. For large inventories, stream or page the result, or write an application-owned artifact and return its reference. A consumer or event connection can disconnect without replay. Maintainers may use `npm run test:sequence-appcontext` as optional AppContext evidence.
+The returned summary is this instance's result. `source.summary` is a transient host event for observers; it is not consumer delivery and can be lost on disconnect. The `filtered-local-objects` topic is the live NDJSON route: start the consumer with that topic as its input before starting this producer. Topics are not persisted or replayed, so a reconnect does not recover missed records.
 
-## Install and connect the deliverable with the Process Adapter
+The producer reads only its configured source directory and sends data through the Hub transport. The Hub does not become a shared filesystem, and the consumer should receive the summary from its input stream rather than attempt to read the producer's path.
 
-Use the canonical [installed Sequence setup and run guide](../sequences/setup-and-run.md). Build the package, install production dependencies into the package, and create the archive:
+## Packaging terminal
 
-### Packaging terminal
+Follow the [installed Sequence setup and run guide](../sequences/setup-and-run.md). Build the package, install production dependencies into it, and create the archive:
 
 ```sh
 npm install
@@ -46,14 +61,18 @@ npm install --production
 si sequence pack . -o object-filter.tar.gz
 ```
 
-### Hub terminal
+## Foreground Hub terminal
+
+Create the sequence store and leave the Hub running in this terminal:
 
 ```sh
 mkdir -p sequence-store
 sth --runtime-adapter process --hostname 127.0.0.1 --port 8000 --sequences-root "$PWD/sequence-store"
 ```
 
-### Readiness terminal
+## Readiness terminal
+
+In another terminal, wait until the Hub reports ready:
 
 ```sh
 timeout 60s sh -c '
@@ -63,9 +82,20 @@ timeout 60s sh -c '
 '
 ```
 
-Deploy with the required source configuration, then observe the result and hand it to the NDJSON consumer:
+## Output/consumer terminal
 
-### Deploy/start terminal
+Start the already-uploaded consumer first so its input stream is connected to the live topic. Replace the placeholder with the consumer's uploaded Sequence ID:
+
+```sh
+si config set apiUrl http://127.0.0.1:8000
+si topic create filtered-local-objects --content-type application/x-ndjson
+si sequence start <consumer-sequence-id> --input-topic filtered-local-objects
+si instance stdout <consumer-instance-id>
+```
+
+## Deploy/start terminal
+
+Upload the producer, then start it with the source directory visible to its Runner. `sequence deploy` uploads and starts in one step; use the separate upload/start path when you need to start the consumer first.
 
 ```sh
 si config set apiUrl http://127.0.0.1:8000
@@ -73,9 +103,26 @@ si sequence deploy ./object-filter.tar.gz --config-string '{"sourceDirectory":"/
 # Or separate upload and start:
 si sequence send ./object-filter.tar.gz
 si sequence start <sequence-id> --config-string '{"sourceDirectory":"/path/visible-to-the-runner/source"}'
+```
+
+## Output terminal
+
+Inspect the producer result and its event/log output:
+
+```sh
 si instance info <instance-id>
 si instance log <instance-id>
 si instance stdout <instance-id>
 ```
 
-Live success is a completed instance whose result reports the filtered JSON count/names and whose logs or output show `source.summary`; the consumer receives that result or the transient event only while connected. The Process Adapter shares the host filesystem and process namespace, has no container resource isolation, and ties Runner cleanup to Hub lifecycle. For a Manager-routed deployment, connect the Hub to the Manager first and target its endpoint with `si config set apiUrl http://manager-host:8200`; Manager routes the upload/start request to the connected Hub, while the Process Adapter still reads only the path visible on that Hub host.
+For a Manager-routed deployment, connect the Hub to the Manager and point `si` at the Manager endpoint. The Manager routes lifecycle requests, but the Runner still executes on the connected Hub; its source path must be visible there. For Docker or Kubernetes, use the selected adapter's mount configuration and do not assume Process Adapter host-path visibility carries over.
+
+For details on topic names and topic-based communication, see the [sequence topics guide](../sequences/sequence-topics.md).
+
+## Local verification (optional)
+
+Run your Sequence project's existing build and test commands before packaging. Those checks can validate your code, but they cannot prove that the selected adapter can see or read the configured source directory.
+
+## What this demonstrates
+
+You can filter files where they are accessible and forward the useful records as NDJSON to a connected consumer Sequence. The producer's return value and event are useful for inspection, while the topic carries the live consumer handoff without treating the Hub as a shared filesystem. A successful run shows the filtered summary published to the consumer topic.

@@ -9,14 +9,32 @@ title: Simple data transform sequence
 
 # Simple data transform sequence
 
-This example shows a Node.js sequence that receives JSON data, transforms it, and returns results. It demonstrates input/output handling, logging, monitoring, and graceful stop.
+Build your first Node Sequence to receive JSON records, multiply each `value`, and return the transformed records. The sequence also writes logs, reports how many records it has processed through monitoring, and handles a graceful stop.
 
-For the canonical installed package, build/test, local Hub readiness, upload, and Manager/Space
-paths, see [Set up and run an installed Sequence](../sequences/setup-and-run.md).
+## Prerequisites
+
+You need Node.js 18 or later, npm, and installed `sth` and `si` CLI commands. Create a Node package with a build script that compiles your TypeScript entry point to `dist/simple-transform.js`.
+
+Your `package.json` needs this package metadata:
+
+```json
+{
+  "name": "@example/simple-transform",
+  "version": "1.0.0",
+  "main": "dist/simple-transform.js",
+  "engines": {
+    "node": ">=18"
+  }
+}
+```
+
+## Write the transform
+
+Create `src/simple-transform.ts`:
 
 ```typescript
-import { AppContext } from "@scramjet/types";
-import { Readable, Transform } from "stream";
+import type { SequenceAppContext } from "@scramjet/sequence-types";
+import { Readable } from "stream";
 
 interface InputRecord {
   id: string;
@@ -31,7 +49,7 @@ interface OutputRecord {
 }
 
 export default async function (
-  this: AppContext<{ multiplier?: number }>,
+  this: SequenceAppContext<{ multiplier?: number }>,
   input: Readable
 ): Promise<OutputRecord[]> {
   const multiplier = this.config?.multiplier ?? 2;
@@ -40,22 +58,18 @@ export default async function (
 
   this.logger.info("sequence starting", { multiplier });
 
-  // Register monitoring handler for custom health data
   this.addMonitoringHandler((current) => ({
     ...current,
     custom: { processedCount: count },
   }));
 
-  // Register stop handler for graceful shutdown
-  this.addStopHandler(async (timeout, canCallKeepalive) => {
+  this.addStopHandler(async (_timeout, canCallKeepalive) => {
     this.logger.info("graceful stop requested", { processedCount: count });
-    // Flush any pending work
     if (canCallKeepalive) {
       this.keepAlive(2000);
     }
   });
 
-  // Process input stream
   for await (const chunk of input) {
     const records: InputRecord[] = Array.isArray(chunk) ? chunk : [chunk];
 
@@ -80,32 +94,11 @@ export default async function (
 }
 ```
 
-## Package the example
+The `input` stream supplies records one at a time or in batches. You return an array of output records after the stream ends. `this.config` reads the deployment configuration, `this.logger` writes instance logs, and the monitoring handler exposes the running `processedCount`. The stop handler logs a stop request and requests a short keepalive period when the runtime permits it.
 
-**package.json:**
+## Package the sequence
 
-```json
-{
-  "name": "@example/simple-transform",
-  "version": "1.0.0",
-  "main": "dist/simple-transform.js",
-  "engines": {
-    "node": ">=18"
-  }
-}
-```
-
-The package has `main: "dist/simple-transform.js"`; build it and include production dependencies
-before creating the archive. The installed workflow below is the author-facing path.
-
-## Installed Process Adapter workflow
-
-Follow [Set up and run an installed Sequence](../sequences/setup-and-run.md) for the canonical
-installation and readiness loop. This example uses Node.js `>=18`, Hub/API port `8000`, loopback
-binding, a separate `sequence-store/` directory, config `{"multiplier":5}`, and two JSON input
-records. It needs no source or data mount.
-
-### Packaging terminal
+Build the package, install its production dependencies, and create the archive that you deploy to the Hub:
 
 ```sh
 npm install
@@ -114,7 +107,11 @@ npm install --production
 si sequence pack . -o simple-transform.tar.gz
 ```
 
-### Hub terminal
+See the [setup and run guide](../sequences/setup-and-run.md) for the canonical walkthrough.
+
+## Start the Hub
+
+In a separate terminal, start a local Process Adapter Hub in the foreground. Keep this terminal running while you deploy and run the sequence:
 
 ```sh
 mkdir -p sequence-store
@@ -122,7 +119,9 @@ sth --runtime-adapter process --hostname 127.0.0.1 --port 8000 \
   --sequences-root "$PWD/sequence-store"
 ```
 
-### Readiness terminal
+## Wait for readiness
+
+In another terminal, wait until the Hub reports that it is ready:
 
 ```sh
 timeout 60s sh -c '
@@ -132,20 +131,43 @@ timeout 60s sh -c '
 '
 ```
 
-### Deploy/start terminal
+## Deploy and start the sequence
+
+Configure the installed CLI to use your Hub, then deploy the archive with a multiplier of five. Note the instance ID printed by the deploy command:
 
 ```sh
 si config set apiUrl http://127.0.0.1:8000
 si sequence deploy ./simple-transform.tar.gz --config-string '{"multiplier":5}'
+```
+
+## Send input
+
+Replace `<instance-id>` with the ID from deployment and send two JSON records:
+
+```sh
 printf '%s\n' '{"id":"a","value":10}' '{"id":"b","value":20}' | \
   si instance input <instance-id>
+```
+
+## Retrieve output and inspect the instance
+
+Retrieve the transformed output, then inspect the instance and its logs. The output for `a` contains `doubled: 50`, the output for `b` contains `doubled: 100`, and the logs include the multiplier and processed records. The instance information also includes the monitoring data, including `processedCount` while it runs.
+
+```sh
+si instance stdout <instance-id>
 si instance list
 si instance info <instance-id>
-si instance stdout <instance-id>
 si instance log <instance-id>
 ```
 
-Success is output with `doubled: 50` for `a` and `doubled: 100` for `b`, the instance visible in
-`si instance list`, and the multiplier visible in instance logs. For Docker or Kubernetes, deploy
-the same archive with the selected adapter and configure its required image, storage, network, and
-port exposure; Process Adapter runs directly on the host and has no container mount.
+## Local verification (optional)
+
+Before packaging, run your package's test command if you have added tests:
+
+```sh
+npm test
+```
+
+## What this demonstrates
+
+You can package a small Node transform, run it on an installed Hub, send it JSON records, and inspect its transformed output, logs, instance details, and monitoring data. A successful run shows the doubled values in the output stream.

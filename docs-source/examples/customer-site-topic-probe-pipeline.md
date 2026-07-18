@@ -6,14 +6,25 @@ title: Customer-site topic probe pipeline
 
 # Customer-site topic probe pipeline
 
-This walkthrough is motivated by the public [Server Fault remote-site monitoring question](https://serverfault.com/questions/96468/how-to-monitor-multiple-remote-sites-over-the-internet). A probe can publish a measurement while another sequence consumes it without coupling their main streams.
+This walkthrough is motivated by the public [Server Fault remote-site monitoring question](https://serverfault.com/questions/96468/how-to-monitor-multiple-remote-sites-over-the-internet). You build two independent Sequences: a probe that publishes a measurement and a dashboard that consumes it without coupling their main streams.
 
 Use the [topics guide](../sequences/sequence-topics.md) for the operation contract.
 
 Use the [installed Sequence setup and run guide](../sequences/setup-and-run.md) for packaging,
 Hub readiness, and direct or Manager-routed execution.
 
-Prerequisites: a running Hub (or connected Manager), two sequence instances in the same permitted topic scope, and a topic with a declared content type. Topic names and origins are scoped; the creator must not assume that a same-named topic in another Hub or Space is the same route.
+## Prerequisites
+
+- Node.js 18 or later, plus published `sth` and `si` commands.
+- A Hub, or a Hub connected to a Manager, that can run both Sequences.
+- Two Sequence projects, `probe-sequence/` and `dashboard-sequence/`, each with its own `package.json` and build script.
+- Both instances must be in the same permitted topic scope. Topic names and origins are scoped, so a same-named topic in another Hub or Space is not the same route.
+
+The probe creates `customer-site-probes` with the `application/json` content type and writes newline-delimited JSON to it. The dashboard receives that topic as its normal `input` stream. It stores the latest probe for each site and serves the current state through a local HTTP server.
+
+Topics provide live delivery, not storage. Handle backpressure and disconnect errors in your application, and decide how to handle measurements missed while a connection is unavailable. Hub, Manager, and Space authentication and authorization remain outside this example.
+
+## Probe Sequence
 
 ```typescript
 import { Readable } from "node:stream";
@@ -39,7 +50,7 @@ export default async function (this: Context) {
 }
 ```
 
-Create the topic, route its input/output as appropriate, and verify content type on both sides. Topic delivery is live and backpressure/disconnect errors are observable; topics are not persisted and cannot be replayed after a connection loss. Reconnect requires an application decision about missed measurements. Authentication and authorization for Hub, Manager, and Space remain outside this snippet.
+`createTopic.post` and `topicWrite.post` are typed Hub-scoped operations. The stream route is scoped to the Hub that runs the probe, so use the exact same topic name and permitted scope when you route the dashboard input.
 
 ## Consume probes in a local dashboard
 
@@ -117,56 +128,44 @@ export default async function (this: Context, input: Readable) {
 }
 ```
 
-Start this package with the existing input-topic routing option and pass the local port as normal
-Sequence configuration. The complete installed-deliverable workflow is below; the dashboard binds
-to loopback at `http://127.0.0.1:8787/`.
+Set `dashboardPort` in the Sequence configuration to choose the local listener port. When you omit it, the dashboard uses `8787`. The server intentionally binds to `127.0.0.1`, so it is available at `http://127.0.0.1:8787/` only from the environment where the dashboard runs.
 
-### Dashboard start terminal
+`--input-topic customer-site-probes` makes the topic the `input` stream consumed above. When that live input closes, the Sequence returns `{ processed, sites }`; add `--output-topic <topic-name>` if you need to route that result to another topic.
 
-```sh
-si sequence start <dashboard-sequence-id> \
-  --input-topic customer-site-probes \
-  --config-string '{"dashboardPort":8787}'
-```
+For Docker, Kubernetes, or a remote Hub, configure the selected environment's port exposure before you expect the local dashboard URL to be reachable. Do not assume the Process Adapter's loopback binding or host filesystem behavior applies to containers. Configure container mounts when your Sequence needs files from the host.
 
-`--input-topic` makes `customer-site-probes` the `input` stream consumed above. The returned
-`{ processed, sites }` value is the Sequence output when that live input is closed; add the
-existing `--output-topic <topic-name>` option if that output should be routed to another topic.
-The dashboard binds only to loopback. For Docker, Kubernetes, or a remote Hub, configure that
-environment's normal port exposure before expecting the local URL to be reachable.
-
-## Optional maintainer evidence
-
-The v2 stream equivalent is `POST /api/v2/topics/:name/stream`; the `createTopic.post` and
-`topicWrite.post` calls above are typed Hub-scoped operations. Python uses the wrapper's scoped
-`context.hub.post()` method. Existing `/api/v1/topic` callers remain compatibility paths. Maintainers
-may run the AppContext and live topic checks when their Docker prerequisites are available; those
-checks are not required for an author to deploy this package. Poll route readiness instead of using
-a fixed sleep.
-
-## Installed Process Adapter workflow
+## Build and run with the Process Adapter
 
 Follow the canonical [Set up and run an installed Sequence](../sequences/setup-and-run.md) guide.
-For this two-sequence pipeline, use Node.js `>=18`, published `sth`/`si`, Hub API port `8000` on
-`127.0.0.1`, and a separate `sequence-store/` directory. The Process Adapter has no container
-mounts. The probe sequence needs config `siteName`, creates the exact topic
-`customer-site-probes` with content type `application/json`, and the dashboard sequence needs
-`dashboardPort: 8787`; expose port `8787` only if the dashboard must be reached beyond loopback.
+This example uses Hub API port `8000` on `127.0.0.1` and a separate `sequence-store/` directory.
 
-### Packaging terminal
+### Probe package terminal
 
-Each directory is a standalone Sequence project with its own `package.json`, build output,
-and production `node_modules` included in its archive.
+Build and pack the probe independently so its archive contains its own build output and production dependencies.
 
 ```sh
-cd probe-sequence && npm install && npm run build && npm install --production && cd ..
+cd probe-sequence
+npm install
+npm run build
+npm install --production
+cd ..
 si sequence pack ./probe-sequence -o customer-site-probe.tar.gz
+```
 
-cd dashboard-sequence && npm install && npm run build && npm install --production && cd ..
+### Dashboard package terminal
+
+Build and pack the dashboard independently for the same reason.
+
+```sh
+cd dashboard-sequence
+npm install
+npm run build
+npm install --production
+cd ..
 si sequence pack ./dashboard-sequence -o customer-site-dashboard.tar.gz
 ```
 
-### Hub terminal
+### Foreground Hub terminal
 
 ```sh
 mkdir -p sequence-store
@@ -188,21 +187,44 @@ timeout 60s sh -c '
 
 ```sh
 si config set apiUrl http://127.0.0.1:8000
-si sequence deploy ./customer-site-probe.tar.gz \
-  --config-string '{"siteName":"customer-a"}'
-si sequence deploy ./customer-site-dashboard.tar.gz \
+si sequence send ./customer-site-dashboard.tar.gz
+si sequence start <dashboard-sequence-id> \
   --input-topic customer-site-probes \
   --config-string '{"dashboardPort":8787}'
+si sequence deploy ./customer-site-probe.tar.gz \
+  --config-string '{"siteName":"customer-a"}'
+si instance list
+si instance info <dashboard-instance-id>
+si instance info <probe-instance-id>
+si instance log <probe-instance-id>
+```
+
+Start the dashboard before the one-shot probe so its input stream is connected when the probe writes its live record. The separate upload/start path makes that ordering explicit; the returned dashboard instance ID is the value used in the observation commands.
+
+### Dashboard access terminal
+
+Run this from the host where the dashboard Sequence is running:
+
+```sh
+curl --fail http://127.0.0.1:8787/
+curl --fail http://127.0.0.1:8787/api/probes
+```
+
+The first request returns the dashboard page. The second returns the latest JSON measurement for each site after the probe publishes to `customer-site-probes`.
+
+## Local verification (optional)
+
+You can use the following checks while developing the two Sequences:
+
+```sh
 si instance list
 si instance info <probe-instance-id>
 si instance info <dashboard-instance-id>
 si instance log <probe-instance-id>
 ```
 
-Success is a `probe.published` event and a JSON measurement containing `site: "customer-a"`, the
-dashboard responding with HTTP 200 at `http://127.0.0.1:8787/`, and `/api/probes` containing that
-measurement. Both instances must be visible in `si instance list` and report started in
-`si instance info`. For Docker or Kubernetes, deploy the two archives with the selected adapter,
-declare the shared topic in the permitted scope, and configure runner networking plus port exposure
-for `8787`; do not assume the process adapter's loopback binding or host filesystem behavior carries
-over.
+The v2 stream endpoint is `POST /api/v2/topics/:name/stream`. In the probe, `createTopic.post` and `topicWrite.post` use that Hub-scoped topic model. Poll the readiness endpoint above instead of relying on a fixed delay before deployment.
+
+## What this demonstrates
+
+You can collect measurements at one location with the probe Sequence and expose their current state through a dashboard Sequence somewhere else. Topic routing delivers the probe's live `customer-site-probes` data to the dashboard's normal input stream, while the local dashboard endpoint exposes the latest per-site state at `/` and `/api/probes`. A successful run shows probe measurements flowing through the topic to the dashboard output.

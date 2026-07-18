@@ -1,92 +1,45 @@
 ---
 id: examples-tested-incremental-log-aggregator
 slug: /examples/tested-incremental-log-aggregator
-title: Test an incremental log aggregator
+title: Build an incremental log aggregator
 ---
 
-# Test an incremental log aggregator
+# Build an incremental log aggregator
 
-This example is motivated by the public [DVC issue #829](https://github.com/treeverse/dvc/issues/829). Load a real Sequence fixture, execute a synthetic log batch, and verify output and health registration without treating the fixture as a production state store.
+Build a Node.js Sequence that accepts one JSON log batch at a time and emits the aggregate for each batch. The Sequence registers a health endpoint while it runs. The workflow is motivated by [DVC #829](https://github.com/treeverse/dvc/issues/829), a public request for incremental log handling.
 
-Start with the [sequence testing guide](../testing/testing-sequences.md) for the harness scope and validation command. This page covers local fixture execution; deployment against a Hub and adapter is a separate validation path.
+Read the [testing Sequences guide](../testing/testing-sequences.md) for the test model used alongside this deployed workflow.
 
-## Prerequisites and boundaries
+## Prerequisites
 
-You need a Node.js Sequence project with `@scramjet/sequence-test` installed as a development dependency. The narrow fixture path is Node-only. It does not validate a process, Docker, or Kubernetes adapter, a running Hub, restart behavior, or a real external state store.
+You need Node.js `>=18`, `@scramjet/sth`, `@scramjet/cli`, and a Node.js Sequence project. Include the Sequence's production dependencies in the packed archive.
 
-The test supplies synthetic log batches and owns a temporary fixture directory. A production implementation must authenticate and authorize any durable store independently.
+Create `index.js` in your Sequence project:
 
-## Load and execute the Sequence
+```javascript
+module.exports = function (input) {
+  this.api.use("/health", (_req, res) => res.end(JSON.stringify({ status: "ok" })));
 
-The aggregator can process a synthetic batch and expose a health route:
+  return input.map((batch) => {
+    if (!Array.isArray(batch) || !batch.every((entry) => entry && typeof entry.level === "string")) {
+      throw new Error("Each input value must be an array of log entries with a level");
+    }
 
-```typescript
-import {
-  createHubHarness,
-  createNodeSequenceFixture,
-  resolveSequenceFixtureMetadata,
-  runSequence,
-} from "@scramjet/sequence-test";
-
-type LogEntry = { level: "info" | "error" };
-const fixture = await createNodeSequenceFixture({
-  "index.js": `
-    module.exports = function (input) {
-      this.api.use("/health", (_req, res) => res.end(JSON.stringify({ status: "ok" })));
-      return input.map(batch => ({
-        processed: batch.length,
-        errors: batch.filter(entry => entry.level === "error").length,
-      }));
+    return {
+      processed: batch.length,
+      errors: batch.filter((entry) => entry.level === "error").length,
     };
-  `,
-});
-
-try {
-  const batch: LogEntry[] = [
-    { level: "info" },
-    { level: "error" },
-  ];
-  const metadata = await resolveSequenceFixtureMetadata(fixture.directory);
-  const harness = createHubHarness();
-  const result = await runSequence({
-    runtime: metadata.runtimeKind,
-    sequencePath: metadata.mainPath,
-    context: harness.context,
-    input: { contentType: "application/x-ndjson", body: [batch] },
   });
-
-  result.assert.completed();
-  console.log(result.output.ndjson());
-  console.log(harness.apiRoutes().map(route => route.path));
-} finally {
-  await fixture.cleanup();
-}
+};
 ```
 
-This verifies that the packaged entry point loads, the synthetic batch executes,
-completion is reported, and the Sequence registers `/health`. It does not prove
-durable progression or checkpointing.
+Each NDJSON input value must be a JSON array of log entries. This implementation aggregates each value as it arrives; it does not retain state across values or restarts. Add authenticated, durable storage only if your application needs cumulative or checkpointed aggregates.
 
-## Optional maintainer evidence: sequence-test harness
+## Deploy with the Process Adapter
 
-The focused sequence-test suite validates local loading, execution, readiness, and health behavior
-as described in the [testing guide](../testing/testing-sequences.md). It is maintainer evidence,
-not the author-facing deployment workflow: it does not prove a running Hub, adapter behavior,
-restart behavior, or durable progression.
+Package and run the deliverable with the canonical [Set up and run an installed Sequence](../sequences/setup-and-run.md) workflow. This example uses a Process Adapter Hub on `127.0.0.1:8000` and stores uploaded archives in `sequence-store/`. Keep the Hub command running in the foreground while you deploy and run the instance.
 
-## Installed Process Adapter workflow
-
-Package and run the deliverable through the canonical [Set up and run an installed
-Sequence](../sequences/setup-and-run.md) workflow. Use these concrete values for this example:
-
-- Runtime prerequisite: Node.js `>=18`, published `@scramjet/sth` and `@scramjet/cli`, and the
-  sequence's production dependencies included in the archive.
-- Input: `application/x-ndjson`, with one JSON log batch per input value. The sample batch is
-  `[ {"level":"info"}, {"level":"error"} ]`.
-- Hub: Process Adapter on loopback `127.0.0.1:8000`, with uploaded sequences stored in the separate
-  `sequence-store/` directory. No source mount is needed for this example.
-
-### Packaging terminal
+### Package
 
 ```sh
 npm install
@@ -95,7 +48,7 @@ npm install --production
 si sequence pack . -o incremental-log-aggregator.tar.gz
 ```
 
-### Hub terminal
+### Foreground Hub
 
 ```sh
 mkdir -p sequence-store
@@ -103,7 +56,7 @@ sth --runtime-adapter process --hostname 127.0.0.1 --port 8000 \
   --sequences-root "$PWD/sequence-store"
 ```
 
-### Readiness terminal
+### Readiness
 
 ```sh
 timeout 60s sh -c '
@@ -113,19 +66,33 @@ timeout 60s sh -c '
 '
 ```
 
-### Deploy/start terminal
+### Deploy and start
 
 ```sh
 si config set apiUrl http://127.0.0.1:8000
 si sequence deploy ./incremental-log-aggregator.tar.gz
+```
+
+### Input
+
+```sh
 echo '[{"level":"info"},{"level":"error"}]' | si instance input <instance-id>
+```
+
+### Output
+
+```sh
 si instance info <instance-id>
 si instance stdout <instance-id>
 si instance log <instance-id>
 ```
 
-The observable success result is `processed: 2` and `errors: 1` in instance output, the instance
-appearing in `si instance list`, and `/health` returning `{"status":"ok"}` while it runs. For a
-Docker or Kubernetes deployment, use the same packed artifact but select that adapter and provide
-its required runner image, storage, and network configuration; the Process Adapter command above
-does not provide container isolation.
+For Docker or Kubernetes, deploy the same packed artifact with that adapter's required runner image, storage, and network configuration. The Process Adapter command does not provide container isolation.
+
+## Local verification (optional)
+
+Install `@scramjet/sequence-test` as a development dependency when you want a fast, local check of your own Sequence before deployment. A harness can feed representative valid and invalid batches, inspect emitted aggregates, and confirm that `/health` is registered without starting a Hub. It is useful for iteration, but it does not validate adapter behavior, restarts, or durable state.
+
+## What this demonstrates
+
+You can process log entries incrementally by aggregating each incoming batch instead of waiting for a complete log set. Instance output lets you observe the aggregate for each batch as it is processed, while input validation rejects malformed values clearly. This keeps aggregation responsive and makes invalid input visible without obscuring the normal deployment workflow. A successful run shows the aggregated output for each batch on the instance output stream.

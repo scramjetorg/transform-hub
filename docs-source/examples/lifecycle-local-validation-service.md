@@ -6,13 +6,21 @@ title: Start a local validation service safely
 
 # Start a local validation service safely
 
-This walkthrough is motivated by the public [Server Fault diagnostics question](https://serverfault.com/questions/412134/server-unreachable-best-way-to-find-out-the-cause): before a service answers traffic, validate its local prerequisites.
+When your Sequence depends on a local file or another startup resource, validate it before you expose a service route. This guide packages a Sequence, runs it on an installed local Hub, and shows the difference between a usable instance and one that fails during startup. It is motivated by the public [Server Fault question about diagnosing an unreachable server](https://serverfault.com/questions/412134/server-unreachable-best-way-to-find-out-the-cause).
 
-Read [sequence lifecycle and readiness](../sequences/sequence-lifecycle.md) first.
+For lifecycle details, read [sequence lifecycle and readiness](../sequences/sequence-lifecycle.md).
+
+## Prerequisites
+
+- Node.js 18 or later and npm
+- The Scramjet CLI (`si`) and Transform Hub CLI (`sth`) installed and available on your `PATH`
+- A Sequence project that can be built with `npm run build`
+- A file that the Process Adapter runner can read, or a plan to package that file with your Sequence
+- `curl`, `timeout`, and `sh` for the readiness command below
+
+This example uses the Process Adapter. You can run the same Sequence with Docker or Kubernetes, but you need to account for their filesystem visibility and startup-timeout settings. Treat `dataFile` as a packaged or explicitly mounted resource, not as an arbitrary host path.
 
 ## Validation-first sequence
-
-Prerequisites: Node.js 18+, a packaged sequence, and a Hub using the process adapter. Docker and Kubernetes can run the same sequence, but filesystem visibility and startup timeouts are adapter-specific. The example treats `DATA_FILE` as a packaged or explicitly mounted resource, not as an arbitrary host path.
 
 ```typescript
 import { access } from "node:fs/promises";
@@ -37,15 +45,15 @@ export default async function (this: SequenceAppContext) {
 }
 ```
 
-In a complete application, the validation phase is explicit and route registration follows it. Until validation succeeds, no exposed listener is active. A failure produces structured logs/events and an errored instance; callers start a new instance instead of retrying inside the failed one. The pending promise only represents the long-running phase after readiness and is not a retry mechanism.
+Route registration follows validation. Until `access()` succeeds, no exposed listener is active. If validation fails, the Sequence writes a structured error, destroys its instance, and rethrows the original error. The instance becomes errored; start a new instance after you fix its configuration or resource instead of retrying inside the failed one. The pending promise represents the long-running phase after readiness, not a retry mechanism.
 
-The trust boundary is the packaged resource, configuration, and adapter mount. Validate paths and permissions without returning file contents. The sequence does not own Hub authentication, public ingress, or secret storage. A dropped client connection does not replay prior requests.
+Your trust boundary is the packaged resource, configuration, and adapter mount. Validate paths and permissions without returning file contents. The Sequence does not manage Hub authentication, public ingress, or secret storage. A dropped client connection does not replay earlier requests.
 
-Maintainers may use the repository lifecycle-contract test and `npm run docs:check` as optional evidence; neither is an author prerequisite for the installed deliverable.
+## Package and run with the Process Adapter
 
-## Install and verify the deliverable with the Process Adapter
+Follow the [installed Sequence setup and run guide](../sequences/setup-and-run.md) for the complete package contract. In your Sequence project, install dependencies, build, install production dependencies, and create the archive:
 
-Follow the canonical [installed Sequence setup and run guide](../sequences/setup-and-run.md) for the full package contract. From the Sequence project, install, build, install production dependencies, and create the archive:
+Set a non-empty `exposePath` in the sequence package metadata to start the sequence API server. For example, add `"exposePath": "/validation-status"` to `package.json`; the supported instance RPC request below identifies the instance explicitly and forwards `path: "/status"` to its API.
 
 ### Packaging terminal
 
@@ -73,7 +81,7 @@ timeout 60s sh -c '
 '
 ```
 
-Point `si` at that Hub and deploy with the configuration key used by this example. `dataFile` must resolve inside the packaged or explicitly mounted filesystem:
+Point `si` at the running Hub and deploy with the configuration key used by this example. `dataFile` must resolve inside the runner's packaged or explicitly mounted filesystem:
 
 ### Deploy/start terminal
 
@@ -88,4 +96,23 @@ si instance info <instance-id>
 si instance log <instance-id>
 ```
 
-Live success is the `ready: true` Hub status, a running instance in `si instance info`, the `validation passed` log, and a successful request to the sequence's `/status` route. A missing or inaccessible `dataFile` must instead produce `RESOURCE_UNAVAILABLE` and an errored instance. The Process Adapter runs child processes without container resource or filesystem isolation; the Hub owns their lifecycle and stops them when it stops. For Manager-routed deployment, configure and connect the Hub to the Manager first, then change `apiUrl` to the Manager endpoint; Manager routes the operation but the connected Hub's Process Adapter runs the Runner.
+### Instance status terminal
+
+Request the sequence route through the supported v2 instance RPC operation. The outer request is always `POST`; its JSON metadata contains the sequence request method, path, and headers:
+
+```sh
+curl --fail --request POST \
+  "http://127.0.0.1:8000/api/v2/instances/<instance-id>/rpc/status" \
+  -H 'content-type: application/json' \
+  --data '{"method":"GET","path":"/status","headers":{"accept":"application/json"}}'
+```
+
+With the Process Adapter, the Hub owns the child process lifecycle and stops it when the Hub stops; it does not provide container filesystem or resource isolation. If you deploy through a Manager, connect the Hub to that Manager first and set `apiUrl` to the Manager endpoint. The Manager routes the deployment, while the connected Hub's Process Adapter runs the Runner.
+
+## Local verification (optional)
+
+Confirm that the Hub reports `ready: true`, then inspect the instance and its logs. The RPC response contains `status`, `headers`, and `body`; after `validation passed` appears, its `body` is the sequence response with `ready: true`. A missing or inaccessible `dataFile` instead logs `RESOURCE_UNAVAILABLE` and leaves the instance errored without an active route.
+
+## What this demonstrates
+
+Validation before route registration prevents a Sequence with a missing or inaccessible `dataFile` from exposing `/status` as though it were usable. The explicit instance RPC route lets you request the ready status only from the intended instance after validation succeeds. A successful run shows the instance ready, its log confirms validation passed, and the RPC response contains the bounded status.

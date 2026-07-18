@@ -346,8 +346,11 @@ test("source-summary and configuration guides describe the canonical safe models
         /for await \(const entry of directory\)/,
         /Number\.isSafeInteger\(info\.size\)/,
         /throw new Error\("directory entry escaped sourceDirectory"\);/,
-        /export async function validateSourceSummary\(sequenceDirectory: string, sourceDirectory: string\): Promise<void>/,
-        /await readiness\.validate\(\)/, /await readiness\.initialize\(\)/, /await readiness\.activateRoute\("\/health"\)/,
+        /validates an absolute directory and opens it before registering.*health/,
+        /si config set apiUrl/,
+        /si sequence deploy/,
+        /si instance output/,
+        /stream compact metadata summaries without uploading/,
     ]) t.regex(source, expression);
     const config = readSourceDoc("sequences", "sequence-configuration-resources-state.md");
     t.regex(config, /where the source is accessible/i);

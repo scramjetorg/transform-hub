@@ -274,7 +274,7 @@
   },
   {
     "id": "examples-tested-incremental-log-aggregator",
-    "title": "Test an incremental log aggregator",
+    "title": "Build an incremental log aggregator",
     "slug": "/examples/tested-incremental-log-aggregator",
     "source": "docs-source/examples/tested-incremental-log-aggregator.md",
     "output": "examples/tested-incremental-log-aggregator.md"
