@@ -16,3 +16,8 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 - [x] **Track: sequence writing guide**
 *Link: [./tracks/sequence_writing_guide_20260716/](./tracks/sequence_writing_guide_20260716/)*
+
+---
+
+- [ ] **Track: dependencies update and cleanup**
+*Link: [./tracks/dependencies_update_cleanup_20260719/](./tracks/dependencies_update_cleanup_20260719/)*
