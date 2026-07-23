@@ -6,12 +6,16 @@ export type ApiClientRequest = {
     query?: unknown;
     headers?: Record<string, string>;
     body?: unknown;
+    timeoutMs?: number;
+    signal?: AbortSignal;
 };
 
 export type ApiClientResponse<T = unknown> = {
     status: number;
     headers: Record<string, string>;
     body: T;
+    /** Idempotent awaited response-resource cleanup when supplied by the transport. */
+    cleanup?: () => Promise<void>;
 };
 
 export type ApiClientTransport = {

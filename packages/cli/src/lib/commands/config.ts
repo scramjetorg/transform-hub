@@ -3,6 +3,7 @@ import { cmd, type CommandDescriptor } from "@scramjet/config";
 import { stringToBoolean } from "../../utils/stringToBoolean";
 import { profileManager, siConfig, sessionConfig, isProfileConfig } from "../config";
 import { displayMessage, displayObject } from "../output";
+import { publicVerser2Profile } from "../config/verser2Profile";
 
 /**
  * Builds the `config` command descriptor tree.
@@ -48,7 +49,7 @@ export const configCommand: CommandDescriptor = cmd("config", (b) => {
                             displayMessage(`Current configuration: ${currentProfileConfig().path}\n`);
                         else
                             displayMessage(`Current profile: ${profileManager.getProfileName()}\n`);
-                        displayObject(configuration, configuration.log.format);
+                        displayObject(configuration.verser2 ? { ...configuration, verser2: publicVerser2Profile(configuration.verser2) } : configuration, configuration.log.format);
                     });
             }),
             cmd("session", (c) => {
@@ -160,7 +161,22 @@ export const configCommand: CommandDescriptor = cmd("config", (b) => {
                                                 throw new Error("Invalid environment");
                                             }
                                         });
-                                })
+                                }),
+                                ...["endpoint", "brokerId", "ingress.level", "ingress.expectedId", "ingress.routeDomain", "target.spaceId", "target.hubId", "tls.caFile", "tls.certFile", "tls.keyFile", "tls.pfxFile", "tls.passphraseReference", "timeoutMs"].map(path => cmd(`verser2.${path}`, leaf => leaf.argument("<value>").action((value: string) => {
+                                    const changed = mutableProfileConfig().updateVerser2Draft(current => {
+                                        const copy: any = current;
+                                        const parts = path.split(".");
+                                        let target = copy;
+                                        for (const part of parts.slice(0, -1)) target = target[part] ||= {};
+                                        target[parts[parts.length - 1]] = path === "timeoutMs" ? Number(value) : value;
+                                        if (path === "tls.pfxFile") { delete copy.tls.certFile; delete copy.tls.keyFile; }
+                                        if (path === "tls.certFile" || path === "tls.keyFile") delete copy.tls.pfxFile;
+                                        if (copy.target && !Object.keys(copy.target).length) delete copy.target;
+                                        return copy;
+                                    });
+                                    if (!changed) throw new Error("Invalid Verser2 configuration");
+                                    if (mutableProfileConfig().promoteVerser2DraftResult() === "failed") throw new Error("Unable to persist Verser2 configuration");
+                                })))
                             );
                     }),
                     cmd("reset", (resetCmd) => {
@@ -201,6 +217,15 @@ export const configCommand: CommandDescriptor = cmd("config", (b) => {
                                         .desc("Reset env")
                                         .action(() => resetValue(defaultEnv, v => mutableProfileConfig().setEnv(v)));
                                 }),
+                                cmd("verser2", (c) => {
+                                    c.desc("Remove outbound Verser2 profile settings").action(() => {
+                                        if (!mutableProfileConfig().resetVerser2()) throw new Error("Reset failed.");
+                                    });
+                                }),
+                                ...["endpoint", "brokerId", "ingress.level", "ingress.expectedId", "ingress.routeDomain", "target.spaceId", "target.hubId", "tls.caFile", "tls.certFile", "tls.keyFile", "tls.pfxFile", "tls.passphraseReference", "timeoutMs"].map(path => cmd(`verser2.${path}`, c => c.action(() => {
+                                    if (!mutableProfileConfig().resetVerser2Field(path)) throw new Error("Reset failed.");
+                                    if (mutableProfileConfig().promoteVerser2DraftResult() === "failed") throw new Error("Unable to persist Verser2 configuration");
+                                }))),
                                 cmd("all", (c) => {
                                     c
                                         .desc("Reset all configuration")

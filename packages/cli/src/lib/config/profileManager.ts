@@ -56,7 +56,8 @@ export class ProfileManager {
         return profileExists(name);
     }
     profileIsValid(name: string) {
-        return new ProfileConfig(profileNameToPath(name)).isValid();
+        const profile = new ProfileConfig(profileNameToPath(name));
+        return profile.validate(profile.get());
     }
 
     isPathSource() {

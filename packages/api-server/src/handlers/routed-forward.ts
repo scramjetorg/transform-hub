@@ -1,23 +1,9 @@
 import { IncomingHttpHeaders, IncomingMessage, ServerResponse } from "http";
 import { Readable } from "stream";
+import type { RoutedForwardResponse, RoutedForwardTransport } from "@scramjet/api-router";
 
-export interface RoutedForwardTransportResponse {
-    statusCode: number;
-    headers?: Record<string, string | string[] | number | undefined>;
-    body: Readable;
-}
-
-export interface RoutedForwardTransport {
-    waitForRoute(domain: string, timeoutMs?: number): Promise<void>;
-    request(request: {
-        domain: string;
-        method: string;
-        path: string;
-        headers?: Record<string, string>;
-        body?: Readable;
-        signal?: AbortSignal;
-    }): Promise<RoutedForwardTransportResponse>;
-}
+export type RoutedForwardTransportResponse = RoutedForwardResponse;
+export type { RoutedForwardTransport };
 
 export interface RoutedForwardOptions {
     transport: RoutedForwardTransport;

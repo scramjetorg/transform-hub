@@ -25,17 +25,27 @@
 
 ## Phase 2: Shared Verser2 Client Transport and CLI Configuration
 
-- [ ] Task: Implement and test the reusable Verser2 broker bridge in the appropriate shared API/client package.
-    - [ ] Materialize route parameters and query strings; map method, headers, JSON, binary, readable-stream bodies, responses, aborts, timeouts, redirects, and errors between API-client and real broker shapes.
-    - [ ] Resolve a unique target and route domain; handle missing, duplicate, stale, and not-ready routes deterministically.
-    - [ ] Own broker connection, cancellation, and stream cleanup lifecycle so typed and raw clients share one implementation.
-- [ ] Task: Add CLI profile/config support for outbound mTLS Verser2 connections.
-    - [ ] Support endpoint, CA/certificate/key or PKCS#12 paths, passphrase reference, peer/route options, timeouts, and environment-safe overrides.
-    - [ ] Validate required credentials and safe file permissions where supported; redact values from profile output, errors, logs, and debug diagnostics.
-    - [ ] Preserve strict compatibility with existing HTTP(S)/v1 profiles and command behavior.
-- [ ] Task: Add focused unit tests for transport encoding, route selection, error translation, timeout/abort/cleanup, profile migration, validation, and secret redaction.
-- [ ] Task: Review changed shared abstractions for duplication; commit and push the validated phase result.
-- [ ] Task: Conductor - Phase Completion 'Shared Verser2 Client Transport and CLI Configuration' (Protocol in workflow.md).
+- [x] Task: Implement and test the reusable Verser2 broker bridge in the appropriate shared API/client package.
+    - [x] Materialize route parameters and query strings; map method, headers, JSON, binary, readable-stream bodies, responses, aborts, timeouts, redirects, and errors between API-client and real broker shapes.
+    - [x] Resolve a unique target and route domain; handle missing, duplicate, stale, and not-ready routes deterministically.
+    - [x] Own broker connection, cancellation, and stream cleanup lifecycle so typed and raw clients share one implementation.
+- [x] Task: Add CLI profile/config support for outbound mTLS Verser2 connections.
+    - [x] Support endpoint, CA/certificate/key or PKCS#12 paths, passphrase reference, peer/route options, timeouts, and environment-safe overrides.
+    - [x] Validate required credentials and safe file permissions where supported; redact values from profile output, errors, logs, and debug diagnostics.
+    - [x] Preserve strict compatibility with existing HTTP(S)/v1 profiles and command behavior.
+- [x] Task: Add focused unit tests for transport encoding, route selection, error translation, timeout/abort/cleanup, profile migration, validation, and secret redaction.
+- [x] Task: Review changed shared abstractions for duplication; commit and push the validated phase result.
+- [~] Task: Conductor - Phase Completion 'Shared Verser2 Client Transport and CLI Configuration' (Protocol in workflow.md).
+
+### Phase 2 validation and reuse record
+
+- Memory-guarded API-router tests: `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" SCRAMJET_AVA_MEMORY_GUARD=1 SCRAMJET_AVA_MEMORY_THRESHOLD_BYTES=524288 node ../../scripts/run-ava.js test/client-transports.spec.ts test/routed-broker.spec.ts --serial` — passed (33 tests); threshold 524288 bytes.
+- Memory-guarded CLI tests: `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" SCRAMJET_AVA_MEMORY_GUARD=1 SCRAMJET_AVA_MEMORY_THRESHOLD_BYTES=524288 node ../../scripts/run-ava.js test/config.spec.ts test/verser2-profile.spec.ts --serial` — passed (20 tests); threshold 524288 bytes.
+- Memory-guarded API-server tests: `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" SCRAMJET_AVA_MEMORY_GUARD=1 SCRAMJET_AVA_MEMORY_THRESHOLD_BYTES=524288 node ../../scripts/run-ava.js test/routed-forward.spec.ts --serial` — passed (29 tests); threshold 524288 bytes.
+- Memory-guarded config tests: `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" SCRAMJET_AVA_MEMORY_GUARD=1 SCRAMJET_AVA_MEMORY_THRESHOLD_BYTES=524288 node ../../scripts/run-ava.js test/verser2-profile.spec.ts --serial` — passed (2 tests); threshold 524288 bytes.
+- No memory-guard skips or threshold exceptions. API-router, CLI, config-source, and API-server-source TypeScript checks passed.
+- Deduplication: `RoutedForwardTransport` now originates in `@scramjet/api-router` and API-server uses aliases; profile schema/validation/masking reside in `@scramjet/config`, while CLI keeps only persistence and credential consumption.
+- Deferred Phase 3 coverage: real `@signicode/verser2-guest-node` mTLS ingress integration. Unrelated pre-existing test typing failures remain in `packages/config/test/parity.spec.ts:251` and `packages/api-server/test/lib/server-mock.ts:65`.
 
 ## Phase 3: v2 Control-Plane Completeness and Topology Validation
 
