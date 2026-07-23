@@ -24,5 +24,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [ ] **Track: Platform CLI over Verser2: enable mTLS-authenticated CLI access to MultiManager, Manager, and Hub APIs; inventory and design command structure with a user-review pause; support arbitrary API calls; phase v1 translation before native v2 CLI coverage.**
+- [~] **Track: Platform CLI over Verser2: enable mTLS-authenticated CLI access to MultiManager, Manager, and Hub APIs; inventory and design command structure with a user-review pause; support arbitrary API calls; phase v1 translation before native v2 CLI coverage.**
 *Link: [./tracks/verser2_cli_20260722/](./tracks/verser2_cli_20260722/)*

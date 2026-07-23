@@ -2,17 +2,17 @@
 
 ## Phase 1: Capability Inventory and Approved Command Design
 
-- [ ] Task: Create the implementation branch `conductor/verser2_cli_20260722` from the captured base branch and open/update the draft PR using this track specification.
-- [ ] Task: Inventory `packages/cli` commands and the corresponding MultiManager, Manager, Hub, and `rest-api2` route ownership.
-    - [ ] Record command scope, middleware dependency, v1 HTTP(S) route/client, v2 operation ID, target level, request/response body type, streaming requirement, and implementation status in a capability matrix.
-    - [ ] Identify missing `rest-api2` contracts, resolvers, or Verser2 registrations needed for non-middleware command coverage.
-    - [ ] Record shared-package reuse decisions for `@scramjet/api-router`, `@scramjet/rest-api2`, `@scramjet/config`, and Verser2 config/types.
-- [ ] Task: Write the command-structure document for review.
-    - [ ] Define profile and per-command transport selection, with HTTP(S)/v1 retained as the existing path and Verser2 using native v2 APIs without silent fallback.
-    - [ ] Define MultiManager/Manager ingress and direct-Hub target rules, route discovery/cache/refresh behavior, route-domain overrides, and direct-Hub upstream isolation.
-    - [ ] Define `si api <method> <endpoint>` syntax, query/header/body/file/stdin/binary input, output/streaming behavior, exit codes, confirmations, and non-interactive semantics.
-    - [ ] Define credential references, permission checks, redaction, configuration migration, and privileged-certificate security posture.
-- [ ] Task: Push the phase commit and draft PR, then obtain explicit user approval of the command-structure document before implementing named or raw API commands.
+- [x] Task: Create the implementation branch `conductor/verser2_cli_20260722` from the captured base branch and open/update the draft PR using this track specification.
+- [x] Task: Inventory `packages/cli` commands and the corresponding MultiManager, Manager, Hub, and `rest-api2` route ownership.
+    - [x] Record command scope, middleware dependency, v1 HTTP(S) route/client, v2 operation ID, target level, request/response body type, streaming requirement, and implementation status in a capability matrix.
+    - [x] Identify missing `rest-api2` contracts, resolvers, or Verser2 registrations needed for non-middleware command coverage.
+    - [x] Record shared-package reuse decisions for `@scramjet/api-router`, `@scramjet/rest-api2`, `@scramjet/config`, and Verser2 config/types.
+- [x] Task: Write the command-structure document for review.
+    - [x] Define profile and per-command transport selection, with HTTP(S)/v1 retained as the existing path and Verser2 using native v2 APIs without silent fallback.
+    - [x] Define MultiManager/Manager ingress and direct-Hub target rules, route discovery/cache/refresh behavior, route-domain overrides, and direct-Hub upstream isolation.
+    - [x] Define `si api <method> <endpoint>` syntax, query/header/body/file/stdin/binary input, output/streaming behavior, exit codes, confirmations, and non-interactive semantics.
+    - [x] Define credential references, permission checks, redaction, configuration migration, and privileged-certificate security posture.
+- [~] Task: Push the phase commit and draft PR, then obtain explicit user approval of the command-structure document before implementing named or raw API commands.
 - [ ] Task: Conductor - Phase Completion 'Capability Inventory and Approved Command Design' (Protocol in workflow.md).
 
 ## Phase 2: Shared Verser2 Client Transport and CLI Configuration
