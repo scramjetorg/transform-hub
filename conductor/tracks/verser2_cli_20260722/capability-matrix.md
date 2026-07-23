@@ -76,7 +76,7 @@ are current/target classifications as stated in the last column.
 | inst log | H | hub | InstanceClient `GET /instance/:id/log` | instance.logs | — | stream | x | current HTTP → native |
 | inst kill | H | hub | InstanceClient `POST /instance/:id/_kill` | instance.deleteInstance | JSON | JSON | u | current semantics missing → native after Phase 3 parity |
 | inst stop | H | hub | InstanceClient `POST /instance/:id/_stop` | instance.deleteInstance | JSON | JSON | u | current semantics missing → native after Phase 3 parity |
-| inst restart | H | hub | stop → kill if needed → start | composite | JSON | JSON | u | current kill/stop parity missing → native after Phase 3 parity |
+| inst restart | H | hub | info → immediate kill → wait for disappearance → start | planned stop → kill if needed → start | JSON | JSON | u | current v1 behavior; target native after Phase 3 parity |
 | inst input | H | hub | InstanceClient `POST /instance/:id/input` | instance.input | stream | stream | d | current HTTP → native |
 | inst inout | H | hub | InstanceClient `POST /instance/:id/inout` | planned instance.inout | stream | stream | duplex | current route missing → native after Phase 3 parity |
 | inst output | H | hub | InstanceClient `GET /instance/:id/output` | instance.output | — | stream | x | current HTTP → native |

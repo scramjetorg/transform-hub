@@ -55,6 +55,19 @@ there is no alternate ingress/domain or HTTP fallback.
 
 ## Shared transport and typed calls
 
+### Approved shared-package ownership and reuse
+
+These are approved design decisions, not implemented code. The transport-neutral
+request/response contract and typed adaptation belong in `@scramjet/api-router`.
+They reuse/adapt the `RoutedForwardTransport` shape in
+`packages/api-server/src/handlers/routed-forward.ts` rather than creating a second
+CLI-specific shared contract. Route contracts and fluent client builders belong in
+`@scramjet/rest-api2`; profile schema, validation, and public-safe masking belong in
+`@scramjet/config`. The concrete `@signicode/verser2-guest-node` session adapter
+belongs in `packages/cli`. It reuses the lifecycle and route-readiness behaviour of
+`packages/manager/src/lib/verser2-transport.ts`, without exporting that Manager
+implementation as a CLI-specific shared contract.
+
 Phase 2 provides the planned `RoutedBrokerTransport` and profile/config support. It
 accepts explicit route domain, method, path, query,
 headers, body, timeout, and `AbortSignal`; response supplies status/headers/body

@@ -13,8 +13,14 @@
     - [x] Define `si api <method> <endpoint>` syntax, query/header/body/file/stdin/binary input, output/streaming behavior, exit codes, confirmations, and non-interactive semantics.
     - [x] Define credential references, permission checks, redaction, configuration migration, and privileged-certificate security posture.
     - [x] Incorporate PR review additions: endpoint inventory/OpenAPI-Markdown output, explicit config-control placeholders, restart sequencing, completion output, and direct log formatting.
-- [~] Task: Push the phase commit and draft PR, then obtain explicit user approval of the command-structure document before implementing named or raw API commands.
-- [ ] Task: Conductor - Phase Completion 'Capability Inventory and Approved Command Design' (Protocol in workflow.md).
+- [x] Task: Push the phase commit and draft PR, then obtain explicit user approval of the command-structure document before implementing named or raw API commands.
+- [~] Task: Conductor - Phase Completion 'Capability Inventory and Approved Command Design' (Protocol in workflow.md).
+
+### Phase 1 validation and reuse record
+
+- Documentation-only validation: `git diff --check` passed. Runtime tests and memory-guarded commands are not applicable because Phase 1 changed no executable code.
+- Deduplication/reuse: planned transport-neutral contract and typed adaptation belong in `@scramjet/api-router` (adapting `RoutedForwardTransport`); route contracts/fluent clients remain in `@scramjet/rest-api2`; profile validation/redaction remain in `@scramjet/config`; the concrete CLI broker session remains package-local while reusing Manager route-readiness/lifecycle behavior.
+- User approval recorded after draft PR review, including endpoint inventory, config-control placeholders, restart sequencing, completion output, and direct log-format requirements.
 
 ## Phase 2: Shared Verser2 Client Transport and CLI Configuration
 
