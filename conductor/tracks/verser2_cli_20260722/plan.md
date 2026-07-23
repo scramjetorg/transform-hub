@@ -35,7 +35,7 @@
     - [x] Preserve strict compatibility with existing HTTP(S)/v1 profiles and command behavior.
 - [x] Task: Add focused unit tests for transport encoding, route selection, error translation, timeout/abort/cleanup, profile migration, validation, and secret redaction.
 - [x] Task: Review changed shared abstractions for duplication; commit and push the validated phase result.
-- [~] Task: Conductor - Phase Completion 'Shared Verser2 Client Transport and CLI Configuration' (Protocol in workflow.md).
+- [x] Task: Conductor - Phase Completion 'Shared Verser2 Client Transport and CLI Configuration' (Protocol in workflow.md).
 
 ### Phase 2 validation and reuse record
 
@@ -46,6 +46,7 @@
 - No memory-guard skips or threshold exceptions. API-router, CLI, config-source, and API-server-source TypeScript checks passed.
 - Deduplication: `RoutedForwardTransport` now originates in `@scramjet/api-router` and API-server uses aliases; profile schema/validation/masking reside in `@scramjet/config`, while CLI keeps only persistence and credential consumption.
 - Deferred Phase 3 coverage: real `@signicode/verser2-guest-node` mTLS ingress integration. Unrelated pre-existing test typing failures remain in `packages/config/test/parity.spec.ts:251` and `packages/api-server/test/lib/server-mock.ts:65`.
+- Phase checkpoint: `994aaeb1` (`feat: add Verser2 CLI transport foundation`).
 
 ## Phase 3: v2 Control-Plane Completeness and Topology Validation
 
