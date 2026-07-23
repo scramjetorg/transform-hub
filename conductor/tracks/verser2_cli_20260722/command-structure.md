@@ -9,7 +9,7 @@ implemented. A selected Verser2 profile has no implicit HTTP(S) fallback.
 type Verser2Profile = {
   endpoint: string; // https URL
   brokerId: string; // non-secret stable broker/peer identity
-  ingress: { level: "multimanager" | "manager" | "hub"; expectedId: string; routeDomain: string };
+  ingress: { level: "platform" | "space" | "hub"; expectedId: string; routeDomain: string };
   target?: { spaceId?: string; hubId?: string };
   tls: { caFile: string; certFile?: string; keyFile?: string; pfxFile?: string; passphraseReference?: string };
   timeoutMs?: number;
@@ -26,10 +26,11 @@ redacts key/PFX/passphrase values and resolved content from `config print`, erro
 and debug output. Paths may be shown only when useful; secret values never are.
 Missing/contradictory target IDs fail validation, not route inference.
 
-Planned ingress: a MultiManager root guest; independently enabled Manager ingress,
-including managed Managers when configured; and a dedicated Hub CLI broker/Host/
-listener with a trust root restricted to the Host v2 router. Direct Hub ingress
-cannot traverse into Manager or MultiManager. Every listener fails closed at startup
+Planned `platform` ingress is a MultiManager root guest; planned `space` ingress is
+an independently enabled Manager, including managed Managers when configured;
+planned `hub` ingress is a dedicated Hub CLI broker/Host/listener with a trust root
+restricted to the Host v2 router. Direct Hub ingress cannot traverse into Manager or
+MultiManager. Every listener fails closed at startup
 with client-CA trust and optional configured fingerprint allowlists; Manager policy
 can propagate to its configured ingress. Clients validate server CA and present a
 credential, but cannot prove server-side mTLS/allowlist enforcement. Server tests
@@ -54,7 +55,8 @@ there is no alternate ingress/domain or HTTP fallback.
 
 ## Shared transport and typed calls
 
-Planned `RoutedBrokerTransport` accepts explicit route domain, method, path, query,
+Phase 2 provides the planned `RoutedBrokerTransport` and profile/config support. It
+accepts explicit route domain, method, path, query,
 headers, body, timeout, and `AbortSignal`; response supplies status/headers/body
 stream plus awaited `cleanup()`, and the session has awaited `close()`. Both typed
 and raw calls use it. Typed adapters materialize routes from actual manifests; raw
@@ -63,6 +65,7 @@ calls never fabricate a `RouteManifestEntry`.
 Use real lowercase fluent APIs in `packages/rest-api2/src/client.ts`, e.g.
 `root.space(id).hubs.get()` and `hub.instance(id).logs.get()`. Required traversal
 or fluent extensions are planned and tested work, not existing CLI functionality.
+Phase 4 migrates the named commands covered by the full 89-variant capability matrix.
 
 ## Raw API: `si api`
 
@@ -81,7 +84,8 @@ Allowed methods are exactly `GET`, `POST`, `PUT`, `PATCH`, `DELETE`, and `HEAD`
 (`foo` is invalid; `/version` becomes `/api/v2/version`). No other base/version
 rewrite occurs.
 
-The selected full profile fixes endpoint, TLS, broker ID, ingress identity, and
+The selected full profile fixes endpoint, TLS, broker ID, ingress identity (`platform`
+= MultiManager, `space` = Manager, `hub` = Host), and
 route domain. Raw commands cannot replace physical ingress. `--space-id` and
 `--hub-id` may select only descendant traversal IDs; a Manager/Hub path requiring
 an omitted ID fails. A different ingress requires selecting a different full

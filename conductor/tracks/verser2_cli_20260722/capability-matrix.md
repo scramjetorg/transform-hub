@@ -6,6 +6,10 @@ sequence + 19 instance + 8 topic + 1 init + 4 store + 1 util + 2 completion + 3
 developerTools**. `Current` records current code; `Target` is planned, never an
 assertion that a CLI component exists. Source for command ownership: `packages/cli/src/lib/commands/*.ts`; v2 routes: `packages/rest-api2/src/routes.ts`; Manager bindings: `packages/manager/src/lib/api/manager-api-v2.ts`.
 
+This is the intended full 89-variant named-command matrix. Phase 2 supplies shared
+transport/config; Phase 4 migrates the named commands. Planned profile ingress
+levels are `platform` (MultiManager), `space` (Manager), and `hub` (Host).
+
 Key: `M`=Manager, `H`=Hub/Host, `MM`=MultiManager, `MW`=Middleware; `—`=none;
 `u/d/x`=unary/downstream/upstream; `local`, `native`, `deferred`, `unavailable`
 are current/target classifications as stated in the last column.
@@ -105,7 +109,8 @@ are current/target classifications as stated in the last column.
 ### Planned uniform ingress identity
 
 `GET /api/v2/ingress/identity` is a **planned**, authenticated v2 operation bound
-at MultiManager, enabled Manager ingress, and the dedicated Host CLI listener. It
+at `platform` (MultiManager), enabled `space` (Manager) ingress, and the dedicated
+`hub` (Host) CLI listener. It
 returns `{ level, serviceId, routeDomain }`. No current route claims this operation.
 For every remote request: (1) connect with mTLS; (2) wait for the exact configured
 domain; (3) call identity over that domain; (4) require exact matches for configured
