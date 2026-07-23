@@ -1,12 +1,14 @@
 # Capability Matrix: CLI to v2 Migration
 
 **Counting unit:** one command leaf, plus one row for each distinct scoped variant;
-aliases are not leaves. Total: **89 = 19 config + 4 scope + 9 space + 9 hub + 10
-sequence + 19 instance + 8 topic + 1 init + 4 store + 1 util + 2 completion + 3
-developerTools**. `Current` records current code; `Target` is planned, never an
+aliases are not leaves. A distinct explicit target or output-mode invocation is a
+variant where this design adds one. Total: **111 = 19 config + 4 scope + 9 space + 9 hub + 10
+sequence + 19 instance + 8 topic + 1 init + 4 store + 1 util + 3 completion + 3
+developerTools + 4 endpoint inventory + 12 config control + 5 log-format variants**.
+`Current` records current code; `Target` is planned, never an
 assertion that a CLI component exists. Source for command ownership: `packages/cli/src/lib/commands/*.ts`; v2 routes: `packages/rest-api2/src/routes.ts`; Manager bindings: `packages/manager/src/lib/api/manager-api-v2.ts`.
 
-This is the intended full 89-variant named-command matrix. Phase 2 supplies shared
+This is the intended full 111-variant named-command matrix. Phase 2 supplies shared
 transport/config; Phase 4 migrates the named commands. Planned profile ingress
 levels are `platform` (MultiManager), `space` (Manager), and `hub` (Host).
 
@@ -74,7 +76,7 @@ are current/target classifications as stated in the last column.
 | inst log | H | hub | InstanceClient `GET /instance/:id/log` | instance.logs | — | stream | x | current HTTP → native |
 | inst kill | H | hub | InstanceClient `POST /instance/:id/_kill` | instance.deleteInstance | JSON | JSON | u | current semantics missing → native after Phase 3 parity |
 | inst stop | H | hub | InstanceClient `POST /instance/:id/_stop` | instance.deleteInstance | JSON | JSON | u | current semantics missing → native after Phase 3 parity |
-| inst restart | H | hub | kill + start | composite | JSON | JSON | u | current kill/stop parity missing → native after Phase 3 parity |
+| inst restart | H | hub | stop → kill if needed → start | composite | JSON | JSON | u | current kill/stop parity missing → native after Phase 3 parity |
 | inst input | H | hub | InstanceClient `POST /instance/:id/input` | instance.input | stream | stream | d | current HTTP → native |
 | inst inout | H | hub | InstanceClient `POST /instance/:id/inout` | planned instance.inout | stream | stream | duplex | current route missing → native after Phase 3 parity |
 | inst output | H | hub | InstanceClient `GET /instance/:id/output` | instance.output | — | stream | x | current HTTP → native |
@@ -102,9 +104,31 @@ are current/target classifications as stated in the last column.
 | util log-format | local | — | — | — | stdin | text | — | local → local |
 | completion install | local | — | — | — | — | files | — | local → local |
 | completion uninstall | local | — | — | — | — | files | — | local → local |
+| completion (script output) | local | — | current install/uninstall-only command | completion script generator | — | shell text | — | planned → native |
 | dev cmdToJson | local | — | — | — | options | file | — | local → local |
 | dev cmdToList | local | — | — | — | options | file | — | local → local |
 | dev cmdToMd | local | — | — | — | options | file | — | local → local |
+| api endpoints (platform) | MM | platform / root | none | root.endpoints | — | OpenAPI/Markdown | u | planned → native |
+| api endpoints (space) | M | space / target space | none | space.endpoints | — | OpenAPI/Markdown | u | planned → native |
+| api endpoints (hub) | H | hub / target hub | none | hub.endpoints | — | OpenAPI/Markdown | u | planned → native |
+| api endpoints (instance) | H | hub / target instance | none | instance.endpoints | — | OpenAPI/Markdown | u | planned → native |
+| space config get | M | space | ManagerClient `GET /config` where available | space.config | — | JSON | u | current partial → native after binding |
+| space config set | M | space | none | planned space.configSet | JSON | JSON | u | current missing → unsupported placeholder, then native |
+| space config reload | M | space | none | planned space.configReload | — | JSON | u | current missing → unsupported placeholder, then native |
+| hub config get | H | hub | none in current CLI | hub.config | — | JSON | u | current route only → native |
+| hub config set | H | hub | none | planned hub.configSet | JSON | JSON | u | current missing → unsupported placeholder, then native |
+| hub config reload | H | hub | none | planned hub.configReload | — | JSON | u | current missing → unsupported placeholder, then native |
+| sequence config get | H | hub / sequence | none | planned sequence.config | — | JSON | u | current missing → unsupported placeholder, then native |
+| sequence config set | H | hub / sequence | none | planned sequence.configSet | JSON | JSON | u | current missing → unsupported placeholder, then native |
+| sequence config reload | H | hub / sequence | none | planned sequence.configReload | — | JSON | u | current missing → unsupported placeholder, then native |
+| instance config get | H | hub / instance | none | planned instance.config | — | JSON | u | current missing → unsupported placeholder, then native |
+| instance config set | H | hub / instance | none | planned instance.configSet | JSON | JSON | u | current missing → unsupported placeholder, then native |
+| instance config reload | H | hub / instance | none | planned instance.configReload | — | JSON | u | current missing → unsupported placeholder, then native |
+| space audit --log-format | MM | platform / root | MiddlewareClient `GET /audit` | root.audit | — | formatted text | x | planned → native |
+| space logs --log-format | M | space | ManagerClient `GET /log` | space.logs | — | formatted text | x | planned → native |
+| hub logs --log-format | H | hub | HostClient `GET /log` | hub.logs | — | formatted text | x | planned → native |
+| hub audit --log-format | H | hub | HostClient `GET /audit` | hub.audit | — | formatted text | x | planned → native |
+| inst log --log-format | H | hub / instance | InstanceClient `GET /instance/:id/log` | instance.logs | — | formatted text | x | planned → native |
 
 ### Planned uniform ingress identity
 

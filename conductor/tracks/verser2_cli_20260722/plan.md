@@ -12,6 +12,7 @@
     - [x] Define MultiManager/Manager ingress and direct-Hub target rules, route discovery/cache/refresh behavior, route-domain overrides, and direct-Hub upstream isolation.
     - [x] Define `si api <method> <endpoint>` syntax, query/header/body/file/stdin/binary input, output/streaming behavior, exit codes, confirmations, and non-interactive semantics.
     - [x] Define credential references, permission checks, redaction, configuration migration, and privileged-certificate security posture.
+    - [x] Incorporate PR review additions: endpoint inventory/OpenAPI-Markdown output, explicit config-control placeholders, restart sequencing, completion output, and direct log formatting.
 - [~] Task: Push the phase commit and draft PR, then obtain explicit user approval of the command-structure document before implementing named or raw API commands.
 - [ ] Task: Conductor - Phase Completion 'Capability Inventory and Approved Command Design' (Protocol in workflow.md).
 

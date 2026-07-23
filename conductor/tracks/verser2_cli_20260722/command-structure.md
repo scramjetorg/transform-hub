@@ -65,7 +65,55 @@ calls never fabricate a `RouteManifestEntry`.
 Use real lowercase fluent APIs in `packages/rest-api2/src/client.ts`, e.g.
 `root.space(id).hubs.get()` and `hub.instance(id).logs.get()`. Required traversal
 or fluent extensions are planned and tested work, not existing CLI functionality.
-Phase 4 migrates the named commands covered by the full 89-variant capability matrix.
+Phase 4 migrates the named commands covered by the full 111-variant capability matrix.
+
+## Named-command additions
+
+### Endpoint inventory
+
+The planned authenticated operations `root.endpoints`, `space.endpoints`,
+`hub.endpoints`, and `instance.endpoints` read the bound v2 router's OpenAPI endpoint
+list. They are planned, not current routes. Their explicit command is:
+
+```text
+si api endpoints [--space-id <id>] [--hub-id <id>] [--instance-id <id>]
+                 [--format openapi|markdown]
+```
+
+The selected profile fixes physical `platform`/`space`/`hub` ingress. Omitted
+descendant IDs select that ingress's own list; supplied IDs traverse only to that
+descendant under the established profile boundary and identity sequence. `openapi`
+emits the collected endpoint representation. `markdown` uses a planned known-endpoint
+formatter to make a stable table of method, path, request kind, response kind, and
+stream direction. It neither probes routes nor invents endpoint definitions.
+
+### Config control and restart
+
+Planned named forms are `space|hub|sequence|instance config get|set|reload`.
+`get` reads the respective v2 config operation where bound; `set` accepts a JSON
+configuration patch; `reload` asks the service to reload its configuration. Current
+space/hub config reads are route inventory only, not current CLI support; no current
+set/reload or sequence/instance config operation is claimed. Until the corresponding
+server operation is bound, each command is an explicit deterministic unsupported
+placeholder (exit `80`), never an HTTP fallback; after approved server work it is a
+native command.
+
+`inst restart` is planned as **stop, then kill only if stopping fails or exceeds its
+configured limit, then start**. Phase 3 still must establish the v2 stop/kill option
+and lifecycle parity before this command becomes native.
+
+### Completion and direct log formatting
+
+`si completion` (with no side-effect subcommand) prints the generated shell
+completion script to stdout. `si completion install` and `si completion uninstall`
+remain explicit opt-in filesystem side effects.
+
+Log-producing commands gain `--log-format pretty|json|raw`: `space audit`, `space
+logs`, `hub logs`, `hub audit`, and `inst log`. The flag transforms each received log
+record directly to stdout; `raw` preserves the received stream bytes. Without it,
+current output behavior remains unchanged, preserving pipe compatibility with
+`si util log-format`. This rendering option does not change transport, target,
+streaming, or no-fallback semantics.
 
 ## Raw API: `si api`
 
