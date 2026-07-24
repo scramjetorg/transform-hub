@@ -47,6 +47,8 @@
 - Deduplication: `RoutedForwardTransport` now originates in `@scramjet/api-router` and API-server uses aliases; profile schema/validation/masking reside in `@scramjet/config`, while CLI keeps only persistence and credential consumption.
 - Deferred Phase 3 coverage: real `@signicode/verser2-guest-node` mTLS ingress integration. Unrelated pre-existing test typing failures remain in `packages/config/test/parity.spec.ts:251` and `packages/api-server/test/lib/server-mock.ts:65`.
 - Phase checkpoint: `994aaeb1` (`feat: add Verser2 CLI transport foundation`).
+- Final Phase 2 acceptance: Oracle review passed after lifecycle fixes. API-router guarded transport tests passed (39 tests) with a 524288-byte threshold and no skips or allowances; CLI (20), API-server (29), and config (2) guarded tests passed. API-router, CLI, config-source, and API-server-source TypeScript checks passed.
+- Phase repair checkpoint: `a2c64a52` (`fix: harden Verser2 broker cleanup lifecycle`).
 
 ## Phase 3: v2 Control-Plane Completeness and Topology Validation
 
