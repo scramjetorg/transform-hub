@@ -119,7 +119,7 @@ function isRoutedTransport(value: Verser2BrokerLike | Verser2ClientTransportOpti
 }
 
 function normalizeHeaders(headers: RoutedBrokerResponse["headers"]): Record<string, string> {
-    return Object.fromEntries(Object.entries(headers).map(([name, value]) => [name, Array.isArray(value) ? value.join(", ") : value]));
+    return Object.fromEntries(Object.entries(headers).map(([name, value]) => [name.toLowerCase(), Array.isArray(value) ? value.join(", ") : value]));
 }
 
 function responseCleanup(response: RoutedBrokerResponse, signal: AbortSignal | undefined, requestBody: unknown, abortBroker: () => void, release: () => void): () => Promise<void> {
@@ -149,9 +149,28 @@ function responseCleanup(response: RoutedBrokerResponse, signal: AbortSignal | u
     return cleanup;
 }
 
+function awaitCleanupOrInterruption(cleanup: Promise<void>, dispatch: BrokerDispatch, routeDomain: string): Promise<void> {
+    const interruption = () => dispatch.timeoutError() || new RoutedBrokerCancelledError(routeDomain);
+    if (dispatch.signal.aborted) return Promise.reject(interruption());
+    return new Promise((resolve, reject) => {
+        const abort = () => reject(interruption());
+        dispatch.signal.addEventListener("abort", abort, { once: true });
+        cleanup.then(
+            () => {
+                dispatch.signal.removeEventListener("abort", abort);
+                resolve();
+            },
+            error => {
+                dispatch.signal.removeEventListener("abort", abort);
+                reject(error);
+            }
+        );
+    });
+}
+
 type BrokerDispatch = { response: RoutedBrokerResponse; signal: AbortSignal; abort(): void; release(): void; timeoutError(): RoutedBrokerTimeoutError | undefined };
 
-async function readUnaryBody(body: Readable, headers: Record<string, string>, limitBytes: number, timeoutError: () => RoutedBrokerTimeoutError | undefined): Promise<unknown> {
+async function readUnaryBody(body: Readable, headers: Record<string, string>, limitBytes: number, interruptionError: () => RoutedBrokerTimeoutError | RoutedBrokerCancelledError | undefined): Promise<unknown> {
     const chunks: Buffer[] = [];
     let size = 0;
     try {
@@ -165,12 +184,12 @@ async function readUnaryBody(body: Readable, headers: Record<string, string>, li
             chunks.push(bytes);
         }
     } catch (error) {
-        const timeout = timeoutError();
-        if (timeout) throw timeout;
+        const interruption = interruptionError();
+        if (interruption) throw interruption;
         throw error;
     }
-    const timeout = timeoutError();
-    if (timeout) throw timeout;
+    const interruption = interruptionError();
+    if (interruption) throw interruption;
     const bytes = Buffer.concat(chunks);
     if (!bytes.length) return undefined;
     const contentType = headers["content-type"]?.toLowerCase() || "";
@@ -381,24 +400,50 @@ export function createVerser2ClientTransport(options: Verser2BrokerLike | Verser
                 return { status: response.status, headers, body: response.body as unknown as T, cleanup: trackedCleanup };
             }
             try {
-                const body = await readUnaryBody(response.body, headers, options.responseBodyLimitBytes ?? 1024 * 1024, dispatch.timeoutError);
-                await cleanup();
+                const body = await readUnaryBody(response.body, headers, options.responseBodyLimitBytes ?? 1024 * 1024, () => dispatch.timeoutError() || (dispatch.signal.aborted ? new RoutedBrokerCancelledError(routeDomain) : undefined));
+                await awaitCleanupOrInterruption(cleanup(), dispatch, routeDomain);
                 return { status: response.status, headers, body: body as T, cleanup };
             } catch (error) {
-                await cleanup().catch(() => {});
+                const pendingCleanup = cleanup();
+                if (error instanceof RoutedBrokerTimeoutError || error instanceof RoutedBrokerCancelledError) {
+                    ownCleanup(pendingCleanup);
+                    throw error;
+                }
+                try {
+                    await awaitCleanupOrInterruption(pendingCleanup, dispatch, routeDomain);
+                } catch (cleanupError) {
+                    if (cleanupError instanceof RoutedBrokerTimeoutError || cleanupError instanceof RoutedBrokerCancelledError) {
+                        ownCleanup(pendingCleanup);
+                        throw cleanupError;
+                    }
+                }
                 throw error;
             }
         },
         async close() {
-            await Promise.allSettled([...activeResponses].map(async active => {
+            const activeCleanups = [...activeResponses].map(async active => {
                 active.abort();
                 if (!active.body.destroyed) active.body.destroy();
                 await active.cleanup();
-            }));
+            });
+            let closeError: unknown;
+            let closeFailed = false;
+            try {
+                await options.transport.close?.();
+            } catch (error) {
+                closeFailed = true;
+                closeError = error;
+            }
+            await Promise.allSettled(activeCleanups);
+            if (closeFailed) {
+                while (lateCleanups.size) {
+                    await Promise.allSettled([...lateCleanups]);
+                }
+                throw closeError;
+            }
             while (settlements.size || lateCleanups.size) {
                 await Promise.allSettled([...settlements, ...lateCleanups]);
             }
-            await options.transport.close?.();
         }
     };
 }

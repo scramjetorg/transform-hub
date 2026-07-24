@@ -229,12 +229,57 @@ test("routed broker decodes bounded unary JSON and text responses", async t => {
     t.is((await client.request({ route })).body, "plain");
 });
 
+test("routed broker decodes JSON content types without header-name casing sensitivity", async t => {
+    const client = createVerser2ClientTransport({
+        routeDomain: "space-a",
+        transport: transport({ async request() { return { status: 200, headers: { "Content-Type": "application/json" }, body: Readable.from(["{\"ok\":true}"]), async cleanup() {} }; } })
+    });
+
+    const response = await client.request({ route: { id: "GET /", method: "get", fullPath: "/" } } as any);
+    t.deepEqual(response.body, { ok: true });
+    await client.close();
+});
+
 test("routed broker reports malformed unary JSON", async t => {
     const client = createVerser2ClientTransport({
         routeDomain: "space-a",
         transport: transport({ async request() { return { status: 500, headers: { "content-type": "application/json" }, body: Readable.from(["{"]), async cleanup() {} }; } })
     });
     await t.throwsAsync(client.request({ route: { id: "GET /", method: "get", fullPath: "/" } } as any), { instanceOf: RoutedBrokerRequestError, message: "Broker response JSON parsing failed" });
+});
+
+test("unary decode failures yield to timeout and cancellation while cleanup remains owned", async t => {
+    const controllers: AbortController[] = [];
+    const clients: { close(): Promise<void> }[] = [];
+    const releases: (() => void)[] = [];
+    registerAvaMemoryCleanup(t, async () => {
+        controllers.forEach(controller => controller.abort());
+        releases.splice(0).forEach(release => release());
+        await Promise.all(clients.splice(0).map(client => client.close()));
+    });
+
+    for (const mode of ["timeout", "cancel"] as const) {
+        const controller = new AbortController();
+        controllers.push(controller);
+        const client = createVerser2ClientTransport({
+            routeDomain: "space-a",
+            requestTimeoutMs: mode === "timeout" ? 5 : undefined,
+            transport: transport({
+                async request() {
+                    return {
+                        status: 200,
+                        headers: { "content-type": "application/json" },
+                        body: Readable.from(["{"]),
+                        cleanup: () => new Promise<void>(resolve => releases.push(resolve))
+                    };
+                }
+            })
+        });
+        clients.push(client);
+        const pending = client.request({ route: { id: "GET /", method: "get", fullPath: "/" }, signal: controller.signal } as any);
+        if (mode === "cancel") setImmediate(() => controller.abort());
+        await t.throwsAsync(pending, { instanceOf: mode === "timeout" ? RoutedBrokerTimeoutError : RoutedBrokerCancelledError });
+    }
 });
 
 test("routed broker enforces bounded unary response collection and cleans up", async t => {
@@ -506,7 +551,7 @@ test("post-header cancellation aborts broker signal and destroys duplex request 
 
 test("routed broker exposes cleanup rejection to an awaiting caller", async t => {
     let body: Readable | undefined;
-    let client: ReturnType<typeof createVerser2ClientTransport> | undefined = createVerser2ClientTransport({
+    let client: (ReturnType<typeof createVerser2ClientTransport> & { close(): Promise<void> }) | undefined = createVerser2ClientTransport({
         routeDomain: "space-a",
         transport: transport({ async request() { body = new Readable({ read() {} }); return { status: 200, headers: {}, body, async cleanup() { throw new Error("cleanup failed"); } }; } })
     });
@@ -567,6 +612,46 @@ test("managed transport close waits when started before a late timeout response 
     t.true(closed);
 });
 
+test("managed close closes the broker before awaiting an in-flight request settlement", async t => {
+    let resolveResponse!: (response: any) => void;
+    let brokerClosed = false;
+    const client = createVerser2ClientTransport({
+        routeDomain: "space-a",
+        transport: transport({
+            async request() { return await new Promise(resolve => { resolveResponse = resolve; }); },
+            async close() {
+                brokerClosed = true;
+                resolveResponse({ status: 200, headers: {}, body: Readable.from([]), async cleanup() {} });
+            }
+        })
+    });
+    const pending = client.request({ route: { id: "GET /", method: "get", fullPath: "/" } } as any);
+    await new Promise(resolve => setImmediate(resolve));
+    await client.close();
+    t.true(brokerClosed);
+    t.is((await pending).status, 200);
+});
+
+test("managed close propagates a transport close rejection without awaiting a never-settling request", async t => {
+    let requested = false;
+    const client = createVerser2ClientTransport({
+        routeDomain: "space-a",
+        transport: transport({
+            async request() {
+                requested = true;
+                return await new Promise(() => {});
+            },
+            async close() { throw "transport close failed"; }
+        })
+    });
+    void client.request({ route: { id: "GET /", method: "get", fullPath: "/" } } as any).catch(() => {});
+    await new Promise(resolve => setImmediate(resolve));
+    let rejected: unknown;
+    try { await client.close(); } catch (error) { rejected = error; }
+    t.true(requested);
+    t.is(rejected, "transport close failed");
+});
+
 test("unary collection retains timeout ownership after response headers", async t => {
     let cleaned = 0;
     const client = createVerser2ClientTransport({
@@ -575,6 +660,40 @@ test("unary collection retains timeout ownership after response headers", async 
     });
     await t.throwsAsync(client.request({ route: { id: "GET /", method: "get", fullPath: "/" } } as any), { instanceOf: RoutedBrokerTimeoutError });
     t.is(cleaned, 1);
+});
+
+test("unary timeout and cancellation reject without waiting for unresolved cleanup", async t => {
+    const releases: (() => void)[] = [];
+    const clients: { close(): Promise<void> }[] = [];
+    const controllers: AbortController[] = [];
+    registerAvaMemoryCleanup(t, async () => {
+        controllers.forEach(controller => controller.abort());
+        releases.splice(0).forEach(release => release());
+        await Promise.all(clients.splice(0).map(client => client.close()));
+    });
+
+    for (const mode of ["timeout", "cancel"] as const) {
+        const controller = new AbortController();
+        controllers.push(controller);
+        const client = createVerser2ClientTransport({
+            routeDomain: "space-a",
+            requestTimeoutMs: mode === "timeout" ? 5 : undefined,
+            transport: transport({
+                async request() {
+                    return {
+                        status: 200,
+                        headers: {},
+                        body: Readable.from(["done"]),
+                        cleanup: () => new Promise<void>(resolve => releases.push(resolve))
+                    };
+                }
+            })
+        });
+        clients.push(client);
+        const pending = client.request({ route: { id: "GET /", method: "get", fullPath: "/" }, signal: controller.signal } as any);
+        if (mode === "cancel") setImmediate(() => controller.abort());
+        await t.throwsAsync(pending, { instanceOf: mode === "timeout" ? RoutedBrokerTimeoutError : RoutedBrokerCancelledError });
+    }
 });
 
 test("managed close aborts and awaits active upstream and duplex responses", async t => {
@@ -617,7 +736,7 @@ test("managed close retains delayed active stream until it destroys, cleans, and
     t.deepEqual(events, []);
     await client.close();
     t.true(body.destroyed);
-    t.deepEqual(events, ["abort", "cleanup", "close"]);
+    t.deepEqual(events, ["abort", "close", "cleanup"]);
 });
 
 test("managed close awaits cleanup started by natural upstream stream completion", async t => {
@@ -638,8 +757,39 @@ test("managed close awaits cleanup started by natural upstream stream completion
     await new Promise(resolve => setImmediate(resolve));
     const closing = client.close();
     await new Promise(resolve => setImmediate(resolve));
-    t.deepEqual(events, ["cleanup"]);
+    t.deepEqual(events, ["cleanup", "close"]);
     releaseCleanup();
     await closing;
     t.deepEqual(events, ["cleanup", "close"]);
+});
+
+test("managed close drains active cleanup before propagating a transport close rejection", async t => {
+    let releaseCleanup!: () => void;
+    let cleanupStarted = false;
+    const client: ReturnType<typeof createVerser2ClientTransport> & { close(): Promise<void> } = createVerser2ClientTransport({
+        routeDomain: "space-a",
+        transport: transport({
+            async request() {
+                const body = new Readable({ read() {} });
+                return {
+                    status: 200,
+                    headers: {},
+                    body,
+                    cleanup: () => new Promise<void>((_resolve, reject) => {
+                        cleanupStarted = true;
+                        releaseCleanup = () => reject("cleanup failed");
+                    })
+                };
+            },
+            async close() { throw "transport close failed"; }
+        })
+    }) as ReturnType<typeof createVerser2ClientTransport> & { close(): Promise<void> };
+    await client.request({ route: { id: "GET /", method: "get", fullPath: "/", kind: "upstream" } } as any);
+    const closePromise = client.close();
+    await new Promise(resolve => setImmediate(resolve));
+    t.true(cleanupStarted);
+    releaseCleanup();
+    let rejected: unknown;
+    try { await closePromise; } catch (err) { rejected = err; }
+    t.true(rejected === "transport close failed");
 });
