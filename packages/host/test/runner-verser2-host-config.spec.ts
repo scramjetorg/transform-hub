@@ -36,7 +36,23 @@ async function tempIdentityDir(): Promise<string> {
     return mkdtemp(join(tmpdir(), "sth-runner-host-"));
 }
 
-test("createSthRunnerVerser2HostOptions maps STH-local endpoint and PEM TLS files", t => {
+async function explicitIdentity(identityDir: string): Promise<{ certFile: string; keyFile: string }> {
+    const generated = await resolveSthRunnerVerser2HostConfig({
+        ...baseConfig(),
+        identityDir,
+        host: {
+            ...baseConfig().host,
+            tls: { mtlsRequired: false }
+        }
+    });
+
+    return {
+        certFile: generated.host.tls.certFile!,
+        keyFile: generated.host.tls.keyFile!
+    };
+}
+
+test("createSthRunnerVerser2HostOptions preserves an explicitly configured legacy 2444 endpoint", t => {
     const options = createSthRunnerVerser2HostOptions(baseConfig());
 
     t.deepEqual(options, {
@@ -258,38 +274,56 @@ test("createSthRunnerVerser2HostOptions authorizes runner fingerprints without M
 });
 
 test("resolveSthRunnerVerser2HostConfig preserves explicitly configured TLS identity", async t => {
+    const identityDir = await tempIdentityDir();
     const config = baseConfig();
 
-    config.ca = "-----BEGIN CERTIFICATE-----\nsth-local\n-----END CERTIFICATE-----";
-    const resolved = await resolveSthRunnerVerser2HostConfig(config);
+    try {
+        const identity = await explicitIdentity(identityDir);
+        config.host.tls.certFile = identity.certFile;
+        config.host.tls.keyFile = identity.keyFile;
+        config.ca = await readFile(join(identityDir, "ca.pem"), "utf8");
+        const resolved = await resolveSthRunnerVerser2HostConfig(config);
 
-    t.is(resolved, config);
-    t.is(resolved.host.tls.certFile, "/certs/sth-runner.crt");
-    t.is(resolved.host.tls.keyFile, "/certs/sth-runner.key");
+        t.is(resolved, config);
+        t.is(resolved.host.tls.certFile, identity.certFile);
+        t.is(resolved.host.tls.keyFile, identity.keyFile);
+    } finally {
+        await rm(identityDir, { recursive: true, force: true });
+    }
 });
 
 test("resolveSthRunnerVerser2HostConfig rejects explicit TLS identity without runner trust material", async t => {
+    const identityDir = await tempIdentityDir();
     const config = baseConfig();
 
-    await t.throwsAsync(() => resolveSthRunnerVerser2HostConfig(config), {
-        message: "STH-local runner verser2 Host explicit TLS identity requires ca or caFile for runner trust"
-    });
+    try {
+        const identity = await explicitIdentity(identityDir);
+        config.host.tls.certFile = identity.certFile;
+        config.host.tls.keyFile = identity.keyFile;
+
+        await t.throwsAsync(() => resolveSthRunnerVerser2HostConfig(config), {
+            message: "STH-local runner verser2 Host explicit TLS identity requires ca or caFile for runner trust"
+        });
+    } finally {
+        await rm(identityDir, { recursive: true, force: true });
+    }
 });
 
 test("resolveSthRunnerVerser2HostConfig loads configured STH-local CA file for runner trust bundles", async t => {
     const identityDir = await tempIdentityDir();
     const config = baseConfig();
 
-    config.caFile = join(identityDir, "runner-ca.pem");
-    await writeFile(config.caFile, "-----BEGIN CERTIFICATE-----\nsth-local\n-----END CERTIFICATE-----", { mode: 0o644 });
-
     try {
+        const identity = await explicitIdentity(identityDir);
+        config.host.tls.certFile = identity.certFile;
+        config.host.tls.keyFile = identity.keyFile;
+        config.caFile = join(identityDir, "ca.pem");
         const resolved = await resolveSthRunnerVerser2HostConfig(config);
 
-        t.is(resolved.ca, "-----BEGIN CERTIFICATE-----\nsth-local\n-----END CERTIFICATE-----");
+        t.is(resolved.ca, await readFile(config.caFile, "utf8"));
         t.is(resolved.caFile, config.caFile);
-        t.is(resolved.host.tls.certFile, "/certs/sth-runner.crt");
-        t.is(resolved.host.tls.keyFile, "/certs/sth-runner.key");
+        t.is(resolved.host.tls.certFile, identity.certFile);
+        t.is(resolved.host.tls.keyFile, identity.keyFile);
     } finally {
         await rm(identityDir, { recursive: true, force: true });
     }

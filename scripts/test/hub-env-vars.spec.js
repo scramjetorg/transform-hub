@@ -121,7 +121,7 @@ test("saveHostEnv captures all five host env vars", t => {
         LOCAL_HOST_INSTANCES_SERVER_PORT: "19000",
         LOCAL_HOST_BASE_URL: "http://127.0.0.1:18000/api/v1",
         SCRAMJET_HOST_BASE_URL: "http://127.0.0.1:18000/api/v1",
-        SCRAMJET_VERSER2_RUNNER_HOST_PUBLIC_URL: "https://127.0.0.1:2444",
+        SCRAMJET_VERSER2_RUNNER_HOST_PUBLIC_URL: "https://127.0.0.1:2445",
     };
 
     // Set up suite host env
@@ -135,7 +135,7 @@ test("saveHostEnv captures all five host env vars", t => {
     t.is(saved.LOCAL_HOST_INSTANCES_SERVER_PORT, "19000");
     t.is(saved.LOCAL_HOST_BASE_URL, "http://127.0.0.1:18000/api/v1");
     t.is(saved.SCRAMJET_HOST_BASE_URL, "http://127.0.0.1:18000/api/v1");
-    t.is(saved.SCRAMJET_VERSER2_RUNNER_HOST_PUBLIC_URL, "https://127.0.0.1:2444");
+    t.is(saved.SCRAMJET_VERSER2_RUNNER_HOST_PUBLIC_URL, "https://127.0.0.1:2445");
 
     for (const k of Object.keys(suite)) {
         delete process.env[k];
@@ -148,7 +148,7 @@ test("restoreHostEnv restores suite host values after scenario override", t => {
         LOCAL_HOST_INSTANCES_SERVER_PORT: "19000",
         LOCAL_HOST_BASE_URL: "http://127.0.0.1:18000/api/v1",
         SCRAMJET_HOST_BASE_URL: "http://127.0.0.1:18000/api/v1",
-        SCRAMJET_VERSER2_RUNNER_HOST_PUBLIC_URL: "https://127.0.0.1:2444",
+        SCRAMJET_VERSER2_RUNNER_HOST_PUBLIC_URL: "https://127.0.0.1:2445",
     };
     const scenario = {
         LOCAL_HOST_PORT: "28000",
@@ -180,7 +180,7 @@ test("restoreHostEnv restores suite host values after scenario override", t => {
     t.is(process.env.LOCAL_HOST_INSTANCES_SERVER_PORT, "19000");
     t.is(process.env.LOCAL_HOST_BASE_URL, "http://127.0.0.1:18000/api/v1");
     t.is(process.env.SCRAMJET_HOST_BASE_URL, "http://127.0.0.1:18000/api/v1");
-    t.is(process.env.SCRAMJET_VERSER2_RUNNER_HOST_PUBLIC_URL, "https://127.0.0.1:2444");
+    t.is(process.env.SCRAMJET_VERSER2_RUNNER_HOST_PUBLIC_URL, "https://127.0.0.1:2445");
 
     for (const k of Object.keys(suite)) {
         delete process.env[k];

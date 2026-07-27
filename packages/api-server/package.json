@@ -46,7 +46,8 @@
       "test/support.spec.ts",
       "test/handler-execution.spec.ts",
       "test/routed-forward.spec.ts",
-      "test/routed-redirect.spec.ts"
+      "test/routed-redirect.spec.ts",
+      "test/v2-http-dispatcher.spec.ts"
     ],
     "require": [
       "ts-node/register"

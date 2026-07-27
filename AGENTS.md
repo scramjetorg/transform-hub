@@ -21,7 +21,7 @@
 
 ## Monorepo wiring
 - Workspaces are `packages/*` plus `bdd/`; custom workspace groups in `package.json` include `modules`, `runners`, and `bdd`.
-- `scripts/run-script.js` runs a package script across workspaces; it defaults to 16 concurrent jobs (override with `-j <jobs>`). Other useful flags: `-w <group>`, `-s <package path|name>`, `-d <package>`, `-e <command>`.
+- `scripts/run-script.js` runs a package script across workspaces; it defaults to 16 concurrent jobs (override with `-j <jobs>`). It runs every selected package after failures, then exits nonzero with aggregated failures; use `--fail-fast` or `SCRAMJET_RUN_SCRIPT_FAIL_FAST=1` to stop scheduling after the first failure. Other useful flags: `-w <group>`, `-s <package path|name>`, `-d <package>`, `-e <command>`.
 - `scripts/build-all.js` builds TypeScript solution configs and pre-packs packages into `dist/`; useful flags: `-w <group>`, `-d <package>`, `--ts-config <file>`, `--no-install`, `--no-distws`.
 - Main STH CLI source is `packages/sth/src/bin/hub.ts`; published/root bin points to `dist/sth/bin/hub.js`.
 - Adapter-launched runner entrypoint is `packages/runner/src/bin/start-runner.ts`; executor selection is in `packages/runner/src/executor/select.ts`.

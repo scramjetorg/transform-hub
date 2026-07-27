@@ -1,4 +1,6 @@
-import test from "ava";
+import baseTest from "ava";
+const { createAvaMemoryGuard } = require("../../../scripts/lib/ava-memory-guard");
+const test: typeof baseTest = createAvaMemoryGuard(baseTest);
 import { ObjLogger } from "@scramjet/obj-logger";
 import { PassThrough } from "stream";
 import { readFileSync } from "fs";
@@ -12,7 +14,7 @@ function createManagerStub(recorder: RouteRecorder) {
     return {
         id: "manager-hotwire",
         router: recorder.asApiRoute(),
-        config: { apiBase: "/api/v1" },
+        config: { apiBase: "/api/v1", verser2: { localGuest: { routeDomain: "space.test.scramjet.internal" } } },
         publicConfig: { apiBase: "/api/v1" },
         service: "@scramjet/manager",
         apiVersion: "v1",
@@ -60,6 +62,7 @@ test("Manager low-risk routes are reachable through verser2 for v1 and v2", asyn
         "/api/v1/config",
         "/api/v1/verser2/trust",
         "/api/v1/load",
+        "/api/v2/ingress/identity",
         "/api/v2/version",
         "/api/v2/config",
         "/api/v2/verser2/trust",
@@ -85,7 +88,11 @@ test("Manager low-risk routes are reachable through verser2 for v1 and v2", asyn
         status: 200,
         body: { service: "@scramjet/manager", apiVersion: "v1", version: "0.0.0-test", build: "test-build" }
     });
-    t.deepEqual(await registrations[4].handle({ method: "GET", path: "/api/v2/version" }), {
+    t.deepEqual(await registrations[4].handle({ method: "GET", path: "/api/v2/ingress/identity" }), {
+        status: 200,
+        body: { level: "space", serviceId: "manager-hotwire", routeDomain: "space.test.scramjet.internal" }
+    });
+    t.deepEqual(await registrations[5].handle({ method: "GET", path: "/api/v2/version" }), {
         status: 200,
         body: { version: "0.0.0-test" }
     });

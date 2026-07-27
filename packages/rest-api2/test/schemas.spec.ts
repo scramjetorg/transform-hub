@@ -1,5 +1,11 @@
 import test from "ava";
-import { RestAPI2Routes, Root, getRestAPI2Route, healthCheckInfo } from "../src";
+import { IngressIdentity, RestAPI2Routes, Root, getRestAPI2Route, healthCheckInfo } from "../src";
+
+test("ingress identity schema accepts only public ingress identity fields", t => {
+    t.true(IngressIdentity.safeParse({ level: "platform", serviceId: "platform-a", routeDomain: "platform.example" }).success);
+    t.false(IngressIdentity.safeParse({ level: "manager", serviceId: "platform-a", routeDomain: "platform.example" }).success);
+    t.false(IngressIdentity.safeParse({ level: "hub", serviceId: "hub-a" }).success);
+});
 
 // ============================================================
 // Assertion (1): host hubRouter /sequences response schema

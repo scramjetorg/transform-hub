@@ -52,14 +52,20 @@
 
 ## Phase 3: v2 Control-Plane Completeness and Topology Validation
 
-- [ ] Task: Implement missing non-middleware `rest-api2` contracts, resolvers, and Verser2 route registrations revealed by the approved capability matrix.
-    - [ ] Keep v2 ownership in `@scramjet/rest-api2`, transport registration in `@scramjet/api-router`, and service-specific handlers thin.
-    - [ ] Ensure MultiManager/Manager ingress reaches advertised/federated routes and direct Hub access remains Hub/downstream scoped.
-- [ ] Task: Add integration coverage for the broker bridge against real Verser2 hosts at MultiManager, Manager, and Hub levels.
-    - [ ] Cover valid mTLS, untrusted CA, absent/invalid certificate, disallowed fingerprint where configured, route readiness, ambiguous domains, direct-Hub isolation, and resolver/redirect traversal.
-    - [ ] Cover JSON, upload/binary, streamed request/response, cancellation, and cleanup behavior where the underlying endpoint supports each mode.
-- [ ] Task: Review API compatibility and contract documentation; commit and push the validated phase result.
-- [ ] Task: Conductor - Phase Completion 'v2 Control-Plane Completeness and Topology Validation' (Protocol in workflow.md).
+- [x] Task: Implement missing non-middleware `rest-api2` contracts, resolvers, and Verser2 route registrations revealed by the approved capability matrix.
+    - [x] Keep v2 ownership in `@scramjet/rest-api2`, transport registration in `@scramjet/api-router`, and service-specific handlers thin.
+    - [x] Ensure MultiManager/Manager ingress reaches advertised/federated routes and direct Hub access remains Hub/downstream scoped.
+- [x] Task: Add integration coverage for the broker bridge against real Verser2 hosts at MultiManager, Manager, and Hub levels.
+    - [x] Cover valid mTLS, untrusted CA, absent/invalid certificate, disallowed fingerprint where configured, route readiness, ambiguous domains, direct-Hub isolation, and resolver/redirect traversal.
+    - [x] Cover JSON, upload/binary, streamed request/response, cancellation, and cleanup behavior where the underlying endpoint supports each mode.
+- [x] Task: Review API compatibility and contract documentation; commit and push the validated phase result.
+- [x] Task: Conductor - Phase Completion 'v2 Control-Plane Completeness and Topology Validation' (Protocol in workflow.md).
+
+### Phase 3 validation and reuse record
+
+- Oracle final review passed. Focused strict validation covered Manager ingress/query/rollback (22), MultiManager routing (8), Host ingress/upload/legacy-port lifecycle (15), API-server dispatcher (4), API-router registry (6), rest-api2 contracts (38), and test profiles (79).
+- Default port topology: Manager/MultiManager primary host 2443, mTLS control ingress 2444, Hub runner host 2445; explicit legacy Hub runner port 2444 relocates its default control ingress to 2446.
+- Deferred unrelated full-suite failures: pytest availability, runner Bun/Python channel behavior, sequence-test docs/memory, and unrelated Host strict-guard failures; follow up at track end.
 
 ## Phase 4: CLI Raw API and Named Command Migration
 

@@ -99,6 +99,13 @@ export namespace RestAPI2 {
         status?: string;
     };
 
+    /** Public, non-secret identity of the authenticated v2 ingress. */
+    export type IngressIdentity = {
+        level: "platform" | "space" | "hub";
+        serviceId: string;
+        routeDomain: string;
+    };
+
     export type Sequence = {
         id: string;
         name?: string;

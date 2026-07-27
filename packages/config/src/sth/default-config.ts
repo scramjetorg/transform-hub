@@ -76,8 +76,8 @@ export const defaultConfig: STHConfiguration = {
             identityDir: join(homedir(), ".scramjet", "verser2-runner-host"),
             host: {
                 bindHost: "127.0.0.1",
-                bindPort: 2444,
-                publicUrl: "https://127.0.0.1:2444",
+                bindPort: 2445,
+                publicUrl: "https://127.0.0.1:2445",
                 tls: {
                     mtlsRequired: false
                 }
@@ -88,6 +88,19 @@ export const defaultConfig: STHConfiguration = {
             localBroker: {
                 peerId: "auto"
             }
+        },
+        controlIngress: {
+            enabled: true,
+            identityDir: join(homedir(), ".scramjet", "verser2-host-control-ingress"),
+            host: {
+                bindHost: "127.0.0.1",
+                bindPort: 2444,
+                publicUrl: "https://127.0.0.1:2444",
+                tls: { mtlsRequired: true }
+            },
+            registration: { allowedClientFingerprints: [] },
+            localBroker: { peerId: "host.control.broker" },
+            guest: { peerId: "sth.default.control.guest", routeDomain: "sth.default.control.scramjet.internal" }
         },
         broker: {
             peerId: "sth.default.broker",

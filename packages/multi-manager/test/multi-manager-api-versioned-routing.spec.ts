@@ -1,4 +1,6 @@
-import test from "ava";
+import baseTest from "ava";
+const { createAvaMemoryGuard } = require("../../../scripts/lib/ava-memory-guard");
+const test: typeof baseTest = createAvaMemoryGuard(baseTest);
 import { ObjLogger } from "@scramjet/obj-logger";
 import { PassThrough } from "stream";
 import { readFileSync } from "fs";
@@ -14,7 +16,7 @@ function createMultiManagerStub(recorder: RouteRecorder) {
         apiServer: recorder.asApiExpose(),
         apiBase: "/api/v1",
         id: "mm-hotwire",
-        config: { server: { apiPort: 20000 }, verser2: {} },
+        config: { server: { apiPort: 20000 }, verser2: { localGuest: { routeDomain: "platform.test.scramjet.internal" } } },
         managersStore: new ManagersStore(),
         healthCheck: { getHealthCheckInfo: () => ({ healthy: true }) },
         getV2HealthCheckInfo: async () => ({
@@ -55,6 +57,7 @@ test("MultiManager low-risk routes are reachable through verser2 for v1 and v2",
         "/api/v1/list",
         "/api/v1/health",
         "/api/v1/verser2/trust/:id?",
+        "/api/v2/ingress/identity",
         "/api/v2/version",
         "/api/v2/info",
         "/api/v2/load",
@@ -67,7 +70,11 @@ test("MultiManager low-risk routes are reachable through verser2 for v1 and v2",
         status: 200,
         body: { service: "@scramjet/multi-manager", apiVersion: "v1", version: "0.0.0-test", build: "test-build" }
     });
-    t.deepEqual(await registrations[6].handle({ method: "GET", path: "/api/v2/version" }), {
+    t.deepEqual(await registrations[6].handle({ method: "GET", path: "/api/v2/ingress/identity" }), {
+        status: 200,
+        body: { level: "platform", serviceId: "mm-hotwire", routeDomain: "platform.test.scramjet.internal" }
+    });
+    t.deepEqual(await registrations[7].handle({ method: "GET", path: "/api/v2/version" }), {
         status: 200,
         body: { service: "@scramjet/multi-manager", apiVersion: "v2", version: "0.0.0-test", build: "test-build" }
     });

@@ -191,7 +191,7 @@ test("formats validation errors", t => {
     t.true(formatZodError(error as z.ZodError).includes("feature.enabled"));
 });
 
-test("verser2 descriptors map env cli aliases and mask secrets", t => {
+test("verser2 descriptors preserve an explicit legacy runner Host port and mask secrets", t => {
     const schemaWithVerser2 = z.object({ verser2: sthOutboundVerser2ConfigSchema }).strict();
     const loaded = loadConfig<z.infer<typeof schemaWithVerser2>>({
         schema: schemaWithVerser2,

@@ -147,8 +147,8 @@ test("MultiManagerAPIHandler v2 resolves Space-owned routes through the local Ma
     };
     const handler = recorder.require("use", "/api/v2/spaces/:spaceId/*").handler as Function;
 
-    await handler({ url: "/api/v2/spaces/manager-1/hubs/sth-1/load", params: {}, headers: {} }, response, () => t.fail());
+    await handler({ url: "/api/v2/spaces/manager-1/hubs/sth-1/load?tag=one&tag=two&empty=", params: {}, headers: {} }, response, () => t.fail());
 
-    t.deepEqual(calls, [{ url: "/api/v2/hubs/sth-1/load" }]);
+    t.deepEqual(calls, [{ url: "/api/v2/hubs/sth-1/load?tag=one&tag=two&empty=" }]);
     t.is(response.statusCode, 200);
 });

@@ -5,7 +5,7 @@
  * scripts/lib/ava-options.js.
  *
  * These tests verify option construction, environment overrides,
- * JIT/WASM/fetch profile selection, worker/timeout defaults, and
+ * JIT/permissive-WASM/fetch profile selection, worker/timeout defaults, and
  * bypass‑guard behaviour.  They do NOT spawn child processes or
  * run package tests.
  */
@@ -237,16 +237,12 @@ test("avaNodeOptions honours base NODE_OPTIONS from argument", (t) => {
 // avaNodeArgs – extra Node CLI arguments
 // ---------------------------------------------------------------------------
 
-test("avaNodeArgs returns WASM limits when SCRAMJET_AVA_JITLESS is unset", (t) => {
+test("avaNodeArgs excludes Worker-incompatible WASM flags when JIT is enabled", (t) => {
 	const savedJit = process.env[ENV.JITLESS];
 	delete process.env[ENV.JITLESS];
 	try {
 		const args = avaNodeArgs();
-		t.true(args.length > 0);
-		t.true(args.some((a) => a.startsWith("--wasm-")));
-		t.true(args.includes("--wasm-max-mem-pages=8192"));
-		t.true(args.includes("--wasm-max-committed-code-mb=256"));
-		t.true(args.includes("--wasm-max-code-space-size-mb=256"));
+		t.deepEqual(args, []);
 	} finally {
 		if (savedJit !== undefined) process.env[ENV.JITLESS] = savedJit;
 	}
@@ -393,7 +389,7 @@ test("phase-final profile enables the strict guard and serial AVA execution", (t
 	}
 });
 
-test("avaNodeArgs returns an empty array when SCRAMJET_AVA_JITLESS=1", (t) => {
+test("avaNodeArgs remains free of WASM flags when SCRAMJET_AVA_JITLESS=1", (t) => {
 	const savedJit = process.env[ENV.JITLESS];
 	process.env[ENV.JITLESS] = "1";
 	try {
@@ -851,10 +847,10 @@ test("memoryHeapThresholdBytes throws on negative env value", (t) => {
 });
 
 // ---------------------------------------------------------------------------
-// buildAvaArgs – memory guard mode (--expose-gc and concurrency 1)
+// Memory guard mode (--expose-gc in NODE_OPTIONS, serial concurrency 1)
 // ---------------------------------------------------------------------------
 
-test("buildAvaArgs injects --expose-gc and --concurrency 1 when SCRAMJET_MEMORY_GUARD=1", (t) => {
+test("memory guard places --expose-gc in NODE_OPTIONS and concurrency 1 in AVA args", (t) => {
 	const savedMemGuard = process.env[ENV.MEMORY_GUARD];
 	const savedAvaMemGuard = process.env[ENV.AVA_MEMORY_GUARD];
 	const savedWorkers = process.env[ENV.WORKERS];
@@ -863,12 +859,8 @@ test("buildAvaArgs injects --expose-gc and --concurrency 1 when SCRAMJET_MEMORY_
 	delete process.env[ENV.WORKERS];
 	try {
 		const args = buildAvaArgs([]);
-		// --expose-gc should appear before ava CLI path
-		const avaIndex = args.findIndex((a) => a.includes("ava") && a.endsWith(".js"));
-		t.true(avaIndex > 0, "ava CLI should be at a positive index");
-		const exposeGcIndex = args.indexOf("--expose-gc");
-		t.true(exposeGcIndex >= 0, "--expose-gc should be present");
-		t.true(exposeGcIndex < avaIndex, "--expose-gc should come before ava CLI");
+		t.true(avaNodeOptions("").includes("--expose-gc"), "--expose-gc should be in NODE_OPTIONS");
+		t.false(args.includes("--expose-gc"), "--expose-gc must not be in Worker-inherited execArgv");
 		// --concurrency 1 should be present
 		const concIdx = args.indexOf("--concurrency");
 		t.true(concIdx >= 0, "--concurrency should be present");
@@ -882,7 +874,7 @@ test("buildAvaArgs injects --expose-gc and --concurrency 1 when SCRAMJET_MEMORY_
 	}
 });
 
-test("buildAvaArgs injects --expose-gc and --concurrency 1 when SCRAMJET_AVA_MEMORY_GUARD=1", (t) => {
+test("AVA-specific memory guard places --expose-gc in NODE_OPTIONS", (t) => {
 	const savedMemGuard = process.env[ENV.MEMORY_GUARD];
 	const savedAvaMemGuard = process.env[ENV.AVA_MEMORY_GUARD];
 	const savedWorkers = process.env[ENV.WORKERS];
@@ -891,7 +883,8 @@ test("buildAvaArgs injects --expose-gc and --concurrency 1 when SCRAMJET_AVA_MEM
 	delete process.env[ENV.WORKERS];
 	try {
 		const args = buildAvaArgs([]);
-		t.true(args.indexOf("--expose-gc") >= 0, "--expose-gc should be present");
+		t.true(avaNodeOptions("").includes("--expose-gc"), "--expose-gc should be in NODE_OPTIONS");
+		t.false(args.includes("--expose-gc"), "--expose-gc must not be in Worker-inherited execArgv");
 		const concIdx = args.indexOf("--concurrency");
 		t.true(concIdx >= 0, "--concurrency should be present");
 		t.is(args[concIdx + 1], "1");
@@ -1000,8 +993,8 @@ test("buildAvaArgs does not throw when SCRAMJET_AVA_WORKERS=1 in memory guard mo
 	process.env[ENV.MEMORY_GUARD] = "1";
 	process.env[ENV.WORKERS] = "1";
 	try {
-		const args = buildAvaArgs([]);
-		t.true(args.indexOf("--expose-gc") >= 0, "--expose-gc should be present");
+		buildAvaArgs([]);
+		t.true(avaNodeOptions("").includes("--expose-gc"), "--expose-gc should be in NODE_OPTIONS");
 	} finally {
 		if (savedMemGuard !== undefined) process.env[ENV.MEMORY_GUARD] = savedMemGuard;
 		else delete process.env[ENV.MEMORY_GUARD];
@@ -1016,8 +1009,8 @@ test("buildAvaArgs does not throw when SCRAMJET_AVA_WORKERS is unset in memory g
 	process.env[ENV.MEMORY_GUARD] = "1";
 	delete process.env[ENV.WORKERS];
 	try {
-		const args = buildAvaArgs([]);
-		t.true(args.indexOf("--expose-gc") >= 0, "--expose-gc should be present");
+		buildAvaArgs([]);
+		t.true(avaNodeOptions("").includes("--expose-gc"), "--expose-gc should be in NODE_OPTIONS");
 	} finally {
 		if (savedMemGuard !== undefined) process.env[ENV.MEMORY_GUARD] = savedMemGuard;
 		else delete process.env[ENV.MEMORY_GUARD];
@@ -1070,14 +1063,15 @@ test("buildAvaArgs does not inject --serial when already in CLI args", (t) => {
 	}
 });
 
-test("buildAvaArgs injects --serial alongside --concurrency 1 and --expose-gc", (t) => {
+test("buildAvaArgs injects --serial alongside --concurrency 1 without --expose-gc execArgv", (t) => {
 	const savedMemGuard = process.env[ENV.MEMORY_GUARD];
 	const savedWorkers = process.env[ENV.WORKERS];
 	process.env[ENV.MEMORY_GUARD] = "1";
 	delete process.env[ENV.WORKERS];
 	try {
 		const args = buildAvaArgs([]);
-		t.true(args.includes("--expose-gc"), "--expose-gc should be present");
+		t.false(args.includes("--expose-gc"), "--expose-gc must not be in Worker-inherited execArgv");
+		t.true(avaNodeOptions("").includes("--expose-gc"), "--expose-gc should be in NODE_OPTIONS");
 		t.true(args.includes("--serial"), "--serial should be present");
 		t.true(args.includes("--concurrency"), "--concurrency should be present");
 		const concIdx = args.indexOf("--concurrency");

@@ -77,6 +77,9 @@ export type STHOutboundVerser2Config = {
     enabled: boolean;
     hostUrl: string;
     runnerHost?: STHRunnerVerser2HostConfig;
+    controlIngress?: STHRunnerVerser2HostConfig & {
+        guest: { peerId: string; routeDomain: string };
+    };
     broker: {
         peerId: string;
         targetDomain: string;

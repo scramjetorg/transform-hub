@@ -15,6 +15,11 @@ export class MultiManagerAPIV2Handler {
         const multiManager = this.multiManager;
         const routes = RestAPI2RouteSets.root.routes();
         const router = bindRoutes(routes, {
+            ingressIdentity: routeBinding.handler<typeof routes.ingressIdentity>(() => ({
+                level: "platform",
+                serviceId: multiManager.id,
+                routeDomain: multiManager.config.verser2.controlIngress?.enabled ? multiManager.config.verser2.controlIngress.guest.routeDomain : multiManager.config.verser2.localGuest.routeDomain
+            }), { id: "root.v2.ingress.identity" }),
             version: routeBinding.handler<typeof routes.version>(() => ({
                 service: multiManager.service,
                 apiVersion: "v2",
@@ -55,7 +60,7 @@ export class MultiManagerAPIV2Handler {
                         const request = req as { url?: string };
                         const originalUrl = request.url;
 
-                        request.url = this.toManagerImplementerPath(remainingPath);
+                        request.url = this.toManagerImplementerPath(remainingPath, originalUrl);
 
                         try {
                             return manager.router.lookup(req as any, res as any, next);
@@ -86,8 +91,11 @@ export class MultiManagerAPIV2Handler {
         return getMultiManagerVerser2TrustExport(this.multiManager.config.verser2, manager?.config);
     }
 
-    private toManagerImplementerPath(remainingPath: string): string {
-        return remainingPath === "/" ? this.v2ApiBase : `${this.v2ApiBase}${remainingPath}`;
+    private toManagerImplementerPath(remainingPath: string, requestUrl?: string): string {
+        const path = remainingPath === "/" ? this.v2ApiBase : `${this.v2ApiBase}${remainingPath}`;
+        const query = requestUrl?.includes("?") ? requestUrl.slice(requestUrl.indexOf("?")) : "";
+
+        return path.includes("?") || !query ? path : `${path}${query}`;
     }
 
     private toSpaceItem(manager: unknown): RestAPI2.Space {

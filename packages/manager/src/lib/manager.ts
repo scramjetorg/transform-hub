@@ -42,7 +42,7 @@ import { SthConnectionStore } from "./sth-connection-store";
 import { csrEnrollmentOptions, getDefaultManagerConfig, managerVerser2Options, maskConfig } from "@scramjet/config";
 import { merge, readJsonFile } from "@scramjet/utility";
 import { ServiceDiscovery, TopicActor } from "./service-discovery";
-import { ManagerSthBrokerTransport, type RouteChangeEvent } from "./verser2-transport";
+import { createManagerSthLocalBrokerTransport, ManagerSthBrokerTransport, type RouteChangeEvent } from "./verser2-transport";
 import { classifyManagerRoute, ManagerRouteDecision, prepareManagerFollowForwarding } from "./route-classifier";
 import { decideRouteForwardingPolicy, isTrustedSthRouteDomain } from "./route-forwarding-policy";
 
@@ -55,7 +55,10 @@ import { Client as MinioClient } from "minio";
 import * as fs from "fs/promises";
 import { homedir } from "os";
 import { ManagerAPIHandler } from "./api/manager-api";
+import { ManagerAPIV2Handler } from "./api/manager-api-v2";
 import { CsrEnrollmentAuthority } from "./csr-enrollment";
+import { startManagerControlIngress, stopManagerControlIngress } from "./manager-control-ingress";
+import { VerserHost } from "@signicode/verser2-host";
 
 const buildInfo = readJsonFile("build.info", __dirname, "..");
 const packageFile = findPackage(__dirname).next();
@@ -129,6 +132,8 @@ export class Manager implements IComponent {
     private routeChangeUnsubscribe?: () => void;
     private hubInventoryState = new Map<string, HubInventoryState>();
     private csrEnrollmentAuthority?: CsrEnrollmentAuthority;
+    private controlIngressHost?: VerserHost;
+    private controlIngressBroker?: { close(reason?: string): Promise<void> };
 
     private sthInfoRegister: ISTHInfoRegister = new STHInfoRegister();
     private commonLogsPipe = new CommonLogsPipe();
@@ -319,6 +324,25 @@ export class Manager implements IComponent {
         this.logger.addOutput(this.commonLogsPipe.getIn());
 
         await this.attachManagerAPIs();
+        if (!(this._config.verser2.controlIngress as any)?.embedded) {
+            try {
+                this.controlIngressHost = await startManagerControlIngress(this._config.verser2.controlIngress, this.createV2Router(), undefined, this._config.verser2.registration.allowedClientFingerprints) as VerserHost | undefined;
+                if (this.controlIngressHost && !this.sthBrokerTransport) {
+                    const broker = await this.attachControlIngressBroker(this.controlIngressHost);
+
+                    this.controlIngressBroker = broker;
+                    this.setSthBrokerTransport(createManagerSthLocalBrokerTransport(broker));
+                }
+            } catch (error) {
+                // startManagerControlIngress has attached the v2 guest by now;
+                // release it and any local broker before propagating startup failure.
+                await this.controlIngressBroker?.close("Manager control ingress startup failed");
+                this.controlIngressBroker = undefined;
+                await stopManagerControlIngress(this.controlIngressHost);
+                this.controlIngressHost = undefined;
+                throw error;
+            }
+        }
 
         this.logger.trace("Manager main called.");
 
@@ -327,6 +351,18 @@ export class Manager implements IComponent {
 
     async attachManagerAPIs() {
         await new ManagerAPIHandler(this).attach();
+    }
+
+    /** Router used exclusively by the dedicated Verser2 v2 control ingress. */
+    createV2Router() {
+        return new ManagerAPIV2Handler(this).createV2Router();
+    }
+
+    /** Isolated for startup rollback coverage and to keep ingress broker setup atomic. */
+    protected async attachControlIngressBroker(host: VerserHost) {
+        return host.attachLocalBroker({
+            brokerId: `${this._config.verser2.controlIngress!.guest.peerId}.broker`
+        });
     }
 
     setupHealthEndpoint(healthCheck: HealthCheck) {
@@ -1023,6 +1059,10 @@ export class Manager implements IComponent {
         this.logger.info("Stopping manager...");
         this.routeChangeUnsubscribe?.();
         this.routeChangeUnsubscribe = undefined;
+        await this.controlIngressBroker?.close("Manager stopped");
+        this.controlIngressBroker = undefined;
+        await stopManagerControlIngress(this.controlIngressHost);
+        this.controlIngressHost = undefined;
         this.logger.info("Manager stopped successfully.");
     }
 }

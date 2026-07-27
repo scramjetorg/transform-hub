@@ -145,7 +145,8 @@ async function dispatchResolvedTarget(
     const originalParams = req.params;
     const existingParams = originalParams || {};
 
-    req.url = remainingPath;
+    const query = originalUrl?.includes("?") ? originalUrl.slice(originalUrl.indexOf("?")) : "";
+    req.url = `${remainingPath}${query}`;
     req.params = { ...params, ...existingParams };
 
     try {

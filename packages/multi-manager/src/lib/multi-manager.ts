@@ -14,8 +14,10 @@ import { ReasonPhrases } from "http-status-codes";
 import { AddressInfo } from "net";
 import { DataStream } from "scramjet";
 import { Writable } from "stream";
+import { createV2HttpDispatcher } from "@scramjet/api-server";
 import { MultiManagerConfig } from "../config/multi-manager-configuration";
 import { MultiManagerAPIHandler } from "./api/multi-manager-api";
+import { MultiManagerAPIV2Handler } from "./api/multi-manager-api-v2";
 import { ManagersStore } from "./manager-store";
 import { MultiManagerAuditor } from "./mulit-manager-auditor";
 import { createVerser2HostOptions } from "./verser2-host-config";
@@ -32,6 +34,8 @@ const name = packageFile.value?.name || "unknown";
 export class MultiManager {
     apiServer: APIExpose;
     verser2Host?: VerserHost;
+    /** Isolated mTLS v2 control plane; never carries Manager/STH transport. */
+    controlIngressHost?: VerserHost;
     apiBase: string;
 
     id: string;
@@ -51,6 +55,9 @@ export class MultiManager {
     freePortsFinder = new FreePortsFinder();
     private commonLogsPipe = new CommonLogsPipe();
     private managerVerser2Handles = new Map<string, { broker?: VerserLocalBrokerHandle; guest?: VerserLocalGuestHandle }>();
+    private controlIngressGuests = new Map<string, VerserLocalGuestHandle>();
+    private controlIngressRootGuest?: VerserLocalGuestHandle;
+    private stopping = false;
 
     public get logStream(): Writable {
         return this.commonLogsPipe.getIn();
@@ -112,6 +119,15 @@ export class MultiManager {
     }
 
     async start() {
+        try {
+            await this.startOwnedResources();
+        } catch (error) {
+            await this.stop();
+            throw error;
+        }
+    }
+
+    private async startOwnedResources() {
         const prettyLog = new DataStream().map(prettyPrint({ colors: this.config.getEntry("logColors") }));
 
         this.logger.addOutput(prettyLog);
@@ -137,6 +153,8 @@ export class MultiManager {
             attachVerser2ServerStreamBoundary((this.verser2Host as any).server, this.logger);
             this.logger.info("verser2 Host started", this.verser2Host.address);
         }
+
+        await this.startControlIngress();
 
         if (this.config.monitoringServer?.port) {
             this.logger.debug(`starting monitoring server on port ${this.config.monitoringServer?.port}`);
@@ -204,7 +222,14 @@ export class MultiManager {
 
                             this.logger.trace(`Starting ${index + 1}/${managerConfigs.length} default manager`, managerConfig.id);
 
-                            const manager = new Manager({ ...managerConfig, s3: this.config.s3 });
+                            const manager = new Manager({
+                                ...managerConfig,
+                                s3: this.config.s3,
+                                verser2: {
+                                    ...managerConfig.verser2,
+                                    controlIngress: managerConfig.verser2.controlIngress && { ...managerConfig.verser2.controlIngress, embedded: true }
+                                }
+                            });
 
                             manager.logger.pipe(this.logger);
 
@@ -288,6 +313,12 @@ export class MultiManager {
         });
 
         this.managerVerser2Handles.set(manager.config.id, { broker, guest });
+        try {
+            await this.attachManagerControlIngress(manager);
+        } catch (error) {
+            await this.detachManagerVerser2Peers(manager.config.id);
+            throw error;
+        }
     }
 
     private async detachManagerVerser2Peers(managerId: string) {
@@ -299,6 +330,71 @@ export class MultiManager {
 
         this.managerVerser2Handles.delete(managerId);
         await Promise.allSettled([handles.broker?.close("manager-stop"), handles.guest?.close("manager-stop")]);
+        const controlGuest = this.controlIngressGuests.get(managerId);
+        this.controlIngressGuests.delete(managerId);
+        await controlGuest?.close("manager-stop");
+    }
+
+    private async startControlIngress() {
+        const ingress = this.config.verser2.controlIngress;
+        if (!ingress?.enabled || this.controlIngressHost) return;
+
+        const controlConfig = await resolveManagerVerser2HostConfig({
+            ...this.config.verser2,
+            host: ingress.host,
+            localGuest: ingress.guest
+        }, "MultiManager control ingress");
+        this.controlIngressHost = createVerserHost(createVerser2HostOptions(controlConfig));
+        this.controlIngressHost.onLifecycle(event => this.logger.debug("control ingress lifecycle", event));
+        try {
+            await this.controlIngressHost.start();
+            attachVerser2ServerStreamBoundary((this.controlIngressHost as any).server, this.logger);
+            this.controlIngressRootGuest = await this.controlIngressHost.attachLocalGuest({
+                guestId: ingress.guest.peerId,
+                routedDomains: [ingress.guest.routeDomain],
+                listener: (req, res) => createV2HttpDispatcher(new MultiManagerAPIV2Handler(this).createV2Router()).listener(req as any, res as any)
+            });
+        } catch (error) {
+            const host = this.controlIngressHost as VerserHost & { stop?: () => Promise<void>; close?: () => Promise<void> };
+            this.controlIngressHost = undefined;
+            await (host.stop?.() || host.close?.());
+            throw error;
+        }
+        this.logger.info("Verser2 control ingress started", this.controlIngressHost.address);
+    }
+
+    private async attachManagerControlIngress(manager: Manager) {
+        const ingress = manager.config.verser2.controlIngress;
+        if (!this.controlIngressHost || !ingress) return;
+
+        const guest = await this.controlIngressHost.attachLocalGuest({
+            guestId: ingress.guest.peerId,
+            routedDomains: [ingress.guest.routeDomain],
+            listener: (req, res) => createV2HttpDispatcher(manager.createV2Router()).listener(req as any, res as any)
+        });
+        this.controlIngressGuests.set(manager.config.id, guest);
+    }
+
+    async stop() {
+        if (this.stopping) return;
+        this.stopping = true;
+        const guests = [this.controlIngressRootGuest, ...this.controlIngressGuests.values()];
+        this.controlIngressRootGuest = undefined;
+        this.controlIngressGuests.clear();
+        await Promise.allSettled(guests.map(guest => guest?.close("multi-manager-stop")));
+        const host = this.controlIngressHost as (VerserHost & { stop?: () => Promise<void>; close?: () => Promise<void> }) | undefined;
+        this.controlIngressHost = undefined;
+        await (host?.stop?.() || host?.close?.());
+        const dataHandles = [...this.managerVerser2Handles.entries()];
+        this.managerVerser2Handles.clear();
+        await Promise.allSettled(dataHandles.flatMap(([, handles]) => [handles.broker?.close("multi-manager-stop"), handles.guest?.close("multi-manager-stop")]));
+        const dataHost = this.verser2Host as (VerserHost & { stop?: () => Promise<void>; close?: () => Promise<void> }) | undefined;
+        this.verser2Host = undefined;
+        await (dataHost?.stop?.() || dataHost?.close?.());
+        const managers = this.managersStore.list();
+        await Promise.allSettled(managers.map(manager => manager.stop()));
+        for (const manager of managers) this.managersStore.remove(manager.id);
+        if (this.apiServer.server.listening) await new Promise<void>(resolve => this.apiServer.server.close(() => resolve()));
     }
 
     async cpmMiddleware(req: ParsedMessage, res: ServerResponse, next: NextCallback) {
@@ -356,7 +452,14 @@ export class MultiManager {
             };
         }
 
-        const manager = new Manager({ ...managerConfig, s3: this.config.s3 });
+        const manager = new Manager({
+            ...managerConfig,
+            s3: this.config.s3,
+            verser2: {
+                ...managerConfig.verser2,
+                controlIngress: managerConfig.verser2.controlIngress && { ...managerConfig.verser2.controlIngress, embedded: true }
+            }
+        });
 
         manager.logger.pipe(this.logger);
 

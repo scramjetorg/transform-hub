@@ -11,8 +11,10 @@
  *
  *   – Heap limit:    --max-old-space-size=2048 (configurable via
  *                    SCRAMJET_AVA_MAX_OLD_SPACE_SIZE)
- *   – JIT profile:   enabled by default (SCRAMJET_AVA_JITLESS=0), with WASM
- *                    limits; opt in to --jitless via SCRAMJET_AVA_JITLESS=1
+ *   – JIT profile:   enabled by default (SCRAMJET_AVA_JITLESS=0), with Node's
+ *                    permissive WASM defaults; opt in to --jitless via
+ *                    SCRAMJET_AVA_JITLESS=1. WASM V8 CLI flags are excluded
+ *                    because AVA Workers reject inherited execArgv flags.
  *   – TypeScript:    TS_NODE_TRANSPILE_ONLY=1 by default; set it to 0 to
  *                    enable ts-node typechecking for a test invocation
  *   – Fetch:         --no-experimental-fetch on SCRAMJET_AVA_FETCH=0

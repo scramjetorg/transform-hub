@@ -34,6 +34,12 @@ export const ErrorBody = z.object({
     details: z.unknown().optional()
 });
 
+export const IngressIdentity = z.object({
+    level: z.union([z.literal("platform"), z.literal("space"), z.literal("hub")]),
+    serviceId: z.string(),
+    routeDomain: z.string()
+});
+
 export const Space = z.object({
     id: z.string(),
     hubs: z.number().int().min(0).optional()

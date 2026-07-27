@@ -13,7 +13,8 @@
  *   SCRAMJET_TEST_PROFILE            – "fast" (concurrent) or "phase-final"
  *                                      (strict serial guard); unset uses normal defaults
  *   SCRAMJET_AVA_MAX_OLD_SPACE_SIZE  – override --max-old-space-size (default 2048)
- *   SCRAMJET_AVA_JITLESS             – defaults to "0" (JIT enabled with WASM limits);
+ *   SCRAMJET_AVA_JITLESS             – defaults to "0" (JIT enabled with Node's
+ *                                      permissive default WASM capabilities);
  *                                      set to a non-disabled value to enable --jitless
  *   TS_NODE_TRANSPILE_ONLY           – defaults to "1" for test runtime transpilation;
  *                                      set to "0" to enable ts-node typechecking
@@ -248,7 +249,7 @@ function maxOldSpaceSize() {
  *
  * - Forces --max-old-space-size (configurable via SCRAMJET_AVA_MAX_OLD_SPACE_SIZE).
  * - Appends --no-experimental-fetch when SCRAMJET_AVA_FETCH is disabled.
- * - Enables JIT with WASM limits by default; appends --jitless when
+ * - Enables JIT with Node's permissive default WASM capabilities; appends --jitless when
  *   SCRAMJET_AVA_JITLESS is explicitly enabled.
  * - Appends --require for the bypass‑guard preload when SCRAMJET_AVA_GUARD=1.
  *
@@ -267,32 +268,34 @@ function avaNodeOptions(options) {
 	// 3. JIT / WASM profile
 	const withJit = isDisabled(process.env[ENV.JITLESS] ?? "0") ? removeNodeOption(withFetchMode, "--jitless") : appendNodeOption(withFetchMode, "--jitless");
 
-	// 4. Bypass‑guard preload (opt‑in via SCRAMJET_AVA_GUARD=1)
+	// 4. Memory guard: NODE_OPTIONS keeps --expose-gc out of execArgv so
+	//    AVA can safely inherit it when creating Workers.
+	const withMemoryGuard = isMemoryGuardEnabled() ? appendNodeOption(withJit, "--expose-gc") : withJit;
+
+	// 5. Bypass‑guard preload (opt‑in via SCRAMJET_AVA_GUARD=1)
 	//    NOTE: this guard is only effective for runner‑spawned AVA processes
 	//    or when users preload ava-guard.cjs directly.  Direct `npx ava`
 	//    invocation without NODE_OPTIONS cannot be intercepted by this
 	//    bounded implementation.
 	if (process.env[ENV.GUARD] !== "1") {
-		return withJit;
+		return withMemoryGuard;
 	}
-	return appendNodeOption(withJit, `--require=${preloadGuardPath()}`);
+	return appendNodeOption(withMemoryGuard, `--require=${preloadGuardPath()}`);
 }
 
 /**
  * Build the extra Node.js CLI arguments for the AVA child process (passed
  * before the ava CLI binary path).
  *
- * When JIT is enabled (the default, or SCRAMJET_AVA_JITLESS is disabled), adds WASM limits
- * to avoid runaway WASM memory under constrained environments.
+ * WASM V8 flags cannot be passed in `execArgv`: AVA inherits them when it
+ * creates Workers and Node rejects them with ERR_WORKER_INVALID_EXEC_ARGV.
+ * Therefore the JIT profile deliberately relies on Node's permissive default
+ * WASM capabilities rather than adding restrictive WASM CLI flags.
  *
  * @returns {string[]}
  */
 function avaNodeArgs() {
-	if (!isDisabled(process.env[ENV.JITLESS] ?? "0")) {
-		return [];
-	}
-
-	return ["--wasm-num-compilation-tasks=1", "--wasm-max-mem-pages=8192", "--wasm-max-committed-code-mb=256", "--wasm-max-code-space-size-mb=256"];
+	return [];
 }
 
 /**
@@ -323,11 +326,6 @@ function avaConcurrency() {
 function buildAvaArgs(cliArgs) {
 	const args = [...avaNodeArgs()];
 	const avaCli = resolveAvaCli();
-
-	// Memory guard mode: inject --expose-gc before the ava CLI path.
-	if (isMemoryGuardEnabled()) {
-		args.push("--expose-gc");
-	}
 
 	args.push(avaCli);
 

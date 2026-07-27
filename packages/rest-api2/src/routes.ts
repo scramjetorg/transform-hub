@@ -12,6 +12,7 @@ import {
     EventMessage,
     EventResponse,
     Hub,
+    IngressIdentity,
     healthCheckInfo,
     Instance,
     InstanceParametersPatch,
@@ -28,7 +29,6 @@ import {
     RpcResponse,
     SendEventResponse,
     Sequence,
-    SendSequencePayload,
     SequenceResponse,
     Space,
     StartSequencePayload,
@@ -86,6 +86,7 @@ function routerFromRouteSet(routeSet: Record<string, RouteDefinition>, basePath?
 
 function hubRouteSet() {
     return {
+        ingressIdentity: Router.get("/ingress/identity", { schemas: { response: IngressIdentity } }),
         load: Router.get("/load", { schemas: { response: LoadResponse } }),
         version: Router.get("/version", { schemas: { response: VersionResponse } }),
         config: Router.get("/config", { schemas: { response: ConfigResponse } }),
@@ -112,10 +113,10 @@ function hubRouteSet() {
 
 function sequenceRouteSet() {
     return {
-        sendSequence: Router.route("post", "/", { kind: "downstream", schemas: { body: SendSequencePayload, response: opResponse(SequenceResponse) } }),
+        sendSequence: Router.route("post", "/", { kind: "downstream", schemas: { response: opResponse(SequenceResponse) } }),
         updateSequence: Router.route("put", "/:sequenceId", {
             kind: "downstream",
-            schemas: { params: RestAPI2Schemas.params.sequence, body: SendSequencePayload, response: opResponse(SequenceResponse) }
+            schemas: { params: RestAPI2Schemas.params.sequence, response: opResponse(SequenceResponse) }
         }),
         deleteSequence: Router.route("delete", "/:sequenceId", { schemas: { params: RestAPI2Schemas.params.sequence, response: opResponse(DeleteSequenceResponse) } }),
         startSequence: Router.post("/:sequenceId/instances", {
@@ -158,6 +159,7 @@ function hubResolverSet() {
 
 function spaceRouteSet() {
     return {
+        ingressIdentity: Router.get("/ingress/identity", { schemas: { response: IngressIdentity } }),
         version: Router.get("/version", { schemas: { response: VersionResponse } }),
         config: Router.get("/config", { schemas: { response: ConfigResponse } }),
         trust: Router.get("/verser2/trust", { schemas: { response: TrustExport } }),
@@ -204,6 +206,7 @@ function spaceResolverSet(basePath = "/api/v2") {
 
 function rootRouteSet() {
     return {
+        ingressIdentity: Router.get("/ingress/identity", { schemas: { response: IngressIdentity } }),
         version: Router.get("/version", { schemas: { response: RestAPI2Schemas.root.version } }),
         info: Router.get("/info", { schemas: { response: RestAPI2Schemas.root.info } }),
         load: Router.get("/load", { schemas: { response: LoadResponse } }),

@@ -28,4 +28,8 @@ export class HostAPIHandler {
         this.v1.attach();
         this.v2.attach();
     }
+
+    createV2Router() {
+        return this.v2.createV2Router();
+    }
 }

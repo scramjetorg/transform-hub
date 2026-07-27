@@ -66,11 +66,13 @@ test("resolveManagerVerser2HostConfig generates and reuses local Host identity",
 });
 
 test("resolveManagerVerser2HostConfig preserves explicit TLS identity", async t => {
-    const config = baseConfig(await tempIdentityDir());
+    const identityDir = await tempIdentityDir();
+    const generated = await resolveManagerVerser2HostConfig(baseConfig(identityDir), "Manager");
+    const config = baseConfig(identityDir);
 
     config.host.tls = {
-        certFile: "/certs/manager.crt",
-        keyFile: "/certs/manager.key",
+        certFile: generated.host.tls.certFile,
+        keyFile: generated.host.tls.keyFile,
         mtlsRequired: false
     };
 
@@ -78,10 +80,10 @@ test("resolveManagerVerser2HostConfig preserves explicit TLS identity", async t 
         const resolved = await resolveManagerVerser2HostConfig(config, "Manager");
 
         t.is(resolved, config);
-        t.is(resolved.host.tls.certFile, "/certs/manager.crt");
-        t.is(resolved.host.tls.keyFile, "/certs/manager.key");
+        t.is(resolved.host.tls.certFile, generated.host.tls.certFile);
+        t.is(resolved.host.tls.keyFile, generated.host.tls.keyFile);
     } finally {
-        await rm(config.host.identityDir!, { recursive: true, force: true });
+        await rm(identityDir, { recursive: true, force: true });
     }
 });
 

@@ -13,6 +13,7 @@ import {
 import { RestAPI2, RestAPI2RouteSets } from "@scramjet/rest-api2";
 import { onRequestDisconnect } from "@scramjet/utility";
 import { createDefaultHealthComponents, degradedComponent, summarizeHealth } from "@scramjet/load-check";
+import { HostError, IDProvider } from "@scramjet/model";
 import { PassThrough, Readable } from "stream";
 
 import { IHost } from "../types";
@@ -53,6 +54,13 @@ export class HostAPIV2Handler {
         const routes = RestAPI2RouteSets.hub.hubRoutes();
 
         return bindRoutes(routes, {
+            ingressIdentity: routeBinding.handler<typeof routes.ingressIdentity>(() => ({
+                level: "hub",
+                serviceId: String((host as any).config?.host?.id),
+                routeDomain: (host as any).config?.verser2?.controlIngress?.enabled
+                    ? (host as any).config.verser2.controlIngress.guest.routeDomain
+                    : (host as any).config?.verser2?.guest?.routeDomain
+            }), { id: "hub.v2.ingress.identity" }),
             load: (): RestAPI2.LoadResponse<RestAPI2.Hub> => ({
                 load: (host.loadCheck.getLoadCheck() as any)?.load ?? 0
             }),
@@ -148,8 +156,12 @@ export class HostAPIV2Handler {
         const routes = RestAPI2RouteSets.hub.sequenceRoutes();
 
         return bindRoutes(routes, {
-            sendSequence: routeBinding.contractOnly("Sequence upload stream remains handled by v1 compatibility surface."),
-            updateSequence: routeBinding.contractOnly("Sequence update stream remains handled by v1 compatibility surface."),
+            sendSequence: routeBinding.handler<typeof routes.sendSequence>((req) => {
+                return this.handleNewSequence(req);
+            }),
+            updateSequence: routeBinding.handler<typeof routes.updateSequence>((req) => {
+                return this.handleUpdateSequence(req, sequenceId(req.params));
+            }),
             deleteSequence: async ({ params, headers }): Promise<RestAPI2.OpResponse<RestAPI2.DeleteSequenceResponse>> => {
                 const id = sequenceId(params);
                 const force = Boolean((headers as Record<string, unknown> | undefined)?.["x-seq-kill-inst"]);
@@ -411,6 +423,105 @@ export class HostAPIV2Handler {
         return req.raw.request;
     }
 
+    /**
+     * Host v2 sequence routes are downstream routes: the package must remain the
+     * original request stream so adapters can consume it incrementally.  Do not
+     * buffer or parse it through the v2 JSON body contract.
+     */
+    private async handleNewSequence(req: RawHttpRouteRequest): Promise<RestAPI2.OpResponse<RestAPI2.SequenceResponse>> {
+        const id = IDProvider.generate();
+
+        if (this.host.sequenceStore.getById(id)) {
+            this.discardRequestBody(req);
+            return this.failedOperation("SEQUENCE_EXISTS", `Sequence with id ${id} already exists`, id, "Method Not Allowed");
+        }
+
+        return this.receiveSequence(req, id, false, "SEQUENCE_UPLOAD_FAILED");
+    }
+
+    private async handleUpdateSequence(req: RawHttpRouteRequest, id: string): Promise<RestAPI2.OpResponse<RestAPI2.SequenceResponse>> {
+        if (!id) {
+            this.discardRequestBody(req);
+            return this.failedOperation("MISSING_SEQUENCE_ID", "Missing sequence id parameter", id, "Bad Request");
+        }
+
+        const existingSequence = this.host.sequenceStore.getById(id);
+        if (!existingSequence) {
+            this.discardRequestBody(req);
+            return this.failedOperation("SEQUENCE_NOT_FOUND", `Sequence with id: ${id} not found`, id, "Not Found");
+        }
+
+        if (existingSequence.instances.length) {
+            this.discardRequestBody(req);
+            return this.failedOperation("SEQUENCE_IN_USE", "Can't update sequence with instances", id, "Conflict");
+        }
+
+        return this.receiveSequence(req, id, true, "SEQUENCE_UPDATE_FAILED");
+    }
+
+    private async receiveSequence(
+        req: RawHttpRouteRequest,
+        id: string,
+        override: boolean,
+        failureCode: string
+    ): Promise<RestAPI2.OpResponse<RestAPI2.SequenceResponse>> {
+        let stream: Readable;
+        try {
+            stream = this.rawReadable(req);
+        } catch (error) {
+            return this.failedOperation("INVALID_SEQUENCE_SOURCE", this.errorMessage(error), id, "Bad Request");
+        }
+
+        const stopWatching = this.destroyOnInterruptedUpload(stream);
+        try {
+            const sequence = await this.host.addSequence(id, stream, override, (stream as { socket?: any }).socket);
+
+            return this.completedOperation(sequence.id, { sequence: { id: sequence.id } });
+        } catch (error) {
+            this.terminateUnfinishedUpload(stream);
+            if (error instanceof HostError && error.code === "SEQUENCE_IDENTIFICATION_FAILED") {
+                return this.failedOperation(error.code, error.message, id, "Bad Request");
+            }
+            if (error instanceof HostError && error.code === "SEQUENCE_EXISTS") {
+                return this.failedOperation(error.code, error.message, id, "Method Not Allowed");
+            }
+
+            return this.failedOperation(failureCode, this.errorMessage(error), id, "Unprocessable Entity");
+        } finally {
+            stopWatching();
+        }
+    }
+
+    /**
+     * An adapter may reject before it begins to read a downstream request. Do
+     * not leave that paused request attached to the direct ingress connection.
+     */
+    private terminateUnfinishedUpload(stream: Readable): void {
+        if (!(stream as { readableEnded?: boolean }).readableEnded && !stream.destroyed) {
+            stream.destroy();
+        }
+    }
+
+    /** Destroy a stalled adapter read when its client abandons an unfinished upload. */
+    private destroyOnInterruptedUpload(stream: Readable): () => void {
+        const interrupt = () => {
+            if (!(stream as { readableEnded?: boolean }).readableEnded && !stream.destroyed) {
+                stream.destroy(new Error("Sequence upload request disconnected"));
+            }
+        };
+        const onClose = () => {
+            if (!(stream as { readableEnded?: boolean }).readableEnded) interrupt();
+        };
+
+        stream.once("aborted", interrupt);
+        stream.once("close", onClose);
+
+        return () => {
+            stream.removeListener("aborted", interrupt);
+            stream.removeListener("close", onClose);
+        };
+    }
+
     private headerValue(headers: Record<string, unknown> | undefined, name: string): string | undefined {
         const value = headers?.[name];
 
@@ -447,11 +558,13 @@ export class HostAPIV2Handler {
         });
     }
 
-    private failedOperation<TOutput>(code: string, message: string, id: string): RestAPI2.OpResponse<TOutput> {
+    private failedOperation<TOutput>(code: string, message: string, id: string, opStatus?: string): RestAPI2.OpResponse<TOutput> {
         return {
             operation: { id: id || code, status: "failed" },
             error: { code, message },
-            ...(code === "TOPIC_NOT_FOUND"
+            ...(opStatus
+                ? { opStatus }
+                : code === "TOPIC_NOT_FOUND"
                 ? { opStatus: "Not Found" }
                 : code === "TOPIC_CONTENT_TYPE_MISMATCH"
                   ? { opStatus: "Conflict" }
@@ -463,6 +576,12 @@ export class HostAPIV2Handler {
                         ? { opStatus: "Gone" }
                         : {})
         };
+    }
+
+    /** Terminate a body rejected before a downstream sequence handler consumes it. */
+    private discardRequestBody(req: unknown): void {
+        const body = (req as any)?.raw?.request || (req as any)?.raw;
+        if (body && !body.readableEnded && !body.destroyed && typeof body.destroy === "function") body.destroy();
     }
 
     private errorMessage(error: unknown): string {
