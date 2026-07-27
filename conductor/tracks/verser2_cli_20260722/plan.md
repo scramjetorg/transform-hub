@@ -66,6 +66,7 @@
 - Oracle final review passed. Focused strict validation covered Manager ingress/query/rollback (22), MultiManager routing (8), Host ingress/upload/legacy-port lifecycle (15), API-server dispatcher (4), API-router registry (6), rest-api2 contracts (38), and test profiles (79).
 - Default port topology: Manager/MultiManager primary host 2443, mTLS control ingress 2444, Hub runner host 2445; explicit legacy Hub runner port 2444 relocates its default control ingress to 2446.
 - Deferred unrelated full-suite failures: pytest availability, runner Bun/Python channel behavior, sequence-test docs/memory, and unrelated Host strict-guard failures; follow up at track end.
+- Phase checkpoint: `7210a704` (`feat: add Verser2 control ingress`).
 
 ## Phase 4: CLI Raw API and Named Command Migration
 
