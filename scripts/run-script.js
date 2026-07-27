@@ -7,6 +7,7 @@ const { DataStream } = require("scramjet");
 const { getDeepDeps } = require("./lib/get-deep-deps");
 const { cwd, env } = require("process");
 const { getDepTypes } = require("./lib/opts");
+const { TEST_PROFILES, testProfile } = require("./lib/ava-options");
 
 const runScript = require("@npmcli/run-script");
 const { relative, resolve, join } = require("path");
@@ -61,7 +62,7 @@ if (opts.help || (!opts._.length && !opts.list)) {
 }
 
 const BUILD_NAME = "run-script";
-const DEFAULT_MAX_PARALLEL = 16;
+const DEFAULT_MAX_PARALLEL = testProfile() === TEST_PROFILES.PHASE_FINAL ? 1 : 16;
 
 console.time(BUILD_NAME);
 
@@ -128,7 +129,7 @@ function execCommand(path, command, verbose) {
     }
 
     await DataStream.from(packages)
-        .setOptions({ maxParallel: +opts.threads || DEFAULT_MAX_PARALLEL })
+        .setOptions({ maxParallel: testProfile() === TEST_PROFILES.PHASE_FINAL ? 1 : +opts.threads || DEFAULT_MAX_PARALLEL })
         .flatMap(async (path) => {
             if (!opts.lax && error) return Promise.reject(new Error("Fail fast..."));
 

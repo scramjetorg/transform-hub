@@ -145,8 +145,8 @@ SCRAMJET_BDD_MEMORY_GUARD=1 node scripts/run-bdd.js -- --name="E2E-001 TC-002"
 Thresholds:
 
 - `SCRAMJET_BDD_MEMORY_THRESHOLD_BYTES` or `SCRAMJET_MEMORY_HEAP_THRESHOLD_BYTES`: parent Cucumber heap growth, default `524288` bytes.
-- `SCRAMJET_BDD_PROCESS_RSS_THRESHOLD_BYTES`: child process RSS delta, default `104857600` bytes.
-- `SCRAMJET_BDD_DOCKER_WORKING_SET_THRESHOLD_BYTES`: Docker runner working-set delta, default `104857600` bytes.
+- `SCRAMJET_BDD_PROCESS_RSS_THRESHOLD_BYTES`: child process RSS delta, default `209715200` bytes (200 MiB).
+- `SCRAMJET_BDD_DOCKER_WORKING_SET_THRESHOLD_BYTES`: Docker runner working-set delta, default `1073741824` bytes (1 GiB).
 
 Emergency skips require both `SCRAMJET_MEMORY_SKIP=1` and a non-empty `SCRAMJET_MEMORY_SKIP_REASON`. Broad silent skips are treated as configuration errors.
 

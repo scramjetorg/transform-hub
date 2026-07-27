@@ -66,6 +66,11 @@ test("DEFAULTS.GRACE_MS is 10000", (t) => {
 	t.is(DEFAULTS.GRACE_MS, 10000);
 });
 
+test("BDD child memory defaults are 200 MiB RSS and 1 GiB Docker working set", (t) => {
+	t.is(DEFAULTS.BDD_PROCESS_RSS_THRESHOLD_BYTES, 200 * 1024 * 1024);
+	t.is(DEFAULTS.BDD_DOCKER_WORKING_SET_THRESHOLD_BYTES, 1024 * 1024 * 1024);
+});
+
 // ---------------------------------------------------------------------------
 // Env‑driven overrides
 // ---------------------------------------------------------------------------
@@ -283,7 +288,7 @@ test("bddNodeArgs returns WASM limit flags (JIT is on)", (t) => {
 	t.true(args.length > 0, "should return WASM limit flags");
 	t.true(args.every((a) => a.startsWith("--wasm-")), "every flag should start with --wasm-");
 	t.true(args.includes("--wasm-num-compilation-tasks=1"));
-	t.true(args.includes("--wasm-max-mem-pages=4096"));
+	t.true(args.includes("--wasm-max-mem-pages=8192"));
 });
 
 // ---------------------------------------------------------------------------

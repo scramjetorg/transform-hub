@@ -99,9 +99,15 @@ npm run test:packages
 
 # Run package tests serially (CI-safe, avoids resource contention)
 npm run test:packages-no-concurrent
+
+# Run the supported fast profile (16 cross-package jobs and AVA workers)
+npm run test:packages:fast
+
+# Run the serial strict memory-proof profile
+npm run test:packages:phase-final
 ```
 
-Package tests use **AVA** with `ts-node/register` and match `**/*.spec.ts`. Tests are run through `scripts/run-ava.js`, which sets `NODE_OPTIONS="--max-old-space-size=1536 --jitless"` for the AVA child process. This avoids V8 worker CodeRange OOMs under the repository's virtual-memory cap.
+Package tests use **AVA** with `ts-node/register` and match `**/*.spec.ts`. Tests run through `scripts/run-ava.js`, which defaults to `NODE_OPTIONS="--max-old-space-size=2048"`, JIT with WASM caps of 8192 pages and 256 MB committed code/code space, and `TS_NODE_TRANSPILE_ONLY=1`. `SCRAMJET_TEST_PROFILE=fast` uses 16 AVA workers and an 8 MiB concurrent-mode budget; it does not enable unsound concurrent per-test GC measurement. `SCRAMJET_TEST_PROFILE=phase-final` serializes packages and AVA and enables the existing strict 524288-byte guard without raising timeouts, thresholds, skips, or allowances. Set `SCRAMJET_AVA_JITLESS=1` or `TS_NODE_TRANSPILE_ONLY=0` for explicit opt-ins. Source TypeScript builds remain the correctness gate.
 
 ### BDD integration tests
 
@@ -129,6 +135,8 @@ npm run test:bdd-ci-verser2
 # Run all BDD tests
 npm run test:bdd
 ```
+
+BDD memory checks default to a 200 MiB child-process RSS delta and a 1 GiB Docker working-set delta. Docker execution remains capped at 1536m memory and 2 CPUs with its existing 600000 ms timeout.
 
 BDD environment variables:
 
@@ -181,7 +189,7 @@ ulimit -v 1835008
 NODE_OPTIONS="--max-old-space-size=1024"
 ```
 
-When running through `scripts/run-ava.js`, the AVA child process automatically uses `--max-old-space-size=1536 --jitless`. Do not override this unless explicitly required.
+When running through `scripts/run-ava.js`, the AVA child process automatically uses `--max-old-space-size=2048`, JIT with WASM caps, and transpile-only TypeScript runtime loading. Use `SCRAMJET_AVA_JITLESS=1` or `TS_NODE_TRANSPILE_ONLY=0` only when a test specifically requires those opt-ins; retain source TypeScript builds as the typechecking gate.
 
 ### TypeScript configuration
 

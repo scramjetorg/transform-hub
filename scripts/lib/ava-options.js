@@ -10,9 +10,13 @@
  *
  * Environment variables honoured (all optional):
  *
- *   SCRAMJET_AVA_MAX_OLD_SPACE_SIZE  – override --max-old-space-size (default 1536)
- *   SCRAMJET_AVA_JITLESS             – set to "0"|"false"|"no"|"off" to disable --jitless
- *                                      and add WASM limits instead
+ *   SCRAMJET_TEST_PROFILE            – "fast" (concurrent) or "phase-final"
+ *                                      (strict serial guard); unset uses normal defaults
+ *   SCRAMJET_AVA_MAX_OLD_SPACE_SIZE  – override --max-old-space-size (default 2048)
+ *   SCRAMJET_AVA_JITLESS             – defaults to "0" (JIT enabled with WASM limits);
+ *                                      set to a non-disabled value to enable --jitless
+ *   TS_NODE_TRANSPILE_ONLY           – defaults to "1" for test runtime transpilation;
+ *                                      set to "0" to enable ts-node typechecking
  *   SCRAMJET_AVA_FETCH               – set to "0"|"false"|"no"|"off" to add
  *                                      --no-experimental-fetch
  *   SCRAMJET_AVA_WORKERS             – AVA concurrency / worker count (positive integer)
@@ -164,7 +168,9 @@ function resolveAvaCli() {
 // ---------------------------------------------------------------------------
 
 const ENV = Object.freeze({
+	TEST_PROFILE: "SCRAMJET_TEST_PROFILE",
 	JITLESS: "SCRAMJET_AVA_JITLESS",
+	TS_NODE_TRANSPILE_ONLY: "TS_NODE_TRANSPILE_ONLY",
 	FETCH: "SCRAMJET_AVA_FETCH",
 	MAX_OLD_SPACE: "SCRAMJET_AVA_MAX_OLD_SPACE_SIZE",
 	WORKERS: "SCRAMJET_AVA_WORKERS",
@@ -183,7 +189,7 @@ const ENV = Object.freeze({
 
 const DEFAULTS = Object.freeze({
 	/** Default --max-old-space-size in MB when the env var is not set. */
-	MAX_OLD_SPACE_SIZE: 1536,
+	MAX_OLD_SPACE_SIZE: 2048,
 	/**
 	 * Default runner‑level timeout in ms.
 	 * 600_000 ms = 10 minutes — safe under <2G memory for serial test runs.
@@ -196,6 +202,8 @@ const DEFAULTS = Object.freeze({
 	 * Override via SCRAMJET_AVA_WORKERS env var.
 	 */
 	WORKERS: 2,
+	FAST_WORKERS: 16,
+	FAST_MEMORY_BUDGET_BYTES: 8 * 1024 * 1024,
 	/**
 	 * Default heap usage threshold in bytes for memory guard mode.
 	 * 524288 bytes = 512 KiB. Override via SCRAMJET_MEMORY_HEAP_THRESHOLD_BYTES
@@ -203,6 +211,19 @@ const DEFAULTS = Object.freeze({
 	 */
 	MEMORY_HEAP_THRESHOLD_BYTES: 524288
 });
+
+const TEST_PROFILES = Object.freeze({
+	FAST: "fast",
+	PHASE_FINAL: "phase-final"
+});
+
+function testProfile() {
+	const profile = process.env[ENV.TEST_PROFILE];
+
+	if (profile === undefined || profile === "") return undefined;
+	if (profile === TEST_PROFILES.FAST || profile === TEST_PROFILES.PHASE_FINAL) return profile;
+	throw new Error(`${ENV.TEST_PROFILE} must be "${TEST_PROFILES.FAST}" or "${TEST_PROFILES.PHASE_FINAL}", got ${JSON.stringify(profile)}.`);
+}
 
 // ---------------------------------------------------------------------------
 // Configuration helpers
@@ -227,7 +248,8 @@ function maxOldSpaceSize() {
  *
  * - Forces --max-old-space-size (configurable via SCRAMJET_AVA_MAX_OLD_SPACE_SIZE).
  * - Appends --no-experimental-fetch when SCRAMJET_AVA_FETCH is disabled.
- * - Appends --jitless by default; removes it when SCRAMJET_AVA_JITLESS is disabled.
+ * - Enables JIT with WASM limits by default; appends --jitless when
+ *   SCRAMJET_AVA_JITLESS is explicitly enabled.
  * - Appends --require for the bypass‑guard preload when SCRAMJET_AVA_GUARD=1.
  *
  * @param {string} [options=process.env.NODE_OPTIONS || ""]  Base options.
@@ -243,7 +265,7 @@ function avaNodeOptions(options) {
 	const withFetchMode = isDisabled(process.env[ENV.FETCH]) ? appendNodeOption(withHeapLimit, "--no-experimental-fetch") : withHeapLimit;
 
 	// 3. JIT / WASM profile
-	const withJit = isDisabled(process.env[ENV.JITLESS]) ? removeNodeOption(withFetchMode, "--jitless") : appendNodeOption(withFetchMode, "--jitless");
+	const withJit = isDisabled(process.env[ENV.JITLESS] ?? "0") ? removeNodeOption(withFetchMode, "--jitless") : appendNodeOption(withFetchMode, "--jitless");
 
 	// 4. Bypass‑guard preload (opt‑in via SCRAMJET_AVA_GUARD=1)
 	//    NOTE: this guard is only effective for runner‑spawned AVA processes
@@ -260,17 +282,17 @@ function avaNodeOptions(options) {
  * Build the extra Node.js CLI arguments for the AVA child process (passed
  * before the ava CLI binary path).
  *
- * When JIT is enabled (SCRAMJET_AVA_JITLESS is disabled), adds WASM limits
+ * When JIT is enabled (the default, or SCRAMJET_AVA_JITLESS is disabled), adds WASM limits
  * to avoid runaway WASM memory under constrained environments.
  *
  * @returns {string[]}
  */
 function avaNodeArgs() {
-	if (!isDisabled(process.env[ENV.JITLESS])) {
+	if (!isDisabled(process.env[ENV.JITLESS] ?? "0")) {
 		return [];
 	}
 
-	return ["--wasm-num-compilation-tasks=1", "--wasm-max-mem-pages=4096", "--wasm-max-committed-code-mb=128", "--wasm-max-code-space-size-mb=128"];
+	return ["--wasm-num-compilation-tasks=1", "--wasm-max-mem-pages=8192", "--wasm-max-committed-code-mb=256", "--wasm-max-code-space-size-mb=256"];
 }
 
 /**
@@ -281,12 +303,15 @@ function avaNodeArgs() {
  * @returns {number|undefined}
  */
 function avaConcurrency() {
+	const profile = testProfile();
+
+	if (profile === TEST_PROFILES.PHASE_FINAL) return 1;
 	const raw = process.env[ENV.WORKERS];
 
 	if (raw && !Number.isNaN(Number(raw)) && Number(raw) > 0) {
 		return Number(raw);
 	}
-	return DEFAULTS.WORKERS;
+	return profile === TEST_PROFILES.FAST ? DEFAULTS.FAST_WORKERS : DEFAULTS.WORKERS;
 }
 
 /**
@@ -396,6 +421,7 @@ function runnerTimeout() {
  * @returns {boolean}
  */
 function isMemoryGuardEnabled() {
+	if (testProfile() === TEST_PROFILES.PHASE_FINAL) return true;
 	const avaGuard = process.env[ENV.AVA_MEMORY_GUARD];
 
 	// AVA-specific guard is explicitly set: honour its value (enabled unless
@@ -432,6 +458,9 @@ function isMemoryGuardEnabled() {
  * @throws {Error}  If an env var is set to a non-numeric, zero, or negative value.
  */
 function memoryHeapThresholdBytes() {
+	if (testProfile() === TEST_PROFILES.PHASE_FINAL) {
+		return DEFAULTS.MEMORY_HEAP_THRESHOLD_BYTES;
+	}
 	const avaThreshold = process.env[ENV.AVA_MEMORY_HEAP_THRESHOLD];
 
 	if (avaThreshold !== undefined) {
@@ -456,7 +485,9 @@ function memoryHeapThresholdBytes() {
 		return n;
 	}
 
-	return DEFAULTS.MEMORY_HEAP_THRESHOLD_BYTES;
+	return testProfile() === TEST_PROFILES.FAST
+		? DEFAULTS.FAST_MEMORY_BUDGET_BYTES
+		: DEFAULTS.MEMORY_HEAP_THRESHOLD_BYTES;
 }
 
 // ---------------------------------------------------------------------------
@@ -467,10 +498,29 @@ function memoryHeapThresholdBytes() {
  * Returns an env object with SCRAMJET_AVA_RUNNER=1 that should be merged into
  * the child process environment to mark a legitimate runner invocation.
  *
- * @returns {{ SCRAMJET_AVA_RUNNER: string }}
+ * @returns {{ SCRAMJET_AVA_RUNNER: string, SCRAMJET_AVA_JITLESS: string, TS_NODE_TRANSPILE_ONLY: string }}
  */
 function runnerInvocationEnv() {
-	return { [ENV.RUNNER]: "1" };
+	const profile = testProfile();
+	const invocationEnv = {
+		[ENV.RUNNER]: "1",
+		[ENV.JITLESS]: process.env[ENV.JITLESS] ?? "0",
+		[ENV.TS_NODE_TRANSPILE_ONLY]: process.env[ENV.TS_NODE_TRANSPILE_ONLY] ?? "1"
+	};
+
+	if (
+		profile === TEST_PROFILES.FAST &&
+		process.env[ENV.AVA_MEMORY_HEAP_THRESHOLD] === undefined &&
+		process.env[ENV.MEMORY_HEAP_THRESHOLD] === undefined
+	) {
+		invocationEnv[ENV.AVA_MEMORY_HEAP_THRESHOLD] = String(DEFAULTS.FAST_MEMORY_BUDGET_BYTES);
+	}
+	if (profile === TEST_PROFILES.PHASE_FINAL) {
+		invocationEnv[ENV.AVA_MEMORY_GUARD] = "1";
+		invocationEnv[ENV.AVA_MEMORY_HEAP_THRESHOLD] = String(DEFAULTS.MEMORY_HEAP_THRESHOLD_BYTES);
+	}
+
+	return invocationEnv;
 }
 
 /**
@@ -512,9 +562,11 @@ module.exports = {
 	// Constants
 	ENV,
 	DEFAULTS,
+	TEST_PROFILES,
 
 	// Configuration helpers
 	maxOldSpaceSize,
+	testProfile,
 	avaNodeOptions,
 	avaNodeArgs,
 	avaConcurrency,

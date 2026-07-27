@@ -167,7 +167,7 @@ Use the supported runners only: `scripts/run-ava.js` for AVA/package tests and `
 Choose the narrowest sufficient validation:
 
 - Default memory guard for agent-run Node/test validation: `ulimit -v 1835008` and `NODE_OPTIONS="--max-old-space-size=1024"`. Start tests and Node-based validation under this guard unless the command is run through a repo/package test runner that already owns process setup and memory behavior. Do not wait for an OOM before applying the guard.
-- AVA package tests use `scripts/run-ava.js`, which sets the spawned AVA process to `NODE_OPTIONS="--max-old-space-size=1536 --jitless"` by default, replacing the generic `--max-old-space-size=1024` guard for the AVA child process. This is intentional because AVA workers can fail under the virtual-memory cap with V8 CodeRange reservation OOMs when JIT is enabled.
+- AVA package tests use `scripts/run-ava.js`, which defaults the spawned AVA process to `--max-old-space-size=2048`, JIT with WASM caps (8192 pages, 256 MB committed code/code space), and `TS_NODE_TRANSPILE_ONLY=1`. Use `SCRAMJET_TEST_PROFILE=fast` for 16 AVA workers and an 8 MiB concurrent-mode budget, or `SCRAMJET_TEST_PROFILE=phase-final` for serial package execution and the strict unchanged 524288-byte AVA guard. Fast mode does not run concurrent per-test GC measurements; an enabled guard always serializes AVA. Do not increase timeouts, skip measurement, or add allowances for phase-final evidence.
 - BDD tests use `scripts/run-bdd.js` (supported entrypoint) or `scripts/run-bdd-docker.js` (internal). The supported memory-constrained path is Docker mode (default), which runs Cucumber inside a Docker container with 1536m memory, 2 CPUs, 600 s timeout, 10 s grace period. Direct mode (`--mode=direct`) is diagnostic/local only; under strict host ulimit, BDD step definitions load ssh2/poly1305 WebAssembly which may fail to allocate. Post-run leak detection runs automatically on all exit paths.
 - Runner regression tests: `npm run test:runner` covers AVA and BDD runner helper tests under memory guard.
 - Biome scripts set `RAYON_NUM_THREADS=12` by default. This bounded parallelism has been measured at ~98 MB max RSS for `npm run lint` under the virtual-memory cap on the current 24-core agent host; record any native allocation failure before considering a cap change.
@@ -175,6 +175,8 @@ Choose the narrowest sufficient validation:
 
 - Package build: `npm run build:packages`
 - Serial package tests: `npm run test:packages-no-concurrent`
+- Fast package tests: `npm run test:packages:fast`
+- Phase-final package proof: `npm run test:packages:phase-final`
 - Lint/check: `npm run lint` for the active Biome lint surface, or a narrower Biome command when the active track calls for changed/staged-file validation. Use explicit format commands for formatting validation. Do not run legacy ESLint commands during the Biome migration track.
 - Runtime invariant check: `npm run check:runtime-invariants`
 - BDD node smoke: `npm run test:bdd-ci-node`
@@ -296,3 +298,32 @@ At the end of each phase:
 - No undocumented change to runtime selection, adapter behavior, or CLI/API contracts.
 - No protocol divergence across supported runtimes unless explicitly planned.
 - No hidden operational default changes.
+
+
+## Automatic process
+
+If the workflow configuration is set to automatic supervision:
+
+1. Run an Oracle review with the phase tasks, acceptance criteria, prior findings, and verification results in the prompt.
+2. Address actionable blocking findings immediately; use delegation when the work is substantial.
+3. Request an Oracle re-review that explicitly checks each prior finding.
+4. Repeat the fix/re-review cycle no more than five times per phase.
+5. After a passing review, complete the phase checkpoint and continue to the next phase.
+6. If the fifth re-review still reports blocking findings, record them in `tech-debt.md`, halt the phase, and ask the user how to proceed.
+
+## Review Guidance (Oracle)
+
+Oracle reviews must prioritize a working, repeatable prototype and fast completion over production-grade hardening.
+
+- Confirm that the phase meets its stated acceptance criteria, preserves isolation between named runs, and keeps credentials out of committed files and routine logs.
+- Treat production concerns—distributed locking, adversarial multi-host concurrency, exhaustive crash recovery, high-availability, performance tuning, and generalized hardening—as non-blocking follow-up recommendations unless the track specification explicitly requires them.
+- Do not block a phase for theoretical races or defense-in-depth improvements unless the track spec specifically requires this level of review.
+- Report optional hardening separately from required MVP findings.
+- A finding is blocking only when it prevents a subsequent planned phase or directly contradicts the track specification.
+- When the MVP acceptance criteria and relevant verification pass, approve the phase rather than requesting production-system guarantees.
+
+After each Oracle phase review, record every finding in the track's `tech-debt.md` and mark it addressed or deferred.
+
+## Track completion
+
+After the final phase, summarize deferred findings and ask the user how to proceed.
