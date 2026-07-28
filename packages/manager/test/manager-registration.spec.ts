@@ -78,25 +78,8 @@ test.serial("Manager registration captures inventory emitted during STH init", a
     });
 });
 
-test.serial("Manager re-registration captures init inventory after clearing stale entities", async (t) => {
-    let initCount = 0;
-
-    await withPatchedInit(async function patchedInit(this: STHController) {
-        initCount++;
-        this.logStream = new PassThrough();
-        this.emit("sequence", makeSequence(initCount === 1 ? "stale-seq" : "fresh-seq"));
-    }, async () => {
-        const manager = makeManager();
-
-        await manager.handleSthRegistration({ id: "hub-1", routeDomain: "hub-1.test" } as any);
-        await manager.handleSthRegistration({ id: "hub-1", routeDomain: "hub-1.test" } as any);
-
-        const infoRegister = (manager as any).sthInfoRegister;
-
-        t.deepEqual(infoRegister.getHubs(), ["hub-1"]);
-        t.deepEqual(infoRegister.getSequences().map((sequence: any) => sequence.id), ["fresh-seq"]);
-    });
-});
+// NOTE: re-registration inventory replacement is tested more thoroughly in
+// "Same-id re-registration replaces active STH controller instead of rejecting".
 
 test.serial("Manager aggregation includes three hubs when one registers later", async (t) => {
     await withPatchedInit(async function patchedInit(this: STHController) {
@@ -346,7 +329,11 @@ test.serial("Same-id re-registration replaces active STH controller instead of r
     await withPatchedInit(async function patchedInit(this: STHController) {
         initCount++;
         this.logStream = new PassThrough();
-        this.emit("sequence", makeSequence(initCount === 1 ? "first-seq" : "replacement-seq"));
+
+        const isFirst = initCount === 1;
+
+        this.emit("sequence", makeSequence(isFirst ? "first-seq" : "replacement-seq"));
+        this.emit("instance", { instance: makeInstance(isFirst ? "first-inst" : "replacement-inst", isFirst ? "first-seq" : "replacement-seq") } as any);
     }, async () => {
         const manager = makeManager();
 
@@ -379,6 +366,7 @@ test.serial("Same-id re-registration replaces active STH controller instead of r
 
         t.deepEqual(infoRegister.getHubs(), ["hub-active"]);
         t.deepEqual(infoRegister.getSequences().map((sequence: any) => sequence.id), ["replacement-seq"]);
+        t.deepEqual(infoRegister.getInstances().map((instance: Instance) => instance.id), ["replacement-inst"]);
     });
 });
 

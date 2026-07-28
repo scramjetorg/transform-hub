@@ -147,6 +147,8 @@ export class Host implements IHost, IComponent {
      */
     cpmConnector?: CPMConnector;
 
+    private cpmInventoryListenerInstalled = false;
+
     runnerVerser2Host?: VerserHost;
     private controlIngressHost?: VerserHost;
     runnerVerser2UpstreamHealth?: HealthComponent = degradedComponent("hub.upstream", false, { configured: false });
@@ -1103,7 +1105,7 @@ export class Host implements IHost, IComponent {
 
         connector.init();
 
-        connector.on("communicationReady", () => {
+        if (!this.cpmInventoryListenerInstalled) connector.on("communicationReady", () => {
             Promise.resolve()
                 .then(async () => {
                     await connector.sendSequencesInfo(this.getSequences().map((s: any) => ({ ...s, status: SequenceMessageCode.SEQUENCE_CREATED })));
@@ -1117,6 +1119,7 @@ export class Host implements IHost, IComponent {
                     this.logger.error("Error sending CPM inventory snapshot", error.message);
                 });
         });
+        this.cpmInventoryListenerInstalled = true;
 
         await connector.connect();
     }
