@@ -180,4 +180,4 @@ All named commands approved in the capability matrix are now implemented: every 
 - **Updated**: `docs-source/cli/usage.md` — Replaced the deprecated v1-only note with a dual-path description; added a concise profile setup example and a cross-reference to the full Verser2 guide.
 - **Validation**: `git diff --check` — passed (no whitespace errors). `npx biome check docs-source/cli/verser2-cli.md docs-source/cli/usage.md` — passed (no lint or format issues).
 - **References**: The documentation links to the capability matrix (`conductor/tracks/verser2_cli_20260722/capability-matrix.md`), command structure (`command-structure.md`), and existing CLI usage/Transform Hub configuration pages for further detail.
-- **No live end-to-end mTLS CLI claim**: The documentation explicitly states that end-to-end CLI mTLS traversal from a configured binary has not been exercised by focused tests.
+- Phase 5 checkpoint: `ef98c880` (`test: validate Verser2 CLI mTLS ingress`), pushed to `origin/conductor/verser2_cli_20260722`.
