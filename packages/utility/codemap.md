@@ -19,6 +19,7 @@ Provides a collection of shared utility functions used across Scramjet Transform
 | `config/` | Configuration related utilities (read-only, file-backed, default configs). |
 | `constants/` | Shared constants (`LogLevelStrings`, object logger constants). |
 | `defer` | Deferred promise creation (with cancellable variant). |
+| `exponential-backoff` | Transport-neutral cancellable exponential backoff delay generator (`BackoffTimer`, `ExponentialBackoff`, `BackoffPromise`). |
 | `file/` | File abstraction helpers by extension (JSON, text, YAML). |
 | `free-ports-finder` | Find available TCP/UDP network ports in a range. |
 | `keygen` | Cryptographic key generation (scrypt-based STH key). |

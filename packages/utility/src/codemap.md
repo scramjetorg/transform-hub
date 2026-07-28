@@ -4,8 +4,9 @@
 
 | File | Lines | Role |
 |------|-------|------|
-| `index.ts` | 19 | Barrel re-export of all utility modules (18 modules). |
+| `index.ts` | 19 | Barrel re-export of all utility modules (20 modules). |
 | `defer.ts` | 40 | `defer()` — creates a deferred promise with external resolve/reject; `cancellableDefer()` with `cancel()`. |
+| `exponential-backoff.ts` | 103 | `createExponentialBackoff()`, `ExponentialBackoff`, `BackoffTimer`, `BackoffPromise` — transport-neutral cancellable exponential backoff delay generator. |
 | `free-ports-finder.ts` | 83 | `FreePortsFinder` class — finds available TCP/UDP ports in a range. |
 | `keygen.ts` | 8 | `generateSTHKey` — cryptographic STH key generation (randomBytes + scryptSync). |
 | `merge.ts` | 24 | Deep recursive object merge (arrays replace, objects recurse, primitives overwrite; optional `strict` mode). |
@@ -32,7 +33,7 @@
 
 ## Responsibility
 
-Implements shared utility functions for the STH ecosystem: deferred promises, deep merge, URL normalization, type guards, stream utilities, port finding, key generation, typed events, reference counting, and HTTP request stream introspection.
+Implements shared utility functions for the STH ecosystem: deferred promises, deep merge, URL normalization, type guards, stream utilities, port finding, key generation, typed events, reference counting, HTTP request stream introspection, and transport-neutral cancellable exponential backoff.
 
 ## Integration Points
 
@@ -41,3 +42,4 @@ Implements shared utility functions for the STH ecosystem: deferred promises, de
 - `LogLevelStrings` from `constants/` is the canonical log level ordering.
 - `typed-emitter` used for type-safe event emitters throughout the codebase.
 - `request-stream` used for HTTP request byte counting and socket introspection in host/transport layers.
+- `exponential-backoff` consumed by `CPMConnector` in `@scramjet/host` for Manager reconnection with configurable initial/max delay, deterministic testing via injectable `BackoffTimer`, and `BackoffPromise.cancel()` for cleanup on abandonment.
