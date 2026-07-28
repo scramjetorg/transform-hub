@@ -14,6 +14,7 @@ Enable teams to run stream-oriented applications reliably anywhere—from local 
 - Write Transform Sequences in supported runtimes such as Node.js and Python.
 - Package and deploy workloads without managing all runtime supervision details directly.
 - Use CLI/API workflows to start, stop, provide input, observe output, inspect schema-backed v2 contracts, and respond to lifecycle events.
+- Use file-backed mTLS CLI profiles to address supported MultiManager, Manager, and direct-Hub v2 APIs while retaining explicit HTTP/v1 compatibility.
 
 ### Contributors
 - Extend package internals, adapters, runners, and runtime wrappers.
