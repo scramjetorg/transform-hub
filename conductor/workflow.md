@@ -170,6 +170,47 @@ Every final Conductor track summary must list the memory-guarded validation that
 
 Use the supported runners only: `scripts/run-ava.js` for AVA/package tests and `scripts/run-bdd.js`/root BDD npm scripts for Cucumber paths.
 
+### AVA Memory Guard Adoption and Review
+
+AVA guard mode and per-test measurement are separate requirements. Setting
+`SCRAMJET_AVA_MEMORY_GUARD=1`, `SCRAMJET_MEMORY_GUARD=1`, or using the
+`phase-final` profile makes `scripts/run-ava.js` run serially with GC exposed; it
+does **not** measure a file that registers tests directly with AVA. Every test file
+claimed as memory-guarded must use `createAvaMemoryGuard(baseTest)`.
+
+Use `registerAvaMemoryCleanup(t, fn)` inside the test body to release retained
+buffers, chunks, streams, captures, mocks, and large responses before final
+measurement. `t.teardown()` runs after the guard measurement and is not sufficient
+for guard-visible cleanup.
+
+`allowAvaMemoryGrowth(t, { threshold, reason })` keeps measurement enabled but
+**replaces** the default threshold for that test; it is not additional headroom.
+Every allowance needs a non-empty reason and must be listed in validation evidence.
+The phase-final proof path permits no allowances, per-file threshold overrides, or
+memory skips. Environment skips require `SCRAMJET_MEMORY_SKIP_REASON` and must be
+recorded with their reason.
+
+Before claiming AVA guard coverage, run the adoption checker against the exact test
+files and include its JSON report with the validation record:
+
+```bash
+npm run check:ava-memory-guard-adoption -- --json --strict <ava-test-file...>
+```
+
+Under `SCRAMJET_TEST_PROFILE=phase-final`, the checker fails for missing adoption,
+skips, or allowances. It reports runner mode separately from source-level adoption;
+do not call an unadopted test measured merely because the runner guard is enabled.
+The AVA guard measures the AVA worker's heap only. Verify child-process and Docker
+memory/cleanup with the BDD or sequence-test mechanisms and separate process-level
+functional tests.
+
+Review checklist:
+- Confirm every claimed test file adopts `createAvaMemoryGuard`.
+- Check guard-visible cleanup before accepting an allowance.
+- Record the exact command, default threshold, every effective allowance, and skips.
+- Review the current source and validation output; do not repeat superseded findings.
+- Distinguish parent-heap evidence from spawned-process behavior.
+
 
 - Maintain greater than 80% meaningful test coverage for changed behavior.
 - Prefer package-level tests for focused implementation work.

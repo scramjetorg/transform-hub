@@ -41,6 +41,7 @@
     "biome:format": "RAYON_NUM_THREADS=12 biome format .",
     "biome:lint": "RAYON_NUM_THREADS=12 biome lint .",
     "check:runtime-invariants": "bash scripts/check-runtime-wrapper-invariants.sh",
+    "check:ava-memory-guard-adoption": "node scripts/check-ava-memory-guard-adoption.js",
     "check:typings-split": "bash scripts/check-typings-split-boundaries.sh && node node_modules/typescript/bin/tsc -p packages/types/test-typings-split/tsconfig.json --noEmit",
     "test:runner": "ulimit -v 1835008 2>/dev/null && node scripts/run-ava.js scripts/test/*.spec.js --serial",
     "test:memory-guard-ava": "ulimit -v 1835008 2>/dev/null && NODE_OPTIONS=\"--max-old-space-size=1024\" SCRAMJET_AVA_MEMORY_GUARD=1 node scripts/run-ava.js scripts/test/ava-memory-guard-live.spec.js",

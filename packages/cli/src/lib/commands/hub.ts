@@ -1,21 +1,27 @@
 import { cmd, type CommandDescriptor } from "@scramjet/config";
-import { MRestAPI } from "@scramjet/api-types";
 import { isProductionEnv } from "../../types";
 import { getHostClient } from "../common";
 import { profileManager, sessionConfig } from "../config";
 import { getMiddlewareClient } from "../platform";
-import { displayEntity, displayObject, displayStream } from "../output";
+import { displayEntity, displayLogStream, displayObject } from "../output";
 import { getInfo } from "../helpers/various";
+import { CapabilityUnavailableError, getNativeCapabilities } from "../capabilities";
+import { configControlCommands } from "./configControls";
 
-function buildProdChildren(): CommandDescriptor[] {
-    const mwClient = getMiddlewareClient();
-
+export function buildProdChildren(): CommandDescriptor[] {
     return [
         cmd("use", (c) => {
             c
                 .argument("<name|id>")
                 .desc("Specify the default Hub you want to work with, all subsequent requests will be sent to this Hub")
                 .action(async (id: string) => {
+                    const native = getNativeCapabilities();
+                    if (native) {
+                        const response = await native.managerJson<{ items?: Array<{ id: string }> }>("GET", "/api/v2/hubs");
+                        if (!response.items?.some(host => host.id === id)) throw new Error("Host not found");
+                        sessionConfig.setLastHubId(id);
+                        return;
+                    }
                     const space = sessionConfig.lastSpaceId;
                     const managerClient = getMiddlewareClient().getManagerClient(space);
                     const hosts = await managerClient.getHosts();
@@ -33,6 +39,11 @@ function buildProdChildren(): CommandDescriptor[] {
                 .alias("ls")
                 .desc("List all the Hubs in the default space")
                 .action(async () => {
+                    const native = getNativeCapabilities();
+                    if (native) {
+                        const response = await native.managerJson<{ items?: unknown[] }>("GET", "/api/v2/hubs");
+                        return displayObject(response.items || [], profileManager.getProfileConfig().format);
+                    }
                     const space = sessionConfig.lastSpaceId;
 
                     if (!space) {
@@ -49,6 +60,13 @@ function buildProdChildren(): CommandDescriptor[] {
             c
                 .desc("Display info about the default Hub")
                 .action(async () => {
+                    const native = getNativeCapabilities();
+                    if (native) {
+                        const response = await native.managerJson<{ items?: Array<{ id: string }> }>("GET", "/api/v2/hubs");
+                        const host = response.items?.find(item => item.id === sessionConfig.lastHubId);
+                        if (!host) throw new Error("Host not found");
+                        return displayObject(host, profileManager.getProfileConfig().format);
+                    }
                     displayObject((await getInfo()).host, profileManager.getProfileConfig().format);
                 });
         }),
@@ -56,13 +74,21 @@ function buildProdChildren(): CommandDescriptor[] {
             c
                 .desc("Disconnect self hosted Hubs from space")
                 .argument("<space_name>", "The name of the Space")
+                .argument("[hub_id]", "Hub Id")
                 .option("--id <id>", "Hub Id")
                 .option("--all", "Disconnects all self-hosted Hubs connected to Space")
-                .action(async (spaceName: string, options: Record<string, unknown>) => {
-                    const id = options.id as string;
+                .action(async (spaceName: string, hubId: string | Record<string, unknown>, commandOptions?: Record<string, unknown>) => {
+                    const options = commandOptions || (typeof hubId === "object" ? hubId : {});
+                    const id = typeof hubId === "string" ? hubId : options.id as string;
                     const all = options.all as boolean;
-                    const managerClient = mwClient.getManagerClient(spaceName);
-                    let opts = {} as MRestAPI.PostDisconnectPayload;
+                    const native = getNativeCapabilities();
+                    if (native) {
+                        if (all) throw new CapabilityUnavailableError("Hub disconnect all (native v2 only binds single-Hub inventory control)");
+                        if (typeof id !== "string") throw new Error("Missing --id or --all");
+                        return displayObject(await native.managerJson("DELETE", `/api/v2/inventory/hubs/${encodeURIComponent(id)}`, undefined, {}, { disconnect: true }, spaceName), profileManager.getProfileConfig().format);
+                    }
+                    const managerClient = getMiddlewareClient().getManagerClient(spaceName);
+                    let opts: { id?: string; limit?: number } = {};
 
                     if (typeof id === "string") {
                         opts = { id };
@@ -86,8 +112,12 @@ function buildProdChildren(): CommandDescriptor[] {
                 .option("-f, --force", "Enable deleting Hubs that are not disconnected")
                 .action(async (id: string, options: Record<string, unknown>) => {
                     const force = options.force as boolean;
+                    const native = getNativeCapabilities();
+                    if (native) {
+                        return displayObject(await native.managerJson("DELETE", `/api/v2/inventory/hubs/${encodeURIComponent(id)}`, undefined, {}, { delete: true, force }), profileManager.getProfileConfig().format);
+                    }
                     const spaceName = sessionConfig.lastSpaceId;
-                    const managerClient = mwClient.getManagerClient(spaceName);
+                    const managerClient = getMiddlewareClient().getManagerClient(spaceName);
 
                     let result;
 
@@ -113,23 +143,26 @@ function buildCommonChildren(): CommandDescriptor[] {
         cmd("logs", (c) => {
             c
                 .desc("Pipe running Hub log to stdout")
-                .action(async () => displayStream(getHostClient().getLogStream()));
+                .option("--log-format <pretty|json|raw>", "Render each log record")
+                .action(async (options: Record<string, unknown>) => { const native = getNativeCapabilities(); return displayLogStream(native ? native.stream("/api/v2/logs") : getHostClient().getLogStream(), options.logFormat as any); });
         }),
         cmd("audit", (c) => {
             c
                 .desc("Pipe running Hub audit information to stdout")
-                .action(async () => displayStream(getHostClient().getAuditStream()));
+                .option("--log-format <pretty|json|raw>", "Render each audit record")
+                .action(async (options: Record<string, unknown>) => { const native = getNativeCapabilities(); return displayLogStream(native ? native.stream("/api/v2/audit") : getHostClient().getAuditStream(), options.logFormat as any); });
         }),
         cmd("load", (c) => {
             c
                 .desc("Monitor CPU, memory and disk usage on the Hub")
-                .action(async () => displayEntity(getHostClient().getLoadCheck(), profileManager.getProfileConfig().format));
+                .action(async () => { const native = getNativeCapabilities(); return displayEntity(native ? native.json("GET", "/api/v2/load") : getHostClient().getLoadCheck(), profileManager.getProfileConfig().format); });
         }),
         cmd("version", (c) => {
             c
                 .desc("Display version of the default Hub")
-                .action(async () => displayEntity(getHostClient().getVersion(), profileManager.getProfileConfig().format));
-        })
+                .action(async () => { const native = getNativeCapabilities(); return displayEntity(native ? native.json("GET", "/api/v2/version") : getHostClient().getVersion(), profileManager.getProfileConfig().format); });
+        }),
+        configControlCommands("hub")
     ];
 }
 
@@ -144,7 +177,7 @@ export const hubCommand: CommandDescriptor = cmd("hub", (b) => {
         .usage("[command] [options...]")
         .desc("Allows to run programs in different data centers, computers or devices in local network");
 
-    if (isProdEnv) {
+    if (isProdEnv || profileConfig.get().verser2) {
         b.children(...buildProdChildren(), ...buildCommonChildren());
     } else {
         b.children(...buildCommonChildren());

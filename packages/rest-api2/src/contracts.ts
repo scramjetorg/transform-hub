@@ -263,6 +263,10 @@ export namespace RestAPI2 {
         query?: unknown;
         headers?: Record<string, string>;
         body?: TBody;
+        /** Optional request deadline propagated to the selected client transport. */
+        timeoutMs?: number;
+        /** Optional cancellation signal propagated to the selected client transport. */
+        signal?: AbortSignal;
     };
 
     export type ClientResponse<TOperation extends OperationId = OperationId, TBody = unknown> = {
@@ -270,6 +274,8 @@ export namespace RestAPI2 {
         status: number;
         headers: Record<string, string>;
         body: TBody;
+        /** Idempotent awaited response-resource cleanup for streaming transports. */
+        cleanup?: () => Promise<void>;
     };
 
     export type ClientTransport = {

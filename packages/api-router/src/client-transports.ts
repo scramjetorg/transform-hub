@@ -118,7 +118,8 @@ function isRoutedTransport(value: Verser2BrokerLike | Verser2ClientTransportOpti
     return "transport" in value;
 }
 
-function normalizeHeaders(headers: RoutedBrokerResponse["headers"]): Record<string, string> {
+function normalizeHeaders(headers: RoutedBrokerResponse["headers"] | undefined): Record<string, string> {
+    if (!headers) return {};
     return Object.fromEntries(Object.entries(headers).map(([name, value]) => [name.toLowerCase(), Array.isArray(value) ? value.join(", ") : value]));
 }
 
@@ -397,7 +398,12 @@ export function createVerser2ClientTransport(options: Verser2BrokerLike | Verser
                 response.body.once("end", complete);
                 response.body.once("error", complete);
                 response.body.once("close", complete);
-                return { status: response.status, headers, body: response.body as unknown as T, cleanup: trackedCleanup };
+                // The request deadline protects route readiness and response
+                // headers. Stream owners manage their post-handoff lifetime;
+                // retaining this timer would destroy a healthy active stream
+                // with an unclassified transport error.
+                dispatch.release();
+                return { status: response.status, headers, body: response.body as unknown as T, cleanup: trackedCleanup, statusText: (response as any).statusText, headerPairs: (response as any).headerPairs };
             }
             try {
                 const body = await readUnaryBody(response.body, headers, options.responseBodyLimitBytes ?? 1024 * 1024, () => dispatch.timeoutError() || (dispatch.signal.aborted ? new RoutedBrokerCancelledError(routeDomain) : undefined));

@@ -1,13 +1,12 @@
 import type { CommandDescriptor } from "@scramjet/config";
-import { dirname, resolve } from "path";
+import { readFileSync } from "fs";
+import { resolve } from "path";
 import { displayMessage } from "../../lib/output";
 import { CompleterParams } from "../../events/completerDetails";
 import { CommandCompleter } from "./commandCompleter";
 import { runScript } from "../../helpers/runScript";
 
-const requireFileNameDir = dirname(require.main!.filename);
-// This should be relative to entry point from package.json/bin/si
-const completionScriptsDir = resolve(requireFileNameDir, "../scripts/completion");
+const completionScriptsDir = resolve(__dirname, "../../../scripts/completion");
 const completionInstallScript = resolve(completionScriptsDir, "install.sh");
 const completionUninstallScript = resolve(completionScriptsDir, "uninstall.sh");
 
@@ -25,6 +24,11 @@ export class Completion {
         const siComperly = this.formatForSiScript(comperly);
 
         process.stdout.write(siComperly);
+    }
+
+    /** Print the shell integration script only; installation remains opt-in. */
+    public static script() {
+        process.stdout.write(readFileSync(resolve(completionScriptsDir, "si"), "utf8"));
     }
 
     public static async install() {

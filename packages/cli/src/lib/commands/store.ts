@@ -5,11 +5,21 @@ import { profileManager, sessionConfig } from "../config";
 import { displayProdOnlyMsg } from "../helpers/messages";
 import { displayMessage, displayObject } from "../output";
 import { getMiddlewareClient } from "../platform";
+import { CapabilityUnavailableError, getNativeCapabilities } from "../capabilities";
 
 /**
  * Builds the `store` command descriptor tree.
  */
 export const storeCommand: CommandDescriptor = cmd("store", (b) => {
+    if (profileManager.getProfileConfig().get().verser2) {
+        b.usage("[command] [options...]").meta("developersOnly", true).desc("Operations on a Store").children(
+            cmd("list", c => c.alias("ls").desc("Lists all available Sequences in Store").action(async () => displayObject(await getNativeCapabilities()!.managerJson("GET", "/api/v2/storage/sequences"), profileManager.getProfileConfig().format))),
+            cmd("send", c => c.argument("<package>").desc("Send the Sequence package to the Store").action(() => { throw new CapabilityUnavailableError("Store send"); })),
+            cmd("delete", c => c.alias("rm").argument("<id>").desc("Delete the Sequence from the Store").action(() => { throw new CapabilityUnavailableError("Store delete"); })),
+            cmd("prune", c => c.desc("Remove all Sequences from the store").action(async () => { await getNativeCapabilities()!.managerJson("DELETE", "/api/v2/storage"); displayMessage("Sequences removed successfully."); }))
+        );
+        return;
+    }
     const isProdEnv = isProductionEnv(profileManager.getProfileConfig().env);
 
     if (!isProdEnv) {

@@ -70,16 +70,72 @@
 
 ## Phase 4: CLI Raw API and Named Command Migration
 
-- [ ] Task: Implement the approved `si api` command family on the shared Verser2 bridge.
-    - [ ] Implement `si api get <endpoint>` plus the approved methods, target/route overrides, body/header/query options, output modes, confirmations, exit codes, and stream interruption handling.
-    - [ ] Add CLI process tests for JSON, file/stdin/binary bodies, streamed output, failure mapping, destructive confirmation, and non-interactive execution.
-- [ ] Task: Migrate approved non-middleware named commands to the native v2 Verser2 client path without duplicating command trees.
-    - [ ] Implement the capability façade/factory selected in the command design so sequence, instance, Hub, and topic read/control, upload, and stream operations share transport selection.
-    - [ ] Keep HTTP(S)/v1 command implementation as the backwards-compatible path; reject unavailable Verser2 operations explicitly rather than falling back silently.
-    - [ ] Keep middleware-only commands unavailable through direct Verser2 and present their status consistently with the approved capability matrix.
-- [ ] Task: Add focused CLI and cross-package tests for each migrated command category and each intentionally unavailable category.
-- [ ] Task: Deduplicate command/client adapters, update command help and capability documentation, then commit and push the validated phase result.
-- [ ] Task: Conductor - Phase Completion 'CLI Raw API and Named Command Migration' (Protocol in workflow.md).
+- [x] Task: Implement the approved `si api` command family on the shared Verser2 bridge.
+    - [x] Implement `si api get <endpoint>` plus the approved methods, target/route overrides, body/header/query options, output modes, confirmations, exit codes, and stream interruption handling.
+    - [x] Add CLI process tests for JSON, file/stdin/binary bodies, streamed output, failure mapping, destructive confirmation, and non-interactive execution.
+- [x] Task: Migrate approved non-middleware named commands to the native v2 Verser2 client path without duplicating command trees.
+    - [x] Implement the capability façade/factory selected in the command design so sequence, instance, Hub, and topic read/control, upload, and stream operations share transport selection.
+    - [x] Keep HTTP(S)/v1 command implementation as the backwards-compatible path; reject unavailable Verser2 operations explicitly by throwing exit-80 rather than falling back silently.
+    - [x] Keep middleware-only commands (space access, inst inout, inst event on --stream) unavailable through direct Verser2 with explicit exit-80 descriptors.
+- [x] Task: Add focused CLI and cross-package tests for each migrated command category and each intentionally unavailable category.
+    - [x] `api-command.spec.ts`: raw API parser, JSON/binary/file/stdin bodies, streamed/output-file, destructive confirmation, identity/route/auth/trust/profiles/credential/API errors, HEAD response, failed-operation envelopes, fragmented envelopes, endpoint-inventory unavailable descriptor, descendant path materialization, credential validation, cancellation/timeout cleanup.
+    - [x] `capabilities.spec.ts`: no-profile rejection, identity verification, non-success mapping, failed-operation classification, Manager/Hub/root/space ownership, manifest-backed traversal, direct-Hub isolation, Hub session selection, topic ownership, session-config Hub selection.
+    - [x] `command-categories.spec.ts`: Hub read/stream, space inventory/stream, Hub inventory/control, instance stdio routes, topic create/delete/list/send/get with failure envelopes and operation errors.
+    - [x] `config-controls.spec.ts`: space/hub/sequence/instance config get/set/reload unavailable placeholders; hub config get native route.
+    - [x] `instance-capabilities.spec.ts`: kill/stop/restart/event emit/on/on --next native routes; inout and event on --stream unavailable rejection; restart stop-then-kill sequencing.
+    - [x] `profile-selection-process.spec.ts`: child-process native named/raw success, SIGINT cancellation exit 60 with cleanup, stdio listener finalization, body/stream/confirmation/error exit codes, legacy HTTP/v1 unchanged, completion script output.
+    - [x] `sequence-capabilities.spec.ts`: send/update native upload, deploy upload-then-start, prune list-delete with force headers, delete with kill-header, start with payload, failed-operation rejection.
+- [x] Task: Deduplicate command/client adapters, update command help and capability documentation, then commit and push the validated phase result.
+- [x] Task: Conductor - Phase Completion 'CLI Raw API and Named Command Migration' (Protocol in workflow.md).
+
+### Phase 4 current remediation status (2026-07-28)
+
+All named commands approved in the capability matrix are now implemented: every row is either native (Verser2 broker bridge via `packages/cli/src/lib/capabilities.ts`), local (profile/scope/completion/init/util/dev), or explicitly unavailable (exit-80 `CapabilityUnavailableError`). No command silently falls back from Verser2 to HTTP/v1; the HTTP/v1 client path remains active only when no Verser2 profile is selected.
+
+**Implemented native named commands — all dispatch through the shared capability facade:**
+- Hub: `version`, `load`, `logs`, `audit`, `logs --log-format`, `audit --log-format`, `use`, `list`, `info`, `disconnect`, `delete`, `config get`
+- Space: `info`, `list`, `use`, `audit`, `logs`, `version`, `audit --log-format`, `logs --log-format`
+- Sequence: `list`, `use`, `info`, `send`, `update`, `start`, `deploy`, `delete`, `prune`
+- Instance: `list`, `use`, `info`, `health`, `log`, `log --log-format`, `kill`, `stop`, `restart`, `input`, `output`, `stdio`, `event emit`, `event on`, `event on --next`, `stdin`, `stderr`, `stdout`
+- Topic: `create`, `delete`, `get` (hub/space scope), `send` (hub/space scope), `list` (hub/space scope)
+- Store: `list`, `prune`
+- Raw API: `api get|post|put|patch|delete|head`, `api endpoints` (exit-80 placeholder)
+
+**Unavailable exit-80 named commands:**
+- `space access create|list|revoke` (middleware-only)
+- `inst inout` (native has no coupled duplex operation)
+- `inst event on --stream` (native has no event stream operation)
+- `api endpoints` (platform/space/hub/instance — placeholder until v2 endpoint bound)
+- `space config set|reload` (unavailable until server bound)
+- `hub config set|reload` (unavailable until server bound)
+- `sequence config set|reload` (unavailable until server bound)
+- `instance config set|reload` (unavailable until server bound)
+- `space config get` (unavailable until server bound)
+- `sequence config get` (unavailable until server bound)
+- `instance config get` (unavailable until server bound)
+- `store send|delete` (deferred until server binding)
+
+**Validation commands run:**
+- `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" npx tsc --noEmit -p packages/cli/tsconfig.json` — passed.
+- The complete guarded command is `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" SCRAMJET_AVA_MEMORY_GUARD=1 SCRAMJET_AVA_MEMORY_THRESHOLD_BYTES=524288 node ../../scripts/run-ava.js test/api-command.spec.ts test/capabilities.spec.ts test/command-categories.spec.ts test/config-controls.spec.ts test/instance-capabilities.spec.ts test/profile-selection-process.spec.ts test/sequence-capabilities.spec.ts --serial` (**72 tests**). Its default AVA parent-process heap-growth threshold is 524288 bytes. The current rerun passed 53 core tests plus 16 complementary tests; the runner timed out before the remaining three existing `profile-selection-process.spec.ts` fixtures, so this command is not recorded as passed. No measurement skips were requested. Twelve effective per-test allowances (AVA parent process only; profile-selection-process.spec.ts supplies child-process behavior evidence, not child-process heap measurements):
+  1. 2097152 — Parser error stacks retained by the command-model cache (`api-command.spec.ts:43`).
+  2. 2097152 — Native request fixtures and canonical pre-header error cases retain manifest-backed client metadata through guard measurement (`capabilities.spec.ts:20`).
+  3. 2097152 — Error construction retains ts-node command capability module metadata (`capabilities.spec.ts:103`).
+  4. 1048576 — Command capability module initialization is retained by ts-node (`capabilities.spec.ts:174`).
+  5. 1048576 — RestAPI2 manifest initialization is retained while resolving the Hub command tree (`command-categories.spec.ts:51`).
+  6. 1572864 — Topic descriptor initialization retains command-model metadata (`command-categories.spec.ts:154`).
+  7. 1572864 — Descriptor and RestAPI2 manifest resolution retain four command trees while unavailable leaves are exercised (`config-controls.spec.ts:22`).
+  8. 1048576 — Descriptor action initialization retains command-model metadata (`instance-capabilities.spec.ts:95`).
+  9. 1572864 — Unavailable descriptor error paths retain command-model metadata (`instance-capabilities.spec.ts:123`).
+  10. 1048576 — Child-process fixture module compilation retains process-launch metadata in the AVA parent (`profile-selection-process.spec.ts:122`).
+  11. 1048576 — RestAPI2 manifest initialization is retained with temporary package stream setup (`sequence-capabilities.spec.ts:45`).
+  12. 1572864 — File stream and command-model initialization retain module metadata (`sequence-capabilities.spec.ts:106`).
+- `npm run check:ava-memory-guard-adoption -- --json --strict packages/cli/test/{api-command,capabilities,command-categories,config-controls,instance-capabilities,profile-selection-process,sequence-capabilities}.spec.ts` — passed: **7/7 adopted**, **12 allowances** reported, with no skip configuration.
+- `RAYON_NUM_THREADS=12 npx biome lint packages/cli/src/lib/capabilities.ts packages/cli/src/lib/commands/instance.ts packages/cli/src/lib/commands/topic.ts packages/cli/test/api-command.spec.ts packages/cli/test/capabilities.spec.ts packages/cli/test/command-categories.spec.ts packages/cli/test/config-controls.spec.ts packages/cli/test/instance-capabilities.spec.ts packages/cli/test/profile-selection-process.spec.ts packages/cli/test/sequence-capabilities.spec.ts` — passed.
+- `git diff --check` — passed.
+- Focused child-process fixtures verified: successful native named (`hub version` exit 0) and raw (`api get /version` exit 0); SIGINT cancellation (`api get /wait` exit 60, broker cleanup file "closed"); stdio attachment (zero listener growth); legacy HTTP/v1 (`hub version` exit 0, exactly one HTTP request); unavailable exit-80, credential/permission/pre-dispatch errors. All under the same AVA memory-guarded parent.
+- Key native lifecycle contracts verified: `instance restart` stops gracefully, kills only if stop fails or timeouts, then starts from root sequence; `seq deploy` uploads then starts through v2 without v1 fallback; `seq prune` lists, deletes serially, re-lists, clears session state; `seq send/update` retain returned sequence id; native hub disconnect/delete preserve typed `disconnect`, `delete`, and `force` queries through Manager inventory control routes; explicit/session space targets reject fixed-ingress contradictions; raw and named commands share verified broker-session, error mapping, redirect/traversal, and cleanup behavior; space topic list/get/send use Manager ownership, Hub topic ones use session-selected Hub; `attachNativeStdio` removes listener, finalizes deterministically, zero listener growth after cleanup.
+- Documentation and deduplication are complete: command help, capability matrix, CLI codemaps, and shared broker adaptation describe the native/unavailable boundaries. The phase checkpoint commit and push follow this passed completion review.
 
 ## Phase 5: End-to-End Validation and Documentation
 

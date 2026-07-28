@@ -1,6 +1,13 @@
 import test from "ava";
 import { PassThrough, Readable } from "stream";
-import type { VerserBroker, VerserBrokerRequest, VerserBrokerResponse } from "@signicode/verser2-guest-node";
+import type {
+    NativeVerserWebSocket,
+    VerserBroker,
+    VerserBrokerRequest,
+    VerserBrokerResponse,
+    VerserBrokerWebSocketRequest,
+    VerserWebSocket
+} from "@signicode/verser2-guest-node";
 import {
     createManagerSthLocalBrokerTransport,
     Verser2DuplicateRouteError,
@@ -44,6 +51,14 @@ class FakeBroker implements VerserBroker {
 
     createFetch(): any {
         return () => undefined;
+    }
+
+    webSocket(_options: VerserBrokerWebSocketRequest): Promise<VerserWebSocket> {
+        return Promise.reject(new Error("WebSocket support is not implemented by FakeBroker"));
+    }
+
+    nativeWebSocket(_options: VerserBrokerWebSocketRequest): Promise<NativeVerserWebSocket> {
+        return Promise.reject(new Error("Native WebSocket support is not implemented by FakeBroker"));
     }
 
     getRoutes(): { targetId: string; domain: string }[] {
