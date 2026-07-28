@@ -16,7 +16,12 @@ export function validateOutboundVerser2Profile(value: unknown): value is Outboun
     if (config.target !== undefined && (!keys(config.target, ["spaceId", "hubId"]) || !Object.keys(config.target).length || Object.values(config.target).some(value => value !== undefined && !id(value)))) return false;
     if (config.ingress.level === "platform" && config.target?.hubId && !config.target.spaceId || config.ingress.level === "space" && (config.target?.spaceId || config.target && !config.target.hubId) || config.ingress.level === "hub" && config.target) return false;
     if (!keys(config.tls, ["caFile", "certFile", "keyFile", "pfxFile", "passphraseReference"]) || !file(config.tls.caFile)) return false;
-    if (!(file(config.tls.certFile) && file(config.tls.keyFile) && config.tls.pfxFile === undefined) && !(file(config.tls.pfxFile) && config.tls.certFile === undefined && config.tls.keyFile === undefined)) return false;
+    // At most one client-identity pair is allowed.  Neither pair is required
+    // when the target ingress does not enforce mTLS.
+    const noIdentity = config.tls.certFile === undefined && config.tls.keyFile === undefined && config.tls.pfxFile === undefined;
+    const pemIdentity = file(config.tls.certFile) && file(config.tls.keyFile) && config.tls.pfxFile === undefined;
+    const pfxIdentity = file(config.tls.pfxFile) && config.tls.certFile === undefined && config.tls.keyFile === undefined;
+    if (!noIdentity && !pemIdentity && !pfxIdentity) return false;
     return (config.tls.passphraseReference === undefined || typeof config.tls.passphraseReference === "string" && (envReference.test(config.tls.passphraseReference) || file(config.tls.passphraseReference))) && (config.timeoutMs === undefined || Number.isFinite(config.timeoutMs) && config.timeoutMs > 0);
 }
 export function validateOutboundVerser2Draft(value: unknown): value is OutboundVerser2ProfileDraft {
@@ -30,4 +35,4 @@ export function validateOutboundVerser2Draft(value: unknown): value is OutboundV
     return draft.timeoutMs === undefined || typeof draft.timeoutMs === "number" && Number.isFinite(draft.timeoutMs) && draft.timeoutMs > 0;
 }
 function validateOutboundVerser2Endpoint(endpoint: string): boolean { try { const url = new URL(endpoint); return url.protocol === "https:" && !!url.hostname && !url.username && !url.password; } catch (_) { return false; } }
-export function publicOutboundVerser2Profile(config: unknown): Partial<OutboundVerser2ProfileConfig> { if (!validateOutboundVerser2Profile(config)) return {}; return { endpoint: config.endpoint, brokerId: config.brokerId, ingress: { ...config.ingress }, target: config.target && { ...config.target }, tls: { caFile: config.tls.caFile, certFile: config.tls.certFile, keyFile: config.tls.keyFile && "********", pfxFile: config.tls.pfxFile && "********", passphraseReference: config.tls.passphraseReference && "********" }, timeoutMs: config.timeoutMs }; }
+export function publicOutboundVerser2Profile(config: unknown): Partial<OutboundVerser2ProfileConfig> { if (!validateOutboundVerser2Profile(config)) return {}; return { endpoint: config.endpoint, brokerId: config.brokerId, ingress: { ...config.ingress }, target: config.target && { ...config.target }, tls: { caFile: config.tls.caFile, certFile: config.tls.certFile, ...(config.tls.keyFile ? { keyFile: "********" } : {}), ...(config.tls.pfxFile ? { pfxFile: "********" } : {}), ...(config.tls.passphraseReference ? { passphraseReference: "********" } : {}) }, timeoutMs: config.timeoutMs }; }

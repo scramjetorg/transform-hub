@@ -9,7 +9,7 @@ title: Verser2 CLI setup and usage
 The `si` CLI supports two transport paths:
 
 - **HTTP(S)/v1** — the existing path using the Hub/Manager v1 REST API via `apiUrl`. Default when no Verser2 profile is configured.
-- **Verser2/v2 (native)** — an mTLS-authenticated Verser2 broker transport that resolves typed v2 REST API contracts through the control-plane topology. Activated by a configured `verser2` profile block.
+- **Verser2/v2 (native)** — a Verser2 broker transport (with optional mTLS client authentication) that resolves typed v2 REST API contracts through the control-plane topology. Activated by a configured `verser2` profile block.
 
 A configured Verser2 profile **never** silently falls back to HTTP(S)/v1. Commands without a native v2 counterpart exit immediately with exit code `80` (`UNAVAILABLE`). The HTTP(S)/v1 path remains active only when no Verser2 profile is selected.
 
@@ -29,15 +29,18 @@ A configured Verser2 profile **never** silently falls back to HTTP(S)/v1. Comman
 ## Prerequisites
 
 - `si` CLI installed (see [CLI usage](./usage.md)).
-- An mTLS-enabled Verser2 broker at the target endpoint (MultiManager, Manager, or Hub).
-- Server CA certificate (PEM) and a client credential: either a PEM certificate + key pair, or a PKCS#12 (PFX) file.
-- Passphrase for the private key or PFX — supplied via a file or environment variable reference.
+- A Verser2 broker at the target endpoint (MultiManager, Manager, or Hub).
+- Server CA certificate (PEM) to verify the broker's TLS server certificate. Required for every Verser2 profile.
+- Client credential for mTLS (optional): either a PEM certificate + key pair, or a PKCS#12 (PFX) file. Only needed when the configured ingress enforces client certificate authentication.
+- Passphrase for the private key or PFX (optional) — supplied via a file or environment variable reference.
 - The target broker ID, ingress level/ID/domain values provided by the platform operator.
 - Linux or macOS (POSIX permission checks are not enforced on Windows).
 
 ## Profile configuration
 
-A Verser2 profile is a set of properties under the `verser2` key in a CLI profile. Configure it with `si config set verser2.<field> <value>`:
+A Verser2 profile is a set of properties under the `verser2` key in a CLI profile. Configure it with `si config set verser2.<field> <value>`.
+
+**Minimal profile — CA only (no client credentials).** Use this when the target ingress does not require client authentication:
 
 ```text
 si config set verser2.endpoint https://broker.example.com:2444
@@ -46,12 +49,17 @@ si config set verser2.ingress.level platform
 si config set verser2.ingress.expectedId mm-1
 si config set verser2.ingress.routeDomain mm-1-default
 si config set verser2.tls.caFile /etc/scramjet/ca.pem
-si config set verser2.tls.certFile /etc/scramjet/client.pem
-si config set verser2.tls.keyFile /etc/scramjet/client-key.pem
 si config set verser2.timeoutMs 15000
 ```
 
-Alternatively use a PKCS#12 credential:
+**With mTLS client credentials (PEM).** Add these when the ingress requires client certificate authentication:
+
+```text
+si config set verser2.tls.certFile /etc/scramjet/client.pem
+si config set verser2.tls.keyFile /etc/scramjet/client-key.pem
+```
+
+Alternatively use a PKCS#12 (PFX) credential, which replaces the PEM identity:
 
 ```text
 si config set verser2.tls.pfxFile /etc/scramjet/client.pfx
@@ -80,18 +88,19 @@ Reset fields with `si config reset verser2.<field>` or remove the entire Verser2
 
 ### Mutual exclusivity
 
-- `certFile` + `keyFile` is one credential option; `pfxFile` is an alternative. Setting one clears the other.
-- `passphraseReference` is optional. Use a file path to read the first line, or `env://MY_VAR` to read from an environment variable.
+- Neither `certFile`+`keyFile` nor `pfxFile` is required — the profile is valid with only `tls.caFile` when the target ingress does not require mTLS.
+- When using client credentials, `certFile` + `keyFile` is one option; `pfxFile` is an alternative. Setting one clears the other.
+- `passphraseReference` is optional and applies only when a private key or PFX is configured. Use a file path to read the first line, or `env://MY_VAR` to read from an environment variable.
 
 ### Permission checks (POSIX)
 
-On Linux and macOS, private credential files (`keyFile` and `pfxFile`) are validated at connection time:
+On Linux and macOS, when private credential files (`keyFile` or `pfxFile`) are configured, they are validated at connection time:
 
 - Must be a regular file (not a symlink).
 - Must be owner-only (`chmod 600` or stricter; no group/other permissions).
 - The file owner must match the current process user.
 
-Violations produce exit code `53` (`PERMISSION`) before any network request.
+Violations produce exit code `53` (`PERMISSION`) before any network request. Profiles with only `tls.caFile` (no private credential material) are not subject to these checks.
 
 ### Secret redaction
 
@@ -116,7 +125,7 @@ Targets a specific Manager (the `expectedId`). Can reach:
 - Space-owned routes: space info, space logs, space version.
 - Hub-owned routes under a selected hub ID (via `target.hubId` or interactive `hub use`).
 
-The Manager identity is fixed by the TLS credential — it cannot be changed per-request. Selecting a different `--space-id` that contradicts the fixed ingress fails with exit code `54` (`TARGET`).
+The Manager identity is fixed by the configured `ingress.expectedId` — it cannot be changed per-request regardless of whether mTLS is active. Selecting a different `--space-id` that contradicts the fixed ingress fails with exit code `54` (`TARGET`).
 
 ### `hub` (direct Hub)
 
@@ -125,12 +134,12 @@ Targets a dedicated Hub Verser2 host listener. Can reach:
 - **Cannot traverse upstream**: Manager, space, or platform operations are unavailable.
 - Has no descendant `target` — attempting `--space-id` or `--hub-id` fails with exit code `54`.
 
-This ingress is isolated to a single Host v2 router. It provides the same REST surface as the Hub's HTTP API but through a dedicated TLS-authenticated Verser2 port. In the default port topology, the Hub control ingress listens on port `2446` when an explicit legacy Hub runner port `2444` is already in use; otherwise, the default mTLS control ingress port is `2444`.
+This ingress is isolated to a single Host v2 router. It provides the same REST surface as the Hub's HTTP API but through a dedicated TLS Verser2 port (with optional mTLS). In the default port topology, the Hub control ingress listens on port `2446` when an explicit legacy Hub runner port `2444` is already in use; otherwise, the default TLS control ingress port is `2444`.
 
 ### Route domain
 
 The configured `routeDomain` selects a unique broker route. The CLI:
-1. Connects to the endpoint with mTLS.
+1. Connects to the endpoint over TLS (with optional client certificate when mTLS credentials are configured).
 2. Waits for the exact configured domain to appear in the route list.
 3. Calls `GET /api/v2/ingress/identity` over that domain.
 4. Verifies `level`, `serviceId`, and `routeDomain` all match the profile exactly.
@@ -155,7 +164,7 @@ A selected Verser2 profile **never** downgrades to HTTP(S)/v1. A command that ha
 
 ### Commands that are natively available
 
-All commands listed as **native** in the [capability matrix](../track/verser2_cli_20260722/capability-matrix.md) dispatch through the Verser2 broker when a profile is active. Key examples:
+The following commands dispatch through the Verser2 broker when a profile is active. Key examples:
 
 - **Hub**: `version`, `load`, `logs`, `audit`, `use`, `list`, `info`, `disconnect`, `delete`, `config get`
 - **Space**: `info`, `list`, `use`, `audit`, `logs`, `version`
@@ -305,7 +314,7 @@ This isolation is enforced at the transport layer — the CLI never sends an ups
 |---|---|---|
 | `Error [CREDENTIAL]: ...` | 50 | Credential file missing, unreadable, or passphrase reference resolves to empty. Check paths and environment variable names. |
 | `Error [TRUST]: ...` | 51 | Server certificate validation failed. Verify the CA file is correct, the server presents a certificate signed by that CA, and the hostname matches. |
-| `Error [AUTH]: ...` | 52 | TLS client authentication rejected. The server required client cert but yours was missing, expired, or not in the server's allowlist. |
+| `Error [AUTH]: ...` | 52 | TLS client authentication rejected. The server required a client certificate but none was provided, or the provided certificate was expired, or its fingerprint was not in the server's allowlist. Add or correct `tls.certFile`/`tls.keyFile` (or `tls.pfxFile`) in the profile. |
 | `Error [PERMISSION]: ...` | 53 | Private key or PFX file has unsafe permissions. Run `chmod 600 <file>`. |
 | `Error [TARGET]: ...` | 54 | Selected space/hub target contradicts the fixed ingress level, or a hub ingress was used with an upstream path. |
 | `Error [ROUTE]: ...` | 55 | Configured route domain not found, not ready, or ambiguous. Check the broker's advertised routes and the `routeDomain` value. |
@@ -336,12 +345,12 @@ This isolation is enforced at the transport layer — the CLI never sends an ups
 
 ## Limitations
 
-- **End-to-end CLI mTLS coverage**: A configured CLI process with file-backed profiles traversing real mTLS to MultiManager, Manager, and direct Host ingress is covered by focused integration tests using real certificate authentication, covering successful traversal, upstream isolation (Hub ingress rejected from Manager/MultiManager routes), and rejected/invalid credentials. Broader scenario coverage (e.g. BDD CLI mTLS scenarios or multi-hop route chains) has not been exercised separately from the typed integration and unit coverage of the broker bridge, transport encoding, and route resolution layers.
+- **End-to-end CLI Verser2 coverage**: A configured CLI process with file-backed profiles traversing a real non-mTLS Hub ingress (CA-only, no client credentials) is covered by a focused integration test. The same test also validates hub-level isolation (upstream traversal rejection). The existing mTLS full-stack test covers MultiManager, Manager, and Hub ingress with real client certificate authentication, including successful traversal, upstream isolation, and rejected/invalid credentials. Broader scenario coverage (e.g. BDD CLI scenarios or multi-hop route chains) has not been exercised separately from the typed integration and unit coverage of the broker bridge, transport encoding, and route resolution layers.
 - **Endpoint inventory**: `si api endpoints` is an explicit exit-80 placeholder until the v2 endpoint-inventory route is bound.
 - **Config control**: `space|sequence|instance config set|reload`, `space|sequence|instance config get`, and `hub config set|reload` are exit-80 placeholders. Only `hub config get` is native.
 - **Store send/delete**: Deferred until server-side binding — exit-80 under Verser2.
 - **File-loaded configuration**: The `@scramjet/config` loader handles JSON, JSONC, and YAML. The Verser2 profile itself is a CLI profile block, not loaded from a standalone config file. Use `si config set` commands or edit the profile JSON directly.
-- **Enterprise authorization**: Granular RBAC and certificate-to-user mapping are not part of the open-source CLI. The mTLS certificate is a privileged control-plane credential.
+- **Enterprise authorization**: Granular RBAC and certificate-to-user mapping are not part of the open-source CLI. When mTLS is used, the client certificate is a privileged control-plane credential.
 - **Windows**: POSIX permission checks (owner-only) are not enforced; only basic file-read validation applies.
 - **PKI lifecycle**: The CLI does not manage certificate renewal, revocation checking, or CSR generation. Use platform tooling (cert-manager, OpenSSL, etc.) for certificate lifecycle.
 

@@ -100,7 +100,14 @@ function responseAdapter(response: VerserBrokerResponse): ApiBrokerResponse {
 export function createVerser2CliTransport(profile: any, signal: AbortSignal): RoutedBrokerTransport {
     let material: ReturnType<typeof validateVerser2Bootstrap>;
     try { material = validateVerser2Bootstrap(profile); } catch (error) { throw profileError(error); }
-    const tls: any = material.pfx ? { ca: material.ca.toString(), pfx: material.pfx, passphrase: material.passphrase } : { ca: material.ca.toString(), cert: material.cert?.toString(), key: material.key?.toString(), passphrase: material.passphrase };
+    const tls: Record<string, unknown> = { ca: material.ca.toString() };
+    if (material.pfx) {
+        tls.pfx = material.pfx;
+    } else {
+        if (material.cert) tls.cert = material.cert.toString();
+        if (material.key) tls.key = material.key.toString();
+    }
+    if (material.passphrase) tls.passphrase = material.passphrase;
     const broker = dependencies.createBroker({ hostUrl: profile.endpoint, brokerId: profile.brokerId, tls }); let connected = false; let closed = false;
     const routes = () => connected && !closed ? broker.getRoutes() : [];
     const target = (domain: string) => { const matches = routes().filter(route => route.domain === domain); if (matches.length !== 1) throw new ApiCommandError("ROUTE", 55, "Configured route is unavailable or ambiguous"); return matches[0]; };

@@ -13,6 +13,15 @@ test("outbound Verser2 structural validation rejects non-primitive endpoints and
     t.false(validateOutboundVerser2Profile({ ...profile, target: [] }));
     t.false(validateOutboundVerser2Profile({ ...profile, target: {} }));
     t.false(validateOutboundVerser2Profile({ ...profile, ingress: { ...profile.ingress, level: "hub" }, target: { hubId: "hub" } }));
+    // Profile with only caFile (no client credentials) is now valid.
+    const { certFile, keyFile, ...noClientTls } = profile.tls;
+    t.true(validateOutboundVerser2Profile({ ...profile, tls: noClientTls }));
+    // But a profile without caFile is still rejected.
+    t.false(validateOutboundVerser2Profile({ ...profile, tls: { certFile: "/cert", keyFile: "/key" } }));
+    // Partial identity (certFile without keyFile) is rejected.
+    t.false(validateOutboundVerser2Profile({ ...profile, tls: { caFile: "/ca", certFile: "/cert" } }));
+    // Both PEM and PFX together are rejected.
+    t.false(validateOutboundVerser2Profile({ ...profile, tls: { caFile: "/ca", certFile: "/cert", keyFile: "/key", pfxFile: "/pfx" } }));
 });
 
 test("outbound draft validation and masking reject unsafe leaves", t => {
