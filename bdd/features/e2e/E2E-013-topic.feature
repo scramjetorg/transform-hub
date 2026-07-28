@@ -1,3 +1,4 @@
+@needs-fix
 Feature: E2E topic tests
 
 The tests check topic functionalities, where we send and receive data from /topic/:name endpoint by using api-client

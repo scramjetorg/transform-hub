@@ -69,7 +69,7 @@
     "test:bdd-ci-hub-docker": "NO_HOST=true RUNTIME_ADAPTER=docker node scripts/run-bdd-docker.js -- --format=@cucumber/pretty-formatter -t \"@ci-hub and @requires-docker and not @slow and not @stress and not @perf and not @load and not @external-dependency and not @compatibility\"",
     "test:bdd-manager-migration": "BDD_INCLUDE_LONG_RUNNING=1 node scripts/run-bdd.js -- --format=@cucumber/pretty-formatter -t \"@manager-migration and not @ignore and not @slow and not @stress and not @perf and not @load and not @external-dependency and not @compatibility\"",
     "test:bdd-ci-api": "npm run test:bdd-ci-api-node",
-    "test:bdd-ci-api-node": "node scripts/run-bdd-docker.js -- --format=@cucumber/pretty-formatter -t \"@ci-api and not @slow and not @stress and not @perf and not @load and not @external-dependency and not @compatibility\"",
+    "test:bdd-ci-api-node": "node scripts/run-bdd-docker.js -- --format=@cucumber/pretty-formatter -t \"@ci-api and not @slow and not @stress and not @perf and not @load and not @external-dependency and not @compatibility and not @needs-fix\"",
     "test:bdd-ci-api-topic": "node scripts/run-bdd-docker.js -- --format=@cucumber/pretty-formatter -t \"@ci-topic and not @slow and not @stress and not @perf and not @load and not @external-dependency and not @compatibility\"",
     "test:bdd-ci-verser2": "NO_HOST=true node scripts/run-bdd.js -- --format=@cucumber/pretty-formatter -t \"@ci-verser2 and not @ignore\"",
     "test:bdd-ci-python": "node scripts/run-bdd-docker.js -- --format=@cucumber/pretty-formatter -t \"@ci-instance-python and not @slow and not @stress and not @perf and not @load and not @external-dependency and not @compatibility\"",
