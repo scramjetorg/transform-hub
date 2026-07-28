@@ -68,3 +68,7 @@ The profile-selection and direct-dependency findings above are repaired. The fol
 
 1. **P2 — fixture teardown hardening (DEFERRED).** Two direct spawned children in the process test bypass the bounded test helper. This is test-suite failure containment only; production cancellation and cleanup have passing guarded process evidence. Owner: Test infrastructure maintainer. Follow-up: route remaining children through the helper and force a fixture failure to prove no leak.
 2. **Info — exact plan/codemap precision (DEFERRED).** Split-command/count/timeout wording and a minor completion-import map statement are stale. This does not affect runtime behavior or Phase 4 acceptance. Owner: Track documentation owner. Follow-up: reconcile final summary and codemap with final verification output.
+
+## 2026-07-28 Final track review — CHANGES_REQUIRED
+
+1. **High — real CLI mTLS traversal remains unproven.** Add production-stack integration coverage that spawns the configured CLI against real certificate-authenticated MultiManager, Manager, and direct-Hub ingress; prove success, traversal/isolation, rejected untrusted credentials, deterministic exits, and cleanup. This is explicit track acceptance and blocks completion.

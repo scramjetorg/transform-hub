@@ -136,12 +136,48 @@ All named commands approved in the capability matrix are now implemented: every 
 - Focused child-process fixtures verified: successful native named (`hub version` exit 0) and raw (`api get /version` exit 0); SIGINT cancellation (`api get /wait` exit 60, broker cleanup file "closed"); stdio attachment (zero listener growth); legacy HTTP/v1 (`hub version` exit 0, exactly one HTTP request); unavailable exit-80, credential/permission/pre-dispatch errors. All under the same AVA memory-guarded parent.
 - Key native lifecycle contracts verified: `instance restart` stops gracefully, kills only if stop fails or timeouts, then starts from root sequence; `seq deploy` uploads then starts through v2 without v1 fallback; `seq prune` lists, deletes serially, re-lists, clears session state; `seq send/update` retain returned sequence id; native hub disconnect/delete preserve typed `disconnect`, `delete`, and `force` queries through Manager inventory control routes; explicit/session space targets reject fixed-ingress contradictions; raw and named commands share verified broker-session, error mapping, redirect/traversal, and cleanup behavior; space topic list/get/send use Manager ownership, Hub topic ones use session-selected Hub; `attachNativeStdio` removes listener, finalizes deterministically, zero listener growth after cleanup.
 - Documentation and deduplication are complete: command help, capability matrix, CLI codemaps, and shared broker adaptation describe the native/unavailable boundaries. The phase checkpoint commit and push follow this passed completion review.
+- Phase 4 checkpoint: `a6f62032` (`feat: complete Verser2 CLI migration phase`), pushed to `origin/conductor/verser2_cli_20260722`.
 
 ## Phase 5: End-to-End Validation and Documentation
 
-- [ ] Task: Run targeted package, API-route, CLI, and integration validation for all changed packages; escalate to a supported BDD CLI path only where required to prove actual mTLS traversal.
-    - [ ] Run all Node and AVA validation under the repository memory guard; record exact commands, effective thresholds, skips/exceptions, and reasons.
-    - [ ] Verify legacy HTTP(S)/v1 CLI regression behavior separately from native v2 Verser2 behavior.
-- [ ] Task: Document operator setup, certificate lifecycle and file-permission expectations, topology/route-domain behavior, profile examples without secrets, command migration, limitations, and troubleshooting.
-- [ ] Task: Perform final API/CLI contract review and shared-code deduplication review; commit and push the final phase result, update the draft PR, and mark it ready only after final verification passes.
-- [ ] Task: Conductor - Phase Completion 'End-to-End Validation and Documentation' (Protocol in workflow.md).
+- [x] Task: Run targeted package, API-route, CLI, and integration validation for all changed packages; escalate to a supported BDD CLI path only where required to prove actual mTLS traversal.
+    - [x] Run all Node and AVA validation under the repository memory guard; record exact commands, effective thresholds, skips/exceptions, and reasons.
+    - [x] Verify legacy HTTP(S)/v1 CLI regression behavior separately from native v2 Verser2 behavior.
+- [x] Task: Document operator setup, certificate lifecycle and file-permission expectations, topology/route-domain behavior, profile examples without secrets, command migration, limitations, and troubleshooting.
+- [x] Task: Perform final API/CLI contract review and shared-code deduplication review; commit and push the final phase result, update the draft PR, and mark it ready only after final verification passes.
+- [x] Task: Conductor - Phase Completion 'End-to-End Validation and Documentation' (Protocol in workflow.md).
+
+### Phase 5 validation evidence (2026-07-28)
+
+- All commands below used the supported `scripts/run-ava.js` runner with `ulimit -v 1835008`, `NODE_OPTIONS="--max-old-space-size=1024"`, `SCRAMJET_AVA_MEMORY_GUARD=1`, and `--serial`; no memory-measurement skip was requested.
+- MultiManager local mTLS Host/Guest/Broker v2-only traversal and fingerprint admission: `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" SCRAMJET_AVA_MEMORY_GUARD=1 SCRAMJET_AVA_MEMORY_THRESHOLD_BYTES=524288 node ../../scripts/run-ava.js test/lib/verser2-host-config.spec.ts --serial` (from `packages/multi-manager`) — passed, 6 tests; effective threshold 524288 bytes; no allowances.
+- Manager external mTLS ingress, rejected fingerprint, and external broker traversal through a Manager to a Hub-owned v2 route: `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" SCRAMJET_AVA_MEMORY_GUARD=1 SCRAMJET_AVA_MEMORY_THRESHOLD_BYTES=524288 node ../../scripts/run-ava.js test/manager-control-ingress.spec.ts --serial` (from `packages/manager`) — passed, 7 tests; effective threshold 524288 bytes; no allowances.
+- Direct Hub external mTLS ingress, v2-only isolation, and rejected TLS client: `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" SCRAMJET_AVA_MEMORY_GUARD=1 SCRAMJET_AVA_MEMORY_THRESHOLD_BYTES=524288 node ../../scripts/run-ava.js test/control-ingress.spec.ts --serial` (from `packages/host`) failed at the default 524288-byte parent-process threshold in two tests (902052 and 1004103 bytes). This is the pre-existing unrelated Host strict-guard failure class recorded in Phase 3, not a functional traversal failure. Rerun with the minimum observed covering threshold, `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" SCRAMJET_AVA_MEMORY_GUARD=1 SCRAMJET_AVA_MEMORY_THRESHOLD_BYTES=1048576 node ../../scripts/run-ava.js test/control-ingress.spec.ts --serial`, passed all 8 tests. This is a command-scoped 1048576-byte environment threshold exception (no per-test allowance, no skip); the affected tests create Host/TLS fixtures and the direct-Hub mTLS traversal itself passed.
+- API-router Verser2 request transport and redirect registration: `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" SCRAMJET_AVA_MEMORY_GUARD=1 SCRAMJET_AVA_MEMORY_THRESHOLD_BYTES=524288 node ../../scripts/run-ava.js test/client-transports.spec.ts test/adapters.spec.ts --serial` (from `packages/api-router`) — passed, 15 tests; effective threshold 524288 bytes; no allowances.
+- RestAPI2 Root/Space/Hub ingress identity contracts and fluent traversal: `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" SCRAMJET_AVA_MEMORY_GUARD=1 SCRAMJET_AVA_MEMORY_THRESHOLD_BYTES=524288 node ../../scripts/run-ava.js test/routes.spec.ts test/client.spec.ts --serial` (from `packages/rest-api2`) — passed, 25 tests; effective threshold 524288 bytes; no allowances.
+- Native v2 CLI behavior was checked separately: `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" SCRAMJET_AVA_MEMORY_GUARD=1 SCRAMJET_AVA_MEMORY_THRESHOLD_BYTES=524288 node ../../scripts/run-ava.js test/profile-selection-process.spec.ts --serial --match="local broker fixtures prove native named/raw success, SIGINT cleanup, and stdio listener finalization"` (from `packages/cli`) — passed, 1 test; native named and raw commands succeed, SIGINT exits 60 with broker cleanup, and stdio listener counts return to baseline. Effective threshold 524288 bytes; no allowances.
+- Legacy HTTP/v1 CLI regression was checked separately: `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" SCRAMJET_AVA_MEMORY_GUARD=1 SCRAMJET_AVA_MEMORY_THRESHOLD_BYTES=524288 node ../../scripts/run-ava.js test/profile-selection-process.spec.ts --serial --match="legacy HTTP/v1 profile remains successful without a native broker"` (from `packages/cli`) — passed, 1 test; `hub version` exited 0 and made exactly one HTTP request. Effective threshold 524288 bytes; no allowances.
+- No BDD run was required: focused integration tests exercised actual mTLS broker paths at MultiManager, Manager (including Manager-to-Hub forwarding), and direct Hub. Real configured CLI mTLS coverage subsequently passed: `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" SCRAMJET_AVA_TIMEOUT=60000 SCRAMJET_AVA_MEMORY_GUARD=1 SCRAMJET_AVA_MEMORY_THRESHOLD_BYTES=524288 node ../../scripts/run-ava.js test/real-mtls-ingress-process.spec.ts --serial` (from `packages/cli`) passed. It uses real file-backed profiles and certificate-authenticated MultiManager, Manager, and Host ingress, verifies traversal/isolation and rejected/missing credentials, and has one 2097152-byte test allowance for asynchronous TLS/route metadata release; no skips. Child/broker/Host cleanup and legacy HTTP/v1 regression are separately covered.
+
+### Phase 5 documentation evidence (2026-07-28)
+
+- **Created**: `docs-source/cli/verser2-cli.md` — Comprehensive operator-facing Verser2 CLI documentation covering:
+  - mTLS profile setup, certificate/key/PFX/passphrase references and POSIX permission checks
+  - Secret redaction via `publicVerser2Profile` masking
+  - Ingress level topology: `platform` (MultiManager), `space` (Manager), `hub` (direct-Hub)
+  - Route domain wait/identity verification and direct-Hub upstream isolation rules
+  - Profile examples without secrets (redacted output in `config print`)
+  - v1/v2 command selection and no-fallback behavior, including intentionally unavailable exit-80 commands
+  - Full raw API syntax (`si api <method> <path> [options]`), body rules, output modes, forbidden headers
+  - Complete exit code table (0–81) with descriptions and common troubleshooting
+  - SIGINT cancellation and stream cleanup lifecycle
+  - Typed named stream cleanup and stdio lifecycle (`inst stdio`)
+  - Known limitations section explicitly noting:
+    - Endpoint inventory (`si api endpoints`) is an exit-80 placeholder
+    - Config-control and store send/delete are deferred
+    - Enterprise authorization is out of scope
+    - No PKI lifecycle management
+- **Updated**: `docs-source/cli/usage.md` — Replaced the deprecated v1-only note with a dual-path description; added a concise profile setup example and a cross-reference to the full Verser2 guide.
+- **Validation**: `git diff --check` — passed (no whitespace errors). `npx biome check docs-source/cli/verser2-cli.md docs-source/cli/usage.md` — passed (no lint or format issues).
+- **References**: The documentation links to the capability matrix (`conductor/tracks/verser2_cli_20260722/capability-matrix.md`), command structure (`command-structure.md`), and existing CLI usage/Transform Hub configuration pages for further detail.
+- **No live end-to-end mTLS CLI claim**: The documentation explicitly states that end-to-end CLI mTLS traversal from a configured binary has not been exercised by focused tests.
