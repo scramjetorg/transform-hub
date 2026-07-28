@@ -29,7 +29,7 @@
 
 ## Testing and generated files
 - Most package tests use AVA with `ts-node/register` and match `**/*.spec.ts`.
-- Agent-run tests and Node validation commands must start under `ulimit -v 1835008` and `NODE_OPTIONS="--max-old-space-size=1024"` unless run through a repo/package test runner that already controls the test process and memory behavior. Do not wait for OOM before applying this guard; use it by default when invoking tests directly or through npm scripts without runner-level memory handling.
+- Run supported repo/package test commands with their default environment. Prefer a supported runner over raw test-process invocation.
 - AVA package tests run through `scripts/run-ava.js` — the **sole supported** AVA/package-test entrypoint. All package `test`/`test:ava` scripts route through it. Default profile: `--max-old-space-size=2048`, JIT with WASM caps (8192 pages, 256 MB committed code/code space), `TS_NODE_TRANSPILE_ONLY=1`, concurrency 2, runner timeout 600000 ms. `SCRAMJET_TEST_PROFILE=fast` uses 16 AVA workers and an 8 MiB concurrent-mode budget; `SCRAMJET_TEST_PROFILE=phase-final` enables the unchanged strict 524288-byte guard and serial execution. Fast mode never enables concurrent GC measurements; an explicitly enabled guard remains serial. Opt in to jitless with `SCRAMJET_AVA_JITLESS=1`, or ts-node typechecking with `TS_NODE_TRANSPILE_ONLY=0`; package source TypeScript builds remain the correctness gate. Other overrides:
   - `SCRAMJET_AVA_FETCH=0` — adds `--no-experimental-fetch`
   - `SCRAMJET_AVA_WORKERS` — AVA concurrency (default 2)
