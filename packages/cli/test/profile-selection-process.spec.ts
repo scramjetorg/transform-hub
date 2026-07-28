@@ -120,11 +120,11 @@ test.serial("local broker fixtures prove native named/raw success, SIGINT cleanu
     const raw = await invokeNative(t, home, fixture, ["api", "get", "/version"]);
     t.is(named.code, 0, named.output); t.is(raw.code, 0, raw.output);
     const cleanup = path.join(directory, "cancel-cleanup"); const ready = path.join(directory, "cancel-ready");
-    const cancelling = spawn(process.execPath, ["-r", "ts-node/register", "packages/cli/src/bin/index.ts", "api", "get", "/wait"], { cwd: path.resolve(__dirname, "../../.."), env: { ...process.env, HOME: home, NODE_OPTIONS: `-r ${fixture}`, SI_FIXTURE_MODE: "cancel", SI_FIXTURE_CLEANUP: cleanup, SI_FIXTURE_READY: ready } });
+    const cancelling = spawnCli(t, home, ["api", "get", "/wait"], { NODE_OPTIONS: `-r ${fixture}`, SI_FIXTURE_MODE: "cancel", SI_FIXTURE_CLEANUP: cleanup, SI_FIXTURE_READY: ready });
     for (let attempt = 0; !fs.existsSync(ready) && attempt < 500; attempt++) await new Promise(resolve => setTimeout(resolve, 10));
-    t.true(fs.existsSync(ready)); cancelling.kill("SIGINT");
-    const cancelled = await new Promise<number | null>(resolve => cancelling.once("close", resolve));
-    t.is(cancelled, 60); t.is(fs.readFileSync(cleanup, "utf8"), "closed");
+    t.true(fs.existsSync(ready)); cancelling.signal("SIGINT");
+    const cancelled = await cancelling.result;
+    t.is(cancelled.code, 60, cancelled.output); t.is(fs.readFileSync(cleanup, "utf8"), "closed");
     const listeners = path.join(directory, "listeners.json");
     const attached = await invokeNative(t, home, fixture, ["instance", "attach", "id"], { SI_FIXTURE_LISTENERS: listeners });
     t.is(attached.code, 0, attached.output);
@@ -182,12 +182,11 @@ test.serial("named stream timeout and SIGINT retain mapped exits after post-hand
     }
     const noTimeout = profile(directory); delete (noTimeout.verser2 as any).timeoutMs; fs.writeFileSync(profileFile, JSON.stringify(noTimeout));
     const cleanup = path.join(directory, "sigint-cleanup"); const handoff = path.join(directory, "sigint-handoff");
-    const child = spawn(process.execPath, ["-r", "ts-node/register", "packages/cli/src/bin/index.ts", "hub", "logs"], { cwd: path.resolve(__dirname, "../../.."), env: { ...process.env, HOME: home, NODE_OPTIONS: `-r ${fixture}`, SI_FIXTURE_MODE: "named-stall", SI_FIXTURE_CLEANUP: cleanup, SI_FIXTURE_HANDOFF: handoff } });
-    let stderr = ""; child.stderr.on("data", chunk => stderr += chunk);
+    const child = spawnCli(t, home, ["hub", "logs"], { NODE_OPTIONS: `-r ${fixture}`, SI_FIXTURE_MODE: "named-stall", SI_FIXTURE_CLEANUP: cleanup, SI_FIXTURE_HANDOFF: handoff });
     for (let attempt = 0; !fs.existsSync(handoff) && attempt < 500; attempt++) await new Promise(resolve => setTimeout(resolve, 10));
-    t.true(fs.existsSync(handoff)); child.kill("SIGINT");
-    const code = await new Promise<number | null>(resolve => child.once("close", resolve));
-    t.is(code, 60, stderr); t.regex(stderr, /Error \[CANCELLED\]/); t.is(fs.readFileSync(cleanup, "utf8"), "closed");
+    t.true(fs.existsSync(handoff)); child.signal("SIGINT");
+    const cancelled = await child.result;
+    t.is(cancelled.code, 60, cancelled.output); t.regex(cancelled.output, /Error \[CANCELLED\]/); t.is(fs.readFileSync(cleanup, "utf8"), "closed");
 });
 
 test.serial("legacy HTTP/v1 profile remains successful without a native broker", async t => {
