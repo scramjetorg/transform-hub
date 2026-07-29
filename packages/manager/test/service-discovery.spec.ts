@@ -2,6 +2,8 @@ import test from "ava";
 import { ServiceDiscovery, TopicActor } from "../src/lib/service-discovery";
 import { ActorRole, ActorType, ISTHController } from "@scramjet/types";
 import { PassThrough } from "stream";
+import { Topic } from "../../host/src/lib/serviceDiscovery/topic";
+import TopicId from "../../host/src/lib/serviceDiscovery/topicId";
 
 /**
  * Minimal mock ISTHController needed for host-type actors.
@@ -436,6 +438,27 @@ test("ServiceDiscovery: host provider to host consumer cross-hub live data flow"
     hostCtrl1.streams.upstream[0].write("cross-hub-payload");
 
     t.is(await received, "cross-hub-payload");
+});
+
+test("ServiceDiscovery: host ingress first payload survives Manager route attachment", async (t) => {
+    const sd = new ServiceDiscovery();
+    const providerHost = mockHostController("host-provider");
+    const consumerHost = mockHostController("host-consumer");
+    const providerTopic = new Topic(new TopicId("topic-first-ingress"), "text/plain", { id: "host-provider", type: "hub" });
+    const providerIngress = new PassThrough();
+
+    providerTopic.acceptPipe(providerIngress);
+    providerIngress.write("first-payload");
+    providerHost.createUpstreamTopicRequest = async () => providerTopic as any;
+
+    sd.register(new TopicActor("topic-first-ingress", ActorRole.PROVIDER, ActorType.HOST, "text/plain", providerHost as any));
+    sd.register(new TopicActor("topic-first-ingress", ActorRole.CONSUMER, ActorType.HOST, "text/plain", consumerHost as any));
+    await waitImmediate();
+
+    t.is(await readChunk(consumerHost.streams.downstream[0]), "first-payload");
+    providerIngress.destroy();
+    providerTopic.destroy();
+    consumerHost.streams.downstream[0].destroy();
 });
 
 test("ServiceDiscovery: host provider end leaves cross-hub consumer stream open for replacement", async (t) => {

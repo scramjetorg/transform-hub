@@ -11,6 +11,21 @@ export enum TopicEvent {
 
 export type TopicStreamOptions = Pick<TransformOptions, "encoding">;
 
+type PendingIngress = {
+    chunk: unknown;
+    encoding: BufferEncoding;
+    callback: (error?: Error | null) => void;
+    source: Readable;
+    onError: (error: Error) => void;
+    onAborted: () => void;
+    onClose: () => void;
+};
+
+type ActiveIngress = {
+    source: Readable;
+    firstChunkSeen: boolean;
+};
+
 export class Topic extends Transform implements TopicHandler {
     protected _id: TopicId;
     protected _options: TopicOptions;
@@ -22,6 +37,9 @@ export class Topic extends Transform implements TopicHandler {
     private _pipeQueue: Readable[] = [];
     private _consuming: Promise<any> | undefined;
     private _pendingTransform?: (error?: Error | null) => void;
+    private _pendingIngress?: PendingIngress;
+    private _activeIngress?: ActiveIngress;
+    private _pipeTargets = new Set<NodeJS.WritableStream>();
 
     constructor(id: TopicId, contentType: ContentType, origin: StreamOrigin, options?: TopicStreamOptions) {
         super({ ...options, highWaterMark: 65536, writableHighWaterMark: 0, readableHighWaterMark: 65536 });
@@ -78,6 +96,8 @@ export class Topic extends Transform implements TopicHandler {
             while (this._pipeQueue.length) {
                 const pipe = this._pipeQueue.shift()!;
 
+                this._activeIngress = { source: pipe, firstChunkSeen: false };
+
                 if ((pipe as ParsedMessage).writeContinue) {
                     (pipe as ParsedMessage).writeContinue();
                 }
@@ -89,6 +109,9 @@ export class Topic extends Transform implements TopicHandler {
                 });
 
                 pipe.unpipe();
+                if (this._activeIngress?.source === pipe && !this._pendingIngress) {
+                    this._activeIngress = undefined;
+                }
             }
 
             this._consuming = undefined;
@@ -96,11 +119,19 @@ export class Topic extends Transform implements TopicHandler {
     }
 
     _transform(chunk: any, encoding: BufferEncoding, callback: (error?: Error | null | undefined) => void): void {
-        // Topics are live routes, not queues. A provider may publish before a
-        // consumer is attached; discard that payload instead of retaining it
-        // in Transform's readable buffer for a later subscriber.
-        const state = (this as unknown as { _readableState?: { pipesCount?: number } })._readableState;
-        if (!state?.pipesCount && this.listenerCount("data") === 0 && this.listenerCount("readable") === 0) {
+        const ingress = this._activeIngress;
+        const isFirstIngressChunk = ingress !== undefined && !ingress.firstChunkSeen;
+        if (isFirstIngressChunk) ingress.firstChunkSeen = true;
+
+        // Topics remain live routes: ordinary writes without a subscriber are
+        // discarded. The one exception is the first chunk of an active ingress.
+        // Manager discovery attaches that pipe asynchronously, so hold exactly
+        // one chunk under backpressure until the route is attached.
+        if (!this.hasConsumer()) {
+            if (isFirstIngressChunk) {
+                this.holdFirstIngressChunk(chunk, encoding, callback, ingress.source);
+                return;
+            }
             this.needDrain = false;
             callback();
             return;
@@ -146,6 +177,7 @@ export class Topic extends Transform implements TopicHandler {
     }
 
     destroy(error?: Error | undefined): this {
+        this.failPendingIngress(error ?? new Error(`Topic ${this.id()} destroyed before ingress attachment`));
         this._errored = error;
         super.destroy(error);
         this.updateState();
@@ -165,11 +197,77 @@ export class Topic extends Transform implements TopicHandler {
     }
 
     pipe<T extends NodeJS.WritableStream>(destination: T, options?: { end?: boolean }): T {
-        return super.pipe(destination, options);
+        this._pipeTargets.add(destination);
+        const result = super.pipe(destination, options);
+        this.flushPendingIngress();
+        return result;
     }
 
     unpipe(...args: any[]) {
+        if (args.length === 0) this._pipeTargets.clear();
+        else this._pipeTargets.delete(args[0] as NodeJS.WritableStream);
         return super.unpipe(...args);
+    }
+
+    private hasConsumer(): boolean {
+        return this._pipeTargets.size > 0 || this.listenerCount("data") > 0 || this.listenerCount("readable") > 0;
+    }
+
+    private holdFirstIngressChunk(
+        chunk: unknown,
+        encoding: BufferEncoding,
+        callback: (error?: Error | null) => void,
+        source: Readable
+    ): void {
+        const fail = (error: Error) => this.failPendingIngress(error);
+        const onAborted = () => fail(new Error(`Topic ${this.id()} ingress cancelled before route attachment`));
+        const onClose = () => {
+            if (!source.readableEnded) onAborted();
+        };
+
+        this._pendingIngress = { chunk, encoding, callback, source, onError: fail, onAborted, onClose };
+        source.once("error", fail);
+        source.once("aborted", onAborted);
+        source.once("close", onClose);
+        this.needDrain = true;
+        this.updateState();
+    }
+
+    private flushPendingIngress(): void {
+        const pending = this._pendingIngress;
+        if (!pending || !this.hasConsumer()) return;
+
+        this.clearPendingIngress();
+        this.needDrain = !this.push(pending.chunk, pending.encoding);
+        if (this.needDrain) {
+            this._pendingTransform = pending.callback;
+            return;
+        }
+        pending.callback();
+        this.updateState();
+    }
+
+    private failPendingIngress(error: Error): void {
+        const pending = this._pendingIngress;
+        if (!pending) return;
+
+        this.clearPendingIngress();
+        this.needDrain = false;
+        pending.callback(error);
+        this.updateState();
+    }
+
+    private clearPendingIngress(): void {
+        const pending = this._pendingIngress;
+        if (!pending) return;
+
+        pending.source.removeListener("error", pending.onError);
+        pending.source.removeListener("aborted", pending.onAborted);
+        pending.source.removeListener("close", pending.onClose);
+        this._pendingIngress = undefined;
+        if (this._activeIngress?.source === pending.source && pending.source.readableEnded) {
+            this._activeIngress = undefined;
+        }
     }
 
     protected updateState() {

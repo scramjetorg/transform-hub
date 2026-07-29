@@ -14,6 +14,8 @@ export interface RunnerBunBootConfig {
     instanceName?: string;
     exitTimeout?: number;
     logLevel?: LogLevel;
+    /** Whether sequence logger records are published to the host LOG channel. */
+    forwardRunnerLogs?: boolean;
     exposePath?: string;
     inputTopic?: string;
     outputTopic?: string;
@@ -64,6 +66,7 @@ export function validateBootConfig(value: unknown): RunnerBunBootConfig {
         instanceName,
         exitTimeout,
         logLevel,
+        forwardRunnerLogs,
         exposePath,
         inputTopic,
         outputTopic,
@@ -120,6 +123,10 @@ export function validateBootConfig(value: unknown): RunnerBunBootConfig {
         throw new Error("runner-bun: boot config field 'logLevel' must be a non-empty string when provided");
     }
 
+    if (forwardRunnerLogs !== undefined && typeof forwardRunnerLogs !== "boolean") {
+        throw new Error("runner-bun: boot config field 'forwardRunnerLogs' must be a boolean when provided");
+    }
+
     if (exposePath !== undefined && (typeof exposePath !== "string" || exposePath.length === 0)) {
         throw new Error("runner-bun: boot config field 'exposePath' must be a non-empty string when provided");
     }
@@ -155,6 +162,7 @@ export function validateBootConfig(value: unknown): RunnerBunBootConfig {
     if (instanceName !== undefined) result.instanceName = instanceName as string;
     if (exitTimeout !== undefined) result.exitTimeout = exitTimeout;
     if (logLevel !== undefined) result.logLevel = logLevel as LogLevel;
+    if (forwardRunnerLogs !== undefined) result.forwardRunnerLogs = forwardRunnerLogs;
     if (exposePath !== undefined) result.exposePath = exposePath as string;
     if (inputTopic !== undefined) result.inputTopic = inputTopic as string;
     if (outputTopic !== undefined) result.outputTopic = outputTopic as string;

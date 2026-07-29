@@ -31,6 +31,8 @@ export interface ProfileConfigEntity {
     log: {
         debug: boolean;
         format: displayFormat;
+        /** Controls the existing debug API-client lifecycle logger. */
+        apiClients?: boolean;
     }
     verser2?: Verser2ProfileConfig;
     verser2Draft?: Verser2ProfileDraft;

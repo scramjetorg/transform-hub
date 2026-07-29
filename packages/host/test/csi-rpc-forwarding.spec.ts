@@ -86,6 +86,7 @@ test("broker RPC transport request finds route and delegates to broker.request",
 
     t.is(brokerRequestCalls.length, 1);
     t.is(brokerRequestCalls[0].targetId, "runner.guest.inst-1");
+    t.is(brokerRequestCalls[0].routeDomain, "runner.inst-1.scramjet.internal");
     t.is(brokerRequestCalls[0].method, "POST");
     t.is(brokerRequestCalls[0].path, "/api/v1/rpc/test");
     t.is(brokerRequestCalls[0].headers?.["content-type"], "application/json");

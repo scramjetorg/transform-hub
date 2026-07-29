@@ -138,6 +138,73 @@ test("Topic data flow: drops payloads published without a subscriber", async t =
     topic.destroy();
 });
 
+test("Topic data flow: retains one first ingress chunk until a consumer pipe attaches", async t => {
+    const topic = new Topic(new TopicId("first-ingress"), "text/plain", testOrigin);
+    const provider = new PassThrough();
+    const consumer = new PassThrough();
+    const received: string[] = [];
+
+    consumer.on("data", chunk => received.push(chunk.toString()));
+    topic.acceptPipe(provider);
+    provider.write("first");
+    await new Promise<void>(resolve => setImmediate(resolve));
+
+    t.deepEqual(received, []);
+    topic.pipe(consumer);
+    await new Promise<void>(resolve => setImmediate(resolve));
+    provider.write("second");
+    await new Promise<void>(resolve => setImmediate(resolve));
+
+    t.deepEqual(received, ["first", "second"]);
+    provider.destroy();
+    consumer.destroy();
+    topic.destroy();
+});
+
+test("Topic data flow: cancelled first ingress releases the pending chunk without delivery", async t => {
+    const topic = new Topic(new TopicId("cancelled-ingress"), "text/plain", testOrigin);
+    const provider = new PassThrough();
+    const consumer = new PassThrough();
+    const received: string[] = [];
+    const error = new Error("ingress failed");
+
+    consumer.on("data", chunk => received.push(chunk.toString()));
+    provider.on("error", () => undefined);
+    topic.acceptPipe(provider);
+    provider.write("first");
+    const topicError = new Promise<Error>(resolve => topic.once("error", resolve));
+    provider.destroy(error);
+
+    t.is(await topicError, error);
+    topic.pipe(consumer);
+    await new Promise<void>(resolve => setImmediate(resolve));
+
+    t.deepEqual(received, []);
+    t.true(topic.destroyed);
+    consumer.destroy();
+});
+
+test("Topic data flow: aborted first ingress releases the pending chunk without duplicate delivery", async t => {
+    const topic = new Topic(new TopicId("aborted-ingress"), "text/plain", testOrigin);
+    const provider = new PassThrough() as PassThrough & { aborted?: boolean };
+    const consumer = new PassThrough();
+    const received: string[] = [];
+
+    consumer.on("data", chunk => received.push(chunk.toString()));
+    topic.acceptPipe(provider);
+    provider.write("first");
+    const topicError = new Promise<Error>(resolve => topic.once("error", resolve));
+    provider.emit("aborted");
+
+    await topicError;
+    topic.pipe(consumer);
+    await new Promise<void>(resolve => setImmediate(resolve));
+
+    t.deepEqual(received, []);
+    t.true(topic.destroyed);
+    consumer.destroy();
+});
+
 test("Topic data flow: many providers writing", async t => {
     const testTopic = new Topic(new TopicId("TestTopic"), "text/plain", testOrigin, { encoding: "ascii" });
 

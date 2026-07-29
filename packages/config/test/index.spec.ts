@@ -15,6 +15,7 @@ import {
     parseCliOptions,
     z
 } from "../src";
+import { ConfigService } from "../src/sth/config-service";
 
 const schema = z.object({
     feature: z.object({
@@ -78,6 +79,14 @@ test("merge preserves valid falsy values and replaces arrays", t => {
     );
 
     t.deepEqual(merged, { enabled: false, count: 0, label: "", tags: [] });
+});
+
+test("runner log forwarding is enabled by default and follows nested config", t => {
+    t.true(new ConfigService().getConfig().log.forwardRunner);
+
+    const config = new ConfigService();
+    config.update({ log: { forwardRunner: false } });
+    t.false(config.getConfig().log.forwardRunner);
 });
 
 test("masks secret descriptor paths", t => {

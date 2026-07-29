@@ -228,6 +228,7 @@ test("ManagerAPIHandler unit handlers cover registration disconnect and S3 mount
 
     const sthSocket = createMockSocket("sth");
     t.deepEqual(await (recorder.require("op", "/api/v1/sth", "post").handler as Function)({ body: { id: "sth" }, socket: sthSocket }), { id: "sth-registered", opStatus: "Accepted" });
+    t.deepEqual(await (recorder.require("op", "/api/v1/sth", "post").handler as Function)({ body: { id: "sth-without-socket" } }), { id: "sth-registered", opStatus: "Accepted" });
     t.true(recorder.has("use", "/api/v1/s3/"));
     t.deepEqual(await (recorder.require("op", "/api/v1/disconnect", "post").handler as Function)({ body: { limit: 0 } }), {
         opStatus: "Accepted",

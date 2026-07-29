@@ -207,6 +207,7 @@ test("createManagerSthLocalBrokerTransport supports local broker handles without
     await transport.request({ domain: "sth.sth-1.scramjet.internal", method: "GET", path: "/" });
 
     t.is(broker.requests[0].targetId, "sth:sth-1:guest");
+    t.is(broker.requests[0].routeDomain, "sth.sth-1.scramjet.internal");
 });
 
 test("Verser2ManagerSthBrokerTransport times out when route is not advertised", async t => {
@@ -239,6 +240,7 @@ test("Verser2ManagerSthBrokerTransport uses exact route domain and target for re
     t.is(broker.requests.length, 1);
     t.deepEqual(broker.requests[0], {
         targetId: "sth:sth-1:guest",
+        routeDomain: "sth.sth-1.scramjet.internal",
         method: "GET",
         path: "/api/v1/config",
         headers: { "x-test": "yes" },

@@ -35,6 +35,8 @@ export interface RunnerNodeBootConfig {
     exitTimeout?: number;
     /** Initial logger log level (mirrors legacy `RunnerConnectInfo.logLevel`). */
     logLevel?: LogLevel;
+    /** Whether sequence logger records are published to the host LOG channel. */
+    forwardRunnerLogs?: boolean;
     /** Optional path prefix under which `context.api.use(...)` handlers are exposed. */
     exposePath?: string;
     /** Optional topic used as this instance input source. */
@@ -57,6 +59,11 @@ export interface RunnerNodeBootConfig {
         leaseAcquireTimeoutMs?: number;
         minWaitingStreams?: number;
     };
+}
+
+/** Missing configuration preserves the historical enabled behavior. */
+export function shouldForwardRunnerLogs(config: Pick<RunnerNodeBootConfig, "forwardRunnerLogs">): boolean {
+    return config.forwardRunnerLogs !== false;
 }
 
 /**
@@ -95,6 +102,7 @@ export function validateBootConfig(value: unknown): RunnerNodeBootConfig {
         sequenceInfo,
         instanceName,
         logLevel,
+        forwardRunnerLogs,
         exposePath,
         inputTopic,
         outputTopic,
@@ -156,6 +164,10 @@ export function validateBootConfig(value: unknown): RunnerNodeBootConfig {
         throw new Error("runner-node: boot config field 'logLevel' must be a non-empty string when provided");
     }
 
+    if (forwardRunnerLogs !== undefined && typeof forwardRunnerLogs !== "boolean") {
+        throw new Error("runner-node: boot config field 'forwardRunnerLogs' must be a boolean when provided");
+    }
+
     if (exposePath !== undefined && (typeof exposePath !== "string" || exposePath.length === 0)) {
         throw new Error("runner-node: boot config field 'exposePath' must be a non-empty string when provided");
     }
@@ -205,6 +217,7 @@ export function validateBootConfig(value: unknown): RunnerNodeBootConfig {
     if (sequenceInfo !== undefined) result.sequenceInfo = sequenceInfo as unknown as SequenceInfo;
     if (instanceName !== undefined) result.instanceName = instanceName as string;
     if (logLevel !== undefined) result.logLevel = logLevel as LogLevel;
+    if (forwardRunnerLogs !== undefined) result.forwardRunnerLogs = forwardRunnerLogs;
     if (exposePath !== undefined) result.exposePath = exposePath as string;
     if (inputTopic !== undefined) result.inputTopic = inputTopic as string;
     if (outputTopic !== undefined) result.outputTopic = outputTopic as string;

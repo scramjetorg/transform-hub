@@ -39,7 +39,7 @@ export class ManagerAPIV1Handler {
         registerHttpRoutes(router, this.createV1CompatibilityRouter());
         router.op("post", `${apiBase}/sth`, async (req: IncomingMessage): Promise<{ id: string; opStatus: string }> => {
             const payload = (req as IncomingMessage & { body: SthRegistrationPayload }).body || {};
-            const peer = (req.socket as IncomingMessage["socket"] & { getPeerCertificate?: (detailed?: boolean) => { raw?: Buffer } }).getPeerCertificate?.(true);
+            const peer = (req.socket as IncomingMessage["socket"] & { getPeerCertificate?: (detailed?: boolean) => { raw?: Buffer } } | undefined)?.getPeerCertificate?.(true);
             const peerCertificate = peer?.raw ? new X509Certificate(peer.raw) : undefined;
             const fingerprint = peerCertificate?.fingerprint256;
             const dnsSans =

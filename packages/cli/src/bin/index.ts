@@ -9,6 +9,7 @@ import { initConfig, profileManager } from "../lib/config";
 import { parseConfigSelection } from "../lib/config/args";
 import { errorHandler } from "../lib/errorHandler";
 import { initPaths } from "../lib/paths";
+import { apiClientLoggingOption, setApiClientLoggingOverride } from "../lib/api-client-logging";
 
 const version = findPackage(__dirname).next().value?.version || "unknown";
 
@@ -52,7 +53,8 @@ function normalizeCommandArgs(args: string[]): string[] {
             .usage("[command] [options...]")
             .option("-c, --config <path>", "Use configuration from file")
             .option("--config-path <path>", "Use configuration from file")
-            .option("--progress", "Global flag, used to display progress (currently used only in 'si seq send/deploy' command");
+            .option("--progress", "Global flag, used to display progress (currently used only in 'si seq send/deploy' command")
+            .option(apiClientLoggingOption);
 
         // Register child commands from command modules
         commandDescriptors.forEach((child: CommandDescriptor) => b.addCommand(child));
@@ -87,6 +89,8 @@ function normalizeCommandArgs(args: string[]): string[] {
     // Execute commands
     if (leaf.action) {
         const ctx = parseCommandContext(resolve, rootDescriptor.options);
+
+        setApiClientLoggingOverride(ctx.options.logApiClients as boolean | undefined);
 
         await executeCommand(ctx);
     } else if (leaf.children && leaf.children.length > 0) {

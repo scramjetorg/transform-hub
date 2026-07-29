@@ -216,6 +216,7 @@ test("Verser2RunnerTransport waits for runner route and opens routed stream requ
         ["GET", "/log"]
     ]);
     t.true(requests.slice(0, 3).every(request => request.targetId === "runner.guest.inst-1"));
+    t.true(requests.every(request => request.routeDomain === "runner.inst-1.scramjet.internal"));
     t.deepEqual(requests.slice(0, 3).map(request => request.body), [
         downstreams[CC.STDIN],
         downstreams[CC.CONTROL],

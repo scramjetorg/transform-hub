@@ -16,6 +16,7 @@ import { DataStream } from "scramjet";
 import { Writable } from "stream";
 import { createV2HttpDispatcher } from "@scramjet/api-server";
 import { MultiManagerConfig } from "../config/multi-manager-configuration";
+import type { MultiManagerOptions } from "../types/multi-manager-types";
 import { MultiManagerAPIHandler } from "./api/multi-manager-api";
 import { MultiManagerAPIV2Handler } from "./api/multi-manager-api-v2";
 import { ManagersStore } from "./manager-store";
@@ -30,6 +31,97 @@ const buildInfo = readJsonFile("build.info", __dirname, "..");
 const packageFile = findPackage(__dirname).next();
 const version = packageFile.value?.version || "unknown";
 const name = packageFile.value?.name || "unknown";
+
+type ManagerVerser2Request = Pick<IncomingMessage, "method" | "url">;
+type ManagerGatewayResponse = { statusCode?: number; once?: (event: string, listener: () => void) => unknown };
+
+function boundedText(value: unknown, limit = 8192): string | undefined {
+    if (value === undefined || value === null) return undefined;
+    return String(value).slice(0, limit);
+}
+
+function safeRequestPath(url: string | undefined): string {
+    const path = String(url || "/").split(/[?#]/, 1)[0] || "/";
+    return path.startsWith("/") ? path : `/${path}`;
+}
+
+function structuredError(error: unknown, depth = 0): Record<string, unknown> {
+    if (!(error instanceof Error)) {
+        return { causeType: typeof error };
+    }
+
+    const cause = (error as Error & { cause?: unknown }).cause;
+
+    return {
+        name: error.name,
+        message: boundedText(error.message, 2048),
+        ...(error.stack !== undefined && { stack: boundedText(error.stack) }),
+        ...(cause !== undefined && { cause: depth < 3 ? structuredError(cause, depth + 1) : { message: "cause depth limit reached" } })
+    };
+}
+
+export function logManagerVerser2RequestFailure(
+    logger: { error: (message: string, details: Record<string, unknown>) => void },
+    managerId: string,
+    request: ManagerVerser2Request,
+    error: unknown,
+): void {
+    logger.error("Manager Verser2 request failed", {
+        managerId,
+        method: request.method || "UNKNOWN",
+        url: safeRequestPath(request.url),
+        error: structuredError(error)
+    });
+}
+
+export function logManagerGatewayRequest(
+    logger: { debug?: (message: string, details: Record<string, unknown>) => void; error: (message: string, details: Record<string, unknown>) => void },
+    managerId: string,
+    request: ManagerVerser2Request,
+    response: ManagerGatewayResponse,
+    dispatch: () => unknown,
+    logApiServers = true,
+): unknown {
+    const startedAt = Date.now();
+    const metadata = { managerId, method: request.method || "UNKNOWN", path: safeRequestPath(request.url) };
+    let completed = false;
+    const complete = () => {
+        if (completed) return;
+        completed = true;
+        const status = response.statusCode;
+        const details = { ...metadata, status, durationMs: Date.now() - startedAt };
+        if (status !== undefined && status >= 400) {
+            logger.error("Manager gateway response failed", {
+                ...details,
+                error: { name: "HttpStatusError", message: `gateway returned HTTP status ${status}` }
+            });
+        }
+        if (logApiServers) logger.debug?.("Manager gateway request completed", details);
+    };
+    const reportDispatchFailure = (error: unknown) => logger.error("Manager gateway dispatch failed", {
+        ...metadata,
+        durationMs: Date.now() - startedAt,
+        error: structuredError(error)
+    });
+
+    if (logApiServers) logger.debug?.("Manager gateway request", metadata);
+    response.once?.("finish", complete);
+    response.once?.("close", complete);
+
+    try {
+        const result = dispatch();
+        if (result && typeof (result as Promise<unknown>).then === "function") {
+            return Promise.resolve(result).catch(error => {
+                reportDispatchFailure(error);
+                throw error;
+            });
+        }
+        return result;
+    } catch (error) {
+        reportDispatchFailure(error);
+        throw error;
+    }
+}
 
 export class MultiManager {
     apiServer: APIExpose;
@@ -58,6 +150,11 @@ export class MultiManager {
     private controlIngressGuests = new Map<string, VerserLocalGuestHandle>();
     private controlIngressRootGuest?: VerserLocalGuestHandle;
     private stopping = false;
+
+    /** Missing configuration preserves the historical API-server log consumption. */
+    static shouldConsumeApiServerLogs(config: Pick<MultiManagerOptions, "log">): boolean {
+        return config.log?.apiServers !== false;
+    }
 
     public get logStream(): Writable {
         return this.commonLogsPipe.getIn();
@@ -134,7 +231,9 @@ export class MultiManager {
 
         prettyLog.pipe(process.stdout);
 
-        this.apiServer.log.map((log) => this.logger.debug("API log", log));
+        if (MultiManager.shouldConsumeApiServerLogs(this.config)) {
+            this.apiServer.log.map((log) => this.logger.debug("API log", log)).resume();
+        }
 
         this.logger.info("Starting MultiManager", version);
         this.logger.debug("MultiManager config", this.config.getMasked());
@@ -229,7 +328,7 @@ export class MultiManager {
                                     ...managerConfig.verser2,
                                     controlIngress: managerConfig.verser2.controlIngress && { ...managerConfig.verser2.controlIngress, embedded: true }
                                 }
-                            });
+                            }, { logApiServers: this.config.log.apiServers });
 
                             manager.logger.pipe(this.logger);
 
@@ -300,15 +399,26 @@ export class MultiManager {
             guestId: manager.config.verser2.localGuest.peerId,
             routedDomains: [manager.config.verser2.localGuest.routeDomain],
             listener: (req, res) =>
-                handleVerser2RequestBoundary(
+                logManagerGatewayRequest(
+                    this.logger,
+                    manager.config.id,
                     req,
                     res,
-                    () =>
-                        manager.router.lookup(req as ParsedMessage, res as ServerResponse, () => {
-                            res.statusCode = 404;
-                            res.end();
-                        }),
-                    this.logger
+                    () => handleVerser2RequestBoundary(
+                        req,
+                        res,
+                        () =>
+                            manager.router.lookup(req as ParsedMessage, res as ServerResponse, (error) => {
+                                if (error) {
+                                    logManagerVerser2RequestFailure(this.logger, manager.config.id, req, error);
+                                }
+
+                                res.statusCode = 404;
+                                res.end();
+                            }),
+                        this.logger
+                    ),
+                    MultiManager.shouldConsumeApiServerLogs(this.config)
                 )
         });
 
@@ -459,7 +569,7 @@ export class MultiManager {
                 ...managerConfig.verser2,
                 controlIngress: managerConfig.verser2.controlIngress && { ...managerConfig.verser2.controlIngress, embedded: true }
             }
-        });
+        }, { logApiServers: this.config.log.apiServers });
 
         manager.logger.pipe(this.logger);
 

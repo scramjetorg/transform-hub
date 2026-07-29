@@ -241,10 +241,12 @@ def _write_boot_error(message: str) -> None:
 
 
 def _configure_logging(
-    log_writer: asyncio.StreamWriter, level_name: str
+    log_writer: asyncio.StreamWriter, level_name: str, forward_runner_logs: bool = True
 ) -> logging.Logger:
     level = getattr(logging, level_name.upper(), logging.INFO)
-    handler = JsonLogHandler(log_writer)
+    handler: logging.Handler = (
+        JsonLogHandler(log_writer) if forward_runner_logs else logging.NullHandler()
+    )
     runtime_logger = logging.getLogger("runner_python.runtime")
     runtime_logger.handlers.clear()
     runtime_logger.addHandler(handler)
@@ -483,7 +485,9 @@ async def main() -> int:
             _write_boot_error(f"Host channel error: {exc}")
             return 2
 
-        runtime_logger = _configure_logging(log_writer, boot_config.logLevel)
+        runtime_logger = _configure_logging(
+            log_writer, boot_config.logLevel, boot_config.forwardRunnerLogs
+        )
         control_logger = logging.getLogger("runner_python.control")
         control_logger.handlers = runtime_logger.handlers.copy()
         control_logger.setLevel(runtime_logger.level)

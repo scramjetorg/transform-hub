@@ -17,4 +17,6 @@ export type RunnerConnectInfo = {
     reconnect?: boolean;
     system?: Record<string, string>;
     logLevel?: LogLevel;
+    /** Whether the runner should forward its log channel to the host. */
+    forwardRunnerLogs?: boolean;
 }

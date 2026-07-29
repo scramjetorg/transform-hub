@@ -81,8 +81,8 @@ function createCeroServerConfig(conf: ServerConfig = {}): ServerConfig["server"]
     return createHttpServer();
 }
 
-export function getRouter(): APIRoute {
-    const router = sequentialRouter({});
+export function getRouter(routerConfig: CeroRouterConfig = {}): APIRoute {
+    const router = sequentialRouter(routerConfig);
     const get = createGetterHandler(router);
     const op = createOperationHandler(router);
     const crud = createCrudHandlers(router);

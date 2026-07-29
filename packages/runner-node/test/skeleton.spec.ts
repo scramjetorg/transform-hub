@@ -7,7 +7,7 @@ import { Readable } from "stream";
 
 import { RunnerMessageCode } from "@scramjet/symbols";
 
-import { parseBootConfigPathFromArgv, validateBootConfig } from "../src/boot-config";
+import { parseBootConfigPathFromArgv, shouldForwardRunnerLogs, validateBootConfig } from "../src/boot-config";
 import { createFdStreams } from "../src/fd-streams";
 
 const ENTRY = resolve(__dirname, "../src/bin/runner-node.ts");
@@ -55,6 +55,15 @@ test("validateBootConfig requires sequencePath and instanceId", t => {
         validateBootConfig({ sequencePath: "/x", instanceId: "i-1" }),
         { sequencePath: "/x", instanceId: "i-1" }
     );
+});
+
+test("runner-node log forwarding defaults to enabled and honors the boot contract", t => {
+    t.true(shouldForwardRunnerLogs({}));
+    t.true(shouldForwardRunnerLogs({ forwardRunnerLogs: true }));
+    t.false(shouldForwardRunnerLogs({ forwardRunnerLogs: false }));
+    t.deepEqual(validateBootConfig({ sequencePath: "/x", instanceId: "i-1", forwardRunnerLogs: false }), {
+        sequencePath: "/x", instanceId: "i-1", forwardRunnerLogs: false
+    });
 });
 
 test("validateBootConfig accepts and validates instancesServerPort/Host", t => {

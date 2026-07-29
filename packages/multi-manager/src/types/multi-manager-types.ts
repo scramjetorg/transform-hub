@@ -18,6 +18,10 @@ export interface MultiManagerOptions extends LoadCheckRequirements {
      * Enable/disable colored log output.
      */
     logColors: boolean;
+    /** Consume API-server log records in the MultiManager logger. */
+    log: {
+        apiServers: boolean;
+    };
     /**
      * MultiManager id.
      */
@@ -56,6 +60,7 @@ export type MultiManagerCommandOptions = {
     config?: string,
     logLevel: LogLevel
     colors: boolean
+    logApiServers?: boolean
     id?: string
     dumpHeap: number,
     serverApiBase?: string
