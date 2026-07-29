@@ -27,8 +27,8 @@ function withRunnerHost(verser2: STHConfiguration["verser2"] = baseVerser2): STH
             ca: sthLocalCa,
             host: {
                 bindHost: "127.0.0.1",
-                bindPort: 2444,
-                publicUrl: "https://sth-local.example:2444",
+                bindPort: 2445,
+                publicUrl: "https://sth-local.example:2445",
                 tls: { mtlsRequired: false }
             },
             registration: {
@@ -53,7 +53,7 @@ test("getRunnerTransportEnv emits STH-local verser2 runner transport when trust 
     const parsed = JSON.parse(env.SCRAMJET_RUNNER_TRANSPORT_CONFIG);
 
     t.is(parsed.kind, "verser2");
-    t.is(parsed.hostUrl, "https://sth-local.example:2444");
+    t.is(parsed.hostUrl, "https://sth-local.example:2445");
     t.not(parsed.hostUrl, baseVerser2.hostUrl);
     t.is(parsed.routeDomain, "runner.inst-42.scramjet.internal");
     t.is(parsed.guestId, "runner.inst-42.guest");
@@ -135,8 +135,8 @@ test("buildRunnerTrustBundle includes STH-local CA first and Manager CA second",
                 ca: `\n${sthLocalCa}\n`,
                 host: {
                     bindHost: "127.0.0.1",
-                    bindPort: 2444,
-                    publicUrl: "https://127.0.0.1:2444",
+                    bindPort: 2445,
+                    publicUrl: "https://127.0.0.1:2445",
                     tls: { mtlsRequired: false }
                 },
                 registration: {
@@ -161,8 +161,8 @@ test("buildRunnerTrustBundle never includes private key or passphrase fields", t
                 ca: sthLocalCa,
                 host: {
                     bindHost: "127.0.0.1",
-                    bindPort: 2444,
-                    publicUrl: "https://127.0.0.1:2444",
+                    bindPort: 2445,
+                    publicUrl: "https://127.0.0.1:2445",
                     tls: {
                         mtlsRequired: false,
                         keyFile: "/secret/server-key.pem",

@@ -82,6 +82,9 @@ test("defaultConfig has base STH fields", t => {
     t.is(defaultConfig.runtimeAdapter, "detect");
     t.true(defaultConfig.verser2.enabled);
     t.is(defaultConfig.verser2.hostUrl, "https://127.0.0.1:2443");
+    t.is(defaultConfig.verser2.runnerHost?.host.bindPort, 2445);
+    t.is(defaultConfig.verser2.runnerHost?.host.publicUrl, "https://127.0.0.1:2445");
+    t.is(defaultConfig.verser2.controlIngress?.host.bindPort, 2444);
 });
 
 // ---------------------------------------------------------------------------
@@ -222,6 +225,7 @@ test("managerDefaultConfig has expected structure", t => {
     t.is(managerDefaultConfig.sthController.unhealthyTimeoutMs, 61_000);
     t.true(managerDefaultConfig.verser2.enabled);
     t.is(managerDefaultConfig.verser2.host.bindPort, 2443);
+    t.is(managerDefaultConfig.verser2.controlIngress?.host.bindPort, 2444);
 });
 
 test("ManagerConfigService is a class", t => {
@@ -248,7 +252,7 @@ test("getDefaultManagerConfig clone is independent of original", t => {
 
 test("ManagerConfigService.update deep-merges config", t => {
     const svc = new ManagerConfigService();
-    svc.update({ logLevel: "DEBUG", verser2: { host: { bindPort: 9999 } } });
+    svc.update({ logLevel: "DEBUG", verser2: { host: { bindPort: 9999 } } } as any);
 
     t.is(svc.getConfig().logLevel, "DEBUG");
     t.is(svc.getConfig().verser2.host.bindPort, 9999);

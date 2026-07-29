@@ -1,6 +1,7 @@
 export * from "./config";
 export * from "./constants";
 export * from "./defer";
+export * from "./exponential-backoff";
 export * from "./file";
 export * from "./free-ports-finder";
 export * from "./keygen";

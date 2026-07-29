@@ -1,4 +1,5 @@
 import type { CommandDescriptor, CommandContext } from "@scramjet/config";
+import type { OutboundVerser2IngressLevel as SharedVerser2IngressLevel, OutboundVerser2ProfileConfig as SharedVerser2ProfileConfig, OutboundVerser2ProfileDraft as SharedVerser2ProfileDraft } from "@scramjet/config";
 
 /**
  * CommandDefinition takes a program root CommandDescriptor and mutates it
@@ -31,7 +32,13 @@ export interface ProfileConfigEntity {
         debug: boolean;
         format: displayFormat;
     }
+    verser2?: Verser2ProfileConfig;
+    verser2Draft?: Verser2ProfileDraft;
 }
+
+export type Verser2IngressLevel = SharedVerser2IngressLevel;
+export type Verser2ProfileConfig = SharedVerser2ProfileConfig;
+export type Verser2ProfileDraft = SharedVerser2ProfileDraft;
 
 export interface SessionConfigEntity {
     lastPackagePath: string;

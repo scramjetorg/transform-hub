@@ -3,6 +3,7 @@ export * from "./adapters/http";
 export * from "./bind";
 export * from "./adapters/verser2";
 export * from "./client-transports";
+export * from "./routed-broker";
 export * from "./manifest";
 export * from "./openapi";
 export * from "./router";

@@ -62,6 +62,21 @@ export const managerVerser2ConfigSchema = z.object({
     }).strict(),
     localBroker: z.object({ peerId: z.string(), routeDomain: z.string() }).strict(),
     localGuest: z.object({ peerId: z.string(), routeDomain: z.string() }).strict(),
+    controlIngress: z.object({
+        enabled: z.boolean(),
+        host: z.object({
+            identityDir: z.string().min(1).optional(),
+            bindHost: z.string(),
+            bindPort: z.number().int().nonnegative(),
+            publicUrl: z.string(),
+            tls: z.object({
+                caFile: optionalFileSchema, certFile: optionalFileSchema, keyFile: optionalFileSchema,
+                pfxFile: optionalFileSchema, passphrase: optionalFileSchema,
+                clientAuthCaFile: optionalFileSchema, mtlsRequired: z.literal(true)
+            }).strict()
+        }).strict(),
+        guest: z.object({ peerId: z.string().min(1), routeDomain: z.string().min(1) }).strict()
+    }).strict().optional(),
     timeouts: timeoutsSchema,
     leases: leasesSchema
 }).strict();
@@ -92,6 +107,19 @@ export const sthOutboundVerser2ConfigSchema = z.object({
             allowedClientFingerprints: z.array(z.string())
         }).strict(),
         localBroker: z.object({ peerId: z.string() }).strict()
+    }).strict().optional(),
+    controlIngress: z.object({
+        enabled: z.boolean(),
+        identityDir: z.string().min(1),
+        ca: optionalFileSchema,
+        caFile: optionalFileSchema,
+        host: z.object({
+            bindHost: z.string(), bindPort: z.number().int().nonnegative(), publicUrl: z.string(),
+            tls: z.object({ certFile: optionalFileSchema, keyFile: optionalFileSchema, pfxFile: optionalFileSchema, passphrase: optionalFileSchema, clientAuthCaFile: optionalFileSchema, mtlsRequired: z.literal(true) }).strict()
+        }).strict(),
+        registration: z.object({ token: optionalFileSchema, allowedClientFingerprints: z.array(z.string()) }).strict(),
+        localBroker: z.object({ peerId: z.string() }).strict(),
+        guest: z.object({ peerId: z.string().min(1), routeDomain: z.string().min(1) }).strict()
     }).strict().optional(),
     broker: z.object({ peerId: z.string(), targetDomain: z.string() }).strict(),
     guest: z.object({ peerId: z.string(), routeDomain: z.string() }).strict(),
@@ -141,6 +169,10 @@ export const managerVerser2Options: ConfigOptionDescriptor[] = [
     { name: "verser2HostKeyFile", flag: "verser2-host-key-file", path: managerPath("host.tls.keyFile"), env: "SCRAMJET_VERSER2_HOST_KEY_FILE", type: "string", description: "verser2 Host TLS private key file", secret: true },
     { name: "verser2HostPfxFile", flag: "verser2-host-pfx-file", path: managerPath("host.tls.pfxFile"), env: "SCRAMJET_VERSER2_HOST_PFX_FILE", type: "string", description: "verser2 Host PFX/PKCS12 file", secret: true },
     { name: "verser2HostPassphrase", flag: "verser2-host-passphrase", path: managerPath("host.tls.passphrase"), env: "SCRAMJET_VERSER2_HOST_PASSPHRASE", type: "string", description: "verser2 Host TLS passphrase", secret: true },
+    { name: "verser2ControlIngressCertFile", flag: "verser2-control-ingress-cert-file", path: managerPath("controlIngress.host.tls.certFile"), env: "SCRAMJET_VERSER2_CONTROL_INGRESS_CERT_FILE", type: "string", description: "Control ingress TLS certificate file" },
+    { name: "verser2ControlIngressKeyFile", flag: "verser2-control-ingress-key-file", path: managerPath("controlIngress.host.tls.keyFile"), env: "SCRAMJET_VERSER2_CONTROL_INGRESS_KEY_FILE", type: "string", description: "Control ingress TLS private key file", secret: true },
+    { name: "verser2ControlIngressPfxFile", flag: "verser2-control-ingress-pfx-file", path: managerPath("controlIngress.host.tls.pfxFile"), env: "SCRAMJET_VERSER2_CONTROL_INGRESS_PFX_FILE", type: "string", description: "Control ingress TLS PFX file", secret: true },
+    { name: "verser2ControlIngressPassphrase", flag: "verser2-control-ingress-passphrase", path: managerPath("controlIngress.host.tls.passphrase"), env: "SCRAMJET_VERSER2_CONTROL_INGRESS_PASSPHRASE", type: "string", description: "Control ingress TLS passphrase", secret: true },
     { name: "verser2HostClientAuthCaFile", flag: "verser2-host-client-auth-ca-file", path: managerPath("host.tls.clientAuthCaFile"), env: "SCRAMJET_VERSER2_HOST_CLIENT_AUTH_CA_FILE", type: "string", description: "CA file used to authenticate verser2 clients" },
     { name: "verser2MtlsRequired", flag: "verser2-mtls-required", path: managerPath("host.tls.mtlsRequired"), env: "SCRAMJET_VERSER2_MTLS_REQUIRED", type: "boolean", description: "Require client certificates for verser2 registration" },
     { name: "verser2RegistrationToken", flag: "verser2-registration-token", path: managerPath("registration.token"), env: "SCRAMJET_VERSER2_REGISTRATION_TOKEN", type: "string", description: "Non-mTLS verser2 registration token", secret: true },
@@ -163,8 +195,8 @@ export const sthOutboundVerser2Options: ConfigOptionDescriptor[] = [
     { name: "verser2RunnerHostCa", flag: "verser2-runner-host-ca", path: sthPath("runnerHost.ca"), env: "SCRAMJET_VERSER2_RUNNER_HOST_CA", type: "string", description: "Inline STH-local runner Host CA PEM" },
     { name: "verser2RunnerHostCaFile", flag: "verser2-runner-host-ca-file", path: sthPath("runnerHost.caFile"), env: "SCRAMJET_VERSER2_RUNNER_HOST_CA_FILE", type: "string", description: "STH-local runner Host CA PEM file" },
     { name: "verser2RunnerHostBindHost", flag: "verser2-runner-host-bind-host", path: sthPath("runnerHost.host.bindHost"), env: "SCRAMJET_VERSER2_RUNNER_HOST_BIND_HOST", type: "string", description: "STH-local runner verser2 Host bind address" },
-    { name: "verser2RunnerHostBindPort", flag: "verser2-runner-host-bind-port", path: sthPath("runnerHost.host.bindPort"), env: "SCRAMJET_VERSER2_RUNNER_HOST_BIND_PORT", type: "number", description: "STH-local runner verser2 Host bind port" },
-    { name: "verser2RunnerHostPublicUrl", flag: "verser2-runner-host-public-url", path: sthPath("runnerHost.host.publicUrl"), env: "SCRAMJET_VERSER2_RUNNER_HOST_PUBLIC_URL", type: "string", description: "STH-local runner verser2 Host URL passed to runners" },
+    { name: "verser2RunnerHostBindPort", flag: "verser2-runner-host-bind-port", path: sthPath("runnerHost.host.bindPort"), env: "SCRAMJET_VERSER2_RUNNER_HOST_BIND_PORT", type: "number", description: "STH-local runner verser2 Host bind port (default 2445; explicit 2444 remains supported)" },
+    { name: "verser2RunnerHostPublicUrl", flag: "verser2-runner-host-public-url", path: sthPath("runnerHost.host.publicUrl"), env: "SCRAMJET_VERSER2_RUNNER_HOST_PUBLIC_URL", type: "string", description: "STH-local runner verser2 Host URL passed to runners (default port 2445)" },
     { name: "verser2RunnerHostCertFile", flag: "verser2-runner-host-cert-file", path: sthPath("runnerHost.host.tls.certFile"), env: "SCRAMJET_VERSER2_RUNNER_HOST_CERT_FILE", type: "string", description: "STH-local runner Host TLS certificate file" },
     { name: "verser2RunnerHostKeyFile", flag: "verser2-runner-host-key-file", path: sthPath("runnerHost.host.tls.keyFile"), env: "SCRAMJET_VERSER2_RUNNER_HOST_KEY_FILE", type: "string", description: "STH-local runner Host TLS private key file", secret: true },
     { name: "verser2RunnerHostPfxFile", flag: "verser2-runner-host-pfx-file", path: sthPath("runnerHost.host.tls.pfxFile"), env: "SCRAMJET_VERSER2_RUNNER_HOST_PFX_FILE", type: "string", description: "STH-local runner Host PFX/PKCS12 file", secret: true },
@@ -174,6 +206,10 @@ export const sthOutboundVerser2Options: ConfigOptionDescriptor[] = [
     { name: "verser2RunnerHostRegistrationToken", flag: "verser2-runner-host-registration-token", path: sthPath("runnerHost.registration.token"), env: "SCRAMJET_VERSER2_RUNNER_HOST_REGISTRATION_TOKEN", type: "string", description: "Non-mTLS runner registration token", secret: true },
     { name: "verser2RunnerHostAllowedClientFingerprints", flag: "verser2-runner-host-allowed-client-fingerprints", path: sthPath("runnerHost.registration.allowedClientFingerprints"), env: "SCRAMJET_VERSER2_RUNNER_HOST_ALLOWED_CLIENT_FINGERPRINTS", type: "string[]", description: "Allowed runner client certificate fingerprints" },
     { name: "verser2RunnerHostBrokerPeerId", flag: "verser2-runner-host-broker-peer-id", path: sthPath("runnerHost.localBroker.peerId"), env: "SCRAMJET_VERSER2_RUNNER_HOST_BROKER_PEER_ID", type: "string", description: "Local STH Broker peer ID for runner routes. Use 'auto' to derive from host ID (default)." },
+    { name: "verser2ControlIngressKeyFile", flag: "verser2-control-ingress-key-file", path: sthPath("controlIngress.host.tls.keyFile"), env: "SCRAMJET_VERSER2_CONTROL_INGRESS_KEY_FILE", type: "string", description: "Host control ingress TLS private key file", secret: true },
+    { name: "verser2ControlIngressPfxFile", flag: "verser2-control-ingress-pfx-file", path: sthPath("controlIngress.host.tls.pfxFile"), env: "SCRAMJET_VERSER2_CONTROL_INGRESS_PFX_FILE", type: "string", description: "Host control ingress TLS PFX file", secret: true },
+    { name: "verser2ControlIngressPassphrase", flag: "verser2-control-ingress-passphrase", path: sthPath("controlIngress.host.tls.passphrase"), env: "SCRAMJET_VERSER2_CONTROL_INGRESS_PASSPHRASE", type: "string", description: "Host control ingress TLS passphrase", secret: true },
+    { name: "verser2ControlIngressRegistrationToken", flag: "verser2-control-ingress-registration-token", path: sthPath("controlIngress.registration.token"), env: "SCRAMJET_VERSER2_CONTROL_INGRESS_REGISTRATION_TOKEN", type: "string", description: "Host control ingress registration token", secret: true },
     { name: "verser2Ca", flag: "verser2-ca", path: sthPath("tls.ca"), env: "SCRAMJET_VERSER2_CA", type: "string", description: "Inline CA PEM bundle for the Manager/MultiManager verser2 Host" },
     { name: "verser2CaFile", flag: "verser2-ca-file", path: sthPath("tls.caFile"), env: "SCRAMJET_VERSER2_CA_FILE", envAliases: ["CPM_SSL_CA_PATH"], type: "string", description: "CA file for the Manager/MultiManager verser2 Host" },
     { name: "verser2CertFile", flag: "verser2-cert-file", path: sthPath("tls.certFile"), env: "SCRAMJET_VERSER2_CERT_FILE", type: "string", description: "STH client certificate file" },

@@ -56,6 +56,43 @@ Maps numeric runner exit codes to structured status/message results. Distinguish
 
 Thin factory: `startHost()` creates an `APIExpose` server via `createServer()`, instantiates `Host`, and calls `host.main()`.
 
+### `cpm-connector.ts` — CPM Manager Connectivity & Reconnect Supervisor
+
+`CPMConnector` manages the Host's connection to the Manager/CPM over verser2 broker+guest. The reconnection design was hardened with the following mechanisms:
+
+#### Single Reconnect Supervisor (`reconnectPromise`)
+- A single shared async loop (`reconnectPromise`) replaces the old recursive `reconnect()` model. Close events, communication-stream errors, and failed registration notifications all share this loop instead of starting competing connection attempts.
+- The supervisor loops `while (!this.isAbandoned)`, calling `connectOnce()` after each backoff delay. Success exits the loop; failure continues until abandoned.
+- On exit (success, failure, or cancellation) the supervisor resets `isReconnecting`, clears `reconnectPromise`, and cancels any pending backoff, making the connector restartable for a future Manager restart.
+
+#### Generation Protection (`communicationGeneration`, `registrationAttemptGeneration`)
+- `communicationGeneration` — a monotonically increasing counter incremented each time `handleCommunicationRequest()` accepts a new Manager communication duplex. All stream close/error callbacks capture the generation at subscription time; `handleConnectionClose()` rejects stale calls where `generation !== this.communicationGeneration`, preventing an old dead stream from disconnecting its live replacement.
+- `registrationAttemptGeneration` — incremented in `handleConnectionClose()` before returning. The `connectOnce()` method captures `regAttemptGeneration` before `registerWithManager()`. If the stream was closed while registration was in-flight, the mismatch is detected after registration returns, the stale result is discarded with `throw new Error("Registration invalidated by stream close")`, and the reconnect supervisor retries.
+
+#### Cancellation / Abandonment (`isAbandoned`, `abandonReconnect()`)
+- `isAbandoned` is the terminal flag. Once set (via `disconnect()`, `KEY_REVOKED`/`LIMIT_EXCEEDED`/`ID_DROP` messages, or a 403 close), all entrypoints (`connect()`, `connectOnce()`, `reconnect()`, `handleConnectionClose()`) are no-ops.
+- `abandonReconnect()` cancels any pending backoff delay and clears `isReconnecting` without setting `isAbandoned`. Used in `disconnect()` (which also sets `isAbandoned`) and drop-message handlers (already setting `isAbandoned`).
+- `disconnect()` sets `isAbandoned`, calls `abandonReconnect()`, ends the communication stream, revokes the verser2 guest route, and closes the verser2 broker/guest.
+
+#### Transport-Neutral Exponential Backoff (`ExponentialBackoff`)
+- Lazily created by `ensureReconnectBackoff()` using `createExponentialBackoff()` from `@scramjet/utility`.
+- `initialDelay` is derived from `config.reconnectionDelay` (default 0).
+- `maxDelay` is either `config.reconnectionMaxDelay` (if set and >= initialDelay) or `initialDelay * maxReconnections` as a legacy compatibility multiplier.
+- `ExponentialBackoff.success()` is called after a successful connection, resetting the wait to `initialDelay`.
+- A custom `BackoffTimer` can be injected via `config.reconnectionTimer` for deterministic testing; defaults to `setTimeout`/`clearTimeout`.
+- Backoff is cancellable per-delay via `BackoffPromise.cancel()` or globally via `ExponentialBackoff.cancel()`.
+
+### `host.ts` — Inventory Replay on Reconnection
+
+The `Host.connectToCPM()` method installs a `communicationReady` listener (gated by `cpmInventoryListenerInstalled` to ensure exactly one listener) that replays the full Host inventory snapshot every time a new communication stream is established:
+
+1. **Sequences**: `connector.sendSequencesInfo(getSequences())` — all local sequences with `SEQUENCE_CREATED` status.
+2. **Instances**: `connector.sendInstancesInfo(getInstances())` — all local instances.
+3. **Topics**: `connector.sendTopicsInfo(getTopics())` — all local topics.
+4. **HTTP Agent**: `s3Client?.setAgent(connector.getHttpAgent())` — updates the S3 client for Manager-backed storage.
+
+This ensures that after every reconnection (triggered by `handleCommunicationRequest` → `communicationReady`), the Manager receives a complete, current view of the Host's state. Stale entities from the previous session are implicitly replaced when the Manager processes the new inventory.
+
 ## Design/Patterns
 
 - **Central `Host` class**: Coordinates immutable config, event bus, logging, telemetry, and async lifecycle.

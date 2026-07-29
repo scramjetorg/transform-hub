@@ -13,6 +13,23 @@ Use a test-conscious incremental workflow for every track. Prefer small, reviewa
 5. **Narrow Validation:** Run the smallest reliable command that proves the changed behavior, then escalate only when the affected area crosses package, runtime, adapter, CLI/API, or BDD boundaries.
 6. **Shared First:** Reuse and adapt existing shared packages before implementing package-local solutions, and move repeated code into shared packages when reuse emerges.
 
+## Effective Policy Precedence and Plan Progression
+
+Resolved Conductor configuration, including any track-level override, takes
+precedence over this document's defaults. When instructions conflict, apply:
+
+1. Effective configuration and track-level overrides.
+2. Exception, safety, destructive-operation, and required-user-decision gates.
+3. Branching and commit policies.
+4. Workflow supervision and automatic progression policies.
+5. Delegation policy.
+6. This repository workflow where it does not conflict with the preceding rules.
+
+Under automatic supervision, routine confirmation, manual-verification, and
+retry procedures in this document do not create a pause unless the effective
+automatic progression policy says that user input is required. Follow the
+automatic process below for the canonical continuation outcome.
+
 ## Task Lifecycle
 
 For each task:
@@ -30,14 +47,14 @@ For each task:
 
 ## Track Branch and Pull Request Policy
 
-- During Conductor track planning, include dedicated branch and PR setup near the start of Phase 1 by default unless the user explicitly asks to omit it.
+- When resolved `branching.mode` is `branched`, include dedicated branch and PR setup near the start of Phase 1 and perform it without routine confirmation. A request to omit branched execution must be resolved as a configuration or policy change before implementation continues.
 - During Conductor track planning, include an explicit push-before-manual-verification checkpoint in every Conductor manual verification task: complete phase work, create the scoped phase commit, push the review branch, then ask for manual verification.
 - Branch from the current branch at planning time unless the user requests a different base.
 - Use the PR as the review and checkpoint surface for the track until completion.
 - PR titles and descriptions should describe the intended TO-BE state of the complete track, not only the initial plan, specification, or documentation artifact.
 - Create PR descriptions as real multiline Markdown. Prefer writing the body to a temporary Markdown file and using `gh pr create --body-file <file>` or `gh pr edit --body-file <file>` instead of passing escaped `\n` strings.
 - Push phase checkpoint commits only when the current branch is the dedicated track branch. Never push Conductor track work directly to `main`.
-- If an existing track lacks a branch or PR and pushing is needed, create or ask for the review surface before pushing.
+- If an existing track lacks a branch or PR and pushing is needed, create the review surface before pushing. Pause only when the base, target, credentials, or push destination cannot be resolved safely without user input.
 
 ## Shared Package Usage and Deduplication
 
@@ -153,6 +170,47 @@ Every final Conductor track summary must list the memory-guarded validation that
 
 Use the supported runners only: `scripts/run-ava.js` for AVA/package tests and `scripts/run-bdd.js`/root BDD npm scripts for Cucumber paths.
 
+### AVA Memory Guard Adoption and Review
+
+AVA guard mode and per-test measurement are separate requirements. Setting
+`SCRAMJET_AVA_MEMORY_GUARD=1`, `SCRAMJET_MEMORY_GUARD=1`, or using the
+`phase-final` profile makes `scripts/run-ava.js` run serially with GC exposed; it
+does **not** measure a file that registers tests directly with AVA. Every test file
+claimed as memory-guarded must use `createAvaMemoryGuard(baseTest)`.
+
+Use `registerAvaMemoryCleanup(t, fn)` inside the test body to release retained
+buffers, chunks, streams, captures, mocks, and large responses before final
+measurement. `t.teardown()` runs after the guard measurement and is not sufficient
+for guard-visible cleanup.
+
+`allowAvaMemoryGrowth(t, { threshold, reason })` keeps measurement enabled but
+**replaces** the default threshold for that test; it is not additional headroom.
+Every allowance needs a non-empty reason and must be listed in validation evidence.
+The phase-final proof path permits no allowances, per-file threshold overrides, or
+memory skips. Environment skips require `SCRAMJET_MEMORY_SKIP_REASON` and must be
+recorded with their reason.
+
+Before claiming AVA guard coverage, run the adoption checker against the exact test
+files and include its JSON report with the validation record:
+
+```bash
+npm run check:ava-memory-guard-adoption -- --json --strict <ava-test-file...>
+```
+
+Under `SCRAMJET_TEST_PROFILE=phase-final`, the checker fails for missing adoption,
+skips, or allowances. It reports runner mode separately from source-level adoption;
+do not call an unadopted test measured merely because the runner guard is enabled.
+The AVA guard measures the AVA worker's heap only. Verify child-process and Docker
+memory/cleanup with the BDD or sequence-test mechanisms and separate process-level
+functional tests.
+
+Review checklist:
+- Confirm every claimed test file adopts `createAvaMemoryGuard`.
+- Check guard-visible cleanup before accepting an allowance.
+- Record the exact command, default threshold, every effective allowance, and skips.
+- Review the current source and validation output; do not repeat superseded findings.
+- Distinguish parent-heap evidence from spawned-process behavior.
+
 
 - Maintain greater than 80% meaningful test coverage for changed behavior.
 - Prefer package-level tests for focused implementation work.
@@ -167,7 +225,7 @@ Use the supported runners only: `scripts/run-ava.js` for AVA/package tests and `
 Choose the narrowest sufficient validation:
 
 - Default memory guard for agent-run Node/test validation: `ulimit -v 1835008` and `NODE_OPTIONS="--max-old-space-size=1024"`. Start tests and Node-based validation under this guard unless the command is run through a repo/package test runner that already owns process setup and memory behavior. Do not wait for an OOM before applying the guard.
-- AVA package tests use `scripts/run-ava.js`, which sets the spawned AVA process to `NODE_OPTIONS="--max-old-space-size=1536 --jitless"` by default, replacing the generic `--max-old-space-size=1024` guard for the AVA child process. This is intentional because AVA workers can fail under the virtual-memory cap with V8 CodeRange reservation OOMs when JIT is enabled.
+- AVA package tests use `scripts/run-ava.js`, which defaults the spawned AVA process to `--max-old-space-size=2048`, JIT with WASM caps (8192 pages, 256 MB committed code/code space), and `TS_NODE_TRANSPILE_ONLY=1`. Use `SCRAMJET_TEST_PROFILE=fast` for 16 AVA workers and an 8 MiB concurrent-mode budget, or `SCRAMJET_TEST_PROFILE=phase-final` for serial package execution and the strict unchanged 524288-byte AVA guard. Fast mode does not run concurrent per-test GC measurements; an enabled guard always serializes AVA. Do not increase timeouts, skip measurement, or add allowances for phase-final evidence.
 - BDD tests use `scripts/run-bdd.js` (supported entrypoint) or `scripts/run-bdd-docker.js` (internal). The supported memory-constrained path is Docker mode (default), which runs Cucumber inside a Docker container with 1536m memory, 2 CPUs, 600 s timeout, 10 s grace period. Direct mode (`--mode=direct`) is diagnostic/local only; under strict host ulimit, BDD step definitions load ssh2/poly1305 WebAssembly which may fail to allocate. Post-run leak detection runs automatically on all exit paths.
 - Runner regression tests: `npm run test:runner` covers AVA and BDD runner helper tests under memory guard.
 - Biome scripts set `RAYON_NUM_THREADS=12` by default. This bounded parallelism has been measured at ~98 MB max RSS for `npm run lint` under the virtual-memory cap on the current 24-core agent host; record any native allocation failure before considering a cap change.
@@ -175,6 +233,8 @@ Choose the narrowest sufficient validation:
 
 - Package build: `npm run build:packages`
 - Serial package tests: `npm run test:packages-no-concurrent`
+- Fast package tests: `npm run test:packages:fast`
+- Phase-final package proof: `npm run test:packages:phase-final`
 - Lint/check: `npm run lint` for the active Biome lint surface, or a narrower Biome command when the active track calls for changed/staged-file validation. Use explicit format commands for formatting validation. Do not run legacy ESLint commands during the Biome migration track.
 - Runtime invariant check: `npm run check:runtime-invariants`
 - BDD node smoke: `npm run test:bdd-ci-node`
@@ -185,6 +245,18 @@ Choose the narrowest sufficient validation:
 
 Validate every tool call result, but distinguish incorrect invocation from a
 real product or code failure.
+
+### Automatic-supervision pause rule
+
+Under automatic supervision, every halt, pause, or request for guidance in
+this section remains subject to the higher-precedence automatic progression and
+exception policies. Do not pause solely to request permission to record a known
+solution; retain the evidence in active track notes and defer that optional
+artifact update if necessary. "Repeated fixes do not converge" is not a fixed
+attempt cap: continue safe, evidence-based diagnosis, remediation, and review
+until a concrete effective stop condition is identified. Record or defer
+unrelated failures that do not invalidate required verification instead of
+pausing.
 
 Before deciding on a recovery path for a recurring or recognizable failure,
 consult `conductor/known-solutions.md`. If an entry matches the observed
@@ -285,10 +357,10 @@ At the end of each phase:
 4. Run the validation command(s) appropriate for the phase scope.
 5. Confirm docs, tests, and code are aligned.
 6. Record any skipped validation and the reason.
-7. Create one scoped phase commit when commits are requested or the active track calls for checkpointing.
+7. Create the scoped phase checkpoint commit required by the resolved commit policy.
 8. Update `plan.md` with the phase checkpoint commit SHA when a phase commit is created.
 9. Push the review branch before asking for manual verification when the track uses a dedicated branch or PR review surface.
-10. Ask the user to manually verify the phase before moving to the next phase when the plan includes a Conductor manual verification task.
+10. Apply the resolved supervision policy at manual-verification points. Under automatic supervision, skip generic or routine manual-verification pauses when equivalent automated evidence is available; record that evidence or non-applicability and continue. If a plan acceptance criterion can only be satisfied by the user, treat it as pending required user input: first complete the required phase commit, push, and PR preparation, then ask via `ask_user` with the PR URL and pause. A task's "manual verification" label alone does not make user input required.
 
 ## Quality Gates
 
@@ -296,3 +368,39 @@ At the end of each phase:
 - No undocumented change to runtime selection, adapter behavior, or CLI/API contracts.
 - No protocol divergence across supported runtimes unless explicitly planned.
 - No hidden operational default changes.
+
+
+## Automatic process
+
+When effective supervision is automatic:
+
+1. Execute plan tasks in order without routine task or phase approvals. Ordinary specialist output, remediable verification failures, and review findings do not by themselves pause progression.
+2. After each task, or a coherent adjacent group that one specialist can safely own, run bounded verification and a configured-review-specialist review. At every phase end, run the full phase review before beginning the next phase.
+3. `PASS` advances immediately.
+4. `CHANGES_REQUIRED` requires immediate remediation followed by a fresh review. Do not impose a fixed fix/re-review attempt cap.
+5. `DEFERRED` may advance only when the reviewer explicitly states that continuation is safe. Record the complete finding and safe-continuation rationale in the effective track `tech-debt.md`.
+6. `BLOCKED` is limited to a concrete user decision or unavailable prerequisite that cannot be remediated without user input. Do not convert unresolved `CHANGES_REQUIRED` or `BLOCKED` findings into debt merely to permit progression.
+7. After `PASS` or a valid safe `DEFERRED` outcome, complete the required phase checkpoint and begin the next phase immediately unless cancellation, pause, superseding instruction, or required user input is pending.
+
+## Review Guidance (Oracle)
+
+Oracle reviews must prioritize a working, repeatable prototype and fast completion over production-grade hardening.
+
+- Confirm that the phase meets its stated acceptance criteria, preserves isolation between named runs, and keeps credentials out of committed files and routine logs.
+- Treat production concerns—distributed locking, adversarial multi-host concurrency, exhaustive crash recovery, high-availability, performance tuning, and generalized hardening—as non-blocking follow-up recommendations unless the track specification explicitly requires them.
+- Do not block a phase for theoretical races or defense-in-depth improvements unless the track spec specifically requires this level of review.
+- Report optional hardening separately from required MVP findings.
+- A finding is blocking only when it prevents a subsequent planned phase or directly contradicts the track specification.
+- When the MVP acceptance criteria and relevant verification pass, approve the phase rather than requesting production-system guarantees.
+
+After each Oracle phase review, record every non-`PASS` canonical finding in the effective track `tech-debt.md` with its verdict and disposition. Mark `CHANGES_REQUIRED` addressed only after a fresh review resolves it; mark `DEFERRED` only when review explicitly permits safe continuation; never reclassify `BLOCKED` as debt to advance.
+
+## Track completion
+
+After the final phase receives `PASS` or a valid safe `DEFERRED` outcome, run
+the configured track-completion verification. If no deferred or non-compliant
+work remains, finalize the track immediately without routine confirmation. If
+such work remains, summarize the complete findings and ask whether to implement
+it now or accept the documented deferrals; pause for that decision. If
+implementation is chosen, remediate and re-review before finalization. If
+acceptance is chosen, record it and then complete the track.

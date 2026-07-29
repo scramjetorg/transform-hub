@@ -141,6 +141,9 @@ export async function ensureGeneratedSthRunnerVerser2HostIdentity(config: STHRun
 }
 
 async function loadConfiguredRunnerHostCa(config: STHRunnerVerser2HostConfig): Promise<STHRunnerVerser2HostConfig> {
+    const tls = config.host.tls;
+    if (tls.keyFile) await assertPrivateFileMode(tls.keyFile);
+    if (tls.pfxFile) await assertPrivateFileMode(tls.pfxFile);
     if (config.ca) {
         return config;
     }

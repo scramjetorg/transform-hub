@@ -1,7 +1,8 @@
 import { ObjLogger } from "@scramjet/obj-logger";
 import { MaybePromise } from "@scramjet/runtime-types";
 import { APIRoute, APIServer, ForwardStrategy, ListenArgs, Middleware, NextCallback, ParsedMessage } from "@scramjet/api-types";
-import { IncomingMessage, ServerResponse, createServer as createHttpServer } from "http";
+import { IncomingMessage, RequestListener, ServerResponse, createServer as createHttpServer } from "http";
+import { registerHttpRoutes, RouterDefinition } from "@scramjet/api-router";
 import { createServer as createHttpsServer } from "https";
 import { DataStream } from "scramjet";
 import { createGetterHandler } from "./handlers/get";
@@ -25,6 +26,10 @@ export { ServerConfiguration } from "./config/ServerConfiguration";
 export type { ServerConfig } from "./types";
 
 export { cero, sequentialRouter };
+
+export type V2HttpDispatcher = {
+    listener: RequestListener;
+};
 
 export const logger = new ObjLogger("ApiServer");
 
@@ -95,6 +100,56 @@ export function getRouter(): APIRoute {
         use,
         forward: (path: string, urls: string[], strategy: ForwardStrategy = roundRobinStrategy) => {
             return use(path, createForwardController(path, urls, strategy));
+        }
+    };
+}
+
+/**
+ * Creates an in-memory HTTP surface for one implemented v2 router. A Verser2
+ * Guest owns transport lifecycle and invokes the returned listener directly.
+ */
+export function createV2HttpDispatcher(runtimeRouter: RouterDefinition): V2HttpDispatcher {
+    const routes = runtimeRouter.collectedRoutes();
+    const resolvers = runtimeRouter.collectedResolvers();
+
+    for (const { route, entry } of routes) {
+        if (entry.fullPath !== "/api/v2" && !entry.fullPath.startsWith("/api/v2/")) {
+            throw new Error(`V2 HTTP dispatcher only accepts /api/v2 routes: ${entry.fullPath}`);
+        }
+        if (!route.handler) {
+            throw new Error(`V2 HTTP dispatcher cannot register handlerless contract-only route: ${entry.id}`);
+        }
+    }
+
+    for (const { entry } of resolvers) {
+        if (entry.fullPath !== "/api/v2" && !entry.fullPath.startsWith("/api/v2/")) {
+            throw new Error(`V2 HTTP dispatcher only accepts /api/v2 resolvers: ${entry.fullPath}`);
+        }
+    }
+
+    const router = getRouter();
+    const rejectV1: Middleware = (_req, res) => {
+        res.writeHead(404);
+        res.end();
+    };
+
+    router.use("/api/v1", rejectV1);
+    router.use("/api/v1/*", rejectV1);
+    registerHttpRoutes(router, runtimeRouter);
+
+    return {
+        listener: (req, res) => {
+            router.lookup(req as ParsedMessage, res, error => {
+                if (error) {
+                    if (!res.headersSent) res.writeHead(500);
+                    if (!res.writableEnded) res.end();
+                    return;
+                }
+                if (!res.headersSent && !res.writableEnded) {
+                    res.writeHead(404);
+                    res.end();
+                }
+            });
         }
     };
 }

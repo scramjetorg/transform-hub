@@ -10,7 +10,7 @@ import { CPMConnectorOptions, LoadCheckStatMessage, NetworkInfo, STHIDMessageDat
 import { StringStream } from "scramjet";
 import { LoadCheck } from "@scramjet/load-check";
 import { createVerserBroker, createVerserNodeGuest, VerserBroker, VerserNodeGuest } from "@signicode/verser2-guest-node";
-import { TypedEmitter } from "@scramjet/utility";
+import { BackoffTimer, createExponentialBackoff, ExponentialBackoff, TypedEmitter } from "@scramjet/utility";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { ReasonPhrases } from "http-status-codes";
 import { DuplexStream } from "@scramjet/api-server";
@@ -125,6 +125,24 @@ export class CPMConnector extends TypedEmitter<Events> {
      */
     isReconnecting: boolean = false;
 
+    /** The one retry loop, shared by all close/error notifications. */
+    private reconnectPromise?: Promise<void>;
+
+    /** Lazily created so reconnect configuration remains optional for older hosts. */
+    private reconnectBackoff?: ExponentialBackoff;
+
+    /** Identifies the currently active Manager communication stream. */
+    private communicationGeneration = 0;
+
+    /**
+     * Monotonically increasing counter invalidating any in-flight registration attempt
+     * when the current communication stream is closed.
+     */
+    private registrationAttemptGeneration = 0;
+
+    /** A single in-flight verser/registration attempt. */
+    private connectionAttempt?: Promise<void>;
+
     /**
      * True if connection to Manager has been established at least once.
      */
@@ -223,6 +241,7 @@ export class CPMConnector extends TypedEmitter<Events> {
     async disconnect() {
         this.logger.info("Disconnecting from Manager");
         this.isAbandoned = true;
+        this.abandonReconnect();
 
         this.handleCommunicationRequestEnd();
 
@@ -265,13 +284,14 @@ export class CPMConnector extends TypedEmitter<Events> {
             };
         }
 
+        const generation = ++this.communicationGeneration;
         this.logger.info(`Hub ${this.config.id} connected to ${this.cpmId}`);
 
         StringStream.from(duplex.input as Readable)
             .on("error", (e: Error) => {
                 if (this.isAbandoned) return;
                 this.logger.error("Communication stream error", e.message);
-                this.reconnect().catch((_e) => {
+                this.handleConnectionClose(1006, generation).catch((_e) => {
                     this.logger.error("Reconnection error", _e);
                 });
             })
@@ -294,6 +314,7 @@ export class CPMConnector extends TypedEmitter<Events> {
                 if (dropMessageCodes.includes(messageCode)) {
                     this.logger.trace("Received pre drop message");
                     this.isAbandoned = true;
+                    this.abandonReconnect();
                 }
 
                 if (messageCode === CPMMessageCode.DO_RECONNECT) {
@@ -310,12 +331,12 @@ export class CPMConnector extends TypedEmitter<Events> {
             })
             .catch((e: any) => {
                 this.logger.warn("communicationChannel error", e.message);
-                void this.handleConnectionClose(1006);
+                void this.handleConnectionClose(1006, generation);
             })
             .run()
             .catch((e: any) => {
                 this.logger.warn("communicationChannel run error", e.message);
-                void this.handleConnectionClose(1006);
+                void this.handleConnectionClose(1006, generation);
             });
 
         this.communicationStream = new StringStream().JSONStringify();
@@ -345,7 +366,7 @@ export class CPMConnector extends TypedEmitter<Events> {
                 settleRequest(() => {
                     this.logger.debug("Platform request close");
 
-                    void this.handleConnectionClose(1000);
+                    void this.handleConnectionClose(1000, generation);
                     resolve({});
                 })
             );
@@ -354,7 +375,7 @@ export class CPMConnector extends TypedEmitter<Events> {
                 settleRequest(() => {
                     this.logger.debug("Platform request closed");
 
-                    void this.handleConnectionClose(1006);
+                    void this.handleConnectionClose(1006, generation);
                     resolve({});
                 })
             );
@@ -363,7 +384,7 @@ export class CPMConnector extends TypedEmitter<Events> {
                 settleRequest(() => {
                     this.logger.error("Platform request error");
 
-                    void this.handleConnectionClose(1006);
+                    void this.handleConnectionClose(1006, generation);
                     reject(new HostError("ERR_PLATFORM_REQUEST_ERROR"));
                 })
             );
@@ -383,29 +404,59 @@ export class CPMConnector extends TypedEmitter<Events> {
      * @returns {Promise<void>} Promise that resolves when connection is established.
      */
     async connect(): Promise<void> {
+        if (this.isAbandoned) return;
+
+        if (this.reconnectPromise) {
+            return this.reconnectPromise;
+        }
+
         try {
-            await this.verser2Broker!.connect();
-            await this.verser2Guest!.connect();
-            await this.registerWithManager();
+            await this.connectOnce();
         } catch (error: any) {
             if (this.isAbandoned) return;
 
             this.logger.error("Can not connect to Manager", this.config.verser2.hostUrl, this.cpmId, error.message);
-
-            await this.reconnect();
-
-            return;
         }
 
-        /**
-         * @TODO: Distinguish existing `connect` request and started communication (Manager handled this host
-         * and made requests to it).
-         * @TODO: Provide detailed communication status.
-         */
+        if (!this.connected) await this.reconnect();
+    }
 
-        this.connected = true;
-        this.connectionAttempts = 0;
-        this.emit("connect");
+    private async connectOnce(): Promise<void> {
+        if (this.connectionAttempt) return this.connectionAttempt;
+
+        this.connectionAttempt = (async () => {
+            await this.verser2Broker!.connect();
+            if (this.isAbandoned) return;
+            await this.verser2Guest!.connect();
+            if (this.isAbandoned) return;
+
+            const regAttemptGeneration = this.registrationAttemptGeneration;
+            await this.registerWithManager();
+            if (this.isAbandoned) return;
+
+            // A close of the current communication stream while registration was in flight
+            // invalidates this attempt — let the reconnect supervisor retry.
+            if (regAttemptGeneration !== this.registrationAttemptGeneration) {
+                this.logger.debug("Registration invalidated by concurrent stream close");
+                throw new Error("Registration invalidated by stream close");
+            }
+
+            /**
+             * @TODO: Distinguish existing `connect` request and started communication (Manager handled this host
+             * and made requests to it).
+             * @TODO: Provide detailed communication status.
+             */
+            this.connected = true;
+            this.connectionAttempts = 0;
+            this.ensureReconnectBackoff().success();
+            this.emit("connect");
+        })();
+
+        try {
+            await this.connectionAttempt;
+        } finally {
+            this.connectionAttempt = undefined;
+        }
     }
 
     private async registerWithManager(): Promise<void> {
@@ -454,7 +505,15 @@ export class CPMConnector extends TypedEmitter<Events> {
      *
      * @param {number} connectionStatusCode - status code
      */
-    async handleConnectionClose(connectionStatusCode: number) {
+    async handleConnectionClose(connectionStatusCode: number, generation?: number) {
+        if (generation !== undefined && generation !== this.communicationGeneration) {
+            this.logger.debug("Ignoring stale CPM communication stream close", connectionStatusCode, generation);
+            return;
+        }
+
+        // Invalidate any in-flight registration — this stream (or its replacement) is gone.
+        this.registrationAttemptGeneration++;
+
         this.handleCommunicationRequestEnd();
 
         this.connection?.removeAllListeners();
@@ -468,48 +527,80 @@ export class CPMConnector extends TypedEmitter<Events> {
 
         if (connectionStatusCode === 403) {
             this.isAbandoned = true;
+            this.abandonReconnect();
+            return;
         }
 
-        await this.reconnect();
+        void this.reconnect();
     }
 
     /**
-     * Reconnects to Manager if maximum number of connection attempts is not reached.
+     * Starts the single reconnect supervisor. Close, error and failed-registration
+     * notifications may all arrive for the same transport failure, so they must share
+     * this loop instead of recursively starting competing connection attempts.
      *
      * @returns {void}
      */
     async reconnect(): Promise<void> {
-        this.connectionAttempts++;
+        if (this.isAbandoned) return;
+        if (this.reconnectPromise) return this.reconnectPromise;
 
-        let shouldReconnect = true;
+        this.isReconnecting = true;
+        this.reconnectPromise = (async () => {
+            try {
+                // Manager availability is not a terminal condition. Keep retrying until
+                // explicitly abandoned; maxReconnections only caps delay for compatibility.
+                while (!this.isAbandoned) {
+                    this.connectionAttempts++;
+                    this.logger.info("Connection lost, retrying", this.connectionAttempts);
+                    await this.ensureReconnectBackoff()();
 
-        if (~this.config.maxReconnections && this.connectionAttempts > this.config.maxReconnections) {
-            shouldReconnect = false;
-            this.logger.warn("Maximum reconnection attempts reached. Giving up.");
-            this.emit("disconnect", 4002, true);
-            return;
-        }
+                    if (this.isAbandoned) break;
 
-        if (this.isReconnecting || this.isAbandoned) {
-            this.emit("disconnect", 4002, false);
-            return;
-        }
+                    try {
+                        await this.connectOnce();
+                        return;
+                    } catch (error: any) {
+                        if (!this.isAbandoned) {
+                            this.logger.error("Can not reconnect to Manager", this.config.verser2.hostUrl, this.cpmId, error.message);
+                        }
+                    }
+                }
+            } finally {
+                // This must be reset for success, failures, and cancellation so a later
+                // Manager restart always gets a new supervisor.
+                this.isReconnecting = false;
+                this.reconnectPromise = undefined;
+                this.reconnectBackoff?.cancel();
+            }
+        })();
 
-        if (shouldReconnect) {
-            this.isReconnecting = true;
+        return this.reconnectPromise;
+    }
 
-            await new Promise<void>((resolve, reject) => {
-                this.logger.info("Connection lost, retrying", this.connectionAttempts);
+    private ensureReconnectBackoff(): ExponentialBackoff {
+        if (this.reconnectBackoff) return this.reconnectBackoff;
 
-                setTimeout(async () => {
-                    await this.connect().then(resolve, reject);
-                }, this.config.reconnectionDelay);
-            });
-        } else {
-            // actual 'connectionStatusCode' is logged before in 'handleConnectionClose'
-            // 4001 as temporary code?
-            this.emit("disconnect", 4001, false);
-        }
+        const initialDelay = Math.max(0, Number(this.config.reconnectionDelay) || 0);
+        // Older configuration exposes maxReconnections but no max-delay setting.
+        // Retain it as a delay-cap multiplier rather than a retry cutoff.
+        const configuredMaxDelay = Number(this.config.reconnectionMaxDelay);
+        const legacyMultiplier = Math.max(1, Number(this.config.maxReconnections) || 1);
+        const maxDelay = Number.isFinite(configuredMaxDelay) && configuredMaxDelay >= initialDelay
+            ? configuredMaxDelay
+            : initialDelay * legacyMultiplier;
+
+        this.reconnectBackoff = createExponentialBackoff({
+            initialDelay,
+            maxDelay,
+            timer: this.config.reconnectionTimer as BackoffTimer | undefined
+        });
+        return this.reconnectBackoff;
+    }
+
+    private abandonReconnect() {
+        this.reconnectBackoff?.cancel();
+        this.isReconnecting = false;
     }
 
     /**

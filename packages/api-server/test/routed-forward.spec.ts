@@ -1,6 +1,19 @@
-import test from "ava";
+import baseTest from "ava";
+const { createAvaMemoryGuard, registerAvaMemoryCleanup } = require("../../../scripts/lib/ava-memory-guard");
+const test: typeof baseTest = createAvaMemoryGuard(baseTest);
 import { Readable, PassThrough } from "stream";
 import { IncomingHttpHeaders, IncomingMessage, ServerResponse } from "http";
+
+test.before(async () => {
+    const { transport, responseBody } = fakeTransport();
+    const { req, res } = fakeReqRes();
+    await forwardRoutedRequest({ transport, domain: "warmup", req, res, path: "/warmup" });
+    responseBody.once("error", () => undefined);
+    responseBody.emit("error", new Error("warmup"));
+    responseBody.destroy();
+    req.destroy();
+    res.destroy();
+});
 
 import {
     forwardRoutedRequest,
@@ -626,6 +639,7 @@ test("forwardRoutedRequest destroys response on upstream response-body error", a
     const { req, res } = fakeReqRes();
     let destroyedWith: Error | undefined;
     const originalDestroy = res.destroy.bind(res);
+    registerAvaMemoryCleanup(t, () => { responseBody.destroy(); req.destroy(); res.destroy(); });
 
     res.destroy = ((error?: Error) => {
         destroyedWith = error;

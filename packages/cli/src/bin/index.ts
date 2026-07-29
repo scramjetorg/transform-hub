@@ -1,15 +1,14 @@
 #!/usr/bin/env ts-node
 
-import { cmd, resolveCommandPath, parseCommandContext, executeCommand, generateHelp, isHelpRequested, type CommandDescriptor } from "@scramjet/config";
+import { type CommandDescriptor, cmd, executeCommand, generateHelp, isHelpRequested, parseCommandContext, resolveCommandPath } from "@scramjet/config";
 import chalk from "chalk";
 import * as dns from "dns";
-
-import { errorHandler } from "../lib/errorHandler";
-import { commandDescriptors } from "../lib/commands/index";
+import findPackage from "find-package-json";
+import { getCommandDescriptors } from "../lib/commands/index";
 import { initConfig, profileManager } from "../lib/config";
 import { parseConfigSelection } from "../lib/config/args";
+import { errorHandler } from "../lib/errorHandler";
 import { initPaths } from "../lib/paths";
-import findPackage from "find-package-json";
 
 const version = findPackage(__dirname).next().value?.version || "unknown";
 
@@ -45,6 +44,7 @@ function normalizeCommandArgs(args: string[]): string[] {
 
     initPaths();
     initConfig();
+    const commandDescriptors = await getCommandDescriptors();
 
     // Build root command descriptor
     const rootDescriptor: CommandDescriptor = cmd("si", (b) => {

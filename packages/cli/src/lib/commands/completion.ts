@@ -10,6 +10,7 @@ import { Completion } from "../../handlers/completion";
 export const completionCommand: CommandDescriptor = cmd("completion", (b) => {
     b
         .desc("Completion operations")
+        .action(Completion.script)
         .children(
             cmd("install", (c) => {
                 c

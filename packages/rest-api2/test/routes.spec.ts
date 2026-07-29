@@ -6,6 +6,7 @@ import { RestAPI2RouteSets, RestAPI2RouteTree, RestAPI2Routes, getOpaqueRouteKey
 test("typed route sets build the existing handlerless router factories", t => {
     const contract = RestAPI2Routes.hub.hubRouter().collect();
     const routeSetRouter = bindRoutes(RestAPI2RouteSets.hub.hubRoutes(), {
+        ingressIdentity: routeBinding.contractOnly(),
         load: routeBinding.contractOnly(),
         version: routeBinding.contractOnly(),
         config: routeBinding.contractOnly(),
@@ -32,6 +33,14 @@ test("RestAPI2RouteTree exposes final public Root Space Hub Instance concepts", 
     t.is(RestAPI2RouteTree.root.children.space.resolver, "space");
     t.is(RestAPI2RouteTree.space.children.hub.resolver, "hub");
     t.is(RestAPI2RouteTree.hub.children.instance.resolver, "instance");
+});
+
+test("ingress identity is a handlerless contract at every ingress router level", t => {
+    for (const router of [RestAPI2Routes.root.router("/api/v2"), RestAPI2Routes.space.router("/api/v2"), RestAPI2Routes.hub.hubRouter()]) {
+        const identity = router.collect().routes.find(route => route.method === "get" && route.fullPath.endsWith("/ingress/identity"));
+        t.truthy(identity);
+        t.false(router.definitions().some(route => route.path === "/ingress/identity" && route.handler));
+    }
 });
 
 test("typed resolver route sets preserve resolver targets and nested virtual paths", t => {

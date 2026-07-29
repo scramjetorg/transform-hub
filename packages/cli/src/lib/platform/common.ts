@@ -5,6 +5,7 @@ import { ClientUtils, ClientUtilsCustomAgent } from "@scramjet/client-utils";
 import { configEnv, isProductionEnv } from "../../types";
 import http from "http";
 import https from "https";
+import { CapabilityUnavailableError } from "../capabilities";
 
 /**
  * Returns host client for host pointed by command options.
@@ -12,7 +13,9 @@ import https from "https";
  * @returns {MiddlewareClient} Host client.
  */
 export const getMiddlewareClient = (): MiddlewareClient => {
-    const { middlewareApiUrl, log:{ debug } } = profileManager.getProfileConfig().get();
+    const configuration = profileManager.getProfileConfig().get();
+    if (configuration.verser2) throw new CapabilityUnavailableError("Middleware-owned command");
+    const { middlewareApiUrl, log:{ debug } } = configuration;
 
     if (!middlewareApiUrl) {
         throw new Error("Middleware API URL is not specified");
@@ -102,7 +105,8 @@ const platformRequirementsValid = (
 
 export const initPlatform = async () => {
     if (!isProductionEnv(profileConfig.env)) return;
-    const { token, env, middlewareApiUrl } = profileConfig.get();
+    const { token, env, middlewareApiUrl, verser2 } = profileConfig.get();
+    if (verser2) return;
 
     /**
      * Set the default values for platform only when all required settings

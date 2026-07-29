@@ -6,12 +6,19 @@ export type ApiClientRequest = {
     query?: unknown;
     headers?: Record<string, string>;
     body?: unknown;
+    timeoutMs?: number;
+    signal?: AbortSignal;
 };
 
 export type ApiClientResponse<T = unknown> = {
     status: number;
+    /** Native broker status text and duplicate header ordering when available. */
+    statusText?: string;
     headers: Record<string, string>;
+    headerPairs?: readonly [string, string][];
     body: T;
+    /** Idempotent awaited response-resource cleanup when supplied by the transport. */
+    cleanup?: () => Promise<void>;
 };
 
 export type ApiClientTransport = {

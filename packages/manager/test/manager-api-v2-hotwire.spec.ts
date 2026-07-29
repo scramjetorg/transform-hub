@@ -354,6 +354,37 @@ test("ManagerAPIHandler preserves Hub control query and request body through the
     });
 });
 
+test("root to Space to Hub v2 forwarding preserves the original repeated query string", async t => {
+    const recorder = new RouteRecorder();
+    const manager = createManagerStub(recorder) as any;
+    let finalHubPath = "";
+
+    manager.forwardRequestToSTH = async (_sth: any, _req: any, res: any, targetPath: string) => {
+        finalHubPath = targetPath;
+        res.end();
+    };
+    const hubResolver = new ManagerAPIV2Handler(manager).createV2Router().resolvers()[0];
+    const managerRouter = {
+        lookup: async (req: any, res: any) => {
+            const target = await (hubResolver.handler as Function)({
+                params: { hubId: "sth-1" },
+                path: req.url,
+                remainingPath: "/instances/inst-1"
+            });
+            await target.local.lookup(req, res);
+        }
+    };
+    const rootRequest = { url: "/api/v2/spaces/space-1/hubs/sth-1/instances/inst-1?tag=one&tag=two&empty=" };
+    const originalUrl = rootRequest.url;
+
+    rootRequest.url = `/api/v2/hubs/sth-1/instances/inst-1${rootRequest.url.slice(rootRequest.url.indexOf("?"))}`;
+    await managerRouter.lookup(rootRequest, { end: () => undefined });
+    rootRequest.url = originalUrl;
+
+    t.is(finalHubPath, "/api/v2/instances/inst-1?tag=one&tag=two&empty=");
+    t.is(rootRequest.url, originalUrl);
+});
+
 test("ManagerAPIHandler all_sequences does not mis-identify stored sequences as hub sequences", async t => {
     const recorder = new RouteRecorder();
     const manager = createManagerStub(recorder);

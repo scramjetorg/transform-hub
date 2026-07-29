@@ -9,13 +9,18 @@
  * tests.  All package `test` / `test:ava` / `npm test` scripts route through
  * this runner, which enforces consistent resource‑control defaults:
  *
- *   – Heap limit:    --max-old-space-size=1536 (configurable via
+ *   – Heap limit:    --max-old-space-size=2048 (configurable via
  *                    SCRAMJET_AVA_MAX_OLD_SPACE_SIZE)
- *   – JIT profile:   --jitless by default (avoids V8 CodeRange OOM under
- *                    <2G memory; opt out via SCRAMJET_AVA_JITLESS=0 which
- *                    adds WASM limits for tests that need WebAssembly)
- *   – WASM limits:   applied automatically when JIT is enabled
+ *   – JIT profile:   enabled by default (SCRAMJET_AVA_JITLESS=0), with Node's
+ *                    permissive WASM defaults; opt in to --jitless via
+ *                    SCRAMJET_AVA_JITLESS=1. WASM V8 CLI flags are excluded
+ *                    because AVA Workers reject inherited execArgv flags.
+ *   – TypeScript:    TS_NODE_TRANSPILE_ONLY=1 by default; set it to 0 to
+ *                    enable ts-node typechecking for a test invocation
  *   – Fetch:         --no-experimental-fetch on SCRAMJET_AVA_FETCH=0
+ *   – Profiles:      SCRAMJET_TEST_PROFILE=fast runs 16 workers with an
+ *                    8 MiB concurrent-mode budget; phase-final enables the
+ *                    strict 524288-byte guard and serial execution
  *   – Workers:       default 2, override via SCRAMJET_AVA_WORKERS env var
  *   – Timeout:       runner‑level timeout via SCRAMJET_AVA_TIMEOUT env var
  *                    (default 600000 ms = 10 min).  AVA's per‑test timeout

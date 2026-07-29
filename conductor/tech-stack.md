@@ -78,6 +78,7 @@ Scramjet Transform Hub is a TypeScript/Node.js monorepo with multiple packages f
 - **Config validation**: Zod is used by `@scramjet/config` as the canonical validation and type inference layer for migrated config flows.
 - **CLI parsing**: `cac` is used internally behind `@scramjet/config`; parser types must not leak into package public APIs.
 - **Config file loading**: `@scramjet/config` supports JSON, YAML, and JSONC for migrated consumers.
+- **Verser2 CLI transport**: `@scramjet/cli` uses `@signicode/verser2-guest-node` with file-backed mTLS profiles and shares API-router routed transport plus RestAPI2 contracts for native v2 and raw API calls; HTTP/v1 remains the separate compatibility path.
 
 ## Operational Dependencies
 
@@ -85,6 +86,7 @@ Scramjet Transform Hub is a TypeScript/Node.js monorepo with multiple packages f
 - Docker for Docker adapter behavior, runner images, and many BDD flows.
 - Kubernetes tooling/configuration for Kubernetes adapter execution.
 - Python tooling for Python runtime wrapper development and tests.
+- File-backed CA and client certificate/key or PKCS#12 material for mTLS CLI control-plane connections.
 
 ## Stack Guidance
 

@@ -7,6 +7,7 @@ const { DataStream } = require("scramjet");
 const { getDeepDeps } = require("./lib/get-deep-deps");
 const { cwd, env } = require("process");
 const { getDepTypes } = require("./lib/opts");
+const { TEST_PROFILES, testProfile } = require("./lib/ava-options");
 
 const runScript = require("@npmcli/run-script");
 const { relative, resolve, join } = require("path");
@@ -38,8 +39,10 @@ const opts = minimist(process.argv.slice(2), {
         "flat-packages": env.FLAT_PACKAGES,
         "make-public": env.MAKE_PUBLIC
     },
-    boolean: ["list", "lax", "verbose", "help", "exec"]
+    boolean: ["list", "lax", "verbose", "help", "exec", "fail-fast"]
 });
+
+const failFast = opts["fail-fast"] || env.SCRAMJET_RUN_SCRIPT_FAIL_FAST === "1";
 
 if (opts.help || (!opts._.length && !opts.list)) {
     const pName = relative(cwd(), process.argv[1]);
@@ -48,7 +51,8 @@ if (opts.help || (!opts._.length && !opts.list)) {
     console.error("Runs scripts in workspaces");
     console.error(`Usage: ${pName} [options] <script> [...args]`);
     console.error(`       ${spaces} -v,--verbose - verbose output`);
-    console.error(`       ${spaces} -L,--lax - succeeds and continues even if any of script fails`);
+    console.error(`       ${spaces} -L,--lax - succeeds after running all scripts, even if any fail`);
+	console.error(`       ${spaces} --fail-fast - stop scheduling scripts after the first failure (env: SCRAMJET_RUN_SCRIPT_FAIL_FAST=1)`);
     console.error(`       ${spaces} -s,--scope <path|name> - run in specific package only`);
     console.error(`       ${spaces} -w,--workspace <name> - workspace filter - default all workspaces`);
     console.error(`       ${spaces} -d,-dependencies <package> - builds dependencies of a package`);
@@ -61,7 +65,7 @@ if (opts.help || (!opts._.length && !opts.list)) {
 }
 
 const BUILD_NAME = "run-script";
-const DEFAULT_MAX_PARALLEL = 16;
+const DEFAULT_MAX_PARALLEL = testProfile() === TEST_PROFILES.PHASE_FINAL ? 1 : 16;
 
 console.time(BUILD_NAME);
 
@@ -128,9 +132,9 @@ function execCommand(path, command, verbose) {
     }
 
     await DataStream.from(packages)
-        .setOptions({ maxParallel: +opts.threads || DEFAULT_MAX_PARALLEL })
+        .setOptions({ maxParallel: testProfile() === TEST_PROFILES.PHASE_FINAL ? 1 : +opts.threads || DEFAULT_MAX_PARALLEL })
         .flatMap(async (path) => {
-            if (!opts.lax && error) return Promise.reject(new Error("Fail fast..."));
+            if (failFast && error) return Promise.reject(new Error("Fail fast..."));
 
             const runconfig = {
                 stdioString: true,

@@ -144,6 +144,9 @@ export async function resolveManagerVerser2HostConfig(
     label = "Manager"
 ): Promise<ManagerVerser2Config> {
     if (hasConfiguredHostIdentity(config)) {
+        for (const file of [config.host.tls.keyFile, config.host.tls.pfxFile].filter(Boolean) as string[]) {
+            await assertPrivateFileMode(file, label);
+        }
         return config;
     }
 

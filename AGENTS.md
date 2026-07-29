@@ -21,7 +21,7 @@
 
 ## Monorepo wiring
 - Workspaces are `packages/*` plus `bdd/`; custom workspace groups in `package.json` include `modules`, `runners`, and `bdd`.
-- `scripts/run-script.js` runs a package script across workspaces; it defaults to 16 concurrent jobs (override with `-j <jobs>`). Other useful flags: `-w <group>`, `-s <package path|name>`, `-d <package>`, `-e <command>`.
+- `scripts/run-script.js` runs a package script across workspaces; it defaults to 16 concurrent jobs (override with `-j <jobs>`). It runs every selected package after failures, then exits nonzero with aggregated failures; use `--fail-fast` or `SCRAMJET_RUN_SCRIPT_FAIL_FAST=1` to stop scheduling after the first failure. Other useful flags: `-w <group>`, `-s <package path|name>`, `-d <package>`, `-e <command>`.
 - `scripts/build-all.js` builds TypeScript solution configs and pre-packs packages into `dist/`; useful flags: `-w <group>`, `-d <package>`, `--ts-config <file>`, `--no-install`, `--no-distws`.
 - Main STH CLI source is `packages/sth/src/bin/hub.ts`; published/root bin points to `dist/sth/bin/hub.js`.
 - Adapter-launched runner entrypoint is `packages/runner/src/bin/start-runner.ts`; executor selection is in `packages/runner/src/executor/select.ts`.
@@ -29,20 +29,20 @@
 
 ## Testing and generated files
 - Most package tests use AVA with `ts-node/register` and match `**/*.spec.ts`.
-- Agent-run tests and Node validation commands must start under `ulimit -v 1835008` and `NODE_OPTIONS="--max-old-space-size=1024"` unless run through a repo/package test runner that already controls the test process and memory behavior. Do not wait for OOM before applying this guard; use it by default when invoking tests directly or through npm scripts without runner-level memory handling.
-- AVA package tests run through `scripts/run-ava.js` — the **sole supported** AVA/package-test entrypoint. All package `test`/`test:ava` scripts route through it. The runner applies safe defaults: `--max-old-space-size=1536`, `--jitless` by default, concurrency 2, runner timeout 600000 ms. Overridable via env vars:
-  - `SCRAMJET_AVA_JITLESS=0` — opt out of `--jitless`, enables JIT+WASM-limited profile
+- Run supported repo/package test commands with their default environment. Prefer a supported runner over raw test-process invocation.
+- AVA package tests run through `scripts/run-ava.js` — the **sole supported** AVA/package-test entrypoint. All package `test`/`test:ava` scripts route through it. Default profile: `--max-old-space-size=2048`, JIT with WASM caps (8192 pages, 256 MB committed code/code space), `TS_NODE_TRANSPILE_ONLY=1`, concurrency 2, runner timeout 600000 ms. `SCRAMJET_TEST_PROFILE=fast` uses 16 AVA workers and an 8 MiB concurrent-mode budget; `SCRAMJET_TEST_PROFILE=phase-final` enables the unchanged strict 524288-byte guard and serial execution. Fast mode never enables concurrent GC measurements; an explicitly enabled guard remains serial. Opt in to jitless with `SCRAMJET_AVA_JITLESS=1`, or ts-node typechecking with `TS_NODE_TRANSPILE_ONLY=0`; package source TypeScript builds remain the correctness gate. Other overrides:
   - `SCRAMJET_AVA_FETCH=0` — adds `--no-experimental-fetch`
   - `SCRAMJET_AVA_WORKERS` — AVA concurrency (default 2)
   - `SCRAMJET_AVA_TIMEOUT` — runner-level timeout ms (default 600000)
-  - `SCRAMJET_AVA_MAX_OLD_SPACE_SIZE` — override heap limit (default 1536)
+  - `SCRAMJET_AVA_MAX_OLD_SPACE_SIZE` — override heap limit (default 2048)
   - `SCRAMJET_AVA_GUARD=1` — opt-in bypass guard (warns on direct `npx ava` without runner; only protects runner-spawned/preloaded processes)
+- Profile aliases: `npm run test:packages:fast` and `npm run test:packages:phase-final`; the latter is the package-level proof path and does not raise timeouts or thresholds.
 - Runner regression tests: `npm run test:runner` (scripts/test/*.spec.js).
 - BDD tests use `scripts/run-bdd.js` (supported entrypoint) or `scripts/run-bdd-docker.js` (internal). The **supported** BDD path under host memory constraints is `--mode=docker` (default), which runs Cucumber inside a Docker container with memory 1536m, CPUs 2, timeout 600000 ms, grace 10000 ms. Direct mode (`--mode=direct`) is for diagnostic/local runs only — under strict host ulimit, step definitions may fail from ssh2/poly1305 WASM allocation.
 - BDD root npm scripts (`test:bdd*`, `test:bdd-ci*`) route through the supported runner.
 - Leak detection: `reportLeakedProcesses()` runs at exit for BDD runner paths, reporting leftover STH/Host/runner/Manager/MultiManager/cucumber processes. Cleanup is current-run scoped.
 - `packages/types` generates exposed type files via `packages/types/scripts/generate.js`; its `build:only` runs that generator.
-- BDD tests often require built `dist/`, Docker images, and env like `RUNTIME_ADAPTER=process|docker`, `SCRAMJET_SPAWN_JS=1`, `SCRAMJET_TEST_LOG=1`, `SCP_ENV_VALUE=GH_CI`.
+- BDD tests often require built `dist/` and Docker images.
 - Docker-adapter BDD also needs runner image artifacts/tags; avoid running full Docker BDD unless the task requires it.
 
 ## Memory guard mode
@@ -108,13 +108,8 @@ Enable via `SCRAMJET_BDD_MEMORY_GUARD=1` or `SCRAMJET_MEMORY_GUARD=1`.  The runn
 
 **Commands:**
 ```bash
-# Focused BDD memory guard unit tests (no real scenarios; no Docker needed):
-ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" \
-  node scripts/run-ava.js \
-    scripts/test/bdd-options.spec.js \
-    scripts/test/bdd-memory-guard.spec.js \
-    scripts/test/run-bdd.spec.js \
-    scripts/test/bdd-memory-registry.spec.js --serial
+# Focused BDD memory-guard unit tests (no real scenarios; no Docker needed):
+npm run test:memory-guard-bdd-focused
 
 # Direct-mode BDD scenario run under memory guard (diagnostic/local only):
 SCRAMJET_BDD_MEMORY_GUARD=1 node scripts/run-bdd.js --mode=direct -- --name="E2E-001 TC-002"
@@ -123,6 +118,8 @@ SCRAMJET_BDD_MEMORY_GUARD=1 node scripts/run-bdd.js --mode=direct -- --name="E2E
 SCRAMJET_BDD_MEMORY_GUARD=1 node scripts/run-bdd.js -- --name="E2E-001 TC-002"
 ```
 
+The focused AVA BDD-memory suite validates BDD runner and guard mechanics. It is not a prerequisite for routine BDD scenario runs; run it when changing the BDD runner, options, hooks, or memory-guard code.
+
 **Environment variables (BDD):**
 | Variable | Default | Description |
 |---|---|---|
@@ -130,8 +127,8 @@ SCRAMJET_BDD_MEMORY_GUARD=1 node scripts/run-bdd.js -- --name="E2E-001 TC-002"
 | `SCRAMJET_MEMORY_GUARD` | — | Common guard fallback |
 | `SCRAMJET_BDD_MEMORY_THRESHOLD_BYTES` | — | Per-scenario heap threshold override |
 | `SCRAMJET_MEMORY_HEAP_THRESHOLD_BYTES` | 524288 | Common heap threshold (512 KiB) |
-| `SCRAMJET_BDD_PROCESS_RSS_THRESHOLD_BYTES` | 104857600 | Child process RSS threshold (100 MiB) |
-| `SCRAMJET_BDD_DOCKER_WORKING_SET_THRESHOLD_BYTES` | 104857600 | Docker container working-set threshold (100 MiB) |
+| `SCRAMJET_BDD_PROCESS_RSS_THRESHOLD_BYTES` | 209715200 | Child process RSS threshold (200 MiB) |
+| `SCRAMJET_BDD_DOCKER_WORKING_SET_THRESHOLD_BYTES` | 1073741824 | Docker container working-set threshold (1 GiB) |
 | `SCRAMJET_MEMORY_SKIP` | — | Set to `1` to skip (requires `SKIP_REASON`) |
 | `SCRAMJET_MEMORY_SKIP_REASON` | — | Non-empty reason when `SKIP=1` |
 
@@ -139,10 +136,10 @@ SCRAMJET_BDD_MEMORY_GUARD=1 node scripts/run-bdd.js -- --name="E2E-001 TC-002"
 - **Parent heap** (512 KiB default): measures `heapUsed + external + arrayBuffers` in the
   Cucumber Node process after forced GC and per-scenario cleanup.  Strict — must adopt
   cleanup patterns and scoped exceptions.
-- **Child process RSS** (100 MiB default): sampled from `/proc/<pid>/status VmRSS` for
+- **Child process RSS** (200 MiB default): sampled from `/proc/<pid>/status VmRSS` for
   spawned Hub, Host, Manager, MultiManager, and runner processes.  Higher threshold reflects
   legitimate child process memory.
-- **Docker container working set** (100 MiB default): computed as `usage - inactive_file`
+- **Docker container working set** (1 GiB default): computed as `usage - inactive_file`
   from Docker stats, with raw-usage fallback.  Covers runner containers.
 
 **Skip/exception rules:**

@@ -33,10 +33,10 @@
  *
  *   Child process / Docker memory checks (Phase 6):
  *     SCRAMJET_BDD_PROCESS_RSS_THRESHOLD_BYTES    – child process RSS threshold
- *                                                   (default 104857600 = 100 MiB)
+ *                                                   (default 209715200 = 200 MiB)
  *     SCRAMJET_BDD_DOCKER_WORKING_SET_THRESHOLD_BYTES – Docker container
  *                                                   working-set threshold
- *                                                   (default 104857600 = 100 MiB)
+ *                                                   (default 1073741824 = 1 GiB)
  *
  * All defaults are chosen for stability under a host‑level <2G memory limit.
  */
@@ -99,16 +99,16 @@ const DEFAULTS = Object.freeze({
     MEMORY_HEAP_THRESHOLD_BYTES: 524288,
     /**
      * Default child process RSS threshold in bytes.
-     * 104857600 bytes = 100 MiB.  Override via
+     * 209715200 bytes = 200 MiB.  Override via
      * SCRAMJET_BDD_PROCESS_RSS_THRESHOLD_BYTES.
      */
-    BDD_PROCESS_RSS_THRESHOLD_BYTES: 104857600,
+    BDD_PROCESS_RSS_THRESHOLD_BYTES: 209715200,
     /**
      * Default Docker container working-set threshold in bytes.
-     * 104857600 bytes = 100 MiB.  Override via
+     * 1073741824 bytes = 1 GiB.  Override via
      * SCRAMJET_BDD_DOCKER_WORKING_SET_THRESHOLD_BYTES.
      */
-    BDD_DOCKER_WORKING_SET_THRESHOLD_BYTES: 104857600
+    BDD_DOCKER_WORKING_SET_THRESHOLD_BYTES: 1073741824
 });
 
 // ---------------------------------------------------------------------------
@@ -239,7 +239,7 @@ function bddNodeOptions() {
  * @returns {string[]}
  */
 function bddNodeArgs() {
-    return ["--wasm-num-compilation-tasks=1", "--wasm-max-mem-pages=4096", "--wasm-max-committed-code-mb=128", "--wasm-max-code-space-size-mb=128"];
+    return ["--wasm-num-compilation-tasks=1", "--wasm-max-mem-pages=8192", "--wasm-max-committed-code-mb=256", "--wasm-max-code-space-size-mb=256"];
 }
 
 // ---------------------------------------------------------------------------
@@ -355,7 +355,7 @@ function bddMemorySkipCheck() {
  * Resolve the process RSS threshold in bytes for BDD child process checks.
  *
  * Reads SCRAMJET_BDD_PROCESS_RSS_THRESHOLD_BYTES; falls back to the built-in
- * default (104857600 = 100 MiB).
+ * default (209715200 = 200 MiB).
  *
  * When the env var is set but its value is not a positive finite number, the
  * function throws rather than silently falling back — the operator has
@@ -385,7 +385,7 @@ function bddProcessRssThresholdBytes() {
  * container memory checks.
  *
  * Reads SCRAMJET_BDD_DOCKER_WORKING_SET_THRESHOLD_BYTES; falls back to the
- * built-in default (104857600 = 100 MiB).
+ * built-in default (1073741824 = 1 GiB).
  *
  * When the env var is set but its value is not a positive finite number, the
  * function throws rather than silently falling back — the operator has

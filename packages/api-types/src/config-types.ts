@@ -95,6 +95,10 @@ export type Verser2ClientTlsConfig = Verser2TlsFilesConfig & {
     caFile?: string;
 };
 
+/**
+ * STH-local runner Host configuration. Defaults use port 2445; explicitly
+ * configured 2444 endpoints remain supported for existing deployments.
+ */
 export type STHRunnerVerser2HostConfig = {
     enabled: boolean;
     identityDir: string;
@@ -148,6 +152,21 @@ export type ManagerVerser2Config = {
         peerId: string;
         routeDomain: string;
     };
+    /** A separate, mTLS-only Verser2 surface for control-plane v2 HTTP (default port 2444). */
+    controlIngress?: {
+        enabled: boolean;
+        host: {
+            identityDir?: string;
+            bindHost: string;
+            bindPort: number;
+            publicUrl: string;
+            tls: Verser2HostTlsConfig;
+        };
+        guest: {
+            peerId: string;
+            routeDomain: string;
+        };
+    };
     timeouts: Verser2TimeoutConfig;
     leases: Verser2LeaseConfig;
 };
@@ -156,6 +175,9 @@ export type STHOutboundVerser2Config = {
     enabled: boolean;
     hostUrl: string;
     runnerHost?: STHRunnerVerser2HostConfig;
+    controlIngress?: STHRunnerVerser2HostConfig & {
+        guest: { peerId: string; routeDomain: string };
+    };
     broker: {
         peerId: string;
         targetDomain: string;

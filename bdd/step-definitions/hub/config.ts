@@ -196,7 +196,7 @@ async function startHubWithParams(world: CustomWorld, params: string[], noDefaul
     const savedRunnerHostEnabled = process.env[runnerHostEnabledEnv];
     const savedRunnerHostPublicUrl = process.env[runnerHostPublicUrlEnv];
 
-    // The suite's BeforeAll host owns the default runner verser2 port (2444).
+    // The suite's BeforeAll host owns the default runner verser2 port (2445).
     // Scenario hubs must not inherit that fixed port, otherwise the second
     // scenario-spawned Hub exits before "Host running!" with EADDRINUSE.
     if (!params.some(param => param.startsWith("--verser2-runner-host-bind-port"))) {

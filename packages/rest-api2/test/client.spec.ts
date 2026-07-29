@@ -65,6 +65,16 @@ test("generic contract shapes are independent v2 outputs", t => {
     t.is(noContent.status, 202);
 });
 
+test("fluent ingress identity clients materialize the bound root, space, and hub paths", async t => {
+    const seen: string[] = [];
+    const transport: ApiClientTransport = { async request<T>(request: ApiClientRequest) { seen.push(request.route.id); return { status: 200, headers: {}, body: {} as T }; } };
+    const client = createRootClient({ manifest: RestAPI2Routes.root.router("/api/v2").collect({ expandResolvers: true }), transport, basePath: "/api/v2" });
+    await client.ingressIdentity.get();
+    await client.space("space-a").ingressIdentity.get();
+    await client.space("space-a").hub("hub-a").ingressIdentity.get();
+    t.deepEqual(seen, ["GET /api/v2/ingress/identity", "GET /api/v2/spaces/:spaceId/ingress/identity", "GET /api/v2/spaces/:spaceId/hubs/:hubId/ingress/identity"]);
+});
+
 test("route ownership separates public paths from implementer paths", t => {
     const hubLoad: RestAPI2.RouteOwnership = {
         owner: "hub",

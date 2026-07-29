@@ -40,7 +40,30 @@ const bddTempPaths: Record<string, string> = {
 };
 
 const resolveBddTempPaths = (args: string): string[] =>
-    args.split(" ").map((arg) => bddTempPaths[arg] || arg);
+    args.split(" ").map((arg) => {
+        // Resolve temporary paths (e.g. __BDD_TMP_SIMPLE_STDIO__).
+        if (bddTempPaths[arg]) return bddTempPaths[arg];
+
+        // Resolve data/sequences/bdd-packages/<archive> references against
+        // the colon-delimited directories in PACKAGES_DIR (set by the Docker
+        // BDD runner to /work-tmp/.../bdd-packages).  Leave the argument
+        // unchanged if no matching archive is found in any directory.
+        const bddPkgMatch = arg.match(/^data\/sequences\/bdd-packages\/(.+)$/);
+        if (bddPkgMatch) {
+            const packagesDirs = process.env.PACKAGES_DIR;
+            if (packagesDirs) {
+                const archiveName = bddPkgMatch[1];
+                for (const dir of packagesDirs.split(":")) {
+                    const candidate = path.join(dir, archiveName);
+                    if (fs.existsSync(candidate)) {
+                        return candidate;
+                    }
+                }
+            }
+        }
+
+        return arg;
+    });
 
 Then("the packed simple-stdio archive is valid", function(this: CustomWorld) {
     const archive = bddTempPaths.__BDD_TMP_SIMPLE_STDIO__;

@@ -44,6 +44,11 @@ export class ManagerAPIV2Handler {
         const router = bindRoutes(
             routes,
             {
+                ingressIdentity: routeBinding.handler<typeof routes.ingressIdentity>(() => ({
+                    level: "space",
+                    serviceId: manager.id,
+                    routeDomain: manager.config.verser2.controlIngress?.enabled ? manager.config.verser2.controlIngress.guest.routeDomain : manager.config.verser2.localGuest.routeDomain
+                }), { id: "space.v2.ingress.identity" }),
                 version: routeBinding.handler<typeof routes.version>(
                     () => ({
                         version: manager.version

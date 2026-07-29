@@ -1,6 +1,8 @@
 import ProfileConfig from "../src/lib/config/profileConfig";
 
-import test from "ava";
+import baseTest from "ava";
+const { createAvaMemoryGuard } = require("../../../scripts/lib/ava-memory-guard");
+const test: typeof baseTest = createAvaMemoryGuard(baseTest);
 import { defaultConfigProfileFile } from "../src/lib/paths";
 import { parseConfigSelection } from "../src/lib/config/args";
 import { ProfileManager, isProfileConfig } from "../src/lib/config/profileManager";

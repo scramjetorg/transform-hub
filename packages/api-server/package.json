@@ -15,6 +15,7 @@
   "dependencies": {
     "0http": "^3.4.1",
     "@scramjet/api-types": "^1.1.0",
+    "@scramjet/api-router": "^1.1.0",
     "@scramjet/model": "^1.1.0",
     "@scramjet/obj-logger": "^1.1.0",
     "@scramjet/runtime-types": "^1.1.0",
@@ -45,7 +46,8 @@
       "test/support.spec.ts",
       "test/handler-execution.spec.ts",
       "test/routed-forward.spec.ts",
-      "test/routed-redirect.spec.ts"
+      "test/routed-redirect.spec.ts",
+      "test/v2-http-dispatcher.spec.ts"
     ],
     "require": [
       "ts-node/register"

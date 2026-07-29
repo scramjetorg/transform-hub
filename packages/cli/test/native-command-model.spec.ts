@@ -1,6 +1,9 @@
-import test from "ava";
-import { cmd, executeCommand, parseCommandContext, resolveCommandPath } from "@scramjet/config";
+import baseTest from "ava";
+const { createAvaMemoryGuard } = require("../../../scripts/lib/ava-memory-guard");
+const test: typeof baseTest = createAvaMemoryGuard(baseTest);
+import { cmd, executeCommand, generateHelp, parseCommandContext, resolveCommandPath } from "@scramjet/config";
 import { CommandCompleter } from "../src/handlers/completion/commandCompleter";
+import { completionCommand } from "../src/lib/commands/completion";
 
 test("native command model resolves nested command paths and aliases", t => {
     const root = cmd("si", b => b.children(
@@ -104,4 +107,11 @@ test("native completion returns subcommands, options, and completer metadata", t
     t.deepEqual(completer.complete(["si", "topic", ""], 2), ["send", "list"]);
     t.deepEqual(completer.complete(["si", "topic", "send", "orders", ""], 4), "filenames");
     t.deepEqual(completer.complete(["si", "topic", "send", "orders", "--"], 4), ["--content-type"]);
+});
+
+test("completion script output is a side-effect-free command leaf", t => {
+    t.truthy(completionCommand.action);
+    t.true(completionCommand.children?.some(child => child.name === "install"));
+    t.true(completionCommand.children?.some(child => child.name === "uninstall"));
+    t.regex(generateHelp(completionCommand), /install/);
 });

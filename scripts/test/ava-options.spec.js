@@ -5,7 +5,7 @@
  * scripts/lib/ava-options.js.
  *
  * These tests verify option construction, environment overrides,
- * JIT/WASM/fetch profile selection, worker/timeout defaults, and
+ * JIT/permissive-WASM/fetch profile selection, worker/timeout defaults, and
  * bypass‑guard behaviour.  They do NOT spawn child processes or
  * run package tests.
  */
@@ -32,8 +32,10 @@ const {
 	isDirectAvaInvocation,
 	isMemoryGuardEnabled,
 	memoryHeapThresholdBytes,
+	testProfile,
 	ENV,
 	DEFAULTS,
+	TEST_PROFILES,
 } = require("../lib/ava-options.js");
 
 const { resolve } = require("node:path");
@@ -170,7 +172,7 @@ test("avaNodeOptions includes --max-old-space-size with default value", (t) => {
 	const savedMo = process.env[ENV.MAX_OLD_SPACE];
 	const savedJit = process.env[ENV.JITLESS];
 	delete process.env[ENV.MAX_OLD_SPACE];
-	// Ensure jitless is default
+	// Ensure JIT is the default.
 	delete process.env[ENV.JITLESS];
 	try {
 		const opts = avaNodeOptions("");
@@ -181,23 +183,23 @@ test("avaNodeOptions includes --max-old-space-size with default value", (t) => {
 	}
 });
 
-test("avaNodeOptions includes --jitless by default", (t) => {
+test("avaNodeOptions enables JIT by default", (t) => {
 	const savedJit = process.env[ENV.JITLESS];
 	delete process.env[ENV.JITLESS];
 	try {
 		const opts = avaNodeOptions("");
-		t.true(opts.includes("--jitless"));
+		t.false(opts.includes("--jitless"));
 	} finally {
 		if (savedJit !== undefined) process.env[ENV.JITLESS] = savedJit;
 	}
 });
 
-test("avaNodeOptions removes --jitless when SCRAMJET_AVA_JITLESS=0", (t) => {
+test("avaNodeOptions adds --jitless when SCRAMJET_AVA_JITLESS=1", (t) => {
 	const savedJit = process.env[ENV.JITLESS];
-	process.env[ENV.JITLESS] = "0";
+	process.env[ENV.JITLESS] = "1";
 	try {
 		const opts = avaNodeOptions("");
-		t.false(opts.includes("--jitless"));
+		t.true(opts.includes("--jitless"));
 	} finally {
 		if (savedJit !== undefined) process.env[ENV.JITLESS] = savedJit;
 		else delete process.env[ENV.JITLESS];
@@ -225,7 +227,7 @@ test("avaNodeOptions honours base NODE_OPTIONS from argument", (t) => {
 	try {
 		const opts = avaNodeOptions("--inspect");
 		t.true(opts.startsWith("--inspect"));
-		t.true(opts.includes("--jitless"));
+		t.false(opts.includes("--jitless"));
 	} finally {
 		if (savedJit !== undefined) process.env[ENV.JITLESS] = savedJit;
 	}
@@ -235,7 +237,7 @@ test("avaNodeOptions honours base NODE_OPTIONS from argument", (t) => {
 // avaNodeArgs – extra Node CLI arguments
 // ---------------------------------------------------------------------------
 
-test("avaNodeArgs returns empty array when SCRAMJET_AVA_JITLESS is not disabled", (t) => {
+test("avaNodeArgs excludes Worker-incompatible WASM flags when JIT is enabled", (t) => {
 	const savedJit = process.env[ENV.JITLESS];
 	delete process.env[ENV.JITLESS];
 	try {
@@ -246,13 +248,153 @@ test("avaNodeArgs returns empty array when SCRAMJET_AVA_JITLESS is not disabled"
 	}
 });
 
-test("avaNodeArgs returns WASM limits when SCRAMJET_AVA_JITLESS=0", (t) => {
+test("testProfile returns fast and phase-final profiles", (t) => {
+	const saved = process.env[ENV.TEST_PROFILE];
+	try {
+		process.env[ENV.TEST_PROFILE] = TEST_PROFILES.FAST;
+		t.is(testProfile(), TEST_PROFILES.FAST);
+		process.env[ENV.TEST_PROFILE] = TEST_PROFILES.PHASE_FINAL;
+		t.is(testProfile(), TEST_PROFILES.PHASE_FINAL);
+	} finally {
+		if (saved !== undefined) process.env[ENV.TEST_PROFILE] = saved;
+		else delete process.env[ENV.TEST_PROFILE];
+	}
+});
+
+test("fast profile defaults to 16 AVA workers", (t) => {
+	const savedProfile = process.env[ENV.TEST_PROFILE];
+	const savedWorkers = process.env[ENV.WORKERS];
+	delete process.env[ENV.WORKERS];
+	process.env[ENV.TEST_PROFILE] = TEST_PROFILES.FAST;
+	try {
+		t.is(avaConcurrency(), DEFAULTS.FAST_WORKERS);
+		t.is(memoryHeapThresholdBytes(), DEFAULTS.FAST_MEMORY_BUDGET_BYTES);
+		t.is(runnerInvocationEnv()[ENV.AVA_MEMORY_HEAP_THRESHOLD], String(DEFAULTS.FAST_MEMORY_BUDGET_BYTES));
+	} finally {
+		if (savedProfile !== undefined) process.env[ENV.TEST_PROFILE] = savedProfile;
+		else delete process.env[ENV.TEST_PROFILE];
+		if (savedWorkers !== undefined) process.env[ENV.WORKERS] = savedWorkers;
+	}
+});
+
+test("fast profile preserves an explicit AVA worker override", (t) => {
+	const savedProfile = process.env[ENV.TEST_PROFILE];
+	const savedWorkers = process.env[ENV.WORKERS];
+	process.env[ENV.TEST_PROFILE] = TEST_PROFILES.FAST;
+	process.env[ENV.WORKERS] = "4";
+	try {
+		t.is(avaConcurrency(), 4);
+	} finally {
+		if (savedProfile !== undefined) process.env[ENV.TEST_PROFILE] = savedProfile;
+		else delete process.env[ENV.TEST_PROFILE];
+		if (savedWorkers !== undefined) process.env[ENV.WORKERS] = savedWorkers;
+		else delete process.env[ENV.WORKERS];
+	}
+});
+
+test("fast profile preserves an explicit common MEMORY_HEAP_THRESHOLD_BYTES override", (t) => {
+	const savedProfile = process.env[ENV.TEST_PROFILE];
+	const savedCommon = process.env[ENV.MEMORY_HEAP_THRESHOLD];
+	const savedAva = process.env[ENV.AVA_MEMORY_HEAP_THRESHOLD];
+	process.env[ENV.TEST_PROFILE] = TEST_PROFILES.FAST;
+	process.env[ENV.MEMORY_HEAP_THRESHOLD] = "1024";
+	delete process.env[ENV.AVA_MEMORY_HEAP_THRESHOLD];
+	try {
+		t.is(memoryHeapThresholdBytes(), 1024);
+		// runnerInvocationEnv should NOT inject 8MiB AVA threshold when common is set
+		const env = runnerInvocationEnv();
+		t.false(
+			ENV.AVA_MEMORY_HEAP_THRESHOLD in env,
+			"should not inject AVA threshold when common threshold is explicitly set"
+		);
+	} finally {
+		if (savedProfile !== undefined) process.env[ENV.TEST_PROFILE] = savedProfile;
+		else delete process.env[ENV.TEST_PROFILE];
+		if (savedCommon !== undefined) process.env[ENV.MEMORY_HEAP_THRESHOLD] = savedCommon;
+		else delete process.env[ENV.MEMORY_HEAP_THRESHOLD];
+		if (savedAva !== undefined) process.env[ENV.AVA_MEMORY_HEAP_THRESHOLD] = savedAva;
+	}
+});
+
+test("fast profile preserves an explicit AVA-specific MEMORY_THRESHOLD_BYTES override", (t) => {
+	const savedProfile = process.env[ENV.TEST_PROFILE];
+	const savedAva = process.env[ENV.AVA_MEMORY_HEAP_THRESHOLD];
+	const savedCommon = process.env[ENV.MEMORY_HEAP_THRESHOLD];
+	process.env[ENV.TEST_PROFILE] = TEST_PROFILES.FAST;
+	process.env[ENV.AVA_MEMORY_HEAP_THRESHOLD] = "8192";
+	delete process.env[ENV.MEMORY_HEAP_THRESHOLD];
+	try {
+		t.is(memoryHeapThresholdBytes(), 8192);
+		// runnerInvocationEnv should NOT inject 8MiB fallback when AVA-specific is already set.
+		// The explicit value flows through process.env in the child env construction,
+		// so runnerInvocationEnv must not overwrite it with the fallback.
+		const env = runnerInvocationEnv();
+		t.false(
+			ENV.AVA_MEMORY_HEAP_THRESHOLD in env,
+			"should not inject 8MiB fallback when AVA-specific threshold is explicitly set"
+		);
+	} finally {
+		if (savedProfile !== undefined) process.env[ENV.TEST_PROFILE] = savedProfile;
+		else delete process.env[ENV.TEST_PROFILE];
+		if (savedAva !== undefined) process.env[ENV.AVA_MEMORY_HEAP_THRESHOLD] = savedAva;
+		else delete process.env[ENV.AVA_MEMORY_HEAP_THRESHOLD];
+		if (savedCommon !== undefined) process.env[ENV.MEMORY_HEAP_THRESHOLD] = savedCommon;
+	}
+});
+
+test("fast profile uses 8MiB fallback when neither threshold env var is set", (t) => {
+	const savedProfile = process.env[ENV.TEST_PROFILE];
+	const savedCommon = process.env[ENV.MEMORY_HEAP_THRESHOLD];
+	const savedAva = process.env[ENV.AVA_MEMORY_HEAP_THRESHOLD];
+	process.env[ENV.TEST_PROFILE] = TEST_PROFILES.FAST;
+	delete process.env[ENV.MEMORY_HEAP_THRESHOLD];
+	delete process.env[ENV.AVA_MEMORY_HEAP_THRESHOLD];
+	try {
+		t.is(memoryHeapThresholdBytes(), DEFAULTS.FAST_MEMORY_BUDGET_BYTES);
+		const env = runnerInvocationEnv();
+		t.is(
+			env[ENV.AVA_MEMORY_HEAP_THRESHOLD],
+			String(DEFAULTS.FAST_MEMORY_BUDGET_BYTES),
+			"should inject 8MiB fallback when no threshold is explicitly set"
+		);
+	} finally {
+		if (savedProfile !== undefined) process.env[ENV.TEST_PROFILE] = savedProfile;
+		else delete process.env[ENV.TEST_PROFILE];
+		if (savedCommon !== undefined) process.env[ENV.MEMORY_HEAP_THRESHOLD] = savedCommon;
+		if (savedAva !== undefined) process.env[ENV.AVA_MEMORY_HEAP_THRESHOLD] = savedAva;
+	}
+});
+
+test("phase-final profile enables the strict guard and serial AVA execution", (t) => {
+	const savedProfile = process.env[ENV.TEST_PROFILE];
+	const savedGuard = process.env[ENV.AVA_MEMORY_GUARD];
+	const savedThreshold = process.env[ENV.AVA_MEMORY_HEAP_THRESHOLD];
+	process.env[ENV.TEST_PROFILE] = TEST_PROFILES.PHASE_FINAL;
+	process.env[ENV.AVA_MEMORY_GUARD] = "0";
+	process.env[ENV.AVA_MEMORY_HEAP_THRESHOLD] = "8388608";
+	try {
+		t.true(isMemoryGuardEnabled());
+		t.is(avaConcurrency(), 1);
+		t.is(memoryHeapThresholdBytes(), DEFAULTS.MEMORY_HEAP_THRESHOLD_BYTES);
+		const args = buildAvaArgs([]);
+		t.true(args.includes("--serial"));
+		t.is(args[args.indexOf("--concurrency") + 1], "1");
+	} finally {
+		if (savedProfile !== undefined) process.env[ENV.TEST_PROFILE] = savedProfile;
+		else delete process.env[ENV.TEST_PROFILE];
+		if (savedGuard !== undefined) process.env[ENV.AVA_MEMORY_GUARD] = savedGuard;
+		else delete process.env[ENV.AVA_MEMORY_GUARD];
+		if (savedThreshold !== undefined) process.env[ENV.AVA_MEMORY_HEAP_THRESHOLD] = savedThreshold;
+		else delete process.env[ENV.AVA_MEMORY_HEAP_THRESHOLD];
+	}
+});
+
+test("avaNodeArgs remains free of WASM flags when SCRAMJET_AVA_JITLESS=1", (t) => {
 	const savedJit = process.env[ENV.JITLESS];
-	process.env[ENV.JITLESS] = "0";
+	process.env[ENV.JITLESS] = "1";
 	try {
 		const args = avaNodeArgs();
-		t.true(args.length > 0);
-		t.true(args.some((a) => a.startsWith("--wasm-")));
+		t.deepEqual(args, []);
 	} finally {
 		if (savedJit !== undefined) process.env[ENV.JITLESS] = savedJit;
 		else delete process.env[ENV.JITLESS];
@@ -325,9 +467,37 @@ test("runnerTimeout honours SCRAMJET_AVA_TIMEOUT", (t) => {
 // Bypass guard
 // ---------------------------------------------------------------------------
 
-test("runnerInvocationEnv returns object with SCRAMJET_AVA_RUNNER=1", (t) => {
-	const env = runnerInvocationEnv();
-	t.is(env[ENV.RUNNER], "1");
+test("runnerInvocationEnv supplies fast-path defaults", (t) => {
+	const savedJit = process.env[ENV.JITLESS];
+	const savedTranspileOnly = process.env[ENV.TS_NODE_TRANSPILE_ONLY];
+	delete process.env[ENV.JITLESS];
+	delete process.env[ENV.TS_NODE_TRANSPILE_ONLY];
+	try {
+		const env = runnerInvocationEnv();
+		t.is(env[ENV.RUNNER], "1");
+		t.is(env[ENV.JITLESS], "0");
+		t.is(env[ENV.TS_NODE_TRANSPILE_ONLY], "1");
+	} finally {
+		if (savedJit !== undefined) process.env[ENV.JITLESS] = savedJit;
+		if (savedTranspileOnly !== undefined) process.env[ENV.TS_NODE_TRANSPILE_ONLY] = savedTranspileOnly;
+	}
+});
+
+test("runnerInvocationEnv preserves explicit fast-path opt-outs", (t) => {
+	const savedJit = process.env[ENV.JITLESS];
+	const savedTranspileOnly = process.env[ENV.TS_NODE_TRANSPILE_ONLY];
+	process.env[ENV.JITLESS] = "1";
+	process.env[ENV.TS_NODE_TRANSPILE_ONLY] = "0";
+	try {
+		const env = runnerInvocationEnv();
+		t.is(env[ENV.JITLESS], "1");
+		t.is(env[ENV.TS_NODE_TRANSPILE_ONLY], "0");
+	} finally {
+		if (savedJit !== undefined) process.env[ENV.JITLESS] = savedJit;
+		else delete process.env[ENV.JITLESS];
+		if (savedTranspileOnly !== undefined) process.env[ENV.TS_NODE_TRANSPILE_ONLY] = savedTranspileOnly;
+		else delete process.env[ENV.TS_NODE_TRANSPILE_ONLY];
+	}
 });
 
 test("preloadGuardPath returns absolute path to ava-guard.cjs", (t) => {
@@ -677,10 +847,10 @@ test("memoryHeapThresholdBytes throws on negative env value", (t) => {
 });
 
 // ---------------------------------------------------------------------------
-// buildAvaArgs – memory guard mode (--expose-gc and concurrency 1)
+// Memory guard mode (--expose-gc in NODE_OPTIONS, serial concurrency 1)
 // ---------------------------------------------------------------------------
 
-test("buildAvaArgs injects --expose-gc and --concurrency 1 when SCRAMJET_MEMORY_GUARD=1", (t) => {
+test("memory guard places --expose-gc in NODE_OPTIONS and concurrency 1 in AVA args", (t) => {
 	const savedMemGuard = process.env[ENV.MEMORY_GUARD];
 	const savedAvaMemGuard = process.env[ENV.AVA_MEMORY_GUARD];
 	const savedWorkers = process.env[ENV.WORKERS];
@@ -689,12 +859,8 @@ test("buildAvaArgs injects --expose-gc and --concurrency 1 when SCRAMJET_MEMORY_
 	delete process.env[ENV.WORKERS];
 	try {
 		const args = buildAvaArgs([]);
-		// --expose-gc should appear before ava CLI path
-		const avaIndex = args.findIndex((a) => a.includes("ava") && a.endsWith(".js"));
-		t.true(avaIndex > 0, "ava CLI should be at a positive index");
-		const exposeGcIndex = args.indexOf("--expose-gc");
-		t.true(exposeGcIndex >= 0, "--expose-gc should be present");
-		t.true(exposeGcIndex < avaIndex, "--expose-gc should come before ava CLI");
+		t.true(avaNodeOptions("").includes("--expose-gc"), "--expose-gc should be in NODE_OPTIONS");
+		t.false(args.includes("--expose-gc"), "--expose-gc must not be in Worker-inherited execArgv");
 		// --concurrency 1 should be present
 		const concIdx = args.indexOf("--concurrency");
 		t.true(concIdx >= 0, "--concurrency should be present");
@@ -708,7 +874,7 @@ test("buildAvaArgs injects --expose-gc and --concurrency 1 when SCRAMJET_MEMORY_
 	}
 });
 
-test("buildAvaArgs injects --expose-gc and --concurrency 1 when SCRAMJET_AVA_MEMORY_GUARD=1", (t) => {
+test("AVA-specific memory guard places --expose-gc in NODE_OPTIONS", (t) => {
 	const savedMemGuard = process.env[ENV.MEMORY_GUARD];
 	const savedAvaMemGuard = process.env[ENV.AVA_MEMORY_GUARD];
 	const savedWorkers = process.env[ENV.WORKERS];
@@ -717,7 +883,8 @@ test("buildAvaArgs injects --expose-gc and --concurrency 1 when SCRAMJET_AVA_MEM
 	delete process.env[ENV.WORKERS];
 	try {
 		const args = buildAvaArgs([]);
-		t.true(args.indexOf("--expose-gc") >= 0, "--expose-gc should be present");
+		t.true(avaNodeOptions("").includes("--expose-gc"), "--expose-gc should be in NODE_OPTIONS");
+		t.false(args.includes("--expose-gc"), "--expose-gc must not be in Worker-inherited execArgv");
 		const concIdx = args.indexOf("--concurrency");
 		t.true(concIdx >= 0, "--concurrency should be present");
 		t.is(args[concIdx + 1], "1");
@@ -826,8 +993,8 @@ test("buildAvaArgs does not throw when SCRAMJET_AVA_WORKERS=1 in memory guard mo
 	process.env[ENV.MEMORY_GUARD] = "1";
 	process.env[ENV.WORKERS] = "1";
 	try {
-		const args = buildAvaArgs([]);
-		t.true(args.indexOf("--expose-gc") >= 0, "--expose-gc should be present");
+		buildAvaArgs([]);
+		t.true(avaNodeOptions("").includes("--expose-gc"), "--expose-gc should be in NODE_OPTIONS");
 	} finally {
 		if (savedMemGuard !== undefined) process.env[ENV.MEMORY_GUARD] = savedMemGuard;
 		else delete process.env[ENV.MEMORY_GUARD];
@@ -842,8 +1009,8 @@ test("buildAvaArgs does not throw when SCRAMJET_AVA_WORKERS is unset in memory g
 	process.env[ENV.MEMORY_GUARD] = "1";
 	delete process.env[ENV.WORKERS];
 	try {
-		const args = buildAvaArgs([]);
-		t.true(args.indexOf("--expose-gc") >= 0, "--expose-gc should be present");
+		buildAvaArgs([]);
+		t.true(avaNodeOptions("").includes("--expose-gc"), "--expose-gc should be in NODE_OPTIONS");
 	} finally {
 		if (savedMemGuard !== undefined) process.env[ENV.MEMORY_GUARD] = savedMemGuard;
 		else delete process.env[ENV.MEMORY_GUARD];
@@ -896,14 +1063,15 @@ test("buildAvaArgs does not inject --serial when already in CLI args", (t) => {
 	}
 });
 
-test("buildAvaArgs injects --serial alongside --concurrency 1 and --expose-gc", (t) => {
+test("buildAvaArgs injects --serial alongside --concurrency 1 without --expose-gc execArgv", (t) => {
 	const savedMemGuard = process.env[ENV.MEMORY_GUARD];
 	const savedWorkers = process.env[ENV.WORKERS];
 	process.env[ENV.MEMORY_GUARD] = "1";
 	delete process.env[ENV.WORKERS];
 	try {
 		const args = buildAvaArgs([]);
-		t.true(args.includes("--expose-gc"), "--expose-gc should be present");
+		t.false(args.includes("--expose-gc"), "--expose-gc must not be in Worker-inherited execArgv");
+		t.true(avaNodeOptions("").includes("--expose-gc"), "--expose-gc should be in NODE_OPTIONS");
 		t.true(args.includes("--serial"), "--serial should be present");
 		t.true(args.includes("--concurrency"), "--concurrency should be present");
 		const concIdx = args.indexOf("--concurrency");

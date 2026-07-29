@@ -57,6 +57,13 @@ test("MultiManagerConfig defaults to verser2 configuration", t => {
     t.is(loaded.verser2.localBroker.routeDomain, "multimanager.default.scramjet.internal");
     t.is(loaded.verser2.localGuest.peerId, "multimanager.default.guest");
     t.is(loaded.verser2.localGuest.routeDomain, "multimanager.default.scramjet.internal");
+    const ingress = loaded.verser2.controlIngress!;
+    t.false(ingress.enabled);
+    t.true(ingress.host.tls.mtlsRequired);
+    t.is(ingress.host.bindPort, 2444);
+    t.is(ingress.host.publicUrl, "https://127.0.0.1:2444");
+    t.is(ingress.guest.routeDomain, "multimanager.default.control.scramjet.internal");
+    t.not(ingress.guest.routeDomain, loaded.verser2.localGuest.routeDomain);
 });
 
 test("MultiManagerConfig loads verser2 config from file env and cli with precedence", t => {

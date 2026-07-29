@@ -27,7 +27,7 @@ function installSpawnStub(calls: any[]) {
     } as NodeJS.Module;
 }
 
-test("process adapter launches runner with STH-local verser2 topology", async t => {
+test("process adapter preserves an explicitly configured legacy 2444 runner Host", async t => {
     const spawnCalls: any[] = [];
 
     installSpawnStub(spawnCalls);

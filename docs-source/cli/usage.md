@@ -97,7 +97,39 @@ si config print                                       # Show current CLI configu
 si config set apiUrl http://...                       # Set default API URL
 ```
 
-> **Note on API version**: The CLI currently uses compatibility workflows targeting the v1 Hub/Manager API (`/api/v1` route tree). It is planned to be updated to the v2 API. Backwards compatibility will be supported when the migration occurs.
+> **Note on API version**: The CLI currently supports two transport paths. The default is HTTP(S)/v1 (`/api/v1` route tree). Configure a [Verser2 profile](verser2-cli.md) to use native v2 REST APIs through a Verser2 broker at the MultiManager, Manager, or Hub level (client mTLS credentials are optional). The Verser2 path never falls back to HTTP(S)/v1; commands without a v2 counterpart exit with a deterministic error. Backwards compatibility is maintained for the HTTP(S)/v1 path.
+
+## Verser2 CLI setup
+
+The `si` CLI can connect to a Verser2 broker for native v2 API access. The minimum profile needs only a CA file for server certificate verification. When the ingress requires client authentication, add mTLS credentials.
+
+**Minimal profile (CA only):**
+
+```bash
+si config set verser2.endpoint https://broker.example.com:2444
+si config set verser2.brokerId my-broker
+si config set verser2.ingress.level platform
+si config set verser2.ingress.expectedId mm-1
+si config set verser2.ingress.routeDomain mm-1-default
+si config set verser2.tls.caFile /etc/scramjet/ca.pem
+```
+
+**Add mTLS client credentials if required by the ingress:**
+
+```bash
+si config set verser2.tls.certFile /etc/scramjet/client.pem
+si config set verser2.tls.keyFile /etc/scramjet/client-key.pem
+```
+
+When private key or PFX files are used, they must be owner-only (`chmod 600`) on POSIX systems. Secrets are redacted from `si config print`.
+
+See the full [Verser2 CLI setup guide](verser2-cli.md) for:
+- Certificate/key and PKCS#12 credential options and passphrase references
+- Ingress levels: `platform` (MultiManager), `space` (Manager), or `hub` (direct Hub)
+- Route domain discovery and identity verification
+- Raw API syntax (`si api get <endpoint>`)
+- Exit code reference and troubleshooting
+- Command availability and intentionally unavailable operations
 
 ## Connecting conceptually to command help
 
@@ -114,3 +146,4 @@ The commands above cover common workflows. For the current listing of commands, 
 - [Build and run workflows](../transform-hub/build-run.md) for deployment lifecycle details.
 - [API client documentation](../api/client-usage.md) for programmatic access.
 - [Manager overview](../manager/overview.md) for understanding what the Manager provides.
+- [Verser2 CLI setup guide](verser2-cli.md) for profile configuration and troubleshooting.

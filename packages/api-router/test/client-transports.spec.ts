@@ -1,4 +1,6 @@
-import test from "ava";
+import baseTest from "ava";
+const { createAvaMemoryGuard } = require("../../../scripts/lib/ava-memory-guard");
+const test: typeof baseTest = createAvaMemoryGuard(baseTest);
 
 import { ApiClientRequest, createApiClient, createHttpClientTransport, createRouter, createVerser2ClientTransport } from "../src";
 import { ClientRequestProbeError, createClientRequestProbe } from "./lib/no-circumvention";
@@ -26,12 +28,12 @@ test("HTTP client transport materializes params, query, headers and body", async
     const client = createApiClient(manifest, transport);
     const response = await client.request("POST /api/v2/sequence/:id", {
         params: { id: "seq 1" },
-        query: { force: true },
+        query: { force: true, tag: ["a", "b"] },
         headers: { authorization: "token" },
         body: { start: true }
     });
 
-    t.is(seen[0].url, "http://localhost:8000/api/v2/sequence/seq%201?force=true");
+    t.is(seen[0].url, "http://localhost:8000/api/v2/sequence/seq%201?force=true&tag=a%2Cb");
     t.is(seen[0].init.method, "POST");
     t.is(seen[0].init.body, '{"start":true}');
     t.is(response.status, 201);

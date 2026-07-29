@@ -44,6 +44,7 @@ function createHostStub(): any {
         getStatus: () => ({ status: "ok" }),
         config: {
             host: { id: "test-hub" },
+            verser2: { guest: { routeDomain: "hub.test.scramjet.internal" } },
             sequencesRoot: "/tmp/sequences"
         }
     };
@@ -60,12 +61,13 @@ test("Host v1 compatibility and v2 mounted routes are reachable through verser2"
     registerVerser2Routes(adapter, v1.createV1CompatibilityRouter());
     registerVerser2Routes(adapter, v2.createV2Router());
 
-    t.deepEqual(registrations.slice(0, 9).map(registration => registration.fullPath), [
+    t.deepEqual(registrations.slice(0, 10).map(registration => registration.fullPath), [
         "/api/v1/load-check",
         "/api/v1/version",
         "/api/v1/config",
         "/api/v1/health",
         "/api/v1/status",
+        "/api/v2/ingress/identity",
         "/api/v2/load",
         "/api/v2/version",
         "/api/v2/config",
@@ -75,11 +77,15 @@ test("Host v1 compatibility and v2 mounted routes are reachable through verser2"
     t.true(registrations.some(registration => registration.fullPath === "/api/v2/sequences/:sequenceId/instances"));
     t.true(registrations.some(registration => registration.fullPath === "/api/v2/logs"));
     t.true(registrations.some(registration => registration.fullPath === "/api/v2/audit"));
+    t.deepEqual(await registrations[5].handle({ method: "GET", path: "/api/v2/ingress/identity" }), {
+        status: 200,
+        body: { level: "hub", serviceId: "test-hub", routeDomain: "hub.test.scramjet.internal" }
+    });
     t.deepEqual(await registrations[1].handle({ method: "GET", path: "/api/v1/version" }), {
         status: 200,
         body: { service: "sth", apiVersion: "v1", version: "1.2.3", build: "build" }
     });
-    t.deepEqual(await registrations[6].handle({ method: "GET", path: "/api/v2/version" }), {
+    t.deepEqual(await registrations[7].handle({ method: "GET", path: "/api/v2/version" }), {
         status: 200,
         body: { version: "1.2.3" }
     });
@@ -137,6 +143,7 @@ test("Host-owned Hub v2 routes are mounted locally and reachable through verser2
     t.true(registrations.some(registration => registration.fullPath === "/api/v2/status"));
     t.false(registrations.some(registration => registration.fullPath.includes(":managerId") || registration.fullPath.includes(":hubId")));
     t.deepEqual(handler.createHubRouter().definitions().map((route: any) => route.path), [
+        "/ingress/identity",
         "/load",
         "/version",
         "/config",

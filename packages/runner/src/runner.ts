@@ -182,8 +182,7 @@ function revertStandardStream(oldStream: Writable) {
     if (overrideMap.has(oldStream)) {
         const { write, drainCb, errorCb } = overrideMap.get(oldStream) as OverrideConfig;
 
-        // @ts-expect-error - this is ok, we're doing this on purpose!
-        delete oldStream.write;
+        delete (oldStream as Omit<Writable, "write"> & { write?: Writable["write"] }).write;
 
         // if prototypic write is there, then no change needed
         if (oldStream.write !== write) oldStream.write = write;
@@ -200,13 +199,25 @@ function overrideStandardStream(oldStream: Writable, newStream: Writable) {
         revertStandardStream(oldStream);
     }
 
-    const write = oldStream.write;
+    type WriteCallback = (error: Error | null | undefined) => void;
+    type StandardWrite = (chunk: any, encoding?: BufferEncoding | WriteCallback, callback?: WriteCallback) => boolean;
+    const write: StandardWrite = oldStream.write.bind(oldStream) as StandardWrite;
+    const replacementWrite: StandardWrite = newStream.write.bind(newStream) as StandardWrite;
 
     if (process.env.PRINT_TO_STDOUT) {
-        // @ts-expect-error
-        oldStream.write = (...args) => {
-            write.call(oldStream, ...args);
-            return newStream.write(...args);
+        oldStream.write = (chunk: any, encoding?: BufferEncoding | ((error: Error | null | undefined) => void), callback?: (error: Error | null | undefined) => void) => {
+            if (typeof encoding === "function") {
+                write.call(oldStream, chunk, encoding);
+                return replacementWrite(chunk, encoding);
+            }
+
+            if (encoding === undefined) {
+                write.call(oldStream, chunk, callback);
+                return replacementWrite(chunk, callback);
+            }
+
+            write.call(oldStream, chunk, encoding, callback);
+            return replacementWrite(chunk, encoding, callback);
         };
     } else {
         oldStream.write = newStream.write.bind(newStream);

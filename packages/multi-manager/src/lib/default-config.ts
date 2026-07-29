@@ -25,6 +25,22 @@ const defaultVerser2Config: ManagerVerser2Config = {
         peerId: "multimanager.default.guest",
         routeDomain: "multimanager.default.scramjet.internal"
     },
+    controlIngress: {
+        // Keep the optional mTLS control listener off unless configured. Its
+        // reserved 2444 port is distinct from the Hub runner Host default (2445).
+        enabled: false,
+        host: {
+            identityDir: join(homedir(), ".scramjet", "verser2-multimanager-control-ingress"),
+            bindHost: "0.0.0.0",
+            bindPort: 2444,
+            publicUrl: "https://127.0.0.1:2444",
+            tls: { mtlsRequired: true }
+        },
+        guest: {
+            peerId: "multimanager.default.control.guest",
+            routeDomain: "multimanager.default.control.scramjet.internal"
+        }
+    },
     timeouts: {
         routeReadinessMs: 10_000,
         leaseAcquireMs: 10_000,

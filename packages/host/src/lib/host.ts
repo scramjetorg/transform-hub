@@ -67,6 +67,7 @@ import {
 } from "./runner-verser2-host-config";
 import { Verser2RunnerBroker } from "./runner-transport";
 import { attachSthLocalRunnerVerser2Peers, getRunnerVerser2HostUpstreamParams } from "./runner-verser2-host-peers";
+import { resolveLegacyRunnerControlIngressConflict, startHostControlIngress, stopHostControlIngress } from "./control-ingress";
 
 import { getStorageAdapter } from "./local-storage/utils";
 import { readStartupConfig } from "./startup-config";
@@ -146,7 +147,10 @@ export class Host implements IHost, IComponent {
      */
     cpmConnector?: CPMConnector;
 
+    private cpmInventoryListenerInstalled = false;
+
     runnerVerser2Host?: VerserHost;
+    private controlIngressHost?: VerserHost;
     runnerVerser2UpstreamHealth?: HealthComponent = degradedComponent("hub.upstream", false, { configured: false });
     private runnerVerser2Broker?: Verser2RunnerBroker;
     private runnerVerser2Guest?: { close?: () => Promise<void> };
@@ -792,6 +796,15 @@ export class Host implements IHost, IComponent {
      * @returns {Promise<this>} Promise resolving to Instance of Host.
      */
     async main(): Promise<void> {
+        try {
+            await this.startOwnedResources();
+        } catch (error) {
+            await this.cleanup();
+            throw error;
+        }
+    }
+
+    private async startOwnedResources(): Promise<void> {
         await this.setTelemetry().catch(() => {
             this.logger.error("Setting telemetry failed");
         });
@@ -817,7 +830,7 @@ export class Host implements IHost, IComponent {
 
         this.pushTelemetry("Host started");
 
-        new HostAPIHandler(this.api, this, version, this.build).attach();
+        this.apiHandler.attach();
 
         this.api.server.on("request", (request: any) => {
             if (request.method !== "POST" || !request.url?.endsWith("/stdin")) return;
@@ -837,6 +850,15 @@ export class Host implements IHost, IComponent {
         });
 
         await this.startListening();
+        const controlIngress = resolveLegacyRunnerControlIngressConflict(
+            this.config.verser2.runnerHost,
+            this.config.verser2.controlIngress
+        );
+        if (controlIngress !== this.config.verser2.controlIngress) {
+            this.logger.warn("Relocating default Hub mTLS control ingress to 2446 because the runner Host is explicitly configured on legacy port 2444.");
+            this.config.verser2.controlIngress = controlIngress;
+        }
+        this.controlIngressHost = await startHostControlIngress(controlIngress, this.apiHandler.createV2Router(), this.config.host.id) as VerserHost | undefined;
         await this.startRunnerVerser2Host();
 
         if (!this.isCPMConfigured()) {
@@ -1007,6 +1029,13 @@ export class Host implements IHost, IComponent {
 
             this.logger.info("STH-local runner verser2 Host started", this.runnerVerser2Host.address);
         }
+
+    }
+
+    private async stopControlIngress() {
+        const host = this.controlIngressHost;
+        this.controlIngressHost = undefined;
+        await stopHostControlIngress(host);
     }
 
     async performStartup() {
@@ -1076,7 +1105,7 @@ export class Host implements IHost, IComponent {
 
         connector.init();
 
-        connector.on("communicationReady", () => {
+        if (!this.cpmInventoryListenerInstalled) connector.on("communicationReady", () => {
             Promise.resolve()
                 .then(async () => {
                     await connector.sendSequencesInfo(this.getSequences().map((s: any) => ({ ...s, status: SequenceMessageCode.SEQUENCE_CREATED })));
@@ -1090,6 +1119,7 @@ export class Host implements IHost, IComponent {
                     this.logger.error("Error sending CPM inventory snapshot", error.message);
                 });
         });
+        this.cpmInventoryListenerInstalled = true;
 
         await connector.connect();
     }
@@ -1521,13 +1551,17 @@ export class Host implements IHost, IComponent {
 
         if (this.runnerVerser2Host) {
             const host = this.runnerVerser2Host as VerserHost & { stop?: () => Promise<void>; close?: () => Promise<void> };
-
-            await (this.runnerVerser2Guest?.close?.() || Promise.resolve());
-            await (host.stop?.() || host.close?.() || Promise.resolve());
+            const guest = this.runnerVerser2Guest;
             this.runnerVerser2Host = undefined;
             this.runnerVerser2Broker = undefined;
             this.runnerVerser2Guest = undefined;
+            await Promise.allSettled([
+                guest?.close?.(),
+                host.stop?.() || host.close?.()
+            ]);
         }
+
+        await this.stopControlIngress();
 
         this.instancesStore = new InstancesStore();
         this.sequenceStore.clear();

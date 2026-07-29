@@ -425,6 +425,7 @@ export * from "./command-model";
 
 export { z };
 export * from "./verser2-config";
+export * from "./verser2-profile";
 
 // Canonical replacement exports for deprecated config packages
 export { development } from "./env";

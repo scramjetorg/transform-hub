@@ -20,7 +20,12 @@ function createVerser2HostTlsOptions(config: ManagerVerser2Config): VerserHostTl
         throw new Error("verser2 Host TLS requires certFile/keyFile or pfxFile");
     }
 
-    if (tls.mtlsRequired && !tls.clientAuthCaFile) {
+    // Generated control-ingress identities use their generated CA as the
+    // client-auth trust anchor. Explicit deployments may still provide a
+    // narrower clientAuthCaFile.
+    const clientAuthCaFile = tls.clientAuthCaFile || (tls.mtlsRequired ? tls.caFile : undefined);
+
+    if (tls.mtlsRequired && !clientAuthCaFile) {
         throw new Error("verser2 Host mTLS requires clientAuthCaFile");
     }
 
@@ -31,7 +36,7 @@ function createVerser2HostTlsOptions(config: ManagerVerser2Config): VerserHostTl
     return {
         ...identity,
         clientAuth: {
-            caFile: tls.clientAuthCaFile,
+            caFile: clientAuthCaFile,
             authorizeRegistration: context => {
                 if (context.metadata.local === true) {
                     return { action: "allow" };
@@ -44,7 +49,7 @@ function createVerser2HostTlsOptions(config: ManagerVerser2Config): VerserHostTl
                 if (config.registration.allowedClientFingerprints.length > 0) {
                     const fingerprint = context.certificate?.fingerprint256;
 
-                    if (!fingerprint || !config.registration.allowedClientFingerprints.includes(fingerprint)) {
+                    if (!fingerprint || !config.registration.allowedClientFingerprints.some(allowed => allowed.replace(/^sha256:/i, "").replace(/:/g, "").toLowerCase() === fingerprint.replace(/^sha256:/i, "").replace(/:/g, "").toLowerCase())) {
                         return { action: "close", reason: "client fingerprint not allowed" };
                     }
                 }
