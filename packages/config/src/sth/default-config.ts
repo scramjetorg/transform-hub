@@ -5,6 +5,9 @@ import { join } from "path";
 export const defaultConfig: STHConfiguration = {
     logLevel: "TRACE",
     logColors: true,
+    log: {
+        forwardRunner: true
+    },
     customName: "",
     description: "",
     tags: [],

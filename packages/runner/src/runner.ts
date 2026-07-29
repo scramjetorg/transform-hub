@@ -41,6 +41,7 @@ import { AddressInfo } from "net";
 import { LocalStorageAgent, LocalStorageAgentHost } from "./local-storage-agent";
 import { setTimeout as setTimeoutPromise } from "timers/promises";
 import { writeFile, unlink, access } from "fs/promises";
+import { shouldForwardRunnerLogs } from "./runner-log-forwarding";
 
 let exitHandled = false;
 
@@ -829,7 +830,9 @@ export class Runner<X extends AppConfig> implements IComponent {
     }
 
     private setupOutputs() {
-        this.logger.pipe(this.hostClient.logStream, { stringified: true });
+        if (shouldForwardRunnerLogs(this.runnerConnectInfo)) {
+            this.logger.pipe(this.hostClient.logStream, { stringified: true });
+        }
 
         if (!this.shouldSerialize) {
             this.instanceOutput?.pipe(this.hostClient.outputStream);

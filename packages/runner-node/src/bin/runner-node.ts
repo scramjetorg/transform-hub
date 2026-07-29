@@ -10,7 +10,7 @@ import type { EncodedMonitoringMessage } from "@scramjet/runtime-types";
 import type { APIExpose } from "@scramjet/api-types";
 import { CommunicationChannel as CC, RunnerExitCode, RunnerMessageCode } from "@scramjet/symbols";
 
-import { parseBootConfigPathFromArgv, readBootConfig, RunnerNodeBootConfig } from "../boot-config";
+import { parseBootConfigPathFromArgv, readBootConfig, RunnerNodeBootConfig, shouldForwardRunnerLogs } from "../boot-config";
 import { buildAppContext, buildSequenceContext } from "../context";
 import { createFdStreams } from "../fd-streams";
 import { buildPing } from "../handshake";
@@ -172,7 +172,9 @@ export async function bootstrap(overrides: BootstrapOverrides = {}): Promise<num
 
         api = built.api;
         context = built.context as unknown as typeof context;
-        logger.pipe(hostClient.logStream, { stringified: true });
+        if (shouldForwardRunnerLogs(bootConfig)) {
+            logger.pipe(hostClient.logStream, { stringified: true });
+        }
 
         if (sequenceFns.initialize) {
             try {

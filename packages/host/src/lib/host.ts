@@ -534,7 +534,8 @@ export class Host implements IHost, IComponent {
             instanceName: sequenceConfig.instanceName,
             sequenceName: sequenceConfig.sequenceName,
             exposePath: sequenceConfig.exposePath || sequence.config.exposePath,
-            logLevel: this.logger.logLevel
+            logLevel: this.logger.logLevel,
+            forwardRunnerLogs: this.config.log?.forwardRunner !== false
         };
     }
 
@@ -1361,7 +1362,8 @@ export class Host implements IHost, IComponent {
         try {
             const config = {
                 ...sequence.config,
-                ...requestConfig
+                ...requestConfig,
+                forwardRunnerLogs: this.config.log?.forwardRunner !== false
             };
 
             const runner = await this.csiDispatcher.startRunner(sequence, config);

@@ -56,6 +56,7 @@ class BootConfig:
     appConfig: dict = field(default_factory=dict)
     instanceName: str | None = None
     logLevel: str = "INFO"
+    forwardRunnerLogs: bool = True
     exposePath: str | None = None
     exposeHost: str | None = None
     inputTopic: str | None = None
@@ -182,6 +183,12 @@ def _validate(payload: Any) -> BootConfig:
     log_level = payload.get("logLevel", "INFO")
     log_level = _require_non_empty_string(log_level, "logLevel")
 
+    forward_runner_logs = payload.get("forwardRunnerLogs", True)
+    if not isinstance(forward_runner_logs, bool):
+        raise ValidationError(
+            "runner-python: boot config field 'forwardRunnerLogs' must be a boolean when provided"
+        )
+
     expose_path = payload.get("exposePath")
     if expose_path is not None:
         expose_path = _require_non_empty_string(expose_path, "exposePath")
@@ -214,6 +221,7 @@ def _validate(payload: Any) -> BootConfig:
         appConfig=app_config,
         instanceName=instance_name,
         logLevel=log_level,
+        forwardRunnerLogs=forward_runner_logs,
         exposePath=expose_path,
         exposeHost=expose_host,
         inputTopic=input_topic,

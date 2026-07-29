@@ -175,6 +175,14 @@ export type STHConfiguration = {
     logColors: boolean;
 
     /**
+     * Logging behavior.
+     */
+    log: {
+        /** Forward runner/sequence log-channel records into the host logger. */
+        forwardRunner: boolean;
+    };
+
+    /**
      * CPM url.
      */
     cpmUrl: string;

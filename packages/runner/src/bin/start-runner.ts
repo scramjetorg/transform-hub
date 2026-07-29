@@ -19,6 +19,7 @@ import { observeChildLifecycleFrames } from "../executor/lifecycle-observer";
 import { parseRunnerTransportConfig, RunnerTransportConfigResult } from "../transport/runner-transport-config";
 import { RunnerVerser2Transport } from "../transport/verser2-runner-transport";
 import { bddBootExitTimeout } from "./bdd-boot-timeout";
+import { copyRunnerLogForwarding } from "../runner-log-forwarding";
 
 const STDERR_TAIL_BYTES = 4096;
 const CR = 0x0d;
@@ -94,6 +95,7 @@ interface RunnerNodeBootConfigShape {
     instanceName?: string;
     exitTimeout?: number;
     logLevel?: LogLevel;
+    forwardRunnerLogs?: boolean;
     exposePath?: string;
     inputTopic?: string;
     outputTopic?: string;
@@ -133,6 +135,7 @@ function writeBootConfig(resolvedInstancesServerHost: string, resolvedInstancesS
     const bddExitTimeout = bddBootExitTimeout();
     if (bddExitTimeout !== undefined) payload.exitTimeout = bddExitTimeout;
     if (parsedRunnerConnectInfo.logLevel) payload.logLevel = parsedRunnerConnectInfo.logLevel;
+    copyRunnerLogForwarding(payload, parsedRunnerConnectInfo);
     if (parsedRunnerConnectInfo.exposePath) payload.exposePath = parsedRunnerConnectInfo.exposePath;
     if (parsedRunnerConnectInfo.inputTopic) payload.inputTopic = parsedRunnerConnectInfo.inputTopic;
     if (parsedRunnerConnectInfo.outputTopic) payload.outputTopic = parsedRunnerConnectInfo.outputTopic;

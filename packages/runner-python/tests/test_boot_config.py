@@ -87,6 +87,7 @@ def test_optional_fields_default_correctly(tmp_path: Path) -> None:
     assert cfg.appConfig == {}
     assert cfg.instanceName is None
     assert cfg.logLevel == "INFO"
+    assert cfg.forwardRunnerLogs is True
     assert cfg.exposePath is None
     assert cfg.exposeHost is None
     assert cfg.inputTopic is None
@@ -109,6 +110,7 @@ def test_optional_fields_round_trip_when_present(tmp_path: Path) -> None:
         "appConfig": {"k": "v"},
         "instanceName": "inst-1",
         "logLevel": "DEBUG",
+        "forwardRunnerLogs": False,
         "exposePath": "/expose",
         "exposeHost": "0.0.0.0",
         "inputTopic": "input-topic",
@@ -120,6 +122,7 @@ def test_optional_fields_round_trip_when_present(tmp_path: Path) -> None:
     assert cfg.appConfig == {"k": "v"}
     assert cfg.instanceName == "inst-1"
     assert cfg.logLevel == "DEBUG"
+    assert cfg.forwardRunnerLogs is False
     assert cfg.exposePath == "/expose"
     assert cfg.exposeHost == "0.0.0.0"
     assert cfg.inputTopic == "input-topic"

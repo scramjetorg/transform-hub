@@ -22,6 +22,7 @@ import { getValidStorageAdapters, Host } from "@scramjet/host";
 import { FileBuilder, processCommanderRunnerEnvs } from "@scramjet/utility";
 import { constants } from "os";
 import { augmentOptions, registerRuntimeAdapterOption } from "@scramjet/adapters";
+import { runnerLogConfig, runnerLogForwardingOption } from "../log-options";
 
 const stringToIntSanitizer = (str: string) => {
     const parsedValue = parseInt(str, 10);
@@ -38,6 +39,7 @@ const commonOptions: ConfigOptionDescriptor[] = [
     { name: "tags", flag: "tags", type: "string", description: 'Specifies tags in the format "tag1, tag2"', defaultValue: "" },
     { name: "config", flag: "config", short: "c", type: "string", description: "Specifies path to config" },
     { name: "logLevel", flag: "log-level", short: "L", type: "string", description: "Specify log level" },
+    runnerLogForwardingOption,
     { name: "colors", flag: "colors", type: "boolean", description: "Enable colors in output", defaultValue: true },
     { name: "port", flag: "port", short: "P", type: "number", description: "API port" },
     { name: "hostname", flag: "hostname", short: "H", type: "string", description: "API IP" },
@@ -226,6 +228,7 @@ const options = parseCliOptions({ argv: process.argv, options: finalRegistry.get
         safeOperationLimit: options.safeOperationLimit,
         logLevel: options.logLevel,
         logColors: options.colors,
+        ...(runnerLogConfig(options.logForwardRunner) || {}),
         kubernetes: {
             quotaName: options.k8sQuotaName,
             namespace: options.k8sNamespace,
