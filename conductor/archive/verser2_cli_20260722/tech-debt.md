@@ -71,6 +71,8 @@ The profile-selection and direct-dependency findings above are repaired. The fol
 
 3. **P2 — CLI process-test startup acceleration (DEFERRED).** The raw API process fixture launches roughly ten isolated `node -r ts-node/register` CLI children, each paying TypeScript hook, module resolution, CLI bootstrap, profile validation, and broker-session startup cost. It uses transpile-only mode, but no shared in-memory cache survives process exit. Owner: CLI test infrastructure maintainer. Follow-up: evaluate building the CLI and running the built entrypoint for process fixtures, while retaining a smaller source-mode smoke test; alternatively create a dedicated CLI test-acceleration track to design reusable compiled-fixture infrastructure without weakening per-invocation cleanup coverage.
 
+4. **P2 — Parallel independent Verser2 CLI requests (DEFERRED).** Several `si` operations fetch independent endpoint data sequentially. Under Verser2, those requests share an authenticated broker session and can be issued concurrently. Owner: CLI transport maintainer. Follow-up: identify independent request groups, introduce bounded parallel dispatch with cancellation/error aggregation and deterministic output ordering, then benchmark representative commands against the current sequential path.
+
 ## 2026-07-28 Final track review — CHANGES_REQUIRED
 
 1. **High — real CLI mTLS traversal remains unproven.** Add production-stack integration coverage that spawns the configured CLI against real certificate-authenticated MultiManager, Manager, and direct-Hub ingress; prove success, traversal/isolation, rejected untrusted credentials, deterministic exits, and cleanup. This is explicit track acceptance and blocks completion.
