@@ -17,6 +17,7 @@ type Verser2RunnerRoute = {
 
 type Verser2RunnerBrokerRequest = {
     targetId: string;
+    routeDomain: string;
     method: string;
     path: string;
     headers?: Record<string, string>;
@@ -118,6 +119,7 @@ export function createRunnerBrokerRpcTransport(broker: Verser2RunnerBroker): Rou
 
             const response = await broker.request({
                 targetId: route.targetId,
+                routeDomain: route.domain,
                 method: request.method,
                 path: request.path,
                 headers: request.headers,
@@ -199,9 +201,9 @@ export class Verser2RunnerTransport implements RunnerTransport {
                 throw new Error(`Runner route unavailable: ${domain}`);
             }
 
-            await this.openRequestBodyRoute(route.targetId, this.routeContracts.stdinPath, options.streams[CC.STDIN] as unknown as Readable, generation);
-            await this.openRequestBodyRoute(route.targetId, this.routeContracts.controlPath, options.streams[CC.CONTROL] as unknown as Readable, generation);
-            await this.openRequestBodyRoute(route.targetId, this.routeContracts.inputPath, options.streams[CC.IN] as unknown as Readable, generation);
+            await this.openRequestBodyRoute(route.targetId, route.domain, this.routeContracts.stdinPath, options.streams[CC.STDIN] as unknown as Readable, generation);
+            await this.openRequestBodyRoute(route.targetId, route.domain, this.routeContracts.controlPath, options.streams[CC.CONTROL] as unknown as Readable, generation);
+            await this.openRequestBodyRoute(route.targetId, route.domain, this.routeContracts.inputPath, options.streams[CC.IN] as unknown as Readable, generation);
             await this.openResponseBodyRoute(domain, this.routeContracts.stdoutPath, options.streams[CC.STDOUT] as unknown as NodeJS.WritableStream, false, generation);
             this.throwIfSetupFailed();
             await this.openResponseBodyRoute(domain, this.routeContracts.stderrPath, options.streams[CC.STDERR] as unknown as NodeJS.WritableStream, false, generation);
@@ -241,10 +243,11 @@ export class Verser2RunnerTransport implements RunnerTransport {
         this.responseBodies = [];
     }
 
-    private async openRequestBodyRoute(targetId: string, path: string, body: Readable, generation: number): Promise<void> {
+    private async openRequestBodyRoute(targetId: string, routeDomain: string, path: string, body: Readable, generation: number): Promise<void> {
         this.assertCurrentGeneration(generation);
         const response = await this.requestRoute({
             targetId,
+            routeDomain,
             method: "POST",
             path,
             headers: { "content-type": "application/octet-stream" },
@@ -284,6 +287,7 @@ export class Verser2RunnerTransport implements RunnerTransport {
 
         const response = await this.requestRoute({
             targetId: route.targetId,
+            routeDomain: route.domain,
             method: "GET",
             path,
             signal: this.abortController?.signal

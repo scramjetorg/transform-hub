@@ -12,7 +12,8 @@ function makeManager(): Manager {
     const manager = new Manager({ id: "test-manager", logLevel: "error" } as any);
 
     manager.setSthBrokerTransport({
-        isRouteReady: () => false
+        isRouteReady: () => false,
+        waitForRoute: async () => undefined
     } as any);
 
     return manager;
@@ -78,6 +79,62 @@ test.serial("Manager registration captures inventory emitted during STH init", a
     });
 });
 
+test.serial("Manager registration waits for the hub route before initializing the controller", async (t) => {
+    let routeWaitedFor = false;
+    let initObservedRouteWait = false;
+    const manager = makeManager();
+
+    manager.setSthBrokerTransport({
+        waitForRoute: async (domain: string, timeoutMs?: number) => {
+            t.is(domain, "sth.hub-route-ready.scramjet.internal");
+            t.is(timeoutMs, (manager as any).config.verser2.timeouts.routeReadinessMs);
+            routeWaitedFor = true;
+        }
+    } as any);
+
+    await withPatchedInit(async function patchedInit(this: STHController) {
+        initObservedRouteWait = routeWaitedFor;
+        this.logStream = new PassThrough();
+    }, async () => {
+        await manager.handleSthRegistration({
+            id: "hub-route-ready",
+            routeDomain: "sth.hub-route-ready.scramjet.internal"
+        } as any);
+    });
+
+    t.true(initObservedRouteWait);
+    t.truthy((manager as any).sthConnectionStore.getById("hub-route-ready"));
+});
+
+test.serial("Manager registration timeout does not create partial controller state", async (t) => {
+    let initCalled = false;
+    const manager = makeManager();
+    const routeError = new Error("route readiness timeout");
+
+    manager.setSthBrokerTransport({
+        waitForRoute: async () => {
+            throw routeError;
+        }
+    } as any);
+
+    await withPatchedInit(async function patchedInit(this: STHController) {
+        initCalled = true;
+        this.logStream = new PassThrough();
+    }, async () => {
+        await t.throwsAsync(
+            manager.handleSthRegistration({
+                id: "hub-route-timeout",
+                routeDomain: "sth.hub-route-timeout.scramjet.internal"
+            } as any),
+            { is: routeError }
+        );
+    });
+
+    t.false(initCalled);
+    t.is((manager as any).sthConnectionStore.getById("hub-route-timeout"), undefined);
+    t.deepEqual((manager as any).sthInfoRegister.getHubs(), []);
+});
+
 // NOTE: re-registration inventory replacement is tested more thoroughly in
 // "Same-id re-registration replaces active STH controller instead of rejecting".
 
@@ -101,7 +158,8 @@ test.serial("Manager aggregation includes three hubs when one registers later", 
         const manager = makeManager();
 
         manager.setSthBrokerTransport({
-            isRouteReady: () => true
+            isRouteReady: () => true,
+            waitForRoute: async () => undefined
         } as any);
         (manager as any).s3Middleware = { index: { sequences: [] } };
 
@@ -133,7 +191,8 @@ test.serial("Manager aggregation readiness supports empty hub inventory without 
         const manager = makeManager();
 
         manager.setSthBrokerTransport({
-            isRouteReady: () => true
+            isRouteReady: () => true,
+            waitForRoute: async () => undefined
         } as any);
 
         await manager.handleSthRegistration({ id: "empty-hub", routeDomain: "empty-hub.test" } as any);
@@ -208,7 +267,8 @@ test.serial("Manager aggregation readiness clears inventory markers on disconnec
         const manager = makeManager();
 
         manager.setSthBrokerTransport({
-            isRouteReady: () => true
+            isRouteReady: () => true,
+            waitForRoute: async () => undefined
         } as any);
 
         await manager.handleSthRegistration({ id: "hub-1", routeDomain: "hub-1.test" } as any);
@@ -339,7 +399,8 @@ test.serial("Same-id re-registration replaces active STH controller instead of r
 
         // Use a transport where isRouteReady returns true (simulating active route).
         manager.setSthBrokerTransport({
-            isRouteReady: () => true
+            isRouteReady: () => true,
+            waitForRoute: async () => undefined
         } as any);
 
         // First registration creates a controller.
@@ -392,7 +453,8 @@ test.serial("Same-id re-registration rolls back to previous controller on init f
         const manager = makeManager();
 
         manager.setSthBrokerTransport({
-            isRouteReady: () => true
+            isRouteReady: () => true,
+            waitForRoute: async () => undefined
         } as any);
 
         // First registration succeeds.
@@ -453,6 +515,7 @@ test.serial("Manager route-change listener cleans up on route removed when route
     const routeChangeListeners: Array<(event: any) => void> = [];
     const fakeTransport = {
         isRouteReady: (domain: string) => false, // route is NOT ready → cleanup allowed
+        waitForRoute: async () => undefined,
         onRouteChange: (listener: (event: any) => void) => {
             routeChangeListeners.push(listener);
             return () => {
@@ -504,6 +567,7 @@ test.serial("Manager route-change listener does not clean up on removed when rou
     const routeChangeListeners: Array<(event: any) => void> = [];
     const fakeTransport = {
         isRouteReady: (domain: string) => true, // route IS ready → guard should skip cleanup
+        waitForRoute: async () => undefined,
         onRouteChange: (listener: (event: any) => void) => {
             routeChangeListeners.push(listener);
             return () => {
@@ -549,6 +613,7 @@ test.serial("Manager route-change listener does not clean up on degraded when ro
     const routeChangeListeners: Array<(event: any) => void> = [];
     const fakeTransport = {
         isRouteReady: (domain: string) => true, // route IS ready → skip cleanup
+        waitForRoute: async () => undefined,
         onRouteChange: (listener: (event: any) => void) => {
             routeChangeListeners.push(listener);
             return () => {
@@ -592,6 +657,7 @@ test.serial("Manager route-change listener cleans up on degraded when route is n
     const routeChangeListeners: Array<(event: any) => void> = [];
     const fakeTransport = {
         isRouteReady: (domain: string) => false, // route NOT ready → cleanup allowed
+        waitForRoute: async () => undefined,
         onRouteChange: (listener: (event: any) => void) => {
             routeChangeListeners.push(listener);
             return () => {

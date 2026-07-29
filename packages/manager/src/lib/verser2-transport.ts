@@ -138,6 +138,7 @@ export class Verser2ManagerSthBrokerTransport implements ManagerSthBrokerTranspo
         try {
             return await this.broker.request({
                 targetId: route.targetId,
+                routeDomain: route.domain,
                 method: request.method,
                 path: request.path,
                 headers: request.headers,

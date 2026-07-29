@@ -67,6 +67,107 @@ const name = packageFile.value?.name || "unknown";
 const defaultLimit = 100;
 const defaultOffset = 0;
 
+type ManagerRequestLogger = Pick<IObjectLogger, "debug" | "error">;
+export type ManagerRuntimeOptions = { logApiServers?: boolean };
+
+function boundedText(value: unknown, limit = 8192): string | undefined {
+    if (value === undefined || value === null) return undefined;
+    return String(value).slice(0, limit);
+}
+
+function safeError(error: unknown, depth = 0): Record<string, unknown> {
+    if (!(error instanceof Error)) {
+        return { causeType: typeof error };
+    }
+
+    const cause = (error as Error & { cause?: unknown }).cause;
+
+    return {
+        name: error.name,
+        message: boundedText(error.message, 2048),
+        ...(error.stack !== undefined && { stack: boundedText(error.stack) }),
+        ...(cause !== undefined && { cause: depth < 3 ? safeError(cause, depth + 1) : { message: "cause depth limit reached" } })
+    };
+}
+
+function requestPath(request: { url?: string }): string {
+    const path = String(request.url || "/").split(/[?#]/, 1)[0] || "/";
+    return path.startsWith("/") ? path : `/${path}`;
+}
+
+function requestMetadata(managerId: string, request: ParsedMessage): Record<string, unknown> {
+    const headers = request.headers || {};
+    const routeDomain = headers["x-scramjet-route-domain"];
+    const targetPath = headers["x-scramjet-route-target-path"];
+
+    return {
+        managerId,
+        method: request.method || "UNKNOWN",
+        path: requestPath(request),
+        ...(routeDomain !== undefined && { routeDomain: String(routeDomain) }),
+        ...(targetPath !== undefined && { targetPath: requestPath({ url: String(targetPath) }) })
+    };
+}
+
+/**
+ * Manager routers are dispatched both by an HTTP server and directly by
+ * Verser2 guests. Keep request observability at this shared lookup boundary.
+ */
+export function addManagerRouterLogging(router: APIRoute, managerId: string, logger: ManagerRequestLogger, logApiServers = true): APIRoute {
+    const lookup = router.lookup.bind(router);
+
+    router.lookup = (request, response, next) => {
+        const startedAt = Date.now();
+        const metadata = requestMetadata(managerId, request as ParsedMessage);
+        let completed = false;
+
+        const logFailure = (error: unknown) => {
+            logger.error("Manager API request failed", {
+                ...metadata,
+                durationMs: Date.now() - startedAt,
+                status: response.statusCode,
+                error: safeError(error)
+            });
+        };
+        const logCompletion = () => {
+            if (completed) return;
+            completed = true;
+            logger.debug("Manager API request completed", {
+                ...metadata,
+                durationMs: Date.now() - startedAt,
+                status: response.statusCode
+            });
+        };
+
+        if (logApiServers) {
+            logger.debug("Manager API request", metadata);
+            response.once?.("finish", logCompletion);
+            response.once?.("close", logCompletion);
+        }
+
+        const handleError = (error?: Error) => {
+            if (error) logFailure(error);
+            return next(error);
+        };
+
+        try {
+            const result: unknown = lookup(request, response, handleError);
+            if (result && typeof (result as Promise<unknown>).catch === "function") {
+                return (result as Promise<unknown>).catch(error => {
+                    logFailure(error);
+                    throw error;
+                });
+            }
+            return result;
+        } catch (error) {
+            logFailure(error);
+            throw error;
+        }
+    };
+
+    return router;
+}
+
 type HubInventoryState = {
     sequencesReceived: boolean;
     instancesReceived: boolean;
@@ -268,11 +369,10 @@ export class Manager implements IComponent {
 
     s3Client?: MinioClient;
 
-    constructor(_config?: ManagerConfiguration) {
+    constructor(_config?: ManagerConfiguration, runtimeOptions: ManagerRuntimeOptions = {}) {
         this._startedPromise = new Promise((res, rej) => {
             this.startHandlers = { res, rej };
         });
-        this._apiRouter = getRouter();
 
         merge(this._config, _config || {});
 
@@ -284,6 +384,22 @@ export class Manager implements IComponent {
         this.id = this._config.id;
         this.logger = new ObjLogger(this, { id: this.id });
         this.logger.logLevel = (this._config.logLevel || "info").toLocaleUpperCase() as LogLevel;
+        this._apiRouter = getRouter({
+            errorHandler: (error, request, response) => {
+                const status = typeof error.code === "number" && error.code >= 400 && error.code < 600 ? error.code : 500;
+                this.logger.error("Manager API handler failed", {
+                    managerId: this.id,
+                    method: request.method || "UNKNOWN",
+                    path: requestPath(request),
+                    status,
+                    error: safeError(error)
+                });
+
+                if (!response.headersSent) response.writeHead(status);
+                if (!response.writableEnded) response.end();
+            }
+        });
+        this._apiRouter = addManagerRouterLogging(this._apiRouter, this.id, this.logger, runtimeOptions.logApiServers !== false);
 
         this.logger.debug("Manager config: ", this.publicConfig);
 
@@ -554,6 +670,8 @@ export class Manager implements IComponent {
             this.logger.warn("Refusing STH registration with invalid verser2 enrollment token", id);
             throw new CeroError("ERR_NOT_CURRENTLY_AVAILABLE");
         }
+
+        await this.sthBrokerTransport.waitForRoute(routeDomain, this.config.verser2.timeouts.routeReadinessMs);
 
         const previousSth = this.sthConnectionStore.getById(id);
         let sth: ISTHController | undefined = previousSth;
