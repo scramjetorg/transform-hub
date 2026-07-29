@@ -17,6 +17,7 @@ export default class ReadOnlyProfileConfig extends ReadOnlyConfigFileDefault<Pro
     get token() { return this.get().token; }
     protected get log() { return this.get().log; }
     get debug() { return this.get().log.debug; }
+    get apiClients() { return this.get().log.apiClients !== false; }
     get format() { return this.get().log.format; }
     get path() { return this.file.path; }
     get(): ProfileConfigEntity {

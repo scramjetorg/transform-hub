@@ -14,6 +14,7 @@ export const profileConfigDefault: ProfileConfigEntity = {
     log: {
         debug: false,
         format: "pretty",
+        apiClients: true,
     },
 };
 

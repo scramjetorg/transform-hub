@@ -16,6 +16,7 @@ import { DataStream } from "scramjet";
 import { Writable } from "stream";
 import { createV2HttpDispatcher } from "@scramjet/api-server";
 import { MultiManagerConfig } from "../config/multi-manager-configuration";
+import type { MultiManagerOptions } from "../types/multi-manager-types";
 import { MultiManagerAPIHandler } from "./api/multi-manager-api";
 import { MultiManagerAPIV2Handler } from "./api/multi-manager-api-v2";
 import { ManagersStore } from "./manager-store";
@@ -58,6 +59,11 @@ export class MultiManager {
     private controlIngressGuests = new Map<string, VerserLocalGuestHandle>();
     private controlIngressRootGuest?: VerserLocalGuestHandle;
     private stopping = false;
+
+    /** Missing configuration preserves the historical API-server log consumption. */
+    static shouldConsumeApiServerLogs(config: Pick<MultiManagerOptions, "log">): boolean {
+        return config.log?.apiServers !== false;
+    }
 
     public get logStream(): Writable {
         return this.commonLogsPipe.getIn();
@@ -134,7 +140,9 @@ export class MultiManager {
 
         prettyLog.pipe(process.stdout);
 
-        this.apiServer.log.map((log) => this.logger.debug("API log", log));
+        if (MultiManager.shouldConsumeApiServerLogs(this.config)) {
+            this.apiServer.log.map((log) => this.logger.debug("API log", log)).resume();
+        }
 
         this.logger.info("Starting MultiManager", version);
         this.logger.debug("MultiManager config", this.config.getMasked());

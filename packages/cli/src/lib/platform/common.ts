@@ -6,6 +6,7 @@ import { configEnv, isProductionEnv } from "../../types";
 import http from "http";
 import https from "https";
 import { CapabilityUnavailableError } from "../capabilities";
+import { shouldAttachApiClientLogger } from "../api-client-logging";
 
 /**
  * Returns host client for host pointed by command options.
@@ -15,7 +16,7 @@ import { CapabilityUnavailableError } from "../capabilities";
 export const getMiddlewareClient = (): MiddlewareClient => {
     const configuration = profileManager.getProfileConfig().get();
     if (configuration.verser2) throw new CapabilityUnavailableError("Middleware-owned command");
-    const { middlewareApiUrl, log:{ debug } } = configuration;
+    const { middlewareApiUrl, log:{ debug, apiClients } } = configuration;
 
     if (!middlewareApiUrl) {
         throw new Error("Middleware API URL is not specified");
@@ -27,7 +28,7 @@ export const getMiddlewareClient = (): MiddlewareClient => {
         new ClientUtilsCustomAgent(middlewareApiUrl, new agent({ keepAlive: true }))
     );
 
-    if (debug) {
+    if (shouldAttachApiClientLogger(debug, apiClients)) {
         middlewareClient.client.addLogger({
             ok(result: any) {
                 const { status, statusText, url } = result;

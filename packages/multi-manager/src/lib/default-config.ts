@@ -65,6 +65,10 @@ export const defaultConfig: MultiManagerOptions = {
      */
     logColors: true,
 
+    log: {
+        apiServers: true
+    },
+
     /**
      * MultiManager id.
      */
@@ -127,6 +131,7 @@ export function createSettings(options: MultiManagerCommandOptions): MultiManage
     const settings = {
         logLevel: options.logLevel || defaultConfig.logLevel,
         logColors: defaultConfig.logColors && options.colors,
+        log: defaultConfig.log,
         id: options.id || defaultConfig.id,
         server: {
             apiBase: options?.serverApiBase || defaultConfig.server.apiBase,

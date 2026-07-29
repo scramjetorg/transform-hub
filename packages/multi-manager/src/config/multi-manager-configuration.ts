@@ -11,6 +11,9 @@ const DEFAULT_BUCKET_SPACE_QUOTA = 5 * 1024 * 1024 * 1024;
 const defaultMultiManagerConfig: MultiManagerOptions = {
     logLevel: "TRACE",
     logColors: true,
+    log: {
+        apiServers: true
+    },
     id: "",
     server: {
         apiBase: "/api",
@@ -92,6 +95,7 @@ export const multiManagerCliOptions = [
     { name: "serverApiHost", path: "server.apiHost", type: "string" as const },
     { name: "serverVersion", path: "server.version", type: "string" as const },
     { name: "logLevel", path: "logLevel", type: "string" as const },
+    { name: "logApiServers", path: "log.apiServers", type: "boolean" as const, negatable: true },
     { name: "manager", path: "manager", type: "json" as const },
     { name: "healtzPort", path: "monitoringServer.port", type: "number" as const },
     { name: "healtzHost", path: "monitoringServer.host", type: "string" as const },
@@ -102,6 +106,7 @@ export const multiManagerCliOptions = [
 const multiManagerConfigSchema = z.object({
     logLevel: z.string(),
     logColors: z.boolean(),
+    log: z.object({ apiServers: z.boolean() }).strict(),
     id: z.string(),
     server: z.object({
         apiBase: z.string(),
@@ -163,6 +168,7 @@ export class MultiManagerConfig extends ReadOnlyConfig<MultiManagerOptions> {
 
     get logLevel() { return this.configuration.logLevel; }
     get logColors() { return this.configuration.logColors; }
+    get log() { return this.configuration.log; }
     get id() { return this.configuration.id; }
     get server() { return this.configuration.server; }
     get manager() { return this.configuration.manager; }
@@ -205,6 +211,8 @@ export class MultiManagerConfig extends ReadOnlyConfig<MultiManagerOptions> {
                 return isLogLevel(value);
             case "logColors":
                 return typeof value === "boolean";
+            case "log":
+                return typeof value === "object" && value !== null && typeof value.apiServers === "boolean";
             case "id":
                 return null;
             case "server":
