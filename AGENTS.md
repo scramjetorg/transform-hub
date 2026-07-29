@@ -42,7 +42,7 @@
 - BDD root npm scripts (`test:bdd*`, `test:bdd-ci*`) route through the supported runner.
 - Leak detection: `reportLeakedProcesses()` runs at exit for BDD runner paths, reporting leftover STH/Host/runner/Manager/MultiManager/cucumber processes. Cleanup is current-run scoped.
 - `packages/types` generates exposed type files via `packages/types/scripts/generate.js`; its `build:only` runs that generator.
-- BDD tests often require built `dist/`, Docker images, and env like `RUNTIME_ADAPTER=process|docker`, `SCRAMJET_SPAWN_JS=1`, `SCRAMJET_TEST_LOG=1`, `SCP_ENV_VALUE=GH_CI`.
+- BDD tests often require built `dist/` and Docker images.
 - Docker-adapter BDD also needs runner image artifacts/tags; avoid running full Docker BDD unless the task requires it.
 
 ## Memory guard mode
@@ -108,13 +108,8 @@ Enable via `SCRAMJET_BDD_MEMORY_GUARD=1` or `SCRAMJET_MEMORY_GUARD=1`.  The runn
 
 **Commands:**
 ```bash
-# Focused BDD memory guard unit tests (no real scenarios; no Docker needed):
-ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" \
-  node scripts/run-ava.js \
-    scripts/test/bdd-options.spec.js \
-    scripts/test/bdd-memory-guard.spec.js \
-    scripts/test/run-bdd.spec.js \
-    scripts/test/bdd-memory-registry.spec.js --serial
+# Focused BDD memory-guard unit tests (no real scenarios; no Docker needed):
+npm run test:memory-guard-bdd-focused
 
 # Direct-mode BDD scenario run under memory guard (diagnostic/local only):
 SCRAMJET_BDD_MEMORY_GUARD=1 node scripts/run-bdd.js --mode=direct -- --name="E2E-001 TC-002"
@@ -122,6 +117,8 @@ SCRAMJET_BDD_MEMORY_GUARD=1 node scripts/run-bdd.js --mode=direct -- --name="E2E
 # Docker-mode BDD scenario run under memory guard (supported path):
 SCRAMJET_BDD_MEMORY_GUARD=1 node scripts/run-bdd.js -- --name="E2E-001 TC-002"
 ```
+
+The focused AVA BDD-memory suite validates BDD runner and guard mechanics. It is not a prerequisite for routine BDD scenario runs; run it when changing the BDD runner, options, hooks, or memory-guard code.
 
 **Environment variables (BDD):**
 | Variable | Default | Description |
