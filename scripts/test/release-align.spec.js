@@ -1341,3 +1341,512 @@ test("buildPythonPath includes src directory from resolved root", (t) => {
 	t.true(entries.length >= 1, "at least one PYTHONPATH entry");
 	t.true(entries.every(e => e.length > 0), "no empty entries");
 });
+
+// ---------------------------------------------------------------------------
+// Fixture manifest tests
+// ---------------------------------------------------------------------------
+
+test("check detects fixture dep drift in bdd/data/sequences/ and iac-test-data/", (t) => {
+	const fix = createFixture(t, {
+		version: "1.1.0",
+		included: ["@scramjet/sth", "@scramjet/host", "@scramjet/types"],
+	});
+
+	// Create a fixture manifest under bdd/data/sequences/ with a stale dep
+	const bddDir = path.join(fix.root, "bdd/data/sequences/fixture-a");
+	mkdirSync(bddDir, { recursive: true });
+	writeFileSync(path.join(bddDir, "package.json"), JSON.stringify({
+		name: "@scramjet/test-fixture-a",
+		version: "0.5.0",
+		private: true,
+		license: "ISC",
+		dependencies: {
+			"@scramjet/host": "^1.0.0",  // stale — should become ^2.0.0
+		},
+	}, null, 2) + "\n");
+
+	// Create a fixture manifest under bdd/iac-test-data/sequences/ with a stale dep
+	const iacDir = path.join(fix.root, "bdd/iac-test-data/sequences/fixture-b");
+	mkdirSync(iacDir, { recursive: true });
+	writeFileSync(path.join(iacDir, "package.json"), JSON.stringify({
+		name: "@scramjet/test-fixture-b",
+		version: "1.2.3",
+		private: true,
+		dependencies: {
+			"@scramjet/types": "1.1.0",   // exact stale — should become 2.0.0
+		},
+	}, null, 2) + "\n");
+
+	const result = runAlign(fix.root, "check");
+
+	// Should pass license (license targets are the regular packages, not fixtures)
+	t.is(result.status, 1, "check should exit 1 due to fixture dep drift");
+
+	t.true(result.stdout.includes("FIXTURE DEP DRIFT"),
+		"should report FIXTURE DEP DRIFT for fixtures");
+
+	// Fixture A: dep on @scramjet/host
+	t.true(result.stdout.includes("@scramjet/test-fixture-a") && result.stdout.includes("@scramjet/host"),
+		"fixture-a host dep drift should be reported");
+
+	// Fixture B: dep on @scramjet/types
+	t.true(result.stdout.includes("@scramjet/test-fixture-b") && result.stdout.includes("@scramjet/types"),
+		"fixture-b types dep drift should be reported");
+});
+
+test("apply updates fixture deps without changing fixture version", (t) => {
+	const fix = createFixture(t, {
+		version: "1.1.0",
+		included: ["@scramjet/sth", "@scramjet/host", "@scramjet/types"],
+	});
+
+	// Fixture in bdd/data/sequences/
+	const bddDir = path.join(fix.root, "bdd/data/sequences/fixture-x");
+	mkdirSync(bddDir, { recursive: true });
+	writeFileSync(path.join(bddDir, "package.json"), JSON.stringify({
+		name: "@scramjet/test-fixture-x",
+		version: "0.5.0",
+		private: true,
+		license: "ISC",
+		dependencies: {
+			"@scramjet/host": "^1.2.0",  // stale
+		},
+	}, null, 2) + "\n");
+
+	// Fixture in bdd/iac-test-data/sequences/
+	const iacDir = path.join(fix.root, "bdd/iac-test-data/sequences/fixture-y");
+	mkdirSync(iacDir, { recursive: true });
+	writeFileSync(path.join(iacDir, "package.json"), JSON.stringify({
+		name: "@scramjet/test-fixture-y",
+		version: "2.0.0",
+		private: true,
+		dependencies: {
+			"@scramjet/types": "~1.1.0",  // stale tilde
+		},
+	}, null, 2) + "\n");
+
+	const result = runAlign(fix.root, "apply");
+
+	t.is(result.status, 0, "apply should exit 0");
+
+	// Fixture A: version unchanged, dep updated
+	const fixtureA = readManifest(
+		path.join(fix.root, "bdd/data/sequences/fixture-x/package.json")
+	);
+	t.is(fixtureA.version, "0.5.0", "fixture version should remain unchanged");
+	t.is(fixtureA.dependencies["@scramjet/host"], "^2.0.0",
+		"fixture dep should be updated to ^2.0.0");
+
+	// Fixture B: version unchanged, dep updated
+	const fixtureB = readManifest(
+		path.join(fix.root, "bdd/iac-test-data/sequences/fixture-y/package.json")
+	);
+	t.is(fixtureB.version, "2.0.0", "iac fixture version should remain unchanged");
+	t.is(fixtureB.dependencies["@scramjet/types"], "~2.0.0",
+		"iac fixture dep should be updated to ~2.0.0 preserving prefix");
+});
+
+test("apply on fixture deps is idempotent — second apply reports no change", (t) => {
+	const fix = createFixture(t, {
+		version: "1.1.0",
+		included: ["@scramjet/sth", "@scramjet/types"],
+	});
+
+	// Fixture in bdd/data/sequences/
+	const bddDir = path.join(fix.root, "bdd/data/sequences/fixture-idem-a");
+	mkdirSync(bddDir, { recursive: true });
+	writeFileSync(path.join(bddDir, "package.json"), JSON.stringify({
+		name: "@scramjet/test-fixture-idem-a",
+		version: "0.5.0",
+		private: true,
+		dependencies: {
+			"@scramjet/types": "^1.1.0",
+		},
+	}, null, 2) + "\n");
+
+	// First apply
+	const first = runAlign(fix.root, "apply");
+	t.is(first.status, 0, "first apply should exit 0");
+
+	// Verify fixture dep was updated
+	const afterFirst = readManifest(
+		path.join(fix.root, "bdd/data/sequences/fixture-idem-a/package.json")
+	);
+	t.is(afterFirst.dependencies["@scramjet/types"], "^2.0.0",
+		"fixture dep should be ^2.0.0 after first apply");
+
+	// Second apply — should be no-op
+	const second = runAlign(fix.root, "apply");
+	t.is(second.status, 0, "second apply should exit 0");
+	t.true(second.stdout.includes("FIXTURE OK") && second.stdout.includes("no change"),
+		"second apply should report fixture deps aligned, no change");
+});
+
+test("check passes when fixtures are already aligned", (t) => {
+	const fix = createFixture(t, {
+		version: "2.0.0",
+		managerVersion: "2.0.0",
+		included: ["@scramjet/sth", "@scramjet/host", "@scramjet/types"],
+	});
+
+	// Fixture in bdd/data/sequences/ — already aligned
+	const bddDir = path.join(fix.root, "bdd/data/sequences/fixture-aligned");
+	mkdirSync(bddDir, { recursive: true });
+	writeFileSync(path.join(bddDir, "package.json"), JSON.stringify({
+		name: "@scramjet/test-fixture-aligned",
+		version: "0.1.0",
+		private: true,
+		devDependencies: {
+			"@scramjet/types": "^2.0.0",
+		},
+	}, null, 2) + "\n");
+
+	// Fixture in bdd/iac-test-data/sequences/ — already aligned
+	const iacDir = path.join(fix.root, "bdd/iac-test-data/sequences/fixture-aligned2");
+	mkdirSync(iacDir, { recursive: true });
+	writeFileSync(path.join(iacDir, "package.json"), JSON.stringify({
+		name: "test-fixture-aligned2",
+		version: "1.0.0",
+		private: true,
+		dependencies: {
+			"@scramjet/host": "2.0.0",
+		},
+	}, null, 2) + "\n");
+
+	setupLicenses(fix);
+
+	const result = runAlign(fix.root, "check");
+
+	t.is(result.status, 0, "check should exit 0 when fixtures aligned");
+	t.true(result.stdout.includes("FIXTURE OK"),
+		"should report FIXTURE OK for aligned fixtures");
+});
+
+test("apply preserves non-scramjet deps and excluded @scramjet refs in fixtures", (t) => {
+	const fix = createFixture(t, {
+		version: "1.1.0",
+		included: ["@scramjet/sth", "@scramjet/host"],
+		excluded: ["@scramjet/verser"],
+	});
+
+	// Fixture with mixed deps
+	const bddDir = path.join(fix.root, "bdd/data/sequences/fixture-mixed");
+	mkdirSync(bddDir, { recursive: true });
+	writeFileSync(path.join(bddDir, "package.json"), JSON.stringify({
+		name: "@scramjet/test-fixture-mixed",
+		version: "0.5.0",
+		private: true,
+		dependencies: {
+			"@scramjet/host": "^1.1.0",   // included — should update
+			"@scramjet/verser": "^1.0.0",  // excluded — preserve
+			"scramjet": "^4.37.0",         // external — preserve
+			"@signicode/verser2-host": "0.7.0", // @signicode — preserve
+		},
+	}, null, 2) + "\n");
+
+	const result = runAlign(fix.root, "apply");
+
+	t.is(result.status, 0, "apply should exit 0");
+
+	const manifest = readManifest(
+		path.join(fix.root, "bdd/data/sequences/fixture-mixed/package.json")
+	);
+
+	// Included-to-included updated
+	t.is(manifest.dependencies["@scramjet/host"], "^2.0.0",
+		"included dep updated to ^2.0.0");
+
+	// Excluded preserved
+	t.is(manifest.dependencies["@scramjet/verser"], "^1.0.0",
+		"excluded dep preserved");
+
+	// External preserved
+	t.is(manifest.dependencies["scramjet"], "^4.37.0",
+		"external non-scramjet dep preserved");
+
+	// @signicode preserved
+	t.is(manifest.dependencies["@signicode/verser2-host"], "0.7.0",
+		"@signicode dep preserved");
+
+	// Fixture identity fields unchanged
+	t.is(manifest.name, "@scramjet/test-fixture-mixed", "fixture name unchanged");
+	t.is(manifest.version, "0.5.0", "fixture version unchanged");
+});
+
+test("discoverFixtureManifests finds nested package.json and applies dep-only alignment", (t) => {
+	const fix = createFixture(t, {
+		version: "1.1.0",
+		included: ["@scramjet/sth", "@scramjet/host", "@scramjet/types"],
+	});
+
+	// Nested fixture under bdd/data/sequences/ (e.g., fixture-nested/lib/deep/)
+	const nestedDir = path.join(fix.root, "bdd/data/sequences/fixture-nested/lib/deep");
+	mkdirSync(nestedDir, { recursive: true });
+	writeFileSync(path.join(nestedDir, "package.json"), JSON.stringify({
+		name: "@scramjet/test-fixture-nested",
+		version: "3.2.1",
+		private: true,
+		license: "ISC",
+		dependencies: {
+			"@scramjet/host": "^1.1.0",  // stale caret
+			"@scramjet/types": "1.1.0",   // stale exact
+		},
+	}, null, 2) + "\n");
+
+	// Nested fixture under bdd/iac-test-data/sequences/ (e.g., iac-built/sub/)
+	const iacNestedDir = path.join(fix.root, "bdd/iac-test-data/sequences/iac-nested/sub/dir");
+	mkdirSync(iacNestedDir, { recursive: true });
+	writeFileSync(path.join(iacNestedDir, "package.json"), JSON.stringify({
+		name: "@scramjet/test-iac-nested",
+		version: "0.9.0",
+		private: true,
+		dependencies: {
+			"@scramjet/types": "~1.1.0",  // stale tilde
+		},
+	}, null, 2) + "\n");
+
+	// Apply
+	const applyResult = runAlign(fix.root, "apply");
+	t.is(applyResult.status, 0, "apply should exit 0");
+
+	// Verify nested fixture in bdd/data/sequences/
+	const nestedManifest = readManifest(
+		path.join(fix.root, "bdd/data/sequences/fixture-nested/lib/deep/package.json")
+	);
+	t.is(nestedManifest.name, "@scramjet/test-fixture-nested", "nested fixture name unchanged");
+	t.is(nestedManifest.version, "3.2.1", "nested fixture version unchanged");
+	t.is(nestedManifest.license, "ISC", "nested fixture license unchanged");
+	t.is(nestedManifest.dependencies["@scramjet/host"], "^2.0.0",
+		"nested fixture host dep updated to ^2.0.0");
+	t.is(nestedManifest.dependencies["@scramjet/types"], "2.0.0",
+		"nested fixture types dep updated to 2.0.0 preserving exact prefix");
+
+	// Verify nested fixture in bdd/iac-test-data/sequences/
+	const iacNestedManifest = readManifest(
+		path.join(fix.root, "bdd/iac-test-data/sequences/iac-nested/sub/dir/package.json")
+	);
+	t.is(iacNestedManifest.name, "@scramjet/test-iac-nested", "iac nested fixture name unchanged");
+	t.is(iacNestedManifest.version, "0.9.0", "iac nested fixture version unchanged");
+	t.is(iacNestedManifest.dependencies["@scramjet/types"], "~2.0.0",
+		"iac nested fixture types dep updated to ~2.0.0 preserving tilde prefix");
+
+	// Set up licenses so check doesn't fail on license drift
+	setupLicenses(fix);
+
+	// Idempotence: check passes after alignment
+	const checkResult = runAlign(fix.root, "check");
+	t.is(checkResult.status, 0, "check should exit 0 after alignment");
+	t.true(checkResult.stdout.includes("FIXTURE OK"),
+		"should report FIXTURE OK for aligned nested fixtures");
+});
+
+test("check fails closed on unknown @scramjet/* dependency in fixture", (t) => {
+	const fix = createFixture(t, {
+		version: "1.1.0",
+		included: ["@scramjet/sth", "@scramjet/host"],
+	});
+
+	// Fixture with a @scramjet/* dep that is neither included nor excluded
+	const bddDir = path.join(fix.root, "bdd/data/sequences/fixture-unknown");
+	mkdirSync(bddDir, { recursive: true });
+	writeFileSync(path.join(bddDir, "package.json"), JSON.stringify({
+		name: "@scramjet/test-fixture-unknown",
+		version: "0.1.0",
+		private: true,
+		dependencies: {
+			"@scramjet/host": "^1.1.0",                         // included — normal
+			"@scramjet/unknown-package": "^1.0.0",               // unknown @scramjet — fail
+		},
+	}, null, 2) + "\n");
+
+	const result = runAlign(fix.root, "check");
+
+	t.is(result.status, 1, "check should exit 1 due to unknown @scramjet dep");
+	t.true(result.stdout.includes("Unexpected @scramjet dependency"),
+		"should report Unexpected @scramjet dependency");
+	t.true(result.stdout.includes("@scramjet/unknown-package"),
+		"should name the unknown package");
+	t.true(result.stdout.includes("fixture-unknown"),
+		"should name the fixture manifest");
+
+	// Apply must also fail closed
+	const applyResult = runAlign(fix.root, "apply");
+	t.is(applyResult.status, 1, "apply should exit 1 due to unknown @scramjet dep");
+	t.true(applyResult.stdout.includes("Apply blocked"),
+		"apply should report blocked");
+});
+
+test("fixture manifests with same name at different paths both get checked and applied", (t) => {
+	const fix = createFixture(t, {
+		version: "1.1.0",
+		included: ["@scramjet/sth", "@scramjet/host", "@scramjet/types"],
+	});
+
+	// Two fixtures with the same package name at different nested paths
+	// under bdd/data/sequences/
+	const sharedName = "@scramjet/shared-fixture-name";
+
+	// First copy at bdd/data/sequences/same-name-a/package.json
+	const dirA = path.join(fix.root, "bdd/data/sequences/same-name-a");
+	mkdirSync(dirA, { recursive: true });
+	writeFileSync(path.join(dirA, "package.json"), JSON.stringify({
+		name: sharedName,
+		version: "1.0.0",
+		private: true,
+		license: "ISC",
+		dependencies: { "@scramjet/host": "^1.1.0" }, // stale
+	}, null, 2) + "\n");
+
+	// Second copy at bdd/data/sequences/sub/same-name-b/package.json
+	const dirB = path.join(fix.root, "bdd/data/sequences/sub/same-name-b");
+	mkdirSync(dirB, { recursive: true });
+	writeFileSync(path.join(dirB, "package.json"), JSON.stringify({
+		name: sharedName,
+		version: "2.0.0",
+		private: true,
+		license: "MIT",
+		dependencies: { "@scramjet/types": "~1.1.0" }, // stale tilde
+	}, null, 2) + "\n");
+
+	// ── check must report both ──
+	const checkBefore = runAlign(fix.root, "check");
+	t.is(checkBefore.status, 1, "check should exit 1 with stale fixture deps");
+
+	// Count FIXTURE DEP DRIFT lines — two distinct fixtures means two drift lines
+	const driftLines = (checkBefore.stdout.match(/FIXTURE DEP DRIFT/g) || []).length;
+	t.is(driftLines, 2, "check should report two FIXTURE DEP DRIFT lines (one per path)");
+
+	// Both drift lines must mention the shared name
+	// The shared name should appear at least in the two FIXTURE DEP DRIFT lines
+	const sharedOccurrences = checkBefore.stdout.split(sharedName).length - 1;
+	t.true(sharedOccurrences >= 2,
+		`shared fixture name "${sharedName}" should appear at least twice in output (found ${sharedOccurrences})`);
+
+	// ── apply updates both ──
+	const applyResult = runAlign(fix.root, "apply");
+	t.is(applyResult.status, 0, "apply should exit 0");
+
+	// Verify first copy
+	const manifestA = readManifest(path.join(fix.root, "bdd/data/sequences/same-name-a/package.json"));
+	t.is(manifestA.name, sharedName, "fixture A name unchanged");
+	t.is(manifestA.version, "1.0.0", "fixture A version unchanged");
+	t.is(manifestA.license, "ISC", "fixture A license unchanged");
+	t.is(manifestA.dependencies["@scramjet/host"], "^2.0.0",
+		"fixture A host dep updated to ^2.0.0");
+
+	// Verify second copy
+	const manifestB = readManifest(
+		path.join(fix.root, "bdd/data/sequences/sub/same-name-b/package.json")
+	);
+	t.is(manifestB.name, sharedName, "fixture B name unchanged");
+	t.is(manifestB.version, "2.0.0", "fixture B version unchanged");
+	t.is(manifestB.license, "MIT", "fixture B license unchanged");
+	t.is(manifestB.dependencies["@scramjet/types"], "~2.0.0",
+		"fixture B types dep updated to ~2.0.0");
+
+	// ── idempotent check passes after alignment ──
+	setupLicenses(fix);
+	const checkAfter = runAlign(fix.root, "check");
+	t.is(checkAfter.status, 0, "check should exit 0 after alignment");
+	t.true(checkAfter.stdout.includes("FIXTURE OK"),
+		"should report FIXTURE OK for aligned same-name fixtures");
+});
+
+// ---------------------------------------------------------------------------
+// Glob-based manifest discovery tests
+// ---------------------------------------------------------------------------
+
+test("boundary.discoverManifests with WORKSPACE_MANIFEST_GLOBS finds packages/* and bdd/package.json", (t) => {
+	const root = mkdtempSync(path.join(tmpdir(), "relalign-ws-glob-"));
+	t.teardown(() => { try { rmSync(root, { force: true, recursive: true }); } catch { /* ok */ } });
+
+	// Create packages/sth/package.json (valid workspace manifest)
+	mkdirSync(path.join(root, "packages/sth"), { recursive: true });
+	writeFileSync(path.join(root, "packages/sth/package.json"),
+		JSON.stringify({ name: "@scramjet/sth", version: "1.0.0" }, null, 2) + "\n");
+
+	// Create packages/host/package.json (another workspace)
+	mkdirSync(path.join(root, "packages/host"), { recursive: true });
+	writeFileSync(path.join(root, "packages/host/package.json"),
+		JSON.stringify({ name: "@scramjet/host", version: "1.0.0" }, null, 2) + "\n");
+
+	// Create bdd/package.json (workspace)
+	mkdirSync(path.join(root, "bdd"), { recursive: true });
+	writeFileSync(path.join(root, "bdd/package.json"),
+		JSON.stringify({ name: "scramjet-bdd", version: "1.0.0" }, null, 2) + "\n");
+
+	// Create a node_modules distraction that must be excluded
+	mkdirSync(path.join(root, "packages/sth/node_modules/some-dep"), { recursive: true });
+	writeFileSync(path.join(root, "packages/sth/node_modules/some-dep/package.json"),
+		JSON.stringify({ name: "some-dep", version: "1.0.0" }, null, 2) + "\n");
+
+	const results = boundary.discoverManifests(boundary.WORKSPACE_MANIFEST_GLOBS, { cwd: root });
+
+	t.true(results.includes("packages/sth/package.json"),
+		"finds packages/sth/package.json");
+	t.true(results.includes("packages/host/package.json"),
+		"finds packages/host/package.json");
+	t.true(results.includes("bdd/package.json"),
+		"finds bdd/package.json");
+
+	// Exactly 3 — no node_modules entries
+	t.is(results.length, 3, "exactly 3 workspace manifests, node_modules excluded");
+
+	// No path contains node_modules
+	for (const r of results) {
+		t.false(r.includes("node_modules"), `result "${r}" must not contain node_modules`);
+	}
+});
+
+test("boundary.discoverManifests with FIXTURE_MANIFEST_GLOBS finds nested fixtures and excludes node_modules", (t) => {
+	const root = mkdtempSync(path.join(tmpdir(), "relalign-fix-glob-"));
+	t.teardown(() => { try { rmSync(root, { force: true, recursive: true }); } catch { /* ok */ } });
+
+	// Top-level fixture
+	mkdirSync(path.join(root, "bdd/data/sequences/fix-top"), { recursive: true });
+	writeFileSync(path.join(root, "bdd/data/sequences/fix-top/package.json"),
+		JSON.stringify({ name: "@scramjet/fix-top", version: "0.1.0" }, null, 2) + "\n");
+
+	// Deeply nested fixture (simulating built/ output)
+	mkdirSync(path.join(root, "bdd/data/sequences/fix-nested/lib/deep"), { recursive: true });
+	writeFileSync(path.join(root, "bdd/data/sequences/fix-nested/lib/deep/package.json"),
+		JSON.stringify({ name: "@scramjet/fix-nested", version: "0.2.0" }, null, 2) + "\n");
+
+	// Fixture in iac-test-data
+	mkdirSync(path.join(root, "bdd/iac-test-data/sequences/iac-top"), { recursive: true });
+	writeFileSync(path.join(root, "bdd/iac-test-data/sequences/iac-top/package.json"),
+		JSON.stringify({ name: "iac-top-seq", version: "1.0.0" }, null, 2) + "\n");
+
+	// Nested iac fixture
+	mkdirSync(path.join(root, "bdd/iac-test-data/sequences/iac-sub/dir"), { recursive: true });
+	writeFileSync(path.join(root, "bdd/iac-test-data/sequences/iac-sub/dir/package.json"),
+		JSON.stringify({ name: "iac-sub-seq", version: "2.0.0" }, null, 2) + "\n");
+
+	// node_modules inside fixture dir — must be excluded
+	mkdirSync(path.join(root, "bdd/data/sequences/fix-top/node_modules/hidden"), { recursive: true });
+	writeFileSync(path.join(root, "bdd/data/sequences/fix-top/node_modules/hidden/package.json"),
+		JSON.stringify({ name: "hidden", version: "1.0.0" }, null, 2) + "\n");
+
+	// node_modules at sequences level — must be excluded
+	mkdirSync(path.join(root, "bdd/data/sequences/node_modules/bad"), { recursive: true });
+	writeFileSync(path.join(root, "bdd/data/sequences/node_modules/bad/package.json"),
+		JSON.stringify({ name: "bad", version: "0.0.1" }, null, 2) + "\n");
+
+	const results = boundary.discoverManifests(boundary.FIXTURE_MANIFEST_GLOBS, { cwd: root });
+
+	t.true(results.includes("bdd/data/sequences/fix-top/package.json"),
+		"finds top-level fixture");
+	t.true(results.includes("bdd/data/sequences/fix-nested/lib/deep/package.json"),
+		"finds deeply nested fixture");
+	t.true(results.includes("bdd/iac-test-data/sequences/iac-top/package.json"),
+		"finds iac-test-data fixture");
+	t.true(results.includes("bdd/iac-test-data/sequences/iac-sub/dir/package.json"),
+		"finds nested iac-test-data fixture");
+
+	// Exactly 4 — no node_modules entries
+	t.is(results.length, 4, "exactly 4 fixture manifests, node_modules excluded");
+
+	for (const r of results) {
+		t.false(r.includes("node_modules"), `result "${r}" must not contain node_modules`);
+	}
+});
