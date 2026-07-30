@@ -123,6 +123,9 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.0",
+	"@cucumber/cucumber": "^7.3.2",
+    "@cucumber/messages": "^14.0.0",
+    "@cucumber/pretty-formatter": "^1.0.0",
     "@istanbuljs/nyc-config-typescript": "^1.0.2",
     "@npmcli/run-script": "4.2.1",
     "@types/node": "^22.15.0",
@@ -135,6 +138,7 @@
     "npm": "10",
     "nyc": "^17.1.0",
     "semver": "^7.7.1",
+	"scramjet-bdd": "file:bdd",
     "tar": "^6.2.1",
     "toposort": "^2.0.2",
     "ts-node": "^10.9.2",

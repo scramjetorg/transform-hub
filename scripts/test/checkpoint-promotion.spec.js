@@ -22,32 +22,36 @@ test("reuses only an immutable checkpoint with the matching identity", (t) => {
 		checkpointReference: REFERENCE,
 		currentSha: SOURCE_SHA,
 		plan: plan(),
-		publisherConfigured: false,
+		publisherConfigured: true,
 		sourceSha: SOURCE_SHA,
 	});
 
-	t.is(decision.mode, "dry-run-reuse");
+	t.is(decision.mode, "live-promote");
 	t.is(decision.reference, REFERENCE);
 	t.is(decision.pointer.pointerTag, "cp-v1-devel");
 });
 
-test("records a dry-run create decision when no matching checkpoint exists", (t) => {
-	const decision = promotionDecision({
+test("fails closed when publisher configuration or immutable output is absent", (t) => {
+	t.throws(() => promotionDecision({
 		currentSha: SOURCE_SHA,
 		plan: plan(),
 		publisherConfigured: false,
 		sourceSha: SOURCE_SHA,
-	});
+	}), { message: /scoped GHCR publisher/i });
 
-	t.is(decision.mode, "dry-run-create");
-	t.is(decision.pointer.immutableTag, `cp-v1-${IDENTITY_DIGEST.slice(7)}`);
+	t.throws(() => promotionDecision({
+		currentSha: SOURCE_SHA,
+		plan: plan(),
+		publisherConfigured: true,
+		sourceSha: SOURCE_SHA,
+	}), { message: /verified immutable/i });
 });
 
-test("rejects stale SHA, identity drift, and unimplemented live publication", (t) => {
+test("rejects stale SHA and identity drift", (t) => {
 	t.throws(() => promotionDecision({
 		currentSha: "d".repeat(40),
 		plan: plan(),
-		publisherConfigured: false,
+		publisherConfigured: true,
 		sourceSha: SOURCE_SHA,
 	}), { message: /stale checkpoint pointer/i });
 
@@ -56,14 +60,8 @@ test("rejects stale SHA, identity drift, and unimplemented live publication", (t
 		checkpointReference: REFERENCE,
 		currentSha: SOURCE_SHA,
 		plan: plan(),
-		publisherConfigured: false,
+		publisherConfigured: true,
 		sourceSha: SOURCE_SHA,
 	}), { message: /identity does not match/i });
 
-	t.throws(() => promotionDecision({
-		currentSha: SOURCE_SHA,
-		plan: plan(),
-		publisherConfigured: true,
-		sourceSha: SOURCE_SHA,
-	}), { message: /not implemented/i });
 });

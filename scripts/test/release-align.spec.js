@@ -508,6 +508,21 @@ test("check fails when excluded package has drifted to target version", (t) => {
 		"should report excluded boundary violation");
 });
 
+test("license-only excluded bdd may preserve an independently managed target version", (t) => {
+	const fix = createFixture(t, {
+		included: ["@scramjet/sth"],
+		excluded: ["scramjet-bdd", "@scramjet/verser"],
+	});
+	const bdd = readManifest(fix.packages.get("scramjet-bdd").manifestPath);
+	bdd.version = "2.0.0";
+	writeFileSync(fix.packages.get("scramjet-bdd").manifestPath, JSON.stringify(bdd, null, 2) + "\n");
+
+	const result = runAlign(fix.root, "dry-run");
+
+	t.false(result.stdout.includes('EXCLUDED BOUNDARY VIOLATION: excluded package "scramjet-bdd"'));
+	t.false(result.stdout.includes('EXCLUDED BOUNDARY VIOLATION: excluded package "@scramjet/verser"'));
+});
+
 test("check fails when included package has excluded dep at target version", (t) => {
 	const fix = createFixture(t, {
 		version: "1.1.0",
@@ -1196,42 +1211,10 @@ test("runner Docker build stages include runner-python", (t) => {
 		"prebuild:docker uses cp -r for runner-python");
 });
 
-test("build-docker-runner-python workflow prepares build context", (t) => {
-	// Verify the CI workflow has the required pre-build steps
-	const workflow = readFileSync(
-		path.resolve(__dirname, "../../.github/workflows/build-docker-runner-python.yml"), "utf8"
-	);
-
-	// Must have Node setup
-	t.true(workflow.includes("setup-node"),
-		"CI workflow sets up Node");
-
-	// Must install dependencies
-	t.true(workflow.includes("npm ci") || workflow.includes("npm install"),
-		"CI workflow installs dependencies");
-
-	// Must build runner JS tree into dist/docker-runner/
-	t.true(workflow.includes("build-all.js") && workflow.includes("dist/docker-runner"),
-		"CI workflow builds runner JS tree into dist/docker-runner/");
-
-	// Must stage runner-python alongside the JS tree
-	t.true(workflow.includes("cp -r packages/runner-python"),
-		"CI workflow stages runner-python via cp -r");
-
-	// Docker build context must be the repo root (.) so the prepared
-	// ./dist/docker-runner/ is available inside the builder.
-	t.true(workflow.includes("docker build"),
-		"CI workflow runs docker build");
-	const dockerCmd = workflow.split("\n").find(l => l.includes("docker build"));
-	t.true(dockerCmd.endsWith(" .") || dockerCmd.endsWith(" .\\"),
-		"Docker build context is repo root (.) not ../../");
-
-	// Verify Dockerfile still requires the staged runner-python context
-	const dockerfile = readFileSync(
-		path.resolve(__dirname, "../../packages/runner-python/Dockerfile"), "utf8"
-	);
-	t.true(dockerfile.includes("COPY ./dist/docker-runner/runner-python"),
-		"Dockerfile COPY expects runner-python from dist/docker-runner/");
+test("runner-python image staging remains a package/Dockerfile contract, not a legacy workflow fixture", (t) => {
+	t.false(existsSync(path.resolve(__dirname, "../../.github/workflows/build-docker-runner-python.yml")));
+	const dockerfile = readFileSync(path.resolve(__dirname, "../../packages/runner-python/Dockerfile"), "utf8");
+	t.true(dockerfile.includes("COPY ./dist/docker-runner/runner-python"));
 });
 
 test("resolveRunnerPythonRoot falls back to local paths when not installed", (t) => {

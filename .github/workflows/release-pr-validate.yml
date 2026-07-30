@@ -75,7 +75,6 @@ jobs:
 
       - id: prerelease_publish
         name: Release PR / publish prereleases to GitHub Packages
-        if: ${{ vars.SCRAMJET_RELEASE_PRERELEASE_PUBLISH == 'true' }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.SCRAMJET_RELEASE_PRERELEASE_PACKAGES_TOKEN }}
           PRERELEASE_PUBLISH_ENABLED: ${{ vars.SCRAMJET_RELEASE_PRERELEASE_PUBLISH }}
@@ -125,13 +124,10 @@ jobs:
         run: |
           test -n "$PUBLISHER_MANIFEST"
           printf '%s' "$PUBLISHER_MANIFEST" | base64 --decode > "$RUNNER_TEMP/release-prerelease-manifest.json"
-          node scripts/release-prerelease-bdd.js verify --manifest "$RUNNER_TEMP/release-prerelease-manifest.json" --expected-checksum "$EXPECTED_CHECKSUM" --dry-run
-          if [ "$PUBLISHED" = "true" ] && [ "$BDD_REGISTRY_ENABLED" = "true" ]; then
-            echo "live=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "live=false" >> "$GITHUB_OUTPUT"
-            echo "Verified publisher manifest only; registry-backed prerelease BDD is dry-run disabled."
-          fi
+          node scripts/release-prerelease-bdd.js verify --manifest "$RUNNER_TEMP/release-prerelease-manifest.json" --expected-checksum "$EXPECTED_CHECKSUM"
+          test "$PUBLISHED" = "true"
+          test "$BDD_REGISTRY_ENABLED" = "true"
+          echo "live=true" >> "$GITHUB_OUTPUT"
 
       - name: Release PR / install verified prereleases and run API BDD
         if: ${{ steps.trusted_manifest.outputs.live == 'true' }}

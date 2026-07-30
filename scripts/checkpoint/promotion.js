@@ -6,41 +6,35 @@ const { pointerUpdatePlan } = require("./provenance.js");
 const REFERENCE = /^ghcr\.io\/scramjetorg\/transform-hub\/ci-deps@sha256:[a-f0-9]{64}$/i;
 const DIGEST = /^sha256:[a-f0-9]{64}$/i;
 
-function promotionDecision({ plan, sourceSha, currentSha, checkpointReference, checkpointIdentityDigest, publisherConfigured }) {
+function promotionDecision({ branch = "devel", plan, sourceSha, currentSha, checkpointReference, checkpointIdentityDigest, publisherConfigured }) {
     if (!plan?.dryRun || !DIGEST.test(plan.identityDigest)) {
         throw new Error("Checkpoint promotion requires a valid dry-run plan.");
     }
 
     const pointer = pointerUpdatePlan({
-        branch: "devel",
+        branch,
         currentSha,
         identityDigest: plan.identityDigest,
         repository: plan.promotion.repository,
         sourceSha
     });
 
-    if (publisherConfigured) {
-        throw new Error("Live GHCR pointer update is not implemented; refusing to publish.");
-    }
-
-    if (!checkpointReference && !checkpointIdentityDigest) {
-        return { mode: "dry-run-create", pointer };
-    }
+    if (!publisherConfigured) throw new Error("Checkpoint promotion requires the scoped GHCR publisher configuration.");
     if (!REFERENCE.test(checkpointReference || "") || !DIGEST.test(checkpointIdentityDigest || "")) {
-        throw new Error("Existing checkpoint must provide an immutable reference and identity digest.");
+        throw new Error("Checkpoint promotion requires a verified immutable checkpoint reference and identity digest.");
     }
     if (checkpointIdentityDigest.toLowerCase() !== plan.identityDigest) {
-        throw new Error("Existing checkpoint identity does not match the validated devel source.");
+        throw new Error("Existing checkpoint identity does not match the validated trusted source.");
     }
 
-    return { mode: "dry-run-reuse", pointer, reference: checkpointReference };
+    return { mode: "live-promote", pointer, reference: checkpointReference };
 }
 
 function parseArgs(args) {
     const options = {};
     for (let index = 0; index < args.length; index++) {
-        if (!["--current-sha", "--plan", "--source-sha"].includes(args[index]) || !args[index + 1]) {
-            throw new Error("Usage: promotion.js --plan <checkpoint-plan.json> --source-sha <sha> --current-sha <sha>");
+        if (!["--branch", "--current-sha", "--plan", "--source-sha"].includes(args[index]) || !args[index + 1]) {
+            throw new Error("Usage: promotion.js --plan <checkpoint-plan.json> --source-sha <sha> --current-sha <sha> [--branch <trusted-branch>]");
         }
         options[args[index].slice(2).replace(/-([a-z])/g, (_, letter) => letter.toUpperCase())] = args[++index];
     }
@@ -52,6 +46,7 @@ function main() {
     try {
         const options = parseArgs(process.argv.slice(2));
         const decision = promotionDecision({
+            branch: options.branch,
             checkpointIdentityDigest: process.env.CHECKPOINT_IDENTITY_DIGEST,
             checkpointReference: process.env.CHECKPOINT_REFERENCE,
             currentSha: options.currentSha,

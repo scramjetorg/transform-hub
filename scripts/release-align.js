@@ -39,6 +39,7 @@ const {
 	MANIFEST_EXCLUDE_GLOBS,
 	isIncluded,
 	isExcluded,
+	isLicenseOnly,
 	isScramjet,
 	isSignicode,
 	isLicenseTarget,
@@ -357,7 +358,7 @@ function computeChangePlan() {
 				const deps = manifest[section];
 				if (!deps || typeof deps !== "object") continue;
 				for (const [depName, depRange] of Object.entries(deps)) {
-					if (isExcluded(depName)) {
+					if (isExcluded(depName) && !isLicenseOnly(depName)) {
 						// Check the excluded dep hasn't been mutated to a 2.0.0 range
 						const verPart = depRange.replace(/^[\^~]/, "");
 						if (verPart === RELEASE_VERSION) {
@@ -371,8 +372,9 @@ function computeChangePlan() {
 				}
 			}
 		} else if (isExcluded(name)) {
-			// Excluded packages are invariants — check they haven't drifted
-			if (manifest.version === RELEASE_VERSION) {
+			// Strictly excluded packages are invariants. License-only packages
+			// remain excluded even when independently versioned at the target.
+			if (!isLicenseOnly(name) && manifest.version === RELEASE_VERSION) {
 				errors.push(
 					`EXCLUDED BOUNDARY VIOLATION: excluded package "${name}" ` +
 					`has version "${manifest.version}" matching target — ` +
@@ -436,7 +438,7 @@ function computeChangePlan() {
 			const deps = manifest[section];
 			if (!deps || typeof deps !== "object") continue;
 			for (const [depName, depRange] of Object.entries(deps)) {
-				if (isExcluded(depName)) {
+				if (isExcluded(depName) && !isLicenseOnly(depName)) {
 					const verPart = depRange.replace(/^[\^~]/, "");
 					if (verPart === RELEASE_VERSION) {
 						errors.push(

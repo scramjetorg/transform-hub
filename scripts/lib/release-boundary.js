@@ -148,7 +148,9 @@ const EXCLUDED_PACKAGES = new Set([
  * Subset of EXCLUDED_PACKAGES that still receive MIT license treatment.
  * These packages remain excluded from version/dep alignment, publish
  * boundaries, and workspace groups, but get the standard MIT LICENSE
- * file and updated manifest license field.
+ * file and updated manifest license field. They may already carry the target
+ * version through an independently managed fixture/base update; that version
+ * is preserved rather than treated as alignment drift.
  */
 const LICENSE_ONLY_PACKAGES = new Set([
 	"scramjet-bdd",
@@ -179,6 +181,17 @@ function isExcluded(name) {
 }
 
 /**
+ * Check whether an excluded package is license-only. License-only packages
+ * stay outside release publishing and dependency alignment even when their
+ * independently managed version equals the release target.
+ * @param {string} name
+ * @returns {boolean}
+ */
+function isLicenseOnly(name) {
+	return LICENSE_ONLY_PACKAGES.has(name);
+}
+
+/**
  * Check whether a name is a @scramjet/* package (regardless of inclusion).
  * @param {string} name
  * @returns {boolean}
@@ -200,7 +213,7 @@ function isSignicode(name) {
 /**
  * Check whether a package should receive MIT license treatment.
  * This covers release-alignment included packages plus the
- * licensing-only excluded packages (runner-python, scramjet-bdd).
+ * licensing-only excluded package `scramjet-bdd`.
  * @param {string} name
  * @returns {boolean}
  */
@@ -330,6 +343,7 @@ module.exports = {
 	MANIFEST_EXCLUDE_GLOBS,
 	isIncluded,
 	isExcluded,
+	isLicenseOnly,
 	isScramjet,
 	isSignicode,
 	isLicenseTarget,

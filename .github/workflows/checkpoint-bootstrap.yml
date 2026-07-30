@@ -1,8 +1,6 @@
-name: Checkpoint bootstrap dry run
+name: Checkpoint developer dry run
 
 on:
-  push:
-    branches: [main, devel, feat/manager-oss]
   workflow_dispatch:
     inputs:
       branch:
@@ -20,7 +18,7 @@ concurrency:
 
 jobs:
   checkpoint-dry-run:
-    name: Checkpoint / bootstrap
+    name: Checkpoint / developer dry run
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:

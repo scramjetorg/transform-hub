@@ -2,7 +2,7 @@ name: Pull request validation
 
 on:
   pull_request:
-    branches: [main, devel]
+    branches: [main, devel, "release/**"]
   merge_group:
     types: [checks_requested]
 
@@ -181,3 +181,30 @@ jobs:
 
       - name: Run Docker-backed API BDD validation
         run: npm run test:bdd-ci-api-node
+
+  bdd-legacy-coverage:
+    # Durable named coverage replacing the removed Node 18 reusable workflows:
+    # hub, API-topic, unified JS/Python, and process-adapter paths.
+    name: CI / durable legacy BDD coverage
+    needs: [package-build]
+    permissions:
+      contents: read
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha || github.sha }}
+
+      - uses: ./.github/actions/setup-workspace
+        with:
+          cache: "false"
+
+      - name: Run legacy-equivalent focused BDD coverage
+        run: |
+          npm run test:bdd-ci-hub
+          npm run test:bdd-ci-api-topic
+          RUNTIME_ADAPTER=process npm run test:bdd-ci-node
+          npm run test:unified-py
+          npm run test:unified-js

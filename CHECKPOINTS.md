@@ -1,8 +1,9 @@
 # CI dependency checkpoints
 
-`checkpoint-bootstrap.yml` currently produces a **dry-run plan only** for the
-trusted `main`, `devel`, and `feat/manager-oss` branches. It does not push an
-image, update a pointer, upload an artifact, or accept pull-request/fork input.
+`checkpoint-bootstrap.yml` is a manual **developer dry-run** that produces a
+plan only for the trusted `main`, `devel`, and `feat/manager-oss` branches. It
+does not push an image, update a pointer, upload an artifact, or accept
+pull-request/fork input.
 
 ## Identity and consumption
 
@@ -28,13 +29,15 @@ Checkpoint images may contain only `/opt/transform-hub/npm-cache` for a fresh
 
 ## Promotion and remote prerequisites
 
-Before any future pointer update, the publisher must re-read the trusted branch
-SHA after acquiring its non-cancellable branch pointer lock. A mismatch fails
-closed; retries may reuse only an immutable image whose identity and statement
-digests match exactly.
+Trusted `devel` and post-publication `main` workflows build the npm cache image,
+publish an immutable `cp-v1-<identity-sha256>` tag, inspect its labels and GHCR
+digest, then re-read the trusted branch SHA immediately before publishing the
+mutable pointer. The pointer digest must equal the immutable digest. A missing
+scoped publisher configuration, credential, digest, label, or SHA match fails
+the job; it is never treated as a dry-run success.
 
-Real GHCR publication is intentionally not enabled here. It requires a
-same-repository, short-lived publisher credential restricted to
-`ghcr.io/scramjetorg/transform-hub/ci-deps`, protected branch/ruleset controls,
-and retention for immutable digests referenced by active pointers. Forks may
-only read verified public digests and can never publish or promote checkpoints.
+Real GHCR publication requires `SCRAMJET_GHCR_SCOPED_PUBLISHER=true`, the
+same-repository `GITHUB_TOKEN` with `packages: write`, protected
+branch/ruleset controls, and retention for immutable digests referenced by
+active pointers. Forks may only read verified public digests and can never
+publish or promote checkpoints.

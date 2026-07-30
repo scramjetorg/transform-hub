@@ -22,7 +22,7 @@ function setupActionSource() {
 test("base PR workflow is read-only, cancellable, and uses a fresh no-cache workspace", (t) => {
 	const source = workflowSource();
 	t.deepEqual(checkWorkflowSource(source, ".github/workflows/pr-validate.yml"), []);
-	t.true(source.includes("branches: [main, devel]"));
+	t.true(source.includes("branches: [main, devel, \"release/**\"]"));
 	t.true(source.includes("merge_group:"));
 	t.true(source.includes("format('pr-{0}'"));
 	t.true(source.includes("format('merge-group-{0}'"));
@@ -74,14 +74,21 @@ test("AVA, build, and targeted Docker BDD jobs are isolated and ordered", (t) =>
 	t.true(source.includes("bdd-node:"));
 	t.true(source.includes("bdd-python:"));
 	t.true(source.includes("bdd-api:"));
-	t.is((source.match(/needs: \[package-build\]/g) || []).length, 3);
+	t.is((source.match(/needs: \[package-build\]/g) || []).length, 4);
 	t.true(source.includes("npm run test:bdd-ci-node"));
 	t.true(source.includes("npm run test:bdd-ci-python"));
 	t.true(source.includes("npm run test:bdd-ci-api-node"));
+	t.true(source.includes("bdd-legacy-coverage:"));
+	t.true(source.includes("name: CI / durable legacy BDD coverage"));
+	t.true(source.includes("npm run test:bdd-ci-hub"));
+	t.true(source.includes("npm run test:bdd-ci-api-topic"));
+	t.true(source.includes("RUNTIME_ADAPTER=process npm run test:bdd-ci-node"));
+	t.true(source.includes("npm run test:unified-py"));
+	t.true(source.includes("npm run test:unified-js"));
 	t.true(source.includes("PR outputs remain disposable"));
-	t.is((source.match(/uses: actions\/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1/g) || []).length, 6);
-	t.is((source.match(/uses: \.\/\.github\/actions\/setup-workspace/g) || []).length, 6);
-	t.is((source.match(/cache: "false"/g) || []).length, 6);
+	t.is((source.match(/uses: actions\/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1/g) || []).length, 7);
+	t.is((source.match(/uses: \.\/\.github\/actions\/setup-workspace/g) || []).length, 7);
+	t.is((source.match(/cache: "false"/g) || []).length, 7);
 	t.false(source.includes("upload-artifact"));
 	t.false(source.includes("download-artifact"));
 	t.false(source.includes("actions/cache"));
@@ -100,17 +107,17 @@ test("Node 22/npm-only setup helper configures dependencies after caller checkou
 test("PR and merge-group workflow has explicit fork-safe read-only permissions and stale-run cancellation", (t) => {
 	const source = workflowSource();
 	t.true(source.includes("pull_request:"));
-	t.true(source.includes("branches: [main, devel]"));
+	t.true(source.includes("branches: [main, devel, \"release/**\"]"));
 	t.true(source.includes("merge_group:"));
 	t.true(source.includes("types: [checks_requested]"));
 	t.true(source.includes("format('pr-{0}'"));
 	t.true(source.includes("format('merge-group-{0}'"));
 	t.true(source.includes("cancel-in-progress: true"));
-	t.is((source.match(/permissions:\n\s+contents: read/g) || []).length, 6);
-	t.is((source.match(/uses: actions\/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1/g) || []).length, 6);
-	t.is((source.match(/persist-credentials: false/g) || []).length, 6);
-	t.is((source.match(/uses: \.\/\.github\/actions\/setup-workspace/g) || []).length, 6);
-	t.is((source.match(/cache: "false"/g) || []).length, 6);
+	t.is((source.match(/permissions:\n\s+contents: read/g) || []).length, 7);
+	t.is((source.match(/uses: actions\/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1/g) || []).length, 7);
+	t.is((source.match(/persist-credentials: false/g) || []).length, 7);
+	t.is((source.match(/uses: \.\/\.github\/actions\/setup-workspace/g) || []).length, 7);
+	t.is((source.match(/cache: "false"/g) || []).length, 7);
 	t.false(source.includes("pull_request_target"));
 	t.false(source.includes("packages: write"));
 	t.false(source.includes("id-token: write"));
@@ -124,7 +131,7 @@ test("every PR job checks out an explicit ref before invoking the local setup he
 	const helper = "uses: ./.github/actions/setup-workspace";
 	let offset = 0;
 
-	for (let job = 0; job < 6; job++) {
+	for (let job = 0; job < 7; job++) {
 		const checkoutIndex = source.indexOf(checkout, offset);
 		const helperIndex = source.indexOf(helper, offset);
 		t.true(checkoutIndex >= offset, `job ${job + 1} must check out first`);

@@ -8,10 +8,11 @@ const { checkWorkflowSource } = require("../check-workflow-policy.js");
 
 const workflowPath = resolve(__dirname, "..", "..", ".github", "workflows", "checkpoint-bootstrap.yml");
 
-test("checkpoint workflow accepts only trusted sources and remains dry-run only", (t) => {
+test("checkpoint developer workflow is manual, trusted, and dry-run only", (t) => {
 	const source = readFileSync(workflowPath, "utf8");
 	t.deepEqual(checkWorkflowSource(source, ".github/workflows/checkpoint-bootstrap.yml"), []);
-	t.true(source.includes("branches: [main, devel, feat/manager-oss]"));
+	t.true(source.includes("workflow_dispatch:"));
+	t.false(source.includes("push:"));
 	t.true(source.includes("type: choice"));
 	t.true(source.includes("case \"$branch\" in main|devel|feat/manager-oss)"));
 	t.true(source.includes("cancel-in-progress: false"));

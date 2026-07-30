@@ -23,9 +23,9 @@ test("devel checkpoint promotion is isolated from cancellable validation and use
 	t.true(source.includes("ref: ${{ github.event.workflow_run.head_sha }}"));
 	t.true(source.includes("persist-credentials: false"));
 	t.true(source.includes("git ls-remote origin refs/heads/devel"));
-	t.true(source.includes("scripts/checkpoint/promotion.js"));
+	t.true(source.includes("scripts/checkpoint/publish.js"));
+	t.true(source.includes("packages: write"));
+	t.true(source.includes("docker login ghcr.io"));
 	t.false(source.includes("pull_request_target"));
-	t.false(source.includes("packages: write"));
 	t.false(source.includes("id-token: write"));
-	t.false(source.includes("docker push"));
 });

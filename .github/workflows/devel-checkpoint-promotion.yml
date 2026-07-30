@@ -19,6 +19,7 @@ jobs:
     if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'devel' && github.event.workflow_run.head_repository.full_name == github.repository }}
     permissions:
       contents: read
+      packages: write
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
@@ -32,16 +33,19 @@ jobs:
         with:
           cache: "false"
 
-      - name: Re-read devel SHA and make fail-closed dry-run promotion decision
+      - name: Devel / build, publish, verify, and promote checkpoint
         shell: bash
         env:
-          CHECKPOINT_IDENTITY_DIGEST: ${{ vars.SCRAMJET_DEVEL_CHECKPOINT_IDENTITY_DIGEST }}
-          CHECKPOINT_REFERENCE: ${{ vars.SCRAMJET_DEVEL_CHECKPOINT_REFERENCE }}
+          GITHUB_TOKEN: ${{ github.token }}
           SCRAMJET_GHCR_SCOPED_PUBLISHER: ${{ vars.SCRAMJET_GHCR_SCOPED_PUBLISHER }}
         run: |
           current_sha="$(git ls-remote origin refs/heads/devel | cut -f1)"
           source_sha="$(git rev-parse HEAD)"
           test -n "$current_sha"
+          test "$SCRAMJET_GHCR_SCOPED_PUBLISHER" = "true"
+          test -n "$GITHUB_TOKEN"
           node scripts/checkpoint/plan.js --dry-run --branch devel --source-sha "$source_sha" --current-sha "$current_sha" --output "$RUNNER_TEMP/checkpoint-promotion"
-          node scripts/checkpoint/promotion.js --plan "$RUNNER_TEMP/checkpoint-promotion/checkpoint-plan.v1.json" --source-sha "$source_sha" --current-sha "$current_sha"
+          printf '%s' "$GITHUB_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+          trap 'docker logout ghcr.io' EXIT
+          node scripts/checkpoint/publish.js --plan "$RUNNER_TEMP/checkpoint-promotion/checkpoint-plan.v1.json" --branch devel --source-sha "$source_sha" --current-sha "$current_sha" --npm-cache "$HOME/.npm"
           rm -rf node_modules

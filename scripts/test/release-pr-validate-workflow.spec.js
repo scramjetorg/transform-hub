@@ -59,7 +59,7 @@ test("release PR prerelease publication is guarded, serialized, and isolated to 
 	t.is((source.match(/github\.event\.pull_request\.head\.ref == 'devel'/g) || []).length, 3);
 	t.is((source.match(/github\.event\.pull_request\.base\.ref == 'main'/g) || []).length, 3);
 	t.true(source.includes("packages: write"));
-	t.true(source.includes("SCRAMJET_RELEASE_PRERELEASE_PUBLISH == 'true'"));
+	t.true(source.includes('test "$PRERELEASE_PUBLISH_ENABLED" = "true"'));
 	t.true(source.includes("SCRAMJET_RELEASE_PRERELEASE_PACKAGES_TOKEN"));
 	t.true(source.includes("SCRAMJET_GH_PACKAGES_PRERELEASE_PUBLISHER"));
 	t.true(source.includes("https://npm.pkg.github.com"));
@@ -82,6 +82,7 @@ test("release PR BDD consumes only verified publisher output and exact prereleas
 	t.true(source.includes("prerelease-manifest-sha256"));
 	t.true(source.includes("PUBLISHER_MANIFEST"));
 	t.true(source.includes("release-prerelease-bdd.js verify"));
+	t.false(source.includes("release-prerelease-bdd.js verify --manifest \"$RUNNER_TEMP/release-prerelease-manifest.json\" --expected-checksum \"$EXPECTED_CHECKSUM\" --dry-run"));
 	t.true(source.includes("release-prerelease-bdd.js prepare"));
 	t.true(source.includes("release-prerelease-bdd.js verify-lock"));
 	t.true(source.includes("release-prerelease-bdd.js activate"));
@@ -89,6 +90,9 @@ test("release PR BDD consumes only verified publisher output and exact prereleas
 	t.true(source.includes("npm --prefix .release-prerelease-bdd ci --ignore-scripts"));
 	t.true(source.includes("npm run test:bdd-ci-api-node"));
 	t.true(source.includes("BDD_NODE_IMAGE"));
+	t.true(source.includes('test "$PUBLISHED" = "true"'));
+	t.true(source.includes('test "$BDD_REGISTRY_ENABLED" = "true"'));
+	t.false(source.includes("live=false"));
 	t.false(source.includes("download-artifact"));
 	t.false(source.includes("upload-artifact"));
 	t.false(source.includes("id-token: write"));
