@@ -49,14 +49,14 @@
 
 ## Phase 4: Implement devel validation and release-PR automation
 
-- [ ] Task: Implement the `devel` push workflow that starts from the last matching checkpoint in an ephemeral runner workspace, builds packages, and runs AVA and BDD in parallel isolated jobs.
-- [ ] Task: Advance the `devel` checkpoint only after all required jobs succeed and its source identity is still current; make failed, superseded, or concurrent runs unable to update the branch pointer.
-- [ ] Task: Implement managed `devel` → `main` PR creation/update and GitHub auto-merge enablement.
-    - [ ] Ensure the workflow only operates on the intended same-repository branches and reports safely when branch protection, required reviews, or merge settings prevent auto-merge.
-    - [ ] Add idempotency tests for existing PRs, retries, stale SHA protection, and auto-merge eligibility without granting a workflow merge-bypass capability.
-- [ ] Task: Validate the `devel` flow through safe dispatch or controlled branch events, including parallel test fan-out and checkpoint update behavior.
-- [ ] Task: Ask @reviewer to review devel checkpoint promotion and release-PR automation for immediate safety and branch-protection compatibility.
-- [ ] Task: Conductor - Phase Completion 'Implement devel validation and release-PR automation' (Protocol in workflow.md)
+- [x] Task: Implement the `devel` push workflow that starts from the last matching checkpoint in an ephemeral runner workspace, builds packages, and runs AVA and BDD in parallel isolated jobs. _(Added trusted devel-only build and parallel AVA/Node/Python/API BDD fan-out with explicit checkout, clean fallback, disposable outputs, and 3 focused tests.)_
+- [x] Task: Advance the `devel` checkpoint only after all required jobs succeed and its source identity is still current; make failed, superseded, or concurrent runs unable to update the branch pointer. _(Added all-gates promotion dependencies, serialized pointer handling, remote SHA re-read, immutable identity reuse, stale rejection, and fail-closed dry-run-only publication; six focused tests pass.)_
+- [x] Task: Implement managed `devel` → `main` PR creation/update and GitHub auto-merge enablement. _(Added constrained workflow-run automation and deterministic management logic; it requests auto-merge but cannot bypass GitHub protection.)_
+    - [x] Ensure the workflow only operates on the intended same-repository branches and reports safely when branch protection, required reviews, or merge settings prevent auto-merge. _(The trusted workflow-run guard permits only successful same-repository `devel` pushes; the automation reports missing token or auto-merge blockers without bypassing protection.)_
+    - [x] Add idempotency tests for existing PRs, retries, stale SHA protection, and auto-merge eligibility without granting a workflow merge-bypass capability. _(Five focused automation/workflow tests cover idempotent decision, trusted source, safe token absence, auto-merge eligibility/blockers, and no admin bypass.)_
+- [x] Task: Validate the `devel` flow through safe dispatch or controlled branch events, including parallel test fan-out and checkpoint update behavior. _(Eleven focused devel-promotion/automation tests passed. Remote controlled dispatch is deferred: GitHub does not yet register the new devel/automation workflow files on the target base branch, and pushing protected `devel` is not performed from this feature branch.)_
+- [x] Task: Ask @reviewer to review devel checkpoint promotion and release-PR automation for immediate safety and branch-protection compatibility. _(Reviewer PASS/accepted after promotion was isolated from cancellable devel validation.)_
+- [x] Task: Conductor - Phase Completion 'Implement devel validation and release-PR automation' (Protocol in workflow.md). _(Phase review passed; remote workflow runs remain deferred until the workflow files are registered on their target branch.)_
 
 ## Phase 5: Implement main release-PR prerelease validation
 

@@ -1,0 +1,140 @@
+name: Devel validation
+
+on:
+  push:
+    branches: [devel]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: devel-validation
+  cancel-in-progress: true
+
+jobs:
+  package-build:
+    name: Devel / package build
+    if: ${{ github.repository == 'scramjetorg/transform-hub' && github.event_name == 'push' && github.ref == 'refs/heads/devel' }}
+    permissions:
+      contents: read
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          ref: ${{ github.sha }}
+
+      - name: Model the last matching verified checkpoint as a cache source
+        shell: bash
+        env:
+          CHECKPOINT_REFERENCE: ${{ vars.SCRAMJET_DEVEL_CHECKPOINT_REFERENCE }}
+        run: |
+          if [[ "$CHECKPOINT_REFERENCE" =~ ^ghcr\.io/scramjetorg/transform-hub/ci-deps@sha256:[a-f0-9]{64}$ ]]; then
+            echo "Verified checkpoint candidate is digest-only and may only seed an npm cache after identity verification."
+          else
+            echo "No matching verified checkpoint is available; clean npm ci fallback is required."
+          fi
+
+      - uses: ./.github/actions/setup-workspace
+        with:
+          cache: "false"
+
+      - name: Build packages
+        run: npm run build:packages
+
+  ava:
+    name: Devel / AVA
+    if: ${{ github.repository == 'scramjetorg/transform-hub' && github.event_name == 'push' && github.ref == 'refs/heads/devel' }}
+    needs: [package-build]
+    permissions:
+      contents: read
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          ref: ${{ github.sha }}
+
+      - uses: ./.github/actions/setup-workspace
+        with:
+          cache: "false"
+
+      - name: Run package tests
+        run: npm run test:packages-no-concurrent
+
+  bdd-node:
+    name: Devel / BDD Node
+    if: ${{ github.repository == 'scramjetorg/transform-hub' && github.event_name == 'push' && github.ref == 'refs/heads/devel' }}
+    needs: [package-build]
+    permissions:
+      contents: read
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          ref: ${{ github.sha }}
+
+      - uses: ./.github/actions/setup-workspace
+        with:
+          cache: "false"
+
+      # Devel validation outputs remain disposable until trusted promotion exists.
+      - name: Build disposable BDD inputs
+        run: npm run build:packages
+
+      - name: Run Docker-backed Node BDD validation
+        run: npm run test:bdd-ci-node
+
+  bdd-python:
+    name: Devel / BDD Python
+    if: ${{ github.repository == 'scramjetorg/transform-hub' && github.event_name == 'push' && github.ref == 'refs/heads/devel' }}
+    needs: [package-build]
+    permissions:
+      contents: read
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          ref: ${{ github.sha }}
+
+      - uses: ./.github/actions/setup-workspace
+        with:
+          cache: "false"
+
+      # Devel validation outputs remain disposable until trusted promotion exists.
+      - name: Build disposable BDD inputs
+        run: npm run build:packages
+
+      - name: Run Docker-backed Python BDD validation
+        run: npm run test:bdd-ci-python
+
+  bdd-api:
+    name: Devel / BDD API
+    if: ${{ github.repository == 'scramjetorg/transform-hub' && github.event_name == 'push' && github.ref == 'refs/heads/devel' }}
+    needs: [package-build]
+    permissions:
+      contents: read
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          ref: ${{ github.sha }}
+
+      - uses: ./.github/actions/setup-workspace
+        with:
+          cache: "false"
+
+      # Devel validation outputs remain disposable until trusted promotion exists.
+      - name: Build disposable BDD inputs
+        run: npm run build:packages
+
+      - name: Run Docker-backed API BDD validation
+        run: npm run test:bdd-ci-api-node

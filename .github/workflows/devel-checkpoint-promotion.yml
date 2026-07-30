@@ -1,0 +1,47 @@
+name: Devel checkpoint promotion
+
+on:
+  workflow_run:
+    workflows: ["Devel validation"]
+    types: [completed]
+    branches: [devel]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: checkpoint-pointer-devel
+  cancel-in-progress: false
+
+jobs:
+  checkpoint-promotion:
+    name: Devel / checkpoint promotion
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'devel' && github.event.workflow_run.head_repository.full_name == github.repository }}
+    permissions:
+      contents: read
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      # The validated same-repository workflow-run SHA is the only source input.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - uses: ./.github/actions/setup-workspace
+        with:
+          cache: "false"
+
+      - name: Re-read devel SHA and make fail-closed dry-run promotion decision
+        shell: bash
+        env:
+          CHECKPOINT_IDENTITY_DIGEST: ${{ vars.SCRAMJET_DEVEL_CHECKPOINT_IDENTITY_DIGEST }}
+          CHECKPOINT_REFERENCE: ${{ vars.SCRAMJET_DEVEL_CHECKPOINT_REFERENCE }}
+          SCRAMJET_GHCR_SCOPED_PUBLISHER: ${{ vars.SCRAMJET_GHCR_SCOPED_PUBLISHER }}
+        run: |
+          current_sha="$(git ls-remote origin refs/heads/devel | cut -f1)"
+          source_sha="$(git rev-parse HEAD)"
+          test -n "$current_sha"
+          node scripts/checkpoint/plan.js --dry-run --branch devel --source-sha "$source_sha" --current-sha "$current_sha" --output "$RUNNER_TEMP/checkpoint-promotion"
+          node scripts/checkpoint/promotion.js --plan "$RUNNER_TEMP/checkpoint-promotion/checkpoint-plan.v1.json" --source-sha "$source_sha" --current-sha "$current_sha"
+          rm -rf node_modules
