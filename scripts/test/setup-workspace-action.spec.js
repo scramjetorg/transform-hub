@@ -9,7 +9,6 @@ const ACTION_PATH = resolve(
 	".github", "actions", "setup-workspace", "action.yml"
 );
 
-const CHECKOUT_SHA = "3d3c42e5aac5ba805825da76410c181273ba90b1";
 const SETUP_NODE_SHA = "820762786026740c76f36085b0efc47a31fe5020";
 
 function loadLines() {
@@ -178,20 +177,12 @@ test("runs.using is composite", (t) => {
 	);
 });
 
-test("inputs define ref (required) and cache (optional, default false)", (t) => {
+test("inputs define cache (optional, default false) without a checkout ref", (t) => {
 	const lines = loadLines();
 	const inputsBlock = blockUnder(lines, "inputs");
 	t.truthy(inputsBlock, "inputs block must exist");
 
-	const refIdx = inputsBlock.findIndex((l) => /^\s*ref:\s*$/.test(l.trim()));
-	t.true(refIdx >= 0, "inputs.ref must be defined");
-
-	const refBlock = inputsBlock.slice(refIdx, refIdx + 6);
-	t.true(refBlock.some((l) => /required:\s*true/.test(l)), "inputs.ref must be required");
-	t.true(
-		refBlock.some((l) => /description:\s*(>|\|)?/.test(l.trim())),
-		"inputs.ref must have a description"
-	);
+	t.false(inputsBlock.some((l) => /^\s*ref:\s*$/.test(l.trim())), "setup helper must not perform checkout");
 
 	const cacheIdx = inputsBlock.findIndex((l) => /^\s*cache:\s*$/.test(l.trim()));
 	t.true(cacheIdx >= 0, "inputs.cache must be defined");
@@ -204,22 +195,10 @@ test("inputs define ref (required) and cache (optional, default false)", (t) => 
 	);
 });
 
-test("checkout step uses actions/checkout at the correct SHA with persist-credentials: false", (t) => {
+test("setup helper has no checkout step because callers check out before invoking it", (t) => {
 	const steps = parseSteps(loadLines());
 	t.truthy(steps, "steps must exist");
-	t.true(steps.length >= 4, `expected at least 4 steps, got ${steps.length}`);
-
-	const checkout = steps.find((s) => {
-		const uses = stepUses(s);
-		return uses && uses.startsWith("actions/checkout@");
-	});
-	t.truthy(checkout, "checkout step must exist");
-	t.is(stepUses(checkout), `actions/checkout@${CHECKOUT_SHA}`, "checkout must pin v7.0.1 SHA");
-
-	const withVals = stepWith(checkout);
-	t.truthy(withVals, "checkout step must have with:");
-	t.is(withVals["persist-credentials"], false, "persist-credentials must be false");
-	t.is(withVals.ref, "${{ inputs.ref }}", "checkout ref must use inputs.ref");
+	t.is(steps.some((s) => (stepUses(s) || "").startsWith("actions/checkout@")), false);
 });
 
 test("setup-node step uses actions/setup-node at the correct SHA with Node 22", (t) => {

@@ -79,6 +79,7 @@ test("AVA, build, and targeted Docker BDD jobs are isolated and ordered", (t) =>
 	t.true(source.includes("npm run test:bdd-ci-python"));
 	t.true(source.includes("npm run test:bdd-ci-api-node"));
 	t.true(source.includes("PR outputs remain disposable"));
+	t.is((source.match(/uses: actions\/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1/g) || []).length, 6);
 	t.is((source.match(/uses: \.\/\.github\/actions\/setup-workspace/g) || []).length, 6);
 	t.is((source.match(/cache: "false"/g) || []).length, 6);
 	t.false(source.includes("upload-artifact"));
@@ -86,13 +87,13 @@ test("AVA, build, and targeted Docker BDD jobs are isolated and ordered", (t) =>
 	t.false(source.includes("actions/cache"));
 });
 
-test("Node 22/npm-only setup helper uses immutable action revisions and never persists credentials", (t) => {
+test("Node 22/npm-only setup helper configures dependencies after caller checkout", (t) => {
 	const source = setupActionSource();
-	t.regex(source, /actions\/checkout@[a-f0-9]{40}/);
-	t.true(source.includes("persist-credentials: false"));
 	t.regex(source, /actions\/setup-node@[a-f0-9]{40}/);
 	t.true(source.includes('node-version: "22"'));
 	t.true(source.includes("npm ci"));
+	t.false(source.includes("actions/checkout@"));
+	t.false(source.includes("inputs.ref"));
 	t.false(source.includes("yarn"));
 });
 
@@ -106,6 +107,8 @@ test("PR and merge-group workflow has explicit fork-safe read-only permissions a
 	t.true(source.includes("format('merge-group-{0}'"));
 	t.true(source.includes("cancel-in-progress: true"));
 	t.is((source.match(/permissions:\n\s+contents: read/g) || []).length, 6);
+	t.is((source.match(/uses: actions\/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1/g) || []).length, 6);
+	t.is((source.match(/persist-credentials: false/g) || []).length, 6);
 	t.is((source.match(/uses: \.\/\.github\/actions\/setup-workspace/g) || []).length, 6);
 	t.is((source.match(/cache: "false"/g) || []).length, 6);
 	t.false(source.includes("pull_request_target"));
@@ -113,6 +116,24 @@ test("PR and merge-group workflow has explicit fork-safe read-only permissions a
 	t.false(source.includes("id-token: write"));
 	t.false(source.includes("secrets."));
 	t.false(source.includes("yarn"));
+});
+
+test("every PR job checks out an explicit ref before invoking the local setup helper", (t) => {
+	const source = workflowSource();
+	const checkout = "uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1";
+	const helper = "uses: ./.github/actions/setup-workspace";
+	let offset = 0;
+
+	for (let job = 0; job < 6; job++) {
+		const checkoutIndex = source.indexOf(checkout, offset);
+		const helperIndex = source.indexOf(helper, offset);
+		t.true(checkoutIndex >= offset, `job ${job + 1} must check out first`);
+		t.true(helperIndex > checkoutIndex, `job ${job + 1} must invoke setup after checkout`);
+		const block = source.slice(checkoutIndex, helperIndex);
+		t.true(block.includes("persist-credentials: false"), `job ${job + 1} checkout must not persist credentials`);
+		t.true(block.includes("ref: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha || github.sha }}"), `job ${job + 1} checkout must use the event SHA`);
+		offset = helperIndex + helper.length;
+	}
 });
 
 test("PR outputs remain disposable and the repository security scan is connected without claiming external enforcement", (t) => {

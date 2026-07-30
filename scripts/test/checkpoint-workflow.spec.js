@@ -18,6 +18,12 @@ test("checkpoint workflow accepts only trusted sources and remains dry-run only"
 	t.true(source.includes("git ls-remote origin"));
 	t.true(source.includes("--dry-run"));
 	t.true(source.includes("rm -rf node_modules"));
+	const checkoutIndex = source.indexOf("uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1");
+	const helperIndex = source.indexOf("uses: ./.github/actions/setup-workspace");
+	t.true(checkoutIndex > source.indexOf("id: source"));
+	t.true(helperIndex > checkoutIndex);
+	t.true(source.slice(checkoutIndex, helperIndex).includes("persist-credentials: false"));
+	t.true(source.slice(checkoutIndex, helperIndex).includes("ref: ${{ steps.source.outputs.branch }}"));
 	t.false(source.includes("pull_request_target"));
 	t.false(source.includes("packages: write"));
 	t.false(source.includes("id-token: write"));

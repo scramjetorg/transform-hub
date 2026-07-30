@@ -21,11 +21,15 @@ jobs:
     steps:
       # The protected organization-required security workflow remains mandatory.
       # This workflow never grants fork code credentials or promotion capability.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha || github.sha }}
+
       - uses: ./.github/actions/setup-workspace
         with:
           # Always disabled for PR/merge-group code, including same-repository PRs.
           cache: "false"
-          ref: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha || github.sha }}
 
       - name: Model optional digest-only checkpoint eligibility
         shell: bash
@@ -74,10 +78,14 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha || github.sha }}
+
       - uses: ./.github/actions/setup-workspace
         with:
           cache: "false"
-          ref: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha || github.sha }}
 
       - name: Run pre-build package tests
         run: npm run test:packages-no-concurrent
@@ -90,10 +98,14 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha || github.sha }}
+
       - uses: ./.github/actions/setup-workspace
         with:
           cache: "false"
-          ref: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha || github.sha }}
 
       - name: Build packages
         run: npm run build:packages
@@ -106,10 +118,14 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha || github.sha }}
+
       - uses: ./.github/actions/setup-workspace
         with:
           cache: "false"
-          ref: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha || github.sha }}
 
       # PR outputs remain disposable: no build artifact or cache crosses jobs.
       - name: Build disposable BDD inputs
@@ -126,10 +142,14 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha || github.sha }}
+
       - uses: ./.github/actions/setup-workspace
         with:
           cache: "false"
-          ref: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha || github.sha }}
 
       # PR outputs remain disposable: no build artifact or cache crosses jobs.
       - name: Build disposable BDD inputs
@@ -146,10 +166,14 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha || github.sha }}
+
       - uses: ./.github/actions/setup-workspace
         with:
           cache: "false"
-          ref: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha || github.sha }}
 
       # PR outputs remain disposable: no build artifact or cache crosses jobs.
       - name: Build disposable BDD inputs

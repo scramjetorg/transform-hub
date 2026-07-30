@@ -37,10 +37,14 @@ jobs:
           case "$branch" in main|devel|feat/manager-oss) ;; *) echo "Untrusted checkpoint branch" >&2; exit 1 ;; esac
           printf 'branch=%s\n' "$branch" >> "$GITHUB_OUTPUT"
 
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          ref: ${{ steps.source.outputs.branch }}
+
       - uses: ./.github/actions/setup-workspace
         with:
           cache: "false"
-          ref: ${{ steps.source.outputs.branch }}
 
       - name: Verify current branch SHA and produce immutable checkpoint plan
         shell: bash
