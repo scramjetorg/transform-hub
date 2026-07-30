@@ -13,7 +13,7 @@
 - [x] Task: Establish the release-history evidence baseline. Reconciled in `release-history.md` on 2026-07-30.
     - [x] Identify the public 1.0.1 release point, associated tags or published artifacts, and the Git history range through the planned 2.0.0 release. The committed 1.0.1 baseline, ancestry, and public-metadata verification gap are recorded in `release-history.md`.
     - [x] Record dated milestones, merged track outcomes, package changes, and known breaking changes that require release-note treatment. Curated source-backed milestones and migration candidates are recorded in `release-history.md`.
-- [ ] Task: Conductor - Phase Completion 'Establish Release Scope and Review Surface' (Protocol in workflow.md)
+- [x] Task: Conductor - Phase Completion 'Establish Release Scope and Review Surface' (Protocol in workflow.md). Checkpoint commits `ecd71645` (scope evidence) and `14cb2fbd` (draft PR/review record) were pushed to the dedicated branch; the split is required because GitHub cannot create a pull request before the branch has a commit differing from its base.
 
 ### Phase 1 validation record
 
