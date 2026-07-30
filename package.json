@@ -147,6 +147,7 @@
   },
   "workspaces": {
     "packages": [
+      "bdd/",
       "packages/adapter-docker",
       "packages/adapter-kubernetes",
       "packages/adapter-process",
