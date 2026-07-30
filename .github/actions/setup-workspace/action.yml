@@ -1,0 +1,57 @@
+name: Setup workspace
+description: >
+  Check out a repository at a caller-supplied ref, install Node 22,
+  verify the toolchain, and run a pristine `npm ci`.
+
+  The `ref` input is required — callers must supply an explicit branch,
+  tag, or commit SHA to prevent accidental default-branch checkout.
+
+  The `cache` input defaults to false and should only be enabled for
+  trusted callers (push, release, or scheduled workflows) to mitigate
+  supply-chain risk from cache poisoning.
+
+  Credentials are not persisted. node_modules is never handed off
+  across jobs.
+
+inputs:
+  ref:
+    description: >
+      Git ref (branch, tag, or commit SHA) to check out.  Required
+      to enforce explicit checkout targets.
+    required: true
+  cache:
+    description: >
+      Enable npm dependency caching.  Set to "true" only when the
+      caller is a trusted workflow (push, release, or schedule) or
+      when the caller has independently evaluated the cache-poisoning
+      risk.
+    required: false
+    default: "false"
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with:
+        ref: ${{ inputs.ref }}
+        persist-credentials: false
+
+    - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+      with:
+        node-version: "22"
+        cache: ${{ inputs.cache == 'true' && 'npm' || '' }}
+        cache-dependency-path: package-lock.json
+
+    - name: Verify Node.js version and npm availability
+      shell: bash
+      run: |
+        MAJOR=$(node -e "process.stdout.write(process.version.slice(1).split('.')[0])")
+        if [ "$MAJOR" -ne 22 ]; then
+          echo "Node.js major version is $MAJOR, expected 22"
+          exit 1
+        fi
+        npm --version >/dev/null 2>&1 || { echo "npm not available"; exit 1; }
+
+    - name: Install dependencies
+      shell: bash
+      run: npm ci

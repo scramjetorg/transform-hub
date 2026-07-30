@@ -1,0 +1,59 @@
+name: Checkpoint bootstrap dry run
+
+on:
+  push:
+    branches: [main, devel, feat/manager-oss]
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: Trusted branch to verify
+        required: true
+        type: choice
+        options: [main, devel, feat/manager-oss]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: checkpoint-bootstrap-${{ inputs.branch || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  checkpoint-dry-run:
+    name: Checkpoint / bootstrap
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Select trusted source branch
+        id: source
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_BRANCH: ${{ inputs.branch }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          branch="$REF_NAME"
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then branch="$INPUT_BRANCH"; fi
+          case "$branch" in main|devel|feat/manager-oss) ;; *) echo "Untrusted checkpoint branch" >&2; exit 1 ;; esac
+          printf 'branch=%s\n' "$branch" >> "$GITHUB_OUTPUT"
+
+      - uses: ./.github/actions/setup-workspace
+        with:
+          cache: "false"
+          ref: ${{ steps.source.outputs.branch }}
+
+      - name: Verify current branch SHA and produce immutable checkpoint plan
+        shell: bash
+        env:
+          BRANCH: ${{ steps.source.outputs.branch }}
+        run: |
+          current_sha="$(git ls-remote origin "refs/heads/$BRANCH" | cut -f1)"
+          source_sha="$(git rev-parse HEAD)"
+          test -n "$current_sha"
+          node scripts/checkpoint/plan.js --dry-run --branch "$BRANCH" --source-sha "$source_sha" --current-sha "$current_sha" --output "$RUNNER_TEMP/checkpoint-plan"
+          rm -rf node_modules
+
+      - name: Record dry-run-only remote prerequisites
+        run: |
+          echo "No image, cache, artifact, package, or pointer is published by this workflow."
+          echo "Real GHCR promotion requires a trusted same-repository publisher credential restricted to ci-deps."
