@@ -107,9 +107,9 @@
 - [x] Task: Complete production-focused review and remediate in-scope findings.
     - [x] Request configured reviewer assessment of the specification, plan outcomes, licensing boundary, release tooling, and documentation evidence.
     - [x] Record safe deferred findings with their rationale; escalate material strategic blockers only when reviewer output requires it.
-- [ ] Task: Finalize the release pull request.
-    - [ ] Commit each completed phase on the dedicated branch, push phase checkpoints, and post verification results as pull-request comments.
-    - [ ] Ensure the draft pull request targets the captured base branch, has the approved specification as its description, and is ready for review only after final verification passes.
+- [x] Task: Finalize the release pull request.
+    - [x] Commit each completed phase on the dedicated branch, push phase checkpoints, and post verification results as pull-request comments. Phase 6 implementation commit `215556ea` was pushed and its verification evidence was posted to PR #59: <https://github.com/0rail/transform-hub/pull/59#issuecomment-5131695049>.
+    - [x] Ensure the draft pull request targets the captured base branch, has the approved specification as its description, and is ready for review only after final verification passes. PR #59 remains a draft against `feat/manager-oss` with `spec.md` as its description.
 - [ ] Task: Conductor - Phase Completion 'Release Verification and Pull-Request Finalization' (Protocol in workflow.md)
 
 ### Phase 6 validation record
