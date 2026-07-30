@@ -84,6 +84,13 @@
     "output": "manager/running.md"
   },
   {
+    "id": "enterprise-overview",
+    "title": "Enterprise offerings",
+    "slug": "/enterprise/overview",
+    "source": "docs-source/enterprise/overview.md",
+    "output": "enterprise/overview.md"
+  },
+  {
     "id": "sequences-packaging",
     "title": "Packaging and deploying sequences",
     "slug": "/sequences/packaging",

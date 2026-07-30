@@ -66,3 +66,4 @@ Legacy `GET /api/v1/health` remains available for backwards-compatible callers.
 - [Connecting Hubs](connecting-hubs.md) — register Hubs with the Manager.
 - [Transform Hub core concepts](../transform-hub/core-concepts.md) for background on Hub and Manager architecture.
 - [CLI usage patterns](../cli/usage.md) for interacting with the Manager from the command line.
+- [Enterprise offerings](../enterprise/overview.md) — RBAC, token authorization, large-scale MultiManager, and multi-organization capabilities.

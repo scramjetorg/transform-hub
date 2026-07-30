@@ -7,4 +7,3 @@
 ## Contents
 
 - [index.md](index.md)
-

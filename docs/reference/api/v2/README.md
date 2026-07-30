@@ -12,4 +12,3 @@
 - [root.md](root.md)
 - [sequence.md](sequence.md)
 - [space.md](space.md)
-

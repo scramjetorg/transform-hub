@@ -12,4 +12,3 @@
 - [reference-api-v2.json](reference-api-v2.json)
 - [reference-cli.json](reference-cli.json)
 - [reference-typescript.json](reference-typescript.json)
-

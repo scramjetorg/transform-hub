@@ -8,4 +8,3 @@
 
 - [Legacy](legacy/README.md)
 - [client-usage.md](client-usage.md)
-

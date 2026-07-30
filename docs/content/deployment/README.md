@@ -9,4 +9,3 @@
 - [docker-adapter.md](docker-adapter.md)
 - [kubernetes-adapter.md](kubernetes-adapter.md)
 - [process-adapter.md](process-adapter.md)
-

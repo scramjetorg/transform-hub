@@ -11,4 +11,3 @@
 - [core-concepts.md](core-concepts.md)
 - [getting-started.md](getting-started.md)
 - [overview.md](overview.md)
-

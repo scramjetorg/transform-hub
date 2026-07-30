@@ -9,4 +9,3 @@
 This directory contains a preserved hand-authored `README.md`. The generated navigation index is available at [`README.index.md`](README.index.md).
 
 _This directory is empty._
-

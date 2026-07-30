@@ -10,4 +10,3 @@
 - [Reference](reference/README.md)
 - [Sidebars](sidebars/README.md)
 - [metadata.json](metadata.json)
-

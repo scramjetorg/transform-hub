@@ -7,4 +7,3 @@
 ## Contents
 
 - [v1-api-client.md](v1-api-client.md)
-

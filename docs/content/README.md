@@ -10,10 +10,10 @@
 - [CLI](cli/README.md)
 - [Deployment](deployment/README.md)
 - [Development](development/README.md)
+- [Enterprise](enterprise/README.md)
 - [Examples](examples/README.md)
 - [Intro](intro/README.md)
 - [Manager](manager/README.md)
 - [Sequences](sequences/README.md)
 - [Testing](testing/README.md)
 - [Transform Hub](transform-hub/README.md)
-

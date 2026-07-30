@@ -7,4 +7,3 @@
 ## Contents
 
 - [testing-sequences.md](testing-sequences.md)
-

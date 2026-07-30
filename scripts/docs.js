@@ -22,7 +22,7 @@ const DESCRIPTION_OVERRIDES = {
 
 const SKIP_IMPORT_PACKAGES = new Set(["multi-manager"]);
 
-const routedSections = ["intro", "transform-hub", "manager", "sequences", "testing", "cli", "api", "deployment", "development", "examples"];
+const routedSections = ["intro", "transform-hub", "manager", "enterprise", "sequences", "testing", "cli", "api", "deployment", "development", "examples"];
 
 function readJson(file) {
     return JSON.parse(fs.readFileSync(file, "utf8"));
@@ -1098,7 +1098,7 @@ function directoryIndexBody(relative, entries, collision) {
         lines.push("");
     }
 
-    return lines.join("\n");
+    return `${lines.join("\n").replace(/\n+$/u, "")}\n`;
 }
 
 function generatePartials(out) {
@@ -1153,7 +1153,7 @@ function generateDirectoryIndexes(out) {
         const index = directoryIndexBody(relative, entries, collision);
 
         if (collision) {
-            writeFile(path.join(dir, "README.index.md"), `${index}\n`);
+            writeFile(path.join(dir, "README.index.md"), index);
             continue;
         }
 
@@ -1162,7 +1162,7 @@ function generateDirectoryIndexes(out) {
             const withoutIndex = original.replace(new RegExp(`\\n?${DIRECTORY_INDEX_START}[\\s\\S]*?${DIRECTORY_INDEX_END}\\n?`, "g"), "").trimEnd();
             writeFile(target, `${withoutIndex}\n\n${DIRECTORY_INDEX_START}\n${index}\n${DIRECTORY_INDEX_END}\n`);
         } else {
-            writeFile(target, `${index}\n`);
+            writeFile(target, index);
         }
     }
 }

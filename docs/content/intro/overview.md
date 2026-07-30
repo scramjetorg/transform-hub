@@ -23,3 +23,5 @@ Welcome to the Scramjet Transform Hub documentation. This is the primary prose r
 ## Navigating the docs
 
 Start with the [Transform Hub overview](../transform-hub/overview.md) for architecture context, or jump straight to the [getting started guide](../transform-hub/getting-started.md) to run your first Sequence.
+
+For information about enterprise-grade capabilities including RBAC, token authorization, large-scale MultiManager deployments, and multi-organization operation, see the [Enterprise offerings](../enterprise/overview.md) page.
