@@ -73,7 +73,7 @@
     - [x] Cross-check changelog claims against Git history, published release evidence, and completed track records; distinguish verified facts from planned work.
     - [x] Add a reproducible source-change/package-version inventory or appendix supporting the curated history.
 - [x] Task: Delegate focused changelog documentation review to the configured reviewer and correct in-scope clarity or release-history defects. Reviewer returned `PASS/no_issue` after publication-claim wording was corrected.
-- [ ] Task: Conductor - Phase Completion 'Publish the 2.0.0 Changelog' (Protocol in workflow.md)
+- [x] Task: Conductor - Phase Completion 'Publish the 2.0.0 Changelog' (Protocol in workflow.md). Checkpoint commit `bd42c249` was pushed after focused reviewer validation.
 
 ## Phase 5: Curate Legacy Documentation, Conductor Records, and Future Roadmap
 
