@@ -1,0 +1,25 @@
+name: Untrusted promotion fixture
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  promote:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@0123456789012345678901234567890123456789
+        with:
+          persist-credentials: false
+      - uses: actions/cache@0123456789012345678901234567890123456789
+        with:
+          path: node_modules
+          key: untrusted
+      - uses: actions/upload-artifact@0123456789012345678901234567890123456789
+        with:
+          name: checkpoint-input
+          path: dist
+      - run: docker push ghcr.io/scramjetorg/transform-hub/ci-deps:untrusted
+      - run: npm publish
