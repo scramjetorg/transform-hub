@@ -272,7 +272,7 @@ docker ps --filter name=bdd-runner- -q | xargs -r docker kill
 Native Node.js addons in `node_modules` must be linux-x64 glibc compatible. If you see an ABI mismatch error, rebuild the dependencies inside a Linux container:
 
 ```bash
-npm install --workspace bdd
+npm install
 ```
 
 This ensures the native modules match the container's runtime.

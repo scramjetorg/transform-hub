@@ -401,7 +401,7 @@ export function createCsrEnrollmentHttpsServer(authority: CsrEnrollmentAuthority
             if ((payload as { grant?: unknown }).grant !== undefined) throw new Error("Invalid request");
             const result = authority.redeem(payload, authorization.slice(7));
             response.writeHead(200, { "content-type": "application/json" }).end(JSON.stringify(result));
-        } catch (error) {
+        } catch {
             response
                 .writeHead(400, { "content-type": "application/json" })
                 .end(JSON.stringify({ version: PROTOCOL_VERSION, code: "invalid-request", message: "CSR enrollment request rejected" }));
