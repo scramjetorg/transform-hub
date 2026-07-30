@@ -88,7 +88,8 @@ Recommended delegation patterns:
 - Use `explore` or `explorer` for read-only codebase searches, dependency tracing, file discovery, and pattern lookups.
 - Use `fixer` for bounded implementation tasks after scope, expected behavior, and verification are clear.
 - Use `librarian` for external documentation, dependency behavior, API references, and public examples.
-- Use `oracle` for architecture tradeoffs, complex debugging, code review, simplification, maintainability review, and risk analysis.
+- Use `reviewer` for formal code, plan, and phase review.
+- Use `oracle` only for reviewer-recommended material strategic architecture and trade-off escalations.
 - Use `designer` only for UI/UX work.
 - Use `general` for mixed multi-step tasks that do not fit a narrower agent.
 - Use `councillor` for independent read-only review when a second opinion is useful.
@@ -376,15 +377,16 @@ When effective supervision is automatic:
 
 1. Execute plan tasks in order without routine task or phase approvals. Ordinary specialist output, remediable verification failures, and review findings do not by themselves pause progression.
 2. After each task, or a coherent adjacent group that one specialist can safely own, run bounded verification and a configured-review-specialist review. At every phase end, run the full phase review before beginning the next phase.
-3. `PASS` advances immediately.
-4. `CHANGES_REQUIRED` requires immediate remediation followed by a fresh review. Do not impose a fixed fix/re-review attempt cap.
-5. `DEFERRED` may advance only when the reviewer explicitly states that continuation is safe. Record the complete finding and safe-continuation rationale in the effective track `tech-debt.md`.
-6. `BLOCKED` is limited to a concrete user decision or unavailable prerequisite that cannot be remediated without user input. Do not convert unresolved `CHANGES_REQUIRED` or `BLOCKED` findings into debt merely to permit progression.
-7. After `PASS` or a valid safe `DEFERRED` outcome, complete the required phase checkpoint and begin the next phase immediately unless cancellation, pause, superseding instruction, or required user input is pending.
+3. `PASS` verdict: advances immediately. Individual review findings use a `no_issue` disposition for non-blocking observations.
+4. `BLOCKED` verdict: the review found issues that require attention. Individual findings carry one of the following dispositions:
+   - `blocked`: limited to a concrete user decision or unavailable prerequisite that cannot be remediated without user input. Do not convert `blocked` findings into debt merely to permit progression.
+   - `deferred`: may advance only when the reviewer explicitly states that continuation is safe. Record the complete finding and safe-continuation rationale in the effective track `tech-debt.md`.
+   - `accepted`: the finding is acknowledged but not acted upon; progression is permitted unless other rules prohibit it.
+5. After `PASS` or when all `BLOCKED` findings carry safe `deferred` or `accepted` dispositions, complete the required phase checkpoint and begin the next phase immediately unless cancellation, pause, superseding instruction, or required user input is pending.
 
-## Review Guidance (Oracle)
+## Review Guidance
 
-Oracle reviews must prioritize a working, repeatable prototype and fast completion over production-grade hardening.
+Reviewer reviews must prioritize a working, repeatable prototype and fast completion over production-grade hardening.
 
 - Confirm that the phase meets its stated acceptance criteria, preserves isolation between named runs, and keeps credentials out of committed files and routine logs.
 - Treat production concerns—distributed locking, adversarial multi-host concurrency, exhaustive crash recovery, high-availability, performance tuning, and generalized hardening—as non-blocking follow-up recommendations unless the track specification explicitly requires them.
@@ -392,12 +394,13 @@ Oracle reviews must prioritize a working, repeatable prototype and fast completi
 - Report optional hardening separately from required MVP findings.
 - A finding is blocking only when it prevents a subsequent planned phase or directly contradicts the track specification.
 - When the MVP acceptance criteria and relevant verification pass, approve the phase rather than requesting production-system guarantees.
+- When the reviewer identifies a material strategic question requiring architecture or trade-off advice beyond routine code or plan review, recommend escalation to oracle.
 
-After each Oracle phase review, record every non-`PASS` canonical finding in the effective track `tech-debt.md` with its verdict and disposition. Mark `CHANGES_REQUIRED` addressed only after a fresh review resolves it; mark `DEFERRED` only when review explicitly permits safe continuation; never reclassify `BLOCKED` as debt to advance.
+After each reviewer phase review, record every non-`PASS` canonical finding in the effective track `tech-debt.md` with its verdict and disposition. Mark `blocked` findings addressed only after a fresh review resolves it; mark `deferred` only when review explicitly permits safe continuation; never reclassify `blocked` as debt to advance.
 
 ## Track completion
 
-After the final phase receives `PASS` or a valid safe `DEFERRED` outcome, run
+After the final phase receives `PASS` or when all `BLOCKED` findings carry safe `deferred` or `accepted` dispositions, run
 the configured track-completion verification. If no deferred or non-compliant
 work remains, finalize the track immediately without routine confirmation. If
 such work remains, summarize the complete findings and ask whether to implement

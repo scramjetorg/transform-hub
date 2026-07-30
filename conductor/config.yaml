@@ -9,8 +9,8 @@ delegation:
     fixes: fixer
     cleanup: cleaner
     research: explorer
-    review: oracle
-    documentation: librarian
+    external_research: librarian
+    review: reviewer
     design: designer
 
 workflow:
