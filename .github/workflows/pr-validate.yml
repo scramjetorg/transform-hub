@@ -1,0 +1,159 @@
+name: Pull request validation
+
+on:
+  pull_request:
+    branches: [main, devel]
+  merge_group:
+    types: [checks_requested]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || format('merge-group-{0}', github.event.merge_group.head_sha) }}
+  cancel-in-progress: true
+
+jobs:
+  base-validation:
+    name: CI / fast gates
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      # The protected organization-required security workflow remains mandatory.
+      # This workflow never grants fork code credentials or promotion capability.
+      - uses: ./.github/actions/setup-workspace
+        with:
+          # Always disabled for PR/merge-group code, including same-repository PRs.
+          cache: "false"
+          ref: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha || github.sha }}
+
+      - name: Model optional digest-only checkpoint eligibility
+        shell: bash
+        env:
+          CHECKPOINT_REFERENCE: ${{ vars.SCRAMJET_PR_CHECKPOINT_REFERENCE }}
+        run: |
+          if [[ "$CHECKPOINT_REFERENCE" =~ ^ghcr\.io/scramjetorg/transform-hub/ci-deps@sha256:[a-f0-9]{64}$ ]]; then
+            echo "Checkpoint candidate is immutable by digest; provenance verification is required before any future cache use."
+          else
+            echo "No verified checkpoint is available; the fresh npm ci fallback is active."
+          fi
+
+      - name: Mergeability and merge-queue eligibility
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          case "$EVENT_NAME" in
+            pull_request|merge_group) echo "GitHub event is eligible for required-check evaluation." ;;
+            *) echo "Unsupported validation event: $EVENT_NAME" >&2; exit 1 ;;
+          esac
+
+      - name: Repository security policy
+        run: npm run check:security-workflow
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Dependency and release alignment
+        run: npm run release:align:check
+
+      - name: Runtime invariants
+        run: npm run check:runtime-invariants
+
+      - name: License validation
+        run: npm run check:licenses
+
+  ava-pre-build:
+    name: CI / AVA
+    needs: [base-validation]
+    permissions:
+      contents: read
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: ./.github/actions/setup-workspace
+        with:
+          cache: "false"
+          ref: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha || github.sha }}
+
+      - name: Run pre-build package tests
+        run: npm run test:packages-no-concurrent
+
+  package-build:
+    name: CI / package build
+    needs: [ava-pre-build]
+    permissions:
+      contents: read
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: ./.github/actions/setup-workspace
+        with:
+          cache: "false"
+          ref: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha || github.sha }}
+
+      - name: Build packages
+        run: npm run build:packages
+
+  bdd-node:
+    name: CI / BDD Node
+    needs: [package-build]
+    permissions:
+      contents: read
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: ./.github/actions/setup-workspace
+        with:
+          cache: "false"
+          ref: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha || github.sha }}
+
+      # PR outputs remain disposable: no build artifact or cache crosses jobs.
+      - name: Build disposable BDD inputs
+        run: npm run build:packages
+
+      - name: Run Docker-backed Node BDD validation
+        run: npm run test:bdd-ci-node
+
+  bdd-python:
+    name: CI / BDD Python
+    needs: [package-build]
+    permissions:
+      contents: read
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: ./.github/actions/setup-workspace
+        with:
+          cache: "false"
+          ref: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha || github.sha }}
+
+      # PR outputs remain disposable: no build artifact or cache crosses jobs.
+      - name: Build disposable BDD inputs
+        run: npm run build:packages
+
+      - name: Run Docker-backed Python BDD validation
+        run: npm run test:bdd-ci-python
+
+  bdd-api:
+    name: CI / BDD API
+    needs: [package-build]
+    permissions:
+      contents: read
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: ./.github/actions/setup-workspace
+        with:
+          cache: "false"
+          ref: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha || github.sha }}
+
+      # PR outputs remain disposable: no build artifact or cache crosses jobs.
+      - name: Build disposable BDD inputs
+        run: npm run build:packages
+
+      - name: Run Docker-backed API BDD validation
+        run: npm run test:bdd-ci-api-node

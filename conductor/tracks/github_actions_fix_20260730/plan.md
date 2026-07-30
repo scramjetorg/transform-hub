@@ -37,13 +37,13 @@
 
 ## Phase 3: Build the pull-request validation pipeline
 
-- [ ] Task: Implement the Node 22/npm pull-request workflow using a fresh checkout and the applicable verified checkpoint, with read-only permissions for fork-originating code and no `pull_request_target` trigger.
-- [ ] Task: Implement ordered fast checks before costly work.
-    - [ ] Add the defined mergeability/merge-queue gate, secret/workflow-policy scan, lint, typecheck, dependency/release-alignment, runtime-invariant, and license commands with clear failure output.
-    - [ ] Run AVA pre-build tests through the supported runner, build the required packages/images, and then execute the defined BDD path in an isolated job.
-    - [ ] Carry only validated package/image artifacts between trusted jobs, checking published artifact digests/checksums before use.
-- [ ] Task: Add automated workflow-policy tests covering Node 22-only/npm-only operation, fast-gate order, immutable action pins, fork permissions, credential non-persistence, `merge_group` coverage, artifact inputs, stale-run cancellation, and secret-scan enforcement.
-- [ ] Task: Validate syntax and policy tests locally; exercise the workflow through a same-repository test PR or dispatch path and capture the resulting check names and outcome.
+- [x] Task: Implement the Node 22/npm pull-request workflow using a fresh checkout and the applicable verified checkpoint, with read-only permissions for fork-originating code and no `pull_request_target` trigger. _(Added `pr-validate.yml` for PR/merge-queue validation with read-only permissions, SHA-pinned helper, no cache, no persistent credentials, digest-only checkpoint modeling, and 2 focused tests.)_
+- [x] Task: Implement ordered fast checks before costly work. _(Fast gates precede isolated AVA, package-build, and disposable BDD jobs; no untrusted outputs cross job boundaries.)_
+    - [x] Add the defined mergeability/merge-queue gate, secret/workflow-policy scan, lint, typecheck, dependency/release-alignment, runtime-invariant, and license commands with clear failure output. _(Implemented ordered fast gates and release-boundary no-emit `typecheck`; 4 focused tests, typecheck across release packages, and workflow policy validation passed.)_
+    - [x] Run AVA pre-build tests through the supported runner, build the required packages/images, and then execute the defined BDD path in an isolated job. _(Added isolated AVA, package-build, and Node/Python/API Docker BDD jobs after fast gates; each uses fresh no-cache setup, has read-only permissions, and retains disposable PR outputs. Four workflow tests and policy validation pass.)_
+    - [x] Carry only validated package/image artifacts between trusted jobs, checking published artifact digests/checksums before use. _(PR jobs intentionally hand off no package/image artifacts: BDD jobs rebuild disposable inputs from a fresh checkout, avoiding untrusted promotion. Trusted checkpoint/release handoffs use the Phase 2 provenance digest contract.)_
+- [x] Task: Add automated workflow-policy tests covering Node 22-only/npm-only operation, fast-gate order, immutable action pins, fork permissions, credential non-persistence, `merge_group` coverage, artifact inputs, stale-run cancellation, and secret-scan enforcement. _(Expanded PR workflow coverage to six focused tests; local workflow-policy validation passes.)_
+- [~] Task: Validate syntax and policy tests locally; exercise the workflow through a same-repository test PR or dispatch path and capture the resulting check names and outcome.
 - [ ] Task: Ask @reviewer to review the PR workflow against the approved fast-check, AVA, build, BDD, public-repository security, trust, and concurrency requirements.
 - [ ] Task: Conductor - Phase Completion 'Build the pull-request validation pipeline' (Protocol in workflow.md)
 
