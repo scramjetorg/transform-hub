@@ -16,6 +16,75 @@
 
 "use strict";
 
+const { sync: globSync } = require("glob");
+const path = require("path");
+
+// ---------------------------------------------------------------------------
+// Manifest discovery glob rules
+// ---------------------------------------------------------------------------
+
+/**
+ * Glob patterns that identify normal workspace manifests eligible for full
+ * version-and-dependency alignment (including `bdd/package.json` which is
+ * treated as a license-only workspace).
+ * These are resolved relative to the repository root.
+ */
+const WORKSPACE_MANIFEST_GLOBS = [
+	"packages/*/package.json",
+	"bdd/package.json",
+];
+
+/**
+ * Glob patterns that identify dependency-only fixture manifests.
+ * Fixture manifests receive only included-to-included `@scramjet/*`
+ * dependency range alignment; their package identity (name, version),
+ * license, and other fields are never altered.
+ *
+ * These cover BDD sequence fixtures and integration-acceptance-test
+ * fixtures, including nested build artifacts.
+ */
+const FIXTURE_MANIFEST_GLOBS = [
+	"bdd/data/sequences/**/package.json",
+	"bdd/iac-test-data/sequences/**/package.json",
+];
+
+/**
+ * Glob patterns that must always be excluded from manifest discovery.
+ * At minimum this excludes `node_modules` trees.  Add additional
+ * exclusions only when justified by scope — broad exclusions risk
+ * silently missing manifests that should be aligned.
+ */
+const MANIFEST_EXCLUDE_GLOBS = [
+	"**/node_modules/**",
+];
+
+/**
+ * Discover all manifest file paths matching the given include globs,
+ * excluding any path matched by the shared exclusion globs plus any
+ * caller-supplied extra ignore patterns.
+ *
+ * Results are relative to the repository root (or the provided `cwd`).
+ *
+ * @param {string[]} globs Include glob patterns (relative to cwd).
+ * @param {object}  [options]
+ * @param {string}  [options.cwd]       Working directory (default `process.cwd()`).
+ * @param {string[]} [options.ignore]   Additional exclude patterns.
+ * @returns {string[]} Deduplicated, sorted relative file paths.
+ */
+function discoverManifests(globs, options = {}) {
+	const cwd = options.cwd || process.cwd();
+	const extraIgnore = options.ignore || [];
+	const allExclude = [...MANIFEST_EXCLUDE_GLOBS, ...extraIgnore];
+
+	const results = [];
+	for (const pattern of globs) {
+		const matches = globSync(pattern, { cwd, ignore: allExclude });
+		results.push(...matches);
+	}
+	// Deduplicate in case multiple glob patterns match the same file.
+	return [...new Set(results)].sort();
+}
+
 /** Target release version string. */
 const RELEASE_VERSION = "2.0.0";
 
@@ -256,6 +325,9 @@ module.exports = {
 	MIT_LICENSE_TEXT,
 	EXPECTED_LICENSE,
 	LICENSE_FILE,
+	WORKSPACE_MANIFEST_GLOBS,
+	FIXTURE_MANIFEST_GLOBS,
+	MANIFEST_EXCLUDE_GLOBS,
 	isIncluded,
 	isExcluded,
 	isScramjet,
@@ -268,4 +340,5 @@ module.exports = {
 	includedPackageDirs,
 	expectedWorkspacePackages,
 	expectedWorkspaceRelease,
+	discoverManifests,
 };

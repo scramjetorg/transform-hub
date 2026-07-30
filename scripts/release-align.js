@@ -34,6 +34,9 @@ const {
 	MIT_LICENSE_TEXT,
 	EXPECTED_LICENSE,
 	LICENSE_FILE,
+	WORKSPACE_MANIFEST_GLOBS,
+	FIXTURE_MANIFEST_GLOBS,
+	MANIFEST_EXCLUDE_GLOBS,
 	isIncluded,
 	isExcluded,
 	isScramjet,
@@ -45,6 +48,7 @@ const {
 	expectedWorkspacePackages,
 	expectedWorkspaceRelease,
 	includedPackageDirs,
+	discoverManifests,
 } = require("./lib/release-boundary");
 
 // ---------------------------------------------------------------------------
@@ -226,31 +230,41 @@ function checkWorkspaceGroups(rootManifest, discoveredPackages) {
 }
 
 /**
- * Find all workspace package.json paths (packages/* and bdd/).
+ * Find all workspace manifest paths using the boundary glob rules.
  * @returns {Array<{ name: string, filePath: string, manifest: object }>}
  */
 function discoverWorkspacePackages() {
+	const relativePaths = discoverManifests(WORKSPACE_MANIFEST_GLOBS, { cwd: ROOT_DIR });
 	const results = [];
-	const packagesDir = path.resolve(ROOT_DIR, "packages");
-
-	for (const dir of fs.readdirSync(packagesDir)) {
-		const pkgPath = path.join(packagesDir, dir, "package.json");
-		if (!fs.existsSync(pkgPath)) continue;
-		const manifest = readJson(pkgPath);
+	for (const relativePath of relativePaths) {
+		const filePath = path.resolve(ROOT_DIR, relativePath);
+		const manifest = readJson(filePath);
 		if (manifest.name) {
-			results.push({ name: manifest.name, filePath: pkgPath, manifest });
+			results.push({ name: manifest.name, filePath, manifest });
 		}
 	}
+	return results;
+}
 
-	// bdd/ workspace
-	const bddPath = path.resolve(ROOT_DIR, "bdd", "package.json");
-	if (fs.existsSync(bddPath)) {
-		const manifest = readJson(bddPath);
+/**
+ * Find all fixture manifest paths using the boundary glob rules.
+ *
+ * Fixture manifests are dependency-only alignment targets – their package
+ * identity (name, version), license, and other fields must never be altered.
+ * They are not workspace members nor part of the npm workspace group.
+ *
+ * @returns {Array<{ name: string, filePath: string, manifest: object }>}
+ */
+function discoverFixtureManifests() {
+	const relativePaths = discoverManifests(FIXTURE_MANIFEST_GLOBS, { cwd: ROOT_DIR });
+	const results = [];
+	for (const relativePath of relativePaths) {
+		const filePath = path.resolve(ROOT_DIR, relativePath);
+		const manifest = readJson(filePath);
 		if (manifest.name) {
-			results.push({ name: manifest.name, filePath: bddPath, manifest });
+			results.push({ name: manifest.name, filePath, manifest });
 		}
 	}
-
 	return results;
 }
 
@@ -262,7 +276,7 @@ function discoverWorkspacePackages() {
  * Compute the complete change plan without modifying any files.
  * Returns an object with:
  *   - rootVersion: { current, expected, changed }
- *   - packages: Map<name, { filePath, manifest, versionChange, depChanges[], imageChange? }>
+ *   - packages: Map<name, { filePath, manifest, versionChange, depChanges[], isFixture, ... }>
  *   - imageConfig: { currentPath, changed, changes[] }
  *   - errors: string[] (drift / validation failures)
  */
@@ -371,6 +385,82 @@ function computeChangePlan() {
 		plan.packages.set(name, pkgInfo);
 	}
 
+	// --- Fixture manifests (dependency-only alignment) ---
+	const fixtures = discoverFixtureManifests();
+
+	for (const { name, filePath, manifest } of fixtures) {
+		// Skip if already known as a workspace package (unusual but safe).
+		// Use the raw name for this guard — workspace entries are name-keyed.
+		if (plan.packages.has(name)) continue;
+
+		// Use a path-unique key so two fixture manifests at different paths
+		// with the same package name are both independently tracked.
+		const fixtureKey = "__fixture__:" + filePath;
+
+		// Skip if we already recorded this exact file path (shouldn't happen,
+		// but guard against accidental re-walk).
+		if (plan.packages.has(fixtureKey)) continue;
+
+		const depChanges = [];
+
+		// Scan every dependency section for included-to-included @scramjet/* refs
+		for (const section of dependencySections()) {
+			const deps = manifest[section];
+			if (!deps || typeof deps !== "object") continue;
+
+			for (const [depName, depRange] of Object.entries(deps)) {
+				if (!isScramjet(depName)) continue; // external — preserve
+				if (isExcluded(depName)) continue;   // excluded invariant — preserve
+
+				if (!isIncluded(depName)) {
+					errors.push(
+						`Unexpected @scramjet dependency "${depName}" in fixture "${name}" ` +
+						`— not in included or excluded sets`
+					);
+					continue;
+				}
+
+				const depExpected = expectedVersion(depName);
+				const prefix = getRangePrefix(depRange);
+				const expectedRange = prefix + depExpected;
+
+				if (depRange !== expectedRange) {
+					depChanges.push({ section, depName, from: depRange, to: expectedRange });
+				}
+			}
+		}
+
+		// Validate no excluded-package range changes for boundary:
+		// a fixture referencing an excluded package at 2.0.0 is a boundary violation.
+		for (const section of dependencySections()) {
+			const deps = manifest[section];
+			if (!deps || typeof deps !== "object") continue;
+			for (const [depName, depRange] of Object.entries(deps)) {
+				if (isExcluded(depName)) {
+					const verPart = depRange.replace(/^[\^~]/, "");
+					if (verPart === RELEASE_VERSION) {
+						errors.push(
+							`EXCLUDED BOUNDARY VIOLATION: fixture "${name}" has excluded dep ` +
+							`"${depName}" at "${depRange}" which matches target version ` +
+							`${RELEASE_VERSION} — excluded packages must not be aligned`
+						);
+					}
+				}
+			}
+		}
+
+		plan.packages.set(fixtureKey, {
+			filePath,
+			manifest,
+			name,
+			versionChange: null,
+			depChanges,
+			isIncluded: false,
+			isExcluded: false,
+			isFixture: true,
+		});
+	}
+
 	// Validate workspace groups against the release boundary
 	const wsErrors = checkWorkspaceGroups(rootManifest, plan.packages);
 	for (const err of wsErrors) {
@@ -477,7 +567,22 @@ function check() {
 			continue;
 		}
 		if (!pkg.isIncluded) {
-			lines.push(`SKIPPED: ${pkg.name}@${pkg.manifest.version} (not in boundary)`);
+			if (pkg.isFixture) {
+				// Fixture manifests: dependency-only alignment, no version/identity changes
+				let fixtureOk = true;
+				for (const dc of pkg.depChanges) {
+					lines.push(
+						`FIXTURE DEP DRIFT: ${pkg.name} → ${dc.depName} (${dc.section}): ${dc.from} → ${dc.to}`
+					);
+					hasDrift = true;
+					fixtureOk = false;
+				}
+				if (fixtureOk) {
+					lines.push(`FIXTURE OK: ${pkg.name}@${pkg.manifest.version} (deps aligned)`);
+				}
+			} else {
+				lines.push(`SKIPPED: ${pkg.name}@${pkg.manifest.version} (not in boundary)`);
+			}
 			continue;
 		}
 
@@ -564,6 +669,22 @@ function dryRun() {
 
 	if (changedCount === 0) {
 		lines.push("(no package version changes)");
+	}
+	lines.push("");
+
+	// Fixture manifests (dependency-only alignment)
+	let fixtureChangedCount = 0;
+	for (const [, pkg] of plan.packages) {
+		if (!pkg.isFixture) continue;
+		if (pkg.depChanges.length === 0) continue;
+		lines.push(`FIXTURE ${pkg.name}: (deps updated)`);
+		for (const dc of pkg.depChanges) {
+			lines.push(`  ${dc.section}.${dc.depName}: ${dc.from} → ${dc.to}`);
+		}
+		fixtureChangedCount++;
+	}
+	if (fixtureChangedCount > 0) {
+		lines.push(`(${fixtureChangedCount} fixture(s) with dependency changes)`);
 	}
 	lines.push("");
 
@@ -672,7 +793,35 @@ function applyChanges() {
 		}
 	}
 
-	// 3. Image config
+	// 3. Fixture manifests (dependency-only alignment)
+	for (const [, pkg] of plan.packages) {
+		if (!pkg.isFixture) continue;
+		if (pkg.depChanges.length === 0) {
+			report.push(`FIXTURE OK: ${pkg.name}@${pkg.manifest.version} (deps aligned, no change)`);
+			continue;
+		}
+
+		const manifest = readJson(pkg.filePath);
+		let pkgChanged = false;
+
+		for (const dc of pkg.depChanges) {
+			if (manifest[dc.section] && dc.depName in manifest[dc.section]) {
+				manifest[dc.section][dc.depName] = dc.to;
+				pkgChanged = true;
+			}
+		}
+
+		if (pkgChanged) {
+			writeJson(pkg.filePath, manifest);
+			report.push(`FIXTURE: ${pkg.name} (deps updated)`);
+			for (const dc of pkg.depChanges) {
+				report.push(`  ${dc.section}.${dc.depName}: ${dc.from} → ${dc.to}`);
+			}
+			modified++;
+		}
+	}
+
+	// 4. Image config
 	if (plan.imageConfig.changed) {
 		writeImageConfig(plan.imageConfig.updatedContent);
 		for (const c of plan.imageConfig.changes) {
@@ -683,7 +832,7 @@ function applyChanges() {
 		report.push(`Image config: already at ${RELEASE_VERSION} (no change)`);
 	}
 
-	// 4. Excluded summary
+	// 5. Excluded summary
 	const excludedNames = [];
 	for (const [, pkg] of plan.packages) {
 		if (pkg.isExcluded) {
