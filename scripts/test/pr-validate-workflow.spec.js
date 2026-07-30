@@ -22,7 +22,7 @@ function setupActionSource() {
 test("base PR workflow is read-only, cancellable, and uses a fresh no-cache workspace", (t) => {
 	const source = workflowSource();
 	t.deepEqual(checkWorkflowSource(source, ".github/workflows/pr-validate.yml"), []);
-	t.true(source.includes("branches: [main, devel, \"release/**\"]"));
+	t.true(source.includes("branches: [main, devel, \"release/**\", \"feat/manager-oss\"]"));
 	t.true(source.includes("merge_group:"));
 	t.true(source.includes("format('pr-{0}'"));
 	t.true(source.includes("format('merge-group-{0}'"));
@@ -109,7 +109,7 @@ test("Node 22/npm-only setup helper configures dependencies after caller checkou
 test("PR and merge-group workflow has explicit fork-safe read-only permissions and stale-run cancellation", (t) => {
 	const source = workflowSource();
 	t.true(source.includes("pull_request:"));
-	t.true(source.includes("branches: [main, devel, \"release/**\"]"));
+	t.true(source.includes("branches: [main, devel, \"release/**\", \"feat/manager-oss\"]"));
 	t.true(source.includes("merge_group:"));
 	t.true(source.includes("types: [checks_requested]"));
 	t.true(source.includes("format('pr-{0}'"));
