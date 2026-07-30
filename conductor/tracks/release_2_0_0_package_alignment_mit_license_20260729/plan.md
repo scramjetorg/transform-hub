@@ -56,6 +56,10 @@
     - [x] Update included package manifests and package license/notices with the official SPDX/OSI MIT text and `Copyright (c) 2026 Scramjet Sp. z o.o.`.
     - [x] Ensure npm package contents retain the required license materials without modifying excluded packages. Every included package has its own MIT `LICENSE`, preventing root fallback content from being distributed.
     - [x] Add focused automated checks or checked fixtures that detect missing, inconsistent, or excluded-package license changes. The release-alignment AVA suite covers license field, text, root, idempotence, and exclusion invariants.
+
+### License authorization record
+
+- On 2026-07-30, the user confirmed the MIT license change on behalf of Scramjet Sp. z o.o. This confirms the track's authorized MIT conversion for the included set, Runner Python, and BDD; it does not alter the preserved upstream notices for bpmux and frame-stream.
 - [ ] Task: Verify the license conversion and publishable package contents.
     - [ ] Run focused license/inventory validation and `npm pack --dry-run` checks for representative STH, CLI, Manager, and MultiManager packages.
     - [ ] Run the narrowest affected builds/tests and record any memory-guarded command, threshold, skip, or non-applicability evidence.

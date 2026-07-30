@@ -28,6 +28,7 @@ COPY ./dist/docker-runner/model ./dist/model
 COPY ./dist/docker-runner/runner ./dist/runner
 COPY ./dist/docker-runner/runner-node ./dist/runner-node
 COPY ./dist/docker-runner/runner-bun ./dist/runner-bun
+COPY ./dist/docker-runner/runner-python ./dist/runner-python
 COPY ./dist/docker-runner/api-server ./dist/api-server
 
 FROM target

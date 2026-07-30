@@ -1169,3 +1169,67 @@ test("runner-python pack content excludes test and docker artifacts", (t) => {
 	t.true(allFiles.includes("dist/requirements.txt"), "files includes requirements.txt");
 	t.true(allFiles.includes("dist/__pypackages__"), "files includes vendored deps");
 });
+
+test("runner Docker build stages include runner-python", (t) => {
+	// Verify the Dockerfile has the COPY line for runner-python
+	const dockerfile = readFileSync(
+		path.resolve(__dirname, "../../packages/runner/Dockerfile"), "utf8"
+	);
+	t.true(dockerfile.includes("runner-python"),
+		"runner Dockerfile copies runner-python");
+
+	// Verify runner-python Dockerfile also has the COPY line
+	const rpDockerfile = readFileSync(
+		path.resolve(__dirname, "../../packages/runner-python/Dockerfile"), "utf8"
+	);
+	t.true(rpDockerfile.includes("runner-python"),
+		"runner-python Dockerfile copies runner-python");
+
+	// Verify prebuild:docker script stages runner-python
+	const runnerPkg = JSON.parse(readFileSync(
+		path.resolve(__dirname, "../../packages/runner/package.json"), "utf8"
+	));
+	const prebuild = runnerPkg.scripts["prebuild:docker"];
+	t.true(prebuild.includes("runner-python"),
+		"prebuild:docker includes runner-python staging");
+	t.true(prebuild.includes("cp -r"),
+		"prebuild:docker uses cp -r for runner-python");
+});
+
+test("build-docker-runner-python workflow prepares build context", (t) => {
+	// Verify the CI workflow has the required pre-build steps
+	const workflow = readFileSync(
+		path.resolve(__dirname, "../../.github/workflows/build-docker-runner-python.yml"), "utf8"
+	);
+
+	// Must have Node setup
+	t.true(workflow.includes("setup-node"),
+		"CI workflow sets up Node");
+
+	// Must install dependencies
+	t.true(workflow.includes("npm ci") || workflow.includes("npm install"),
+		"CI workflow installs dependencies");
+
+	// Must build runner JS tree into dist/docker-runner/
+	t.true(workflow.includes("build-all.js") && workflow.includes("dist/docker-runner"),
+		"CI workflow builds runner JS tree into dist/docker-runner/");
+
+	// Must stage runner-python alongside the JS tree
+	t.true(workflow.includes("cp -r packages/runner-python"),
+		"CI workflow stages runner-python via cp -r");
+
+	// Docker build context must be the repo root (.) so the prepared
+	// ./dist/docker-runner/ is available inside the builder.
+	t.true(workflow.includes("docker build"),
+		"CI workflow runs docker build");
+	const dockerCmd = workflow.split("\n").find(l => l.includes("docker build"));
+	t.true(dockerCmd.endsWith(" .") || dockerCmd.endsWith(" .\\"),
+		"Docker build context is repo root (.) not ../../");
+
+	// Verify Dockerfile still requires the staged runner-python context
+	const dockerfile = readFileSync(
+		path.resolve(__dirname, "../../packages/runner-python/Dockerfile"), "utf8"
+	);
+	t.true(dockerfile.includes("COPY ./dist/docker-runner/runner-python"),
+		"Dockerfile COPY expects runner-python from dist/docker-runner/");
+});
