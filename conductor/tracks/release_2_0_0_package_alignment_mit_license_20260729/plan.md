@@ -37,7 +37,7 @@
     - [x] Update manifest versions and included internal dependency, peer-dependency, and optional-dependency ranges. Independent `check` output confirmed every included package and included internal range at 2.0.0 while excluded manifests stayed unchanged.
     - [x] Update included Docker image references, release metadata, and the npm lockfile without changing excluded package versions or dependency policies. `npm install --ignore-scripts` regenerated `package-lock.json` from the release-only workspace; `npm ci --ignore-scripts` then reproduced it. Excluded manifests remain unchanged.
     - [x] Run the focused alignment checks, affected package tests through the supported AVA runner, and an npm dependency-resolution check. `npm run release:align:check`, `npm run release:align:dry-run`, and the 34-case AVA suite passed under the default memory guard; `npm install --ignore-scripts` regenerated the lockfile and `npm ci --ignore-scripts` reproduced it.
-- [ ] Task: Conductor - Phase Completion 'Build Deterministic Package and Dependency Alignment Tooling' (Protocol in workflow.md)
+- [x] Task: Conductor - Phase Completion 'Build Deterministic Package and Dependency Alignment Tooling' (Protocol in workflow.md). Checkpoint commit `f075b1b2` was pushed to the dedicated branch after alignment validation and reviewer remediation; the P2 image-config assertion follow-up is retained in `td.md`.
 
 ### Phase 2 validation record
 
