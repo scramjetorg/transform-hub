@@ -1,6 +1,6 @@
 import { spawn } from "child_process";
 import { existsSync } from "fs";
-import { resolve } from "path";
+import { resolve, dirname } from "path";
 import { Duplex } from "stream";
 import { PythonSpawnOptions, RuntimeExecutor, RuntimeProcessHandles } from "@scramjet/runtime-types";
 
@@ -22,18 +22,80 @@ export const RUNNER_PYTHON_STDIO = ["pipe", "pipe", "pipe", "ipc", "pipe", "pipe
 
 export type RunnerPythonStdio = typeof RUNNER_PYTHON_STDIO;
 
+/**
+ * Attempt to resolve the installed @scramjet/runner-python package root
+ * via Node module resolution, falling back to local source paths for
+ * development (monorepo) environments.
+ *
+ * Returns the package root directory path, or null if neither is found.
+ */
+function resolveRunnerPythonRoot(): string | null {
+    // 1. Installed package (production): require.resolve finds package.json
+    try {
+        const pkgJsonPath = require.resolve("@scramjet/runner-python/package.json");
+        return dirname(pkgJsonPath);
+    } catch {
+        // not installed — fall through to local paths
+    }
+
+    // 2. Local monorepo source paths (development)
+    const localCandidates = [
+        resolve(__dirname, "../../../runner-python"),
+        resolve(__dirname, "../../runner-python"),
+        resolve(__dirname, "../../../packages/runner-python"),
+    ];
+
+    for (const candidate of localCandidates) {
+        if (existsSync(candidate)) return candidate;
+    }
+
+    return null;
+}
+
+/**
+ * Build the PYTHONPATH for the runner-python child process.
+ *
+ * Production layout (installed npm package):
+ *   <pkg_root>/dist/src             — real runner_python source package
+ *   <pkg_root>/dist/__pypackages__  — vendored pip dependencies
+ *
+ * Local layout (monorepo development):
+ *   <pkg_root>/src                  — real runner_python source package
+ *   <pkg_root>/__pypackages__       — vendored pip dependencies (installed via install-deps.sh --target __pypackages__)
+ *   <pkg_root>/dist/__pypackages__  — vendored pip dependencies (built via install-deps.sh --target dist/__pypackages__)
+ */
 function buildPythonPath(existing?: string): string {
-    const candidates = [
-        resolve(__dirname, "../../../runner-python/src"),
-        resolve(__dirname, "../../../runner-python/__pypackages__"),
+    const root = resolveRunnerPythonRoot();
+    const candidates: string[] = [];
+
+    if (root) {
+        // Production layout (installed package — prepack puts everything under dist/)
+        const prodSrc = resolve(root, "dist/src");
+        const prodVendor = resolve(root, "dist/__pypackages__");
+        if (existsSync(prodSrc)) candidates.push(prodSrc);
+        if (existsSync(prodVendor)) candidates.push(prodVendor);
+
+        // Local layout (monorepo development)
+        const localSrc = resolve(root, "src");
+        const localVendor = resolve(root, "__pypackages__");
+        const localDistVendor = resolve(root, "dist/__pypackages__");
+        if (existsSync(localSrc)) candidates.push(localSrc);
+        if (existsSync(localVendor)) candidates.push(localVendor);
+        if (existsSync(localDistVendor) && !candidates.includes(localDistVendor)) {
+            candidates.push(localDistVendor);
+        }
+    }
+
+    // Legacy fallback paths for monorepo transitive resolution
+    const legacyCandidates = [
         resolve(__dirname, "../../../runner-python/dist/__pypackages__"),
-        resolve(__dirname, "../../runner-python/src"),
-        resolve(__dirname, "../../runner-python/__pypackages__"),
         resolve(__dirname, "../../runner-python/dist/__pypackages__"),
-        resolve(__dirname, "../../../packages/runner-python/src"),
         resolve(__dirname, "../../../packages/runner-python/__pypackages__"),
-        resolve(__dirname, "../../../dist/runner-python/__pypackages__")
+        resolve(__dirname, "../../../dist/runner-python/__pypackages__"),
     ].filter(existsSync);
+    for (const p of legacyCandidates) {
+        if (!candidates.includes(p)) candidates.push(p);
+    }
 
     if (existing) candidates.push(existing);
 

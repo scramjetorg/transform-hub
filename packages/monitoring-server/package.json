@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/monitoring-server",
-  "version": "1.1.0",
+  "version": "2.0.0",
   "description": "Scramjet Monitoring Server",
   "main": "src/index.ts",
   "scripts": {
@@ -11,11 +11,11 @@
     "test:ava": "# nyc node ../../scripts/run-ava.js"
   },
   "dependencies": {
-    "@scramjet/api-types": "^1.1.0",
-    "@scramjet/utility": "^1.1.0"
+    "@scramjet/api-types": "^2.0.0",
+    "@scramjet/utility": "^2.0.0"
   },
   "devDependencies": {
-    "@scramjet/types": "^1.1.0",
+    "@scramjet/types": "^2.0.0",
     "@types/node": "^22.15.0",
     "ava": "^3.15.0",
     "nyc": "^15.1.0",
@@ -34,7 +34,7 @@
     ]
   },
   "author": "Scramjet <open-source@scramjet.org>",
-  "license": "AGPL-3.0",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/scramjetorg/monitoring-server.git"

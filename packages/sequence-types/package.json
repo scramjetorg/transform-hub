@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/sequence-types",
-  "version": "1.1.0",
+  "version": "2.0.0",
   "description": "Sequence-author-facing types for Scramjet Transform Hub. Exports the frozen sequence AppContext API backed by BaseAppContext from @scramjet/runtime-types, plus canonical sequence application/function types for sequence authors.",
   "main": "./src/index.ts",
   "scripts": {
@@ -9,10 +9,10 @@
     "test": "tsc --noEmit && node test/no-forbidden-deps.cjs"
   },
   "author": "Scramjet <open-source@scramjet.org>",
-  "license": "AGPL-3.0",
+  "license": "MIT",
   "dependencies": {
-    "@scramjet/runtime-types": "^1.1.0",
-    "@scramjet/symbols": "^1.1.0"
+    "@scramjet/runtime-types": "^2.0.0",
+    "@scramjet/symbols": "^2.0.0"
   },
   "devDependencies": {
     "@types/node": "^22.15.0",

@@ -8,6 +8,7 @@ const { resolve, dirname } = require("path");
 const { DataStream } = require("scramjet");
 const toposort = require("toposort");
 const { promisify } = require("util");
+const { isIncluded } = require("./lib/release-boundary");
 const cwd = resolve(__dirname, "../dist/");
 const pkgs = glob.sync("./*/package.json", {
     cwd,
@@ -20,6 +21,7 @@ const force = process.argv.includes("-f");
 const skip = process.argv.includes("-s");
 const main = process.argv.includes("-p");
 const local = process.argv.includes("-l");
+const releaseBoundary = process.argv.includes("--release-boundary");
 
 if (main === local || process.argv.includes("-h")) {
     console.error(`Usage: ${process.argv[1]} -p|-l [-nf] <cmd> [...args]`);
@@ -32,6 +34,7 @@ if (main === local || process.argv.includes("-h")) {
     console.error(" -s skip already published");
     console.error(" -p go public");
     console.error(" -l publish local");
+    console.error(" --release-boundary restrict to 2.0.0 included packages only");
     process.exitCode = 11;
     process.exit();
 }
@@ -89,6 +92,11 @@ const checkIfPublished = async (opts, item) => {
     for (const item of filesWithDeps) {
         try {
             const opts = { cwd: dirname(item.fullFile) };
+
+            if (releaseBoundary && !isIncluded(item.name)) {
+                console.error(" ---> Skipping (excluded from release boundary):", item.name);
+                continue;
+            }
 
             if (dryRun) {
                 console.error("Would publish", item.name);

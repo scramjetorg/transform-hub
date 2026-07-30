@@ -28,6 +28,7 @@ Routes can be resolved to a child `space` via:
 
 | Operation | Method | Path (full) | Kind | Schemas |
 |-----------|--------|-------------|------|---------|
+| `ingressIdentity` | `GET` | `/api/v2/ingress/identity` | request | `response`: `IngressIdentity` |
 | `version` | `GET` | `/api/v2/version` | request | `response`: `version` |
 | `info` | `GET` | `/api/v2/info` | request | `response`: `info` |
 | `load` | `GET` | `/api/v2/load` | request | `response`: `LoadResponse` |
@@ -37,6 +38,14 @@ Routes can be resolved to a child `space` via:
 | `audit` | `GET` | `/api/v2/audit` | upstream | `response`: `RestAPI2Schemas.stream` |
 
 ### Route details
+
+#### `ingressIdentity`
+
+- **Operation ID**: `GET /api/v2/ingress/identity`
+- **Method**: `GET`
+- **Path (full)**: `/api/v2/ingress/identity`
+- **Path (node-local)**: `/ingress/identity`
+- **Schemas**: `response`: `IngressIdentity`
 
 #### `version`
 

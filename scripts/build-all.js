@@ -17,6 +17,7 @@ const { getDeepDeps } = require("./lib/get-deep-deps");
 const { cwd, env } = require("process");
 const { getDepTypes } = require("./lib/opts");
 const { existsSync } = require("fs");
+const { isIncluded } = require("./lib/release-boundary");
 
 const opts = minimist(process.argv.slice(2), {
     alias: {
@@ -186,7 +187,12 @@ console.time(BUILD_NAME);
             console.timeLog(BUILD_NAME, "Done, setting up workspace...");
             const contents = {
                 private: true,
-                workspaces: prepacks.map(x => relative(outDir, x.rootDistPackPath))
+                // Legacy packages remain available in dist, but are excluded from
+                // npm workspace installation because their preserved 1.x ranges
+                // cannot resolve against the aligned 2.0.0 package set.
+                workspaces: prepacks
+                    .filter(pack => isIncluded(pack.currPackageJson.name))
+                    .map(pack => relative(outDir, pack.rootDistPackPath))
             };
 
             await writeFile(join(outDir, "package.json"), JSON.stringify(contents, null, 2));

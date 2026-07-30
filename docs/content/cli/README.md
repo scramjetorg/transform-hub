@@ -7,4 +7,5 @@
 ## Contents
 
 - [usage.md](usage.md)
+- [verser2-cli.md](verser2-cli.md)
 

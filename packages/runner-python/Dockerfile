@@ -67,6 +67,7 @@ COPY ./dist/docker-runner/model ./dist/model
 COPY ./dist/docker-runner/runner ./dist/runner
 COPY ./dist/docker-runner/runner-node ./dist/runner-node
 COPY ./dist/docker-runner/runner-bun ./dist/runner-bun
+COPY ./dist/docker-runner/runner-python ./dist/runner-python
 COPY ./dist/docker-runner/api-server ./dist/api-server
 
 # ---------------------------------------------------------------------------
@@ -88,8 +89,29 @@ RUN yarn install --ignore-engines --frozen-lockfile --production --silent \
 # `python3 -m runner_python <bootConfigPath>` (see packages/runner-python/README.md).
 # We do NOT copy packages/python-runner/runner.py - that legacy runner is
 # intentionally excluded; this image hosts the new runner-python wrapper.
+#
+# The verser2 guest Python wheel is a run-time dependency imported by
+# runner_python/verser2_runtime.py.  Local development resolves it via
+# install-deps.sh; here we download the exact same public release asset
+# and verify its SHA-256 before installing, so the image is self-contained.
+COPY packages/runner-python/scripts/verser2-config.sh /tmp/verser2-config.sh
 COPY packages/runner-python/requirements.txt ${RUNNER_PY_DIR}/requirements.txt
-RUN pip install --no-cache-dir -r ${RUNNER_PY_DIR}/requirements.txt
+RUN set -eux \
+    && . /tmp/verser2-config.sh \
+    && TMP_DIR="$(mktemp -d)" \
+    && python3 -c "
+import sys
+from pathlib import Path
+from urllib.request import urlopen
+url, dst = sys.argv[1], Path(sys.argv[2])
+dst.write_bytes(urlopen(url).read())
+" "${VERSER2_WHEEL_URL}" "${TMP_DIR}/${VERSER2_WHEEL}" \
+    && echo "${VERSER2_WHEEL_SHA256}  ${TMP_DIR}/${VERSER2_WHEEL}" \
+        | sha256sum --check --status \
+    && pip install --no-cache-dir \
+        -r ${RUNNER_PY_DIR}/requirements.txt \
+        "${TMP_DIR}/${VERSER2_WHEEL}" \
+    && rm -rf "${TMP_DIR}" /tmp/verser2-config.sh
 
 COPY packages/runner-python/runner_python ${RUNNER_PY_DIR}/runner_python
 COPY packages/runner-python/src          ${RUNNER_PY_DIR}/src

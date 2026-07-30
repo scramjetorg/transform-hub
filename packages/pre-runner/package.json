@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/pre-runner",
-  "version": "1.1.0",
+  "version": "2.0.0",
   "description": "This package is part of Scramjet Transform Hub. The package identifies the sequences and returns the information to back STH.",
   "scripts": {
     "build:docker": "docker build -t scramjetorg/pre-runner:$(git rev-parse HEAD) -t scramjetorg/pre-runner:dev .",
@@ -20,7 +20,7 @@
     "unpack.sh"
   ],
   "author": "Scramjet <open-source@scramjet.org>",
-  "license": "AGPL-3.0",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/scramjetorg/transform-hub.git"

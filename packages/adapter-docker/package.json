@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/adapter-docker",
-  "version": "1.1.0",
+  "version": "2.0.0",
   "description": "This package is part of Scramjet Transform Hub. This module holds the docker adapters utilized by Scramjet Transform Hub",
   "main": "./src/index.ts",
   "scripts": {
@@ -12,22 +12,22 @@
     "prepack": "node ../../scripts/publish.js"
   },
   "author": "Scramjet <open-source@scramjet.org>",
-  "license": "AGPL-3.0",
+  "license": "MIT",
   "dependencies": {
-    "@scramjet/adapters-common": "1.1.0",
-    "@scramjet/api-types": "^1.1.0",
-    "@scramjet/model": "^1.1.0",
-    "@scramjet/obj-logger": "^1.1.0",
-    "@scramjet/pre-runner": "^1.1.0",
-    "@scramjet/runner": "^1.1.0",
-    "@scramjet/utility": "^1.1.0",
+    "@scramjet/adapters-common": "2.0.0",
+    "@scramjet/api-types": "^2.0.0",
+    "@scramjet/model": "^2.0.0",
+    "@scramjet/obj-logger": "^2.0.0",
+    "@scramjet/pre-runner": "^2.0.0",
+    "@scramjet/runner": "^2.0.0",
+    "@scramjet/utility": "^2.0.0",
     "dockerode": "^4.0.2",
     "tar": "^7.4.3",
     "ts.data.json": "^2.2.0"
   },
   "devDependencies": {
-    "@scramjet/runtime-types": "^1.1.0",
-    "@scramjet/types": "^1.1.0",
+    "@scramjet/runtime-types": "^2.0.0",
+    "@scramjet/types": "^2.0.0",
     "@types/dockerode": "<=3.3.3",
     "@types/js-yaml": "4.0.5",
     "@types/node": "^22.15.0",

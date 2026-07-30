@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/cli",
-  "version": "1.1.0",
+  "version": "2.0.0",
   "description": "This package is part of Scramjet Transform Hub. The package provides a CLI interface to communicate with Scramjet Transform Hub.",
   "main": "./src/index.ts",
   "bin": {
@@ -17,17 +17,17 @@
     "preinstall": "tar --version 2>&1 >/dev/null"
   },
   "author": "Scramjet <open-source@scramjet.org>",
-  "license": "AGPL-3.0",
+  "license": "MIT",
   "dependencies": {
-    "@scramjet/api-client": "^1.1.0",
-    "@scramjet/api-router": "^1.1.0",
-    "@scramjet/api-types": "^1.1.0",
-    "@scramjet/client-utils": "^1.1.0",
-    "@scramjet/config": "^1.1.0",
-    "@scramjet/middleware-api-client": "^1.1.0",
-    "@scramjet/obj-logger": "^1.1.0",
-    "@scramjet/rest-api2": "^1.1.0",
-    "@scramjet/utility": "^1.1.0",
+    "@scramjet/api-client": "^2.0.0",
+    "@scramjet/api-router": "^2.0.0",
+    "@scramjet/api-types": "^2.0.0",
+    "@scramjet/client-utils": "^2.0.0",
+    "@scramjet/config": "^2.0.0",
+    "@scramjet/middleware-api-client": "^2.0.0",
+    "@scramjet/obj-logger": "^2.0.0",
+    "@scramjet/rest-api2": "^2.0.0",
+    "@scramjet/utility": "^2.0.0",
     "@signicode/verser2-guest-node": "0.7.0",
     "chalk": "^4.1.2",
     "find-package-json": "^1.2.0",
@@ -37,8 +37,8 @@
     "validator": "^13.7.0"
   },
   "devDependencies": {
-    "@scramjet/runtime-types": "^1.1.0",
-    "@scramjet/types": "^1.1.0",
+    "@scramjet/runtime-types": "^2.0.0",
+    "@scramjet/types": "^2.0.0",
     "@types/find-package-json": "^1.2.3",
     "@types/minimatch": "^3.0.5",
     "@types/node": "^22.15.0",

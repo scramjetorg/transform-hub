@@ -42,6 +42,7 @@ The following sub-routers are mounted under this node:
 
 | Operation | Method | Path (full) | Kind | Schemas |
 |-----------|--------|-------------|------|---------|
+| `ingressIdentity` | `GET` | `/api/v2/spaces/:spaceId/hubs/:hubId/ingress/identity` | request | `response`: `IngressIdentity` |
 | `load` | `GET` | `/api/v2/spaces/:spaceId/hubs/:hubId/load` | request | `response`: `LoadResponse` |
 | `version` | `GET` | `/api/v2/spaces/:spaceId/hubs/:hubId/version` | request | `response`: `VersionResponse` |
 | `config` | `GET` | `/api/v2/spaces/:spaceId/hubs/:hubId/config` | request | `response`: `ConfigResponse` |
@@ -59,6 +60,14 @@ The following sub-routers are mounted under this node:
 | `audit` | `GET` | `/api/v2/spaces/:spaceId/hubs/:hubId/audit` | upstream | `response`: `RestAPI2Schemas.stream` |
 
 ### Route details
+
+#### `ingressIdentity`
+
+- **Operation ID**: `GET /api/v2/spaces/:spaceId/hubs/:hubId/ingress/identity`
+- **Method**: `GET`
+- **Path (full)**: `/api/v2/spaces/:spaceId/hubs/:hubId/ingress/identity`
+- **Path (node-local)**: `/ingress/identity`
+- **Schemas**: `response`: `IngressIdentity`
 
 #### `load`
 

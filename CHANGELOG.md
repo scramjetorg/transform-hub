@@ -234,6 +234,146 @@ This is a historical release record of completed work and is not an npm publicat
 
 * Hardened BDD teardown with current-run process scoping, awaited TERM-to-KILL escalation, temporary cleanup, and opt-in leak failure.
 
+## [2.0.0] - 2026-07-30
+
+Repository-scoped release record for the 2.0.0 baseline assembled on 2026-07-30
+(commit `db54d058fb4d71dca958272ca67fccff793a9970`).  This section documents the
+aligned package set, MIT license migration, breaking changes, and material
+highlights since the 1.0.1 release.  It is not an npm publication or GitHub
+release; see the appendix for the tracked inventory boundary.
+
+### Release scope and aligned package set
+
+The 2.0.0 candidate set aligns the following included first-party `@scramjet/*`
+workspaces to version 2.0.0 under the MIT license.  Excluded packages retain
+their existing versions and licensing.
+
+| Package(s) | Prior version | License change | 2.0.0 disposition |
+| --- | --- | --- | --- |
+| `@scramjet/sth`, `@scramjet/cli` | 1.1.0 | AGPL-3.0 → MIT | 2.0.0, MIT |
+| `@scramjet/manager`, `@scramjet/multi-manager` | 0.35.1 | AGPL-3.0 → MIT | 2.0.0, MIT |
+| `@scramjet/host`, `@scramjet/pre-runner` | 1.1.0 | AGPL-3.0 → MIT | 2.0.0, MIT |
+| `@scramjet/runner`, `@scramjet/runner-node`, `@scramjet/runner-bun` | 1.1.0 | MIT (retained) | 2.0.0, MIT |
+| `@scramjet/api-client`, `@scramjet/client-utils`, `@scramjet/sequence-test` | 1.1.0 | MIT (retained) | 2.0.0, MIT |
+| `@scramjet/config`, `@scramjet/rest-api2`, `@scramjet/api-router`, `@scramjet/api-server` | 1.1.0 | AGPL-3.0 → MIT | 2.0.0, MIT |
+| `@scramjet/api-types`, `@scramjet/runtime-types`, `@scramjet/sequence-types`, `@scramjet/types` | 1.1.0 | AGPL-3.0 → MIT | 2.0.0, MIT |
+| `@scramjet/symbols`, `@scramjet/model` | 1.1.0 | AGPL-3.0 → MIT | 2.0.0, MIT |
+| `@scramjet/utility`, `@scramjet/telemetry` | 1.1.0 | ISC → MIT | 2.0.0, MIT |
+| `@scramjet/adapters`, `@scramjet/adapters-common`, `@scramjet/adapter-docker`, `@scramjet/adapter-kubernetes`, `@scramjet/adapter-process` | 1.1.0 | AGPL-3.0 → MIT | 2.0.0, MIT |
+| `@scramjet/load-check`, `@scramjet/monitoring-server`, `@scramjet/obj-logger`, `@scramjet/logger`, `@scramjet/module-loader` | 1.1.0 | AGPL-3.0 → MIT | 2.0.0, MIT |
+| `@scramjet/middleware-api-client`, `@scramjet/multi-manager-api-client` | 1.1.0 | AGPL-3.0 → MIT | 2.0.0, MIT |
+| `@scramjet/runner-python` | — | — | 2.0.0, MIT (release target) |
+| `scramjet-bdd` | 1.1.0 | ISC → MIT | Version/publish excluded; MIT metadata only |
+
+**Excluded from the 2.0.0 set** (preserved at prior version and license):
+
+| Package | Preserved version | License |
+| --- | --- | --- |
+| `@scramjet/verser` | 1.1.0 | AGPL-3.0 |
+| `@scramjet/bpmux` | 9.0.0 | MIT (upstream-derived) |
+| `@scramjet/frame-stream` | 5.0.0 | MIT (upstream-derived) |
+
+### MIT license migration
+
+The license for included first-party packages has migrated from
+AGPL-3.0 (or, in the case of `@scramjet/utility`, `@scramjet/telemetry`, and
+`scramjet-bdd`, ISC) to the MIT license.  Packages that were already MIT
+retain their existing terms.
+
+Each migrated package includes an updated `LICENSE` file and MIT notice.
+Upstream-derived packages (`@scramjet/bpmux`, `@scramjet/frame-stream`)
+preserve their existing attributions.  The `scramjet-bdd` test-only workspace
+receives MIT metadata and a notice file without entering the 2.0.0 version or
+publish set.
+
+### Runner Python release target
+
+`@scramjet/runner-python` is included in the 2.0.0 release set as a publishable package target
+under the MIT license.  The package includes:
+
+- Python sequence protocol modules and contract documentation
+- Pytest infrastructure and golden-parity fixtures
+- Sequence-format parity validation
+- Python sequence contract documentation and parity validation (2026-07)
+
+### Breaking changes and migration guidance
+
+1. **Adapter package split** — Docker, Kubernetes, and process adapters moved
+   out of `@scramjet/sth` into their own packages
+   (`@scramjet/adapter-docker`, `@scramjet/adapter-kubernetes`,
+   `@scramjet/adapter-process`) with a shared `@scramjet/adapters-common`
+   dependency.  Imports from the STH package must be updated to reference the
+   adapter-specific packages.
+
+2. **Legacy Verser/BPMux removal** — Active callsites for the original Verser
+   and BPMux transports have been removed.  Standalone legacy packages remain
+   buildable.  Users depending on the legacy transport layer must migrate to
+   Verser2.
+
+3. **Commander replacement** — Direct Commander usage has been replaced with
+   Scramjet-owned runtime option registries (`@scramjet/config`).  Argument
+   parsing across STH, CLI, and runner surfaces now uses the new option
+   registry.  An invariant guard prevents reintroduction of Commander.
+
+4. **Lint/format tooling migration** — ESLint and Prettier have been replaced
+   by Biome across the repository.  Legacy ESLint configurations are no longer
+   maintained.
+
+5. **Type package deprecation** — `@scramjet/types` is deprecated in favor of
+   the split type packages:
+   - `@scramjet/runtime-types` for runtime-neutral contracts
+   - `@scramjet/sequence-types` for sequence-author types
+   - `@scramjet/api-types` for API DTOs and client stubs
+
+   Existing imports continue to resolve through the compatibility barrel.
+
+6. **Manager and MultiManager version alignment** — Both packages have been
+   aligned from 0.35.1 to 2.0.0.  Internal `@scramjet/manager: ^0.35.1`
+   dependency references are updated to `^2.0.0`.
+
+### Shipped track highlights
+
+The following material work was completed between the 1.0.1 release
+(2024-03-13) and this 2.0.0 baseline.  See the Pre-2.0.0 section above for
+the full historical record.
+
+- **2024-10/11**: Docker, Kubernetes, and process adapters split from STH
+- **2025-02/05**: RPC/API/storage foundations, Node 22 support, local BPMux
+  fork, frame-stream package
+- **2026-05**: Runner-node isolation, process executor, lifecycle/stream
+  forwarding, BDD runner-container fixtures
+- **2026-06**: Sequence-test and Config packages, Commander replacement,
+  API v2 and Verser2 topology, typings split, Biome migration,
+  memory-safe tooling (AVA/BDD memory guards), Python and Bun runner
+  scaffolding
+- **2026-07**: Cleanup roadmap, documentation ownership migration,
+  Python sequence contract documentation, BDD teardown hardening
+
+### Acknowledgments
+
+This release includes contributions from: @patuwwy, @piotrek6641, @gzukowski,
+@a-tylenda, @alicja-gruzdz, @karoltylenda, @MichalCz, @ErykSol, @S4adam,
+@mcdominik, @tomekcrm, @kociolekscramjet, @daro1337, @Tatarinho, @gierwialo,
+@RayNawfal, and dependabot.
+
+The 2.0.0 alignment and MIT licensing migration were prepared on behalf of the
+Scramjet organization.
+
+### Appendix: Source and package-version evidence
+
+- **1.0.1 release point**: Commit
+  `7f97c217b958bb8723d390d5d75336cf38361392` (tag `v1.0.1`,
+  2024-03-13T11:38:48Z)
+- **Pre-2.0.0 baseline**: Commit
+  `db54d058fb4d71dca958272ca67fccff793a9970` (2026-07-30T00:16:50Z)
+- **Range**: 967 commits between release points; 271 first-parent commits
+- **Track inventory**:
+  `conductor/archive/release_2_0_0_package_alignment_mit_license_20260729/inventory.md`
+  — reconciled package boundary, excluded packages, release tooling safeguards
+- **Release history evidence**:
+  `conductor/archive/release_2_0_0_package_alignment_mit_license_20260729/release-history.md`
+  — curated evidence from the Pre-2.0.0 historical entries and git history
+
 ## [1.0.1] - 2024-03-13
 
 ## Fixed

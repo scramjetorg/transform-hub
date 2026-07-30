@@ -8,6 +8,7 @@
 
 - [connecting-hubs.md](connecting-hubs.md)
 - [csr-enrollment.md](csr-enrollment.md)
+- [docker-compose.md](docker-compose.md)
 - [overview.md](overview.md)
 - [running.md](running.md)
 

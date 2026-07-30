@@ -22,8 +22,8 @@ A configured Verser2 profile **never** silently falls back to HTTP(S)/v1. Comman
     - packages/cli/src/lib/capabilities.ts — native capability facade
     - packages/cli/src/lib/config/verser2Profile.ts — credential validation
     - packages/config/src/verser2-profile.ts — profile schema and redaction
-    - conductor/tracks/verser2_cli_20260722/capability-matrix.md — full command inventory
-    - conductor/tracks/verser2_cli_20260722/command-structure.md — approved design
+    - conductor/archive/verser2_cli_20260722/capability-matrix.md — full command inventory
+    - conductor/archive/verser2_cli_20260722/command-structure.md — approved design
 -->
 
 ## Prerequisites
@@ -357,8 +357,8 @@ This isolation is enforced at the transport layer — the CLI never sends an ups
 ## See also
 
 - [CLI usage](./usage.md) — basic CLI setup and common workflows
-- [Capability matrix — full command inventory](../../conductor/tracks/verser2_cli_20260722/capability-matrix.md) — every command variant with v1/v2 availability
-- [Command structure — approved design](../../conductor/tracks/verser2_cli_20260722/command-structure.md) — profile model, identity sequence, error exits
+- [Capability matrix — full command inventory](../../conductor/archive/verser2_cli_20260722/capability-matrix.md) — every command variant with v1/v2 availability
+- [Command structure — approved design](../../conductor/archive/verser2_cli_20260722/command-structure.md) — profile model, identity sequence, error exits
 - [Transform Hub configuration](../transform-hub/configuration.md) — Verser2 server-side setup
 - [Manager overview](../manager/overview.md) — orchestration layer architecture
 - [API client documentation](../api/client-usage.md) — programmatic access
