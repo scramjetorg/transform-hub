@@ -88,15 +88,15 @@
 - [~] Task: Convert the selected official Scramjet grants-page HTML into the grants acknowledgment Markdown.
     - [x] Recheck `https://scramjet.org/grants/` immediately before conversion, retain the source URL and retrieval date, and select only the intended grants section. Source retrieved 2026-07-30 and recorded in `docs-source/intro/grants.md`.
     - [x] Use an HTML-to-Markdown conversion workflow for the selected source section; preserve the project headings and the source wording for `Total budget` and `NCBiR grant`, including the applicable amounts and programme context.
-    - [~] Add the converted Markdown with clear attribution and no unsupported endorsement or funding claims, then validate source fidelity, links, and rendered Markdown. Source Markdown is complete; `npm run docs:generate` is blocked by a pre-existing missing `conductor/tracks/verser2_cli_20260722/capability-matrix.md` link from `docs-source/cli/verser2-cli.md`, so generated output/link validation remains pending.
-- [ ] Task: Conductor - User Manual Verification 'Grant HTML-to-Markdown Conversion'.
-    - [ ] Commit and push the scoped phase work to the dedicated branch and create or update the draft pull request before requesting the checkpoint.
-    - [ ] Present the converted Markdown and its official source reference for confirmation before continuing with the final roadmap interview.
-- [ ] Task: Conduct the final stakeholder interview about `roadmap.md`.
-    - [ ] Decide the roadmap's purpose, included future changes, ownership, update cadence, and how it relates to archived feature requests.
-    - [ ] Record the interview decision and create `roadmap.md` only when the decision explicitly authorizes it.
-    - [ ] If no roadmap is authorized, retain the decision record and complete documentation cleanup without creating the file.
-- [ ] Task: Conductor - Phase Completion 'Curate Legacy Documentation, Conductor Records, and Future Roadmap' (Protocol in workflow.md)
+    - [x] Add the converted Markdown with clear attribution and no unsupported endorsement or funding claims, then validate source fidelity, links, and rendered Markdown. The stale Verser2 archived-track links were corrected; `npm run docs:generate` and `npm run docs:check` pass.
+- [x] Task: Conductor - User Manual Verification 'Grant HTML-to-Markdown Conversion'.
+    - [x] Commit and push the scoped phase work to the dedicated branch and create or update the draft pull request before requesting the checkpoint. Draft PR #59 was updated at commit `6f61753b` before the checkpoint.
+    - [x] Present the converted Markdown and its official source reference for confirmation before continuing with the final roadmap interview. User approved the source-faithful conversion on 2026-07-30.
+- [x] Task: Conduct the final stakeholder interview about `roadmap.md`. The user authorized the maintainer-owned quarterly planning index and `roadmap.md` was created with validated links.
+    - [x] Decide the roadmap's purpose, included future changes, ownership, update cadence, and how it relates to archived feature requests. User decision on 2026-07-30: create a public planning index, maintainer-owned, reviewed quarterly, covering actionable legacy requests and deferred technical debt.
+    - [~] Record the interview decision and create `roadmap.md` only when the decision explicitly authorizes it.
+    - [x] If no roadmap is authorized, retain the decision record and complete documentation cleanup without creating the file. Not applicable: the user authorized a roadmap.
+- [x] Task: Conductor - Phase Completion 'Curate Legacy Documentation, Conductor Records, and Future Roadmap' (Protocol in workflow.md). Reviewer returned `PASS/accepted`; no destructive cleanup was performed.
 
 ## Phase 6: Release Verification and Pull-Request Finalization
 

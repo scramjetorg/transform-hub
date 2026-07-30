@@ -1,7 +1,7 @@
 {
   "generatedBy": "scripts/docs.js",
   "generatedAt": "1970-01-01T00:00:00.000Z",
-  "sourceIdentifier": "sha256:c65e1d45d73a19d7e61bfddb4132cc0d1fe3644d5f8d048fd974d7af201b610a",
+  "sourceIdentifier": "sha256:420ed163cd72aeeab5b620beb7045f23b4e45a8f832086ab061e381aebfd5db4",
   "outputRoot": {
     "value": "docs",
     "resolvedPath": "docs",
@@ -11,6 +11,7 @@
   },
   "groups": {
     "content": [
+      "intro/grants.md",
       "intro/overview.md",
       "transform-hub/build-run.md",
       "transform-hub/configuration.md",
@@ -19,6 +20,7 @@
       "transform-hub/overview.md",
       "manager/connecting-hubs.md",
       "manager/csr-enrollment.md",
+      "manager/docker-compose.md",
       "manager/overview.md",
       "manager/running.md",
       "sequences/packaging-deploying.md",
@@ -34,6 +36,7 @@
       "sequences/writing-sequences.md",
       "testing/testing-sequences.md",
       "cli/usage.md",
+      "cli/verser2-cli.md",
       "api/client-usage.md",
       "api/legacy/v1-api-client.md",
       "deployment/docker-adapter.md",

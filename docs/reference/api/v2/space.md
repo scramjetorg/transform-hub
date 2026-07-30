@@ -28,6 +28,7 @@ Routes can be resolved to a child `hub` via:
 
 | Operation | Method | Path (full) | Kind | Schemas |
 |-----------|--------|-------------|------|---------|
+| `ingressIdentity` | `GET` | `/api/v2/spaces/:spaceId/ingress/identity` | request | `response`: `IngressIdentity` |
 | `version` | `GET` | `/api/v2/spaces/:spaceId/version` | request | `response`: `VersionResponse` |
 | `config` | `GET` | `/api/v2/spaces/:spaceId/config` | request | `response`: `ConfigResponse` |
 | `trust` | `GET` | `/api/v2/spaces/:spaceId/verser2/trust` | request | `response`: `TrustExport` |
@@ -53,6 +54,14 @@ Routes can be resolved to a child `hub` via:
 | `storageClear` | `DELETE` | `/api/v2/spaces/:spaceId/storage` | request | `query`: `StoreClearQuery(optional)`, `response`: `StoreClearResponse` |
 
 ### Route details
+
+#### `ingressIdentity`
+
+- **Operation ID**: `GET /api/v2/spaces/:spaceId/ingress/identity`
+- **Method**: `GET`
+- **Path (full)**: `/api/v2/spaces/:spaceId/ingress/identity`
+- **Path (node-local)**: `/ingress/identity`
+- **Schemas**: `response`: `IngressIdentity`
 
 #### `version`
 

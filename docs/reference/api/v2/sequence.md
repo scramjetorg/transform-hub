@@ -15,8 +15,8 @@ title: API v2 — Sequence routes
 
 | Operation | Method | Path (full) | Kind | Schemas |
 |-----------|--------|-------------|------|---------|
-| `sendSequence` | `POST` | `/api/v2/spaces/:spaceId/hubs/:hubId/sequences` | downstream | `body`: `SendSequencePayload`, `response`: `opResponse(SequenceResponse)` |
-| `updateSequence` | `PUT` | `/api/v2/spaces/:spaceId/hubs/:hubId/sequences/:sequenceId` | downstream | `params`: `sequence`, `body`: `SendSequencePayload`, `response`: `opResponse(SequenceResponse)` |
+| `sendSequence` | `POST` | `/api/v2/spaces/:spaceId/hubs/:hubId/sequences` | downstream | `response`: `opResponse(SequenceResponse)` |
+| `updateSequence` | `PUT` | `/api/v2/spaces/:spaceId/hubs/:hubId/sequences/:sequenceId` | downstream | `params`: `sequence`, `response`: `opResponse(SequenceResponse)` |
 | `deleteSequence` | `DELETE` | `/api/v2/spaces/:spaceId/hubs/:hubId/sequences/:sequenceId` | request | `params`: `sequence`, `response`: `opResponse(DeleteSequenceResponse)` |
 | `startSequence` | `POST` | `/api/v2/spaces/:spaceId/hubs/:hubId/sequences/:sequenceId/instances` | request | `params`: `sequence`, `body`: `StartSequencePayload`, `response`: `opResponse(StartSequenceResponse)` |
 | `getSequence` | `GET` | `/api/v2/spaces/:spaceId/hubs/:hubId/sequences/:sequenceId` | request | `params`: `sequence`, `response`: `SequenceResponse` |
@@ -31,7 +31,7 @@ title: API v2 — Sequence routes
 - **Path (full)**: `/api/v2/spaces/:spaceId/hubs/:hubId/sequences`
 - **Path (node-local)**: `/`
 - **Kind**: `downstream`
-- **Schemas**: `body`: `SendSequencePayload`, `response`: `opResponse(SequenceResponse)`
+- **Schemas**: `response`: `opResponse(SequenceResponse)`
 
 #### `updateSequence`
 
@@ -40,7 +40,7 @@ title: API v2 — Sequence routes
 - **Path (full)**: `/api/v2/spaces/:spaceId/hubs/:hubId/sequences/:sequenceId`
 - **Path (node-local)**: `/:sequenceId`
 - **Kind**: `downstream`
-- **Schemas**: `params`: `sequence`, `body`: `SendSequencePayload`, `response`: `opResponse(SequenceResponse)`
+- **Schemas**: `params`: `sequence`, `response`: `opResponse(SequenceResponse)`
 
 #### `deleteSequence`
 

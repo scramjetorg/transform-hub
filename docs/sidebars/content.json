@@ -1,5 +1,12 @@
 [
   {
+    "id": "intro-grants",
+    "title": "Grants",
+    "slug": "/intro/grants",
+    "source": "docs-source/intro/grants.md",
+    "output": "intro/grants.md"
+  },
+  {
     "id": "intro-overview",
     "title": "Transform Hub documentation",
     "slug": "/intro",
@@ -54,6 +61,13 @@
     "slug": "/manager/csr-enrollment",
     "source": "docs-source/manager/csr-enrollment.md",
     "output": "manager/csr-enrollment.md"
+  },
+  {
+    "id": "manager-docker-compose",
+    "title": "Run a Manager and Hubs with Docker Compose",
+    "slug": "/manager/docker-compose",
+    "source": "docs-source/manager/docker-compose.md",
+    "output": "manager/docker-compose.md"
   },
   {
     "id": "manager-overview",
@@ -159,6 +173,13 @@
     "slug": "/cli/usage",
     "source": "docs-source/cli/usage.md",
     "output": "cli/usage.md"
+  },
+  {
+    "id": "cli-verser2",
+    "title": "Verser2 CLI setup and usage",
+    "slug": "/cli/verser2",
+    "source": "docs-source/cli/verser2-cli.md",
+    "output": "cli/verser2-cli.md"
   },
   {
     "id": "api-client-usage",
