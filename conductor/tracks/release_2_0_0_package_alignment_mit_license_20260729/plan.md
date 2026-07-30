@@ -77,18 +77,18 @@
 
 ## Phase 5: Curate Legacy Documentation, Conductor Records, and Future Roadmap
 
-- [ ] Task: Classify remaining feature-request documentation and prepare a traceable cleanup proposal.
-    - [ ] Identify completed, obsolete, actionable, and historically relevant requests in the legacy roadmap documentation.
-    - [ ] Delegate non-Conductor documentation cleanup to the configured cleanup specialist only after the proposed removals/archives are bounded and reviewer-safe.
-    - [ ] Redirect, archive, or retain each item with traceability; do not silently discard material that remains relevant.
-- [ ] Task: Review old Conductor tracks and registry entries without touching active tracks.
-    - [ ] Have the main Conductor session prepare an archival/consolidation proposal for completed or stale records and preserve their registry links or archive paths.
-    - [ ] Request configured reviewer safety review before any broad move, deletion, or registry rewrite.
-    - [ ] Apply only approved Conductor-record changes and verify all retained links.
-- [ ] Task: Convert the selected official Scramjet grants-page HTML into the grants acknowledgment Markdown.
-    - [ ] Recheck `https://scramjet.org/grants/` immediately before conversion, retain the source URL and retrieval date, and select only the intended grants section.
-    - [ ] Use an HTML-to-Markdown conversion workflow for the selected source section; preserve the project headings and the source wording for `Total budget` and `NCBiR grant`, including the applicable amounts and programme context.
-    - [ ] Add the converted Markdown with clear attribution and no unsupported endorsement or funding claims, then validate source fidelity, links, and rendered Markdown.
+- [x] Task: Classify remaining feature-request documentation and prepare a traceable cleanup proposal. The reviewer-ready non-destructive proposal is in `legacy-docs-proposal.md`.
+    - [x] Identify completed, obsolete, actionable, and historically relevant requests in the legacy roadmap documentation. Read-only classification was reconciled into `legacy-docs-proposal.md`.
+    - [x] Delegate non-Conductor documentation cleanup to the configured cleanup specialist only after the proposed removals/archives are bounded and reviewer-safe. The proposal defers all mutation until safety review.
+    - [x] Redirect, archive, or retain each item with traceability; do not silently discard material that remains relevant. Proposed dispositions retain actionable/historical material and archive rather than delete obsolete references.
+- [x] Task: Review old Conductor tracks and registry entries without touching active tracks. Proposal recorded in `conductor-records-proposal.md`.
+    - [x] Have the main Conductor session prepare an archival/consolidation proposal for completed or stale records and preserve their registry links or archive paths. The proposal preserves all registered records and flags the orphaned metadata-only track for later decision.
+    - [x] Request configured reviewer safety review before any broad move, deletion, or registry rewrite. Reviewer returned `PASS/accepted`; no record move is approved or necessary.
+    - [x] Apply only approved Conductor-record changes and verify all retained links. No record changes are approved or required at this time; retained registry links were checked.
+- [~] Task: Convert the selected official Scramjet grants-page HTML into the grants acknowledgment Markdown.
+    - [x] Recheck `https://scramjet.org/grants/` immediately before conversion, retain the source URL and retrieval date, and select only the intended grants section. Source retrieved 2026-07-30 and recorded in `docs-source/intro/grants.md`.
+    - [x] Use an HTML-to-Markdown conversion workflow for the selected source section; preserve the project headings and the source wording for `Total budget` and `NCBiR grant`, including the applicable amounts and programme context.
+    - [~] Add the converted Markdown with clear attribution and no unsupported endorsement or funding claims, then validate source fidelity, links, and rendered Markdown. Source Markdown is complete; `npm run docs:generate` is blocked by a pre-existing missing `conductor/tracks/verser2_cli_20260722/capability-matrix.md` link from `docs-source/cli/verser2-cli.md`, so generated output/link validation remains pending.
 - [ ] Task: Conductor - User Manual Verification 'Grant HTML-to-Markdown Conversion'.
     - [ ] Commit and push the scoped phase work to the dedicated branch and create or update the draft pull request before requesting the checkpoint.
     - [ ] Present the converted Markdown and its official source reference for confirmation before continuing with the final roadmap interview.
