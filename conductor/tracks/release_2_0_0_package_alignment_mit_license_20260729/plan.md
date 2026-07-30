@@ -25,19 +25,27 @@
 
 ## Phase 2: Build Deterministic Package and Dependency Alignment Tooling
 
-- [ ] Task: Review existing shared release helpers and alignment scripts before changing tooling.
-    - [ ] Inspect `scripts/add-to-packages-json.js`, `scripts/bump-dependencies-versions.sh`, `scripts/bump_docker_images.sh`, root npm scripts, package-lock behavior, and release CI.
-    - [ ] Document why the release-specific alignment implementation is centralized rather than duplicated across scripts.
-- [ ] Task: Delegate the known alignment-tool implementation and focused tests to the configured implementation specialist.
-    - [ ] Consolidate package, internal dependency, image-tag, and release-metadata alignment into a deterministic supported workflow scoped to the included package inventory.
-    - [ ] Provide a validation or dry-run mode that reports version drift, excluded-package mutations, and unresolved internal ranges without silently correcting unrelated packages.
-    - [ ] Update or add focused tests/fixtures that prove a successful 2.0.0 alignment, idempotent reruns, and failure on deliberate drift.
-    - [ ] Update release-tooling documentation and `conductor/tech-stack.md` if the supported release command surface changes.
-- [ ] Task: Apply the approved alignment workflow to set the included package graph to `2.0.0`.
-    - [ ] Update manifest versions and included internal dependency, peer-dependency, and optional-dependency ranges.
-    - [ ] Update included Docker image references, release metadata, and the npm lockfile without changing excluded package versions or dependency policies.
-    - [ ] Run the focused alignment checks, affected package tests through the supported AVA runner, and an npm dependency-resolution check.
+- [x] Task: Review existing shared release helpers and alignment scripts before changing tooling. Decision recorded in `alignment-tooling.md` on 2026-07-30.
+    - [x] Inspect `scripts/add-to-packages-json.js`, `scripts/bump-dependencies-versions.sh`, `scripts/bump_docker_images.sh`, root npm scripts, package-lock behavior, and release CI. The review confirmed unscoped manifest/image mutations, stale generated/absent-file handling, and legacy Yarn release workflows.
+    - [x] Document why the release-specific alignment implementation is centralized rather than duplicated across scripts. The static boundary, deterministic modes, preservation rules, and test approach are recorded in `alignment-tooling.md`.
+- [x] Task: Delegate the known alignment-tool implementation and focused tests to the configured implementation specialist. Parent verification passed on 2026-07-30.
+    - [x] Consolidate package, internal dependency, image-tag, and release-metadata alignment into a deterministic supported workflow scoped to the included package inventory. `scripts/release-align.js` and `scripts/lib/release-boundary.js` are the single supported policy/command path; both CI and `publish:dist` use the boundary-restricted publisher.
+    - [x] Provide a validation or dry-run mode that reports version drift, excluded-package mutations, and unresolved internal ranges without silently correcting unrelated packages. `check`, `dry-run`, and `apply` modes are covered by the focused suite.
+    - [x] Update or add focused tests/fixtures that prove a successful 2.0.0 alignment, idempotent reruns, and failure on deliberate drift. `scripts/test/release-align.spec.js` passed all 24 cases through `scripts/run-ava.js` under the default memory guard.
+    - [x] Update release-tooling documentation and `conductor/tech-stack.md` if the supported release command surface changes. `alignment-tooling.md` and `conductor/tech-stack.md` now document the supported alignment commands and release workspace boundary.
+- [x] Task: Apply the approved alignment workflow to set the included package graph to `2.0.0`. The release-only npm workspace correction in `alignment-tooling.md` allowed npm to regenerate and reproduce the lockfile without modifying excluded manifests.
+    - [x] Update manifest versions and included internal dependency, peer-dependency, and optional-dependency ranges. Independent `check` output confirmed every included package and included internal range at 2.0.0 while excluded manifests stayed unchanged.
+    - [x] Update included Docker image references, release metadata, and the npm lockfile without changing excluded package versions or dependency policies. `npm install --ignore-scripts` regenerated `package-lock.json` from the release-only workspace; `npm ci --ignore-scripts` then reproduced it. Excluded manifests remain unchanged.
+    - [x] Run the focused alignment checks, affected package tests through the supported AVA runner, and an npm dependency-resolution check. `npm run release:align:check`, `npm run release:align:dry-run`, and the 34-case AVA suite passed under the default memory guard; `npm install --ignore-scripts` regenerated the lockfile and `npm ci --ignore-scripts` reproduced it.
 - [ ] Task: Conductor - Phase Completion 'Build Deterministic Package and Dependency Alignment Tooling' (Protocol in workflow.md)
+
+### Phase 2 validation record
+
+- `npm install --ignore-scripts` regenerated `package-lock.json`; `npm ci --ignore-scripts` reproduced the release-only workspace dependency graph. Neither command manually edited the lockfile.
+- `npm run release:align:check` and `npm run release:align:dry-run` passed with every included package at 2.0.0 and all five excluded workspaces preserved.
+- `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" node scripts/run-ava.js scripts/test/release-align.spec.js --serial` passed 34 tests. No per-test memory guard adoption was claimed; this focused tooling test does not retain child-process captures or run BDD.
+- Reviewer remediation: the initial Phase 2 review blocked partial writes on validation errors. `apply` now fails closed before writing and the re-review returned `PASS/deferred`; the non-blocking missing image-config snapshot assertion is tracked in `td.md`.
+- Shared-code/deduplication check: `scripts/lib/release-boundary.js` centralizes the release boundary for alignment, workspace validation, and publishing; no parallel package-specific logic was added.
 
 ## Phase 3: Convert Included Packages to MIT Distribution Licensing
 

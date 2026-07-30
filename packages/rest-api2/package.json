@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/rest-api2",
-  "version": "1.1.0",
+  "version": "2.0.0",
   "description": "Scramjet Transform Hub v2 REST API contracts and common client.",
   "main": "./src/index.ts",
   "scripts": {
@@ -13,7 +13,7 @@
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "AGPL-3.0",
   "dependencies": {
-    "@scramjet/api-router": "^1.1.0",
+    "@scramjet/api-router": "^2.0.0",
     "zod": "^3.24.3"
   },
   "devDependencies": {

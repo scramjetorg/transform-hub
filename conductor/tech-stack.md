@@ -15,8 +15,8 @@ Scramjet Transform Hub is a TypeScript/Node.js monorepo with multiple packages f
 ## Monorepo Structure
 
 - **Package manager**: npm for agent-run commands in this environment.
-- **Workspaces**: `packages/*` and `bdd/`.
-- **Workspace groups**: custom groups include modules, runners, and BDD workflows.
+- **Workspaces**: the npm-facing workspace set is an explicit first-party release package list. Legacy Verser/upstream packages, the private Python runner, and BDD remain outside that release-resolution set.
+- **Workspace groups**: custom groups include broad modules, runners, BDD workflows, and an explicit release group used for release packing.
 - **Primary package output**: built packages are emitted into `dist/`.
 
 ## TypeScript Configuration
@@ -68,6 +68,7 @@ Scramjet Transform Hub is a TypeScript/Node.js monorepo with multiple packages f
 ## Build and Tooling
 
 - **Build orchestration**: custom scripts under `scripts/`, including package builds and workspace script runners.
+- **Release alignment**: `npm run release:align:check`, `npm run release:align:dry-run`, and `npm run release:align:apply` are the supported 2.0.0 package/dependency/image alignment commands. They share an explicit inclusion boundary, preserve excluded packages, and gate release publication.
 - **Development entrypoint**: `npm run start:dev` for source-based hub startup.
 - **Built entrypoint**: `npm run start` after package build output exists in `dist/`.
 - **Linting/Formatting**: Biome is the active lint/format command surface during the migration from ESLint/Prettier. Use `npm run lint`, `npm run lint:quick`, `npm run lint:fix`, and `npm run format`; scripts set `RAYON_NUM_THREADS=12`, `lint` runs Biome linting, and formatting is explicit to avoid broad format churn. Do not run legacy ESLint commands unless a track explicitly re-enables them.
