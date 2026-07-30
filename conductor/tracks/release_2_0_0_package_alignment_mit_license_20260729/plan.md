@@ -49,10 +49,10 @@
 
 ## Phase 3: Convert Included Packages to MIT Distribution Licensing
 
-- [x] Task: Validate the approved included-package boundary before changing license files or metadata. Reconfirmed against `inventory.md` and the release-boundary validator on 2026-07-30.
+- [~] Task: Validate the approved included-package boundary before changing license files or metadata. User direction on 2026-07-30 adds `@scramjet/runner-python` to the MIT, 2.0.0 version, and npm publish boundary; `scramjet-bdd` remains MIT licensing-only.
     - [x] Reconfirm that STH, CLI, Manager, MultiManager, and other classified Scramjet-owned packages are in scope.
     - [x] Reconfirm that legacy Verser and upstream/external packages remain excluded and retain their existing license files and manifest fields.
-- [x] Task: Delegate bounded first-party license metadata and distribution-notice changes to the configured implementation specialist. Parent verification passed on 2026-07-30.
+- [~] Task: Delegate bounded first-party license metadata and distribution-notice changes to the configured implementation specialist. Follow-up required for the user-authorized Runner Python and BDD MIT licensing expansion.
     - [x] Update included package manifests and package license/notices with the official SPDX/OSI MIT text and `Copyright (c) 2026 Scramjet Sp. z o.o.`.
     - [x] Ensure npm package contents retain the required license materials without modifying excluded packages. Every included package has its own MIT `LICENSE`, preventing root fallback content from being distributed.
     - [x] Add focused automated checks or checked fixtures that detect missing, inconsistent, or excluded-package license changes. The release-alignment AVA suite covers license field, text, root, idempotence, and exclusion invariants.

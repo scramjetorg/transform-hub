@@ -27,6 +27,7 @@
     "@scramjet/rest-api2": "^2.0.0",
     "@scramjet/runner-bun": "^2.0.0",
     "@scramjet/runner-node": "^2.0.0",
+    "@scramjet/runner-python": "^2.0.0",
     "@scramjet/runtime-types": "^2.0.0",
     "@scramjet/sequence-types": "^2.0.0",
     "@scramjet/symbols": "^2.0.0",

@@ -182,7 +182,7 @@ function setupLicenses(fix) {
 	writeFileSync(fix.rootPkg, JSON.stringify(rootMan, null, 2) + "\n");
 
 	for (const [name, pkg] of fix.packages) {
-		if (!boundary.isIncluded(name) || boundary.isExcluded(name)) continue;
+		if (!boundary.isLicenseTarget(name)) continue;
 		const pkgDir = path.dirname(pkg.manifestPath);
 		const manifest = readManifest(pkg.manifestPath);
 		manifest.license = "MIT";
@@ -1094,4 +1094,78 @@ test("check fails when included package license field drifts after apply-license
 	t.is(checkResult.status, 1, "check should detect license drift");
 	t.true(checkResult.stdout.includes("LICENSE DRIFT"),
 		"should report drifting package");
+});
+
+test("runner-python is now included in version alignment; bdd remains license-only excluded", (t) => {
+	const fix = createFixture(t, {
+		version: "1.1.0",
+		included: ["@scramjet/sth", "@scramjet/runner-python"],
+		excluded: ["scramjet-bdd", "@scramjet/verser"],
+	});
+
+	// Before: runner-python has non-MIT license, bdd and verser have non-MIT
+	const rpBefore = readManifest(fix.packages.get("@scramjet/runner-python").manifestPath);
+	t.not(rpBefore.license, "MIT", "runner-python not MIT before");
+	const bddBefore = readManifest(fix.packages.get("scramjet-bdd").manifestPath);
+	t.not(bddBefore.license, "MIT", "bdd not MIT before");
+	const verserBefore = readManifest(fix.packages.get("@scramjet/verser").manifestPath);
+	t.is(verserBefore.license, "AGPL-3.0", "verser AGPL-3.0 before");
+
+	// apply-licenses gives MIT to both runner-python (included) and bdd (license-only)
+	const licResult = runAlign(fix.root, "apply-licenses");
+	t.is(licResult.status, 0, "apply-licenses should succeed");
+
+	const rpLic = readManifest(fix.packages.get("@scramjet/runner-python").manifestPath);
+	t.is(rpLic.license, "MIT", "runner-python now MIT");
+	const bddLic = readManifest(fix.packages.get("scramjet-bdd").manifestPath);
+	t.is(bddLic.license, "MIT", "bdd now MIT");
+	const verserLic = readManifest(fix.packages.get("@scramjet/verser").manifestPath);
+	t.is(verserLic.license, "AGPL-3.0", "verser still AGPL-3.0");
+
+	// Version apply: runner-python (included) gets bumped to 2.0.0;
+	// bdd (excluded except licensing) stays at 1.1.0; verser stays at 1.1.0.
+	const applyResult = runAlign(fix.root, "apply");
+	t.is(applyResult.status, 0, "apply should succeed");
+
+	const rpVer = readManifest(fix.packages.get("@scramjet/runner-python").manifestPath);
+	t.is(rpVer.version, "2.0.0", "runner-python version bumped to 2.0.0");
+	t.is(rpVer.license, "MIT", "runner-python license still MIT after apply");
+
+	const bddVer = readManifest(fix.packages.get("scramjet-bdd").manifestPath);
+	t.is(bddVer.version, "1.1.0", "bdd version unchanged (excluded from version alignment)");
+	t.is(bddVer.license, "MIT", "bdd license still MIT after apply");
+
+	const verserVer = readManifest(fix.packages.get("@scramjet/verser").manifestPath);
+	t.is(verserVer.version, "1.1.0", "verser version unchanged (strictly excluded)");
+	t.is(verserVer.license, "AGPL-3.0", "verser license unchanged");
+});
+
+test("runner-python pack content excludes test and docker artifacts", (t) => {
+	// Validate the package.json files field excludes unwanted paths.
+	// We do not run npm pack (requires full install), but we verify the
+	// manifest "files" field explicitly.
+	const pkg = JSON.parse(readFileSync(
+		path.resolve(__dirname, "../../packages/runner-python/package.json"), "utf8"
+	));
+
+	t.true(Array.isArray(pkg.files), "runner-python has files field");
+	t.is(pkg.private, undefined, "runner-python is public (no private field)");
+
+	// Verify common unwanted patterns are not present
+	const allFiles = pkg.files.join(" ");
+	t.false(allFiles.includes("tests"), "files excludes tests/");
+	t.false(allFiles.includes("Dockerfile"), "files excludes Dockerfile");
+	t.false(allFiles.includes("codemap"), "files excludes codemap");
+	t.false(allFiles.includes("__pycache__"), "files excludes __pycache__");
+	t.false(allFiles.includes("docker-entrypoint"), "files excludes docker scripts");
+	t.false(allFiles.includes("unpack.sh"), "files excludes unpack.sh");
+	t.false(allFiles.includes("wait-for-sequence"), "files excludes wait scripts");
+
+	// Verify required publish content is included
+	t.true(allFiles.includes("dist/LICENSE"), "files includes LICENSE");
+	t.true(allFiles.includes("dist/runner_python"), "files includes runner_python package");
+	t.true(allFiles.includes("dist/src"), "files includes src");
+	t.true(allFiles.includes("dist/pyproject.toml"), "files includes pyproject.toml");
+	t.true(allFiles.includes("dist/requirements.txt"), "files includes requirements.txt");
+	t.true(allFiles.includes("dist/__pypackages__"), "files includes vendored deps");
 });

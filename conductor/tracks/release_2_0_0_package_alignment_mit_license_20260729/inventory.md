@@ -27,8 +27,8 @@ and must not be expanded without a written scope decision.
 | `@scramjet/verser` | 1.1.0 | AGPL-3.0 | Excluded | Explicit legacy-Verser exclusion in the specification. Preserve its version and licensing policy. |
 | `@scramjet/bpmux` | 9.0.0 | MIT | Excluded | Explicit upstream-derived exclusion; preserve existing David Halls attribution and version. |
 | `@scramjet/frame-stream` | 5.0.0 | MIT | Excluded | Explicit upstream-derived exclusion; preserve existing upstream attribution and version. |
-| `@scramjet/runner-python` | 1.1.0 | no manifest license; private | Excluded | Private npm workspace, not a publish target; it must not be swept into package licensing/version automation. |
-| `scramjet-bdd` | 1.1.0 | ISC | Excluded | Test-only `bdd/` workspace, excluded from the publish workspace group. |
+| `@scramjet/runner-python` | 2.0.0 | MIT | Included | Per user direction on 2026-07-30, it is a public npm release target with its own MIT notice and is consumed by the outer runner. |
+| `scramjet-bdd` | 1.1.0 | ISC | Version/publish excluded; MIT licensing included | Test-only `bdd/` workspace, excluded from the publish workspace group. Per user direction on 2026-07-30, it receives MIT metadata and a notice without entering the 2.0.0 version/publish set. |
 
 ## Publishing, internal references, and image evidence
 

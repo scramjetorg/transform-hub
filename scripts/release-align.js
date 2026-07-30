@@ -38,6 +38,7 @@ const {
 	isExcluded,
 	isScramjet,
 	isSignicode,
+	isLicenseTarget,
 	dependencySections,
 	getRangePrefix,
 	expectedVersion,
@@ -202,8 +203,8 @@ function checkWorkspaceGroups(rootManifest, discoveredPackages) {
 		const pkgDir = name === "scramjet-bdd" ? "bdd" : "packages/" + name.replace("@scramjet/", "");
 		excludedDirs.add(pkgDir);
 	}
-	// Also check the known static excluded dirs
-	for (const exName of ["@scramjet/verser", "@scramjet/bpmux", "@scramjet/frame-stream", "@scramjet/runner-python"]) {
+	// Also check the known static excluded dirs (runner-python is now included)
+	for (const exName of ["@scramjet/verser", "@scramjet/bpmux", "@scramjet/frame-stream"]) {
 		excludedDirs.add("packages/" + exName.replace("@scramjet/", ""));
 	}
 	excludedDirs.add("bdd");
@@ -408,7 +409,7 @@ function checkLicenseState(packages) {
 	const errors = [];
 
 	for (const [, pkg] of packages) {
-		if (!pkg.isIncluded) continue;
+		if (!isLicenseTarget(pkg.name)) continue;
 
 		const pkgDir = path.dirname(pkg.filePath);
 		const licensePath = path.join(pkgDir, LICENSE_FILE);
@@ -735,9 +736,10 @@ function applyLicenses() {
 		report.push(`Root package.json license: already ${EXPECTED_LICENSE} (no change)`);
 	}
 
-	// 3. Per-package LICENSE and license field
+	// 3. Per-package LICENSE and license field (includes licensing-only
+	//    excluded packages like runner-python and scramjet-bdd).
 	for (const [, pkg] of plan.packages) {
-		if (!pkg.isIncluded) continue;
+		if (!isLicenseTarget(pkg.name)) continue;
 
 		const pkgDir = path.dirname(pkg.filePath);
 		const licensePath = path.join(pkgDir, LICENSE_FILE);
@@ -762,10 +764,11 @@ function applyLicenses() {
 		if (pkgChanged) modified++;
 	}
 
-	// 4. Confirm no excluded package was mutated (its license field must be
-	//    byte-for-byte unchanged from the original on-disk manifest).
+	// 4. Confirm no strictly excluded package was mutated (its license field
+	//    must be byte-for-byte unchanged).  License-only packages (runner-python,
+	//    scramjet-bdd) are intentionally being updated.
 	for (const [, pkg] of plan.packages) {
-		if (!pkg.isExcluded) continue;
+		if (!pkg.isExcluded || isLicenseTarget(pkg.name)) continue;
 		const onDisk = readJson(pkg.filePath);
 		if (onDisk.license !== pkg.manifest.license) {
 			errors.push(

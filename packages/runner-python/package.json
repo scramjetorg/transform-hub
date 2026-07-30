@@ -1,15 +1,33 @@
 {
     "name": "@scramjet/runner-python",
-    "version": "1.1.0",
-    "description": "Python runtime wrapper for packages/runner",
-    "private": true,
+    "version": "2.0.0",
+    "description": "Python runtime wrapper for packages/runner — python3 runner_python process launcher.",
     "scripts": {
+        "build": "bash scripts/install-deps.sh --target dist/__pypackages__",
+        "prepack": "bash scripts/install-deps.sh --target dist/__pypackages__ && cp LICENSE dist/ && cp -r runner_python dist/ && cp -r src dist/",
         "install:deps": "bash scripts/install-deps.sh --dev --target __pypackages__",
         "test": "PYTHONPATH=__pypackages__:src:$PYTHONPATH pytest",
-        "build": "bash scripts/install-deps.sh --target dist/__pypackages__",
         "clean": "rm -rf __pypackages__ dist"
     },
+    "files": [
+        "dist/LICENSE",
+        "dist/runner_python",
+        "dist/src",
+        "dist/pyproject.toml",
+        "dist/requirements.txt",
+        "dist/__pypackages__"
+    ],
     "dependencies": {
         "@signicode/verser2-guest-python": "0.7.0"
-    }
+    },
+    "author": "Scramjet <open-source@scramjet.org>",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/scramjetorg/transform-hub.git"
+    },
+    "bugs": {
+        "url": "https://github.com/scramjetorg/transform-hub/issues"
+    },
+    "homepage": "https://github.com/scramjetorg/transform-hub#readme"
 }
