@@ -11,7 +11,7 @@
     "test": "nyc node ../../scripts/run-ava.js"
   },
   "author": "Scramjet <open-source@scramjet.org>",
-  "license": "AGPL-3.0",
+  "license": "MIT",
   "dependencies": {
     "@scramjet/obj-logger": "^2.0.0",
     "@scramjet/utility": "^2.0.0",

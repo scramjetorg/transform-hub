@@ -119,6 +119,40 @@ function isSignicode(name) {
 }
 
 /**
+ * Official SPDX/OSI MIT license text as retrieved 2026-07-30.
+ * Copyright assigned to Scramjet Sp. z o.o. for the 2.0.0 release.
+ */
+const MIT_LICENSE_TEXT = [
+	"MIT License",
+	"",
+	"Copyright (c) 2026 Scramjet Sp. z o.o.",
+	"",
+	'Permission is hereby granted, free of charge, to any person obtaining a copy',
+	'of this software and associated documentation files (the "Software"), to deal',
+	"in the Software without restriction, including without limitation the rights",
+	"to use, copy, modify, merge, publish, distribute, sublicense, and/or sell",
+	'copies of the Software, and to permit persons to whom the Software is',
+	"furnished to do so, subject to the following conditions:",
+	"",
+	"The above copyright notice and this permission notice shall be included in all",
+	"copies or substantial portions of the Software.",
+	"",
+	'THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR',
+	"IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,",
+	"FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE",
+	"AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER",
+	"LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,",
+	"OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE",
+	"SOFTWARE.",
+].join("\n") + "\n";
+
+/** Expected license identifier for all included packages and root. */
+const EXPECTED_LICENSE = "MIT";
+
+/** Filename for the MIT license file placed in each package dir. */
+const LICENSE_FILE = "LICENSE";
+
+/**
  * Return the union of all sections that may reference dependencies.
  * @returns {string[]}
  */
@@ -197,6 +231,9 @@ module.exports = {
 	INCLUDED_PACKAGES,
 	EXCLUDED_PACKAGES,
 	IMAGE_CONFIG_PATH,
+	MIT_LICENSE_TEXT,
+	EXPECTED_LICENSE,
+	LICENSE_FILE,
 	isIncluded,
 	isExcluded,
 	isScramjet,

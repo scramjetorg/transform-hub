@@ -14,7 +14,7 @@
     "test:ava": "node ../../scripts/run-ava.js -T 50000 --serial"
   },
   "author": "Scramjet <open-source@scramjet.org>",
-  "license": "AGPL-3.0",
+  "license": "MIT",
   "dependencies": {
     "@scramjet/api-types": "^2.0.0",
     "@scramjet/config": "^2.0.0",

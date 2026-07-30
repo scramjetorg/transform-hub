@@ -17,7 +17,7 @@
     "preinstall": "tar --version 2>&1 >/dev/null"
   },
   "author": "Scramjet <open-source@scramjet.org>",
-  "license": "AGPL-3.0",
+  "license": "MIT",
   "dependencies": {
     "@scramjet/api-client": "^2.0.0",
     "@scramjet/api-router": "^2.0.0",

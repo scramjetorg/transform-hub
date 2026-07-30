@@ -9,7 +9,7 @@
     "test": "tsc --noEmit"
   },
   "author": "Scramjet <open-source@scramjet.org>",
-  "license": "AGPL-3.0",
+  "license": "MIT",
   "devDependencies": {
     "@types/node": "^22.15.0",
     "typescript": "~4.7.4"

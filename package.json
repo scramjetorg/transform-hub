@@ -58,6 +58,7 @@
     "release:align:check": "node scripts/release-align.js check",
     "release:align:dry-run": "node scripts/release-align.js dry-run",
     "release:align:apply": "node scripts/release-align.js apply",
+    "release:align:apply-licenses": "node scripts/release-align.js apply-licenses",
     "start": "DEVELOPMENT=true node dist/sth/bin/hub.js",
     "start:dev": "tsx packages/sth/src/bin/hub.ts",
     "start:dev:cli": "DEVELOPMENT=true tsx packages/cli/src/bin/index.ts",
@@ -99,7 +100,7 @@
     "docs:sync:readmes": "node ./scripts/docs.js sync:readmes"
   },
   "author": "Scramjet <open-source@scramjet.org>",
-  "license": "AGPL-3.0",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/scramjetorg/transform-hub.git"

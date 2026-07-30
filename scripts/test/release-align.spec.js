@@ -168,6 +168,29 @@ function readManifest(pkgPath) {
 	return JSON.parse(readFileSync(pkgPath, "utf8"));
 }
 
+/**
+ * Set up proper MIT license state in a fixture: write root LICENSE, set
+ * all included packages' license field to MIT, and create LICENSE files.
+ */
+function setupLicenses(fix) {
+	const mitText = boundary.MIT_LICENSE_TEXT;
+	const rootDir = path.dirname(fix.rootPkg);
+	writeFileSync(path.join(rootDir, "LICENSE"), mitText);
+
+	const rootMan = readManifest(fix.rootPkg);
+	rootMan.license = "MIT";
+	writeFileSync(fix.rootPkg, JSON.stringify(rootMan, null, 2) + "\n");
+
+	for (const [name, pkg] of fix.packages) {
+		if (!boundary.isIncluded(name) || boundary.isExcluded(name)) continue;
+		const pkgDir = path.dirname(pkg.manifestPath);
+		const manifest = readManifest(pkg.manifestPath);
+		manifest.license = "MIT";
+		writeFileSync(pkg.manifestPath, JSON.stringify(manifest, null, 2) + "\n");
+		writeFileSync(path.join(pkgDir, "LICENSE"), mitText);
+	}
+}
+
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
@@ -182,6 +205,9 @@ test("check passes on already-aligned workspace", (t) => {
 			"@scramjet/multi-manager.deps": { "@scramjet/manager": "^2.0.0" },
 		}
 	});
+
+	// Set up proper MIT license state for the check
+	setupLicenses(fix);
 
 	const result = runAlign(fix.root, "check");
 
@@ -604,6 +630,8 @@ test("check passes on pre-aligned state with Manager/MultiManager at 2.0.0", (t)
 		}
 	});
 
+	setupLicenses(fix);
+
 	const result = runAlign(fix.root, "check");
 
 	t.is(result.status, 0, "check should pass when all aligned");
@@ -651,6 +679,8 @@ test("check passes when workspace groups match the release boundary", (t) => {
 		managerVersion: "2.0.0",
 		included: ["@scramjet/sth", "@scramjet/host"],
 	});
+
+	setupLicenses(fix);
 
 	const result = runAlign(fix.root, "check");
 
@@ -843,4 +873,225 @@ test("apply fails closed on workspace-group drift, leaves files unchanged", (t) 
 		hostBefore,
 		"included package unchanged after blocked apply"
 	);
+});
+
+// ---------------------------------------------------------------------------
+// License tests
+// ---------------------------------------------------------------------------
+
+test("check passes when all licenses are MIT with LICENSE files", (t) => {
+	const fix = createFixture(t, {
+		version: "2.0.0",
+		managerVersion: "2.0.0",
+		included: ["@scramjet/sth", "@scramjet/host"],
+	});
+
+	setupLicenses(fix);
+
+	const result = runAlign(fix.root, "check");
+	t.is(result.status, 0, "check should pass when all licenses correct");
+});
+
+test("check fails when included package has non-MIT license field", (t) => {
+	const fix = createFixture(t, {
+		version: "2.0.0",
+		managerVersion: "2.0.0",
+		included: ["@scramjet/sth", "@scramjet/host"],
+	});
+
+	const mitText = boundary.MIT_LICENSE_TEXT;
+	writeFileSync(path.join(path.dirname(fix.rootPkg), "LICENSE"), mitText);
+	for (const [, pkg] of fix.packages) {
+		if (!pkg.isIncluded || pkg.isExcluded) continue;
+		const pkgDir = path.dirname(pkg.manifestPath);
+		const manifest = readManifest(pkg.manifestPath);
+		manifest.license = "MIT";
+		writeFileSync(path.join(pkgDir, "LICENSE"), mitText);
+		writeFileSync(pkg.manifestPath, JSON.stringify(manifest, null, 2) + "\n");
+	}
+
+	const sth = readManifest(fix.packages.get("@scramjet/sth").manifestPath);
+	sth.license = "AGPL-3.0";
+	writeFileSync(fix.packages.get("@scramjet/sth").manifestPath,
+		JSON.stringify(sth, null, 2) + "\n");
+
+	const result = runAlign(fix.root, "check");
+	t.is(result.status, 1, "check should fail on license drift");
+	t.true(result.stdout.includes("LICENSE DRIFT"),
+		"should report LICENSE DRIFT");
+});
+
+test("check fails when included package is missing LICENSE file", (t) => {
+	const fix = createFixture(t, {
+		version: "2.0.0",
+		managerVersion: "2.0.0",
+		included: ["@scramjet/sth"],
+	});
+
+	const mitText = boundary.MIT_LICENSE_TEXT;
+	writeFileSync(path.join(path.dirname(fix.rootPkg), "LICENSE"), mitText);
+	const sth = readManifest(fix.packages.get("@scramjet/sth").manifestPath);
+	sth.license = "MIT";
+	writeFileSync(fix.packages.get("@scramjet/sth").manifestPath,
+		JSON.stringify(sth, null, 2) + "\n");
+
+	const result = runAlign(fix.root, "check");
+	t.is(result.status, 1, "check should fail on missing LICENSE");
+	t.true(result.stdout.includes("LICENSE FILE MISSING"),
+		"should report LICENSE FILE MISSING");
+});
+
+test("check fails when LICENSE file content does not match standard text", (t) => {
+	const fix = createFixture(t, {
+		version: "2.0.0",
+		managerVersion: "2.0.0",
+		included: ["@scramjet/sth"],
+	});
+
+	const mitText = boundary.MIT_LICENSE_TEXT;
+	writeFileSync(path.join(path.dirname(fix.rootPkg), "LICENSE"), mitText);
+
+	const sthDir = path.dirname(fix.packages.get("@scramjet/sth").manifestPath);
+	writeFileSync(path.join(sthDir, "LICENSE"), "This is not the MIT license text.\n");
+	const sth = readManifest(fix.packages.get("@scramjet/sth").manifestPath);
+	sth.license = "MIT";
+	writeFileSync(fix.packages.get("@scramjet/sth").manifestPath,
+		JSON.stringify(sth, null, 2) + "\n");
+
+	const result = runAlign(fix.root, "check");
+	t.is(result.status, 1, "check should fail on wrong LICENSE content");
+	t.true(result.stdout.includes("LICENSE FILE DRIFT"),
+		"should report LICENSE FILE DRIFT");
+});
+
+test("apply-licenses creates LICENSE files and updates license fields", (t) => {
+	const fix = createFixture(t, {
+		version: "1.1.0",
+		included: ["@scramjet/sth", "@scramjet/host"],
+	});
+
+	t.false(existsSync(path.join(path.dirname(fix.rootPkg), "LICENSE")),
+		"no root LICENSE before apply");
+
+	const result = runAlign(fix.root, "apply-licenses");
+	t.is(result.status, 0, "apply-licenses should exit 0");
+
+	t.true(existsSync(path.join(path.dirname(fix.rootPkg), "LICENSE")),
+		"root LICENSE created");
+	const sthDir = path.dirname(fix.packages.get("@scramjet/sth").manifestPath);
+	t.true(existsSync(path.join(sthDir, "LICENSE")),
+		"package LICENSE created");
+
+	const rootMan = readManifest(fix.rootPkg);
+	t.is(rootMan.license, "MIT", "root license should be MIT");
+	const sthMan = readManifest(fix.packages.get("@scramjet/sth").manifestPath);
+	t.is(sthMan.license, "MIT", "package license should be MIT");
+});
+
+test("apply-licenses is idempotent", (t) => {
+	const fix = createFixture(t, {
+		version: "1.1.0",
+		included: ["@scramjet/sth"],
+	});
+
+	const first = runAlign(fix.root, "apply-licenses");
+	t.is(first.status, 0, "first apply-licenses should exit 0");
+
+	const second = runAlign(fix.root, "apply-licenses");
+	t.is(second.status, 0, "second apply-licenses should exit 0");
+	t.true(second.stdout.includes("no change"),
+		"second apply-licenses should report no changes");
+});
+
+test("apply-licenses does not modify excluded packages", (t) => {
+	const fix = createFixture(t, {
+		version: "1.1.0",
+		included: ["@scramjet/sth"],
+		excluded: ["@scramjet/verser"],
+	});
+
+	const verserBefore = readManifest(fix.packages.get("@scramjet/verser").manifestPath);
+
+	const result = runAlign(fix.root, "apply-licenses");
+	t.is(result.status, 0, "apply-licenses should exit 0");
+
+	const verserAfter = readManifest(fix.packages.get("@scramjet/verser").manifestPath);
+	t.is(verserAfter.license, verserBefore.license,
+		"excluded package license should be unchanged");
+	t.is(existsSync(path.join(
+		path.dirname(fix.packages.get("@scramjet/verser").manifestPath), "LICENSE"
+	)), false, "excluded package should not get a LICENSE file");
+});
+
+test("apply-licenses creates LICENSE for already-MIT packages that lacked the file", (t) => {
+	const fix = createFixture(t, {
+		version: "1.1.0",
+		included: ["@scramjet/sth"],
+	});
+
+	const sth = readManifest(fix.packages.get("@scramjet/sth").manifestPath);
+	sth.license = "MIT";
+	writeFileSync(fix.packages.get("@scramjet/sth").manifestPath,
+		JSON.stringify(sth, null, 2) + "\n");
+
+	const sthDir = path.dirname(fix.packages.get("@scramjet/sth").manifestPath);
+	t.false(existsSync(path.join(sthDir, "LICENSE")), "no LICENSE before apply");
+
+	const result = runAlign(fix.root, "apply-licenses");
+	t.is(result.status, 0, "apply-licenses should exit 0");
+
+	t.true(existsSync(path.join(sthDir, "LICENSE")), "LICENSE file created");
+	t.is(readFileSync(path.join(sthDir, "LICENSE"), "utf8"),
+		boundary.MIT_LICENSE_TEXT, "LICENSE content matches MIT text");
+});
+
+test("apply-licenses creates root LICENSE and updates root license to MIT", (t) => {
+	const fix = createFixture(t, {
+		version: "1.1.0",
+		included: ["@scramjet/sth"],
+	});
+
+	t.false(existsSync(path.join(path.dirname(fix.rootPkg), "LICENSE")),
+		"no root LICENSE before apply");
+	const rootBefore = readManifest(fix.rootPkg);
+	t.not(rootBefore.license, "MIT", "root license not MIT before apply");
+
+	const result = runAlign(fix.root, "apply-licenses");
+	t.is(result.status, 0, "apply-licenses should exit 0");
+
+	t.true(existsSync(path.join(path.dirname(fix.rootPkg), "LICENSE")),
+		"root LICENSE created");
+	const rootAfter = readManifest(fix.rootPkg);
+	t.is(rootAfter.license, "MIT", "root license should be MIT");
+});
+
+test("check fails when root LICENSE is missing", (t) => {
+	const fix = createFixture(t, {
+		version: "2.0.0",
+		managerVersion: "2.0.0",
+		included: ["@scramjet/sth"],
+	});
+
+	const result = runAlign(fix.root, "check");
+	t.is(result.status, 1, "check should fail on missing root LICENSE");
+});
+
+test("check fails when included package license field drifts after apply-licenses", (t) => {
+	const fix = createFixture(t, {
+		version: "1.1.0",
+		included: ["@scramjet/sth", "@scramjet/host"],
+	});
+
+	const applyResult = runAlign(fix.root, "apply-licenses");
+	t.is(applyResult.status, 0, "apply-licenses should succeed");
+
+	const host = readManifest(fix.packages.get("@scramjet/host").manifestPath);
+	host.license = "AGPL-3.0";
+	writeFileSync(fix.packages.get("@scramjet/host").manifestPath,
+		JSON.stringify(host, null, 2) + "\n");
+
+	const checkResult = runAlign(fix.root, "check");
+	t.is(checkResult.status, 1, "check should detect license drift");
+	t.true(checkResult.stdout.includes("LICENSE DRIFT"),
+		"should report drifting package");
 });

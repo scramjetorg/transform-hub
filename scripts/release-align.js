@@ -31,6 +31,9 @@ const {
 	RELEASE_VERSION,
 	INCLUDED_PACKAGES,
 	IMAGE_CONFIG_PATH,
+	MIT_LICENSE_TEXT,
+	EXPECTED_LICENSE,
+	LICENSE_FILE,
 	isIncluded,
 	isExcluded,
 	isScramjet,
@@ -396,12 +399,59 @@ function computeChangePlan() {
 	return plan;
 }
 
-// ---------------------------------------------------------------------------
-// Check Mode
-// ---------------------------------------------------------------------------
+/**
+ * Validate license state for all discovered packages and root.
+ * Returns array of error strings (empty if all correct).
+ * @param {Map<string,object>} packages discovered packages map
+ */
+function checkLicenseState(packages) {
+	const errors = [];
+
+	for (const [, pkg] of packages) {
+		if (!pkg.isIncluded) continue;
+
+		const pkgDir = path.dirname(pkg.filePath);
+		const licensePath = path.join(pkgDir, LICENSE_FILE);
+
+		if (pkg.manifest.license !== EXPECTED_LICENSE) {
+			errors.push(
+				`LICENSE DRIFT: "${pkg.name}" has license "${pkg.manifest.license}" ` +
+				`expected "${EXPECTED_LICENSE}"`
+			);
+		}
+
+		if (!fs.existsSync(licensePath)) {
+			errors.push(
+				`LICENSE FILE MISSING: "${pkg.name}" has no ${LICENSE_FILE} file`
+			);
+		} else {
+			const existing = fs.readFileSync(licensePath, "utf8");
+			if (existing !== MIT_LICENSE_TEXT) {
+				errors.push(
+					`LICENSE FILE DRIFT: "${pkg.name}" ${LICENSE_FILE} content does not ` +
+					`match the standard MIT text`
+				);
+			}
+		}
+	}
+
+	const rootLicensePath = path.resolve(ROOT_DIR, LICENSE_FILE);
+	if (!fs.existsSync(rootLicensePath)) {
+		errors.push(`Root ${LICENSE_FILE} file is missing`);
+	} else {
+		const existing = fs.readFileSync(rootLicensePath, "utf8");
+		if (existing !== MIT_LICENSE_TEXT) {
+			errors.push(
+				`Root ${LICENSE_FILE} content does not match the standard MIT text`
+			);
+		}
+	}
+
+	return errors;
+}
 
 /**
- * Run check mode — validate alignment without writing.
+ * Run check mode — validate all alignment AND license state without writing.
  * Returns { ok: boolean, errors: string[], reportLines: string[] }
  */
 function check() {
@@ -463,7 +513,14 @@ function check() {
 		hasDrift = true;
 	}
 
-	return { ok: !hasDrift, errors: plan.errors, reportLines: lines };
+	// License validation
+	const licErrors = checkLicenseState(plan.packages);
+	for (const err of licErrors) {
+		lines.push(`LICENSE: ${err}`);
+		hasDrift = true;
+	}
+
+	return { ok: !hasDrift, errors: [...plan.errors, ...licErrors], reportLines: lines };
 }
 
 // ---------------------------------------------------------------------------
@@ -642,6 +699,88 @@ function applyChanges() {
 }
 
 // ---------------------------------------------------------------------------
+// License Apply Mode
+// ---------------------------------------------------------------------------
+
+/**
+ * Write MIT LICENSE files and update manifest license fields for all included
+ * packages and root.  Does not touch excluded packages.
+ * Returns { ok, reportLines, errors }.
+ */
+function applyLicenses() {
+	const plan = computeChangePlan();
+	const report = [];
+	const errors = [];
+	let modified = 0;
+
+	// 1. Root LICENSE
+	const rootLicensePath = path.resolve(ROOT_DIR, LICENSE_FILE);
+	if (!fs.existsSync(rootLicensePath) || fs.readFileSync(rootLicensePath, "utf8") !== MIT_LICENSE_TEXT) {
+		fs.writeFileSync(rootLicensePath, MIT_LICENSE_TEXT, "utf8");
+		report.push(`Root ${LICENSE_FILE}: updated to MIT`);
+		modified++;
+	} else {
+		report.push(`Root ${LICENSE_FILE}: already correct (no change)`);
+	}
+
+	// 2. Root package.json license field
+	const rootPath = path.resolve(ROOT_DIR, "package.json");
+	const rootManifest = readJson(rootPath);
+	if (rootManifest.license !== EXPECTED_LICENSE) {
+		rootManifest.license = EXPECTED_LICENSE;
+		writeJson(rootPath, rootManifest);
+		report.push(`Root package.json license: ${rootManifest.license} → ${EXPECTED_LICENSE}`);
+		modified++;
+	} else {
+		report.push(`Root package.json license: already ${EXPECTED_LICENSE} (no change)`);
+	}
+
+	// 3. Per-package LICENSE and license field
+	for (const [, pkg] of plan.packages) {
+		if (!pkg.isIncluded) continue;
+
+		const pkgDir = path.dirname(pkg.filePath);
+		const licensePath = path.join(pkgDir, LICENSE_FILE);
+		let pkgChanged = false;
+
+		// LICENSE file
+		if (!fs.existsSync(licensePath) || fs.readFileSync(licensePath, "utf8") !== MIT_LICENSE_TEXT) {
+			fs.writeFileSync(licensePath, MIT_LICENSE_TEXT, "utf8");
+			report.push(`${pkg.name}: created/updated ${LICENSE_FILE}`);
+			pkgChanged = true;
+		}
+
+		// manifest license field
+		const manifest = readJson(pkg.filePath);
+		if (manifest.license !== EXPECTED_LICENSE) {
+			manifest.license = EXPECTED_LICENSE;
+			writeJson(pkg.filePath, manifest);
+			report.push(`${pkg.name}: license ${manifest.license} → ${EXPECTED_LICENSE}`);
+			pkgChanged = true;
+		}
+
+		if (pkgChanged) modified++;
+	}
+
+	// 4. Confirm no excluded package was mutated (its license field must be
+	//    byte-for-byte unchanged from the original on-disk manifest).
+	for (const [, pkg] of plan.packages) {
+		if (!pkg.isExcluded) continue;
+		const onDisk = readJson(pkg.filePath);
+		if (onDisk.license !== pkg.manifest.license) {
+			errors.push(
+				`EXCLUDED BOUNDARY VIOLATION: excluded package "${pkg.name}" ` +
+				`license changed from "${pkg.manifest.license}" to "${onDisk.license}"` +
+				` — excluded packages must not be mutated`
+			);
+		}
+	}
+
+	const ok = errors.length === 0;
+	return { ok, modified, reportLines: report, errors };
+}
+
+// ---------------------------------------------------------------------------
 // CLI Entrypoint
 // ---------------------------------------------------------------------------
 
@@ -649,9 +788,10 @@ function usage() {
 	console.error(`Usage: node scripts/release-align.js <mode>
 
 Modes:
-  check    — validate alignment; exit 0 if aligned, 1 if drift found
-  dry-run  — show the change plan without writing files
-  apply    — execute the alignment changes
+  check            — validate full alignment; exit 0 if aligned, 1 if drift
+  dry-run          — show the change plan without writing files
+  apply            — execute alignment changes (version, deps, images)
+  apply-licenses   — write MIT LICENSE files and update license fields only
 
 Options:
   -h, --help  show this message`);
@@ -667,7 +807,7 @@ function main() {
 
 	const mode = args[0];
 
-	if (!mode || !["check", "dry-run", "apply"].includes(mode)) {
+	if (!mode || !["check", "dry-run", "apply", "apply-licenses"].includes(mode)) {
 		console.error(`Error: invalid mode "${mode}"`);
 		usage();
 	}
@@ -697,6 +837,21 @@ function main() {
 			}
 			process.exit(1);
 		}
+	} else if (mode === "apply-licenses") {
+		const result = applyLicenses();
+		for (const line of result.reportLines) {
+			console.log(line);
+		}
+		if (result.modified > 0) {
+			console.log(`\n${result.modified} file(s) modified.`);
+		}
+		if (!result.ok) {
+			console.error(`\n${result.errors.length} error(s) during license apply:`);
+			for (const err of result.errors) {
+				console.error(`  ${err}`);
+			}
+			process.exit(1);
+		}
 	}
 }
 
@@ -704,4 +859,4 @@ if (require.main === module) {
 	main();
 }
 
-module.exports = { check, dryRun, applyChanges, computeChangePlan };
+module.exports = { check, dryRun, applyChanges, applyLicenses, computeChangePlan };

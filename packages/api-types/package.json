@@ -9,7 +9,7 @@
     "test": "tsc --noEmit && node test/no-forbidden-deps.cjs"
   },
   "author": "Scramjet <open-source@scramjet.org>",
-  "license": "AGPL-3.0",
+  "license": "MIT",
   "dependencies": {
     "@scramjet/runtime-types": "^2.0.0",
     "@scramjet/symbols": "^2.0.0"

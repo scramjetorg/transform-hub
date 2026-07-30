@@ -11,7 +11,7 @@
     "clean": "rm -rf ./dist .bic_cache"
   },
   "author": "Scramjet <open-source@scramjet.org>",
-  "license": "AGPL-3.0",
+  "license": "MIT",
   "devDependencies": {
     "@scramjet/runtime-types": "^2.0.0",
     "@scramjet/types": "^2.0.0",

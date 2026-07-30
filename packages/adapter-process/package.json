@@ -12,7 +12,7 @@
     "prepack": "node ../../scripts/publish.js"
   },
   "author": "Scramjet <open-source@scramjet.org>",
-  "license": "AGPL-3.0",
+  "license": "MIT",
   "dependencies": {
     "@scramjet/adapters-common": "2.0.0",
     "@scramjet/api-types": "^2.0.0",

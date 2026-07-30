@@ -18,7 +18,7 @@
     "savehash": "node ../../scripts/hash-to-file.js ./src/"
   },
   "author": "Scramjet <open-source@scramjet.org>",
-  "license": "AGPL-3.0",
+  "license": "MIT",
   "dependencies": {
     "@scramjet/api-router": "^2.0.0",
     "@scramjet/api-server": "^2.0.0",
