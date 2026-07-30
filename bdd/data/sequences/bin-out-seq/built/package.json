@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/bin-out-seq",
-  "version": "2.0.0",
+  "version": "0.23.2",
   "description": "A Sequence that reads binary file and writes data to output.",
   "main": "index.js",
   "scripts": {

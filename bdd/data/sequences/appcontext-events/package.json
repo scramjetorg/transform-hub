@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/test-appcontext-events",
-  "version": "2.0.0",
+  "version": "0.1.0",
   "description": "BDD fixture: AppContext event emission and reception.",
   "main": "index.js",
   "license": "ISC",

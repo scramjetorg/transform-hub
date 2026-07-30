@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/test-params-validator",
-  "version": "2.0.0",
+  "version": "0.1.0",
   "description": "BDD fixture: validates startup arguments and throws a stable error.",
   "main": "index.js",
   "license": "ISC",

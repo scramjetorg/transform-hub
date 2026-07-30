@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/test-api-streaming",
-  "version": "2.0.0",
+  "version": "0.1.0",
   "description": "BDD fixture: streaming API request/response (runner-node spawn-isolation regression).",
   "main": "index.js",
   "license": "ISC",

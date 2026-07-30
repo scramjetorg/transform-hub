@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/test-python-bdd-appcontext-hosted",
-  "version": "2.0.0",
+  "version": "0.1.0",
   "private": true,
   "main": "main.py",
   "engines": { "python3": "3" },

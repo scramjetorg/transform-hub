@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/test-appcontext-config",
-  "version": "2.0.0",
+  "version": "0.1.0",
   "description": "BDD fixture: AppContext config and instanceId access.",
   "main": "index.js",
   "license": "ISC",
