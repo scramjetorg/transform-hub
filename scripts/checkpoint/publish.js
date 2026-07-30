@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 
 const { execFileSync } = require("node:child_process");
-const { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } = require("node:fs");
+const { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } = require("node:fs");
 const { tmpdir } = require("node:os");
 const { join } = require("node:path");
-const { pointerUpdatePlan } = require("./provenance.js");
+const { checkpointLabels, createStatement, digestDocument, pointerUpdatePlan, statementTag } = require("./provenance.js");
 const { promotionDecision } = require("./promotion.js");
 
 const REPOSITORY = "ghcr.io/scramjetorg/transform-hub/ci-deps";
@@ -37,8 +37,18 @@ function dockerfile(labels) {
     return [
         "FROM node:22-bookworm-slim",
         "COPY npm-cache/ /opt/transform-hub/npm-cache/",
+        "COPY provenance/identity.v1.json /opt/transform-hub/provenance/identity.v1.json",
         ...labelLines,
         "ENTRYPOINT [\"npm\"]"
+    ].join("\n") + "\n";
+}
+
+function statementDockerfile(labels) {
+    const labelLines = Object.entries(labels).map(([key, value]) => `LABEL ${key}=${JSON.stringify(value)}`);
+    return [
+        "FROM scratch",
+        "COPY provenance/statement.v1.json /opt/transform-hub/provenance/statement.v1.json",
+        ...labelLines
     ].join("\n") + "\n";
 }
 
@@ -66,6 +76,9 @@ function readRemoteSha(branch) {
 function publishCheckpoint(options, { run = defaultRun, remoteSha = readRemoteSha } = {}) {
     const plan = typeof options.plan === "string" ? JSON.parse(readFileSync(options.plan, "utf8")) : options.plan;
     if (plan?.promotion?.repository !== REPOSITORY) throw new Error("Checkpoint publication repository is not the approved GHCR repository.");
+    if (!plan.identity || digestDocument(plan.identity) !== plan.identityDigest) {
+        throw new Error("Checkpoint publication plan identity does not match its identity digest.");
+    }
     if (process.env.SCRAMJET_GHCR_SCOPED_PUBLISHER !== "true") {
         throw new Error("Checkpoint publication requires the scoped GHCR publisher configuration.");
     }
@@ -79,6 +92,7 @@ function publishCheckpoint(options, { run = defaultRun, remoteSha = readRemoteSh
     });
     const immutable = `${REPOSITORY}:${pointer.immutableTag}`;
     const pointerReference = `${REPOSITORY}:${pointer.pointerTag}`;
+    const statementReference = `${REPOSITORY}:${statementTag(plan.identityDigest)}`;
     const context = mkdtempSync(join(tmpdir(), "transform-hub-checkpoint-"));
 
     try {
@@ -86,11 +100,27 @@ function publishCheckpoint(options, { run = defaultRun, remoteSha = readRemoteSh
             filter: (source) => ![".npmrc", "credentials"].includes(source.split(/[\\/]/).pop()),
             recursive: true
         });
+        const provenance = join(context, "provenance");
+        mkdirSync(provenance);
+        writeFileSync(join(provenance, "identity.v1.json"), `${JSON.stringify(plan.identity)}\n`);
         writeFileSync(join(context, "Dockerfile"), dockerfile(plan.labels));
         run(["build", "--pull", "--platform", "linux/amd64", "--tag", immutable, context]);
         assertLabels(JSON.parse(run(["image", "inspect", immutable, "--format", "{{json .Config.Labels}}"], true)), plan.labels);
         run(["push", immutable]);
         const published = immutableReference(REPOSITORY, run(["image", "inspect", immutable, "--format", "{{join .RepoDigests \"\\n\"}}"], true));
+        const statement = createStatement({
+            identityDigest: plan.identityDigest,
+            image: { digest: published.digest, platform: "linux/amd64", repository: REPOSITORY }
+        });
+        const statementLabels = {
+            ...checkpointLabels(plan.identity, plan.identityDigest),
+            "io.scramjet.provenance.statement-digest": digestDocument(statement)
+        };
+        writeFileSync(join(provenance, "statement.v1.json"), `${JSON.stringify(statement)}\n`);
+        writeFileSync(join(context, "Statement.Dockerfile"), statementDockerfile(statementLabels));
+        run(["build", "--pull", "--platform", "linux/amd64", "--file", join(context, "Statement.Dockerfile"), "--tag", statementReference, context]);
+        assertLabels(JSON.parse(run(["image", "inspect", statementReference, "--format", "{{json .Config.Labels}}"], true)), statementLabels);
+        run(["push", statementReference]);
         const currentSha = remoteSha(options.branch);
         const decision = promotionDecision({
             branch: options.branch,
@@ -105,7 +135,7 @@ function publishCheckpoint(options, { run = defaultRun, remoteSha = readRemoteSh
         run(["push", pointerReference]);
         const pointerDigest = run(["buildx", "imagetools", "inspect", pointerReference, "--format", "{{.Manifest.Digest}}"], true).trim().toLowerCase();
         if (pointerDigest !== published.digest) throw new Error("GHCR checkpoint pointer digest does not match the immutable image digest.");
-        return { ...decision, digest: published.digest, pointer: decision.pointer, reference: published.reference };
+        return { ...decision, digest: published.digest, pointer: decision.pointer, reference: published.reference, statementReference };
     } finally {
         rmSync(context, { force: true, recursive: true });
     }
@@ -122,4 +152,4 @@ function main() {
 
 if (require.main === module) main();
 
-module.exports = { assertLabels, dockerfile, immutableReference, parseArgs, parseRemoteSha, publishCheckpoint, readRemoteSha };
+module.exports = { assertLabels, dockerfile, immutableReference, parseArgs, parseRemoteSha, publishCheckpoint, readRemoteSha, statementDockerfile };

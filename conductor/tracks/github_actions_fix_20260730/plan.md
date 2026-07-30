@@ -85,3 +85,7 @@
 - [x] Task: Confirm each phase has its scoped checkpoint commit recorded in this plan and pushed from `conductor/github_actions_fix_20260730` before final PR verification. _(Pushed phase checkpoints: `b962ba3b`, `e9b51d31`, `1dbe374a`, `7ed1c03d`, `b809116c`, and `9f773430`.)_
 - [x] Task: Update the draft implementation PR with final verification results as a PR comment; keep it draft until final verification is complete, then mark it ready for review. _(Posted final evidence at https://github.com/scramjetorg/transform-hub/pull/1078#issuecomment-5136271674 and marked PR #1078 ready for review.)_
 - [x] Task: Conductor - Phase Completion 'Finalize the implementation review surface' (Protocol in workflow.md). _(Final evidence posted to ready-for-review PR #1078; remote governance/OIDC/registry and scanner execution are documented operator prerequisites.)_
+
+## Post-completion checkpoint remediation
+
+- [x] Track-completion review: replace PR/devel checkpoint digest-variable logging with verified immutable cache consumption, publish a final immutable statement sidecar bound to the cache digest, and add the trusted manual `feat/manager-oss` publication path. Documentation now records the live, fail-closed publication contract; remote publication was not run.

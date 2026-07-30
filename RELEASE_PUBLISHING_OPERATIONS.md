@@ -4,6 +4,13 @@ This is an **operator runbook**, not evidence that any external setting below ex
 
 This runbook covers production npm publishing. It is separate from GitHub Packages prereleases and dependency checkpoints; see [CHECKPOINTS.md](CHECKPOINTS.md) for checkpoint identity and clean-install fallback rules.
 
+## Current workflow status
+
+`.github/workflows/main-release.yml` is implemented and is the only production
+npm publication workflow. It remains fail-closed until operators configure the
+required npm trusted-publisher registrations and `production` environment below;
+its presence does not prove that those remote controls exist.
+
 ## Release boundary
 
 The production set is `INCLUDED_PACKAGES` in [`scripts/lib/release-boundary.js`](scripts/lib/release-boundary.js), also represented by root `workspaces.release`. Do not infer it from `packages/*` or use a wildcard publisher registration. Each of these **37** packages requires a separate npm trusted-publisher registration:
@@ -44,13 +51,17 @@ For **every individual package** above, an npm package administrator must add a 
 | Workflow filename | `main-release.yml` |
 | Package | The individual package being registered |
 
-The future protected production workflow must be `.github/workflows/main-release.yml`. Do **not** register a temporary, renamed, reusable, pull-request, or prerelease workflow. This document does not assert that this workflow or any npm registration currently exists.
+The protected production workflow is `.github/workflows/main-release.yml`. Do
+**not** register a temporary, renamed, reusable, pull-request, or prerelease
+workflow. This document does not assert that any npm registration currently
+exists.
 
 Use npm trusted publishing/OIDC only: do not create an `NPM_TOKEN`, automation token, publish key, or repository secret as a substitute. Before enabling production publishing, operators must confirm every package is publishable as intended, owned by `@scramjet`, registered as above, and has no conflicting legacy publisher. Record the review in the release change record.
 
 ## Required GitHub remote controls
 
-Create a repository environment named exactly `production` and attach it only to the future `main-release.yml` publish job. Operators must:
+Create a repository environment named exactly `production` and attach it only to
+the active `main-release.yml` publish job. Operators must:
 
 1. Restrict deployment branches/tags to protected `main` only. Do not permit `devel`, feature branches, pull requests, forks, or tags as alternatives.
 2. Require approval from the designated release-maintainers team before OIDC issuance. Require at least two reviewers where supported and prevent self-review.

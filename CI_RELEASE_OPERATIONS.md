@@ -18,8 +18,8 @@ removed; `security-check.yml` is retained.
 | `pr-validate.yml` | PRs to `main`, `devel`, or `release/**`; merge queue | `CI / fast gates`, `CI / AVA`, `CI / package build`, `CI / BDD Node`, `CI / BDD Python`, `CI / BDD API`, `CI / durable legacy BDD coverage` | Fork-safe, read-only validation. The durable coverage job owns former hub, API-topic, unified JS/Python, and process-adapter coverage. |
 | `security-check.yml` | PR, merge queue, pushes to trusted branches, weekly schedule | `Security / repository policy` | Redacted history scanning and repository policy defense in depth. |
 | `devel-validate.yml` | Push to `devel` | `Devel / package build`, `Devel / AVA`, `Devel / BDD Node`, `Devel / BDD Python`, `Devel / BDD API` | Same-repository devel validation. |
-| `devel-checkpoint-promotion.yml` | Successful `Devel validation` workflow run on same-repository `devel` | `Devel / checkpoint promotion` | Isolated, non-cancellable dry-run checkpoint promotion decision. |
-| `checkpoint-bootstrap.yml` | Trusted branch push or manual trusted-branch selection | `Checkpoint / bootstrap` | Dry-run provenance/checkpoint plan only. |
+| `devel-checkpoint-promotion.yml` | Successful `Devel validation` workflow run on same-repository `devel` | `Devel / checkpoint promotion` | Guarded live GHCR checkpoint publication and pointer promotion. |
+| `checkpoint-bootstrap.yml` | Manual trusted-branch selection (`main`, `devel`, or `feat/manager-oss`) | `Checkpoint / trusted publication` | Trusted immutable checkpoint publication and pointer promotion; it fails closed when GHCR publication configuration is absent. |
 | `release-pr-automation.yml` | Successful same-repository `Devel validation` push | `Release PR / automation` | Creates or updates the managed `devel` to `main` PR and requests auto-merge. |
 | `release-pr-validate.yml` | PR to `main`; jobs guard same-repository `devel` to `main` | `Release PR / package validation`, `Release PR / prerelease publication`, `Release PR / prerelease BDD` | Exact prerelease identity, package, and BDD validation path. |
 | `main-release.yml` | Push to `main` | `Release / boundary validation`, `Release / npm publish`, `Release / checkpoint promotion` | Protected production npm release and publication-gated checkpoint decision. |
@@ -48,11 +48,13 @@ track** and is not an active workflow or release handoff.
   when their published release identity and final package checksum match exactly.
   A partial publication must never be resolved by republishing an immutable npm
   version.
-- Checkpoint bootstrap and promotion are digest-first and dry-run by default.
-  Consume only immutable `@sha256` image references after identity/statement
-  verification; a missing or mismatched checkpoint uses clean `npm ci`.
+- Checkpoint planning is dry-run, but trusted checkpoint publication and
+  promotion are live, digest-first paths that fail closed when required GHCR
+  configuration is absent. Consume only immutable `@sha256` image references
+  after identity/statement/label verification; a missing or mismatched
+  checkpoint uses clean `npm ci`.
   [CHECKPOINTS.md](CHECKPOINTS.md) is authoritative for checkpoint labels,
-  pointers, retention, and eventual GHCR publication.
+  pointers, retention, and live guarded GHCR publication and pointer promotion.
 - Do not upload release manifests, secrets, scanner findings, `node_modules`, or
   mutable Docker image archives as a handoff. Persist auditable release evidence
   in the GitHub run and trusted registry metadata instead.

@@ -1,6 +1,6 @@
 # CI and Release Contract
 
-**Captured:** 2026-07-30  
+**Captured:** 2026-07-30
 **Status:** Phase 1 design record; later phases implement and test this contract.
 
 ## Required command mapping

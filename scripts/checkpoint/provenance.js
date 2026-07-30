@@ -69,6 +69,10 @@ function pointerTag(branch) {
     return `cp-v1-${assertAllowedBranch(branch).replaceAll("/", "-")}`;
 }
 
+function statementTag(identityDigest) {
+    return `${immutableTag(identityDigest)}-statement`;
+}
+
 function checkpointLabels(identity, identityDigest) {
     return {
         "io.scramjet.provenance.identity-digest": assertDigest(identityDigest, "identity digest"),
@@ -158,5 +162,6 @@ module.exports = {
     pointerTag,
     pointerUpdatePlan,
     resolveCheckpoint,
-    sha256
+    sha256,
+    statementTag
 };

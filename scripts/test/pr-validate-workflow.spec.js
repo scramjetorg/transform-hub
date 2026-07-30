@@ -32,8 +32,8 @@ test("base PR workflow is read-only, cancellable, and uses a fresh no-cache work
 	t.true(source.includes("name: CI / fast gates"));
 	t.true(source.includes("cache: \"false\""));
 	t.true(source.includes("github.event.pull_request.head.sha"));
-	t.true(source.includes("@sha256:"));
-	t.true(source.includes("fresh npm ci fallback"));
+	t.is((source.match(/checkpoint-branch: \$\{\{ github\.event\.pull_request\.base\.ref \|\| github\.event\.merge_group\.base_ref \|\| '' \}\}/g) || []).length, 7);
+	t.false(source.includes("SCRAMJET_PR_CHECKPOINT_REFERENCE"));
 	t.true(source.includes("organization-required security workflow"));
 	t.false(source.includes("pull_request_target"));
 	t.false(source.includes("packages: write"));
@@ -98,7 +98,9 @@ test("Node 22/npm-only setup helper configures dependencies after caller checkou
 	const source = setupActionSource();
 	t.regex(source, /actions\/setup-node@[a-f0-9]{40}/);
 	t.true(source.includes('node-version: "22"'));
+	t.true(source.includes("scripts/checkpoint/consume.js"));
 	t.true(source.includes("npm ci"));
+	t.true(source.includes("npm ci --cache \"$CHECKPOINT_NPM_CACHE\""));
 	t.false(source.includes("actions/checkout@"));
 	t.false(source.includes("inputs.ref"));
 	t.false(source.includes("yarn"));

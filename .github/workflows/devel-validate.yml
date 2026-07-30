@@ -25,20 +25,10 @@ jobs:
           persist-credentials: false
           ref: ${{ github.sha }}
 
-      - name: Model the last matching verified checkpoint as a cache source
-        shell: bash
-        env:
-          CHECKPOINT_REFERENCE: ${{ vars.SCRAMJET_DEVEL_CHECKPOINT_REFERENCE }}
-        run: |
-          if [[ "$CHECKPOINT_REFERENCE" =~ ^ghcr\.io/scramjetorg/transform-hub/ci-deps@sha256:[a-f0-9]{64}$ ]]; then
-            echo "Verified checkpoint candidate is digest-only and may only seed an npm cache after identity verification."
-          else
-            echo "No matching verified checkpoint is available; clean npm ci fallback is required."
-          fi
-
       - uses: ./.github/actions/setup-workspace
         with:
           cache: "false"
+          checkpoint-branch: devel
 
       - name: Build packages
         run: npm run build:packages
@@ -60,6 +50,7 @@ jobs:
       - uses: ./.github/actions/setup-workspace
         with:
           cache: "false"
+          checkpoint-branch: devel
 
       - name: Run package tests
         run: npm run test:packages-no-concurrent
@@ -81,6 +72,7 @@ jobs:
       - uses: ./.github/actions/setup-workspace
         with:
           cache: "false"
+          checkpoint-branch: devel
 
       # Devel validation outputs remain disposable until trusted promotion exists.
       - name: Build disposable BDD inputs
@@ -106,6 +98,7 @@ jobs:
       - uses: ./.github/actions/setup-workspace
         with:
           cache: "false"
+          checkpoint-branch: devel
 
       # Devel validation outputs remain disposable until trusted promotion exists.
       - name: Build disposable BDD inputs
@@ -131,6 +124,7 @@ jobs:
       - uses: ./.github/actions/setup-workspace
         with:
           cache: "false"
+          checkpoint-branch: devel
 
       # Devel validation outputs remain disposable until trusted promotion exists.
       - name: Build disposable BDD inputs

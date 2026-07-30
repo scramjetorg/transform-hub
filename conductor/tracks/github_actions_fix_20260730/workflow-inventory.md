@@ -1,6 +1,6 @@
 # Legacy GitHub Actions Inventory
 
-**Captured:** 2026-07-30  
+**Captured:** 2026-07-30
 **Scope:** every legacy workflow in `.github/workflows` (15 YAML files).
 
 ## Disposition matrix

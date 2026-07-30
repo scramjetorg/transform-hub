@@ -74,6 +74,7 @@ async function createPlan(options, root = ROOT) {
             reinstall: "npm ci --ignore-scripts --cache /opt/transform-hub/npm-cache"
         },
         dryRun: true,
+        identity,
         identityDigest,
         labels: checkpointLabels(identity, identityDigest),
         promotion,

@@ -56,8 +56,8 @@ test("devel build gates parallel AVA and Docker BDD jobs without promotion", (t)
 	t.true(source.includes("npm run test:bdd-ci-node"));
 	t.true(source.includes("npm run test:bdd-ci-python"));
 	t.true(source.includes("npm run test:bdd-ci-api-node"));
-	t.true(source.includes("last matching verified checkpoint as a cache source"));
-	t.true(source.includes("clean npm ci fallback"));
+	t.is((source.match(/checkpoint-branch: devel/g) || []).length, 5);
+	t.false(source.includes("SCRAMJET_DEVEL_CHECKPOINT_REFERENCE"));
 	t.true(source.includes("Devel validation outputs remain disposable"));
 	t.false(source.includes("upload-artifact"));
 	t.false(source.includes("download-artifact"));

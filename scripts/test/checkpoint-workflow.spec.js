@@ -8,7 +8,7 @@ const { checkWorkflowSource } = require("../check-workflow-policy.js");
 
 const workflowPath = resolve(__dirname, "..", "..", ".github", "workflows", "checkpoint-bootstrap.yml");
 
-test("checkpoint developer workflow is manual, trusted, and dry-run only", (t) => {
+test("checkpoint workflow manually publishes only trusted branch checkpoints", (t) => {
 	const source = readFileSync(workflowPath, "utf8");
 	t.deepEqual(checkWorkflowSource(source, ".github/workflows/checkpoint-bootstrap.yml"), []);
 	t.true(source.includes("workflow_dispatch:"));
@@ -18,6 +18,11 @@ test("checkpoint developer workflow is manual, trusted, and dry-run only", (t) =
 	t.true(source.includes("cancel-in-progress: false"));
 	t.true(source.includes("git ls-remote origin"));
 	t.true(source.includes("--dry-run"));
+	t.true(source.includes("github.repository == 'scramjetorg/transform-hub'"));
+	t.true(source.includes("packages: write"));
+	t.true(source.includes("SCRAMJET_GHCR_SCOPED_PUBLISHER"));
+	t.true(source.includes("scripts/checkpoint/publish.js"));
+	t.true(source.includes("docker login ghcr.io"));
 	t.true(source.includes("rm -rf node_modules"));
 	const checkoutIndex = source.indexOf("uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1");
 	const helperIndex = source.indexOf("uses: ./.github/actions/setup-workspace");
@@ -26,8 +31,6 @@ test("checkpoint developer workflow is manual, trusted, and dry-run only", (t) =
 	t.true(source.slice(checkoutIndex, helperIndex).includes("persist-credentials: false"));
 	t.true(source.slice(checkoutIndex, helperIndex).includes("ref: ${{ steps.source.outputs.branch }}"));
 	t.false(source.includes("pull_request_target"));
-	t.false(source.includes("packages: write"));
 	t.false(source.includes("id-token: write"));
-	t.false(source.includes("docker push"));
 	t.false(source.includes("upload-artifact"));
 });

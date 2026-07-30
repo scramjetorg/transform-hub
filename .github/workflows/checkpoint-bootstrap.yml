@@ -1,4 +1,4 @@
-name: Checkpoint developer dry run
+name: Checkpoint trusted publication
 
 on:
   workflow_dispatch:
@@ -17,8 +17,12 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  checkpoint-dry-run:
-    name: Checkpoint / developer dry run
+  checkpoint-publish:
+    name: Checkpoint / trusted publication
+    if: ${{ github.repository == 'scramjetorg/transform-hub' }}
+    permissions:
+      contents: read
+      packages: write
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
@@ -44,18 +48,20 @@ jobs:
         with:
           cache: "false"
 
-      - name: Verify current branch SHA and produce immutable checkpoint plan
+      - name: Build, verify, and promote the trusted immutable checkpoint
         shell: bash
         env:
           BRANCH: ${{ steps.source.outputs.branch }}
+          GITHUB_TOKEN: ${{ github.token }}
+          SCRAMJET_GHCR_SCOPED_PUBLISHER: ${{ vars.SCRAMJET_GHCR_SCOPED_PUBLISHER }}
         run: |
           current_sha="$(git ls-remote origin "refs/heads/$BRANCH" | cut -f1)"
           source_sha="$(git rev-parse HEAD)"
           test -n "$current_sha"
+          test "$SCRAMJET_GHCR_SCOPED_PUBLISHER" = "true"
+          test -n "$GITHUB_TOKEN"
           node scripts/checkpoint/plan.js --dry-run --branch "$BRANCH" --source-sha "$source_sha" --current-sha "$current_sha" --output "$RUNNER_TEMP/checkpoint-plan"
+          printf '%s' "$GITHUB_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+          trap 'docker logout ghcr.io' EXIT
+          node scripts/checkpoint/publish.js --plan "$RUNNER_TEMP/checkpoint-plan/checkpoint-plan.v1.json" --branch "$BRANCH" --source-sha "$source_sha" --current-sha "$current_sha" --npm-cache "$HOME/.npm"
           rm -rf node_modules
-
-      - name: Record dry-run-only remote prerequisites
-        run: |
-          echo "No image, cache, artifact, package, or pointer is published by this workflow."
-          echo "Real GHCR promotion requires a trusted same-repository publisher credential restricted to ci-deps."

@@ -19,6 +19,10 @@ inputs:
       risk.
     required: false
     default: "false"
+  checkpoint-branch:
+    description: Trusted checkpoint branch to verify before installing dependencies.
+    required: false
+    default: ""
 
 runs:
   using: composite
@@ -39,6 +43,16 @@ runs:
         fi
         npm --version >/dev/null 2>&1 || { echo "npm not available"; exit 1; }
 
+    - name: Restore verified dependency checkpoint
+      if: ${{ inputs.checkpoint-branch != '' }}
+      shell: bash
+      run: node scripts/checkpoint/consume.js --branch "${{ inputs.checkpoint-branch }}"
+
     - name: Install dependencies
       shell: bash
-      run: npm ci
+      run: |
+        if [ -n "${CHECKPOINT_NPM_CACHE:-}" ]; then
+          npm ci --cache "$CHECKPOINT_NPM_CACHE"
+        else
+          npm ci
+        fi
