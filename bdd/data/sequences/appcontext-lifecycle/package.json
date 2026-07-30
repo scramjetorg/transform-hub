@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/test-appcontext-lifecycle",
-  "version": "0.1.0",
+  "version": "2.0.0",
   "description": "BDD fixture: AppContext lifecycle (keepAlive, end).",
   "main": "index.js",
   "license": "ISC",

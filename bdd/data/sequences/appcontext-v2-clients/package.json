@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/test-appcontext-v2-clients",
-  "version": "0.1.0",
+  "version": "2.0.0",
   "description": "BDD fixture: AppContext v2 hubClient and spaceClient calls.",
   "main": "index.js",
   "license": "ISC",

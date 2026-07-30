@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/test-logging-sequence",
-  "version": "0.1.0",
+  "version": "2.0.0",
   "description": "BDD fixture: emits AppContext logs plus stdout/stderr for process-adapter log forwarding demos.",
   "main": "index.js",
   "license": "ISC",
