@@ -49,10 +49,10 @@
 
 ## Phase 3: Convert Included Packages to MIT Distribution Licensing
 
-- [~] Task: Validate the approved included-package boundary before changing license files or metadata. User direction on 2026-07-30 adds `@scramjet/runner-python` to the MIT, 2.0.0 version, and npm publish boundary; `scramjet-bdd` remains MIT licensing-only.
+- [x] Task: Validate the approved included-package boundary before changing license files or metadata. User direction on 2026-07-30 adds `@scramjet/runner-python` to the MIT, 2.0.0 version, and npm publish boundary; `scramjet-bdd` remains MIT licensing-only.
     - [x] Reconfirm that STH, CLI, Manager, MultiManager, and other classified Scramjet-owned packages are in scope.
     - [x] Reconfirm that legacy Verser and upstream/external packages remain excluded and retain their existing license files and manifest fields.
-- [~] Task: Delegate bounded first-party license metadata and distribution-notice changes to the configured implementation specialist. Follow-up required for the user-authorized Runner Python and BDD MIT licensing expansion.
+- [x] Task: Delegate bounded first-party license metadata and distribution-notice changes to the configured implementation specialist. Runner Python and BDD scope expansions are implemented and validated.
     - [x] Update included package manifests and package license/notices with the official SPDX/OSI MIT text and `Copyright (c) 2026 Scramjet Sp. z o.o.`.
     - [x] Ensure npm package contents retain the required license materials without modifying excluded packages. Every included package has its own MIT `LICENSE`, preventing root fallback content from being distributed.
     - [x] Add focused automated checks or checked fixtures that detect missing, inconsistent, or excluded-package license changes. The release-alignment AVA suite covers license field, text, root, idempotence, and exclusion invariants.
@@ -61,10 +61,10 @@
 
 - On 2026-07-30, the user confirmed the MIT license change on behalf of Scramjet Sp. z o.o. This confirms the track's authorized MIT conversion for the included set, Runner Python, and BDD; it does not alter the preserved upstream notices for bpmux and frame-stream.
 - [ ] Task: Verify the license conversion and publishable package contents.
-    - [ ] Run focused license/inventory validation and `npm pack --dry-run` checks for representative STH, CLI, Manager, and MultiManager packages.
-    - [ ] Run the narrowest affected builds/tests and record any memory-guarded command, threshold, skip, or non-applicability evidence.
-    - [ ] Request configured reviewer validation for the included/excluded boundary and MIT notice coverage.
-- [ ] Task: Conductor - Phase Completion 'Convert Included Packages to MIT Distribution Licensing' (Protocol in workflow.md)
+    - [x] Run focused license/inventory validation and `npm pack --dry-run` checks for representative STH, CLI, Manager, and MultiManager packages. The four 2.0.0 dry-run tarball manifests include MIT `LICENSE` files.
+    - [x] Run the narrowest affected builds/tests and record any memory-guarded command, threshold, skip, or non-applicability evidence. After the user-approved host `python3-pip` installation, `npm --workspace=@scramjet/runner test` passed all 115 tests; no source-level AVA memory guard adoption was claimed. `npm run check:runtime-invariants` remains unavailable because `rg` is not installed.
+    - [x] Request configured reviewer validation for the included/excluded boundary and MIT notice coverage. Reviewer re-review passed the Runner Python Docker publish path after staged-context and verified-verser2-wheel remediation.
+- [x] Task: Conductor - Phase Completion 'Convert Included Packages to MIT Distribution Licensing' (Protocol in workflow.md). Phase checkpoint includes user-authorized MIT conversion, Runner Python npm publication support, and self-contained Docker dependency installation.
 
 ## Phase 4: Publish the 2.0.0 Changelog
 
