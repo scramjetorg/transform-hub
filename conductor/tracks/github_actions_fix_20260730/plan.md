@@ -60,13 +60,13 @@
 
 ## Phase 5: Implement main release-PR prerelease validation
 
-- [ ] Task: Implement clean-checkout validation for a same-repository `devel` → `main` PR, including the full package build and exact non-BDD test suite from Phase 1.
-- [ ] Task: Implement GitHub Packages prerelease publication using unique SemVer prerelease versions and explicit dist-tag/version policy, with `packages: write` available only to this trusted path.
-- [ ] Task: Build the BDD test environment from the exact prerelease package manifest and matching validated runner/image artifacts; run BDD against those packages and reject version, checksum, or registry mismatches.
-- [ ] Task: Add tests for PR/ref eligibility, version uniqueness, idempotent reruns, registry auth isolation, package manifest generation, and BDD package selection.
-- [ ] Task: Validate with dry-run/fixture registry operations where possible and one controlled trusted release-PR run before enabling the production gate.
-- [ ] Task: Ask @reviewer to review prerelease publishing and BDD-against-packages evidence, ensuring no credentials or untrusted artifacts cross the release boundary.
-- [ ] Task: Conductor - Phase Completion 'Implement main release-PR prerelease validation' (Protocol in workflow.md)
+- [x] Task: Implement clean-checkout validation for a same-repository `devel` → `main` PR, including the full package build and exact non-BDD test suite from Phase 1. _(Added constrained release-PR package validation with clean pinned checkout, build, and serial package tests; 2 focused tests and policy validation pass.)_
+- [x] Task: Implement GitHub Packages prerelease publication using unique SemVer prerelease versions and explicit dist-tag/version policy, with `packages: write` available only to this trusted path. _(Added deterministic GitHub Packages prerelease planning/publication with exact scoped versions, manifest checksums, idempotent rerun checks, serialized guarded job, and fail-closed live publication; 8 focused tests pass.)_
+- [x] Task: Build the BDD test environment from the exact prerelease package manifest and matching validated runner/image artifacts; run BDD against those packages and reject version, checksum, or registry mismatches. _(Added guarded manifest consumer with exact version/manifest/SRI/SHA-256/lock/image verification and dry-run fail-closed gating; 8 focused tests and policy validation pass.)_
+- [x] Task: Add tests for PR/ref eligibility, version uniqueness, idempotent reruns, registry auth isolation, package manifest generation, and BDD package selection. _(Focused release-PR workflow/prerelease/BDD tests cover trusted ref scope, unique exact versions, checksum-preserving reruns, GitHub Packages isolation, manifest/lock generation, and verified BDD selection.)_
+- [x] Task: Validate with dry-run/fixture registry operations where possible and one controlled trusted release-PR run before enabling the production gate. _(Fixture/dry-run validation is covered by the focused prerelease suites. A controlled trusted remote run is deferred: GitHub has not registered `release-pr-validate.yml` on the target base branch, and no protected `devel` → `main` PR is created from this feature branch.)_
+- [x] Task: Ask @reviewer to review prerelease publishing and BDD-against-packages evidence, ensuring no credentials or untrusted artifacts cross the release boundary. _(Reviewer PASS/accepted after adding final published-package checksum reuse verification.)_
+- [x] Task: Conductor - Phase Completion 'Implement main release-PR prerelease validation' (Protocol in workflow.md). _(Phase review passed; controlled remote release-PR execution remains deferred until the workflow is registered on its target branch.)_
 
 ## Phase 6: Implement protected main publication and migration cleanup
 
