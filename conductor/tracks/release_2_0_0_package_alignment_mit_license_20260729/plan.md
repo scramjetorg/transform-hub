@@ -68,11 +68,11 @@
 
 ## Phase 4: Publish the 2.0.0 Changelog
 
-- [ ] Task: Produce the complete curated 2.0.0 changelog from the established 1.0.1-to-2.0.0 evidence range.
-    - [ ] Include important dates, material package and product changes, breaking changes, migration guidance, and release acknowledgments.
-    - [ ] Cross-check changelog claims against Git history, published release evidence, and completed track records; distinguish verified facts from planned work.
-    - [ ] Add a reproducible source-change/package-version inventory or appendix supporting the curated history.
-- [ ] Task: Delegate focused changelog documentation review to the configured reviewer and correct in-scope clarity or release-history defects.
+- [x] Task: Produce the complete curated 2.0.0 changelog from the established 1.0.1-to-2.0.0 evidence range.
+    - [x] Include important dates, material package and product changes, breaking changes, migration guidance, and release acknowledgments.
+    - [x] Cross-check changelog claims against Git history, published release evidence, and completed track records; distinguish verified facts from planned work.
+    - [x] Add a reproducible source-change/package-version inventory or appendix supporting the curated history.
+- [x] Task: Delegate focused changelog documentation review to the configured reviewer and correct in-scope clarity or release-history defects. Reviewer returned `PASS/no_issue` after publication-claim wording was corrected.
 - [ ] Task: Conductor - Phase Completion 'Publish the 2.0.0 Changelog' (Protocol in workflow.md)
 
 ## Phase 5: Curate Legacy Documentation, Conductor Records, and Future Roadmap
