@@ -60,7 +60,7 @@
 ### License authorization record
 
 - On 2026-07-30, the user confirmed the MIT license change on behalf of Scramjet Sp. z o.o. This confirms the track's authorized MIT conversion for the included set, Runner Python, and BDD; it does not alter the preserved upstream notices for bpmux and frame-stream.
-- [ ] Task: Verify the license conversion and publishable package contents.
+- [x] Task: Verify the license conversion and publishable package contents. Focused license checks, representative package contents, Runner integration tests, and reviewer validation passed; the unavailable `rg`-dependent invariant helper is recorded as an environment limitation.
     - [x] Run focused license/inventory validation and `npm pack --dry-run` checks for representative STH, CLI, Manager, and MultiManager packages. The four 2.0.0 dry-run tarball manifests include MIT `LICENSE` files.
     - [x] Run the narrowest affected builds/tests and record any memory-guarded command, threshold, skip, or non-applicability evidence. After the user-approved host `python3-pip` installation, `npm --workspace=@scramjet/runner test` passed all 115 tests; no source-level AVA memory guard adoption was claimed. `npm run check:runtime-invariants` remains unavailable because `rg` is not installed.
     - [x] Request configured reviewer validation for the included/excluded boundary and MIT notice coverage. Reviewer re-review passed the Runner Python Docker publish path after staged-context and verified-verser2-wheel remediation.
