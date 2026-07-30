@@ -2,8 +2,8 @@
 
 ## Phase 1: Establish the CI contract and review surface
 
-- [ ] Task: During `/conductor:implement`, capture the current branch as the PR base, create `conductor/github_actions_fix_20260730` from current HEAD, and perform all track work on it.
-- [ ] Task: Create or update a draft implementation PR targeting the captured base branch, using the approved specification as its Markdown description.
+- [x] Task: During `/conductor:implement`, capture the current branch as the PR base, create `conductor/github_actions_fix_20260730` from current HEAD, and perform all track work on it. _(Completed: based on local `feat/manager-oss` at its then-current HEAD; branch pushed.)_
+- [~] Task: Create or update a draft implementation PR targeting the captured base branch, using the approved specification as its Markdown description.
 - [ ] Task: Use @explorer for a read-only inventory of every `.github/workflows` file, its trigger, permissions, callers, secrets, artifacts, and current disposition; record the replacement/retention/removal matrix in track documentation.
 - [ ] Task: Inspect `package.json`, release scripts, BDD runner options, Docker image scripts, and branch protection assumptions; map each required fast gate, AVA run, non-BDD suite, BDD suite, typecheck, and license check to an exact supported command.
     - [ ] Inventory existing Git hooks and secret/security tooling; select maintained, reproducible secret-scanning and workflow-policy tooling with CI and pre-commit integration.

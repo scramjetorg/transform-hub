@@ -24,5 +24,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [ ] **Track: github actions fix**
+- [~] **Track: github actions fix**
 *Link: [./tracks/github_actions_fix_20260730/](./tracks/github_actions_fix_20260730/)*
