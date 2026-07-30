@@ -85,7 +85,7 @@
     - [x] Have the main Conductor session prepare an archival/consolidation proposal for completed or stale records and preserve their registry links or archive paths. The proposal preserves all registered records and flags the orphaned metadata-only track for later decision.
     - [x] Request configured reviewer safety review before any broad move, deletion, or registry rewrite. Reviewer returned `PASS/accepted`; no record move is approved or necessary.
     - [x] Apply only approved Conductor-record changes and verify all retained links. No record changes are approved or required at this time; retained registry links were checked.
-- [~] Task: Convert the selected official Scramjet grants-page HTML into the grants acknowledgment Markdown.
+- [x] Task: Convert the selected official Scramjet grants-page HTML into the grants acknowledgment Markdown.
     - [x] Recheck `https://scramjet.org/grants/` immediately before conversion, retain the source URL and retrieval date, and select only the intended grants section. Source retrieved 2026-07-30 and recorded in `docs-source/intro/grants.md`.
     - [x] Use an HTML-to-Markdown conversion workflow for the selected source section; preserve the project headings and the source wording for `Total budget` and `NCBiR grant`, including the applicable amounts and programme context.
     - [x] Add the converted Markdown with clear attribution and no unsupported endorsement or funding claims, then validate source fidelity, links, and rendered Markdown. The stale Verser2 archived-track links were corrected; `npm run docs:generate` and `npm run docs:check` pass.
@@ -94,7 +94,7 @@
     - [x] Present the converted Markdown and its official source reference for confirmation before continuing with the final roadmap interview. User approved the source-faithful conversion on 2026-07-30.
 - [x] Task: Conduct the final stakeholder interview about `roadmap.md`. The user authorized the maintainer-owned quarterly planning index and `roadmap.md` was created with validated links.
     - [x] Decide the roadmap's purpose, included future changes, ownership, update cadence, and how it relates to archived feature requests. User decision on 2026-07-30: create a public planning index, maintainer-owned, reviewed quarterly, covering actionable legacy requests and deferred technical debt.
-    - [~] Record the interview decision and create `roadmap.md` only when the decision explicitly authorizes it.
+    - [x] Record the interview decision and create `roadmap.md` only when the decision explicitly authorizes it. Root `roadmap.md` was created and its 27 relative links were validated.
     - [x] If no roadmap is authorized, retain the decision record and complete documentation cleanup without creating the file. Not applicable: the user authorized a roadmap.
 - [x] Task: Conductor - Phase Completion 'Curate Legacy Documentation, Conductor Records, and Future Roadmap' (Protocol in workflow.md). Reviewer returned `PASS/accepted`; no destructive cleanup was performed.
 
