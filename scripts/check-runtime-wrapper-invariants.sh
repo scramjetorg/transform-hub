@@ -13,7 +13,7 @@
 # Usage:
 #   bash scripts/check-runtime-wrapper-invariants.sh
 #
-# Requirements: ripgrep (`rg`).
+# Requirements: @vscode/ripgrep devDependency (bundles ripgrep).
 
 set -o pipefail
 
@@ -22,8 +22,16 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
 REPO_ROOT="$(cd -- "${SCRIPT_DIR}/.." &> /dev/null && pwd)"
 cd "${REPO_ROOT}"
 
-if ! command -v rg > /dev/null 2>&1; then
-    echo "ERROR: ripgrep (rg) is required but not installed." >&2
+# Resolve bundled ripgrep binary via @vscode/ripgrep.
+RG_PATH=""
+if ! RG_PATH="$(node -p "require('@vscode/ripgrep').rgPath" 2>/dev/null)"; then
+    echo "ERROR: @vscode/ripgrep is not installed or resolution failed." >&2
+    echo "  Run: npm install @vscode/ripgrep@^1.18.0" >&2
+    exit 2
+fi
+if [ ! -x "${RG_PATH}" ]; then
+    echo "ERROR: Bundled ripgrep binary not found or not executable:" >&2
+    echo "  ${RG_PATH}" >&2
     exit 2
 fi
 
@@ -57,7 +65,7 @@ run_guard() {
 guard1() {
     local hits
     hits="$(
-        rg -n '"(node|bun|python3)"\s+in\s+engines|engines\.(node|bun|python3)' \
+        "${RG_PATH}" -n '"(node|bun|python3)"\s+in\s+engines|engines\.(node|bun|python3)' \
             packages/adapter-process/src \
             packages/adapter-docker/src \
             packages/adapter-kubernetes/src \
@@ -81,7 +89,7 @@ guard1() {
 guard2() {
     local hits
     hits="$(
-        rg -n 'os\.environ.*(SEQUENCE_PATH|SEQUENCE_INFO|RUNNER_CONNECT_INFO)' \
+        "${RG_PATH}" -n 'os\.environ.*(SEQUENCE_PATH|SEQUENCE_INFO|RUNNER_CONNECT_INFO)' \
             packages/runner-python/src \
             2> /dev/null \
         || true
@@ -101,7 +109,7 @@ guard2() {
 guard3() {
     local hits
     hits="$(
-        rg -n 'bpmux' packages/runner-python --glob '!Dockerfile*' 2> /dev/null || true
+        "${RG_PATH}" -n 'bpmux' packages/runner-python --glob '!Dockerfile*' 2> /dev/null || true
     )"
     if [ -z "${hits}" ]; then
         return 0
@@ -118,7 +126,7 @@ guard3() {
 guard4() {
     local hits
     hits="$(
-        rg -n '\bREQUESTS\b' packages/runner-python/src 2> /dev/null || true
+        "${RG_PATH}" -n '\bREQUESTS\b' packages/runner-python/src 2> /dev/null || true
     )"
     if [ -z "${hits}" ]; then
         return 0
@@ -136,12 +144,12 @@ guard4() {
 guard5() {
     local hits
     hits="$(
-        rg -l '@scramjet/python-runner' 2> /dev/null \
-        | rg -v 'CHANGELOG' \
-        | rg -v 'docs/roadmap' \
-        | rg -v '(^|/)yarn\.lock$' \
-        | rg -v '(^|/)package-lock\.json$' \
-        | rg -v 'scripts/check-runtime-wrapper-invariants\.sh' \
+        "${RG_PATH}" -l '@scramjet/python-runner' 2> /dev/null \
+        | "${RG_PATH}" -v 'CHANGELOG' \
+        | "${RG_PATH}" -v 'docs/roadmap' \
+        | "${RG_PATH}" -v '(^|/)yarn\.lock$' \
+        | "${RG_PATH}" -v '(^|/)package-lock\.json$' \
+        | "${RG_PATH}" -v 'scripts/check-runtime-wrapper-invariants\.sh' \
         || true
     )"
     if [ -z "${hits}" ]; then
@@ -159,7 +167,7 @@ guard5() {
 guard6() {
     local hits
     hits="$(
-        rg -n 'process\.stdout\s*=|redirectOutputs' \
+        "${RG_PATH}" -n 'process\.stdout\s*=|redirectOutputs' \
             packages/runner/src \
             2> /dev/null \
         || true
@@ -181,7 +189,7 @@ guard6() {
 guard7() {
     local files
     files="$(
-        rg -l '@scramjet/bpmux|@scramjet/verser|from .*bpmux|require\(["'\''`]bpmux|import .*\bBPMux\b|new BPMux\(|new Verser\(|\bVerserClient\b|\bVerserConnection\b|\bapiVerser\b|\bverserConnection\b|\bmigrationMode\b|\bverser2MigrationMode\b|verser2-migration-mode|SCRAMJET_VERSER2_MIGRATION_MODE|kind: "legacy"|kind === "legacy"|\bRunnerTransportConfigLegacy\b|RunnerTransportKind = "legacy"|\bSocketServer\b' \
+        "${RG_PATH}" -l '@scramjet/bpmux|@scramjet/verser|from .*bpmux|require\(["'\''`]bpmux|import .*\bBPMux\b|new BPMux\(|new Verser\(|\bVerserClient\b|\bVerserConnection\b|\bapiVerser\b|\bverserConnection\b|\bmigrationMode\b|\bverser2MigrationMode\b|verser2-migration-mode|SCRAMJET_VERSER2_MIGRATION_MODE|kind: "legacy"|kind === "legacy"|\bRunnerTransportConfigLegacy\b|RunnerTransportKind = "legacy"|\bSocketServer\b' \
             packages package.json \
             --glob '!packages/verser/**' \
             --glob '!packages/bpmux/**' \
@@ -227,7 +235,7 @@ run_guard 7 "No active legacy transport references outside standalone legacy pac
 guard8() {
     local hits
     hits="$(
-        rg -n 'from ["'\''`]commander["'\''`]|require\(["'\''`]commander["'\''`]\)|import\(["'\''`]commander["'\''`]\)|"commander"\s*:' \
+        "${RG_PATH}" -n 'from ["'\''`]commander["'\''`]|require\(["'\''`]commander["'\''`]\)|import\(["'\''`]commander["'\''`]\)|"commander"\s*:' \
             packages \
             --glob '!**/node_modules/**' \
             --glob '!**/dist/**' \

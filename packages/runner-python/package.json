@@ -6,7 +6,7 @@
         "build": "bash scripts/install-deps.sh --target dist/__pypackages__",
         "prepack": "bash scripts/install-deps.sh --target dist/__pypackages__ && cp LICENSE dist/ && cp -r runner_python dist/ && cp -r src dist/",
         "install:deps": "bash scripts/install-deps.sh --dev --target __pypackages__",
-        "test": "PYTHONPATH=__pypackages__:src:$PYTHONPATH pytest",
+        "test": "PYTHONPATH=__pypackages__:src:$PYTHONPATH python3 -m pytest",
         "clean": "rm -rf __pypackages__ dist"
     },
     "files": [

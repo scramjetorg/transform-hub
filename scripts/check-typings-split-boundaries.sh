@@ -22,7 +22,7 @@
 # Usage:
 #   bash scripts/check-typings-split-boundaries.sh
 #
-# Requirements: ripgrep (`rg`).
+# Requirements: @vscode/ripgrep devDependency (bundles ripgrep).
 #
 
 set -o pipefail
@@ -31,8 +31,16 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
 REPO_ROOT="$(cd -- "${SCRIPT_DIR}/.." &> /dev/null && pwd)"
 cd "${REPO_ROOT}"
 
-if ! command -v rg > /dev/null 2>&1; then
-    echo "ERROR: ripgrep (rg) is required but not installed." >&2
+# Resolve bundled ripgrep binary via @vscode/ripgrep.
+RG_PATH=""
+if ! RG_PATH="$(node -p "require('@vscode/ripgrep').rgPath" 2>/dev/null)"; then
+    echo "ERROR: @vscode/ripgrep is not installed or resolution failed." >&2
+    echo "  Run: npm install @vscode/ripgrep@^1.18.0" >&2
+    exit 2
+fi
+if [ ! -x "${RG_PATH}" ]; then
+    echo "ERROR: Bundled ripgrep binary not found or not executable:" >&2
+    echo "  ${RG_PATH}" >&2
     exit 2
 fi
 
@@ -91,7 +99,7 @@ guard2() {
 
     # Check package.json dependencies
     for dep in "${forbidden[@]}"; do
-        if rg -q "\"@scramjet/${dep}\"" packages/runtime-types/package.json 2>/dev/null; then
+        if "${RG_PATH}" -q "\"@scramjet/${dep}\"" packages/runtime-types/package.json 2>/dev/null; then
             violations+=("package.json depends on @scramjet/${dep}")
         fi
     done
@@ -103,7 +111,7 @@ guard2() {
         for dep in "${forbidden[@]}"; do
             local src_hits
             src_hits="$(
-                rg -nF "@scramjet/${dep}" packages/runtime-types/src/ 2>/dev/null || true
+                "${RG_PATH}" -nF "@scramjet/${dep}" packages/runtime-types/src/ 2>/dev/null || true
             )"
             if [ -n "${src_hits}" ]; then
                 violations+=("src/ contains reference to @scramjet/${dep}")
@@ -157,7 +165,7 @@ guard3() {
     # Using -F (fixed-string) avoids regex escaping pitfalls with parentheses,
     # curly braces, and dots in import() / @type { / "@scramjet/types" patterns.
     hits="$(
-        rg -n -F \
+        "${RG_PATH}" -n -F \
             '@scramjet/types' \
             packages/ bdd/ \
             --glob '!**/node_modules/**' \

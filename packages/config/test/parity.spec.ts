@@ -43,10 +43,10 @@ test("development returns false when both PRODUCTION and DEVELOPMENT are set", t
 // ---------------------------------------------------------------------------
 
 test("imageConfig has expected image tags", t => {
-    t.is(imageConfig.prerunner, "scramjetorg/pre-runner:1.1.0");
-    t.is(imageConfig.runner.node, "scramjetorg/runner:1.1.0");
-    t.is(imageConfig.runner.python3, "scramjetorg/runner-py:1.1.0");
-    t.is(imageConfig.runner.bun, "scramjetorg/runner-bun:1.1.0");
+    t.is(imageConfig.prerunner, "scramjetorg/pre-runner:2.0.0");
+    t.is(imageConfig.runner.node, "scramjetorg/runner:2.0.0");
+    t.is(imageConfig.runner.python3, "scramjetorg/runner-py:2.0.0");
+    t.is(imageConfig.runner.bun, "scramjetorg/runner-bun:2.0.0");
 });
 
 // ---------------------------------------------------------------------------

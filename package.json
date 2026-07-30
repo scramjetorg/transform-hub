@@ -115,6 +115,7 @@
     "@istanbuljs/nyc-config-typescript": "^1.0.2",
     "@npmcli/run-script": "4.2.1",
     "@types/node": "^22.15.0",
+    "@vscode/ripgrep": "^1.18.0",
     "cloc": "^2.11.0",
     "fs-extra": "^9.1.0",
     "glob": "^7.2.3",

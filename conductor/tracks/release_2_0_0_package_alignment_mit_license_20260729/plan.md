@@ -100,14 +100,25 @@
 
 ## Phase 6: Release Verification and Pull-Request Finalization
 
-- [ ] Task: Perform end-to-end release consistency validation.
-    - [ ] Run the alignment validator, license/inventory checks, `npm run build:packages`, focused package tests, and `npm run lint` using the repository-supported commands.
-    - [ ] Escalate to serial package tests, runtime invariant checks, or BDD smoke tests only when changed surfaces require them; record every command and any skipped validation with reason.
-    - [ ] Verify the final changelog, grants acknowledgment, links, included package versions, internal ranges, and excluded package invariants.
-- [ ] Task: Complete production-focused review and remediate in-scope findings.
-    - [ ] Request configured reviewer assessment of the specification, plan outcomes, licensing boundary, release tooling, and documentation evidence.
-    - [ ] Record safe deferred findings with their rationale; escalate material strategic blockers only when reviewer output requires it.
+- [x] Task: Perform end-to-end release consistency validation.
+    - [x] Run the alignment validator, license/inventory checks, `npm run build:packages`, focused package tests, and `npm run lint` using the repository-supported commands.
+    - [x] Escalate to serial package tests, runtime invariant checks, or BDD smoke tests only when changed surfaces require them; record every command and any skipped validation with reason.
+    - [x] Verify the final changelog, grants acknowledgment, links, included package versions, internal ranges, and excluded package invariants.
+- [x] Task: Complete production-focused review and remediate in-scope findings.
+    - [x] Request configured reviewer assessment of the specification, plan outcomes, licensing boundary, release tooling, and documentation evidence.
+    - [x] Record safe deferred findings with their rationale; escalate material strategic blockers only when reviewer output requires it.
 - [ ] Task: Finalize the release pull request.
     - [ ] Commit each completed phase on the dedicated branch, push phase checkpoints, and post verification results as pull-request comments.
     - [ ] Ensure the draft pull request targets the captured base branch, has the approved specification as its description, and is ready for review only after final verification passes.
 - [ ] Task: Conductor - Phase Completion 'Release Verification and Pull-Request Finalization' (Protocol in workflow.md)
+
+### Phase 6 validation record
+
+- `npm run release:align:check` and `npm run release:align:dry-run` passed, confirming every included package and included internal range at 2.0.0, MIT-license boundary checks, 2.0.0 image tags, and preservation of `@scramjet/bpmux@9.0.0`, `@scramjet/frame-stream@5.0.0`, `@scramjet/verser@1.1.0`, and `scramjet-bdd@1.1.0`.
+- `npm run docs:check` passed, validating generated documentation, the grants acknowledgment, and documentation links. `git diff --check` passed.
+- `npm run build:packages` passed after the generated dist workspace was restricted to included release packages. It still prepacks legacy artifacts but does not install their preserved incompatible 1.x dependency ranges; `node scripts/run-ava.js scripts/test/build-all.spec.js --serial` passed.
+- `npm run lint` completed successfully with 36 existing warnings; no automatic fixes were applied.
+- `npm run test:packages-no-concurrent` exercised all package suites. Release-induced failures in API Router cancellation cleanup, config image-tag expectations, and Runner Python test invocation were remediated. Focused verification passed: `@scramjet/api-router` (92 tests), `@scramjet/config` (62 tests), and `@scramjet/runner-python` (316 tests). Remaining failures are pre-existing Runner Bun mocking, sequence-test walkthrough/test mismatch, and dependency resolution in policy-excluded legacy bpmux/Verser packages.
+- The invariant helpers no longer require a global `rg`: the root `@vscode/ripgrep` dev dependency supplies their resolved local binary. `npm run check:runtime-invariants` passed all 8 guards and `npm run check:typings-split` passed all 4 guards plus its no-emit TypeScript compilation. Docker BDD smoke tests were not run because the release changes did not alter BDD runtime behavior.
+- Production reviewer result: `PASS/deferred`, phase scope. Oracle final reconciliation found no release blockers: the legacy dependency issue is resolved by the passing full build and the remaining P2 image-config failed-apply assertion is optional test hardening.
+- Final reviewer re-review: `PASS/accepted`, phase scope. The root `@vscode/ripgrep` dev dependency and both invariant scripts correctly use the bundled platform binary, removing the host-global `rg` prerequisite without changing release runtime behavior.

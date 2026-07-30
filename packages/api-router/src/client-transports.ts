@@ -123,13 +123,13 @@ function normalizeHeaders(headers: RoutedBrokerResponse["headers"] | undefined):
     return Object.fromEntries(Object.entries(headers).map(([name, value]) => [name.toLowerCase(), Array.isArray(value) ? value.join(", ") : value]));
 }
 
-function responseCleanup(response: RoutedBrokerResponse, signal: AbortSignal | undefined, requestBody: unknown, abortBroker: () => void, release: () => void): () => Promise<void> {
+function responseCleanup(response: RoutedBrokerResponse, signals: Array<AbortSignal | undefined>, requestBody: unknown, abortBroker: () => void, release: () => void): () => Promise<void> {
     let cleanupPromise: Promise<void> | undefined;
     const cleanup = (): Promise<void> => {
         if (!cleanupPromise) {
             cleanupPromise = Promise.resolve().then(() => response.cleanup());
             cleanupPromise.finally(() => {
-                signal?.removeEventListener("abort", abort);
+                signals.forEach(signal => signal?.removeEventListener("abort", abort));
                 release();
             }).catch(() => {});
         }
@@ -144,8 +144,8 @@ function responseCleanup(response: RoutedBrokerResponse, signal: AbortSignal | u
     response.body.once("end", autoCleanup);
     response.body.once("close", autoCleanup);
     response.body.once("error", autoCleanup);
-    signal?.addEventListener("abort", abort, { once: true });
-    if (signal?.aborted) abort();
+    signals.forEach(signal => signal?.addEventListener("abort", abort, { once: true }));
+    if (signals.some(signal => signal?.aborted)) abort();
     if (response.body.readableEnded || response.body.destroyed) autoCleanup();
     return cleanup;
 }
@@ -385,7 +385,7 @@ export function createVerser2ClientTransport(options: Verser2BrokerLike | Verser
 
             const response = dispatch.response;
             const headers = normalizeHeaders(response.headers);
-            const cleanup = responseCleanup(response, dispatch.signal, request.body, dispatch.abort, dispatch.release);
+            const cleanup = responseCleanup(response, [request.signal, dispatch.signal], request.body, dispatch.abort, dispatch.release);
             if (request.route.kind === "upstream" || request.route.kind === "duplex") {
                 const active = { body: response.body, abort: dispatch.abort, cleanup: undefined as unknown as () => Promise<void> };
                 const remove = () => activeResponses.delete(active);

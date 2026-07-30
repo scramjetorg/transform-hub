@@ -13,3 +13,6 @@
   - **Rationale:** The implementation returns before the image write and the
     current test coverage verifies the same fail-closed path for manifests;
     the reviewer judged the omitted assertion non-blocking.
+  - **Final reconciliation (2026-07-30):** Oracle rejected this as a release
+    blocker: validation returns before image writes and the omitted assertion
+    is optional P2 hardening. It remains deferred without blocking 2.0.0.
