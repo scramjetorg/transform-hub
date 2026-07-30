@@ -368,10 +368,10 @@ Scramjet organization.
   `db54d058fb4d71dca958272ca67fccff793a9970` (2026-07-30T00:16:50Z)
 - **Range**: 967 commits between release points; 271 first-parent commits
 - **Track inventory**:
-  `conductor/tracks/release_2_0_0_package_alignment_mit_license_20260729/inventory.md`
+  `conductor/archive/release_2_0_0_package_alignment_mit_license_20260729/inventory.md`
   — reconciled package boundary, excluded packages, release tooling safeguards
 - **Release history evidence**:
-  `conductor/tracks/release_2_0_0_package_alignment_mit_license_20260729/release-history.md`
+  `conductor/archive/release_2_0_0_package_alignment_mit_license_20260729/release-history.md`
   — curated evidence from the Pre-2.0.0 historical entries and git history
 
 ## [1.0.1] - 2024-03-13

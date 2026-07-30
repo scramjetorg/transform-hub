@@ -11,7 +11,7 @@
  * The boundary is fixed by the track specification and must not be expanded
  * without a written scope decision.
  *
- * @see conductor/tracks/release_2_0_0_package_alignment_mit_license_20260729/inventory.md
+ * @see conductor/archive/release_2_0_0_package_alignment_mit_license_20260729/inventory.md
  */
 
 "use strict";

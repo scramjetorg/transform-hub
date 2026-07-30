@@ -117,7 +117,7 @@ normalization. Storage proxy behavioral issues remain unrepaired.
 
 ### 7. Image-Config Immutability Assertions (Deferred Review)
 
-**Source:** [Deferred review finding](conductor/tracks/release_2_0_0_package_alignment_mit_license_20260729/td.md)
+**Source:** [Deferred review finding](conductor/archive/release_2_0_0_package_alignment_mit_license_20260729/td.md)
 (Phase 2, ID `release-align-failed-apply-image-immutability`, P2)
 
 The failed-apply regression tests verify that manifests remain unchanged when
@@ -154,9 +154,9 @@ documentation.
 The following references are preserved for traceability. They are **completed
 or superseded** and are not treated as active work:
 
-- [Legacy Documentation Cleanup Proposal](conductor/tracks/release_2_0_0_package_alignment_mit_license_20260729/legacy-docs-proposal.md)
-  — Phase 5 analysis of documentation surfaces; proposed dispositions are
-  under review.
+- [Legacy Documentation Cleanup Proposal](conductor/archive/release_2_0_0_package_alignment_mit_license_20260729/legacy-docs-proposal.md)
+  — Phase 5 analysis of documentation surfaces and completed proposed
+  dispositions.
 - [Deferred Removals Record](conductor/archive/cleanup_roadmap_20260702/deferred-removals.md)
   — Documents compatibility surfaces that remain intentionally retained after
   the archival cleanup track.
@@ -179,6 +179,7 @@ or superseded** and are not treated as active work:
   - [test_memory_efficiency_20260625](conductor/archive/test_memory_efficiency_20260625/outcome.md)
   - [cleanup_roadmap_20260702](conductor/archive/cleanup_roadmap_20260702/outcome.md)
   - [verser2_cli_20260722](conductor/archive/verser2_cli_20260722/outcome.md)
+  - [release_2_0_0_package_alignment_mit_license_20260729](conductor/archive/release_2_0_0_package_alignment_mit_license_20260729/outcomes.md)
 
 ---
 
@@ -222,7 +223,7 @@ The following are explicitly **not** objectives of this roadmap:
 | Document | Location |
 |----------|----------|
 | Technical Debt Register | [docs-source/development/technical-debt.md](docs-source/development/technical-debt.md) |
-| Legacy Documentation Cleanup Proposal | [conductor/tracks/release_2_0_0_package_alignment_mit_license_20260729/legacy-docs-proposal.md](conductor/tracks/release_2_0_0_package_alignment_mit_license_20260729/legacy-docs-proposal.md) |
-| Deferred Review Findings (Phase 2) | [conductor/tracks/release_2_0_0_package_alignment_mit_license_20260729/td.md](conductor/tracks/release_2_0_0_package_alignment_mit_license_20260729/td.md) |
+| Legacy Documentation Cleanup Proposal | [conductor/archive/release_2_0_0_package_alignment_mit_license_20260729/legacy-docs-proposal.md](conductor/archive/release_2_0_0_package_alignment_mit_license_20260729/legacy-docs-proposal.md) |
+| Deferred Review Findings (Phase 2) | [conductor/archive/release_2_0_0_package_alignment_mit_license_20260729/td.md](conductor/archive/release_2_0_0_package_alignment_mit_license_20260729/td.md) |
 | Deferred Removals Record | [conductor/archive/cleanup_roadmap_20260702/deferred-removals.md](conductor/archive/cleanup_roadmap_20260702/deferred-removals.md) |
 | Conductor Tracks | [conductor/tracks.md](conductor/tracks.md) |
