@@ -2,10 +2,10 @@
 
 ## Phase 1: Establish Release Scope and Review Surface
 
-- [~] Task: Establish the dedicated implementation branch and release review surface.
+- [x] Task: Establish the dedicated implementation branch and release review surface.
     - [x] Capture the current branch as the pull-request base and apply branching-policy checks for a dirty worktree, non-main base, upstream availability, unpushed commits, and divergence. Base: `feat/manager-oss` at `db54d058fb4d71dca958272ca67fccff793a9970`; clean, tracked, and synchronized with `origin/feat/manager-oss`. Non-main targeting was confirmed by the user on 2026-07-30.
     - [x] Create `conductor/release_2_0_0_package_alignment_mit_license_20260729` from the captured HEAD and perform all release work on it. Verified checked-out branch on 2026-07-30.
-    - [ ] Create or update the draft pull request using the approved specification as its description when the review surface is required.
+    - [x] Create or update the draft pull request using the approved specification as its description when the review surface is required. Draft PR #59: <https://github.com/0rail/transform-hub/pull/59>, targeting `feat/manager-oss`, was created from the approved `spec.md` on 2026-07-30.
 - [x] Task: Delegate read-only inventory work to the configured research specialist and reconcile it in the track records. Reconciled in `inventory.md` on 2026-07-30.
     - [x] Inventory workspace manifests, publish configuration, current versions, licenses, internal dependency ranges, image references, and release scripts. Evidence and current-state table recorded in `inventory.md`.
     - [x] Classify STH, CLI, Manager, MultiManager, and every other Scramjet-owned package as included or excluded with a documented rationale. Candidate release boundary and ownership-evidence limitation recorded in `inventory.md`.
@@ -14,6 +14,14 @@
     - [x] Identify the public 1.0.1 release point, associated tags or published artifacts, and the Git history range through the planned 2.0.0 release. The committed 1.0.1 baseline, ancestry, and public-metadata verification gap are recorded in `release-history.md`.
     - [x] Record dated milestones, merged track outcomes, package changes, and known breaking changes that require release-note treatment. Curated source-backed milestones and migration candidates are recorded in `release-history.md`.
 - [ ] Task: Conductor - Phase Completion 'Establish Release Scope and Review Surface' (Protocol in workflow.md)
+
+### Phase 1 validation record
+
+- `git diff --check` passed before the Phase 1 scope commit.
+- The history baseline was verified locally with `git show`, ancestry, and commit-count checks: `7f97c217` (2024-03-13) is an ancestor of `db54d058` (2026-07-30); the range contains 967 commits and 271 first-parent commits.
+- Draft PR #59 targets the approved `feat/manager-oss` base and uses `spec.md` as its description.
+- Reviewer result: `PASS/no_issue`, scope `phase`; evidence confirms the review surface, required included/excluded boundary, verified/planned release-history distinction, and preservation of active tracks.
+- Shared-code/deduplication check: not applicable; Phase 1 creates only Conductor release evidence and no runtime/package implementation.
 
 ## Phase 2: Build Deterministic Package and Dependency Alignment Tooling
 
