@@ -202,6 +202,10 @@ jobs:
           cache: "false"
           checkpoint-branch: ${{ github.event.pull_request.base.ref || github.event.merge_group.base_ref || '' }}
 
+      # PR outputs remain disposable: build durable BDD inputs in this isolated job.
+      - name: Build disposable BDD inputs
+        run: npm run build:packages
+
       - name: Run legacy-equivalent focused BDD coverage
         run: |
           npm run test:bdd-ci-hub

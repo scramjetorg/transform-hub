@@ -88,6 +88,7 @@ test("AVA, build, and targeted Docker BDD jobs are isolated and ordered", (t) =>
 	t.true(source.includes("RUNTIME_ADAPTER=process npm run test:bdd-ci-node"));
 	t.true(source.includes("npm run test:unified-py"));
 	t.true(source.includes("npm run test:unified-js"));
+	t.is((source.match(/run: npm run build:packages/g) || []).length, 5);
 	t.true(source.includes("PR outputs remain disposable"));
 	t.is((source.match(/uses: actions\/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1/g) || []).length, 7);
 	t.is((source.match(/uses: \.\/\.github\/actions\/setup-workspace/g) || []).length, 7);
@@ -162,5 +163,5 @@ test("PR outputs remain disposable and the repository security scan is connected
 	t.false(source.includes("actions/cache"));
 	t.false(source.includes("docker push"));
 	t.false(source.includes("npm publish"));
-	t.is((source.match(/PR outputs remain disposable/g) || []).length, 3);
+	t.is((source.match(/PR outputs remain disposable/g) || []).length, 4);
 });
