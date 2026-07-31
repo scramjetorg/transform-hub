@@ -67,6 +67,9 @@ test("AVA, build, and targeted Docker BDD jobs are isolated and ordered", (t) =>
 	t.true(source.includes("ava-pre-build:"));
 	t.true(source.includes("name: CI / AVA"));
 	t.true(source.includes("needs: [base-validation]"));
+	t.true(source.includes("oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6"));
+	t.true(source.includes('bun-version: "1"'));
+	t.true(source.indexOf("oven-sh/setup-bun@") < source.indexOf("npm run test:packages-no-concurrent"));
 	t.true(source.includes("npm run test:packages-no-concurrent"));
 	t.true(source.includes("package-build:"));
 	t.true(source.includes("name: CI / package build"));

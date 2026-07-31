@@ -26,7 +26,7 @@ Scramjet Transform Hub is a TypeScript monorepo for supervising sequence deploym
 
 | Group | Packages |
 |-------|----------|
-| `modules` | All `packages/*` |
+| `packages` | All active packages (explicit list, excludes archived modules) |
 | `runners` | `packages/runner`, `packages/runner-bun`, `packages/runner-python`, `packages/pre-runner` |
 | `bdd` | `bdd/` |
 
@@ -68,7 +68,7 @@ Under the hood, `build:packages` uses `scripts/build-all.js` with `--ts-config t
 
 | Flag | Purpose |
 |------|---------|
-| `-w <group>` | Target workspace group (`modules`, `runners`) |
+| `-w <group>` | Target workspace group (`packages`, `runners`) |
 | `-d <package>` | Target specific package by path or name |
 | `--ts-config <file>` | TypeScript config (default: `tsconfig.build.json`) |
 | `--no-install` | Skip dependency installation |
@@ -229,7 +229,7 @@ When running through `scripts/run-ava.js`, the AVA child process automatically u
 scripts/build-all.js -v -d packages/my-package --ts-config tsconfig.build.json
 
 # Run tests for a package
-scripts/run-script.js -w modules test -d packages/my-package
+scripts/run-script.js -w packages test -d packages/my-package
 
 # Or directly via the package manifest
 npm run test -w packages/my-package

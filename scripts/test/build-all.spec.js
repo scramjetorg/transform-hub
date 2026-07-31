@@ -18,7 +18,7 @@ function createWorkspace(t) {
 	writeFileSync(join(root, "package.json"), JSON.stringify({
 		name: "build-all-fixture-root",
 		private: true,
-		workspaces: { modules: ["packages/*"] }
+		workspaces: { packages: ["packages/*"] }
 	}));
 
 	for (const [directory, name] of [
@@ -39,7 +39,7 @@ test("build-all limits dist workspace installation to release-boundary packages"
 	const result = spawnSync(process.execPath, [
 		buildAll,
 		"--root", root,
-		"--workspace", "modules",
+		"--workspace", "packages",
 		"--no-build",
 		"--no-install"
 	], { encoding: "utf8" });
