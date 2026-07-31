@@ -12,7 +12,7 @@
     "build:all": "npm run build:packages && npm run build:docker",
     "build:all-packages": "npm run build:packages",
     "prebuild:packages": "scripts/run-script.js -v -w packages build:only",
-    "build:packages": "scripts/build-all.js -v -w packages --ts-config tsconfig.build.json",
+    "build:packages": "scripts/build-all.js -v -w packages --ts-config tsconfig.build.json && node scripts/check-runner-python-build-artifact.js",
     "build:docker": "scripts/run-script.js -w packages build:docker",
     "build:docker:runners": "scripts/run-script.js -w runners build:docker",
     "docs:clean": "node ./scripts/docs.js clean",
