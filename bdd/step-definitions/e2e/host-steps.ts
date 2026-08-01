@@ -35,6 +35,7 @@ const { getOwnership, allocateOwnedPort } = require("../../lib/ownership.js");
 const { clearE2eScenarioState, setLastTerminalStopDiagnostics } = require("../../lib/e2e-module-state.js");
 const { teardownFloodSource } = require("../../lib/flood-teardown.js");
 const { waitForInstanceDetachment } = require("../../lib/instance-detachment.js");
+const { resolveFixturePackagePath } = require("../../lib/fixture-package-path.js");
 
 function resolveSequencePackage(packageName: string): string {
     const configuredDirs = (process.env.PACKAGES_DIR || "")
@@ -64,7 +65,7 @@ function resolveOwnedArchive(packagePath: string): string {
         const cliDir = fs.readdirSync(tempPath).find((entry) => entry.startsWith("cli-") && fs.statSync(path.join(tempPath, entry)).isDirectory());
         if (cliDir) return path.join(tempPath, cliDir, "simple-stdio.tar.gz");
     }
-    return packagePath;
+    return resolveFixturePackagePath(packagePath);
 }
 
 let hostClient: HostClient;
