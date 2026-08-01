@@ -41,6 +41,17 @@ export type RouteHandler<TSchemas extends RouteSchemas = RouteSchemas> = (
 
 export type RouteKind = "request" | "upstream" | "downstream" | "duplex";
 
+/**
+ * Explicit stream-route behavior that must be audited by the handler owner.
+ *
+ * Most downstream routes use Cero's default content-type gate. Set
+ * `handlerValidatesContentType` only when the route handler validates the
+ * incoming media type itself.
+ */
+export type StreamRouteOptions = {
+    handlerValidatesContentType?: true;
+};
+
 export type ResolverRequest<TSchemas extends RouteSchemas = RouteSchemas> = RouteRequest<TSchemas> & {
     path: string;
     remainingPath: string;
@@ -111,6 +122,7 @@ export type RouteDefinition<TSchemas extends RouteSchemas = RouteSchemas> = {
     path: string;
     description?: string;
     kind?: RouteKind;
+    stream?: StreamRouteOptions;
     tags?: string[];
     schemas?: TSchemas;
     hooks?: RouteHook[];

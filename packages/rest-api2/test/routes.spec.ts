@@ -28,6 +28,16 @@ test("typed route sets build the existing handlerless router factories", t => {
     t.true(RestAPI2Routes.hub.hubRouter().definitions().every(route => !route.handler));
 });
 
+test("only topic stream writers opt into handler-owned content-type validation", t => {
+    const hubTopicWrite = RestAPI2RouteSets.hub.hubRoutes().topicWrite;
+    const spaceTopicWrite = RestAPI2RouteSets.space.routes().topicWrite;
+    const sequenceUpload = RestAPI2RouteSets.hub.sequenceRoutes().sendSequence;
+
+    t.deepEqual(hubTopicWrite.stream, { handlerValidatesContentType: true });
+    t.deepEqual(spaceTopicWrite.stream, { handlerValidatesContentType: true });
+    t.is(sequenceUpload.stream, undefined);
+});
+
 test("RestAPI2RouteTree exposes final public Root Space Hub Instance concepts", t => {
     t.deepEqual(Object.keys(RestAPI2RouteTree), ["root", "space", "hub", "sequence", "instance"]);
     t.is(RestAPI2RouteTree.root.children.space.resolver, "space");

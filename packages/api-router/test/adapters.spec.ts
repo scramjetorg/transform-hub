@@ -240,6 +240,7 @@ test("registerHttpRoutes dispatches dynamic resolvers to verser2 redirects", asy
 
 test("registerHttpRoutes registers stream route kinds when target supports them", t => {
     const calls: string[] = [];
+    const downstreamOptions: Array<Record<string, unknown> | undefined> = [];
     const api = {
         get() {},
         op() {},
@@ -248,6 +249,7 @@ test("registerHttpRoutes registers stream route kinds when target supports them"
         },
         downstream(path: string, _handler: Function, options?: { method?: string }) {
             calls.push(`downstream:${path}:${options?.method || "post"}`);
+            downstreamOptions.push(options);
         },
         duplex(path: string) {
             calls.push(`duplex:${path}`);
@@ -257,6 +259,7 @@ test("registerHttpRoutes registers stream route kinds when target supports them"
         .route(Router.get("/logs", { kind: "upstream" }))
         .route(Router.post("/sequences", { kind: "downstream" }))
         .route(Router.route("put", "/sequences/:sequenceId", { kind: "downstream" }))
+        .route(Router.post("/topics/:name/stream", { kind: "downstream", stream: { handlerValidatesContentType: true } }))
         .route(Router.post("/rpc", { kind: "duplex" }));
 
     registerHttpRoutes(api, router);
@@ -265,7 +268,13 @@ test("registerHttpRoutes registers stream route kinds when target supports them"
         "upstream:/api/v2/logs",
         "downstream:/api/v2/sequences:post",
         "downstream:/api/v2/sequences/:sequenceId:put",
+        "downstream:/api/v2/topics/:name/stream:post",
         "duplex:/api/v2/rpc"
+    ]);
+    t.deepEqual(downstreamOptions, [
+        undefined,
+        { method: "put" },
+        { checkContentType: false }
     ]);
 });
 

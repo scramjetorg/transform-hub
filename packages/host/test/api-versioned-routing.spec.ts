@@ -7,6 +7,7 @@ import { RestAPI2Routes, createRestAPI2Client } from "@scramjet/rest-api2";
 import { HostAPIV1Handler } from "../src/lib/api/host-api-v1";
 import { HostAPIV2Handler } from "../src/lib/api/host-api-v2";
 import { ServiceDiscovery } from "../src/lib/serviceDiscovery/sd-adapter";
+import TopicId from "../src/lib/serviceDiscovery/topicId";
 import { RouteRecorder } from "@scramjet/api-server/test/lib/route-recorder";
 
 function createHostStub(): any {
@@ -284,6 +285,42 @@ test("direct Host topic routes map failed operation codes to HTTP status and ret
         operation: { id: "missing", status: "failed" },
         error: { code: "TOPIC_NOT_FOUND", message: "Topic missing not found" }
     });
+});
+
+test("Host v2 topic writer accepts NDJSON and rejects unsupported media types", async t => {
+    const serviceDiscovery = new ServiceDiscovery(new ObjLogger("host-topic-write"), "test-hub");
+    const topic = serviceDiscovery.createTopicIfNotExist({ topic: new TopicId("cities"), contentType: "application/x-ndjson" });
+    const consumer = new PassThrough();
+    topic.pipe(consumer);
+    consumer.resume();
+    const handler = new HostAPIV2Handler(new RouteRecorder().asApiExpose(), { ...createV2HostStub(), serviceDiscovery }, "1.2.3");
+    const route = handler.createHubRouter().definitions().find(route => route.path === "/topics/:name/stream" && route.method === "post")!;
+    const validRequest = new PassThrough();
+    const acceptedPromise = (route.handler as any)({
+        params: { name: "cities" },
+        headers: { "content-type": "application/x-ndjson" },
+        raw: { request: validRequest, response: {} }
+    });
+    validRequest.end('{"city":"New York"}');
+
+    t.deepEqual(await acceptedPromise, {
+        operation: { id: "cities", status: "completed" },
+        result: { accepted: true }
+    });
+
+    const rejected = await (route.handler as any)({
+        params: { name: "cities" },
+        headers: { "content-type": "application/json" },
+        raw: { request: new PassThrough(), response: {} }
+    });
+    t.deepEqual(rejected, {
+        operation: { id: "cities", status: "failed" },
+        error: { code: "INVALID_CONTENT_TYPE", message: "Unsupported content-type" },
+        opStatus: "Unsupported Media Type"
+    });
+
+    consumer.destroy();
+    topic.destroy();
 });
 
 // ---- createHubRouter() handler tests ------------------------------------
