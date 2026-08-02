@@ -1,0 +1,58 @@
+name: Setup workspace
+description: >
+  Configure Node 22 after the caller has checked out an explicit ref,
+  verify the toolchain, and run a pristine `npm ci`.
+
+  The `cache` input defaults to false and should only be enabled for
+  trusted callers (push, release, or scheduled workflows) to mitigate
+  supply-chain risk from cache poisoning.
+
+  Callers must perform credential-safe checkout first. node_modules is never
+  handed off across jobs.
+
+inputs:
+  cache:
+    description: >
+      Enable npm dependency caching.  Set to "true" only when the
+      caller is a trusted workflow (push, release, or schedule) or
+      when the caller has independently evaluated the cache-poisoning
+      risk.
+    required: false
+    default: "false"
+  checkpoint-branch:
+    description: Trusted checkpoint branch to verify before installing dependencies.
+    required: false
+    default: ""
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+      with:
+        node-version: "22"
+        cache: ${{ inputs.cache == 'true' && 'npm' || '' }}
+        cache-dependency-path: package-lock.json
+
+    - name: Verify Node.js version and npm availability
+      shell: bash
+      run: |
+        MAJOR=$(node -e "process.stdout.write(process.version.slice(1).split('.')[0])")
+        if [ "$MAJOR" -ne 22 ]; then
+          echo "Node.js major version is $MAJOR, expected 22"
+          exit 1
+        fi
+        npm --version >/dev/null 2>&1 || { echo "npm not available"; exit 1; }
+
+    - name: Restore verified dependency checkpoint
+      if: ${{ inputs.checkpoint-branch != '' }}
+      shell: bash
+      run: node scripts/checkpoint/consume.js --branch "${{ inputs.checkpoint-branch }}"
+
+    - name: Install dependencies
+      shell: bash
+      run: |
+        if [ -n "${CHECKPOINT_NPM_CACHE:-}" ]; then
+          npm ci --cache "$CHECKPOINT_NPM_CACHE"
+        else
+          npm ci
+        fi

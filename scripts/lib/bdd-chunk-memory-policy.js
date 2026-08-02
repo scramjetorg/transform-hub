@@ -1,5 +1,3 @@
-"use strict";
-
 const MiB = 1024 * 1024;
 
 const CHUNK_MEMORY_POLICY = "SCRAMJET_BDD_CHUNK_MEMORY_POLICY";

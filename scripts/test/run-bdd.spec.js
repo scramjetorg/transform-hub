@@ -54,6 +54,18 @@ test("run-bdd.js resolves cucumber-js from bdd/ directory", (t) => {
 	t.true(cli.includes("cucumber"), "resolved path should contain cucumber");
 });
 
+test("Docker BDD runner gets cucumber-js from the root npm install", (t) => {
+	const rootManifest = JSON.parse(fs.readFileSync(path.resolve(__dirname, "../..", "package.json"), "utf8"));
+	const dockerRunner = fs.readFileSync(path.resolve(__dirname, "..", "run-bdd-docker.js"), "utf8");
+
+	t.is(rootManifest.devDependencies["@cucumber/cucumber"], "^7.3.2");
+	t.is(rootManifest.devDependencies["@cucumber/messages"], "^14.0.0");
+	t.is(rootManifest.devDependencies["@cucumber/pretty-formatter"], "^1.0.0");
+	t.is(rootManifest.devDependencies["scramjet-bdd"], "file:bdd");
+	t.true(dockerRunner.includes("PATH=/work/node_modules/.bin:$PATH"));
+	t.false(dockerRunner.includes("yarn"));
+});
+
 // ---------------------------------------------------------------------------
 // Mode default
 // ---------------------------------------------------------------------------

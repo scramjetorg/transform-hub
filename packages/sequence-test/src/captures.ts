@@ -229,7 +229,7 @@ export function createSequenceAssertions(options: { monitoring: MonitoringCaptur
         memoryWithinLimit: (options: MemoryWithinLimitOptions) => {
             const { threshold } = options;
 
-            if (typeof threshold !== "number" || !isFinite(threshold) || threshold <= 0) {
+            if (typeof threshold !== "number" || !Number.isFinite(threshold) || threshold <= 0) {
                 throw new Error(`memoryWithinLimit: threshold must be a positive finite number, got ${threshold}`);
             }
 

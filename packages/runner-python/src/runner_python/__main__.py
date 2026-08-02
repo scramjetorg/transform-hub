@@ -597,6 +597,10 @@ async def main() -> int:
                 sequence_context, input_stream, *handshake_result.args
             )
         except Exception as exc:
+            # A sequence entrypoint can fail synchronously after transport and
+            # initialization succeed. Let the Host establish the instance
+            # before reporting that execution failure on stderr.
+            monitoring_writer.write_frame(READY, {"state": "ready"})
             handshake_writer.flush()
             with contextlib.suppress(Exception):
                 sys.stdout.flush()

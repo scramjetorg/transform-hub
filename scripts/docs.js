@@ -97,7 +97,7 @@ function validateOutputMarker(dir) {
     let marker;
     try {
         marker = JSON.parse(fs.readFileSync(file, "utf8"));
-    } catch (error) {
+    } catch {
         throw new Error(`Refusing to use invalid docs output marker: ${file}`);
     }
 
@@ -210,9 +210,8 @@ function routedMarkdownFiles() {
 
 function validateLinks(file, content) {
     const linkPattern = /\[[^\]]+\]\((?!https?:|mailto:|#)([^)]+)\)/g;
-    let match;
 
-    while ((match = linkPattern.exec(content))) {
+    for (let match = linkPattern.exec(content); match !== null; match = linkPattern.exec(content)) {
         const target = match[1].split("#")[0];
 
         if (!target || target.startsWith("/")) continue;
@@ -531,9 +530,8 @@ function findMatching(text, openIndex, openChar = "(", closeChar = ")") {
 function parseStringLiteralArgs(argsText) {
     const args = [];
     const re = /"((?:\\.|[^"])*)"/g;
-    let match;
 
-    while ((match = re.exec(argsText)) !== null) {
+    for (let match = re.exec(argsText); match !== null; match = re.exec(argsText)) {
         args.push(match[1].replace(/\\"/g, '"'));
     }
 
@@ -543,9 +541,8 @@ function parseStringLiteralArgs(argsText) {
 function findCmdCalls(text) {
     const calls = [];
     const re = /cmd\s*\(\s*"((?:\\.|[^"])*)"/g;
-    let match;
 
-    while ((match = re.exec(text)) !== null) {
+    for (let match = re.exec(text); match !== null; match = re.exec(text)) {
         const open = text.indexOf("(", match.index);
         const close = findMatching(text, open);
 
@@ -584,9 +581,8 @@ function parseChainString(commandText, methodName) {
 function parseChainStringPairs(commandText, methodName) {
     const pairs = [];
     const methodRe = new RegExp(`\\.${methodName}\\s*\\(`, "g");
-    let match;
 
-    while ((match = methodRe.exec(commandText)) !== null) {
+    for (let match = methodRe.exec(commandText); match !== null; match = methodRe.exec(commandText)) {
         const open = commandText.indexOf("(", match.index);
         const close = findMatching(commandText, open);
 
@@ -650,9 +646,8 @@ function commandSourceOrder() {
     const source = fs.readFileSync(indexFile, "utf8");
     const order = [];
     const re = /import\s+\{\s*(\w+)Command\s*\}\s+from\s+"\.\/(\w+)"/g;
-    let match;
 
-    while ((match = re.exec(source)) !== null) {
+    for (let match = re.exec(source); match !== null; match = re.exec(source)) {
         if (match[2] !== "developerTools") order.push(match[2]);
     }
 
@@ -1171,8 +1166,7 @@ function validateGeneratedLinks(dir) {
     for (const file of listFiles(dir).filter((file) => file.endsWith(".md"))) {
         const content = fs.readFileSync(file, "utf8");
         const links = /\[[^\]]+\]\(([^)]+)\)/g;
-        let match;
-        while ((match = links.exec(content))) {
+        for (let match = links.exec(content); match !== null; match = links.exec(content)) {
             const target = match[1].split("#")[0];
             if (!target || /^(?:https?:|mailto:|data:|\/)/.test(target)) continue;
             const resolved = path.resolve(path.dirname(file), target);
@@ -1259,8 +1253,7 @@ function parseAPIV2RouteSet(source, funcName) {
     //   1) key: Router.get|post|put|delete|patch(
     //   2) key: Router.route("method",
     const entryRe = /(\w+)\s*:\s*Router\.(?:route\s*\(\s*"(\w+)"|(get|post|put|delete|patch)\s*\()/g;
-    let entryMatch;
-    while ((entryMatch = entryRe.exec(body)) !== null) {
+    for (let entryMatch = entryRe.exec(body); entryMatch !== null; entryMatch = entryRe.exec(body)) {
         const key = entryMatch[1];
         let method;
         let argsStart;
@@ -1316,8 +1309,7 @@ function parseAPIV2RouteSet(source, funcName) {
         if (schemasMatch) {
             const schemasText = schemasMatch[1];
             const schemaEntryRe = /(\w+)\s*:\s*([^,}]+)/g;
-            let sMatch;
-            while ((sMatch = schemaEntryRe.exec(schemasText)) !== null) {
+            for (let sMatch = schemaEntryRe.exec(schemasText); sMatch !== null; sMatch = schemaEntryRe.exec(schemasText)) {
                 const skey = sMatch[1];
                 let sval = sMatch[2].trim();
                 // Simplify schema references: remove RestAPI2Schemas.xxx. prefix, handle function calls
@@ -1371,8 +1363,7 @@ function parseAPIV2ResolverSet(source, funcName) {
     const schemasMatch = optsText.match(/\bschemas\s*:\s*\{([^}]*)\}/);
     if (schemasMatch) {
         const schemaEntryRe = /(\w+)\s*:\s*([^,}]+)/g;
-        let sMatch;
-        while ((sMatch = schemaEntryRe.exec(schemasMatch[1])) !== null) {
+        for (let sMatch = schemaEntryRe.exec(schemasMatch[1]); sMatch !== null; sMatch = schemaEntryRe.exec(schemasMatch[1])) {
             let sval = sMatch[2].trim();
             sval = sval.replace(/RestAPI2Schemas\.[a-z]+\./g, "");
             schemas[sMatch[1]] = sval;
@@ -1656,11 +1647,6 @@ function parseAPIV2FromSource() {
 const API_V2_NODES = parseAPIV2FromSource();
 const API_V2_NODE_NAMES = ["root", "space", "hub", "sequence", "instance"];
 
-function routeKindBadge(kind) {
-    if (!kind || kind === "request") return "";
-    return ` \`${kind}\``;
-}
-
 function schemasList(schemas) {
     if (!schemas) return "—";
     const parts = [];
@@ -1813,7 +1799,6 @@ function generateAPIV2(out) {
 
         for (const route of node.routes) {
             const fullPath = makeFullPath(nodeName, route.path);
-            const opId = `${route.method.toUpperCase()} ${fullPath}`;
             const kind = route.kind || "request";
             const schemas = schemasList(route.schemas);
             lines.push(`| \`${route.key}\` | \`${route.method.toUpperCase()}\` | \`${fullPath}\` | ${kind} | ${schemas} |`);
@@ -1914,7 +1899,7 @@ function generateLegacyV1(out) {
         "",
         "> **Backwards compatibility**: The v1 API (route tree `/api/v1`, package `@scramjet/api-client`) remains available and supported for existing deployments. New projects should use the [API v2 reference](../../v2/index.md).",
         "",
-        "This page mirrors the content from \`docs-source/api/legacy/v1-api-client.md\`.",
+        "This page mirrors the content from `docs-source/api/legacy/v1-api-client.md`.",
         "",
         bodyContent.trim(),
         ""

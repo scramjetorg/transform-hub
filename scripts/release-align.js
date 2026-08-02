@@ -23,31 +23,24 @@
  * @see scripts/lib/release-boundary.js
  */
 
-"use strict";
-
 const fs = require("fs");
 const path = require("path");
 const {
 	RELEASE_VERSION,
-	INCLUDED_PACKAGES,
 	IMAGE_CONFIG_PATH,
 	MIT_LICENSE_TEXT,
 	EXPECTED_LICENSE,
 	LICENSE_FILE,
 	WORKSPACE_MANIFEST_GLOBS,
 	FIXTURE_MANIFEST_GLOBS,
-	MANIFEST_EXCLUDE_GLOBS,
 	isIncluded,
 	isExcluded,
+	isLicenseOnly,
 	isScramjet,
-	isSignicode,
 	isLicenseTarget,
 	dependencySections,
 	getRangePrefix,
 	expectedVersion,
-	expectedWorkspacePackages,
-	expectedWorkspaceRelease,
-	includedPackageDirs,
 	discoverManifests,
 } = require("./lib/release-boundary");
 
@@ -93,15 +86,6 @@ function writeJson(filePath, obj) {
 }
 
 /**
- * Read image-config.ts content.
- * @returns {string}
- */
-function readImageConfig() {
-	const p = path.resolve(ROOT_DIR, IMAGE_CONFIG_PATH);
-	return fs.readFileSync(p, "utf8");
-}
-
-/**
  * Write image-config.ts content.
  * @param {string} content
  */
@@ -121,11 +105,10 @@ function writeImageConfig(content) {
  */
 function updateImageTags(content, newVersion) {
 	const re = /(scramjetorg\/[-\w]+):([\d.]+)"/g;
-	let match;
 	let result = content;
 	let changed = false;
 
-	while ((match = re.exec(content)) !== null) {
+	for (let match = re.exec(content); match !== null; match = re.exec(content)) {
 		if (match[2] !== newVersion) {
 			result = result.replace(match[0], `${match[1]}:${newVersion}"`);
 			changed = true;
@@ -357,7 +340,7 @@ function computeChangePlan() {
 				const deps = manifest[section];
 				if (!deps || typeof deps !== "object") continue;
 				for (const [depName, depRange] of Object.entries(deps)) {
-					if (isExcluded(depName)) {
+					if (isExcluded(depName) && !isLicenseOnly(depName)) {
 						// Check the excluded dep hasn't been mutated to a 2.0.0 range
 						const verPart = depRange.replace(/^[\^~]/, "");
 						if (verPart === RELEASE_VERSION) {
@@ -371,8 +354,9 @@ function computeChangePlan() {
 				}
 			}
 		} else if (isExcluded(name)) {
-			// Excluded packages are invariants — check they haven't drifted
-			if (manifest.version === RELEASE_VERSION) {
+			// Strictly excluded packages are invariants. License-only packages
+			// remain excluded even when independently versioned at the target.
+			if (!isLicenseOnly(name) && manifest.version === RELEASE_VERSION) {
 				errors.push(
 					`EXCLUDED BOUNDARY VIOLATION: excluded package "${name}" ` +
 					`has version "${manifest.version}" matching target — ` +
@@ -436,7 +420,7 @@ function computeChangePlan() {
 			const deps = manifest[section];
 			if (!deps || typeof deps !== "object") continue;
 			for (const [depName, depRange] of Object.entries(deps)) {
-				if (isExcluded(depName)) {
+				if (isExcluded(depName) && !isLicenseOnly(depName)) {
 					const verPart = depRange.replace(/^[\^~]/, "");
 					if (verPart === RELEASE_VERSION) {
 						errors.push(
@@ -476,8 +460,7 @@ function computeChangePlan() {
 		if (changed) {
 			// Collect individual changes
 			const re = /(scramjetorg\/[-\w]+):([\d.]+)"/g;
-			let m;
-			while ((m = re.exec(imgContent)) !== null) {
+			for (let m = re.exec(imgContent); m !== null; m = re.exec(imgContent)) {
 				plan.imageConfig.changes.push({ image: m[1], from: m[2], to: RELEASE_VERSION });
 			}
 		}

@@ -104,6 +104,7 @@ function hubRouteSet() {
         }),
         topicWrite: Router.post("/topics/:name/stream", {
             kind: "downstream",
+            stream: { handlerValidatesContentType: true },
             schemas: { params: RestAPI2Schemas.params.topic, headers: RestAPI2Schemas.headers.http, response: opResponse(TopicStreamResponse) }
         }),
         logs: Router.get("/logs", { kind: "upstream", schemas: { response: LogRecord } }),
@@ -179,6 +180,7 @@ function spaceRouteSet() {
         }),
         topicWrite: Router.post("/topics/:name/stream", {
             kind: "downstream",
+            stream: { handlerValidatesContentType: true },
             schemas: { params: RestAPI2Schemas.params.topic, headers: RestAPI2Schemas.headers.http, response: opResponse(TopicStreamResponse) }
         }),
         logs: Router.get("/logs", { kind: "upstream", schemas: { response: LogRecord } }),

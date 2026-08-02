@@ -80,6 +80,46 @@ function createRealLifecycleCsi(control: (code: RunnerMessageCode, payload: unkn
     return { csi, resolveTerminal };
 }
 
+test("Manager topic writer accepts NDJSON and rejects unsupported media types", async t => {
+    const registered: Array<{ contentType: string }> = [];
+    const manager = Object.create(Manager.prototype) as any;
+    manager.logger = new ObjLogger("manager-topic-write");
+    manager.serviceDiscovery = {
+        register: (_actor: unknown, options: { contentType: string }) => registered.push(options),
+        onUpdate: () => undefined
+    };
+    const response = { endCalled: false, statusCode: undefined as number | undefined, end() { this.endCalled = true; } };
+    const validRequest = new PassThrough() as any;
+    Object.assign(validRequest, {
+        params: { name: "cities" },
+        headers: { "content-type": "application/x-ndjson" },
+        method: "POST",
+        url: "/api/v2/topics/cities/stream"
+    });
+
+    const accepted = await manager.handleTopicDownstreamRequest(validRequest, response);
+    t.true(accepted instanceof PassThrough);
+    t.deepEqual(registered, [{ contentType: "application/x-ndjson" }]);
+    t.false(response.endCalled);
+
+    const invalidRequest = new PassThrough() as any;
+    Object.assign(invalidRequest, {
+        params: { name: "cities" },
+        headers: { "content-type": "application/json" },
+        method: "POST",
+        url: "/api/v2/topics/cities/stream"
+    });
+    const rejected = await manager.handleTopicDownstreamRequest(invalidRequest, response);
+    rejected.on("error", () => undefined);
+
+    t.is(response.statusCode, 415);
+    t.true(response.endCalled);
+    t.deepEqual(registered, [{ contentType: "application/x-ndjson" }]);
+    validRequest.destroy();
+    accepted.destroy();
+    invalidRequest.destroy();
+});
+
 test("real Manager-routed CSI control preserves direct Hub semantics", async t => {
     const scenarios = [
         { body: { mode: "stop", timeout: 0 }, controls: [RunnerMessageCode.STOP, RunnerMessageCode.KILL] },

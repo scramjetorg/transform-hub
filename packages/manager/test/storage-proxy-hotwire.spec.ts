@@ -1,5 +1,6 @@
 import test, { ExecutionContext } from "ava";
 import { mkdtemp, rm } from "fs/promises";
+import { tmpdir } from "os";
 import { join } from "path";
 import { PassThrough } from "stream";
 import { ObjLogger } from "@scramjet/obj-logger";
@@ -14,6 +15,10 @@ const storageConfig = {
     bucket: "storage-hotwire",
     bucketLimit: 1024 * 1024
 };
+
+function createTempRoot(prefix: string): Promise<string> {
+    return mkdtemp(join(tmpdir(), prefix));
+}
 
 function assertStorageProxyRoutes(t: ExecutionContext, recorder: RouteRecorder) {
     t.true(recorder.has("use", "/api/v1/s3"));
@@ -88,7 +93,7 @@ test("DiskProxy unit delete handler updates index for matching filenames", async
 });
 
 test("DiskProxy unit index and object operations work with the default disk client", async t => {
-    const tempRoot = await mkdtemp(join("/tmp/opencode", "diskproxy-"));
+    const tempRoot = await createTempRoot("diskproxy-");
     const recorder = new RouteRecorder();
     const proxy = new DiskProxy({ ...storageConfig, bucket: tempRoot, router: recorder.asApiRoute() });
 
@@ -107,7 +112,7 @@ test("DiskProxy unit index and object operations work with the default disk clie
 });
 
 test("DiskProxy default disk client handles streams metadata reads and removals", async t => {
-    const tempRoot = await mkdtemp(join("/tmp/opencode", "diskproxy-client-"));
+    const tempRoot = await createTempRoot("diskproxy-client-");
     const recorder = new RouteRecorder();
     const proxy = new DiskProxy({ ...storageConfig, bucket: tempRoot, router: recorder.asApiRoute() });
     const client = (proxy as any).s3Client;

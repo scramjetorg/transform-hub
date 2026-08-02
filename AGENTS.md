@@ -10,7 +10,7 @@
 
 ## High-value commands
 - Install deps: `npm ci` for a clean install, `npm install` when updating the lockfile.
-- Build packages only: `npm run build:packages` (`scripts/build-all.js -v -w modules --ts-config tsconfig.build.json`).
+- Build packages only: `npm run build:packages` (`scripts/build-all.js -v -w packages --ts-config tsconfig.build.json`).
 - Full build is expensive: `npm run build` includes packages and Docker builds.
 - Unit/package tests: `npm run test:packages-no-concurrent` is the CI-safe serial variant; `npm run test:packages` runs package tests concurrently.
 - BDD smoke paths: `npm run test:bdd-ci-api-node`, `npm run test:bdd-ci-node`, `npm run test:bdd-ci-python`, or `npm run test:bdd`.
@@ -20,7 +20,7 @@
 - Dev hub: `npm run start:dev`; built hub: `npm run start` after building `dist/`.
 
 ## Monorepo wiring
-- Workspaces are `packages/*` plus `bdd/`; custom workspace groups in `package.json` include `modules`, `runners`, and `bdd`.
+- Workspaces are explicit `packages/*` listed entries plus `bdd/`; custom workspace groups in `package.json` include `packages`, `release`, `runners`, and `bdd`.
 - `scripts/run-script.js` runs a package script across workspaces; it defaults to 16 concurrent jobs (override with `-j <jobs>`). It runs every selected package after failures, then exits nonzero with aggregated failures; use `--fail-fast` or `SCRAMJET_RUN_SCRIPT_FAIL_FAST=1` to stop scheduling after the first failure. Other useful flags: `-w <group>`, `-s <package path|name>`, `-d <package>`, `-e <command>`.
 - `scripts/build-all.js` builds TypeScript solution configs and pre-packs packages into `dist/`; useful flags: `-w <group>`, `-d <package>`, `--ts-config <file>`, `--no-install`, `--no-distws`.
 - Main STH CLI source is `packages/sth/src/bin/hub.ts`; published/root bin points to `dist/sth/bin/hub.js`.

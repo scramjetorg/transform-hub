@@ -30,7 +30,7 @@ test("source-side data walkthrough compiles and runs its loaded sequence", async
     const markdown = await fs.readFile(walkthroughPath, "utf8");
     const snippets = [...markdown.matchAll(/```typescript\n([\s\S]*?)```/g)].map(match => match[1]);
 
-    t.is(snippets.length, 2, "the walkthrough has sequence and validation TypeScript blocks");
+    t.is(snippets.length, 1, "the walkthrough has one self-contained TypeScript sequence snippet");
     t.regex(snippets[0], /opendir\(root\)/);
     t.true(snippets[0].indexOf("const directory = await opendir(root);") < snippets[0].indexOf('this.api.use("/health"'));
     t.regex(snippets[0], /for await \(const entry of directory\)/);
@@ -48,20 +48,10 @@ test("source-side data walkthrough compiles and runs its loaded sequence", async
         await fs.rm(directory, { recursive: true, force: true });
     });
 
-    const validation = [
-        "declare const sequenceDirectory: string;",
-        "declare const sourceDirectory: string;",
-        snippets[1]
-    ].join("\n");
     await fs.writeFile(path.join(directory, "sequence.ts"), snippets[0], "utf8");
-    await fs.writeFile(path.join(directory, "validation.ts"), validation, "utf8");
 
     diagnostics = [
         ts.transpileModule(snippets[0], {
-            reportDiagnostics: true,
-            compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 }
-        }),
-        ts.transpileModule(validation, {
             reportDiagnostics: true,
             compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 }
         })

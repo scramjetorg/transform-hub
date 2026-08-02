@@ -1,5 +1,3 @@
-"use strict";
-
 const GiB = 1024 * 1024 * 1024;
 const MiB = 1024 * 1024;
 

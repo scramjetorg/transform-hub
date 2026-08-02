@@ -82,7 +82,8 @@ export default class ProfileConfig extends ConfigFileDefault<ProfileConfigEntity
     }
     setVerser2DraftTls(field: "certFile" | "keyFile" | "pfxFile", value: string): boolean {
         return this.updateVerser2Draft(current => {
-            const tls = current.tls ||= {};
+            if (!current.tls) current.tls = {};
+            const tls = current.tls;
             tls[field] = value;
             if (field === "pfxFile") {
                 delete tls.certFile;

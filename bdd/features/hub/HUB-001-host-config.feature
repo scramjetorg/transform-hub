@@ -89,9 +89,9 @@ Feature: HUB-001 Host configuration
 
     @ci-hub @starts-host
     Scenario: HUB-001 TC-016 Scenario Hub runner port collision is handled
-        # Occupy the default runner verser2 port 2444 to simulate the suite
-        # host's runner listener. The Hub harness must dynamically allocate a
-        # free runner host port (not inherit 2444) to survive.
+        # Occupy the legacy 2444 verser2 endpoint. The Hub harness must pass
+        # dynamic runner Host and control-ingress endpoints, leaving this port
+        # occupied throughout the first Hub startup.
         When port 2444 is occupied
         When hub process is started with random ports and parameters ""
         Then host is running

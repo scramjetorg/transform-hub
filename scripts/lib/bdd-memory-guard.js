@@ -45,8 +45,6 @@
  *   SCRAMJET_MEMORY_SKIP_REASON           – required non-empty reason when SKIP=1
  */
 
-"use strict";
-
 const {
     isBddMemoryGuardEnabled,
     bddMemoryHeapThresholdBytes,

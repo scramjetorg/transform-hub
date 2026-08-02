@@ -3,9 +3,11 @@
     "version": "2.0.0",
     "description": "Python runtime wrapper for packages/runner — python3 runner_python process launcher.",
     "scripts": {
-        "build": "bash scripts/install-deps.sh --target dist/__pypackages__",
-        "prepack": "bash scripts/install-deps.sh --target dist/__pypackages__ && cp LICENSE dist/ && cp -r runner_python dist/ && cp -r src dist/",
+        "build": "bash scripts/build-dist.sh && node scripts/assert-dist-artifact.js",
+        "build:only": "npm run build",
+        "prepack": "npm run build",
         "install:deps": "bash scripts/install-deps.sh --dev --target __pypackages__",
+        "test:artifact": "node scripts/assert-dist-artifact.js",
         "test": "PYTHONPATH=__pypackages__:src:$PYTHONPATH python3 -m pytest",
         "clean": "rm -rf __pypackages__ dist"
     },

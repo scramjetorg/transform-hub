@@ -1,5 +1,3 @@
-"use strict";
-
 const http = require("node:http");
 
 function parseDockerStatsWorkingSet(payload) {

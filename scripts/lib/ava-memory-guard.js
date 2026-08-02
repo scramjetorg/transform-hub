@@ -87,8 +87,6 @@
  *   test function.
  */
 
-"use strict";
-
 const { isMemoryGuardEnabled, memoryHeapThresholdBytes, ENV } = require("./ava-options.js");
 
 // ---------------------------------------------------------------------------

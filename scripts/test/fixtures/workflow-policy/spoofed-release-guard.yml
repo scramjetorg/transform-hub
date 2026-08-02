@@ -1,0 +1,16 @@
+name: Spoofed release guard fixture
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    permissions:
+      contents: read
+      packages: write
+    runs-on: ubuntu-24.04
+    steps:
+      - run: echo "github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'devel' && github.event.pull_request.base.ref == 'main'"

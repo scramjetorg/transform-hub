@@ -1,0 +1,16 @@
+name: Compliant replacement fixture
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@0123456789012345678901234567890123456789
+        with:
+          persist-credentials: false
+      - run: npm ci

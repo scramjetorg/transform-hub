@@ -39,7 +39,12 @@ function isOpMethod(method: RouteDefinition["method"]): method is "post" | "put"
 }
 
 function streamOptions(route: RouteDefinition): StreamConfig | undefined {
-    return route.method === "put" ? { method: "put" } : undefined;
+    const options = {
+        ...(route.stream?.handlerValidatesContentType ? { checkContentType: false } : {}),
+        ...(route.method === "put" ? { method: "put" as const } : {})
+    };
+
+    return Object.keys(options).length ? options : undefined;
 }
 
 function writeResolverError(res: ServerResponse, statusCode: number, message: string, error?: unknown) {

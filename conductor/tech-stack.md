@@ -72,6 +72,7 @@ Scramjet Transform Hub is a TypeScript/Node.js monorepo with multiple packages f
 - **Development entrypoint**: `npm run start:dev` for source-based hub startup.
 - **Built entrypoint**: `npm run start` after package build output exists in `dist/`.
 - **Linting/Formatting**: Biome is the active lint/format command surface during the migration from ESLint/Prettier. Use `npm run lint`, `npm run lint:quick`, `npm run lint:fix`, and `npm run format`; scripts set `RAYON_NUM_THREADS=12`, `lint` runs Biome linting, and formatting is explicit to avoid broad format churn. Do not run legacy ESLint commands unless a track explicitly re-enables them.
+- **CI security policy**: GitHub Actions replacement work uses Gitleaks for redacted secret detection, Actionlint for workflow syntax, Zizmor for Actions security analysis, and a repository-specific deterministic policy checker. Tool releases, action revisions, and security images must be checksum/digest pinned; local Git-hook feedback is repository-managed, while protected CI is the enforcement boundary.
 - **Docs**: generated documentation under `docs/` and package README files.
 - **API routing**: `@scramjet/api-router` provides decorator and imperative route declaration, Zod-first validation, route hooks, OpenAPI 3.1 generation, schema-mode route loading, HTTP registration, verser2 registration, and generic client transports.
 - **API contracts**: `@scramjet/rest-api2` provides v2 DTO contracts, Zod schemas, handlerless route sets, typed route binding, and the common v2 client surface.
@@ -85,6 +86,7 @@ Scramjet Transform Hub is a TypeScript/Node.js monorepo with multiple packages f
 
 - Node.js/npm for development and package execution.
 - Docker for Docker adapter behavior, runner images, and many BDD flows.
+- A verified security-tool bootstrap for the pinned Gitleaks binary and a Git client for installing the repository-managed hooks.
 - Kubernetes tooling/configuration for Kubernetes adapter execution.
 - Python tooling for Python runtime wrapper development and tests.
 - File-backed CA and client certificate/key or PKCS#12 material for mTLS CLI control-plane connections.

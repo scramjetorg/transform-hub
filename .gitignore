@@ -49,6 +49,9 @@ web_modules/
 # Optional npm cache directory
 .npm
 
+# Verified local security-tool cache
+.security-tools/
+
 # Microbundle cache
 .rpt2_cache/
 .rts2_cache_cjs/

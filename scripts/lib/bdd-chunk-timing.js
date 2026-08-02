@@ -1,5 +1,3 @@
-"use strict";
-
 const TOP_LIMIT = 10;
 
 function monotonicMs() {
@@ -27,7 +25,7 @@ function parseTimingEventLines(raw) {
     for (const line of lines) {
         try {
             events.push(JSON.parse(line));
-        } catch (parseErr) {
+        } catch {
             const snippet = line.length > 120 ? line.slice(0, 117) + "..." : line;
             process.stderr.write(`[bdd-chunk-timing] warning: skipping malformed JSON line: ${snippet}\n`);
         }

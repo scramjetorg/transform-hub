@@ -1,5 +1,3 @@
-"use strict";
-
 const fs = require("node:fs");
 const { execFileSync } = require("node:child_process");
 const { requestDockerStats } = require("./docker-memory.js");

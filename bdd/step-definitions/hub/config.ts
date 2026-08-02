@@ -189,22 +189,45 @@ async function startHubWithParams(world: CustomWorld, params: string[], noDefaul
     // treats that URL as an external-host shortcut and never owns a child.
     hostUtils.hostUrl = "";
     const expectedHubExitCode = resources.expectedHubExitCode as number | undefined;
-    const runnerHostPortEnv = "SCRAMJET_VERSER2_RUNNER_HOST_BIND_PORT";
-    const runnerHostEnabledEnv = "SCRAMJET_VERSER2_RUNNER_HOST_ENABLED";
-    const runnerHostPublicUrlEnv = "SCRAMJET_VERSER2_RUNNER_HOST_PUBLIC_URL";
-    const savedRunnerHostPort = process.env[runnerHostPortEnv];
-    const savedRunnerHostEnabled = process.env[runnerHostEnabledEnv];
-    const savedRunnerHostPublicUrl = process.env[runnerHostPublicUrlEnv];
+    const hasConfigFile = params.some(param => param === "--config" || param === "-c" || param.startsWith("--config="));
+    const hasRunnerHostPort = params.some(param => param.startsWith("--verser2-runner-host-bind-port"));
+    let dynamicVerser2ConfigPath: string | undefined;
 
-    // The suite's BeforeAll host owns the default runner verser2 port (2445).
-    // Scenario hubs must not inherit that fixed port, otherwise the second
-    // scenario-spawned Hub exits before "Host running!" with EADDRINUSE.
-    if (!params.some(param => param.startsWith("--verser2-runner-host-bind-port"))) {
-        process.env[runnerHostEnabledEnv] = "true";
-        const allocatedPort = String(await freeport());
+    // A Hub starts its control ingress before its runner Host. Setting only
+    // runnerHost through process.env left the ingress on its default 2444,
+    // so a scenario that deliberately occupies 2444 still exited before the
+    // runner Host was created. Give both listeners scenario-local endpoints
+    // through the same config-file path that the child process loads.
+    if (!hasConfigFile) {
+        const controlIngressPort = await freeport();
+        let runnerHostPort: number | undefined;
 
-        process.env[runnerHostPortEnv] = allocatedPort;
-        process.env[runnerHostPublicUrlEnv] = `https://127.0.0.1:${allocatedPort}`;
+        if (!hasRunnerHostPort) {
+            runnerHostPort = await freeport();
+            while (runnerHostPort === controlIngressPort) runnerHostPort = await freeport();
+        }
+
+        dynamicVerser2ConfigPath = `data/.hub-verser2-${process.pid}-${Date.now()}.json`;
+        await writeFile(dynamicVerser2ConfigPath, JSON.stringify({
+            verser2: {
+                controlIngress: {
+                    host: {
+                        bindPort: controlIngressPort,
+                        publicUrl: `https://127.0.0.1:${controlIngressPort}`
+                    }
+                },
+                ...(!hasRunnerHostPort ? {
+                    runnerHost: {
+                        enabled: true,
+                        host: {
+                            bindPort: runnerHostPort!,
+                            publicUrl: `https://127.0.0.1:${runnerHostPort}`
+                        }
+                    }
+                } : {})
+            }
+        }));
+        params = [...params, "--config", dynamicVerser2ConfigPath];
     }
 
     hostUtils.expectedExitCode = expectedHubExitCode;
@@ -226,12 +249,7 @@ async function startHubWithParams(world: CustomWorld, params: string[], noDefaul
 
         out = await spawnPromise;
     } finally {
-        if (savedRunnerHostPort === undefined) delete process.env[runnerHostPortEnv];
-        else process.env[runnerHostPortEnv] = savedRunnerHostPort;
-        if (savedRunnerHostEnabled === undefined) delete process.env[runnerHostEnabledEnv];
-        else process.env[runnerHostEnabledEnv] = savedRunnerHostEnabled;
-        if (savedRunnerHostPublicUrl === undefined) delete process.env[runnerHostPublicUrlEnv];
-        else process.env[runnerHostPublicUrlEnv] = savedRunnerHostPublicUrl;
+        if (dynamicVerser2ConfigPath) await unlink(dynamicVerser2ConfigPath).catch(() => undefined);
     }
 
     if (!hostUtils.host) throw new Error("Missing host from utils.");

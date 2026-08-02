@@ -141,12 +141,6 @@ function validateParallelCompletion(chunks, launchedNames, results) {
     };
 }
 
-function sameWorkerGeneration(left, right) {
-    if (!left || !right || left.chunkId !== right.chunkId) return false;
-    if (left.generation != null || right.generation != null) return left.generation === right.generation && left.wrapperPid === right.wrapperPid;
-    return left.wrapperPid === right.wrapperPid;
-}
-
 function isWorkerProcessAlive(wrapperPid) {
     try {
         process.kill(wrapperPid, 0);
