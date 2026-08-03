@@ -1,0 +1,113 @@
+# Accepted historical Gitleaks exceptions.
+# User approval: 2026-08-03; owner: repository maintainers; review expiry: 2027-08-03.
+# Rationale: reviewed historic generated/test/revoked records.
+# Each entry is an exact immutable commit:file:rule-id:startLine fingerprint; no token values are retained.
+
+# Reviewed historic generated/test/revoked record; exact user-approved exception.
+211fcbc025895b0945107a874a2f789b17fa72b4:sth-config-dev-aw3-new.json:generic-api-key:17
+# Reviewed historic generated/test/revoked record; exact user-approved exception.
+2f22e3d928ef94d9509e5f1e990f274ecb9209e4:packages/cli/test/config.spec.ts:jwt:19
+# Reviewed historic generated/test/revoked record; exact user-approved exception.
+2f22e3d928ef94d9509e5f1e990f274ecb9209e4:packages/cli/test/config.spec.ts:jwt:20
+# Reviewed historic generated/test/revoked record; exact user-approved exception.
+4d362dca26f14365df13a20604f21b8b0aa10322:.slim/codemap.json:generic-api-key:192
+# Reviewed historic generated/test/revoked record; exact user-approved exception.
+4d362dca26f14365df13a20604f21b8b0aa10322:.slim/codemap.json:generic-api-key:193
+# Reviewed historic generated/test/revoked record; exact user-approved exception.
+4d362dca26f14365df13a20604f21b8b0aa10322:.slim/codemap.json:generic-api-key:195
+# Reviewed historic generated/test/revoked record; exact user-approved exception.
+4d362dca26f14365df13a20604f21b8b0aa10322:.slim/codemap.json:generic-api-key:257
+# Reviewed historic generated/test/revoked record; exact user-approved exception.
+4d362dca26f14365df13a20604f21b8b0aa10322:.slim/codemap.json:generic-api-key:697
+# Reviewed historic generated/test/revoked record; exact user-approved exception.
+4d362dca26f14365df13a20604f21b8b0aa10322:.slim/codemap.json:generic-api-key:699
+# Reviewed historic generated/test/revoked record; exact user-approved exception.
+4d362dca26f14365df13a20604f21b8b0aa10322:.slim/codemap.json:generic-api-key:703
+# Reviewed historic generated/test/revoked record; exact user-approved exception.
+4d362dca26f14365df13a20604f21b8b0aa10322:.slim/codemap.json:generic-api-key:737
+# Reviewed historic generated/test/revoked record; exact user-approved exception.
+4d362dca26f14365df13a20604f21b8b0aa10322:.slim/codemap.json:generic-api-key:758
+# Reviewed historic generated/test/revoked record; exact user-approved exception.
+4d362dca26f14365df13a20604f21b8b0aa10322:.slim/codemap.json:generic-api-key:769
+# Reviewed historic generated/test/revoked record; exact user-approved exception.
+4d362dca26f14365df13a20604f21b8b0aa10322:.slim/codemap.json:generic-api-key:782
+# Reviewed historic generated/test/revoked record; exact user-approved exception.
+4d362dca26f14365df13a20604f21b8b0aa10322:.slim/codemap.json:generic-api-key:94
+# Reviewed historic generated/test/revoked record; exact user-approved exception.
+7c812a472e6a4ea74a82356258b173c52e3507fe:packages/manager/test/verser2-trust-export.spec.ts:private-key:87
+# Reviewed historic generated/test/revoked record; exact user-approved exception.
+7ee0e2092b9752f744d2b8ee41c6e68ad4c61114:.slim/codemap.json:generic-api-key:173
+# Reviewed historic generated/test/revoked record; exact user-approved exception.
+7ee0e2092b9752f744d2b8ee41c6e68ad4c61114:.slim/codemap.json:generic-api-key:682
+# Reviewed historic generated/test/revoked record; exact user-approved exception.
+adc67de07825c9157565a6a5590160b65c695345:.slim/codemap.json:generic-api-key:584
+# Reviewed historic generated/test/revoked record; exact user-approved exception.
+e2b5f6138b6b04cf1f84c6711735153a7ff04f81:.slim/codemap.json:generic-api-key:192
+# Reviewed historic generated/test/revoked record; exact user-approved exception.
+e2b5f6138b6b04cf1f84c6711735153a7ff04f81:.slim/codemap.json:generic-api-key:194
+# Reviewed historic generated/test/revoked record; exact user-approved exception.
+e2b5f6138b6b04cf1f84c6711735153a7ff04f81:.slim/codemap.json:generic-api-key:195
+# Reviewed historic generated/test/revoked record; exact user-approved exception.
+e2b5f6138b6b04cf1f84c6711735153a7ff04f81:.slim/codemap.json:generic-api-key:255
+# Reviewed historic generated/test/revoked record; exact user-approved exception.
+e2b5f6138b6b04cf1f84c6711735153a7ff04f81:.slim/codemap.json:generic-api-key:256
+# Reviewed historic generated/test/revoked record; exact user-approved exception.
+e2b5f6138b6b04cf1f84c6711735153a7ff04f81:.slim/codemap.json:generic-api-key:257
+# Reviewed historic generated/test/revoked record; exact user-approved exception.
+e2b5f6138b6b04cf1f84c6711735153a7ff04f81:.slim/codemap.json:generic-api-key:317
+# Reviewed historic generated/test/revoked record; exact user-approved exception.
+e2b5f6138b6b04cf1f84c6711735153a7ff04f81:.slim/codemap.json:generic-api-key:318
+# Reviewed historic generated/test/revoked record; exact user-approved exception.
+e2b5f6138b6b04cf1f84c6711735153a7ff04f81:.slim/codemap.json:generic-api-key:319
+# Reviewed historic generated/test/revoked record; exact user-approved exception.
+e2b5f6138b6b04cf1f84c6711735153a7ff04f81:.slim/codemap.json:generic-api-key:694
+# Reviewed historic generated/test/revoked record; exact user-approved exception.
+e2b5f6138b6b04cf1f84c6711735153a7ff04f81:.slim/codemap.json:generic-api-key:696
+# Reviewed historic generated/test/revoked record; exact user-approved exception.
+e2b5f6138b6b04cf1f84c6711735153a7ff04f81:.slim/codemap.json:generic-api-key:700
+# Reviewed historic generated/test/revoked record; exact user-approved exception.
+e2b5f6138b6b04cf1f84c6711735153a7ff04f81:.slim/codemap.json:generic-api-key:753
+# Reviewed historic generated/test/revoked record; exact user-approved exception.
+e2b5f6138b6b04cf1f84c6711735153a7ff04f81:.slim/codemap.json:generic-api-key:755
+# Reviewed historic generated/test/revoked record; exact user-approved exception.
+e2b5f6138b6b04cf1f84c6711735153a7ff04f81:.slim/codemap.json:generic-api-key:766
+# Reviewed historic generated/test/revoked record; exact user-approved exception.
+e2b5f6138b6b04cf1f84c6711735153a7ff04f81:.slim/codemap.json:generic-api-key:779
+# Reviewed historic generated/test/revoked record; exact user-approved exception.
+e2b5f6138b6b04cf1f84c6711735153a7ff04f81:.slim/codemap.json:generic-api-key:85
+# Reviewed historic generated/test/revoked record; exact user-approved exception.
+f85512f25fc30b150117af925ffe85426185b158:packages/cli/test/config.spec.ts:jwt:20
+# Reviewed historic generated/test/revoked record; exact user-approved exception.
+f85512f25fc30b150117af925ffe85426185b158:packages/cli/test/config.spec.ts:jwt:21
+# Reviewed historic generated/test/revoked record; exact user-approved exception.
+f8b4dd6ed0c5b162996fc65de722b3f33ab5e100:.slim/codemap.json:generic-api-key:168
+# Reviewed historic generated/test/revoked record; exact user-approved exception.
+f8b4dd6ed0c5b162996fc65de722b3f33ab5e100:.slim/codemap.json:generic-api-key:311
+# Reviewed historic generated/test/revoked record; exact user-approved exception.
+f8b4dd6ed0c5b162996fc65de722b3f33ab5e100:.slim/codemap.json:generic-api-key:339
+# Reviewed historic generated/test/revoked record; exact user-approved exception.
+f8b4dd6ed0c5b162996fc65de722b3f33ab5e100:.slim/codemap.json:generic-api-key:508
+# Reviewed historic generated/test/revoked record; exact user-approved exception.
+f8b4dd6ed0c5b162996fc65de722b3f33ab5e100:.slim/codemap.json:generic-api-key:574
+# Reviewed historic generated/test/revoked record; exact user-approved exception.
+f8b4dd6ed0c5b162996fc65de722b3f33ab5e100:.slim/codemap.json:generic-api-key:576
+# Reviewed historic generated/test/revoked record; exact user-approved exception.
+f8b4dd6ed0c5b162996fc65de722b3f33ab5e100:.slim/codemap.json:generic-api-key:608
+# Reviewed historic generated/test/revoked record; exact user-approved exception.
+f8b4dd6ed0c5b162996fc65de722b3f33ab5e100:.slim/codemap.json:generic-api-key:621
+# Reviewed historic generated/test/revoked record; exact user-approved exception.
+f8b4dd6ed0c5b162996fc65de722b3f33ab5e100:.slim/codemap.json:generic-api-key:632
+# Reviewed historic generated/test/revoked record; exact user-approved exception.
+f8b4dd6ed0c5b162996fc65de722b3f33ab5e100:.slim/codemap.json:generic-api-key:665
+# Reviewed historic generated/test/revoked record; exact user-approved exception.
+f8b4dd6ed0c5b162996fc65de722b3f33ab5e100:.slim/codemap.json:generic-api-key:666
+# Reviewed historic generated/test/revoked record; exact user-approved exception.
+f8b4dd6ed0c5b162996fc65de722b3f33ab5e100:.slim/codemap.json:generic-api-key:667
+# Reviewed historic generated/test/revoked record; exact user-approved exception.
+f8b4dd6ed0c5b162996fc65de722b3f33ab5e100:.slim/codemap.json:generic-api-key:668
+# Reviewed historic generated/test/revoked record; exact user-approved exception.
+f8b4dd6ed0c5b162996fc65de722b3f33ab5e100:.slim/codemap.json:generic-api-key:669
+# Reviewed historic generated/test/revoked record; exact user-approved exception.
+f8b4dd6ed0c5b162996fc65de722b3f33ab5e100:.slim/codemap.json:generic-api-key:670
+# Reviewed historic generated/test/revoked record; exact user-approved exception.
+f8b4dd6ed0c5b162996fc65de722b3f33ab5e100:.slim/codemap.json:generic-api-key:671

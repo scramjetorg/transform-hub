@@ -32,10 +32,17 @@ is unavoidable, rotate any exposed credential, document the incident, and let
 required CI make the merge decision. There is no environment variable that
 silently skips the hook.
 
-`.gitleaks.toml` intentionally has no active exceptions. A false-positive
-exception must be path- or fingerprint-specific, include a rationale, owner,
-and expiry in the configuration, and receive security review. Broad regex,
-entropy, extension, or rule suppression is prohibited.
+`.gitleaks.toml` intentionally has no active exceptions. An accepted exception
+must use an exact immutable `.gitleaksignore` fingerprint in
+`commit:file:rule-id:startLine` form. Its checked-in audit comments must state
+the rationale, owner, approval date, and review expiry; token values and
+scanner-report baselines must never be committed. Broad regex, entropy,
+extension, rule, path, or commit-wide suppression is prohibited. Full-history
+scanning remains unchanged.
+
+The current exceptions cover reviewed historic generated, test, and revoked
+records. They were user-approved on 2026-08-03, are owned by the repository
+maintainers, and expire for review on 2027-08-03.
 
 ## Remaining controls
 
