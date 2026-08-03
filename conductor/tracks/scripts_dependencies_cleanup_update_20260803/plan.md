@@ -37,7 +37,9 @@
     - `scripts/_/pack-sequence`: deferred; it is invoked by `scripts/_/upload-sequence` and uses legacy Yarn/package assumptions. Owner: repository scripts maintainers; revisit only with a joint removal/migration plan.
     - `scripts/_/upload-sequence`: deferred; no external caller was found, but it invokes `pack-sequence` and is compatibility-sensitive. Owner: repository scripts maintainers; requires an explicit joint-removal decision.
     - `scripts/packsequence.js`: retained; invoked by `bdd/data/sequences/args-to-output/package.json` and documented in `ENV_VARS.md`. Owner: BDD fixture maintainers; remove only with a fixture/package-interface migration.
-- [ ] Task: Conductor - Phase Completion 'Establish Cleanup Evidence and Remove Approved Legacy Scripts' (Protocol in workflow.md)
+- [x] Task: Conductor - Phase Completion 'Establish Cleanup Evidence and Remove Approved Legacy Scripts' (Protocol in workflow.md)
+  - Checkpoint: `f940a70d273de731fb485ec2fe1fc3a38508f593` (`chore: remove obsolete script and build assets (phase 1)`), pushed to the draft PR branch.
+  - Formal phase review: `PASS/accepted`; baseline runner-suite triage deferred outside this cleanup scope.
 
 ## Phase 2: Inventory and Remove Proven-Unused Direct Dependencies
 
