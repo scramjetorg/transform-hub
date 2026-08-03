@@ -2,27 +2,41 @@
 
 ## Phase 1: Establish Cleanup Evidence and Remove Approved Legacy Scripts
 
-- [~] Task: Create the implementation review surface.
+- [x] Task: Create the implementation review surface.
   - [x] Capture the current branch, upstream state, immutable base SHA, clean-worktree status, and selected validation baseline.
     - Evidence: base `devel` tracked `origin/devel`, was clean and aligned at `9377dfec1cca015ce9ba1f60059f5f6a4a9325fc`; Phase 1 validation baseline is `npm run test:runner` and `npm run build:packages`.
   - [x] Create `conductor/scripts_dependencies_cleanup_update_20260803` from the captured base during implementation.
     - Evidence: branch `conductor/scripts_dependencies_cleanup_update_20260803` created at `9377dfec1cca015ce9ba1f60059f5f6a4a9325fc`.
-  - [ ] Open or update a draft pull request targeting the captured base branch.
-- [ ] Task: Revalidate the approved script-deletion inventory.
-  - [ ] Search source, package scripts, active workflows, runtime loading, tests, fixtures, and documentation for each approved path.
-  - [ ] Record negative-reference evidence for `scripts/validate-bdd-archive.js`, `scripts/test-all.sh`, `build/Dockerfile`, and `build/package.json`.
-  - [ ] Reconfirm that `build/` contains no retained asset before directory removal.
-- [ ] Task: Remove the approved obsolete script and build assets.
-  - [ ] Delete the four approved paths and remove the empty `build/` directory.
-  - [ ] Keep `scripts/lib/bdd-fixture-archives.js` and all active runner/container entrypoints intact.
-- [ ] Task: Validate script cleanup.
-  - [ ] Run `npm run test:runner`.
-  - [ ] Run `npm run build:packages`.
-  - [ ] Repeat targeted reference searches and record any residual references.
-- [ ] Task: Review Phase 2 scope and create handoff notes.
-  - [ ] Record deleted paths, retained scripts, validation results, known failures, and exact dependency-removal entry criteria.
-  - [ ] Review potential script candidates without deleting them: `scripts/_/pack-sequence`, `scripts/_/upload-sequence`, and `scripts/packsequence.js`.
-  - [ ] Record each potential candidate as retained, deferred, or requiring an explicit compatibility decision.
+  - [x] Open or update a draft pull request targeting the captured base branch.
+    - Evidence: draft PR #1080, https://github.com/scramjetorg/transform-hub/pull/1080, targets `devel` from `conductor/scripts_dependencies_cleanup_update_20260803`.
+- [x] Task: Revalidate the approved script-deletion inventory.
+  - [x] Search source, package scripts, active workflows, runtime loading, tests, fixtures, and documentation for each approved path.
+  - [x] Record negative-reference evidence for `scripts/validate-bdd-archive.js`, `scripts/test-all.sh`, `build/Dockerfile`, and `build/package.json`.
+    - Evidence: repository-wide inventory found no external references to the four approved targets; `validate-bdd-archive.js` has only self references and `test-all.sh` has none. The sole non-track reference in `validate-bdd-archive.js` is its own retained fixture helper import.
+  - [x] Reconfirm that `build/` contains no retained asset before directory removal.
+    - Evidence: `build/` contains only the approved `Dockerfile` and `package.json`; neither has source, manifest, workflow, test, fixture, runtime, or documentation consumers.
+- [x] Task: Remove the approved obsolete script and build assets.
+  - [x] Delete the four approved paths and remove the empty `build/` directory.
+    - Evidence: safety proposal received `PASS/accepted` phase review; all four tracked paths and the empty directory are absent.
+  - [x] Keep `scripts/lib/bdd-fixture-archives.js` and all active runner/container entrypoints intact.
+    - Evidence: protected fixture helper remains present; deletion diff contains only the four approved files.
+- [x] Task: Validate script cleanup.
+  - [x] Run `npm run test:runner`.
+    - Evidence: run under `ulimit -v 1835008` and `NODE_OPTIONS=--max-old-space-size=1024`; exited with 25 failures in pre-existing BDD-wave manifest coverage, Docker telemetry, docs metadata drift, setup-action fixture expectations, and GC-enabled Verser2 tests. The change diff is limited to the four approved deletions and Conductor evidence, and no deleted-target reference remains; this is an unrelated baseline failure recorded for Phase 1 handoff.
+  - [x] Run `npm run build:packages`.
+    - Evidence: passed under `ulimit -v 1835008` and `NODE_OPTIONS=--max-old-space-size=1024`; all package TypeScript builds and dist prepacking completed. The runner-python build emitted a pip resolver conflict warning for the host environment's `pyopenssl`, without failing the build.
+  - [x] Repeat targeted reference searches and record any residual references.
+    - Evidence: tracked-file search outside `conductor/` returned no references to any deleted target; `scripts/lib/bdd-fixture-archives.js` remains present. No residual references found.
+- [x] Task: Review Phase 2 scope and create handoff notes.
+  - [x] Record deleted paths, retained scripts, validation results, known failures, and exact dependency-removal entry criteria.
+    - Deleted: `scripts/validate-bdd-archive.js`, `scripts/test-all.sh`, `build/Dockerfile`, `build/package.json`, and the now-empty `build/` directory.
+    - Retained: `scripts/lib/bdd-fixture-archives.js` and all active runner/container entrypoints. `npm run build:packages` passed; `npm run test:runner` retains the unrelated baseline failures recorded above.
+    - Phase 2 entry: inventory every root/workspace direct dependency and remove only owner-scoped candidates with source, runtime, workflow, test, fixture, generated-output, and documentation evidence plus prior cleanup safety review.
+  - [x] Review potential script candidates without deleting them: `scripts/_/pack-sequence`, `scripts/_/upload-sequence`, and `scripts/packsequence.js`.
+  - [x] Record each potential candidate as retained, deferred, or requiring an explicit compatibility decision.
+    - `scripts/_/pack-sequence`: deferred; it is invoked by `scripts/_/upload-sequence` and uses legacy Yarn/package assumptions. Owner: repository scripts maintainers; revisit only with a joint removal/migration plan.
+    - `scripts/_/upload-sequence`: deferred; no external caller was found, but it invokes `pack-sequence` and is compatibility-sensitive. Owner: repository scripts maintainers; requires an explicit joint-removal decision.
+    - `scripts/packsequence.js`: retained; invoked by `bdd/data/sequences/args-to-output/package.json` and documented in `ENV_VARS.md`. Owner: BDD fixture maintainers; remove only with a fixture/package-interface migration.
 - [ ] Task: Conductor - Phase Completion 'Establish Cleanup Evidence and Remove Approved Legacy Scripts' (Protocol in workflow.md)
 
 ## Phase 2: Inventory and Remove Proven-Unused Direct Dependencies
