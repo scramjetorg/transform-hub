@@ -10,7 +10,7 @@
     "build": "../../scripts/build-all.js --config-name=tsconfig.build.json --copy-dist",
     "clean": "rm -rf ./dist .bic_cache",
     "copy:configs": "cd src; tar c `find -iname *.json` | tar x -C ../dist/",
-    "test": "echo \"Warning: no test specified\""
+    "test": "node ../../scripts/run-ava.js"
   },
   "ava": {
     "extensions": [
@@ -35,7 +35,7 @@
     "@scramjet/obj-logger": "^2.0.0",
     "@scramjet/utility": "^2.0.0",
     "winston": "^3.8.2",
-    "winston-loki": "^6.0.6"
+    "winston-loki": "^6.1.5"
   },
   "devDependencies": {
     "@scramjet/types": "^2.0.0",

@@ -39,6 +39,6 @@
   },
   "dependencies": {
     "normalize-url": "4",
-    "yaml": "^2.2.2"
+    "yaml": "^2.9.0"
   }
 }

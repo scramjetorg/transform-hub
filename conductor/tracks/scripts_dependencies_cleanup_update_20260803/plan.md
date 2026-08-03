@@ -82,24 +82,49 @@
 
 ## Phase 3: Remediate Retained Production Dependency Findings
 
-- [ ] Task: Capture a fresh retained-production audit baseline.
-  - [ ] Run `npm audit --omit=dev --json` and `npm explain` for each retained critical or high production chain.
-  - [ ] Record dependency path, workspace owner, installed version, fixed minimum, runtime reachability, and compatibility risk.
-- [ ] Task: Apply compatible production dependency updates by owner group.
-  - [ ] Prioritize archive-processing, Docker adapter, Kubernetes client, HTTP, YAML, WebSocket, and protobuf dependency chains.
-  - [ ] Update same-major fixes in isolated groups with focused package build and tests before proceeding to the next group.
-  - [ ] Regenerate the npm lockfile after each approved owner group and verify the intended resolution.
-- [ ] Task: Handle production major-version migrations explicitly.
-  - [ ] Evaluate `tar`, `dockerode`, `minio`, `uuid`, and other major remediation candidates for API/runtime compatibility.
-  - [ ] Add or update focused regression coverage before or alongside each approved migration.
-  - [ ] Record any unapproved major migration as deferred with its dependency path, exposure, owner, required validation, and revisit condition.
-- [ ] Task: Validate retained runtime behavior.
-  - [ ] Run affected package tests/builds and `npm run check:runtime-invariants`.
-  - [ ] Run focused supported process, Docker, Kubernetes, or BDD validation when the changed dependency reaches that surface.
-  - [ ] Reject changes that introduce a new runtime, adapter, API, CLI, or runner regression.
-- [ ] Task: Review Phase 4 scope and create handoff notes.
-  - [ ] Record audit delta, resolved and residual production findings, deferred major migrations, validation evidence, and development/tooling entry criteria.
-  - [ ] Confirm that production behavior is stable before modifying development or test tooling.
+- [x] Task: Capture a fresh retained-production audit baseline.
+  - [x] Run `npm audit --omit=dev --json` and `npm explain` for each retained critical or high production chain.
+    - Evidence: the unchanged Phase 2 closing audit is the Phase 3 baseline: 23 production findings (2 critical, 9 high, 12 moderate). Its dependency-chain mapping is recorded in the Phase 2 handoff; no manifest or lockfile changed after that audit.
+  - [x] Record dependency path, workspace owner, installed version, fixed minimum, runtime reachability, and compatibility risk.
+    - Critical production chains: adapters/CLI/root archive paths use tar 7.4.3 or 6.2.1 (7.5.21+ fixes 7.x; root 6→7 is a migration); adapter-docker and telemetry reach protobufjs 7.5.0/7.4.0 (7.6.5+).
+    - Same-major production groups: Docker gRPC 1.13.3→1.13.5+, host HTTP axios 1.13.2→1.18+ with form-data/follow-redirects, Kubernetes js-yaml 4.1.1→4.3+, minimatch/ws, and config yaml 2.7.0→2.8.3+.
+    - Major-risk deferrals: minio 7→8, uuid 8→14, root tar 6→7, and pico-s3/file-type or socks/ip-address dependency migrations; all require focused behavior coverage.
+- [x] Task: Apply compatible production dependency updates by owner group.
+  - [x] Prioritize archive-processing, Docker adapter, Kubernetes client, HTTP, YAML, WebSocket, and protobuf dependency chains.
+    - First isolated group selected: telemetry Loki/protobuf chain.
+  - [~] Update same-major fixes in isolated groups with focused package build and tests before proceeding to the next group.
+    - Telemetry: `winston-loki` updated to `^6.1.5` (resolved 6.1.6); focused construction, push, and connection-error tests added and passed, as did telemetry build/typecheck.
+    - Shared YAML: config and utility updated to `yaml ^2.9.0`; config tests (62), utility tests (19; one pre-existing skip), typechecks, and builds passed. Added a utility nested-object/array YAML round-trip regression.
+    - Kubernetes: `js-yaml ^4.3.0` and `tar ^7.5.21` resolve to 4.3.1/7.5.22; client tree resolves ws 8.21.1 and tar-fs 3.1.3. Kubeconfig YAML and gzip archive regression tests, package tests (4), typecheck, and build passed.
+    - Docker: `tar ^7.5.21` resolves to 7.5.22; compatible lock refresh resolves dockerode 4.0.12, gRPC 1.14.4, proto-loader 0.8.1, and protobufjs 7.6.5. Adapter typecheck, tests (5), and build passed.
+    - Host HTTP: `axios ^1.18.1` resolves to 1.19.0 with follow-redirects 1.16.0 and form-data 4.0.6; S3 streaming/header/keep-alive regressions, host typecheck, build, and tests (322 passed; 9 skipped) passed. `pico-s3` remains unchanged pending its fixed-artifact confirmation.
+    - CLI: `minimatch ^3.1.5` resolves to 3.1.5 and brace-expansion 1.1.18; added `.siignore` glob-filter packaging coverage. CLI typecheck, build, and tests (122) passed.
+  - [x] Regenerate the npm lockfile after each approved owner group and verify the intended resolution.
+    - Telemetry lock resolution updated with npm; `winston-loki@6.1.6` verified.
+    - Shared YAML lock resolution updated with npm; `yaml@2.9.0` verified.
+    - Kubernetes lock resolution updated with npm; intended patched resolutions verified.
+    - Docker lock resolution updated with npm; intended gRPC/protobuf and tar resolutions verified.
+    - Host HTTP lock resolution updated with npm; intended axios chain resolutions verified.
+    - CLI lock resolution updated with npm; intended minimatch/brace-expansion resolutions verified.
+- [~] Task: Handle production major-version migrations explicitly.
+  - [x] Evaluate `tar`, `dockerode`, `minio`, `uuid`, and other major remediation candidates for API/runtime compatibility.
+    - Audit delta after compatible groups: 23 → 12 production findings (critical 2→1, high 9→2, moderate 12→9). Remaining critical/high work is rooted in root tar 6.x/tooling and retained compatibility/major chains; minio 7→8 and uuid 8→14 remain migration candidates.
+  - [x] Add or update focused regression coverage before or alongside each approved migration.
+    - No major migration was approved; same-major groups received focused coverage where they changed behavior-sensitive paths.
+  - [x] Record any unapproved major migration as deferred with its dependency path, exposure, owner, required validation, and revisit condition.
+    - Deferred: root/CLI tar 6→7 (archive tooling; owner root scripts/CLI; requires pack/extract regression); minio 7→8 (manager storage; requires S3 compatibility/BDD); uuid 8→14 (model/load-check; requires identifier API audit); pico-s3/file-type and socks/ip-address dependency-owned majors (host/Kubernetes; require released fixed artifacts and adapter tests).
+- [x] Task: Validate retained runtime behavior.
+  - [x] Run affected package tests/builds and `npm run check:runtime-invariants`.
+    - Evidence: all changed owner package tests/builds/typechecks passed; final package build and all 8 runtime-wrapper invariants passed under the repository guard.
+  - [x] Run focused supported process, Docker, Kubernetes, or BDD validation when the changed dependency reaches that surface.
+    - Evidence: `npm run test:bdd-ci-api-node` passed 13 scenarios / 72 steps in Docker mode for the host/CLI surface; cleanup reported no leaked repository processes.
+  - [x] Reject changes that introduce a new runtime, adapter, API, CLI, or runner regression.
+    - Evidence: focused package tests, full package build, runtime invariants, and API-node BDD smoke passed after the compatible updates.
+- [x] Task: Review Phase 4 scope and create handoff notes.
+  - [x] Record audit delta, resolved and residual production findings, deferred major migrations, validation evidence, and development/tooling entry criteria.
+    - Audit improved from 23 to 12 production findings (critical 2→1, high 9→2). Compatible telemetry, YAML, Kubernetes, Docker/gRPC/protobuf, host HTTP, and CLI glob chains are resolved. Residual root tar 6.x and the recorded major migrations remain deferred with owners and revisit conditions.
+  - [x] Confirm that production behavior is stable before modifying development or test tooling.
+    - No runtime regression was observed in focused owner tests, full build, invariants, or API-node BDD; Phase 4 may evaluate development/tooling findings without altering deferred production migrations.
 - [ ] Task: Conductor - Phase Completion 'Remediate Retained Production Dependency Findings' (Protocol in workflow.md)
 
 ## Phase 4: Update Development and Test Tooling Safely
