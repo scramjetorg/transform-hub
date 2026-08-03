@@ -2,9 +2,11 @@
 
 ## Phase 1: Establish Cleanup Evidence and Remove Approved Legacy Scripts
 
-- [ ] Task: Create the implementation review surface.
-  - [ ] Capture the current branch, upstream state, immutable base SHA, clean-worktree status, and selected validation baseline.
-  - [ ] Create `conductor/scripts_dependencies_cleanup_update_20260803` from the captured base during implementation.
+- [~] Task: Create the implementation review surface.
+  - [x] Capture the current branch, upstream state, immutable base SHA, clean-worktree status, and selected validation baseline.
+    - Evidence: base `devel` tracked `origin/devel`, was clean and aligned at `9377dfec1cca015ce9ba1f60059f5f6a4a9325fc`; Phase 1 validation baseline is `npm run test:runner` and `npm run build:packages`.
+  - [x] Create `conductor/scripts_dependencies_cleanup_update_20260803` from the captured base during implementation.
+    - Evidence: branch `conductor/scripts_dependencies_cleanup_update_20260803` created at `9377dfec1cca015ce9ba1f60059f5f6a4a9325fc`.
   - [ ] Open or update a draft pull request targeting the captured base branch.
 - [ ] Task: Revalidate the approved script-deletion inventory.
   - [ ] Search source, package scripts, active workflows, runtime loading, tests, fixtures, and documentation for each approved path.
