@@ -52,6 +52,11 @@ jobs:
           cache: "false"
           checkpoint-branch: devel
 
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6
+        with:
+          bun-version: "1"
+
       - name: Run package tests
         run: npm run test:packages-no-concurrent
 

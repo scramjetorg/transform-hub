@@ -66,3 +66,22 @@ test("devel build gates parallel AVA and Docker BDD jobs without promotion", (t)
 	t.false(source.includes("checkpoint-promotion:"));
 	t.false(source.includes("checkpoint-pointer-devel"));
 });
+
+test("devel AVA job installs pinned Bun before package tests", (t) => {
+	const source = workflowSource();
+	const avaJobStart = source.indexOf("  ava:\n");
+	const avaJobEnd = source.indexOf("  bdd-node:\n");
+	const avaJob = source.slice(avaJobStart, avaJobEnd);
+
+	t.true(avaJob.includes("oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6"), "Bun action must use the pinned commit");
+	t.true(avaJob.includes('bun-version: "1"'), "Bun major-version input must be pinned to 1");
+	t.true(
+		avaJob.indexOf("oven-sh/setup-bun@") > avaJob.indexOf("uses: ./.github/actions/setup-workspace"),
+		"Setup Bun must run after setup-workspace"
+	);
+	t.true(
+		avaJob.indexOf("oven-sh/setup-bun@") < avaJob.indexOf("npm run test:packages-no-concurrent"),
+		"Setup Bun must run before package tests"
+	);
+	t.is((source.match(/oven-sh\/setup-bun@/g) || []).length, 1, "Setup Bun must appear only in the ava job");
+});

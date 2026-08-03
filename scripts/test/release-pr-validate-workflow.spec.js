@@ -49,6 +49,25 @@ test("release PR validation uses a clean, read-only, immutable checkout for buil
 	t.false(source.includes("npm publish"));
 });
 
+test("release PR package validation installs pinned Bun before package tests", (t) => {
+	const source = readFileSync(workflowPath, "utf8");
+	const jobStart = source.indexOf("  package-validation:\n");
+	const jobEnd = source.indexOf("  prerelease-publication:\n");
+	const job = source.slice(jobStart, jobEnd);
+
+	t.true(job.includes("oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6"), "Bun action must use the pinned commit");
+	t.true(job.includes('bun-version: "1"'), "Bun major-version input must be pinned to 1");
+	t.true(
+		job.indexOf("oven-sh/setup-bun@") > job.indexOf("uses: ./.github/actions/setup-workspace"),
+		"Setup Bun must run after setup-workspace"
+	);
+	t.true(
+		job.indexOf("oven-sh/setup-bun@") < job.indexOf("npm run test:packages-no-concurrent"),
+		"Setup Bun must run before package tests"
+	);
+	t.is((source.match(/oven-sh\/setup-bun@/g) || []).length, 1, "Setup Bun must appear only in the package-validation job");
+});
+
 test("release PR prerelease publication is guarded, serialized, and isolated to GitHub Packages", (t) => {
 	const source = readFileSync(workflowPath, "utf8");
 	t.deepEqual(checkWorkflowSource(source, ".github/workflows/release-pr-validate.yml"), []);
