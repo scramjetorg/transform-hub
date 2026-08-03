@@ -21,8 +21,3 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 - [ ] **Track: dependencies update and cleanup**
 *Link: [./tracks/dependencies_update_cleanup_20260719/](./tracks/dependencies_update_cleanup_20260719/)*
-
----
-
-- [x] **Track: github actions fix**
-*Link: [./tracks/github_actions_fix_20260730/](./tracks/github_actions_fix_20260730/)*
