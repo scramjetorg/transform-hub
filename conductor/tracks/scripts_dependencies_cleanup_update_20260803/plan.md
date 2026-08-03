@@ -76,7 +76,9 @@
   - [x] Define the retained production vulnerability owner groups and fixed-version targets for Phase 3.
     - Same-major owner groups: adapters (tar 7.5.21+, gRPC 1.13.5+, protobufjs 7.6.5+, ws 7.5.11+/8.21.0+); host (axios 1.18+, form-data 4.0.6+, follow-redirects 1.15.12+, pico-s3 fixed artifact pending confirmation, qs); Kubernetes/config (js-yaml 4.3+, yaml 2.8.3+, minimatch 3.1.4+); telemetry (protobufjs 7.6.5+); CLI/root archive tooling (tar 6.x requires explicit migration decision).
     - Major migration deferrals requiring focused regression: minio 7→8, uuid 8→14, root tar 6→7, and dependency-owned file-type/ip-address upgrades. Dockerode needs a same-major patch that resolves its uuid/gRPC/protobuf chain.
-- [ ] Task: Conductor - Phase Completion 'Inventory and Remove Proven-Unused Direct Dependencies' (Protocol in workflow.md)
+- [x] Task: Conductor - Phase Completion 'Inventory and Remove Proven-Unused Direct Dependencies' (Protocol in workflow.md)
+  - Checkpoint: `c7ec3d875dc24c2d22f70b66fe50dc38c902915b` (`chore: remove unused direct dependencies (phase 2)`), pushed to the draft PR branch.
+  - Formal phase review: `PASS/accepted` after correcting the Phase 2 removal count to 19.
 
 ## Phase 3: Remediate Retained Production Dependency Findings
 
