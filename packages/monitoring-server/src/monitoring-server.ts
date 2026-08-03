@@ -1,5 +1,5 @@
 import { createServer } from "http";
-import { IMonitoringServer, MonitoringServerOptions, MonitoringServerValidator as MonitoringServerHealthCheck, MonitoringServerConfig } from "@scramjet/types";
+import { IMonitoringServer, MonitoringServerOptions, MonitoringServerValidator as MonitoringServerHealthCheck, MonitoringServerConfig } from "@scramjet/api-types";
 import { MonitoringServerConf } from "./config/monitoringConfig";
 
 export class MonitoringServer implements IMonitoringServer {

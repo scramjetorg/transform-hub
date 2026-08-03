@@ -29,7 +29,10 @@ export class JSONParserStream extends Transform {
 
     private _handle(chunk: string) {
         try {
-            this.push(this.parser(chunk));
+            if (chunk)
+                this.push(this.parser(chunk));
+            else
+                this.push(chunk);
         } catch (e: any) {
             this.emit("error", Object.assign(new Error("Cannot parse"), { originalMessage: e?.message, chunk, cause: e?.stack }));
         }

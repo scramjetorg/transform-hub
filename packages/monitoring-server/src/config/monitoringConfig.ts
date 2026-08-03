@@ -1,4 +1,4 @@
-import { MonitoringServerConfig } from "@scramjet/types";
+import { MonitoringServerConfig } from "@scramjet/api-types";
 import { definedValidator, portValidator, ReadOnlyConfig, SchemaValidator } from "@scramjet/utility";
 
 const schemaValidator = new SchemaValidator({

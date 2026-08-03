@@ -1,22 +1,47 @@
 import { getInstanceAdapter } from "@scramjet/adapters";
-import { IDProvider } from "@scramjet/model";
+import { CommunicationHandler, HostError, IDProvider } from "@scramjet/model";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { InstanceStatus, RunnerMessageCode } from "@scramjet/symbols";
-import { ContentType, EventMessageData, HostProxy, ICommunicationHandler, IObjectLogger, Instance, InstanceConfig, MessageDataType, PangMessageData, PingMessageData, STHConfiguration, STHRestAPI, SequenceInfo, SequenceInfoInstance } from "@scramjet/types";
+import { IObjectLogger } from "@scramjet/runtime-types";
+import {
+    DownstreamStreamsConfig,
+    EventMessageData,
+    HostProxy,
+    Instance,
+    InstanceConfig,
+    PangMessageData,
+    PingMessageData,
+    SequenceInfo,
+    SequenceInfoInstance,
+    IStorageAdapter,
+    StartInstanceReturnType
+} from "@scramjet/runtime-types";
+import { STHConfiguration, STHRestAPI } from "@scramjet/api-types";
+import { ContentType, ICommunicationHandler, MessageDataType } from "./types/from-types";
 import { TypedEmitter } from "@scramjet/utility";
 import { CSIController, CSIControllerInfo } from "./csi-controller";
-import { InstanceStore } from "./instance-store";
+import { Verser2RunnerBroker } from "./runner-transport";
 import { ServiceDiscovery } from "./serviceDiscovery/sd-adapter";
 import TopicId from "./serviceDiscovery/topicId";
 import { Readable, Writable } from "stream";
-import SequenceStore from "./sequenceStore";
+import { PassThrough } from "stream";
+import SequenceStore from "./sequence-store";
 import { mapRunnerExitCode } from "./utils";
+import { InstancesStore } from "./instance-store";
 
-export type DispatcherErrorEventData = { id:string, err: any };
-export type DispatcherInstanceEndEventData = { id: string, code: number, info: CSIControllerInfo & { executionTime: number }, sequence: SequenceInfoInstance};
+const RUNNER_CHANNEL_INSTANCE_ID_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/i;
+
+export type DispatcherErrorEventData = { id: string; err: any };
+export type DispatcherInstanceEndEventData = {
+    id: string;
+    code: number;
+    info: CSIControllerInfo & { executionTime: number };
+    sequence: SequenceInfoInstance;
+    controller?: CSIController;
+};
 export type DispatcherInstanceTerminatedEventData = DispatcherInstanceEndEventData;
 export type DispatcherInstanceEstablishedEventData = Instance;
-export type DispatcherChimeEvent = { id: string, language: string, seqId: string };
+export type DispatcherChimeEvent = { id: string; language: string; seqId: string };
 
 type Events = {
     pang: (payload: MessageDataType<RunnerMessageCode.PANG>) => void;
@@ -26,22 +51,28 @@ type Events = {
     end: (data: DispatcherInstanceEndEventData) => void;
     terminated: (data: DispatcherInstanceEndEventData) => void;
     established: (data: DispatcherInstanceEstablishedEventData) => void;
-    event: (eventData: { event: EventMessageData, id: string }) => void;
+    event: (eventData: { event: EventMessageData; id: string }) => void;
 };
 
 type CSIDispatcherOpts = {
-    instanceStore: typeof InstanceStore,
-    sequenceStore: SequenceStore,
-    serviceDiscovery: ServiceDiscovery,
-    STHConfig: STHConfiguration
-}
+    instanceStore: InstancesStore;
+    sequenceStore: SequenceStore;
+    serviceDiscovery: ServiceDiscovery;
+    STHConfig: STHConfiguration;
+    localStorageAdapter: IStorageAdapter;
+    runnerBrokerProvider?: () => Verser2RunnerBroker | undefined;
+    hostProxy?: HostProxy;
+};
 
 export class CSIDispatcher extends TypedEmitter<Events> {
     public logger: IObjectLogger;
-    public instanceStore: typeof InstanceStore;
+    public instanceStore: InstancesStore;
     public sequenceStore: SequenceStore;
     private STHConfig: STHConfiguration;
     private serviceDiscovery: ServiceDiscovery;
+    private localStorageAdapter: IStorageAdapter;
+    private runnerBrokerProvider?: () => Verser2RunnerBroker | undefined;
+    private hostProxy?: HostProxy;
 
     constructor(opts: CSIDispatcherOpts) {
         super();
@@ -51,6 +82,9 @@ export class CSIDispatcher extends TypedEmitter<Events> {
         this.sequenceStore = opts.sequenceStore;
         this.STHConfig = opts.STHConfig;
         this.serviceDiscovery = opts.serviceDiscovery;
+        this.localStorageAdapter = opts.localStorageAdapter;
+        this.runnerBrokerProvider = opts.runnerBrokerProvider;
+        this.hostProxy = opts.hostProxy;
     }
 
     async createCSIController(
@@ -59,16 +93,26 @@ export class CSIDispatcher extends TypedEmitter<Events> {
         payload: STHRestAPI.StartSequencePayload,
         communicationHandler: ICommunicationHandler,
         config: STHConfiguration,
-        instanceProxy: HostProxy) {
+        instanceProxy: HostProxy
+    ) {
         sequenceInfo.instances = sequenceInfo.instances || [];
 
-        const csiController = new CSIController({
-            id,
-            sequenceInfo,
-            payload,
-            status: InstanceStatus.INITIALIZING,
-            inputHeadersSent: false
-        }, communicationHandler, config, instanceProxy, this.STHConfig.runtimeAdapter);
+        const csiController = new CSIController(
+            {
+                id,
+                sequenceInfo,
+                payload,
+                status: InstanceStatus.INITIALIZING,
+                inputHeadersSent: false
+            },
+            communicationHandler,
+            config,
+            instanceProxy,
+            this.STHConfig.runtimeAdapter,
+            this.instanceStore,
+            this.localStorageAdapter,
+            this.runnerBrokerProvider
+        );
 
         this.logger.trace("CSIController created", id, sequenceInfo);
 
@@ -82,7 +126,6 @@ export class CSIDispatcher extends TypedEmitter<Events> {
                 this.emit("error", { id, err });
             })
             .on("event", async (event: EventMessageData) => {
-                this.logger.info("Received event", event);
                 this.emit("event", { event, id: csiController.id });
             })
             .on("hourChime", () => {
@@ -93,7 +136,6 @@ export class CSIDispatcher extends TypedEmitter<Events> {
                 });
             })
 
-            // eslint-disable-next-line complexity
             .on("pang", async (data: PangMessageData) => {
                 this.logger.trace("PANG received", [csiController.id, data]);
 
@@ -106,34 +148,37 @@ export class CSIDispatcher extends TypedEmitter<Events> {
 
                     await this.serviceDiscovery.routeTopicToStream(
                         { topic: new TopicId(data.requires), contentType: data.contentType as ContentType },
-                        csiController.getInputStream()
+                        await csiController.getInput(data.contentType as ContentType)
                     );
 
-                    csiController.inputHeadersSent = true;
-
                     await this.serviceDiscovery.update({
-                        requires: data.requires, contentType: data.contentType, topicName: data.requires, status: "add"
+                        requires: data.requires,
+                        contentType: data.contentType,
+                        topicName: data.requires,
+                        status: "add"
                     });
                 }
 
                 if (data.provides && !csiController.outputRouted && data.contentType) {
                     this.logger.trace("Routing Sequence output to topic", data.provides);
 
-                    await this.serviceDiscovery.routeStreamToTopic(
-                        csiController.getOutputStream(),
-                        { topic: new TopicId(data.provides), contentType: data.contentType as ContentType }
-                    );
+                    await this.serviceDiscovery.routeStreamToTopic(csiController.getOutputStream(), {
+                        topic: new TopicId(data.provides),
+                        contentType: data.contentType as ContentType
+                    });
 
                     csiController.outputRouted = true;
 
                     await this.serviceDiscovery.update({
-                        localProvider: csiController.id, provides: data.provides, contentType: data.contentType!, topicName: data.provides, status: "add"
+                        localProvider: csiController.id,
+                        provides: data.provides,
+                        contentType: data.contentType!,
+                        topicName: data.provides,
+                        status: "add"
                     });
                 }
             })
             .on("ping", (pingMessage: PingMessageData) => {
-                this.logger.info("Ping received", JSON.stringify(pingMessage));
-
                 if (pingMessage.sequenceInfo.config.type !== this.STHConfig.runtimeAdapter) {
                     this.logger.error("Incorrect Instance adapter");
 
@@ -152,15 +197,15 @@ export class CSIDispatcher extends TypedEmitter<Events> {
                 this.emit("established", { id: pingMessage.id, sequence: pingMessage.sequenceInfo });
             })
             .on("end", async (code: number) => {
-                this.logger.trace("csiControllerontrolled ended", `id: ${csiController.id}`, `Exit code: ${code}`);
+                this.logger.trace("csiController ended", `id: ${csiController.id}`, `Exit code: ${code}`);
 
                 if (csiController.provides && csiController.provides !== "") {
-                    csiController.getOutputStream().unpipe(this.serviceDiscovery.getData(
-                        {
+                    csiController.getOutputStream().unpipe(
+                        this.serviceDiscovery.getData({
                             topic: new TopicId(csiController.provides),
                             contentType: "" as ContentType
-                        }
-                    ) as Writable);
+                        }) as Writable
+                    );
                 }
 
                 csiController.logger.unpipe(this.logger);
@@ -168,34 +213,41 @@ export class CSIDispatcher extends TypedEmitter<Events> {
                 this.emit("end", {
                     id,
                     code,
+                    controller: csiController,
                     info: {
                         executionTime: csiController.executionTime
                     },
                     sequence: csiController.sequence
                 });
 
-                const seq = this.sequenceStore.getById(csiController.sequence.id);
+                // A stable ID may already belong to a replacement controller.
+                // A delayed end from this controller must not remove it.
+                if (this.instanceStore.get(csiController.id) === csiController) {
+                    const seq = this.sequenceStore.getById(csiController.sequence.id);
 
-                if (seq) {
-                    seq.instances = seq.instances.filter(i => i !== csiController.id);
+                    if (seq) {
+                        seq.instances = seq.instances.filter((i) => i !== csiController.id);
+                    }
+
+                    this.instanceStore.delete(csiController.id);
                 }
-
-                delete this.instanceStore[csiController.id];
             })
             .on("terminated", (code) => {
                 this.logger.debug("Terminated event received", code);
 
                 if (csiController.requires && csiController.requires !== "") {
-                    (this.serviceDiscovery.getData({
-                        topic: new TopicId(csiController.requires),
-                        contentType: "" as ContentType,
-                    }) as Readable
+                    (
+                        this.serviceDiscovery.getData({
+                            topic: new TopicId(csiController.requires),
+                            contentType: "" as ContentType
+                        }) as Readable
                     ).unpipe(csiController.getInputStream()!);
                 }
 
                 this.emit("terminated", {
                     id,
                     code,
+                    controller: csiController,
                     info: {
                         executionTime: csiController.executionTime
                     },
@@ -210,18 +262,46 @@ export class CSIDispatcher extends TypedEmitter<Events> {
 
         this.logger.trace("csiController started", id);
 
-        this.instanceStore[id] = csiController;
+        this.instanceStore.set(id, csiController);
 
         return csiController;
     }
 
-    async startRunner(sequence: SequenceInfo, payload: STHRestAPI.StartSequencePayload) {
+    async startRunner(sequence: SequenceInfo, payload: STHRestAPI.StartSequencePayload): Promise<StartInstanceReturnType> {
         this.logger.debug("Preparing Runner...");
 
         const limits = {
             memory: payload.limits?.memory || this.STHConfig.docker.runner.maxMem
         };
         const id = payload.instanceId || IDProvider.generate();
+        let reservedInstanceId = false;
+        let reservedInstanceName = false;
+
+        if (!RUNNER_CHANNEL_INSTANCE_ID_PATTERN.test(id)) {
+            throw new HostError("INSTANCE_STARTUP_ERROR", "Instance ID must be a DNS-label-safe value for runner verser2 channel routing");
+        }
+
+        if (this.instanceStore.hasName(id)) {
+            throw new HostError("INSTANCE_ID_CONFLICT", "Instance ID conflicts with an existing instance name");
+        }
+
+        if (!this.instanceStore.reserveId(id)) {
+            throw new HostError("INSTANCE_ID_CONFLICT", "Instance ID already taken");
+        }
+
+        reservedInstanceId = true;
+
+        if (payload.instanceName) {
+            if (this.instanceStore.has(payload.instanceName) || this.instanceStore.hasReservedId(payload.instanceName)) {
+                throw new HostError("INSTANCE_NAME_CONFLICT", "Instance name conflicts with an existing instance ID");
+            }
+
+            if (!this.instanceStore.reserveName(payload.instanceName, id)) {
+                throw new HostError("INSTANCE_NAME_CONFLICT", "Instance with a given name already exists");
+            }
+
+            reservedInstanceName = true;
+        }
 
         const instanceAdapter = getInstanceAdapter(this.STHConfig.runtimeAdapter, this.STHConfig, id);
         const instanceConfig: InstanceConfig = {
@@ -238,58 +318,124 @@ export class CSIDispatcher extends TypedEmitter<Events> {
 
         this.logger.debug("Dispatching...");
 
-        const dispatchResultCode = await instanceAdapter.dispatch(
-            instanceConfig,
-            this.STHConfig.host.instancesServerPort,
-            id,
-            sequence,
-            payload
-        );
-
-        if (dispatchResultCode !== 0) {
-            this.logger.warn("Dispatch result code:", dispatchResultCode);
-            throw await mapRunnerExitCode(dispatchResultCode, sequence);
+        if (typeof payload.reconnect === "undefined") {
+            payload.reconnect = this.STHConfig.instanceReconnect;
         }
 
-        this.logger.debug("Dispatched. Waiting for connection...", id);
+        try {
+            const dispatchResultCode = await instanceAdapter.dispatch(instanceConfig, this.STHConfig.host.instancesServerPort, id, sequence, payload);
 
-        let established = false;
+            if (dispatchResultCode !== 0) {
+                this.logger.warn("Dispatch result code:", dispatchResultCode);
+                throw await mapRunnerExitCode(dispatchResultCode, sequence);
+            }
 
-        return await Promise.race([
-            new Promise<void>((resolve, _reject) => {
-                const resolveFunction = (instance: Instance) => {
-                    if (instance.id === id) {
-                        this.logger.debug("Established", id);
+            this.logger.debug("Dispatched. Waiting for connection...", id);
 
-                        this.off("established", resolveFunction);
-                        established = true;
-                        resolve();
-                    }
-                };
+            if (this.usesSthLocalRunnerVerser2Transport()) {
+                const csiController = await this.createCSIController(
+                    id,
+                    sequence,
+                    payload,
+                    new CommunicationHandler(),
+                    this.STHConfig,
+                    this.hostProxy || ({ onInstanceRequest: () => undefined, onRPCExpose: () => undefined } as HostProxy)
+                );
+                const streams = Array.from({ length: 9 }, () => new PassThrough()) as unknown as DownstreamStreamsConfig;
 
-                this.on("established", resolveFunction);
-            }).then(() => ({
-                id,
-                appConfig: payload.appConfig,
-                args: payload.args,
-                sequenceId: sequence.id,
-                info: {},
-                limits,
-                sequence
-            })),
-            // handle fast fail - before connection is established.
-            Promise.resolve().then(
-                () => instanceAdapter.waitUntilExit(undefined, id, sequence)
-                    .then(async (exitCode: number) => {
+                csiController.handleInstanceConnect(streams).catch((error) => {
+                    this.logger.error("Verser2 runner synthetic connect failed", id, error);
+                });
+            }
+
+            let established = false;
+
+            const result = await Promise.race([
+                new Promise<void>((resolve, _reject) => {
+                    const resolveFunction = (instance: Instance) => {
+                        if (instance.id === id) {
+                            this.logger.debug("Established", id);
+
+                            this.off("established", resolveFunction);
+                            established = true;
+                            resolve();
+                        }
+                    };
+
+                    this.on("established", resolveFunction);
+                }).then(() => ({
+                    id,
+                    appConfig: payload.appConfig,
+                    args: payload.args,
+                    sequenceId: sequence.id,
+                    info: {},
+                    limits,
+                    sequence
+                })),
+                Promise.resolve().then(() =>
+                    instanceAdapter.waitUntilExit(undefined, id, sequence).then(async (exitCode: number) => {
                         if (!established) {
                             this.logger.info("Exited before established", id, exitCode);
+
+                            if (exitCode > 0) {
+                                this.logger.error(
+                                    `STH runtime error phase=runner-connect adapter=${this.STHConfig.runtimeAdapter} sequenceId=${sequence.id} instanceId=${id} exitCode=${exitCode}`,
+                                    {
+                                        phase: "runner-connect",
+                                        adapter: this.STHConfig.runtimeAdapter,
+                                        sequenceId: sequence.id,
+                                        instanceId: id,
+                                        exitCode,
+                                        crashLog: await instanceAdapter.getCrashLog()
+                                    }
+                                );
+                            }
 
                             return mapRunnerExitCode(exitCode, sequence);
                         }
 
-                        return undefined;
+                        return {
+                            message: "Exited before established",
+                            exitcode: -1,
+                            status: InstanceStatus.ERRORED
+                        };
                     })
-            )
-        ]);
+                )
+            ]);
+
+            if (reservedInstanceName && !("id" in result) && payload.instanceName) {
+                this.instanceStore.unregisterName(payload.instanceName, id);
+            }
+
+            if (!("id" in result) && reservedInstanceId) {
+                this.instanceStore.releaseId(id);
+            }
+
+            if ("id" in result) {
+                const controller = this.instanceStore.get(id) as any;
+                try {
+                    await controller?.waitForReady(this.STHConfig.timings.startupTimeout || 30_000);
+                } catch (error) {
+                    this.logger.warn("Runner readiness failed; terminating instance before returning failure", id, error);
+                    throw error;
+                }
+            }
+
+            return result;
+        } catch (error) {
+            if (reservedInstanceId) {
+                this.instanceStore.releaseId(id);
+            }
+
+            if (reservedInstanceName && payload.instanceName) {
+                this.instanceStore.unregisterName(payload.instanceName, id);
+            }
+
+            throw error;
+        }
+    }
+
+    private usesSthLocalRunnerVerser2Transport(): boolean {
+        return !!(this.STHConfig.verser2.enabled && this.STHConfig.verser2.runnerHost?.enabled && this.runnerBrokerProvider?.());
     }
 }

@@ -1,0 +1,70 @@
+import { ManagerVerser2Config } from "@scramjet/api-types";
+import { VerserHostOptions, VerserHostTlsOptions } from "@signicode/verser2-host";
+
+function createVerser2HostTlsOptions(config: ManagerVerser2Config): VerserHostTlsOptions {
+    const tls = config.host.tls;
+    let identity: VerserHostTlsOptions;
+
+    if (tls.certFile && tls.keyFile) {
+        identity = {
+            certFile: tls.certFile,
+            keyFile: tls.keyFile,
+            passphrase: tls.passphrase
+        };
+    } else if (tls.pfxFile) {
+        identity = {
+            pfxFile: tls.pfxFile,
+            passphrase: tls.passphrase
+        };
+    } else {
+        throw new Error("verser2 Host TLS requires certFile/keyFile or pfxFile");
+    }
+
+    // Generated control-ingress identities use their generated CA as the
+    // client-auth trust anchor. Explicit deployments may still provide a
+    // narrower clientAuthCaFile.
+    const clientAuthCaFile = tls.clientAuthCaFile || (tls.mtlsRequired ? tls.caFile : undefined);
+
+    if (tls.mtlsRequired && !clientAuthCaFile) {
+        throw new Error("verser2 Host mTLS requires clientAuthCaFile");
+    }
+
+    if (!tls.clientAuthCaFile && !tls.mtlsRequired && config.registration.allowedClientFingerprints.length === 0) {
+        return identity;
+    }
+
+    return {
+        ...identity,
+        clientAuth: {
+            caFile: clientAuthCaFile,
+            authorizeRegistration: context => {
+                if (context.metadata.local === true) {
+                    return { action: "allow" };
+                }
+
+                if (tls.mtlsRequired && !context.certificate) {
+                    return { action: "close", reason: "client certificate required" };
+                }
+
+                if (config.registration.allowedClientFingerprints.length > 0) {
+                    const fingerprint = context.certificate?.fingerprint256;
+
+                    if (!fingerprint || !config.registration.allowedClientFingerprints.some(allowed => allowed.replace(/^sha256:/i, "").replace(/:/g, "").toLowerCase() === fingerprint.replace(/^sha256:/i, "").replace(/:/g, "").toLowerCase())) {
+                        return { action: "close", reason: "client fingerprint not allowed" };
+                    }
+                }
+
+                return { action: "allow" };
+            }
+        }
+    };
+}
+
+export function createVerser2HostOptions(config: ManagerVerser2Config): VerserHostOptions {
+    return {
+        hostId: `${config.localBroker.peerId}.host`,
+        host: config.host.bindHost,
+        port: config.host.bindPort,
+        tls: createVerser2HostTlsOptions(config)
+    };
+}

@@ -1,6 +1,4 @@
-import { PassThrough, Readable, Writable } from "stream";
-
-import { DataStream } from "scramjet";
+import { Readable } from "stream";
 
 export type LogLevel = "ERROR" | "WARN" | "INFO" | "DEBUG" | "FATAL" | "TRACE";
 
@@ -45,13 +43,17 @@ export type LogEntry = Partial<{
     from: string;
 }>
 
-export interface IObjectLogger {
-    inputLogStream: PassThrough;
-    inputStringifiedLogStream: PassThrough;
-    outputLogStream: PassThrough;
-    output: DataStream;
+export type IObjectLoggerOptions = { end?: boolean; stringified?: boolean };
 
-    addOutput(output: Writable): void;
+export interface IObjectLogger {
+    inputLogStream: NodeJS.WritableStream;
+    inputStringifiedLogStream: NodeJS.WritableStream;
+    outputLogStream: NodeJS.ReadableStream;
+    output: NodeJS.ReadableStream;
+
+    logLevel: LogLevel;
+
+    addOutput(output: NodeJS.WritableStream): void;
 
     write(level: LogEntry["level"], entry: LogEntry | string, ...optionalParams: any[]): void;
     end(): void;
@@ -66,8 +68,8 @@ export interface IObjectLogger {
     addObjectLoggerSource(source: IObjectLogger): void;
     addSerializedLoggerSource(source: Readable): void;
 
-    pipe(target: Writable | IObjectLogger, options?: { end?: boolean; stringified?: boolean }): void;
-    unpipe(target?: Writable | IObjectLogger): void;
+    pipe(target: NodeJS.WritableStream | IObjectLogger, options?: IObjectLoggerOptions): void;
+    unpipe(target?: NodeJS.WritableStream | IObjectLogger): void;
 
     updateBaseLog(entry: LogEntry): void;
 }

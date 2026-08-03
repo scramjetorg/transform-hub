@@ -5,6 +5,7 @@ import { FunctionDefinition } from "./messages/describe-sequence";
 import { IObjectLogger } from "./object-logger";
 import { MaybePromise } from "./utils";
 import { MonitoringMessageFromRunnerData } from "./messages";
+import { ILocalStorage } from "./local-storage";
 
 /**
  * A callback that will be called when the Sequence is being stopped gracefully.
@@ -33,7 +34,12 @@ export type MonitoringHandler =
  * with the Platform to ensure that it's in operation and should be kept alive without
  * interruption.
  */
-export interface AppContext<AppConfigType extends AppConfig, State extends any> {
+export interface AppContext<
+    AppConfigType extends AppConfig,
+    State extends any,
+    HubClientType = unknown,
+    SpaceClientType = unknown
+> {
     logger: IObjectLogger;
 
     /**
@@ -162,6 +168,8 @@ export interface AppContext<AppConfigType extends AppConfig, State extends any> 
     emit(ev: string, message?: any): this;
     emit(ev: "error", message: AppError): this;
 
+    emitToSpace(ev: string, message?: any): this;
+
     /**
      * Provides automated definition as understood by the system
      */
@@ -174,7 +182,7 @@ export interface AppContext<AppConfigType extends AppConfig, State extends any> 
      */
     describe(definition: FunctionDefinition): this;
 
-    readonly config: AppConfigType;
+    readonly config: Partial<AppConfigType>;
     readonly AppError: AppErrorConstructor;
 
     /** Allows setting timeout in millis to exit the sequence after exit called (default 10000) */
@@ -183,9 +191,21 @@ export interface AppContext<AppConfigType extends AppConfig, State extends any> 
     /** Allows to access Hub, for details please refer to @scramjet/api-client */
     hub: import("./api-client/host-client").HostClient;
 
+    /** Allows to access canonical v2 Hub API client. */
+    hubClient(): HubClientType;
+
     /** Allows to access Space, for details please refer to @scramjet/api-client */
     space: import("./api-client/manager-client").ManagerClient;
 
+    /** Allows to access canonical v2 Space API client. */
+    spaceClient(): SpaceClientType;
+
     /** Instance Id */
     instanceId: string;
+
+    /** API Server */
+    api: import("./api-expose").APIExpose;
+
+    /** Local storage */
+    localStorage: ILocalStorage;
 }

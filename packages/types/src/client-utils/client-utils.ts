@@ -3,6 +3,7 @@
 import { Agent as HTTPAgent } from "http";
 import { Agent as HTTPSAgent } from "https";
 import { Readable } from "stream";
+import { HttpMethod } from "../api-expose";
 
 export declare class QueryError extends Error {
     readonly url: string;
@@ -23,7 +24,7 @@ export declare class ClientError extends Error {
     message: any;
     body: any;
     constructor(code: ClientErrorCode, reason?: Error | string, message?: string, source?: Error, status?: string);
-    from(error: Error | QueryError, message?: string, source?: Error): ClientError;
+    static from(error: Error | QueryError, message?: string, source?: Error): ClientError;
     toJSON(): Promise<unknown>;
 }
 
@@ -43,21 +44,22 @@ export declare class RequestLogger {
 }
 
 export declare type RequestConfig = {
-    parse: "json" | "text" | "stream";
+    parse: "json" | "text" | "stream" | "response";
     json?: boolean;
     throwOnErrorHttpCode?: boolean;
 }
 
 export declare class HttpClient {
-    addLogger(logger: RequestLogger): void;
+    addLogger(logger: Partial<RequestLogger>): void;
     get<T>(url: string, requestInit?: RequestInit): Promise<T>;
     getStream(url: string, requestInit?: RequestInit): Promise<Readable>;
-    post<T>(url: string, data: any, requestInit?: RequestInit, options?: {
-        json: boolean;
-    } & RequestConfig): Promise<T>;
+    post<T>(url: string, data: any, requestInit?: RequestInit, options?: RequestConfig): Promise<T>;
+    put<T>(url: string, data: any, requestInit?: RequestInit, options?: RequestConfig): Promise<T>;
+    request(method: HttpMethod, url: string, requestInit?: RequestInit): Promise<Response>;
     delete<T>(url: string, requestInit?: RequestInit): Promise<T>;
     sendStream<T>(url: string, stream: any, requestInit?: RequestInit, options?: SendStreamOptions): Promise<T>;
 }
+export interface IHttpClient extends HttpClient {}
 
 export declare class ClientUtilsBase extends HttpClient {
     static headers: Headers;
@@ -69,7 +71,7 @@ export declare class ClientUtilsBase extends HttpClient {
     constructor(apiBase: string, fetch: any, normalizeUrlFn?: (url: string) => string);
 
     addLogger(logger: Partial<RequestLogger>): void;
-    get<T>(url: string, requestInit: RequestInit): Promise<T>;
+    get<T>(url: string, requestInit?: RequestInit): Promise<T>;
     getStream(url: string, requestInit?: RequestInit): Promise<any>;
     post<T>(url: string, data: any, requestInit?: RequestInit, config?: RequestConfig): Promise<T>;
     put<T>(url: string, data: any, requestInit?: RequestInit, config?: RequestConfig): Promise<T>;

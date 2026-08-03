@@ -32,7 +32,6 @@ export interface PipeableStream<Produces> extends Readable {
     read(count?: number): Produces[] | null;
     pipe<T extends NodeJS.WritableStream>(destination: T, options?: { end?: boolean }): T;
     // Again a hen-egg issue
-    // eslint-disable-next-line no-use-before-define
     pipe<T extends WritableStream<Produces>>(destination: T, options?: { end?: boolean }): T;
 }
 /**
@@ -43,7 +42,7 @@ export interface PipeableStream<Produces> extends Readable {
 
 export interface ReadableStream<Produces> extends PipeableStream<Produces> {
     [Symbol.asyncIterator](): AsyncIterableIterator<Produces>;
-    destroy(): void;
+    destroy(): this;
 }
 /**
  * Writable stream representation with generic chunks.
@@ -54,15 +53,17 @@ export interface ReadableStream<Produces> extends PipeableStream<Produces> {
 export interface WritableStream<Consumes> extends Writable {
     objectMode?: true;
     writable: boolean;
-    destroy(): void;
+    destroy(): this;
     write(item: Consumes, cb?: (err?: Error | null) => void): boolean;
     write(str: never, encoding: never, cb?: (err?: Error | null) => void): boolean;
-    end(cb?: () => void): void;
-    end(data: Consumes, cb?: () => void): void;
-    end(str: never, encoding: never, cb?: () => void): void;
+    end(cb?: () => void): this;
+    end(data: Consumes, cb?: () => void): this;
+    end(str: never, encoding: never, cb?: () => void): this;
 }
 
-export type DuplexStream<Consumes, Produces> = WritableStream<Consumes> & ReadableStream<Produces>;
+export type DuplexStream<Consumes, Produces> = WritableStream<Consumes> & ReadableStream<Produces> & {
+    allowHalfOpen: boolean;
+};
 export type PassThoughStream<Passes> = DuplexStream<Passes, Passes>;
 
 /**
@@ -86,7 +87,7 @@ export type HasTopicInformation = {
 export type SynchronousStreamable<Produces> = SynchronousStreamablePayload<Produces> & HasTopicInformation;
 /**
  * Represents all readable stream types that will be accepted as return values
- * from {@see TFunction}
+ * from @see {TFunction}
  */
 export type Streamable<Produces> = MaybePromise<SynchronousStreamable<Produces>>;
 
@@ -116,6 +117,6 @@ export type Port = number;
 
 export type ApiVersion = string;
 
-export type Validator = (message: string) => (value: any) => string | boolean;
-export type ValidationSchema = { [key: string]: ((value: any) => string | boolean)[] };
+export type Validator = (message: string) => (value: any, object: Record<string, any>) => string | boolean;
+export type ValidationSchema = { [key: string]: ((value: any, obj: Record<string, any>) => string | boolean)[] };
 export type ValidationResult = { name: string; isValid: boolean; message?: string };

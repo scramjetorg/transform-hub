@@ -1,6 +1,7 @@
 
-import { GetSequenceResponse } from "@scramjet/types/src/rest-api-sth";
-import { AppConfig, InstanceLimits } from "@scramjet/types";
+import { STHRestAPI } from "@scramjet/api-types";
+import { InstanceLimits } from "@scramjet/runtime-types";
+import { AppConfig } from "@scramjet/runtime-types";
 import { constants, createReadStream, createWriteStream, PathLike } from "fs";
 import { readdir, access, lstat } from "fs/promises";
 import { InstanceClient, SequenceClient } from "@scramjet/api-client";
@@ -22,6 +23,8 @@ type SequenceUploadOptions = {
     id?: string;
 }
 
+type MMFilter = () => (p: string, i: number, arr: string[]) => boolean;
+
 /**
  * TODO: Comment.
  *
@@ -35,7 +38,7 @@ const getIgnoreFunction = async (file: PathLike) => {
         return () => true;
     }
 
-    const rules: ReturnType<typeof mmfilter>[] = await StringStream.from(createReadStream(file))
+    const rules: ReturnType<MMFilter>[] = await StringStream.from(createReadStream(file))
         .lines()
         .filter((line: string) => line.substr(0, line.indexOf("#")).trim() === "")
         .parse((line: string) => mmfilter(line))
@@ -164,21 +167,23 @@ export const sequenceParseConfig = async (configFile: string = "", configString:
 };
 
 export const sequenceStart = async (
-    id: string, { appConfig, args, outputTopic, inputTopic, limits, instanceId }:
+    id: string, { appConfig, args, outputTopic, inputTopic, limits, instanceId, instanceName, sequenceName }:
         {
             appConfig: AppConfig,
             args?: any[],
             outputTopic?: string,
             inputTopic?: string,
             limits?: InstanceLimits,
-            instanceId?: string
+            instanceId?: string,
+            instanceName?: string,
+            sequenceName?: string
         }
 ): Promise<InstanceClient> => {
     const sequenceClient = SequenceClient.from(getSequenceId(id), getHostClient());
 
     try {
         const instance = await sequenceClient.start({
-            appConfig, args: args?.length ? args : undefined, outputTopic, inputTopic, limits, instanceId
+            appConfig, args: args?.length ? args : undefined, outputTopic, inputTopic, limits, instanceId, instanceName, sequenceName
         });
 
         sessionConfig.setLastInstanceId(instance.id);
@@ -213,12 +218,13 @@ export const sequenceDelete = async (
     return deleteSequenceResponse;
 };
 
-export const waitForInstanceKills = (seq: GetSequenceResponse, timeout: number) => {
+export const waitForInstanceKills = (seq: STHRestAPI.GetSequenceResponse, timeout: number) => {
     return promiseTimeout((async () => {
         let l;
 
-        // eslint-disable-next-line no-cond-assign
-        while (l = (await getHostClient().getSequence(seq.id)).instances.length) {
+        while (true) {
+            l = (await getHostClient().getSequence(seq.id)).instances.length;
+            if (!l) break;
             displayMessage(`Sequence ${seq.id}. Waiting for ${l} instance${l > 1 ? "s" : ""} to finish...`);
             await defer(1000);
         }

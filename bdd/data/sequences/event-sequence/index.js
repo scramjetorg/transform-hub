@@ -1,6 +1,4 @@
-/* eslint-disable no-console */
 
-// eslint-disable-next-line valid-jsdoc
 /**
  * Simple test event sequence.
  *
@@ -8,7 +6,7 @@
  * @param {string} inputEvent - input
  * @param {string} outputEvent - output
  * @returns {void}
- * @this {import("@scramjet/types").AppContext<{}, {}>} - context
+ * @this {import("@scramjet/sequence-types").SequenceAppContext<{}, {}>} - context
  */
 module.exports = async function(_input, inputEvent = "in", outputEvent = "out") {
     this.logger.info("started");
@@ -19,10 +17,7 @@ module.exports = async function(_input, inputEvent = "in", outputEvent = "out") 
             console.log("event", JSON.stringify(ev));
             this.emit(outputEvent, JSON.stringify({ test: ev.test + 1 }));
 
-            await new Promise(res2 => setTimeout(res2, 100));
-
             res();
         });
     });
 };
-

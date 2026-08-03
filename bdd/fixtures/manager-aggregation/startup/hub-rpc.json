@@ -1,0 +1,13 @@
+{
+  "sequences": [
+    {
+      "id": "api-server",
+      "sequenceName": "api-server",
+      "instanceName": "hub-rpc-api-main",
+      "args": [],
+      "keepAlive": true,
+      "required": true,
+      "restartLimit": 1
+    }
+  ]
+}

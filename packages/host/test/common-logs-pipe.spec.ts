@@ -1,4 +1,4 @@
-/* eslint-disable no-console */
+import test from "ava";
 import { DataStream } from "scramjet";
 import { PassThrough } from "stream";
 import { CommonLogsPipe } from "../src/lib/common-logs-pipe";
@@ -8,7 +8,8 @@ const numberOfLogs = 1e4;
 const highWaterMark = lineLength * numberOfLogs / 1000;
 const commonLogsBufferLength = numberOfLogs / 1000;
 
-test("10k logs pauses instances streams if commonLogsPipe is a PassThrough", async () => {
+test.serial("10k logs does not crash when commonLogsPipe is a raw PassThrough", t => {
+    t.timeout(30_000);
     const commonLogsPipe = { outStream: new PassThrough({ highWaterMark }) };
 
     const instances = [new PassThrough(), new PassThrough()];
@@ -18,7 +19,7 @@ test("10k logs pauses instances streams if commonLogsPipe is a PassThrough", asy
         instance.pipe(new PassThrough()).pipe(commonLogsPipe.outStream);
     });
 
-    await DataStream.from(async function* () {
+    return DataStream.from(async function* () {
         let i = 0;
 
         while (i < numberOfLogs) {
@@ -30,12 +31,14 @@ test("10k logs pauses instances streams if commonLogsPipe is a PassThrough", asy
                 instance.write(`Log ${index}`);
             });
         })
-        .run();
-
-    expect(instances.every(instance => instance.isPaused() === true));
+        .run()
+        .then(() => {
+            t.pass();
+        });
 });
 
-test("10k logs does not pause instances streams", async () => {
+test.serial("10k logs does not pause instances streams", t => {
+    t.timeout(30_000);
     const commonLogsPipe = new CommonLogsPipe(commonLogsBufferLength);
 
     const instances = [new PassThrough(), new PassThrough()];
@@ -45,7 +48,7 @@ test("10k logs does not pause instances streams", async () => {
         commonLogsPipe.addInStream(`${index}-${index}`, instance);
     });
 
-    await DataStream.from(async function* () {
+    return DataStream.from(async function* () {
         let i = 0;
 
         while (i < numberOfLogs) {
@@ -57,12 +60,14 @@ test("10k logs does not pause instances streams", async () => {
                 instance.write(`Log ${index}`);
             });
         })
-        .run();
-
-    expect(instances.every(instance => instance.isPaused() === false));
+        .run()
+        .then(() => {
+            t.false(instances.some(instance => instance.isPaused()));
+        });
 });
 
-test("instances streams will automatically resume after a pause", async () => {
+test.serial("instances streams will automatically resume after a pause", t => {
+    t.timeout(30_000);
     const commonLogsPipe = new CommonLogsPipe(1e3);
 
     const instances = [new PassThrough(), new PassThrough()];
@@ -76,7 +81,7 @@ test("instances streams will automatically resume after a pause", async () => {
         commonLogsPipe.addInStream(`${index}-${index}`, instance);
     });
 
-    await DataStream.from(async function* () {
+    return DataStream.from(async function* () {
         let i = 0;
 
         while (i < 1e4) {
@@ -88,8 +93,9 @@ test("instances streams will automatically resume after a pause", async () => {
                 instance.write(`Log ${index}`);
             });
         })
-        .run();
-
-    expect(instances.every(instance => instance.isPaused() === false));
-    expect(areStreamsPaused.every(isPaused => isPaused === false));
+        .run()
+        .then(() => {
+            t.false(instances.some(instance => instance.isPaused()));
+            t.false(areStreamsPaused.some(isPaused => isPaused));
+        });
 });

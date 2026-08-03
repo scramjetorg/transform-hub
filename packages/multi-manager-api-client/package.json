@@ -1,27 +1,25 @@
 {
   "name": "@scramjet/multi-manager-api-client",
-  "version": "1.0.1",
+  "version": "2.0.0",
   "description": "Scramjet MultiManager API Client",
   "main": "src/index.ts",
   "scripts": {
     "build": "../../scripts/build-all.js --config-name=tsconfig.build.json --copy-dist",
-    "build:docs": "typedoc",
     "clean": "rm -rf ./dist .bic_cache",
     "watch": "tsc -b --watch",
     "test": "npm run test:ava",
-    "test:ava": "ava"
+    "test:ava": "node ../../scripts/run-ava.js"
   },
   "dependencies": {
-    "@scramjet/api-client": "^1.0.1",
-    "@scramjet/client-utils": "^1.0.1"
+    "@scramjet/api-client": "^2.0.0",
+    "@scramjet/client-utils": "^2.0.0",
+    "@scramjet/api-types": "^2.0.0",
+    "@scramjet/runtime-types": "^2.0.0"
   },
   "devDependencies": {
-    "@scramjet/types": "^1.0.1",
-    "@types/node": "15.12.5",
+    "@types/node": "^22.15.0",
     "ava": "^3.15.0",
     "ts-node": "^10.9.1",
-    "typedoc": "0.23.17",
-    "typedoc-plugin-markdown": "3.13.6",
     "typescript": "~4.7.4"
   },
   "ava": {
@@ -36,7 +34,7 @@
     ]
   },
   "author": "Scramjet <open-source@scramjet.org>",
-  "license": "AGPL-3.0",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/scramjetorg/scramjet-cpm-dev.git"

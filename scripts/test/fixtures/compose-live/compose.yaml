@@ -1,0 +1,10 @@
+services:
+  hub:
+    image: ${STH_COMPOSE_IMAGE:?STH_COMPOSE_IMAGE is required}
+    command: ["scramjet-transform-hub", "--config", "/etc/scramjet/sth.yaml"]
+    ports:
+      - "${STH_COMPOSE_PORT}:8000"
+    volumes:
+      - ./sth.yaml:/etc/scramjet/sth.yaml:ro
+      - ./startup-config.yaml:/etc/scramjet/startup-config.yaml:ro
+      - ./sequence-store:/var/lib/scramjet/sequences:ro

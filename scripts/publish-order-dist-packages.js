@@ -1,7 +1,5 @@
 #!/usr/bin/env node
-/* eslint-disable no-loop-func */
 
-/* eslint-disable no-return-assign */
 
 const { exec: _exec } = require("child_process");
 const { writeFile, readFile } = require("fs/promises");
@@ -10,6 +8,7 @@ const { resolve, dirname } = require("path");
 const { DataStream } = require("scramjet");
 const toposort = require("toposort");
 const { promisify } = require("util");
+const { isIncluded } = require("./lib/release-boundary");
 const cwd = resolve(__dirname, "../dist/");
 const pkgs = glob.sync("./*/package.json", {
     cwd,
@@ -22,6 +21,7 @@ const force = process.argv.includes("-f");
 const skip = process.argv.includes("-s");
 const main = process.argv.includes("-p");
 const local = process.argv.includes("-l");
+const releaseBoundary = process.argv.includes("--release-boundary");
 
 if (main === local || process.argv.includes("-h")) {
     console.error(`Usage: ${process.argv[1]} -p|-l [-nf] <cmd> [...args]`);
@@ -34,6 +34,7 @@ if (main === local || process.argv.includes("-h")) {
     console.error(" -s skip already published");
     console.error(" -p go public");
     console.error(" -l publish local");
+    console.error(" --release-boundary restrict to 2.0.0 included packages only");
     process.exitCode = 11;
     process.exit();
 }
@@ -49,12 +50,11 @@ const checkIfPublished = async (opts, item) => {
         const out = await exec(`npm view --json ${item.name}@${item.version}`, opts);
 
         return out.stdout.length > 0;
-    } catch (e) {
+    } catch {
         return false;
     }
 };
 
-// eslint-disable-next-line complexity
 (async () => {
     const files = await DataStream.from(pkgs)
         .map((x) => resolve(cwd, x))
@@ -93,6 +93,11 @@ const checkIfPublished = async (opts, item) => {
         try {
             const opts = { cwd: dirname(item.fullFile) };
 
+            if (releaseBoundary && !isIncluded(item.name)) {
+                console.error(" ---> Skipping (excluded from release boundary):", item.name);
+                continue;
+            }
+
             if (dryRun) {
                 console.error("Would publish", item.name);
                 continue;
@@ -128,7 +133,7 @@ const checkIfPublished = async (opts, item) => {
                 throw new Error("Package still not available after 600 secs");
 
             console.error(" `-> ops done, waiting until new package visible");
-        } catch (e) {
+    } catch (e) {
             if (!force)
                 throw e;
             else

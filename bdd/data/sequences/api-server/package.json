@@ -1,0 +1,18 @@
+{
+  "name": "@scramjet/api-server-test",
+  "version": "0.20.0",
+  "description": "",
+  "license": "ISC",
+  "author": "Scramjet <open-source@scramjet.org>",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/scramjetorg/transform-hub.git"
+  },
+  "devDependencies": {
+    "@scramjet/types": "2.0.0",
+    "@scramjet/api-server": "2.0.0"
+  },
+  "exposePath": "/test",
+  "private": true
+}

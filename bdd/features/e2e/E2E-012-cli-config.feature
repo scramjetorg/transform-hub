@@ -10,7 +10,7 @@ Feature: CLI config tests
         When I execute CLI with "config print"
         When I confirm apiUrl has changed to "http://127.0.0.1:8888/api/v1"
 
-    @ci-api
+    @ci-api @profile-config
     Scenario: E2E-012 TC-002 Test 'si config profile create/remove'
         When I execute CLI with "config profile list"
         When I execute CLI with "config profile create testProfile"
@@ -24,7 +24,7 @@ Feature: CLI config tests
         Then I confirm "testProfile" "not exist" on the list
         Then I confirm I switched to "default" profile
 
-    @ci-api
+    @ci-api @profile-config
     Scenario: E2E-012 TC-003 Test seting values in config after changing profile
         When I execute CLI with "config profile list"
         When I execute CLI with "config profile create testProfile"

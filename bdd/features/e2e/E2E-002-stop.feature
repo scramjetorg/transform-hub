@@ -1,9 +1,9 @@
 Feature: Stop e2e tests
 
-    @ci-instance-node
+    @ci-instance-node @slow
     Scenario: E2E-002 TC-001 API test - Send stop, sequence sends keepAlive, runner closes successfully
         Given host is running
-        When sequence "../packages/can-keep-alive.tar.gz" loaded
+        When sequence "data/sequences/bdd-packages/can-keep-alive.tar.gz" loaded
         And instance started with arguments "SEND_KEEPALIVE"
         And wait for instance healthy is "true"
         And get runner PID

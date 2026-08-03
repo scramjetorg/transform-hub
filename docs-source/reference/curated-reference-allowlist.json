@@ -1,0 +1,63 @@
+{
+  "$schema": "./curated-reference-allowlist.schema.json",
+  "version": 1,
+  "entrypoints": [
+    {
+      "package": "@scramjet/sth",
+      "entrypoint": "packages/sth/src/index.ts",
+      "audience": ["users", "operators", "implementers"],
+      "stability": "stable",
+      "outputPath": "reference/typescript/sth/",
+      "reason": "Public Transform Hub startup surface used by applications and operators.",
+      "reviewers": ["runtime-maintainers"]
+    },
+    {
+      "package": "@scramjet/types",
+      "entrypoint": "packages/types/src/app-context.ts",
+      "audience": ["implementers"],
+      "stability": "stable",
+      "outputPath": "reference/typescript/types-app-context/",
+      "reason": "Sequence runtime app context contracts are useful to sequence authors and runtime implementers without blessing the full types barrel.",
+      "reviewers": ["runtime-maintainers"]
+    },
+    {
+      "package": "@scramjet/types",
+      "entrypoint": "packages/types/src/runtime-executor.ts",
+      "audience": ["implementers"],
+      "stability": "internal-but-useful",
+      "outputPath": "reference/typescript/types-runtime-executor/",
+      "reason": "Runtime executor contracts are implementer-facing and should be documented narrowly instead of exposing the full types barrel.",
+      "reviewers": ["runtime-maintainers"],
+      "notes": "Do not infer stability for other @scramjet/types barrel exports from this entry."
+    },
+    {
+      "package": "@scramjet/sequence-test",
+      "entrypoint": "packages/sequence-test/src/index.ts",
+      "audience": ["implementers", "contributors"],
+      "stability": "supported-scoped",
+      "outputPath": "reference/typescript/sequence-test/",
+      "reason": "Supported for scoped local sequence fixture/hub-harness/AppContext validation. Not a replacement for package tests, BDD, adapter/runtime invariant checks, or full live Hub/process/Docker/Kubernetes parity.",
+      "reviewers": ["test-tooling-maintainers"],
+      "notes": "Generator must prominently display the scoped support boundary: supported for local fixture/harness/AppContext validation, not full Hub/runner parity."
+    },
+    {
+      "package": "@scramjet/rest-api2",
+      "entrypoint": "packages/rest-api2/src/index.ts",
+      "audience": ["implementers", "api-client-users"],
+      "stability": "experimental",
+      "outputPath": "reference/typescript/rest-api2/",
+      "reason": "Schema-aware v2 API contracts and client helpers are useful for API/client documentation.",
+      "reviewers": ["api-maintainers"],
+      "notes": "Do not claim MCP or incomplete router features are complete from this reference."
+    },
+    {
+      "package": "@scramjet/api-client",
+      "entrypoint": "packages/api-client/src/index.ts",
+      "audience": ["users", "operators", "api-client-users"],
+      "stability": "stable",
+      "outputPath": "reference/typescript/api-client/",
+      "reason": "Current practical client surface for interacting with Hub, Instance, Sequence, and Manager APIs.",
+      "reviewers": ["api-maintainers"]
+    }
+  ]
+}

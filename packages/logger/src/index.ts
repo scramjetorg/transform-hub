@@ -1,4 +1,4 @@
-import { LoggerOptions, WritableStream } from "@scramjet/types";
+import { LoggerOptions, WritableStream } from "@scramjet/runtime-types";
 
 import { Console } from "console";
 import { inspect, InspectOptions } from "util";
@@ -40,7 +40,7 @@ const writeLog = (streamSpec: keyof typeof loggerOutputs, ...args: any[]) => {
 
 export class Logger implements Console {
     private name: string;
-    Console: NodeJS.ConsoleConstructor;
+    Console: typeof Console.prototype.Console;
     /**
      * @param reference - A reference passed to logger (log4j style)
      * @param _options - Logger options
@@ -150,7 +150,6 @@ const addLoggerStream = (stream: WritableStream<any>, dest: LoggerOutputStream<a
 
     // Transform source stream into "objectMode" stream.
     if (!stream.objectMode) {
-        // eslint-disable-next-line no-extra-parens
         const colors = (stream as typeof stream & { hasColors?: Function }).hasColors?.();
 
         outputStream.output = new DataStream();

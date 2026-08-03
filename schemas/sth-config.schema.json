@@ -1,0 +1,317 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.scramjet.org/transform-hub/sth-config.schema.json",
+  "title": "Scramjet Transform Hub configuration",
+  "description": "Configuration file consumed by Scramjet Transform Hub through the --config CLI option. The schema follows the current STHConfiguration contract and documented defaults.",
+  "type": "object",
+  "additionalProperties": true,
+  "properties": {
+    "description": {
+      "type": "string",
+      "description": "Human-readable description of this Hub instance.",
+      "default": ""
+    },
+    "tags": {
+      "type": "array",
+      "description": "User-assigned tags for this Hub instance.",
+      "items": { "type": "string", "minLength": 1 },
+      "default": []
+    },
+    "customName": {
+      "type": "string",
+      "description": "Custom name used to identify this Hub instance.",
+      "default": ""
+    },
+    "logLevel": {
+      "$ref": "#/$defs/logLevel",
+      "description": "Logging verbosity for the Hub.",
+      "default": "TRACE"
+    },
+    "logColors": {
+      "type": "boolean",
+      "description": "Enable ANSI colors in logs.",
+      "default": true
+    },
+    "cpmUrl": {
+      "type": "string",
+      "description": "Scramjet Cloud Platform Manager URL.",
+      "default": ""
+    },
+    "cpmSslCaPath": {
+      "type": "string",
+      "description": "Path to a certificate authority file for verifying self-signed CPM certificates."
+    },
+    "cpmId": {
+      "type": "string",
+      "description": "Scramjet Cloud Platform Manager identifier.",
+      "default": ""
+    },
+    "cpm": {
+      "type": "object",
+      "description": "CPM reconnection settings.",
+      "additionalProperties": true,
+      "properties": {
+        "maxReconnections": {
+          "type": "number",
+          "description": "Maximum reconnection attempts. Use -1 for no limit where supported.",
+          "default": 100
+        },
+        "reconnectionDelay": {
+          "type": "number",
+          "description": "Delay between reconnection attempts in milliseconds.",
+          "default": 2000
+        }
+      }
+    },
+    "platform": {
+      "type": "object",
+      "description": "Scramjet Platform connection settings.",
+      "additionalProperties": true,
+      "properties": {
+        "apiKey": { "type": "string" },
+        "apiVersion": { "type": "string", "default": "v1" },
+        "api": { "type": "string", "description": "Platform API URL." },
+        "space": { "type": "string", "description": "Target Platform space." },
+        "hostType": { "type": "string", "enum": ["hub", "federation"] }
+      }
+    },
+    "debug": {
+      "type": "boolean",
+      "description": "Start runners with debugging enabled.",
+      "default": false
+    },
+    "docker": { "$ref": "#/$defs/dockerConfig" },
+    "host": { "$ref": "#/$defs/hostConfig" },
+    "instanceRequirements": { "$ref": "#/$defs/instanceRequirements" },
+    "safeOperationLimit": {
+      "type": "number",
+      "description": "Memory reserved by the Hub for safe operation, in megabytes.",
+      "default": 512
+    },
+    "identifyExisting": {
+      "type": "boolean",
+      "description": "Whether the Hub should identify existing stored Sequences on startup.",
+      "default": false
+    },
+    "runtimeAdapter": {
+      "type": "string",
+      "description": "Sequence and Instance adapter selection.",
+      "enum": ["detect", "process", "docker", "kubernetes"],
+      "default": "detect"
+    },
+    "kubernetes": { "$ref": "#/$defs/kubernetesConfig" },
+    "localStorageAdapter": {
+      "type": "string",
+      "description": "Local storage adapter used by the Hub.",
+      "enum": ["file", "couchdb"],
+      "default": "file"
+    },
+    "localStoragePath": {
+      "type": "string",
+      "description": "Storage path for the file-based local storage adapter.",
+      "default": ""
+    },
+    "sequencesRoot": {
+      "type": "string",
+      "description": "Directory where the process or Kubernetes adapter stores new Transform Sequences.",
+      "default": "~/.scramjet_sequences"
+    },
+    "instanceReconnect": {
+      "type": "boolean",
+      "description": "Signal runners to attempt to reconnect to the Hub.",
+      "default": false
+    },
+    "startupConfig": {
+      "type": "string",
+      "description": "Path to a host startup-config file containing a top-level sequences array.",
+      "default": ""
+    },
+    "killOnExit": {
+      "type": "boolean",
+      "description": "Kill all instances when the Hub exits.",
+      "default": false
+    },
+    "exitWithLastInstance": {
+      "type": "boolean",
+      "description": "Exit the Hub after the last instance ends.",
+      "default": false
+    },
+    "timings": { "$ref": "#/$defs/timings" },
+    "telemetry": { "$ref": "#/$defs/telemetry" },
+    "monitorgingServer": {
+      "type": "object",
+      "description": "Monitoring server settings. The property name follows the current TypeScript contract spelling.",
+      "additionalProperties": true,
+      "properties": {
+        "port": { "type": "number" },
+        "host": { "type": "string" },
+        "path": { "type": "string" }
+      }
+    },
+    "runnerEnvs": {
+      "type": "object",
+      "description": "Additional environment variables passed to runners.",
+      "additionalProperties": { "type": "string" }
+    },
+    "adapters": {
+      "type": "object",
+      "description": "Adapter-specific configuration keyed by adapter module name.",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": { "type": "string", "description": "Adapter module name." }
+        },
+        "additionalProperties": true
+      },
+      "default": {}
+    },
+    "couchdb": { "$ref": "#/$defs/couchdb" },
+    "strictPlatformConnection": {
+      "type": "boolean",
+      "description": "Strictly check Platform connection.",
+      "default": false
+    }
+  },
+  "$defs": {
+    "logLevel": {
+      "type": "string",
+      "enum": ["ERROR", "WARN", "INFO", "DEBUG", "FATAL", "TRACE", "error", "warn", "info", "debug", "fatal", "trace"]
+    },
+    "hostConfig": {
+      "type": "object",
+      "description": "Host API and instance server settings.",
+      "additionalProperties": true,
+      "properties": {
+        "hostname": { "type": "string", "description": "Interface address for the API server.", "default": "::" },
+        "id": { "type": "string", "description": "Custom host identifier." },
+        "port": { "type": "number", "description": "API server port.", "default": 8000 },
+        "apiBase": { "type": "string", "description": "Base path for Host API endpoints.", "default": "/api/v1" },
+        "instancesServerPort": { "type": "number", "description": "Port used by connecting Instances.", "default": 8001 },
+        "infoFilePath": { "type": "string", "description": "Path where host information is written.", "default": "/tmp/sth-id.json" },
+        "federationControl": { "type": "boolean", "description": "Enable federation control.", "default": false }
+      }
+    },
+    "instanceRequirements": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "freeMem": { "type": "number", "description": "Required free memory in megabytes.", "default": 256 },
+        "cpuLoad": { "type": "number", "description": "Required free CPU percentage.", "default": 10 },
+        "freeSpace": { "type": "number", "description": "Required free disk space in megabytes.", "default": 128 }
+      }
+    },
+    "dockerConfig": {
+      "type": "object",
+      "description": "Docker adapter configuration.",
+      "additionalProperties": true,
+      "properties": {
+        "prerunner": { "$ref": "#/$defs/containerConfig" },
+        "runner": {
+          "allOf": [{ "$ref": "#/$defs/containerConfig" }],
+          "properties": {
+            "image": { "type": "string", "default": "" },
+            "maxMem": { "type": "number", "default": 512 },
+            "hostIp": { "type": "string", "default": "0.0.0.0" },
+            "exposePortsRange": {
+              "type": "array",
+              "description": "Inclusive host port range exposed for runner containers.",
+              "prefixItems": [{ "type": "number" }, { "type": "number" }],
+              "minItems": 2,
+              "maxItems": 2,
+              "default": [30000, 32767]
+            }
+          }
+        },
+        "runnerImages": { "$ref": "#/$defs/runnerImages" }
+      }
+    },
+    "containerConfig": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "image": { "type": "string", "description": "Docker image to use.", "default": "" },
+        "maxMem": { "type": "number", "description": "Maximum memory in megabytes." }
+      }
+    },
+    "runnerImages": {
+      "type": "object",
+      "description": "Runner images keyed by runtime.",
+      "additionalProperties": false,
+      "properties": {
+        "python3": { "type": "string", "default": "" },
+        "node": { "type": "string", "default": "" },
+        "bun": { "type": "string", "default": "" }
+      }
+    },
+    "kubernetesConfig": {
+      "type": "object",
+      "description": "Kubernetes adapter configuration.",
+      "additionalProperties": true,
+      "properties": {
+        "namespace": { "type": "string", "default": "default" },
+        "quotaName": { "type": "string" },
+        "defaultPullPolicy": { "type": "string", "enum": ["IfNotPresent", "Always", "Never"] },
+        "authConfigPath": { "type": "string" },
+        "sthPodHost": { "type": "string" },
+        "runnerImages": { "$ref": "#/$defs/runnerImages" },
+        "sequencesRoot": { "type": "string", "default": "~/.scramjet_sequences" },
+        "timeout": { "type": "number", "default": 0 },
+        "runnerResourcesRequestsMemory": { "type": "string" },
+        "runnerResourcesRequestsCpu": { "type": "string" },
+        "runnerResourcesLimitsMemory": { "type": "string" },
+        "runnerResourcesLimitsCpu": { "type": "string" }
+      }
+    },
+    "timings": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "heartBeatInterval": { "type": "number", "description": "Heartbeat interval in milliseconds.", "default": 10000 },
+        "instanceAdapterExitDelay": { "type": "number", "description": "Delay after runner exit during which Instance API remains available, in milliseconds.", "default": 9000 },
+        "instanceLifetimeExtensionDelay": { "type": "number", "description": "Delay before CSIController emits end, in milliseconds.", "default": 180000 },
+        "startupTimeout": { "type": "number", "minimum": 1, "description": "Maximum time to wait for a configured startup entry, in milliseconds.", "default": 30000 }
+      }
+    },
+    "telemetry": {
+      "type": "object",
+      "description": "Telemetry settings.",
+      "additionalProperties": true,
+      "properties": {
+        "status": { "type": "boolean", "default": false },
+        "adapter": { "type": "string", "default": "loki" },
+        "environment": { "type": "string", "default": "not-set" },
+        "loki": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "host": { "type": "string", "default": "https://analytics.scramjet.org/sth-usage" },
+            "replaceTimestamp": { "type": "boolean", "default": true },
+            "labels": { "type": "object", "additionalProperties": { "type": "string" } }
+          }
+        }
+      }
+    },
+    "couchdb": {
+      "type": "object",
+      "description": "CouchDB local storage adapter settings.",
+      "additionalProperties": true,
+      "properties": {
+        "url": { "type": "string", "default": "http://localhost:5984" },
+        "dbName": { "type": "string", "default": "localstorage" },
+        "user": { "type": "string", "default": "" },
+        "pass": { "type": "string", "default": "" }
+      }
+    }
+  },
+  "examples": [
+    {
+      "$schema": "./schemas/sth-config.schema.json",
+      "runtimeAdapter": "process",
+      "host": { "hostname": "0.0.0.0", "port": 8000 },
+      "sequencesRoot": "./dist/__sequences",
+      "identifyExisting": true,
+      "startupConfig": "./startup-config.json"
+    }
+  ]
+}

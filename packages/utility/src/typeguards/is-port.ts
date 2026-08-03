@@ -1,4 +1,4 @@
-import { Port } from "@scramjet/types";
+import { Port } from "@scramjet/runtime-types";
 
 export const isPort = (port: number | string): port is Port => {
     if (typeof port === "string") {

@@ -1,0 +1,155 @@
+---
+id: manager-csr-enrollment
+slug: /manager/csr-enrollment
+title: Controlled CSR enrollment
+---
+
+# Controlled CSR enrollment
+
+> **Warning — not production PKI:** CSR enrollment is a controlled-deployment bootstrap helper, not a general-purpose production PKI. It has no HSM/KMS integration, highly available CA service, replicated grant/authorization store, automated certificate rollover, or secure certificate-delivery channel. It does not provide CRL or OCSP. Use an established PKI for production certificate issuance and lifecycle management.
+
+CSR enrollment provisions a Hub client certificate from a Manager-held CA after a local operator explicitly approves a Hub-generated CSR. It is disabled by default and should be enabled only long enough to provision the required identities.
+
+## Public surfaces
+
+The helper is exported by the `@scramjet/host`, `@scramjet/manager`, `@scramjet/runtime-types`, and `@scramjet/config` packages.
+
+The `@scramjet/sth` package publishes the developer/homelab binary `sth-csr-enrollment` for generation and redemption. The `@scramjet/manager` package publishes the separate `manager-csr-enrollment` binary for local approval. Neither binary adds a remote CSR-approval endpoint.
+
+### Runnable homelab workflow
+
+Generate a Hub-local key and CSR, writing only the public request envelope to the request file:
+
+```bash
+sth-csr-enrollment generate \
+  --identity-dir "$HOME/.scramjet/hubs/hub-test" \
+  --hub-id hub-test \
+  --output "$HOME/.scramjet/csr/hub-test.request.json"
+```
+
+The private key remains at `identity-dir/client.key.pem`; the request file does not contain it. The command prints only the request-file path.
+
+On the Manager host, configure `csrEnrollment` with `enabled: true`, the CA files, a private storage directory, and the exact local `operatorApproval`. Store the approval in a protected file and approve locally:
+
+```bash
+chmod 600 "$HOME/.scramjet/secrets/csr-operator-approval"
+manager-csr-enrollment approve \
+  --manager-config ./manager.json \
+  --request "$HOME/.scramjet/csr/hub-test.request.json" \
+  --operator-approval-file "$HOME/.scramjet/secrets/csr-operator-approval" \
+  --grant-output "$HOME/.scramjet/csr/hub-test.grant.json"
+```
+
+The grant file is a protected one-time bearer secret. Approval output prints only its path. Do not paste the grant into a shell command, log, JSON redemption body, or issue tracker.
+
+Redeem directly against the Manager HTTPS endpoint and install the certificate atomically on the Hub:
+
+```bash
+sth-csr-enrollment redeem \
+  --identity-dir "$HOME/.scramjet/hubs/hub-test" \
+  --request "$HOME/.scramjet/csr/hub-test.request.json" \
+  --grant-file "$HOME/.scramjet/csr/hub-test.grant.json" \
+  --manager-url https://manager.example.test:2443 \
+  --ca-file ./manager-enrollment-ca.pem \
+  --ca-fingerprint 'AA:BB:CC:...'
+```
+
+The redeem command requires HTTPS, sends the grant only as an `Authorization: Bearer` header, pins the supplied CA fingerprint, and prints only the installed certificate path. Replace the example fingerprint with the complete SHA-256 fingerprint; do not use the abbreviated placeholder literally. The CA certificate and fingerprint must be delivered to the Hub through an authenticated deployment channel.
+
+### Host API
+
+```ts
+createHubCsrEnrollmentRequest(
+  identityDir: string,
+  hubId: string,
+  sans?: readonly string[],
+): CsrEnrollmentRequest
+
+installHubEnrollmentCertificate(
+  identityDir: string,
+  certificatePem: string,
+  hubId: string,
+  trust: {
+    managerCaPem: string;
+    managerCaFingerprint256: string;
+    maxLeafValidityMs?: number;
+  },
+): void
+```
+
+`createHubCsrEnrollmentRequest` generates and retains the Hub-local private key and CSR. The default and only accepted SAN is the Hub ID. `installHubEnrollmentCertificate` requires the pinned Manager CA certificate and SHA-256 fingerprint, verifies the issuing chain, validity, key match, CA=false, exact SAN, and client-auth-only policy before writing the certificate.
+
+There is no public Host convenience method that silently discovers trust or sends a grant. The enrollment redemption request must be made over direct HTTPS by the deployment integration, with the Manager CA pinned. The bearer grant belongs in the HTTPS `Authorization: Bearer <grant>` header, never in the JSON body.
+
+### Manager API
+
+```ts
+new CsrEnrollmentAuthority({
+  enabled: true,
+  storageDir,
+  caKeyFile,
+  caCertFile,
+  operatorApproval,
+  grantTtlMs?,
+  leafValidityMs?,
+})
+
+authority.approve(request, operatorApproval)
+authority.redeem(request, grant)
+createCsrEnrollmentHttpsServer(authority, { key, cert })
+authority.revokeClientFingerprint(fingerprint256)
+```
+
+Approval is a local programmatic operation. The exact configured operator approval is mandatory; there is no default approval and no automatic approval endpoint. The HTTPS server exposes `POST /api/v2/enrollment/redeem`, requires a single Bearer token, rejects a `grant` property in the JSON body, and returns generic external errors.
+
+The normal Manager registration route remains the existing Manager API route (normally `POST /api/v1/sth`, depending on `apiBase`). When CSR enrollment is enabled, registration authorization uses the verified TLS peer certificate, not a Hub-supplied fingerprint. The peer fingerprint and its single DNS SAN must match the persisted issued Hub identity and the claimed registration ID.
+
+## Configuration and CLI shape
+
+The public configuration schema is `csrEnrollment`. The exported option descriptors provide these names and environment mappings:
+
+| Setting | Environment | Meaning |
+|---|---|---|
+| `csrEnrollment.enabled` / `--csr-enrollment-enabled` | `SCRAMJET_CSR_ENROLLMENT_ENABLED` | Explicit opt-in; default `false` |
+| `csrEnrollment.operatorApproval` / `--csr-enrollment-operator-approval` | `SCRAMJET_CSR_ENROLLMENT_OPERATOR_APPROVAL` | Required local operator approval; secret |
+| `csrEnrollment.storageDir` / `--csr-enrollment-storage-dir` | `SCRAMJET_CSR_ENROLLMENT_STORAGE_DIR` | Private grant/issuance directory |
+| `csrEnrollment.caKeyFile` / `--csr-enrollment-ca-key-file` | `SCRAMJET_CSR_ENROLLMENT_CA_KEY_FILE` | Manager CA private key; secret |
+| `csrEnrollment.caCertFile` / `--csr-enrollment-ca-cert-file` | `SCRAMJET_CSR_ENROLLMENT_CA_CERT_FILE` | Manager CA certificate |
+
+`redemptionPath` is fixed to `/api/v2/enrollment/redeem`. The standalone Manager runtime remains programmatic, while `manager-csr-enrollment approve` provides the dedicated local approval workflow. Option descriptors are available through `@scramjet/config` for the surrounding configuration surfaces. Secret and private-path values are masked in Manager public configuration and logs.
+
+When enabled, `storageDir`, `caKeyFile`, `caCertFile`, and `operatorApproval` are required. The Manager validates the CA certificate and matching private key, CA constraints, key strength, and current validity during authority startup. The leaf certificate validity is capped by both the configured limit and the remaining CA lifetime.
+
+## Enrollment flow
+
+1. The Hub creates a local key and CSR with `createHubCsrEnrollmentRequest`.
+2. An operator transfers the CSR request to the Manager-side approval integration and supplies the exact local operator approval.
+3. The Manager validates the PKCS#10 structure and signature, subject CN, exact DNS SAN, clientAuth-only EKU, allowed public-key algorithm/strength, and requested extensions.
+4. The Manager persists a one-time grant record and returns the short-lived bearer grant to the operator integration.
+5. The deployment integration calls the Manager redemption endpoint directly over HTTPS. The TLS server certificate must be validated normally, and the Manager CA used for Hub enrollment must be pinned by the Hub.
+6. The Manager issues a CA-signed, CA=false client certificate, persists its fingerprint and issued Hub ID, and atomically records the consumed grant.
+7. The Hub verifies the certificate against the pinned Manager CA and local key, then atomically installs the certificate beside the Hub-local key.
+8. The Hub connects/registers using TLS. Manager registration derives the peer fingerprint and SAN from the server-side TLS connection context.
+
+## Trust distribution and transport choices
+
+The Manager CA certificate and its expected SHA-256 fingerprint are public trust material, but they must be distributed to the Hub through an authenticated deployment channel. The helper does not distribute the CA, authenticate an operator, or provide a secure delivery mechanism. Do not copy the CA private key to a Hub.
+
+TLS protects the connection and mTLS can require the peer to present a certificate. The persisted fingerprint authorization is an additional Manager application-level registration control; it is not a replacement for TLS or mTLS. A missing TLS peer certificate, unknown issued fingerprint, revoked fingerprint, SAN mismatch, or Hub-ID mismatch is rejected.
+
+## Persistence, permissions, and secrets
+
+- Hub identity directories are created with mode `0700`.
+- Hub private key, CSR, and certificate files are written with mode `0600`; existing key/CSR state is not silently overwritten.
+- Manager enrollment storage is created with mode `0700`.
+- CA private-key permissions must not grant group/world access; CA files and grant state must not be symlinks.
+- Grant records use a SHA-256 hash of the bearer token as the filename. Issuance records use a SHA-256 hash of the CSR. Temporary files are private and replaced atomically.
+- Bearer grants, operator approval, CA private-key contents, and private key material must not be logged, placed in public configuration, or included in JSON redemption bodies.
+
+## Failure, recovery, rotation, and revocation
+
+Redemption is transactionally guarded by a per-grant lock. A stale lock older than five minutes can be recovered. If issuance completed before a process interruption, a persisted issued response allows a retry to complete the grant state consistently and return the same certificate rather than issuing a second one. Unknown, expired, consumed, mismatched, or malformed grants fail without exposing sensitive details.
+
+Revoking an issued fingerprint persists a local revoked state and blocks subsequent registrations for that fingerprint. Rotation is manual: provision a new Hub identity/certificate, deploy the new certificate and pinned trust as appropriate, update the Manager authorization state, validate a new connection, and revoke the old fingerprint. There is no automated rollover, CRL, or OCSP. Existing TLS/verser2 sessions are not retroactively terminated by revocation; reconnect or explicitly close the active session through the surrounding deployment/control-plane mechanisms.
+
+The grant store and authorization records are local to the Manager instance. There is no built-in HA replication, conflict resolution, backup protocol, or multi-Manager consistency model. Plan recovery and rotation around those limitations.

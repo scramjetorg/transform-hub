@@ -1,4 +1,4 @@
-import { IdString } from "@scramjet/types";
+import { IdString } from "@scramjet/runtime-types";
 
 /**
  * Basic pattern used in modules id checks

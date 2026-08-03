@@ -10,10 +10,12 @@ export enum CPMMessageCode {
     SEQUENCE = 7006,
 
     TOPIC = 7007,
+    EVENT = 7008,
 
     CONFIRM_MSG = 8000,
 
     KEY_REVOKED = 9001,
     LIMIT_EXCEEDED = 9002,
-    ID_DROP = 9003
+    ID_DROP = 9003,
+    DO_RECONNECT = 9004,
 }

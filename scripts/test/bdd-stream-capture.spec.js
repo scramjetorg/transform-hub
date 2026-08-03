@@ -1,0 +1,56 @@
+const test = require("ava");
+const { PassThrough } = require("stream");
+const { collectStreamUntilEndOrSignal } = require("../../bdd/lib/stream-capture.js");
+
+test("collectStreamUntilEndOrSignal preserves bytes when the stream never ends", async t => {
+
+	const stream = new PassThrough();
+	let complete;
+	const completion = new Promise(resolve => { complete = resolve; });
+	const captured = collectStreamUntilEndOrSignal(stream, completion, 1);
+
+	stream.write("Cleaning up... ");
+	stream.write("Cleanup done.\n");
+	complete();
+
+	t.is(await captured, "Cleaning up... Cleanup done.\n");
+});
+
+test("collectStreamUntilEndOrSignal resolves normally on stream end", async t => {
+	const stream = new PassThrough();
+	const completion = new Promise(() => undefined);
+	const captured = collectStreamUntilEndOrSignal(stream, completion);
+
+	stream.end("complete\n");
+
+	t.is(await captured, "complete\n");
+	t.true(stream.destroyed);
+});
+
+test("collectStreamUntilEndOrSignal releases the stream after a signal", async t => {
+	const stream = new PassThrough();
+	let complete;
+	const captured = collectStreamUntilEndOrSignal(stream, new Promise(resolve => { complete = resolve; }), 1);
+	stream.write(Buffer.alloc(1024, 1));
+	complete();
+
+	t.is((await captured).length, 1024);
+	t.false(stream.destroyed);
+	t.is(stream.listenerCount("data"), 0);
+	t.is(stream.listenerCount("end"), 0);
+	t.is(stream.listenerCount("error"), 1);
+});
+
+test("a buffered response has one stream owner", async t => {
+
+	const stream = new PassThrough();
+	let complete;
+	const buffered = collectStreamUntilEndOrSignal(stream, new Promise(resolve => { complete = resolve; }), 1);
+
+	stream.write("shared response");
+	complete();
+
+	t.is(await buffered, "shared response");
+	t.is(await buffered, "shared response");
+	t.is(stream.listenerCount("data"), 0);
+});

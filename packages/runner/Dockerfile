@@ -1,4 +1,4 @@
-FROM node:18-bullseye-slim AS target
+FROM node:22-bookworm-slim AS target
 
 ENV PACKAGE_DIR=/package \
     HUB_DIR=/opt/transform-hub \
@@ -14,19 +14,22 @@ RUN apt-get update \
     && apt-get install -y gosu tini --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
-FROM node:18-bullseye-slim AS builder
+FROM node:22-bookworm-slim AS builder
 
 WORKDIR /app/
 
-COPY ./dist/sth-config ./dist/sth-config
-COPY ./dist/api-client ./dist/api-client
-COPY ./dist/client-utils ./dist/client-utils
-COPY ./dist/utility ./dist/utility
-COPY ./dist/symbols ./dist/symbols
-COPY ./dist/obj-logger ./dist/obj-logger
-COPY ./dist/model ./dist/model
-COPY ./dist/runner ./dist/runner
-COPY ./dist/package.json ./dist/package.json
+COPY ./dist/docker-runner/frame-stream ./dist/frame-stream
+COPY ./dist/docker-runner/api-client ./dist/api-client
+COPY ./dist/docker-runner/client-utils ./dist/client-utils
+COPY ./dist/docker-runner/utility ./dist/utility
+COPY ./dist/docker-runner/symbols ./dist/symbols
+COPY ./dist/docker-runner/obj-logger ./dist/obj-logger
+COPY ./dist/docker-runner/model ./dist/model
+COPY ./dist/docker-runner/runner ./dist/runner
+COPY ./dist/docker-runner/runner-node ./dist/runner-node
+COPY ./dist/docker-runner/runner-bun ./dist/runner-bun
+COPY ./dist/docker-runner/runner-python ./dist/runner-python
+COPY ./dist/docker-runner/api-server ./dist/api-server
 
 FROM target
 
@@ -47,4 +50,3 @@ RUN mkdir /pipes \
 
 ENTRYPOINT [ "/usr/bin/tini", "--", "docker-entrypoint.sh" ]
 CMD [ "start-runner" ]
-

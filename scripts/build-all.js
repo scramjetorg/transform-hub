@@ -1,13 +1,14 @@
 #!/usr/bin/env node
 
-"use strict";
+
 
 const {
     runCommand, getPackagesInWorkspace,
-    makeTypescriptSolutionForPackageList, findClosestPackageJSONLocation
+    makeTypescriptSolutionForPackageList, findClosestPackageJSONLocation,
+    findClosestWorkspacePackageJSONLocation
 } = require("./lib/build-utils");
 const minimist = require("minimist");
-const { join, resolve, relative } = require("path");
+const { join, resolve, relative, dirname } = require("path");
 
 const { DataStream } = require("scramjet");
 const PrePack = require("./lib/pre-pack");
@@ -16,6 +17,7 @@ const { getDeepDeps } = require("./lib/get-deep-deps");
 const { cwd, env } = require("process");
 const { getDepTypes } = require("./lib/opts");
 const { existsSync } = require("fs");
+const { isIncluded } = require("./lib/release-boundary");
 
 const opts = minimist(process.argv.slice(2), {
     alias: {
@@ -85,31 +87,53 @@ const BUILD_NAME = "build";
 
 console.time(BUILD_NAME);
 
-// eslint-disable-next-line complexity
 (async function() {
     let exitcode;
 
-    const pkg = findClosestPackageJSONLocation(opts.root);
-    const allPackages = getPackagesInWorkspace(pkg, [opts.workspace].flat().filter(x => x));
+    const workspacePkg = findClosestWorkspacePackageJSONLocation(opts.root);
+    const workspaceRoot = dirname(workspacePkg);
+    const wantsWorkspaceSelection = !!opts.workspace || !!opts.dependencies;
+    const pkg = wantsWorkspaceSelection
+        ? workspacePkg
+        : findClosestPackageJSONLocation(opts.root);
+
+    opts.root = workspaceRoot;
+
+    const workspaceFilter = [opts.workspace].flat().filter(x => x);
+    const allPackages = getPackagesInWorkspace(pkg, workspaceFilter);
+    const packageWorkspaceDeps = !wantsWorkspaceSelection && pkg !== workspacePkg
+        ? getPackagesInWorkspace(workspacePkg)
+        : allPackages;
     let packages = allPackages;
+
+    if (!wantsWorkspaceSelection && pkg !== workspacePkg) {
+        packages = (await getDeepDeps(opts.root, getDepTypes({ a: true }), [relative(opts.root, dirname(pkg))], packageWorkspaceDeps))
+            .map((pkgDir) => resolve(opts.root, pkgDir));
+    }
 
     if (opts.dependencies) {
         const depTypeObject = opts["dep-types"] ? Object.fromEntries([...opts["dep-types"]].map(k => [k, true])) : { a: true };
         const depTypes = getDepTypes(depTypeObject);
 
-        packages = await getDeepDeps(opts.root, depTypes, [opts.dependencies].flat(), packages);
+        const dependencyInputs = [opts.dependencies].flat()
+            .map((input) => input === "."
+                ? relative(opts.root, dirname(findClosestPackageJSONLocation(cwd())))
+                : input);
+
+        packages = (await getDeepDeps(opts.root, depTypes, dependencyInputs, packages))
+            .map((pkgDir) => resolve(opts.root, pkgDir));
         // potentially is there reason not to build all dependency types?
     }
 
     if (opts.list) {
-        console.log(packages.join("\n"));
+        console.log(packages.map((pkgDir) => relative(workspaceRoot, pkgDir) || ".").join("\n"));
         process.exit();
     }
 
     if (opts.build) {
         console.timeLog(BUILD_NAME, "Finding packages to build typescript.");
 
-        const configName = opts["ts-config"] || "tsconfig.json";
+        const configName = opts["ts-config"] || opts["config-name"] || "tsconfig.json";
         const tsPackages = packages
             .filter((pkgDir) => existsSync(join(pkgDir, configName)));
 
@@ -149,7 +173,7 @@ console.time(BUILD_NAME);
         await DataStream.from(prepacks)
             .do(pack => { pack.startTs = Date.now(); })
             .do(pack => pack.build())
-            .do(pack => console.error(`${pack.currDir} done in ${Date.now() - pack.startTs} millis`))
+            .do(pack => console.error(`*** ${pack.currDir} -> ${pack.rootDistPackPath} done in ${Date.now() - pack.startTs} millis`))
             .run()
             .catch(async (e) => {
                 process.once("beforeExit", () => {
@@ -163,7 +187,12 @@ console.time(BUILD_NAME);
             console.timeLog(BUILD_NAME, "Done, setting up workspace...");
             const contents = {
                 private: true,
-                workspaces: prepacks.map(x => relative(outDir, x.rootDistPackPath))
+                // Legacy packages remain available in dist, but are excluded from
+                // npm workspace installation because their preserved 1.x ranges
+                // cannot resolve against the aligned 2.0.0 package set.
+                workspaces: prepacks
+                    .filter(pack => isIncluded(pack.currPackageJson.name))
+                    .map(pack => relative(outDir, pack.rootDistPackPath))
             };
 
             await writeFile(join(outDir, "package.json"), JSON.stringify(contents, null, 2));
@@ -172,7 +201,9 @@ console.time(BUILD_NAME);
         if (opts.install) {
             console.timeLog(BUILD_NAME, `Done, installing packages in ${outDir}...`);
 
-            const cmd = `cd ${outDir} && pwd >&2 && npx npm@8 install -q -ws --no-audit`;
+            const rootNpmrc = join(opts.root, ".npmrc");
+            const npmUserconfig = existsSync(rootNpmrc) ? ` --userconfig ${JSON.stringify(rootNpmrc)}` : "";
+            const cmd = `cd ${JSON.stringify(outDir)} && pwd >&2 && npx npm@8 install -q -ws --no-audit${npmUserconfig}`;
 
             await runCommand(cmd, opts.verbose);
         }

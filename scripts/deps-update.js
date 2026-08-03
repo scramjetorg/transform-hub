@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-/* eslint-disable complexity */
 
 const semver = require("semver");
 const { resolve, relative, dirname, join } = require("path");
@@ -87,7 +86,6 @@ if (opts.help || opts["long-help"]) {
     // Create tmp working directory.
     try {
         await mkdir(outDir);
-    // eslint-disable-next-line no-empty
     } catch {}
 
     console.log("Reading packages...");
@@ -168,7 +166,7 @@ if (opts.help || opts["long-help"]) {
                     if (dep in localVersions) continue;
 
                     const [name, version] = dep;
-                    const newVersion = version.replace(/\d+\.\d+\.\d+[^\s]*/, lockFile.dependencies[dep[0]].version);
+                    const newVersion = version.replace(/\d+\.\d+\.\d+[^\s]*/, lockFile.packages[dep[0]].version);
 
                     newDeps[depType][name] = newVersion;
                 }

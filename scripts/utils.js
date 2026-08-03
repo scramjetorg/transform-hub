@@ -1,4 +1,4 @@
-"use strict";
+
 
 const merge = (target, source = {}, strict = false) => Object.keys(source)
     .forEach((key) => {

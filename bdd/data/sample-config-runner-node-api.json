@@ -1,0 +1,9 @@
+{
+  "sequences": [
+    {
+      "id": "api-streaming",
+      "sequenceName": "api-streaming",
+      "instanceName": "api-streaming-instance"
+    }
+  ]
+}

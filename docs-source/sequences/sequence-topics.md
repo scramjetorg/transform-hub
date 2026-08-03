@@ -1,0 +1,198 @@
+---
+id: sequences-topics
+slug: /sequences/topics
+title: Topics, data routing, and sequence metadata
+---
+
+# Topics, data routing, and sequence metadata
+
+## Topics
+
+Topics are named live data channels that sequences can publish to or subscribe from independently of the main input/output stream. They enable decoupled data flows between sequences and external systems, but they are not a durable queue: topics are not persisted and cannot be replayed after a disconnect.
+
+Topic operations have a Hub or Space scope, a name/origin, and a declared content type. Content type must be preserved by publishers and consumers. The route applies backpressure where the active stream supports it; a connection loss is reported as a disconnect error and reconnect does not recover missed messages. There is no exactly-once guarantee.
+
+The v2 route tree is canonical. Hub topic operations use `/api/v2/topics`; Space operations are routed through the Manager/Space prefix, for example `/api/v1/cpm/api/v2/topics` in the current compatibility bridge. The v1 routes remain supported compatibility paths, not a separate topic store.
+
+### Creating a topic
+
+Topics are created through the Hub API or programmatically:
+
+```
+POST /api/v2/topics
+Content-Type: application/json
+
+{"topic":{"name":"sensor-readings","contentType":"application/x-ndjson"}}
+```
+
+### Publishing to a topic
+
+Sequences can send data to a topic using the `AppContext` hub client:
+
+```typescript
+import { Readable } from "node:stream";
+import type { AppConfig, SequenceAppContext } from "@scramjet/sequence-types";
+import type { HubClient } from "@scramjet/rest-api2";
+
+type Context = SequenceAppContext<AppConfig, unknown, HubClient, unknown>;
+
+async function publish(this: Context) {
+  await this.hubClient().createTopic.post({
+  body: { topic: { name: "sensor-readings", contentType: "application/x-ndjson" } }
+  });
+  await this.hubClient().topicWrite.post({
+  params: { name: "sensor-readings" },
+  headers: { "content-type": "application/x-ndjson" },
+  body: Readable.from([Buffer.from('{"sensor":"temperature","value":22.5}\n')])
+  });
+}
+```
+
+In Python:
+
+```python
+await context.hub.post(
+    "/topics/sensor-readings/stream",
+    headers={"content-type": "application/json"},
+    body=b'{"sensor":"temperature","value":22.5,"unit":"celsius"}\n',
+)
+```
+
+### Subscribing to a topic
+
+A sequence can receive topic data as its input by specifying the topic name when starting the sequence instance:
+
+```
+POST /api/v1/sequence/:id/start
+Content-Type: application/json
+
+{
+  "topic": "sensor-readings"
+}
+```
+
+When started with a topic subscription, the sequence input stream contains the topic messages.
+
+For the installed CLI workflow, create and route the topic with the existing commands and start
+the instance with input/output topic options:
+
+```bash
+si topic create sensor-readings --content-type application/x-ndjson
+si sequence start <sequence-id> \
+  --input-topic sensor-readings \
+  --output-topic normalized-readings
+printf '{"sensor":"temperature","value":22.5}\n' | si topic send sensor-readings
+si topic get normalized-readings
+```
+
+`--input-topic` feeds the instance input stream and `--output-topic` publishes its output stream.
+These are startup routing options, not package metadata helpers. A sequence that publishes an
+independent topic uses the existing `hubClient().topicWrite.post()` operation shown above; do not
+invent `consumes` or `produces` AppContext methods.
+
+### Topic metadata
+
+Topics have associated metadata:
+
+- **`name`**: Unique topic identifier within the Hub scope
+- **`contentType`**: MIME type for the topic data
+- **`created`**: ISO timestamp of creation
+
+The v2 Hub route is the canonical topic contract. `hubClient().topicWrite.post()` is the typed Node Hub-scoped stream operation. Python exposes the wrapper's scoped `context.hub.post()` method; it does not expose the Node `@scramjet/rest-api2` fluent client or a generic Python REST SDK. Existing v1 compatibility paths remain available. A same-named topic in another Hub or Space is not automatically the same topic.
+
+## Sequence metadata
+
+Each sequence package includes metadata that the platform uses for routing, runtime selection, and configuration. The metadata lives in the sequence's `package.json`.
+
+### Required fields
+
+```json
+{
+  "name": "@my-org/my-sequence",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "engines": {
+    "node": ">=18"
+  }
+}
+```
+
+- **`main`**: Entry point for the sequence (JS/TS/Python file)
+- **`engines`**: Declares required runtimes; at least one engine key must match a supported runtime
+
+### Optional fields
+
+```json
+{
+  "scramjet": {
+    "sequence": {
+      "type": "python",
+      "entrypoint": "main",
+      "args": ["--flag"],
+      "config": {
+        "inputContentType": "application/x-ndjson",
+        "outputContentType": "application/x-ndjson"
+      }
+    }
+  }
+}
+```
+
+### Auto-detected metadata
+
+The platform infers runtime kind from engine keys using this priority (defined in `selectRuntimeKind()` from `@scramjet/symbols`):
+
+1. `engines.node` → runtime `node`
+2. `engines.bun` → runtime `bun`
+3. `engines.python3` → runtime `python3`
+
+If multiple engines are declared, the first matching supported runtime wins.
+
+### Function introspection
+
+The runner auto-detects sequence function metadata:
+
+- Number of functions in the exported array
+- Function parameter names
+- Return type hints (where available)
+
+This information is sent to the host via `DESCRIBE` frames and is available through the API.
+
+## Data routing
+
+Data flows through sequences along these paths:
+
+```
+External source
+      │
+      ▼
+  [Topic] ──▶ Sequence input stream
+                  │
+                  ▼
+            [AppContext]
+                  │
+                  ▼
+            Functions (chain)
+                  │
+                  ▼
+            Output stream ──▶ Host / API consumer
+```
+
+### Input sources
+
+A sequence input can originate from:
+
+1. An **API call** — data sent when the instance is started
+2. A **topic subscription** — data routed from a named topic
+3. A **preceding sequence** — output of one sequence chained to another
+4. **STDIN** — in process-adapter mode
+
+### Output destinations
+
+Sequence output can go to:
+
+1. **API response** — retrieved by the caller
+2. **Topic publication** — explicitly sent via `hubClient().topicWrite.post()` (or `si topic send`)
+3. **Another sequence** — via topic subscription chains
+
+For installed execution, use the [Customer-site topic probe pipeline Process Adapter workflow](../examples/customer-site-topic-probe-pipeline.md#installed-process-adapter-workflow), then refer to the [canonical installed Process Adapter example baseline](setup-and-run.md#installed-process-adapter-example-baseline). The example's maintainer checks are optional and do not replace the installed workflow.

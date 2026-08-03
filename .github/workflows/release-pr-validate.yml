@@ -1,0 +1,154 @@
+name: Release PR validation
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-pr-validation-${{ github.event.pull_request.number }}
+  # A publication run must never be cancelled partway through its package set.
+  cancel-in-progress: false
+
+jobs:
+  package-validation:
+    name: Release PR / package validation
+    if: ${{ github.event.pull_request.base.ref == 'main' && github.event.pull_request.head.ref == 'devel' && github.event.pull_request.head.repo.full_name == github.repository }}
+    permissions:
+      contents: read
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - uses: ./.github/actions/setup-workspace
+        with:
+          cache: "false"
+
+      - name: Release PR / build packages
+        run: npm run build:packages
+
+      - name: Release PR / package tests
+        run: npm run test:packages-no-concurrent
+
+  prerelease-publication:
+    name: Release PR / prerelease publication
+    if: ${{ github.event.pull_request.base.ref == 'main' && github.event.pull_request.head.ref == 'devel' && github.event.pull_request.head.repo.full_name == github.repository }}
+    needs: [package-validation]
+    outputs:
+      prerelease-manifest: ${{ steps.prerelease_manifest.outputs.manifest }}
+      prerelease-manifest-sha256: ${{ steps.prerelease_manifest.outputs.checksum }}
+      prereleases-published: ${{ steps.prerelease_publish.outputs.published }}
+    permissions:
+      contents: read
+      packages: write
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - uses: ./.github/actions/setup-workspace
+        with:
+          cache: "false"
+
+      - name: Release PR / build publishable packages
+        run: FLAT_PACKAGES=true MAKE_PUBLIC=true NO_INSTALL=true node scripts/build-all.js -w release --ts-config tsconfig.build.json
+
+      - id: prerelease_manifest
+        name: Release PR / create prerelease manifest
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PRERELEASE_ATTEMPT: r${{ github.run_id }}.a${{ github.run_attempt }}
+        run: |
+          node scripts/release-prerelease.js plan --pr "$PR_NUMBER" --sha "$HEAD_SHA" --attempt "$PRERELEASE_ATTEMPT" --packages-dir dist --output "$RUNNER_TEMP/release-prerelease-manifest.json"
+          echo "manifest=$(base64 -w 0 "$RUNNER_TEMP/release-prerelease-manifest.json")" >> "$GITHUB_OUTPUT"
+          echo "checksum=$(node -p "require(process.env.RUNNER_TEMP + '/release-prerelease-manifest.json').checksum")" >> "$GITHUB_OUTPUT"
+
+      - id: prerelease_publish
+        name: Release PR / publish prereleases to GitHub Packages
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.SCRAMJET_RELEASE_PRERELEASE_PACKAGES_TOKEN }}
+          PRERELEASE_PUBLISH_ENABLED: ${{ vars.SCRAMJET_RELEASE_PRERELEASE_PUBLISH }}
+          SCRAMJET_GH_PACKAGES_PRERELEASE_PUBLISHER: ${{ vars.SCRAMJET_GH_PACKAGES_PRERELEASE_PUBLISHER }}
+        run: |
+          test "$PRERELEASE_PUBLISH_ENABLED" = "true"
+          test "$SCRAMJET_GH_PACKAGES_PRERELEASE_PUBLISHER" = "github-packages"
+          test -n "$NODE_AUTH_TOKEN"
+          export NPM_CONFIG_USERCONFIG="$RUNNER_TEMP/release-prerelease.npmrc"
+          trap 'rm -f "$NPM_CONFIG_USERCONFIG"' EXIT
+          umask 077
+          {
+            printf '%s\n' '@scramjet:registry=https://npm.pkg.github.com'
+            printf '%s\n' "//npm.pkg.github.com/:_authToken=$NODE_AUTH_TOKEN"
+            printf '%s\n' 'always-auth=true'
+          } > "$NPM_CONFIG_USERCONFIG"
+          node scripts/release-prerelease.js publish --manifest "$RUNNER_TEMP/release-prerelease-manifest.json" --packages-dir dist
+          echo "published=true" >> "$GITHUB_OUTPUT"
+
+  prerelease-bdd:
+    name: Release PR / prerelease BDD
+    if: ${{ github.event.pull_request.base.ref == 'main' && github.event.pull_request.head.ref == 'devel' && github.event.pull_request.head.repo.full_name == github.repository }}
+    needs: [prerelease-publication]
+    permissions:
+      contents: read
+      packages: read
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: "22"
+          cache: ""
+
+      - id: trusted_manifest
+        name: Release PR / verify trusted prerelease manifest
+        env:
+          EXPECTED_CHECKSUM: ${{ needs.prerelease-publication.outputs.prerelease-manifest-sha256 }}
+          PUBLISHED: ${{ needs.prerelease-publication.outputs.prereleases-published }}
+          PUBLISHER_MANIFEST: ${{ needs.prerelease-publication.outputs.prerelease-manifest }}
+          BDD_REGISTRY_ENABLED: ${{ vars.SCRAMJET_RELEASE_PRERELEASE_BDD == 'true' }}
+        run: |
+          test -n "$PUBLISHER_MANIFEST"
+          printf '%s' "$PUBLISHER_MANIFEST" | base64 --decode > "$RUNNER_TEMP/release-prerelease-manifest.json"
+          node scripts/release-prerelease-bdd.js verify --manifest "$RUNNER_TEMP/release-prerelease-manifest.json" --expected-checksum "$EXPECTED_CHECKSUM"
+          test "$PUBLISHED" = "true"
+          test "$BDD_REGISTRY_ENABLED" = "true"
+          echo "live=true" >> "$GITHUB_OUTPUT"
+
+      - name: Release PR / install verified prereleases and run API BDD
+        if: ${{ steps.trusted_manifest.outputs.live == 'true' }}
+        env:
+          BDD_IMAGES: ${{ vars.SCRAMJET_RELEASE_PRERELEASE_BDD_IMAGES }}
+          NODE_AUTH_TOKEN: ${{ secrets.SCRAMJET_RELEASE_PRERELEASE_PACKAGES_READ_TOKEN }}
+        run: |
+          test -n "$NODE_AUTH_TOKEN"
+          test -n "$BDD_IMAGES"
+          export NPM_CONFIG_USERCONFIG="$RUNNER_TEMP/release-prerelease-read.npmrc"
+          trap 'rm -f "$NPM_CONFIG_USERCONFIG"' EXIT
+          umask 077
+          {
+            printf '%s\n' '@scramjet:registry=https://npm.pkg.github.com'
+            printf '%s\n' "//npm.pkg.github.com/:_authToken=$NODE_AUTH_TOKEN"
+            printf '%s\n' 'always-auth=true'
+          } > "$NPM_CONFIG_USERCONFIG"
+          node scripts/release-prerelease-bdd.js prepare --manifest "$RUNNER_TEMP/release-prerelease-manifest.json" --expected-checksum "${{ needs.prerelease-publication.outputs.prerelease-manifest-sha256 }}" --images-json "$BDD_IMAGES" --install-dir .release-prerelease-bdd --output "$RUNNER_TEMP/release-prerelease-bdd.json"
+          npm ci --ignore-scripts
+          npm --prefix .release-prerelease-bdd install --package-lock-only --ignore-scripts --registry https://npm.pkg.github.com
+          node scripts/release-prerelease-bdd.js verify-lock --lock .release-prerelease-bdd/package-lock.json --record "$RUNNER_TEMP/release-prerelease-bdd.json"
+          npm --prefix .release-prerelease-bdd ci --ignore-scripts
+          node scripts/release-prerelease-bdd.js activate --install-dir .release-prerelease-bdd --record "$RUNNER_TEMP/release-prerelease-bdd.json" --workspace-root .
+          BDD_NODE_IMAGE="$(node -p "require(process.env.RUNNER_TEMP + '/release-prerelease-bdd.json').images.find((image) => image.role === 'bdd-node').reference")" npm run test:bdd-ci-api-node

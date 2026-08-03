@@ -2,7 +2,7 @@ const { createInterface } = require("node:readline");
 
 module.exports = async function(_input, nowait) {
     /**
-     * @this {import("@scramjet/types").AppContext}
+     * @this {import("@scramjet/sequence-types").SequenceAppContext}
      */
     const lines = createInterface({ input: process.stdin });
 

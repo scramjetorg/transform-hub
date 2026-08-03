@@ -1,4 +1,4 @@
-import { ContentType } from "@scramjet/types";
+import { ContentType } from "../types/from-types";
 
 export const isContentType = (contentType: string): contentType is ContentType => {
     return [

@@ -1,21 +1,48 @@
 #!/usr/bin/env node
 
-import { Runner } from "../runner";
-import fs from "fs";
-import { AppConfig, SequenceInfo } from "@scramjet/types";
-import { HostClient } from "../host-client";
-import { RunnerExitCode } from "@scramjet/symbols";
-import { RunnerConnectInfo } from "@scramjet/types/src/runner-connect";
+import * as fs from "fs";
+import * as os from "os";
+import { dirname, resolve } from "path";
+import { Readable, Writable } from "stream";
 
-const sequencePath: string = process.env.SEQUENCE_PATH?.replace(/.js$/, "") + ".js";
-const instancesServerPort = process.env.INSTANCES_SERVER_PORT;
-const instancesServerHost = process.env.INSTANCES_SERVER_HOST;
+import { AppConfig, LogLevel } from "@scramjet/runtime-types";
+import { RunnerExitCode, RunnerMessageCode, selectRuntimeKind } from "@scramjet/symbols";
+
+import { RunnerConnectInfo, RuntimeProcessHandles, SequenceInfo } from "@scramjet/runtime-types";
+
+import { selectExecutor } from "../executor/select";
+import { forwardChildStdio } from "../executor/stream-forwarder";
+import { translateChildClose, writeTerminalLifecycleFrame } from "../executor/exit-translation";
+import { resolveRunnerNodeEntry } from "../executor/runner-node-launcher";
+import { resolveRunnerBunEntry } from "../executor/runner-bun-launcher";
+import { observeChildLifecycleFrames } from "../executor/lifecycle-observer";
+import { parseRunnerTransportConfig, RunnerTransportConfigResult } from "../transport/runner-transport-config";
+import { RunnerVerser2Transport } from "../transport/verser2-runner-transport";
+import { bddBootExitTimeout } from "./bdd-boot-timeout";
+import { copyRunnerLogForwarding } from "../runner-log-forwarding";
+
+const STDERR_TAIL_BYTES = 4096;
+const CR = 0x0d;
+
+function normalizeSequencePath(path: string | undefined, engines?: Record<string, string>): string {
+    if (!path) return "";
+    if (selectRuntimeKind(engines) === "python3") return path;
+    return path.replace(/(?<!\.m?js|\.ts)$/, ".js");
+}
+
+// ---------------------------------------------------------------------------
+// Adapter-facing env validation. Preserved verbatim from the legacy entry so
+// adapters do not need to change. Same env names, same exit codes.
+// ---------------------------------------------------------------------------
+
+const rawSequencePath = process.env.SEQUENCE_PATH;
 const instanceId = process.env.INSTANCE_ID;
 const sequenceInfo = process.env.SEQUENCE_INFO;
 const runnerConnectInfo = process.env.RUNNER_CONNECT_INFO;
 
 let connectInfo: SequenceInfo;
 let parsedRunnerConnectInfo: RunnerConnectInfo;
+let runnerTransportConfig: RunnerTransportConfigResult;
 
 try {
     if (!runnerConnectInfo) throw new Error("Connection JSON is required.");
@@ -33,18 +60,17 @@ try {
     process.exit(RunnerExitCode.INVALID_ENV_VARS);
 }
 
-if (!instancesServerPort || instancesServerPort !== parseInt(instancesServerPort, 10).toString()) {
-    console.error("Incorrect run argument: instancesServerPort");
-    process.exit(RunnerExitCode.INVALID_ENV_VARS);
-}
-
-if (!instancesServerHost) {
-    console.error("Incorrect run argument: instancesServerHost");
-    process.exit(RunnerExitCode.INVALID_ENV_VARS);
-}
+const sequencePath = normalizeSequencePath(rawSequencePath, connectInfo.config?.engines);
 
 if (!instanceId) {
     console.error("Incorrect run argument: instanceId");
+    process.exit(RunnerExitCode.INVALID_ENV_VARS);
+}
+
+try {
+    runnerTransportConfig = parseRunnerTransportConfig(instanceId);
+} catch (error) {
+    console.error(error instanceof Error ? error.message : "Incorrect run argument: runner transport config");
     process.exit(RunnerExitCode.INVALID_ENV_VARS);
 }
 
@@ -53,22 +79,285 @@ if (!fs.existsSync(sequencePath)) {
     process.exit(RunnerExitCode.INVALID_SEQUENCE_PATH);
 }
 
-const hostClient = new HostClient(+instancesServerPort, instancesServerHost);
+// ---------------------------------------------------------------------------
+// Boot config: a private absolute file passed to runner-node as argv[2].
+// runner-node owns its own runtime; runner-owned env vars are NOT forwarded.
+// ---------------------------------------------------------------------------
 
-/**
- * Start runner script.
- *
- * * Creates an instance of a runner.
- * * Runs a sequence.
- *
- * @param sequencePath - sequence file path
- * @param fifosPath - fifo files path
- */
+interface RunnerNodeBootConfigShape {
+    sequencePath: string;
+    sequenceArgs?: unknown[];
+    instanceId: string;
+    instancesServerPort: number;
+    instancesServerHost: string;
+    appConfig?: AppConfig;
+    sequenceInfo: SequenceInfo;
+    instanceName?: string;
+    exitTimeout?: number;
+    logLevel?: LogLevel;
+    forwardRunnerLogs?: boolean;
+    exposePath?: string;
+    inputTopic?: string;
+    outputTopic?: string;
+    exposeHost?: string;
+    requestsUnsupported?: string;
+    verser2Runtime?: {
+        hostUrl: string;
+        runnerGuestId: string;
+        runnerRouteDomain: string;
+        hubBrokerId: string;
+        hubTargetDomain?: string;
+        spaceTargetDomain?: string;
+        tls?: unknown;
+        leaseAcquireTimeoutMs?: number;
+        minWaitingStreams?: number;
+    };
+}
 
-const runner: Runner<AppConfig> = new Runner(sequencePath, hostClient, instanceId, connectInfo, parsedRunnerConnectInfo);
+function writeBootConfig(resolvedInstancesServerHost: string, resolvedInstancesServerPort: number): string {
+    const dir = fs.mkdtempSync(resolve(os.tmpdir(), "runner-node-boot-"));
+    const file = resolve(dir, "boot-config.json");
 
-runner.main()
-    .catch(e => {
-        process.exitCode = e.errorCode || 11;
-        process.exit();
+    const payload: RunnerNodeBootConfigShape = {
+        sequencePath: resolve(sequencePath),
+        instanceId: instanceId!,
+        instancesServerPort: resolvedInstancesServerPort,
+        instancesServerHost: resolvedInstancesServerHost,
+        sequenceInfo: connectInfo
+    };
+
+    if (Array.isArray(parsedRunnerConnectInfo.args)) {
+        payload.sequenceArgs = parsedRunnerConnectInfo.args;
+    }
+
+    if (parsedRunnerConnectInfo.appConfig) payload.appConfig = parsedRunnerConnectInfo.appConfig;
+    if (parsedRunnerConnectInfo.instanceName) payload.instanceName = parsedRunnerConnectInfo.instanceName;
+    const bddExitTimeout = bddBootExitTimeout();
+    if (bddExitTimeout !== undefined) payload.exitTimeout = bddExitTimeout;
+    if (parsedRunnerConnectInfo.logLevel) payload.logLevel = parsedRunnerConnectInfo.logLevel;
+    copyRunnerLogForwarding(payload, parsedRunnerConnectInfo);
+    if (parsedRunnerConnectInfo.exposePath) payload.exposePath = parsedRunnerConnectInfo.exposePath;
+    if (parsedRunnerConnectInfo.inputTopic) payload.inputTopic = parsedRunnerConnectInfo.inputTopic;
+    if (parsedRunnerConnectInfo.outputTopic) payload.outputTopic = parsedRunnerConnectInfo.outputTopic;
+
+    const exposeHostResolved = parsedRunnerConnectInfo.exposeHost ?? process.env.EXPOSE_HOST;
+
+    if (exposeHostResolved) payload.exposeHost = exposeHostResolved;
+
+    if (runnerTransportConfig.kind === "verser2") {
+        payload.verser2Runtime = {
+            hostUrl: runnerTransportConfig.hostUrl,
+            runnerGuestId: runnerTransportConfig.guestId,
+            runnerRouteDomain: runnerTransportConfig.routeDomain,
+            hubBrokerId: runnerTransportConfig.hubBrokerId,
+            ...(runnerTransportConfig.hubTargetDomain ? { hubTargetDomain: runnerTransportConfig.hubTargetDomain } : {}),
+            ...(runnerTransportConfig.spaceTargetDomain ? { spaceTargetDomain: runnerTransportConfig.spaceTargetDomain } : {}),
+            ...(runnerTransportConfig.tls ? { tls: runnerTransportConfig.tls } : {}),
+            ...(runnerTransportConfig.leaseAcquireTimeoutMs !== undefined ? { leaseAcquireTimeoutMs: runnerTransportConfig.leaseAcquireTimeoutMs } : {}),
+            ...(runnerTransportConfig.minWaitingStreams !== undefined ? { minWaitingStreams: runnerTransportConfig.minWaitingStreams } : {})
+        };
+    }
+
+    fs.writeFileSync(file, JSON.stringify(payload), { encoding: "utf8", mode: 0o600 });
+
+    return file;
+}
+
+function tryRemove(file: string): void {
+    try {
+        fs.rmSync(file, { force: true });
+        fs.rmdirSync(dirname(file));
+    } catch {
+        // best-effort cleanup
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Stream wiring helpers. fd4/fd5 are raw passthrough; no JSON / base64
+// aggregation, no V1 protocol names.
+// ---------------------------------------------------------------------------
+
+function pipeRaw(src: Readable, dst: Writable): void {
+    src.on("error", () => {
+        /* swallow - host stream errors are non-fatal here */
     });
+    src.pipe(dst, { end: false });
+}
+
+function appendTail(current: string, chunk: Buffer | string): string {
+    return (current + chunk.toString()).slice(-STDERR_TAIL_BYTES);
+}
+
+function observeRpcExpose(stream: Readable, transport: RunnerVerser2Transport): void {
+    let pending = "";
+
+    stream.on("data", (chunk: Buffer | string) => {
+        pending += typeof chunk === "string" ? chunk : chunk.toString("utf8");
+
+        for (;;) {
+            const lfIdx = pending.indexOf("\n");
+
+            if (lfIdx === -1) break;
+
+            let endIdx = lfIdx;
+
+            if (endIdx > 0 && pending.charCodeAt(endIdx - 1) === CR) endIdx -= 1;
+
+            const line = pending.slice(0, endIdx);
+
+            pending = pending.slice(lfIdx + 1);
+
+            try {
+                const parsed = JSON.parse(line) as [number, { payload?: { exposeHost?: string; exposePort?: number } }];
+
+                if (parsed[0] === RunnerMessageCode.PING && parsed[1]?.payload?.exposePort !== undefined) {
+                    transport.setRpcTarget(parsed[1].payload.exposeHost || "localhost", parsed[1].payload.exposePort);
+                }
+            } catch {
+                // ignore non-frame lines
+            }
+        }
+    });
+}
+
+async function main(): Promise<void> {
+    const hostClient = new RunnerVerser2Transport({
+        config: runnerTransportConfig,
+        instanceId: instanceId!
+    });
+
+    await hostClient.init();
+    const resolvedInstancesServerHost = hostClient.localChannelHost;
+    const resolvedInstancesServerPort = hostClient.localChannelPort;
+
+    const bootConfigPath = writeBootConfig(resolvedInstancesServerHost, resolvedInstancesServerPort);
+
+    let handles: RuntimeProcessHandles;
+
+    try {
+        const engines = connectInfo.config?.engines || (parsedRunnerConnectInfo.appConfig?.engines as Record<string, string> | undefined) || {};
+        const executor = selectExecutor({ engines });
+        const childEnv: NodeJS.ProcessEnv = {};
+
+        // Forward target domains for hubClient() / spaceClient() direct v2 routing.
+        if (runnerTransportConfig.hubTargetDomain) {
+            childEnv.HUB_TARGET_DOMAIN = runnerTransportConfig.hubTargetDomain;
+        }
+        if (runnerTransportConfig.spaceTargetDomain) {
+            childEnv.SPACE_TARGET_DOMAIN = runnerTransportConfig.spaceTargetDomain;
+        }
+
+        let runtimeEntry = "";
+
+        if (executor.kind === "bun") {
+            runtimeEntry = resolveRunnerBunEntry(__dirname).entry;
+        } else if (executor.kind === "node") {
+            const entry = resolveRunnerNodeEntry(__dirname);
+
+            runtimeEntry = entry.entry;
+
+            if (entry.needsTsNode) {
+                // ts-node fallback for source-tree development. Inherit the parent's
+                // PATH/HOME/NODE_PATH so ts-node and resolved modules stay reachable;
+                // anything runner-owned (SEQUENCE_PATH, RUNNER_CONNECT_INFO, ...) is
+                // NOT forwarded - the boot config file replaces that channel.
+                childEnv.NODE_OPTIONS = "--require ts-node/register/transpile-only";
+                if (process.env.PATH) childEnv.PATH = process.env.PATH;
+                if (process.env.HOME) childEnv.HOME = process.env.HOME;
+                if (process.env.NODE_PATH) childEnv.NODE_PATH = process.env.NODE_PATH;
+            }
+        }
+
+        handles = executor.spawn({
+            runtimeEntry,
+            bootConfigPath,
+            env: childEnv
+        });
+    } catch (err) {
+        tryRemove(bootConfigPath);
+        await hostClient.disconnect(true).catch(() => undefined);
+        console.error("Failed to spawn runtime runner:", err instanceof Error ? err.message : err);
+        process.exit(RunnerExitCode.SEQUENCE_FAILED_DURING_EXECUTION);
+    }
+
+    // host stdin -> child stdin (fd0). Use end:true so EOF on host stdin is
+    // forwarded to the sequence; the parent process owns the pipe lifetime.
+    if (handles.child.stdin) {
+        hostClient.stdinStream.on("error", () => undefined);
+        hostClient.stdinStream.pipe(handles.child.stdin);
+    }
+
+    // child stdout/stderr -> host stdout/stderr (raw, end:false)
+    forwardChildStdio(handles.child, {
+        hostStdout: hostClient.stdoutStream,
+        hostStderr: hostClient.stderrStream
+    });
+
+    // host control -> child fd4 (raw)
+    pipeRaw(hostClient.controlStream, handles.control);
+
+    // Track whether the child already emitted a terminal lifecycle frame
+    // (SEQUENCE_COMPLETED / SEQUENCE_STOPPED). The observer is non-
+    // destructive; bytes still flow to host monitoring unchanged.
+    const lifecycle = observeChildLifecycleFrames(handles.monitoring);
+
+    if (hostClient instanceof RunnerVerser2Transport) {
+        observeRpcExpose(handles.monitoring, hostClient);
+    }
+
+    // child fd5 -> host monitoring (raw)
+    pipeRaw(handles.monitoring, hostClient.monitorStream);
+    let childStderrTail = "";
+
+    handles.child.stderr?.on("data", (chunk: Buffer) => {
+        childStderrTail = appendTail(childStderrTail, chunk);
+    });
+
+    handles.child.once("error", (err: Error) => {
+        console.error("runner-node child errored:", err instanceof Error ? err.message : err);
+    });
+
+    handles.child.once("close", (code: number | null, signal: NodeJS.Signals | null) => {
+        const translated = translateChildClose(code, signal);
+
+        if (translated.exitCode !== RunnerExitCode.SUCCESS) {
+            console.error(
+                `STH runtime error phase=runner-runtime adapter=${process.env.RUNTIME_ADAPTER || "unknown"} runtime=node instanceId=${instanceId} exitCode=${translated.exitCode}`,
+                {
+                    phase: "runner-runtime",
+                    adapter: process.env.RUNTIME_ADAPTER || "unknown",
+                    runtime: "node",
+                    instanceId,
+                    exitCode: translated.exitCode,
+                    childExitCode: code,
+                    signal,
+                    stderrTail: childStderrTail
+                }
+            );
+        }
+
+        if (!lifecycle.observed()) {
+            try {
+                writeTerminalLifecycleFrame(hostClient.monitorStream, translated);
+            } catch {
+                // never fail child cleanup on a failed frame write
+            }
+        }
+
+        tryRemove(bootConfigPath);
+
+        hostClient
+            .disconnect(translated.exitCode !== RunnerExitCode.SUCCESS)
+            .catch(() => undefined)
+            .finally(() => {
+                process.exitCode = translated.exitCode;
+                process.exit();
+            });
+    });
+}
+
+main().catch((err) => {
+    console.error("start-runner failed:", err instanceof Error ? (err.stack ?? err.message) : err);
+    process.exitCode = RunnerExitCode.SEQUENCE_FAILED_DURING_EXECUTION;
+    process.exit();
+});

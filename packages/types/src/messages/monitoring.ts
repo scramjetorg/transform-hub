@@ -2,16 +2,23 @@ import { RunnerMessageCode } from "@scramjet/symbols";
 import { FunctionStatus } from "../runner";
 
 export type MonitoringMessageFromRunnerData = {
-
     /** How many items are processed by the Sequence per second. */
     sequences?: FunctionStatus[];
 
     /** Calculated backpressure: processing * throughput / buffer. */
     healthy: boolean;
-}
+
+    /** Author-provided bounded, namespaced health details. */
+    details?: Record<string, unknown>;
+
+    error?: {
+        stack?: string;
+        message: string;
+        code?: string;
+    };
+};
 
 export type MonitoringMessageData = MonitoringMessageFromRunnerData & {
-
     /** CPU usage */
     cpuTotalUsage?: number;
 
@@ -34,7 +41,7 @@ export type MonitoringMessageData = MonitoringMessageFromRunnerData & {
 
     /** PID of Runner If STH is run with --runtime-adapter='process' option */
     processId?: number;
-}
+};
 
 /**
  * Monitoring message including detailed performance statistics.

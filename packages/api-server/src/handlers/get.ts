@@ -1,4 +1,4 @@
-import { APIRoute, GetResolver, ICommunicationHandler, MessageDataType, MonitoringMessageCode, NextCallback } from "@scramjet/types";
+import { APIRoute, GetResolver, ICommunicationHandler, MessageDataType, MonitoringMessageCode, NextCallback } from "@scramjet/api-types";
 import { CeroError, SequentialCeroRouter } from "../lib/definitions";
 import { mimeAccepts } from "../lib/mime";
 import { IncomingMessage, ServerResponse } from "http";
@@ -27,7 +27,6 @@ export function createGetterHandler(router: SequentialCeroRouter): APIRoute["get
      * @param {object} data Output data.
      * @param {ServerResponse} res Response object.
      * @param {NextCallback} next Next callback.
-     * @returns Unused.
      */
     const output = (data: any, res: ServerResponse, next: NextCallback): void => {
         try {
@@ -36,7 +35,8 @@ export function createGetterHandler(router: SequentialCeroRouter): APIRoute["get
                     "content-type": "application/json"
                 });
 
-                return res.end();
+                res.end();
+                return;
             }
 
             let statusCode = 200;
@@ -59,9 +59,11 @@ export function createGetterHandler(router: SequentialCeroRouter): APIRoute["get
                 "content-type": "application/json"
             });
 
-            return res.end(out);
+            res.end(out);
+            return;
         } catch (e: any) {
-            return next(new CeroError("ERR_FAILED_TO_SERIALIZE", e));
+            next(new CeroError("ERR_FAILED_TO_SERIALIZE", e));
+            return;
         }
     };
     /**
@@ -71,26 +73,31 @@ export function createGetterHandler(router: SequentialCeroRouter): APIRoute["get
      * @param {MonitoringMessageCode} op Message code.
      * @param {ICommunicationHandler} conn Communication handler to use monitoring stream from.
      */
-    const getMonitoring = <T extends MonitoringMessageCode>(
-        path: string | RegExp, op: T, conn: ICommunicationHandler
-    ): void => {
+    const getMonitoring = <T extends MonitoringMessageCode>(path: string | RegExp, op: T, conn: ICommunicationHandler): void => {
         let lastItem: MessageDataType<T> | null = null;
-        let monitoringMessageResolve: Function;
+        let resolveFirst: Function;
 
-        const monitoringMessagePromise = new Promise((res) => {
-            monitoringMessageResolve = res;
+        const firstArrived = new Promise<void>((res) => {
+            resolveFirst = res;
         });
 
         conn.addMonitoringHandler(op, (data) => {
             lastItem = data[1];
-            monitoringMessageResolve();
+
+            if (resolveFirst) {
+                resolveFirst();
+                resolveFirst = undefined!;
+            }
 
             return data;
         });
 
         router.get(path, async (req, res, next) => {
             try {
-                await monitoringMessagePromise;
+                if (lastItem === null) {
+                    await firstArrived;
+                }
+
                 check(req);
 
                 return output(lastItem as object, res, next);
@@ -117,9 +124,7 @@ export function createGetterHandler(router: SequentialCeroRouter): APIRoute["get
         });
     };
 
-    return <T extends MonitoringMessageCode>(
-        path: string | RegExp, msg: GetResolver | T, conn?: ICommunicationHandler
-    ) => {
+    return <T extends MonitoringMessageCode>(path: string | RegExp, msg: GetResolver | T, conn?: ICommunicationHandler) => {
         if (typeof msg === "function") {
             return getResolver(path, msg);
         }

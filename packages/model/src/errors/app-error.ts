@@ -1,4 +1,4 @@
-import { AppError as IAppError, AppErrorCode } from "@scramjet/types";
+import { AppError as IAppError, AppErrorCode } from "@scramjet/runtime-types";
 
 type IAppErrorData = {
     data?: any;

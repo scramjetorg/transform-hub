@@ -1,0 +1,8 @@
+{
+  "track_id": "old_verser_callsites_removal_20260615",
+  "type": "chore",
+  "status": "completed",
+  "created_at": "2026-06-15T21:03:46Z",
+  "updated_at": "2026-06-15T23:20:00Z",
+  "description": "Remove legacy old-verser active callsites and old-way configuration"
+}

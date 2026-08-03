@@ -1,0 +1,54 @@
+{
+  "name": "@scramjet/config",
+  "version": "2.0.0",
+  "description": "This package is part of Scramjet Transform Hub. The package provides Zod-backed configuration loading, validation, masking, and CLI option metadata.",
+  "main": "./src/index.ts",
+  "scripts": {
+    "start": "ts-node ./src/index",
+    "build": "../../scripts/build-all.js --config-name=tsconfig.build.json --copy-dist",
+    "clean": "rm -rf ./dist .bic_cache",
+    "test": "npm run test:ava",
+    "test:ava": "node ../../scripts/run-ava.js -T 50000 --serial"
+  },
+  "author": "Scramjet <open-source@scramjet.org>",
+  "license": "MIT",
+  "dependencies": {
+    "@scramjet/api-types": "^2.0.0",
+    "@scramjet/runtime-types": "^2.0.0",
+    "@scramjet/utility": "^2.0.0",
+    "cac": "^6.7.14",
+    "jsonc-parser": "^3.3.1",
+    "yaml": "^2.2.2",
+    "zod": "^3.25.67"
+  },
+  "peerDependencies": {
+    "@scramjet/adapters": "^2.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@scramjet/adapters": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@scramjet/adapters": "^2.0.0",
+    "@types/node": "^22.15.0",
+    "ava": "^3.15.0",
+    "ts-node": "^10.9.1",
+    "typescript": "~4.7.4"
+  },
+  "ava": {
+    "extensions": [
+      "ts"
+    ],
+    "files": [
+      "**/*.spec.ts"
+    ],
+    "require": [
+      "ts-node/register/transpile-only"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/scramjetorg/transform-hub.git"
+  }
+}

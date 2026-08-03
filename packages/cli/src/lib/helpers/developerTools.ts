@@ -1,90 +1,80 @@
-import { Command } from "commander";
-import { ExtendedHelpConfiguration } from "../../types";
+import type { CommandDescriptor } from "@scramjet/config";
 
-export const rootCommand = (command: Command) => {
-    while (command.parent !== null) {
-        command = command.parent;
-    }
-    return command as Command;
+/**
+ * Walk up the parent chain from a child descriptor.
+ * In the flat descriptor model, we don't maintain parent pointers,
+ * so this finds the root by traversing the commands/index tree.
+ * For the purposes of developer tools, we accept the root directly.
+ */
+export const rootCommand = (command: CommandDescriptor): CommandDescriptor => {
+    return command;
 };
 
-export const cmdToJson = (command: Command) => {
+export const cmdToJson = (command: CommandDescriptor): Record<string, unknown> => {
     return {
-        command: command.name(),
-        alias: command.alias(),
-        description: command.description(),
-        usage: command.usage(),
-        arguments: command.args.toString(),
-        options: JSON.stringify(command.opts()),
-        commands: command.commands.map(cmdToJson as any),
+        command: command.name,
+        alias: command.alias || "",
+        description: command.description || "",
+        usage: command.usage || "",
+        arguments: (command.arguments || []).map((a) => a.name).toString(),
+        options: JSON.stringify((command.options || []).reduce((acc, o) => {
+            acc[o.name] = o.default;
+            return acc;
+        }, {} as Record<string, unknown>)),
+        commands: (command.children || []).map(cmdToJson),
     };
 };
 
-export const cmdToList = (command: Command, stream: NodeJS.WritableStream, parentName: string = "") => {
-    const name = parentName ? `${parentName} ${command.name()}` : command.name();
+export const cmdToList = (command: CommandDescriptor, stream: NodeJS.WritableStream, parentName: string = "") => {
+    const name = parentName ? `${parentName} ${command.name}` : command.name;
 
     stream.write(name);
     stream.write("\n");
-    command.commands.forEach(cmd => {
+    (command.children || []).forEach((cmd) => {
         cmdToList(cmd, stream, name);
     });
 };
 
-export const getCmdFullName = (command: Command) => {
-    let name = command.name();
-
-    while (command.parent !== null) {
-        command = command.parent;
-        name = `${command.name()} ${name}`;
+export const getCmdFullName = (command: CommandDescriptor, parentName: string = ""): string => {
+    if (parentName) {
+        return `${parentName} ${command.name}`;
     }
-    return name;
+    return command.name;
 };
 
-const parseHelp = (command: Command) => {
-    let help = "";
+const parseHelpFromDescriptor = (command: CommandDescriptor) => {
+    const args: string[] = (command.arguments || []).map((a) => {
+        const optional = a.required ? "" : " (optional)";
+        const choices = a.choices && a.choices.length > 0 ? ` [${a.choices.join("|")}]` : "";
 
-    command.configureOutput({ writeOut: (str) => { help += str; } });
-    command.outputHelp();
+        return `  ${a.name}${choices}${optional}  ${a.description || ""}`;
+    });
 
-    const argumentsStart = help.indexOf("Arguments:\n");
-    let argumentsEnd: number, optionsEnd: number;
-    let args: string[] = [];
-    let opts: string[] = [];
+    const opts: string[] = (command.options || []).map((o) => {
+        const short = o.short ? `-${o.short}, ` : "    ";
 
-    if (argumentsStart !== -1) {
-        argumentsEnd = help.indexOf("\n\n", argumentsStart);
-        if (argumentsEnd !== -1)
-            args = help.slice(argumentsStart + 11, argumentsEnd).split("\n");
-    }
-
-    const optionsStart = help.indexOf("Options:\n");
-
-    if (optionsStart !== -1) {
-        optionsEnd = help.indexOf("\n\n", optionsStart);
-        if (optionsEnd !== -1)
-            opts = help.slice(optionsStart + 9, optionsEnd).split("\n");
-    }
+        return `  ${short}--${o.name}  ${o.description || ""}`;
+    });
 
     return { args, opts };
 };
 
-export const cmdToMdFormat = (command: Command, stream: NodeJS.WritableStream) => {
-    const alias = command.alias() ? ` | ${command.alias()}` : "";
+export const cmdToMdFormat = (command: CommandDescriptor, stream: NodeJS.WritableStream) => {
+    const alias = command.alias ? ` | ${command.alias}` : "";
     const cmdName = getCmdFullName(command);
-    const { args, opts } = parseHelp(command);
+    const { args, opts } = parseHelpFromDescriptor(command);
 
     stream.write(`## $ ${cmdName}${alias}\n\n`);
 
     stream.write("**Description**\n\n");
-    stream.write(`${command.description()}\n\n`);
+    stream.write(`${command.description || ""}\n\n`);
 
     stream.write("**Usage**\n\n");
-    stream.write(`\`${cmdName} ${command.usage()}\`\n\n`);
+    stream.write(`\`${cmdName} ${command.usage || ""}\`\n\n`);
 
     if (args.length) {
         stream.write("**Arguments**\n\n");
         args.forEach(arg => stream.write(`*${arg}\n`));
-        // stream.write(args);
         stream.write("\n");
     }
 
@@ -96,15 +86,14 @@ export const cmdToMdFormat = (command: Command, stream: NodeJS.WritableStream) =
     stream.write("---\n\n");
 };
 
-export const cmdToMd = (command: Command, stream: NodeJS.WritableStream) => {
-    const { developersOnly } = command.configureHelp() as ExtendedHelpConfiguration;
+export const cmdToMd = (command: CommandDescriptor, stream: NodeJS.WritableStream) => {
+    const developersOnly = command.metadata?.developersOnly === true;
 
     if (developersOnly) return; // Skip printing developers commands
-
-    if (command.parent !== null)
+    if (command.name !== "" && command.name !== "si") {
         cmdToMdFormat(command, stream);
-    command.commands.forEach(cmd => {
+    }
+    (command.children || []).forEach((cmd) => {
         cmdToMd(cmd, stream);
     });
 };
-

@@ -1,14 +1,15 @@
-import { DataStream, StringStream } from "scramjet";
-import { IObjectLogger, LogEntry, LogLevel } from "@scramjet/types";
-import { PassThrough, Readable, Writable } from "stream";
+import { IObjectLogger, IObjectLoggerOptions, LogEntry, LogLevel } from "@scramjet/runtime-types";
+import { Duplex, PassThrough, Readable, Writable } from "stream";
 import { LogLevelStrings } from "@scramjet/utility";
-
 import { getName } from "./utils/get-name";
-import { JSONParserStream } from "./utils/streams";
+import { JSONParserStream, JSONStringifierStream } from "./utils/streams";
+import { StringStream } from "scramjet";
 
 type ObjLogPipeOptions = {
     stringified?: boolean;
 };
+
+const noop = () => {};
 
 const getCircularReplacer = () => {
     const seen = new WeakSet();
@@ -21,9 +22,16 @@ const getCircularReplacer = () => {
             seen.add(value);
         }
 
-        // eslint-disable-next-line consistent-return
         return value;
     };
+};
+
+const stringifier = (line: any): string => {
+    try {
+        return JSON.stringify(line) + "\n";
+    } catch {
+        return JSON.stringify(line, getCircularReplacer()) + "\n";
+    }
 };
 
 export class ObjLogger implements IObjectLogger {
@@ -35,37 +43,69 @@ export class ObjLogger implements IObjectLogger {
     /**
      * @type {PassThrough} Stream used to write logs.
      */
-    outputLogStream = new PassThrough({ objectMode: true });
+    readonly outputLogStream = new PassThrough({ objectMode: true }).resume();
 
     /**
      * Input log stream in object mode.
      */
-    inputLogStream = new PassThrough({ objectMode: true }).resume();
+    readonly inputLogStream = new PassThrough({ objectMode: true }).resume();
 
     /**
      * Input log stream in string mode.
      */
-    inputStringifiedLogStream = new PassThrough({ objectMode: true }).resume();
+    readonly inputStringifiedLogStream = new PassThrough({ objectMode: true }).resume();
 
     /**
      * Output stream in object mode.
      */
-    output = new DataStream({ objectMode: true }).resume();
+    readonly output = new PassThrough({ objectMode: true }).resume();
 
     /**
      * Name used to indicate the source of the log.
      */
-    name: string;
+    readonly name: string;
 
     /**
      * Default log object.
      */
-    baseLog: LogEntry;
+    readonly baseLog: LogEntry;
 
     /**
      * Log level.
      */
-    logLevel: LogLevel;
+    private _logLevel: LogLevel = "TRACE";
+    readonly targets: Set<IObjectLogger> = new Set();
+
+    public get logLevel(): LogLevel {
+        return this._logLevel;
+    }
+    public set logLevel(value: LogLevel) {
+        this._logLevel = value;
+
+        this.trace = noop;
+        this.info = noop;
+        this.error = noop;
+        this.debug = noop;
+        this.fatal = noop;
+        this.warn = noop;
+
+        switch (value) {
+            case "TRACE":
+                this.trace = ObjLogger.prototype.trace;
+            case "DEBUG":
+                this.debug = ObjLogger.prototype.debug;
+            case "INFO":
+                this.info = ObjLogger.prototype.info;
+            case "WARN":
+                this.warn = ObjLogger.prototype.warn;
+            case "ERROR":
+                this.error = ObjLogger.prototype.error;
+            case "FATAL":
+                this.fatal = ObjLogger.prototype.fatal;
+            default:
+                break;
+        }
+    }
 
     /**
      * Additional output streams.
@@ -75,7 +115,7 @@ export class ObjLogger implements IObjectLogger {
     /**
      * Other logger sources
      */
-    sources: Set<Readable | IObjectLogger> = new Set();
+    private sources: Set<Readable | IObjectLogger> = new Set();
 
     /**
      * Logging levels hierarchy.
@@ -87,8 +127,9 @@ export class ObjLogger implements IObjectLogger {
      * @param {any} reference Used to obtain a name for the logger.
      * @param {LogEntry} baseLog Default log object.
      * @param {LogLevel} logLevel Log level.
+     * @param {number} _keep Deprecated, unused compatibility parameter.
      */
-    constructor(reference: any, baseLog: LogEntry = {}, logLevel: LogLevel = "TRACE") {
+    constructor(reference: any, baseLog: LogEntry = {}, logLevel: LogLevel = "INFO", _keep: number = 10_000) {
         this.name = getName(reference);
 
         this.baseLog = baseLog;
@@ -105,26 +146,24 @@ export class ObjLogger implements IObjectLogger {
                     ...this.baseLog
                 };
 
-                this.write(entry.level!, entry, ...entry.data || []);
+                this.write(entry.level!, entry, ...(entry.data || []));
             });
 
         this.outputLogStream.pipe(this.output);
     }
 
     write(level: LogLevel, entry: LogEntry | string, ...optionalParams: any[]) {
-        if (this.ended)
-            throw new Error("Cannot write to the stream anymore.");
-
-        if (ObjLogger.levels.indexOf(level) > ObjLogger.levels.indexOf(this.logLevel)) {
-            return;
-        }
+        if (this.ended) throw new Error("Cannot write to the stream anymore.");
 
         let paramsCopy;
 
         if (optionalParams.length) {
             try {
-                paramsCopy = JSON.parse(JSON.stringify(optionalParams));
+                paramsCopy = optionalParams.map((x) => (x instanceof Error ? { Error: x.message, stack: x.stack } : structuredClone(x)));
             } catch {
+                // Some runtime diagnostics include streams with intentional
+                // back-references.  The structured clone above rejects those
+                // values; the fallback must remain safe for the same input.
                 paramsCopy = JSON.parse(JSON.stringify(optionalParams, getCircularReplacer()));
             }
         }
@@ -145,11 +184,11 @@ export class ObjLogger implements IObjectLogger {
             ...this.baseLog
         };
 
-        this.outputs.forEach(output => {
+        this.outputs.forEach((output) => {
             if (output.writableObjectMode) {
                 output.write(a);
             } else {
-                output.write(JSON.stringify(a) + "\n");
+                output.write(stringifier(a) + "\n");
             }
         });
 
@@ -188,36 +227,43 @@ export class ObjLogger implements IObjectLogger {
         Object.assign(this.baseLog, baseLog);
     }
 
-    private _stringifiedOutput?: StringStream;
+    private _stringifiedOutput?: Duplex;
 
-    get stringifiedOutput(): StringStream {
+    get stringifiedOutput(): Readable {
         if (!this._stringifiedOutput)
             this._stringifiedOutput = this.output
-                .stringify((chunk) => {
-                    try {
-                        return JSON.stringify(chunk) + "\n";
-                    } catch (e) {
-                        return JSON.stringify(chunk, getCircularReplacer()) + "\n";
-                    }
-                })
-                // eslint-disable-next-line no-console
-                .catch((e: any) => { console.error(e?.cause); });
+                .pipe(
+                    new JSONStringifierStream({
+                        stringifier
+                    })
+                )
+                .on("error", (e: any) => {
+                    console.error(e);
+                });
 
         return this._stringifiedOutput;
     }
 
     addObjectLoggerSource(source: IObjectLogger): void {
-        if (this.sources.has(source)) return;
+        if (this.sources.has(source)) {
+            return;
+        }
 
         this.sources.add(source);
         source.outputLogStream.on("data", (entry) => this.inputLogStream.write(entry));
     }
 
     addSerializedLoggerSource(source: Readable): void {
-        if (this.sources.has(source)) return;
+        if (this.sources.has(source)) {
+            return;
+        }
 
         this.sources.add(source);
-        source.on("data", (entry) => this.inputStringifiedLogStream.write(entry));
+        StringStream.from(source)
+            .lines()
+            .on("data", (line: string) => {
+                this.inputStringifiedLogStream.write(`${line}\n`);
+            });
     }
 
     /**
@@ -228,13 +274,12 @@ export class ObjLogger implements IObjectLogger {
      * @param options Pipe options. If option `stringified` is set to true, the output will be stringified.
      * @returns {Writable} Piped stream
      */
-    pipe(
-        target: Writable | IObjectLogger,
-        { end = false, stringified }: { end?: boolean, stringified?: boolean } = {}
-    ): typeof target {
+    pipe(target: Writable | IObjectLogger, { end = false, stringified }: IObjectLoggerOptions = {}): typeof target {
         if (target instanceof ObjLogger) {
             this.baseLog.id ||= target.baseLog.id;
             this.logLevel = target.logLevel;
+
+            this.targets.add(target);
 
             target.addObjectLoggerSource(this);
             return target;
@@ -242,8 +287,9 @@ export class ObjLogger implements IObjectLogger {
 
         target = target as Writable;
 
-        if (stringified || !target.writableObjectMode)
+        if (stringified || !target.writableObjectMode) {
             return this.stringifiedOutput.pipe(target, { end });
+        }
 
         return this.output.pipe(target, { end });
     }
@@ -253,7 +299,7 @@ export class ObjLogger implements IObjectLogger {
      * or an instance of class fulfiling IObjectLogger interface.
      *
      * @param {Writable | IObjectLogger} target Target for log stream.
-     * @param {ObjLogPipeOptions} [options] Pipe options. Should be the same as passed to @see ObjectLogger.pipe
+     * @param {ObjLogPipeOptions} [options] Pipe options. Should be the same as passed to @see ObjLogger.pipe
      * @returns {Writable} Unpiped stream
      */
     unpipe(target: Writable | IObjectLogger | undefined, options: ObjLogPipeOptions = {}) {
@@ -285,4 +331,3 @@ export class ObjLogger implements IObjectLogger {
         this.inputStringifiedLogStream.end();
     }
 }
-

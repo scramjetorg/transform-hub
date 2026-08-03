@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-/* eslint-disable @typescript-eslint/no-floating-promises */
 const { writeFile } = require("fs/promises");
 const { exec: execCallback } = require("child_process");
 const { promisify } = require("util");

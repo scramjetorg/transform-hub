@@ -1,0 +1,8 @@
+{
+  "name": "@scramjet/test-bun-bdd-appcontext-hosted",
+  "version": "0.1.0",
+  "private": true,
+  "main": "index.js",
+  "engines": { "bun": "1" },
+  "exposePath": "/bun"
+}

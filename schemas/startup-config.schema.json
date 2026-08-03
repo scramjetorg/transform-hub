@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.scramjet.org/transform-hub/startup-config.schema.json",
+  "title": "Scramjet Transform Hub startup-config",
+  "description": "Host startup-config file consumed by Scramjet Transform Hub through --startup-config. The file contains Transform Sequences that should be started with the Hub.",
+  "type": "object",
+  "required": ["sequences"],
+  "additionalProperties": true,
+  "properties": {
+    "sequences": {
+      "type": "array",
+      "description": "Transform Sequences to resolve and start when the Hub starts.",
+      "items": { "$ref": "#/$defs/startSequence" },
+      "default": []
+    }
+  },
+  "$defs": {
+    "startSequence": {
+      "type": "object",
+      "description": "Startup entry matching the current StartSequenceDTO contract.",
+      "required": ["id"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Stored Sequence identifier to start. For process adapter startup flows, this must resolve from the configured sequencesRoot."
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S",
+          "description": "Deprecated compatibility alias for instanceName. Prefer instanceName for new startup-config files."
+        },
+        "sequenceName": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S",
+          "description": "Optional logical Sequence identifier used for stable agent/operator workflows."
+        },
+        "instanceName": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S",
+          "description": "Optional public Instance label. Use a stable value when an agent must identify the resulting Instance."
+        },
+        "required": {
+          "type": "boolean",
+          "description": "Whether this Sequence is required on the target and should be relaunched according to restart policy.",
+          "default": false
+        },
+        "restartLimit": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Non-negative restart limit for failed required runs."
+        },
+        "appConfig": {
+          "type": "object",
+          "description": "Application configuration passed to the Transform Sequence.",
+          "additionalProperties": true
+        },
+        "args": {
+          "type": "array",
+          "description": "Arguments passed to the Transform Sequence function.",
+          "items": { "type": "string" },
+          "default": []
+        },
+        "instanceId": {
+          "type": "string",
+          "minLength": 36,
+          "maxLength": 36,
+          "description": "Optional explicit Instance identifier. Most users should prefer instanceName for a stable public label."
+        },
+        "exposePath": {
+          "type": "string",
+          "description": "Optional path used to expose Instance RPC."
+        },
+        "logLevel": {
+          "type": "string",
+          "description": "Optional per-Instance log level.",
+          "enum": ["ERROR", "WARN", "INFO", "DEBUG", "FATAL", "TRACE"]
+        },
+        "keepAlive": {
+          "type": "boolean",
+          "description": "Accepted by startup DTO validation. Current host startup does not pass this field into the runner startup payload."
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "$schema": "./schemas/startup-config.schema.json",
+      "sequences": [
+        {
+          "id": "weather-reader",
+          "sequenceName": "weather-reader",
+          "instanceName": "weather-reader-prod",
+          "required": true,
+          "restartLimit": 3,
+          "args": ["Warsaw"]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,226 @@
+---
+id: manager-docker-compose
+slug: /manager/docker-compose
+title: Run a Manager and Hubs with Docker Compose
+---
+
+# Run a Manager and Hubs with Docker Compose
+
+Work in progress — this guide has been manually verified only. Automated verification is not yet available.
+
+Use this guide when you have a Docker Compose topology that starts a Manager and one or more connected STH/Hubs. Manager-level CLI routing and Hub discovery are not available in this open topology — those capabilities are deferred to the Enterprise Version.
+
+This is not a new Compose stack. You must supply or adapt the Compose file and the Manager/Hub configuration that you have manually verified for your environment. The checked-in BDD Compose fixture at `scripts/test/fixtures/compose-live/compose.yaml` starts a Hub only. It does not provide a Manager service or a host-published Manager API, so it is not sufficient for this guide by itself.
+
+Before relying on this workflow, manually verify the rendered Compose configuration, the Manager readiness signal, the Hub registrations, and a complete deploy/control cycle for your topology.
+
+## What you need
+
+Your Compose file must define all of the following:
+
+- A Manager/control service with a host-published control port when you need host access to it.
+- One or more STH/Hub services configured with an externally supplied CPM URL and CPM ID.
+- A shared Docker network or another verified network path that lets every Hub reach its Manager endpoint.
+- Any configuration files, certificates, storage mounts, images, and environment variables required by the Manager and Hubs.
+
+The names, ports, API base path, TLS settings, and service names below depend on your topology. Do not copy an example value until it matches the configuration you are starting. For the connection model, see [Connecting Hubs](connecting-hubs.md) and [Transform Hub configuration](../transform-hub/configuration.md).
+
+## Illustrative topology template
+
+The following inline source illustrates the repository's MultiManager and STH command conventions. It is a topology template to adapt, not a claim that this repository ships this stack or its images.
+
+Before creating `compose.yaml`, set every required image and identity value. `MANAGER_IMAGE` must contain the repository's `multi-manager` executable; `HUB_IMAGE` must contain `scramjet-transform-hub` and the process-adapter runtime dependencies.
+
+`CPM_URL` is an operator-supplied CPM API base URL that is reachable from the Hub containers. It is deliberately not `http://manager:8200`: verify the externally reachable address, API path, TLS trust, and routing for your deployment. `CPM_ID` is the Manager/CPM identifier expected by that endpoint. Manager-level CLI routing through the CPM URL is not available in this open topology — those capabilities are deferred to the Enterprise Version.
+
+```sh
+export MANAGER_IMAGE=<image-containing-multi-manager>      # deployment-specific
+export HUB_IMAGE=<image-containing-scramjet-transform-hub> # deployment-specific
+export MULTI_MANAGER_ID=mm-local                            # deployment-specific
+export MANAGER_ID=manager-local                             # deployment-specific
+export CPM_URL=<externally-reachable-cpm-api-base>          # required; reachable from Hub containers and host si
+export CPM_ID=<manager-cpm-identifier>                      # required; commonly the deployed Manager identifier
+```
+
+```yaml
+# compose.yaml
+services:
+  manager:
+    image: "${MANAGER_IMAGE:?set MANAGER_IMAGE}"
+    command:
+      - multi-manager
+      - "--id=${MULTI_MANAGER_ID:?set MULTI_MANAGER_ID}"
+      - --host=0.0.0.0
+      - --server-api-port=8200
+      - --verser2-host-bind-host=0.0.0.0
+      - --verser2-host-bind-port=2443
+      - --verser2-host-public-url=https://manager:2443
+      - --verser2-host-identity-dir=/var/lib/scramjet/verser2
+      - >-
+        --manager={"id":"${MANAGER_ID:?set MANAGER_ID}","verser2":{"localBroker":{"peerId":"manager.${MANAGER_ID:?set MANAGER_ID}.broker","routeDomain":"manager.${MANAGER_ID:?set MANAGER_ID}.scramjet.internal"},"localGuest":{"peerId":"manager.${MANAGER_ID:?set MANAGER_ID}.guest","routeDomain":"manager.${MANAGER_ID:?set MANAGER_ID}.scramjet.internal"}}}
+    ports:
+      - "127.0.0.1:8200:8200" # optional Manager/control access from the host
+      # verser2 uses container port 2443 only on manager-network; it is not host-published
+    volumes:
+      - manager-identity:/var/lib/scramjet/verser2
+    networks:
+      - manager-network
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:8200/api/v1/version').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))\""]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+
+  hub-a:
+    image: "${HUB_IMAGE:?set HUB_IMAGE}"
+    command:
+      - scramjet-transform-hub
+      - --id=hub-a
+      - --runtime-adapter=process
+      - --hostname=0.0.0.0
+      - --port=8000
+      - --instances-server-port=9000
+      - --sequences-root=/var/lib/scramjet/sequences
+      - "--cpm-url=${CPM_URL:?set CPM_URL}"
+      - "--cpm-id=${CPM_ID:?set CPM_ID}"
+      - --verser2-enabled=true
+      - --verser2-host-url=https://manager:2443
+      - --verser2-guest-peer-id=sth.hub-a.guest
+      - --verser2-guest-route-domain=sth.hub-a.scramjet.internal
+      - --verser2-broker-peer-id=sth.hub-a.broker
+      - "--verser2-broker-target-domain=manager.${MANAGER_ID:?set MANAGER_ID}.scramjet.internal"
+      # Hub API port 8000 and runner-host port 9000 stay on manager-network; neither is host-published
+    volumes:
+      - hub-a-sequences:/var/lib/scramjet/sequences
+    networks:
+      - manager-network
+    depends_on:
+      manager:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:8000/api/v1/status').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))\""]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+
+  hub-b:
+    image: "${HUB_IMAGE:?set HUB_IMAGE}"
+    command:
+      - scramjet-transform-hub
+      - --id=hub-b
+      - --runtime-adapter=process
+      - --hostname=0.0.0.0
+      - --port=8000
+      - --instances-server-port=9000
+      - --sequences-root=/var/lib/scramjet/sequences
+      - "--cpm-url=${CPM_URL:?set CPM_URL}"
+      - "--cpm-id=${CPM_ID:?set CPM_ID}"
+      - --verser2-enabled=true
+      - --verser2-host-url=https://manager:2443
+      - --verser2-guest-peer-id=sth.hub-b.guest
+      - --verser2-guest-route-domain=sth.hub-b.scramjet.internal
+      - --verser2-broker-peer-id=sth.hub-b.broker
+      - "--verser2-broker-target-domain=manager.${MANAGER_ID:?set MANAGER_ID}.scramjet.internal"
+      # Hub API port 8000 and runner-host port 9000 stay on manager-network; neither is host-published
+    volumes:
+      - hub-b-sequences:/var/lib/scramjet/sequences
+    networks:
+      - manager-network
+    depends_on:
+      manager:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:8000/api/v1/status').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))\""]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+
+volumes:
+  manager-identity:
+  hub-a-sequences:
+  hub-b-sequences:
+
+networks:
+  manager-network:
+    driver: bridge
+```
+
+The source publishes only the optional Manager/control port on `127.0.0.1:8200`. Hub API, Sequence API, verser2, and Runner-host ports remain private to `manager-network`. Manually verify the CPM URL, certificate trust, identity storage, and Runner connectivity after adapting the source.
+
+## Start the topology
+
+Save the inline source as `compose.yaml` after adapting it, then start its fixed service names and ports.
+
+```sh
+export COMPOSE_FILE="$PWD/compose.yaml"
+
+docker compose -f "$COMPOSE_FILE" config
+docker compose -f "$COMPOSE_FILE" up -d
+docker compose -f "$COMPOSE_FILE" ps
+```
+
+The control port is not an `si` endpoint. Manager-level CLI routing and Hub discovery through the CPM URL are not available in this open topology — those capabilities are deferred to the Enterprise Version. To use `si` with an individual Hub, you must first ensure that Hub's API port is host-accessible (for example, by adding a host port mapping to that Hub service). The topology template above keeps Hub API ports private to `manager-network`; adapt it if you need host-side `si` access.
+
+## Check readiness and Hub connections
+
+First verify the Manager/control service, then inspect the externally supplied CPM endpoint and the two Hub services:
+
+```sh
+curl --fail --silent http://127.0.0.1:8200/api/v1/version
+curl --fail --silent "$CPM_URL/health"
+docker compose -f "$COMPOSE_FILE" ps
+docker compose -f "$COMPOSE_FILE" logs --tail=100 manager hub-a hub-b
+```
+
+Wait until the health response and Manager logs show that your required Hubs have connected. Do not treat a running container as proof that routing works: the Manager can be running before Hub registration and inventory aggregation complete. Inspect the configured Hub services when a Hub is missing:
+
+```sh
+docker compose -f "$COMPOSE_FILE" logs --tail=100 <hub-service-name>
+```
+
+The Manager keeps the connected-Hub registry and routes control requests over each Hub's Manager connection. It does not execute the Sequence itself. See [Manager overview](overview.md) for the routing model and [Set up and run an installed Sequence](../sequences/setup-and-run.md) for the canonical package and run workflow.
+
+## Use the installed CLI
+
+Manager-level CLI routing and Hub discovery are not available in this open topology — those capabilities are deferred to the Enterprise Version.
+
+To use `si` for deployment and Instance control against a selected Hub, verify that the Hub's API port is host-accessible (for example, by mapping it in `compose.yaml`). Then configure `si` with that Hub endpoint:
+
+```sh
+si config set apiUrl "http://127.0.0.1:8000"
+si config print
+```
+
+Using a Hub endpoint directly bypasses Manager-level CLI routing. The `si` operations that follow are directed to that specific Hub only.
+
+## Deploy and control an Instance
+
+Package a Sequence according to the [canonical installed Sequence run guide](../sequences/setup-and-run.md), then deploy it through the Hub endpoint that `si` is configured to target. Save the returned Instance ID for later commands.
+
+```sh
+si sequence pack ./my-sequence -o my-sequence.tar.gz
+si sequence deploy ./my-sequence.tar.gz
+
+si instance list
+si instance info <instance-id>
+si instance log <instance-id>
+si instance stdout <instance-id>
+printf 'input\n' | si instance input <instance-id> --end
+si instance stop <instance-id> 10000
+```
+
+These commands target the selected Hub directly and bypass Manager-level CLI routing. If an operation fails, first confirm that the Hub is reachable and check the Manager and Hub logs. The [CLI usage guide](../cli/usage.md) lists the available Instance commands.
+
+## Stop and clean up
+
+Stop the manually verified topology from the same Compose file:
+
+```sh
+docker compose -f "$COMPOSE_FILE" down --remove-orphans
+```
+
+Add `--volumes` only when you intend to delete the topology's named volumes and the data they contain. Verify cleanup with:
+
+```sh
+docker compose -f "$COMPOSE_FILE" ps
+```

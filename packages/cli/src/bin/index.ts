@@ -1,33 +1,105 @@
 #!/usr/bin/env ts-node
-/* eslint-disable no-console */
 
-import { Command } from "commander";
-
-import { errorHandler } from "../lib/errorHandler";
-import { commands } from "../lib/commands/index";
-import { initConfig } from "../lib/config";
-import { initPaths } from "../lib/paths";
+import { type CommandDescriptor, cmd, executeCommand, generateHelp, isHelpRequested, parseCommandContext, resolveCommandPath } from "@scramjet/config";
+import chalk from "chalk";
 import * as dns from "dns";
+import findPackage from "find-package-json";
+import { getCommandDescriptors } from "../lib/commands/index";
+import { initConfig, profileManager } from "../lib/config";
+import { parseConfigSelection } from "../lib/config/args";
+import { errorHandler } from "../lib/errorHandler";
+import { initPaths } from "../lib/paths";
+import { apiClientLoggingOption, setApiClientLoggingOverride } from "../lib/api-client-logging";
 
-const program = new Command();
+const version = findPackage(__dirname).next().value?.version || "unknown";
+
+function normalizeCommandArgs(args: string[]): string[] {
+    const selection = parseConfigSelection(args);
+
+    if (!selection) return args;
+
+    const configArgs = selection.kind === "readonly-path" ? ["--config-path", selection.value] : ["-c", selection.value];
+    const withoutConfig = [...args];
+
+    if (args.some((arg) => arg === "-c" || arg === "--config" || arg === "--config-path")) {
+        const flagIndex = withoutConfig.findIndex((arg) => arg === "-c" || arg === "--config" || arg === "--config-path");
+        withoutConfig.splice(flagIndex, 2);
+    } else {
+        const inlineIndex = withoutConfig.findIndex((arg) => arg.startsWith("-c=") || arg.startsWith("--config=") || arg.startsWith("--config-path="));
+        withoutConfig.splice(inlineIndex, 1);
+    }
+
+    return [...withoutConfig, ...configArgs];
+}
 
 /**
- * Start commander using defined config {@link Apple.seeds}
+ * Build the full command tree from descriptors and run it.
  */
 (async () => {
     // https://nodejs.org/api/dns.html#dnssetdefaultresultorderorder
     const { setDefaultResultOrder } = dns as unknown as { setDefaultResultOrder?: (param: string) => void };
 
-    if (setDefaultResultOrder) { setDefaultResultOrder("ipv4first"); }
+    if (setDefaultResultOrder) {
+        setDefaultResultOrder("ipv4first");
+    }
 
     initPaths();
     initConfig();
+    const commandDescriptors = await getCommandDescriptors();
 
-    commands.forEach((command) => command(program));
+    // Build root command descriptor
+    const rootDescriptor: CommandDescriptor = cmd("si", (b) => {
+        b.desc("This is a Scramjet Command Line Interface to communicate with Transform Hub and Cloud Platform.")
+            .usage("[command] [options...]")
+            .option("-c, --config <path>", "Use configuration from file")
+            .option("--config-path <path>", "Use configuration from file")
+            .option("--progress", "Global flag, used to display progress (currently used only in 'si seq send/deploy' command")
+            .option(apiClientLoggingOption);
 
-    program.parse(process.argv);
+        // Register child commands from command modules
+        commandDescriptors.forEach((child: CommandDescriptor) => b.addCommand(child));
+    });
 
-    await new Promise((res) => program.hook("postAction", res));
+    // Handle --version before command resolution
+    if (process.argv.includes("--version") || process.argv.includes("-v")) {
+        console.log(`SI version: ${version}`);
+        process.exit(0);
+    }
+
+    const commandArgv = normalizeCommandArgs(process.argv.slice(2));
+    const resolve = resolveCommandPath(commandArgv, rootDescriptor);
+    const leaf = resolve.command;
+
+    // Show help text
+    if (isHelpRequested(process.argv)) {
+        const helpLines: string[] = [];
+
+        helpLines.push(`Current profile: ${profileManager.getProfileName()}`);
+        helpLines.push("");
+
+        const help = generateHelp(leaf);
+
+        helpLines.push(help);
+        helpLines.push(chalk.greenBright("To find out more about CLI, please check out our docs at https://docs.scramjet.org/platform/cli-reference"));
+        helpLines.push(`${chalk.hex("#7ed2e4")("Read more about Scramjet at https://scramjet.org/ 🚀")}`);
+        console.log(helpLines.join("\n"));
+        process.exit(0);
+    }
+
+    // Execute commands
+    if (leaf.action) {
+        const ctx = parseCommandContext(resolve, rootDescriptor.options);
+
+        setApiClientLoggingOverride(ctx.options.logApiClients as boolean | undefined);
+
+        await executeCommand(ctx);
+    } else if (leaf.children && leaf.children.length > 0) {
+        // No action and has children - show help for the node
+        console.log(generateHelp(leaf));
+    }
+
+    // Wait for any pending promises (postAction)
+    await new Promise((res) => setImmediate(res));
 })().catch(errorHandler);
 
 process.on("uncaughtException", errorHandler);

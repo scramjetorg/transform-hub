@@ -13,9 +13,9 @@ export const readJsonFile = (fileNameCandidate: string, ...path: string[]): { [k
 
         if (jsonFile.exists() && jsonFile.isReadable())
             data = jsonFile.read();
-    } catch (err) {
+    } catch (_err) {
         // Ignore.
-    } finally {
-        return data;
     }
+
+    return data;
 };

@@ -1,0 +1,13 @@
+title = "Transform Hub reviewed Gitleaks configuration"
+
+[extend]
+useDefault = true
+
+# Exceptions must be narrowly scoped to one reviewed path or fingerprint, carry
+# a rationale and expiry in this file, and be removed when no longer needed.
+# Broad rule, entropy, extension, or global regex suppressions are prohibited.
+[allowlist]
+description = "No active exceptions. Add only reviewed, path/fingerprint-specific false positives."
+paths = []
+regexes = []
+commits = []

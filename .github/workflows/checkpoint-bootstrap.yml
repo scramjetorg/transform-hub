@@ -1,0 +1,67 @@
+name: Checkpoint trusted publication
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: Trusted branch to verify
+        required: true
+        type: choice
+        options: [main, devel, feat/manager-oss]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: checkpoint-bootstrap-${{ inputs.branch || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  checkpoint-publish:
+    name: Checkpoint / trusted publication
+    if: ${{ github.repository == 'scramjetorg/transform-hub' }}
+    permissions:
+      contents: read
+      packages: write
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Select trusted source branch
+        id: source
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_BRANCH: ${{ inputs.branch }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          branch="$REF_NAME"
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then branch="$INPUT_BRANCH"; fi
+          case "$branch" in main|devel|feat/manager-oss) ;; *) echo "Untrusted checkpoint branch" >&2; exit 1 ;; esac
+          printf 'branch=%s\n' "$branch" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          ref: ${{ steps.source.outputs.branch }}
+
+      - uses: ./.github/actions/setup-workspace
+        with:
+          cache: "false"
+
+      - name: Build, verify, and promote the trusted immutable checkpoint
+        shell: bash
+        env:
+          BRANCH: ${{ steps.source.outputs.branch }}
+          GITHUB_TOKEN: ${{ github.token }}
+          SCRAMJET_GHCR_SCOPED_PUBLISHER: ${{ vars.SCRAMJET_GHCR_SCOPED_PUBLISHER }}
+        run: |
+          current_sha="$(git ls-remote origin "refs/heads/$BRANCH" | cut -f1)"
+          source_sha="$(git rev-parse HEAD)"
+          test -n "$current_sha"
+          test "$SCRAMJET_GHCR_SCOPED_PUBLISHER" = "true"
+          test -n "$GITHUB_TOKEN"
+          node scripts/checkpoint/plan.js --dry-run --branch "$BRANCH" --source-sha "$source_sha" --current-sha "$current_sha" --output "$RUNNER_TEMP/checkpoint-plan"
+          printf '%s' "$GITHUB_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+          trap 'docker logout ghcr.io' EXIT
+          node scripts/checkpoint/publish.js --plan "$RUNNER_TEMP/checkpoint-plan/checkpoint-plan.v1.json" --branch "$BRANCH" --source-sha "$source_sha" --current-sha "$current_sha" --npm-cache "$HOME/.npm"
+          rm -rf node_modules

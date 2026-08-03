@@ -1,0 +1,8 @@
+{
+  "name": "v2-hub-client",
+  "version": "1.0.0",
+  "main": "index.js",
+  "engines": {
+    "node": ">=16"
+  }
+}

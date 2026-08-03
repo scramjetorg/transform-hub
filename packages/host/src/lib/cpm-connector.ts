@@ -3,37 +3,61 @@ import { Readable } from "stream";
 import * as http from "http";
 
 import { CPMMessageCode, SequenceMessageCode } from "@scramjet/symbols";
-import {
-    STHRestAPI,
-    CPMConnectorOptions,
-    EncodedControlMessage,
-    Instance,
-    LoadCheckStatMessage,
-    NetworkInfo,
-    STHIDMessageData,
-    IObjectLogger,
-    STHTopicEventData,
-    AddSTHTopicEventData
-} from "@scramjet/types";
+import { EncodedControlMessage, Instance, IObjectLogger, STHTopicEventData } from "@scramjet/runtime-types";
+import { STHRestAPI } from "@scramjet/api-types";
+import { CPMConnectorOptions, LoadCheckStatMessage, NetworkInfo, STHIDMessageData, AddSTHTopicEventData, SpaceEventMessageData } from "./types/from-types";
 
 import { StringStream } from "scramjet";
 import { LoadCheck } from "@scramjet/load-check";
-import { VerserClient } from "@scramjet/verser";
-import { TypedEmitter, generateSTHKey, normalizeUrl } from "@scramjet/utility";
+import { createVerserBroker, createVerserNodeGuest, VerserBroker, VerserNodeGuest } from "@signicode/verser2-guest-node";
+import { BackoffTimer, createExponentialBackoff, ExponentialBackoff, TypedEmitter } from "@scramjet/utility";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { ReasonPhrases } from "http-status-codes";
 import { DuplexStream } from "@scramjet/api-server";
-import { VerserClientConnection } from "@scramjet/verser/src/types";
-import { EOL, networkInterfaces } from "os";
+import { networkInterfaces } from "os";
+import { HostError } from "@scramjet/model";
+import { Verser2ClientTlsConfig } from "@scramjet/api-types";
+import { getManagerGuestMinWaitingStreams } from "./cpm-connector-leases";
 
 type STHInformation = {
     id?: string;
-}
+};
 
 type Events = {
-    connect: () => void,
-    "log_connect": (logStream: NodeJS.WritableStream) => void;
+    connect: () => void;
+    communicationReady: () => void;
     id: (id: string) => void;
+    event: (event: SpaceEventMessageData) => void;
+    disconnect: (statusCode: number, given_up: boolean) => void;
+};
+
+const dropMessageCodes = [CPMMessageCode.KEY_REVOKED, CPMMessageCode.LIMIT_EXCEEDED, CPMMessageCode.ID_DROP];
+
+export function createVerser2ClientTlsOptions(tls: Verser2ClientTlsConfig) {
+    const trust = tls.ca ? { ca: tls.ca } : { caFile: tls.caFile };
+
+    if (tls.pfxFile) {
+        return {
+            ...trust,
+            pfxFile: tls.pfxFile,
+            passphrase: tls.passphrase
+        };
+    }
+
+    if (tls.certFile || tls.keyFile) {
+        if (!tls.certFile || !tls.keyFile) {
+            throw new Error("Both verser2 TLS certFile and keyFile must be provided together");
+        }
+
+        return {
+            ...trust,
+            certFile: tls.certFile,
+            keyFile: tls.keyFile,
+            passphrase: tls.passphrase
+        };
+    }
+
+    return trust;
 }
 
 /**
@@ -101,6 +125,24 @@ export class CPMConnector extends TypedEmitter<Events> {
      */
     isReconnecting: boolean = false;
 
+    /** The one retry loop, shared by all close/error notifications. */
+    private reconnectPromise?: Promise<void>;
+
+    /** Lazily created so reconnect configuration remains optional for older hosts. */
+    private reconnectBackoff?: ExponentialBackoff;
+
+    /** Identifies the currently active Manager communication stream. */
+    private communicationGeneration = 0;
+
+    /**
+     * Monotonically increasing counter invalidating any in-flight registration attempt
+     * when the current communication stream is closed.
+     */
+    private registrationAttemptGeneration = 0;
+
+    /** A single in-flight verser/registration attempt. */
+    private connectionAttempt?: Promise<void>;
+
     /**
      * True if connection to Manager has been established at least once.
      */
@@ -125,12 +167,9 @@ export class CPMConnector extends TypedEmitter<Events> {
      */
     cpmId: string;
 
-    /**
-     * VerserClient Instance used for connecting with Verser.
-     *
-     * @type {VerserClient}
-     */
-    verserClient: VerserClient;
+    verser2Broker?: VerserBroker;
+
+    verser2Guest?: VerserNodeGuest;
 
     /**
      * Reference for method called in interval and sending load check data to the Manager.
@@ -140,76 +179,40 @@ export class CPMConnector extends TypedEmitter<Events> {
     loadInterval?: NodeJS.Timeout;
 
     /**
-     * Loaded certificate authority file for connecting to CPM via HTTPS
-     */
-    _cpmSslCa?: string | Buffer;
-
-    /**
      * @constructor
      * @param {string} cpmHostname CPM hostname to connect to. (e.g. "localhost:8080").
      * @param {string} cpm CPM id to connect to. (format: "org:manager").
      * @param {CPMConnectorOptions} config CPM connector configuration.
      * @param {Server} server API server to handle incoming requests.
      */
-    constructor(private cpmHostname: string, cpm: string, config: CPMConnectorOptions, server: http.Server) {
+    constructor(_cpmHostname: string, cpm: string, config: CPMConnectorOptions, server: http.Server) {
         super();
 
-        const [orgId, cpmId] = cpm.split(":");
+        const [, cpmId] = cpm.split(":");
 
         this.cpmId = cpmId;
         this.config = config;
 
         this.logger = new ObjLogger(this);
 
-        let sthKey;
+        const tls = createVerser2ClientTlsOptions(this.config.verser2.tls);
 
-        if (config.apiKey) {
-            sthKey = generateSTHKey(config.apiKey);
-        }
-
-        this.verserClient = new VerserClient({
-            verserUrl: `${this.cpmUrl}/api/${config.apiVersion}/${orgId}/${cpmId}/`,
-            headers: {
-                "x-sth-description": typeof this.config.description !== "undefined" ? this.config.description : "",
-                "x-sth-tags": JSON.stringify(typeof this.config.tags !== "undefined" ? this.config.tags : []),
-                "x-manager-id": cpmId,
-                "x-sth-id": this.config.id || "",
-                ...orgId && { "x-org-id": orgId },
-                ...sthKey && { Authorization: `Digest cnonce="${sthKey}"` }
-            },
-            server,
-            https: this.isHttps
-                ? { ca: [this.cpmSslCa] }
-                : undefined
+        this.verser2Broker = createVerserBroker({
+            hostUrl: this.config.verser2.hostUrl,
+            brokerId: this.config.verser2.broker.peerId,
+            leaseAcquireTimeoutMs: this.config.verser2.timeouts.leaseAcquireMs,
+            tls
         });
-
-        this.verserClient.logger.pipe(this.logger);
+        this.verser2Guest = createVerserNodeGuest({
+            hostUrl: this.config.verser2.hostUrl,
+            guestId: this.config.verser2.guest.peerId,
+            routedDomains: [this.config.verser2.guest.routeDomain],
+            minWaitingStreams: getManagerGuestMinWaitingStreams(this.config.verser2.leases.minimumWaitingLeases, this.config.verser2.leases.minimumUpstreamWaitingStreams),
+            leaseAcquireTimeoutMs: this.config.verser2.timeouts.leaseAcquireMs,
+            tls
+        }).attach(server, this.config.verser2.guest.routeDomain);
 
         this.logger.trace("Initialized.");
-    }
-
-    private get cpmSslCa() {
-        if (typeof this.config.cpmSslCaPath === "undefined") {
-            throw new Error("No cpmSslCaPath specified");
-        }
-
-        if (!this._cpmSslCa) {
-            this._cpmSslCa = fs.readFileSync(this.config.cpmSslCaPath);
-        }
-
-        return this._cpmSslCa;
-    }
-
-    /**
-     * Should Host connect on SSL encrypted connection to CPM
-     */
-    private get isHttps(): boolean {
-        // @TODO potentially not all https requests would use custom CA
-        return typeof this.config.cpmSslCaPath === "string";
-    }
-
-    private get cpmUrl() {
-        return normalizeUrl(`${this.cpmHostname.replace(/\/$/, "")}`, { defaultProtocol: this.isHttps ? "https:" : "http:" });
     }
 
     /**
@@ -233,7 +236,33 @@ export class CPMConnector extends TypedEmitter<Events> {
     /**
      * Initializes connector.
      */
-    init() {
+    init() {}
+
+    async disconnect() {
+        this.logger.info("Disconnecting from Manager");
+        this.isAbandoned = true;
+        this.abandonReconnect();
+
+        this.handleCommunicationRequestEnd();
+
+        if (this.connection) {
+            this.connection.destroy();
+            this.connection = undefined;
+        }
+
+        // Best-effort revoke our advertised route before disconnecting.
+        if (this.verser2Guest) {
+            try {
+                await this.verser2Guest.revokeRoutes([this.config.verser2.guest.routeDomain]);
+            } catch (error: any) {
+                this.logger.warn("Failed to revoke guest route on disconnect", error?.message ?? error);
+            }
+        }
+
+        await this.verser2Broker?.close("disconnect");
+        await this.verser2Guest?.close("disconnect");
+
+        this.logger.info("Disconnected from Manager");
     }
 
     handleCommunicationRequestEnd() {
@@ -241,6 +270,7 @@ export class CPMConnector extends TypedEmitter<Events> {
 
         if (this.loadInterval) {
             clearInterval(this.loadInterval);
+            this.loadInterval = undefined;
         }
 
         this.communicationStream = undefined;
@@ -248,53 +278,68 @@ export class CPMConnector extends TypedEmitter<Events> {
 
     async handleCommunicationRequest(duplex: DuplexStream, _headers: http.IncomingHttpHeaders) {
         if (this.communicationStream) {
+            this.logger.warn("Already connected to Manager", this.communicationStream);
             return {
                 opStatus: ReasonPhrases.CONFLICT
             };
         }
 
-        this.logger.info(`${EOL}${EOL}\t\x1b[33m${this.config.id} connected to ${this.cpmId}\x1b[0m${EOL} `);
+        const generation = ++this.communicationGeneration;
+        this.logger.info(`Hub ${this.config.id} connected to ${this.cpmId}`);
 
         StringStream.from(duplex.input as Readable)
+            .on("error", (e: Error) => {
+                if (this.isAbandoned) return;
+                this.logger.error("Communication stream error", e.message);
+                this.handleConnectionClose(1006, generation).catch((_e) => {
+                    this.logger.error("Reconnection error", _e);
+                });
+            })
             .JSONParse()
             .map(async (message: EncodedControlMessage) => {
                 this.logger.trace("Received message", message);
-                const messageCode = message[0] as CPMMessageCode;
+                const messageCode = message[0] as unknown as CPMMessageCode;
 
                 if (messageCode === CPMMessageCode.STH_ID) {
-                    // eslint-disable-next-line no-extra-parens
                     this.info.id = (message[1] as STHIDMessageData).id;
 
                     this.logger.trace("Received id", this.info.id);
 
-                    this.verserClient.updateHeaders({ "x-sth-id": this.info.id });
+                    fs.writeFileSync(this.config.infoFilePath, JSON.stringify(this.info));
 
-                    fs.writeFileSync(
-                        this.config.infoFilePath,
-                        JSON.stringify(this.info)
-                    );
-
-                    this.emit("id", this.info.id);
+                    this.emit("id", this.info.id ?? "");
                     this.logger.updateBaseLog({ id: this.info.id });
                 }
-
-                const dropMessageCodes = [
-                    CPMMessageCode.KEY_REVOKED,
-                    CPMMessageCode.LIMIT_EXCEEDED,
-                    CPMMessageCode.ID_DROP
-                ];
 
                 if (dropMessageCodes.includes(messageCode)) {
                     this.logger.trace("Received pre drop message");
                     this.isAbandoned = true;
+                    this.abandonReconnect();
+                }
+
+                if (messageCode === CPMMessageCode.DO_RECONNECT) {
+                    this.logger.info("CPM is asking to reconnect");
+                }
+
+                if (messageCode === CPMMessageCode.EVENT) {
+                    const event = message[1] as SpaceEventMessageData;
+
+                    await this.receiveEvent(event);
                 }
 
                 return message;
-            }).catch((e: any) => {
+            })
+            .catch((e: any) => {
                 this.logger.warn("communicationChannel error", e.message);
+                void this.handleConnectionClose(1006, generation);
+            })
+            .run()
+            .catch((e: any) => {
+                this.logger.warn("communicationChannel run error", e.message);
+                void this.handleConnectionClose(1006, generation);
             });
 
-        this.communicationStream = new StringStream().JSONStringify().resume();
+        this.communicationStream = new StringStream().JSONStringify();
         this.communicationStream.pipe(duplex.output);
 
         await this.setLoadCheckMessageSender();
@@ -303,35 +348,55 @@ export class CPMConnector extends TypedEmitter<Events> {
             this.logger.warn("Communication stream paused");
         });
 
-        await this.communicationStream.whenWrote(
-            [CPMMessageCode.NETWORK_INFO, await this.getNetworkInfo()]
-        );
+        await this.communicationStream.whenWrote([CPMMessageCode.NETWORK_INFO, await this.getNetworkInfo()]);
 
-        this.emit("connect");
+        this.emit("communicationReady");
 
         return new Promise((resolve, reject) => {
-            duplex.on("end", () => {
-                this.logger.debug("Platform request close");
+            let requestSettled = false;
 
-                this.handleCommunicationRequestEnd();
-                resolve({});
-            });
+            const settleRequest = (handler: () => void) => {
+                if (requestSettled) return;
 
-            duplex.on("error", () => {
-                this.logger.error("Platform request error");
+                requestSettled = true;
+                handler();
+            };
 
-                this.handleCommunicationRequestEnd();
-                reject();
-            });
+            duplex.on("end", () =>
+                settleRequest(() => {
+                    this.logger.debug("Platform request close");
+
+                    void this.handleConnectionClose(1000, generation);
+                    resolve({});
+                })
+            );
+
+            duplex.on("close", () =>
+                settleRequest(() => {
+                    this.logger.debug("Platform request closed");
+
+                    void this.handleConnectionClose(1006, generation);
+                    resolve({});
+                })
+            );
+
+            duplex.on("error", () =>
+                settleRequest(() => {
+                    this.logger.error("Platform request error");
+
+                    void this.handleConnectionClose(1006, generation);
+                    reject(new HostError("ERR_PLATFORM_REQUEST_ERROR"));
+                })
+            );
         });
     }
 
     getHttpAgent(): http.Agent {
-        return this.verserClient.verserAgent as http.Agent;
+        return this.verser2Broker!.createAgent();
     }
 
     /**
-     * Connect to Manager using VerserClient.
+     * Connect to Manager using verser2.
      * Host send its id to Manager in headers. If id is not set, it will be received from Manager.
      * When connection is established it sets up handlers for communication channels.
      * If connection fails, it will try to reconnect.
@@ -339,61 +404,99 @@ export class CPMConnector extends TypedEmitter<Events> {
      * @returns {Promise<void>} Promise that resolves when connection is established.
      */
     async connect(): Promise<void> {
-        this.isReconnecting = false;
+        if (this.isAbandoned) return;
 
-        if (this.info.id) {
-            this.verserClient.updateHeaders({ "x-sth-id": this.info.id });
+        if (this.reconnectPromise) {
+            return this.reconnectPromise;
         }
-
-        let connection: VerserClientConnection;
 
         try {
-            this.logger.trace("Connecting to Manager", this.cpmUrl, this.cpmId);
-            connection = await this.verserClient.connect();
-
-            connection.socket
-                .once("close", async () => {
-                    this.logger.warn("Space request close status", connection.res.statusCode);
-                    this.logger.warn("Space request close message", connection.res.statusMessage);
-
-                    await this.handleConnectionClose(connection.res.statusCode || -1);
-                });
+            await this.connectOnce();
         } catch (error: any) {
-            this.logger.error("Can not connect to Manager", this.cpmUrl, this.cpmId, error.message);
+            if (this.isAbandoned) return;
 
-            await this.reconnect();
-
-            return;
+            this.logger.error("Can not connect to Manager", this.config.verser2.hostUrl, this.cpmId, error.message);
         }
 
-        /**
-         * @TODO: Distinguish existing `connect` request and started communication (Manager handled this host
-         * and made requests to it).
-         * @TODO: Provide detailed communication status.
-        */
+        if (!this.connected) await this.reconnect();
+    }
 
-        this.connected = true;
-        this.connectionAttempts = 0;
+    private async connectOnce(): Promise<void> {
+        if (this.connectionAttempt) return this.connectionAttempt;
 
-        connection.res.once("error", async (error: any) => {
-            this.logger.error("Request error", error);
+        this.connectionAttempt = (async () => {
+            await this.verser2Broker!.connect();
+            if (this.isAbandoned) return;
+            await this.verser2Guest!.connect();
+            if (this.isAbandoned) return;
 
-            try {
-                await this.reconnect();
-            } catch (e) {
-                this.logger.error("Reconnect failed");
+            const regAttemptGeneration = this.registrationAttemptGeneration;
+            await this.registerWithManager();
+            if (this.isAbandoned) return;
+
+            // A close of the current communication stream while registration was in flight
+            // invalidates this attempt — let the reconnect supervisor retry.
+            if (regAttemptGeneration !== this.registrationAttemptGeneration) {
+                this.logger.debug("Registration invalidated by concurrent stream close");
+                throw new Error("Registration invalidated by stream close");
             }
+
+            /**
+             * @TODO: Distinguish existing `connect` request and started communication (Manager handled this host
+             * and made requests to it).
+             * @TODO: Provide detailed communication status.
+             */
+            this.connected = true;
+            this.connectionAttempts = 0;
+            this.ensureReconnectBackoff().success();
+            this.emit("connect");
+        })();
+
+        try {
+            await this.connectionAttempt;
+        } finally {
+            this.connectionAttempt = undefined;
+        }
+    }
+
+    private async registerWithManager(): Promise<void> {
+        const req = this.makeHttpRequestToCpm("POST", "sth", { "content-type": "application/json" });
+        const payload = JSON.stringify({
+            id: this.config.id || this.info.id,
+            description: this.config.description || "",
+            tags: this.config.tags || [],
+            enrollmentToken: this.config.verser2.enrollment.token,
+            routeDomain: this.config.verser2.guest.routeDomain
         });
 
-        this.verserClient.once("error", async (error: any) => {
-            this.logger.warn("VerserClient error", error);
+        const responseBody = await new Promise<string>((resolve, reject) => {
+            req.on("response", (res: http.IncomingMessage) => {
+                const chunks: Buffer[] = [];
 
-            try {
-                await this.reconnect();
-            } catch (e) {
-                this.logger.error("Reconnect failed");
-            }
+                res.on("data", (chunk) => chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)));
+                res.on("end", () => {
+                    if ((res.statusCode || 500) >= 400) {
+                        reject(new Error(`Manager STH registration failed: ${res.statusCode} ${res.statusMessage || ""}`.trim()));
+                        return;
+                    }
+                    resolve(Buffer.concat(chunks).toString("utf8"));
+                });
+                res.on("error", reject);
+            });
+            req.on("error", reject);
+            req.end(payload);
         });
+
+        if (!responseBody) return;
+
+        const response = JSON.parse(responseBody) as { id?: string };
+
+        if (response.id && response.id !== this.info.id) {
+            this.info.id = response.id;
+            fs.writeFileSync(this.config.infoFilePath, JSON.stringify(this.info));
+            this.emit("id", this.info.id);
+            this.logger.updateBaseLog({ id: this.info.id });
+        }
     }
 
     /**
@@ -402,7 +505,15 @@ export class CPMConnector extends TypedEmitter<Events> {
      *
      * @param {number} connectionStatusCode - status code
      */
-    async handleConnectionClose(connectionStatusCode: number) {
+    async handleConnectionClose(connectionStatusCode: number, generation?: number) {
+        if (generation !== undefined && generation !== this.communicationGeneration) {
+            this.logger.debug("Ignoring stale CPM communication stream close", connectionStatusCode, generation);
+            return;
+        }
+
+        // Invalidate any in-flight registration — this stream (or its replacement) is gone.
+        this.registrationAttemptGeneration++;
+
         this.handleCommunicationRequestEnd();
 
         this.connection?.removeAllListeners();
@@ -416,41 +527,80 @@ export class CPMConnector extends TypedEmitter<Events> {
 
         if (connectionStatusCode === 403) {
             this.isAbandoned = true;
+            this.abandonReconnect();
+            return;
         }
 
-        await this.reconnect();
+        void this.reconnect();
     }
 
     /**
-     * Reconnects to Manager if maximum number of connection attempts is not reached.
+     * Starts the single reconnect supervisor. Close, error and failed-registration
+     * notifications may all arrive for the same transport failure, so they must share
+     * this loop instead of recursively starting competing connection attempts.
      *
      * @returns {void}
      */
     async reconnect(): Promise<void> {
-        if (this.isReconnecting || this.isAbandoned) {
-            return;
-        }
+        if (this.isAbandoned) return;
+        if (this.reconnectPromise) return this.reconnectPromise;
 
-        this.connectionAttempts++;
+        this.isReconnecting = true;
+        this.reconnectPromise = (async () => {
+            try {
+                // Manager availability is not a terminal condition. Keep retrying until
+                // explicitly abandoned; maxReconnections only caps delay for compatibility.
+                while (!this.isAbandoned) {
+                    this.connectionAttempts++;
+                    this.logger.info("Connection lost, retrying", this.connectionAttempts);
+                    await this.ensureReconnectBackoff()();
 
-        let shouldReconnect = true;
+                    if (this.isAbandoned) break;
 
-        if (~this.config.maxReconnections && this.connectionAttempts > this.config.maxReconnections) {
-            shouldReconnect = false;
-            this.logger.warn("Maximum reconnection attempts reached. Giving up.");
-        }
+                    try {
+                        await this.connectOnce();
+                        return;
+                    } catch (error: any) {
+                        if (!this.isAbandoned) {
+                            this.logger.error("Can not reconnect to Manager", this.config.verser2.hostUrl, this.cpmId, error.message);
+                        }
+                    }
+                }
+            } finally {
+                // This must be reset for success, failures, and cancellation so a later
+                // Manager restart always gets a new supervisor.
+                this.isReconnecting = false;
+                this.reconnectPromise = undefined;
+                this.reconnectBackoff?.cancel();
+            }
+        })();
 
-        if (shouldReconnect) {
-            this.isReconnecting = true;
+        return this.reconnectPromise;
+    }
 
-            await new Promise<void>((resolve, reject) => {
-                this.logger.info("Connection lost, retrying", this.connectionAttempts);
+    private ensureReconnectBackoff(): ExponentialBackoff {
+        if (this.reconnectBackoff) return this.reconnectBackoff;
 
-                setTimeout(async () => {
-                    await this.connect().then(resolve, reject);
-                }, this.config.reconnectionDelay);
-            });
-        }
+        const initialDelay = Math.max(0, Number(this.config.reconnectionDelay) || 0);
+        // Older configuration exposes maxReconnections but no max-delay setting.
+        // Retain it as a delay-cap multiplier rather than a retry cutoff.
+        const configuredMaxDelay = Number(this.config.reconnectionMaxDelay);
+        const legacyMultiplier = Math.max(1, Number(this.config.maxReconnections) || 1);
+        const maxDelay = Number.isFinite(configuredMaxDelay) && configuredMaxDelay >= initialDelay
+            ? configuredMaxDelay
+            : initialDelay * legacyMultiplier;
+
+        this.reconnectBackoff = createExponentialBackoff({
+            initialDelay,
+            maxDelay,
+            timer: this.config.reconnectionTimer as BackoffTimer | undefined
+        });
+        return this.reconnectBackoff;
+    }
+
+    private abandonReconnect() {
+        this.reconnectBackoff?.cancel();
+        this.isReconnecting = false;
     }
 
     /**
@@ -490,12 +640,21 @@ export class CPMConnector extends TypedEmitter<Events> {
         return ifs;
     }
 
+    async receiveEvent(event: SpaceEventMessageData): Promise<void> {
+        this.logger.debug("Received event", event.eventName);
+
+        this.emit("event", event);
+    }
+
+    async sendEvent(event: SpaceEventMessageData): Promise<void> {
+        await this.communicationStream?.whenWrote([CPMMessageCode.EVENT, event]);
+        this.logger.debug("Sent event", event);
+    }
+
     async sendLoad() {
         try {
-            await this.communicationStream?.whenWrote(
-                [CPMMessageCode.LOAD, await this.getLoad()]
-            );
-        } catch (e) {
+            await this.communicationStream?.whenWrote([CPMMessageCode.LOAD, await this.getLoad()]);
+        } catch {
             this.logger.error("Error sending loadcheck");
         }
     }
@@ -508,7 +667,7 @@ export class CPMConnector extends TypedEmitter<Events> {
 
         this.loadInterval = setInterval(async () => {
             await this.sendLoad();
-        }, 5000);
+        }, 10000);
     }
 
     /**
@@ -537,9 +696,7 @@ export class CPMConnector extends TypedEmitter<Events> {
     async sendSequencesInfo(sequences: STHRestAPI.GetSequencesResponse): Promise<void> {
         this.logger.trace("Sending sequences information, total sequences", sequences.length);
 
-        await this.communicationStream!.whenWrote(
-            [CPMMessageCode.SEQUENCES, { sequences }]
-        );
+        await this.communicationStream!.whenWrote([CPMMessageCode.SEQUENCES, { sequences }]);
 
         this.logger.trace("Sequences information sent");
     }
@@ -552,9 +709,7 @@ export class CPMConnector extends TypedEmitter<Events> {
     async sendInstancesInfo(instances: Instance[]): Promise<void> {
         this.logger.trace("Sending instances information");
 
-        await this.communicationStream?.whenWrote(
-            [CPMMessageCode.INSTANCES, { instances }]
-        );
+        await this.communicationStream?.whenWrote([CPMMessageCode.INSTANCES, { instances }]);
 
         this.logger.trace("Instances information sent");
     }
@@ -565,13 +720,10 @@ export class CPMConnector extends TypedEmitter<Events> {
      * @param {string} sequenceId Sequence id.
      * @param {SequenceMessageCode} seqStatus Sequence status.
      */
-    // eslint-disable-next-line max-len
-    async sendSequenceInfo(sequenceId: string, seqStatus: SequenceMessageCode, config: STHRestAPI.GetSequenceResponse) : Promise<void> {
+    async sendSequenceInfo(sequenceId: string, seqStatus: SequenceMessageCode, config: STHRestAPI.GetSequenceResponse): Promise<void> {
         this.logger.trace("Send sequence status update", sequenceId, seqStatus);
 
-        await this.communicationStream?.whenWrote(
-            [CPMMessageCode.SEQUENCE, { id: sequenceId, status: seqStatus, config }]
-        );
+        await this.communicationStream?.whenWrote([CPMMessageCode.SEQUENCE, { id: sequenceId, status: seqStatus, config }]);
 
         this.logger.trace("Sequence status update sent", sequenceId, seqStatus);
     }
@@ -585,9 +737,7 @@ export class CPMConnector extends TypedEmitter<Events> {
     async sendInstanceInfo(instance: Instance): Promise<void> {
         this.logger.trace("Send instance status update", instance.status);
 
-        await this.communicationStream?.whenWrote(
-            [CPMMessageCode.INSTANCE, { instance }]
-        );
+        await this.communicationStream?.whenWrote([CPMMessageCode.INSTANCE, { instance }]);
     }
 
     /**
@@ -597,9 +747,7 @@ export class CPMConnector extends TypedEmitter<Events> {
      * @param data Topic information.
      */
     async sendTopicInfo(data: STHTopicEventData) {
-        await this.communicationStream?.whenWrote(
-            [CPMMessageCode.TOPIC, { ...data }]
-        );
+        await this.communicationStream?.whenWrote([CPMMessageCode.TOPIC, { ...data }]);
     }
 
     async sendTopicsInfo(topics: Omit<STHTopicEventData, "status">[]) {
@@ -613,20 +761,25 @@ export class CPMConnector extends TypedEmitter<Events> {
         this.logger.trace("Topics information sent");
     }
 
-    public makeHttpRequestToCpm(
-        method: string,
-        reqPath: string,
-        headers: http.OutgoingHttpHeaders | Record<string, string> = {}
-    ): http.ClientRequest {
+    public makeHttpRequestToCpm(method: string, reqPath: string, headers: http.OutgoingHttpHeaders | Record<string, string> = {}): http.ClientRequest {
         //@TODO: Disconnecting/error handling
-        const url = `http://scramjet-space/api/v1/cpm/${this.cpmId}/api/v1/${reqPath}`;
+        const path = reqPath.replace(/^\/+/, "");
+        const versionedPath = /^api\/v[12](?:\/|$)/.test(path) ? path : `api/v1/${path}`;
+        const url = `http://${this.config.verser2.broker.targetDomain}/${versionedPath}`;
 
-        this.logger.info("make HTTP Req to CPM", url);
+        this.logger.debug("make HTTP Req to CPM", url);
 
-        return http.request(
-            url,
-            { method, agent: this.verserClient.verserAgent, headers }
-        );
+        return http.request(url, { method, agent: this.getHttpAgent(), headers });
+    }
+
+    public getCpmRouteMetadata(reqPath: string) {
+        const path = reqPath.replace(/^\/+/, "");
+        const versionedPath = /^api\/v[12](?:\/|$)/.test(path) ? path : `api/v1/${path}`;
+
+        return {
+            routeDomain: this.config.verser2.broker.targetDomain,
+            targetPath: `/${versionedPath}`
+        };
     }
 
     /**
@@ -640,9 +793,11 @@ export class CPMConnector extends TypedEmitter<Events> {
             this.makeHttpRequestToCpm("GET", `topic/${topic}`)
                 .on("response", (res: http.IncomingMessage) => {
                     resolve(res);
-                }).on("error", (err: Error) => {
+                })
+                .on("error", (err: Error) => {
                     this.logger.error("Topic request error:", err);
-                }).end();
+                })
+                .end();
         });
     }
 
@@ -651,9 +806,11 @@ export class CPMConnector extends TypedEmitter<Events> {
             this.makeHttpRequestToCpm("GET", `sequence-store/${id}`)
                 .on("response", (res: http.IncomingMessage) => {
                     resolve(res);
-                }).on("error", (err: Error) => {
+                })
+                .on("error", (err: Error) => {
                     this.logger.error("Sequence request error:", err);
-                }).end();
+                })
+                .end();
         });
     }
 }

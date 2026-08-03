@@ -1,10 +1,22 @@
-
 import { ObjLogger } from "@scramjet/obj-logger";
 import {
-    EventMessageData, KeepAliveMessageData, MonitoringMessageFromRunnerData,
-    AppConfig, AppError, AppErrorConstructor, AppContext, WritableStream,
-    FunctionDefinition, KillHandler, StopHandler, MonitoringHandler, IObjectLogger, HostClient, ManagerClient
-} from "@scramjet/types";
+    AppConfig,
+    AppError,
+    AppErrorConstructor,
+    BaseAppContext,
+    FunctionDefinition,
+    IObjectLogger,
+    ILocalStorage,
+    KillHandler,
+    LogLevel,
+    MonitoringHandler,
+    MonitoringMessageFromRunnerData,
+    mergeHealthOutputs,
+    StopHandler,
+    WritableStream
+} from "@scramjet/runtime-types";
+import type { EventMessageData, KeepAliveMessageData } from "@scramjet/runtime-types";
+import type { APIExpose, HostClient, ManagerClient } from "@scramjet/api-types";
 import { EventEmitter } from "events";
 
 function assertFunction(handler: any | Function): handler is Function {
@@ -22,8 +34,9 @@ export interface RunnerProxy {
     keepAliveIssued(): void;
 }
 
-export class RunnerAppContext<AppConfigType extends AppConfig, State extends any>
-implements AppContext<AppConfigType, State> {
+export class RunnerAppContext<AppConfigType extends AppConfig, State extends any, HubClientType = unknown, SpaceClientType = unknown>
+    implements BaseAppContext<AppConfigType, State, HubClientType, SpaceClientType>
+{
     private runner;
     config: AppConfigType;
     AppError!: AppErrorConstructor;
@@ -31,20 +44,51 @@ implements AppContext<AppConfigType, State> {
     emitter: EventEmitter;
     initialState?: State;
     exitTimeout: number = 10000;
-    logger: IObjectLogger = new ObjLogger("Sequence");
+    logger: IObjectLogger;
+    /** Retained legacy sequence API (`this.hub`); new code should prefer `hubClient()`. */
     hub: HostClient;
+    /** Retained legacy sequence API (`this.space`); new code should prefer `spaceClient()`. */
     space: ManagerClient;
+    private v2HubClient: HubClientType;
+    private v2SpaceClient: SpaceClientType;
     instanceId: string;
+    api: APIExpose;
+    localStorage: ILocalStorage;
 
-    constructor(config: AppConfigType, monitorStream: WritableStream<any>,
-        emitter: EventEmitter, runner: RunnerProxy, hostClient: HostClient, spaceClient: ManagerClient, id: string) {
+    constructor(
+        config: AppConfigType,
+        monitorStream: WritableStream<any>,
+        emitter: EventEmitter,
+        runner: RunnerProxy,
+        hostClient: HostClient,
+        spaceClient: ManagerClient,
+        v2HubClient: HubClientType,
+        v2SpaceClient: SpaceClientType,
+        id: string,
+        logLevel: LogLevel,
+        api: APIExpose,
+        localStorage: ILocalStorage
+    ) {
         this.config = config;
         this.monitorStream = monitorStream;
         this.emitter = emitter;
         this.runner = runner;
         this.hub = hostClient;
         this.space = spaceClient;
+        this.v2HubClient = v2HubClient;
+        this.v2SpaceClient = v2SpaceClient;
         this.instanceId = id;
+        this.api = api;
+        this.localStorage = localStorage;
+        this.logger = new ObjLogger(`App:${this.instanceId}`, {}, logLevel);
+    }
+
+    hubClient(): HubClientType {
+        return this.v2HubClient;
+    }
+
+    spaceClient(): SpaceClientType {
+        return this.v2SpaceClient;
     }
 
     private handleSave(_state: any): void {
@@ -84,20 +128,10 @@ implements AppContext<AppConfigType, State> {
 
     private _monitoringHandlers: MonitoringHandler[] = [];
 
-    async monitor(
-        initialMessage: MonitoringMessageFromRunnerData = { healthy: true }
-    ): Promise<MonitoringMessageFromRunnerData> {
-        let message = initialMessage;
-
-        for (const handler of this._monitoringHandlers) {
-            //TODO add sequences const { healthy, sequences } = await handler(message);
-            const { healthy } = await handler(message);
-
-            //if any of handlers returns false then healthy is false
-            message = { healthy: message.healthy && healthy };
-        }
-
-        return message;
+    async monitor(initialMessage: MonitoringMessageFromRunnerData = { healthy: true }): Promise<MonitoringMessageFromRunnerData> {
+        const outputs: unknown[] = [initialMessage];
+        for (const handler of this._monitoringHandlers) outputs.push(await handler(initialMessage));
+        return mergeHealthOutputs(outputs) as MonitoringMessageFromRunnerData;
     }
 
     addMonitoringHandler(handler: MonitoringHandler): this {
@@ -119,6 +153,7 @@ implements AppContext<AppConfigType, State> {
     }
 
     keepAlive(milliseconds?: number): this {
+        this.runner.keepAliveIssued();
         this.runner.sendKeepAlive({ keepAlive: milliseconds || 0 });
         return this;
     }
@@ -144,8 +179,14 @@ implements AppContext<AppConfigType, State> {
     }
 
     emit(eventName: string, message?: any) {
-        this.runner.sendEvent({ eventName, message });
+        this.runner.sendEvent({ eventName, message, scope: "host" });
         // this.emitter.emit(eventName, message);
+        return this;
+    }
+
+    emitToSpace(ev: string, message?: any): this {
+        this.runner.sendEvent({ eventName: ev, message, scope: "space" });
+
         return this;
     }
 }

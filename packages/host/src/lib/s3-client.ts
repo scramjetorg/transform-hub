@@ -1,7 +1,8 @@
 import { ObjLogger } from "@scramjet/obj-logger";
 import { Agent, IncomingHttpHeaders } from "http";
-import { PicoS3, CLOUD_PROVIDERS, getObject } from "pico-s3";
+import { PicoS3, CLOUD_PROVIDERS, getObject, S3GetOptions } from "pico-s3";
 import { Readable } from "stream";
+import { AxiosRequestConfig } from "axios";
 
 type SequenceStoreClientConfig = {
     host: string;
@@ -41,12 +42,19 @@ export class S3Client {
 
     async getObject(options: { filename: string; directory?: string }):
         Promise<{status: number, data: Readable, headers: IncomingHttpHeaders }> {
+        const axiosOptions: S3GetOptions = {
+            ...this.clientConfig,
+            ...options,
+        };
+        const axiosOverride: AxiosRequestConfig = {
+            httpAgent: this.agent,
+            responseType: "stream",
+            headers: { Accept: "*/*", "Content-Type": "application/octet-stream" }
+        };
+
         return getObject(
-            {
-                ...this.clientConfig,
-                ...options,
-            },
-            { httpAgent: this.agent, responseType: "stream", headers: { Accept: "*/*", "Content-Type": "application/octet-stream" } }
-        );
+            axiosOptions,
+            axiosOverride
+        ) as Promise<{status: number, data: Readable, headers: IncomingHttpHeaders }>;
     }
 }

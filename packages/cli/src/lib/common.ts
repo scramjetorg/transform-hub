@@ -8,6 +8,8 @@ import { Readable } from "stream";
 import { profileManager, sessionConfig } from "./config";
 import { getMiddlewareClient } from "./platform";
 import { isDevelopmentEnv, isProductionEnv } from "../types";
+import { CapabilityUnavailableError } from "./capabilities";
+import { shouldAttachApiClientLogger } from "./api-client-logging";
 
 const { F_OK } = constants;
 
@@ -20,10 +22,11 @@ let hostClient: HostClient;
  */
 export const getHostClient = (): HostClient => {
     const profileConfig = profileManager.getProfileConfig();
+    if (profileConfig.get().verser2) throw new CapabilityUnavailableError("This named command");
 
     if (hostClient) return hostClient;
 
-    const { apiUrl, env, log: { debug } } = profileConfig.get();
+    const { apiUrl, env, log: { debug, apiClients } } = profileConfig.get();
     const { lastSpaceId, lastHubId } = sessionConfig.get();
 
     if (isDevelopmentEnv(env)) {
@@ -34,7 +37,7 @@ export const getHostClient = (): HostClient => {
             .getHostClient(lastHubId);
     }
 
-    if (debug) {
+    if (shouldAttachApiClientLogger(debug, apiClients)) {
         hostClient.client.addLogger({
             ok(result) {
                 const { status, statusText, url } = result;

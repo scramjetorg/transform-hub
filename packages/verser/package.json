@@ -1,31 +1,30 @@
 {
   "name": "@scramjet/verser",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "This package is part of Scramjet Transform Hub. The package provides a reverse server functionality used among Scramjet modules.",
   "main": "./src/index.ts",
   "scripts": {
-    "start": "ts-node ./src/bin/index",
     "build": "../../scripts/build-all.js --config-name=tsconfig.build.json --copy-dist",
-    "build:docs": "typedoc",
     "clean": "rm -rf ./dist .bic_cache",
     "test": "npm run test:ava",
-    "test:ava": "ava"
+    "test:ava": "node ../../scripts/run-ava.js",
+    "test:legacy": "node ../../scripts/run-ava.js test/http-connection.spec.ts"
   },
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "AGPL-3.0",
   "dependencies": {
-    "@scramjet/obj-logger": "^1.0.1",
-    "@scramjet/utility": "^1.0.1",
-    "bpmux": "^8.2.1"
+    "@scramjet/obj-logger": "^2.0.0",
+    "@scramjet/utility": "^2.0.0",
+    "@scramjet/bpmux": "^9.0.0"
   },
   "devDependencies": {
-    "@scramjet/api-server": "^1.0.1",
-    "@scramjet/types": "^1.0.1",
-    "@types/node": "15.12.5",
+    "@scramjet/api-server": "^2.0.0",
+    "@scramjet/api-types": "^2.0.0",
+    "@scramjet/runtime-types": "^2.0.0",
+    "@scramjet/types": "^2.0.0",
+    "@types/node": "^22.15.0",
     "ava": "^3.15.0",
     "ts-node": "^10.9.1",
-    "typedoc": "0.23.17",
-    "typedoc-plugin-markdown": "3.13.6",
     "typescript": "~4.7.4"
   },
   "ava": {
@@ -33,7 +32,7 @@
       "ts"
     ],
     "files": [
-      "**/*.spec.ts"
+      "test/exports.spec.ts"
     ],
     "require": [
       "ts-node/register"

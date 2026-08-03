@@ -1,133 +1,145 @@
-import { APIExpose } from "@scramjet/types";
-import test, { after, before, beforeEach } from "ava";
-import { Readable, Writable } from "stream";
-import { StringStream } from "scramjet";
-import { createSandbox } from "sinon";
-import { mockRequestResponse, mockServer, ServerWithPlayMethods } from "./lib/server-mock";
-import { routerMock } from "./lib/trouter-mock";
+import test from "ava";
+import { PassThrough, Writable } from "stream";
 
-/* eslint-disable-next-line import/no-extraneous-dependencies */
-import { CeroRouter, createServer } from "@scramjet/api-server";
+import { getRouter } from "@scramjet/api-server";
+import { createStreamHandlers } from "../src/handlers/stream";
 
-export const sandbox = createSandbox();
+test("stream methods register upstream, downstream and duplex routes", t => {
+    const api = getRouter();
 
-let server: ServerWithPlayMethods;
-let router: CeroRouter;
-let api: APIExpose;
-
-before(() => {
-    server = mockServer(sandbox);
-    router = routerMock(sandbox);
-    api = createServer({ server, router });
+    t.notThrows(() => {
+        api.upstream("/api/up", new PassThrough(), { text: true });
+        api.downstream("/api/down", new PassThrough(), { end: true, text: true });
+        api.duplex("/api/duplex", () => undefined);
+    });
 });
 
-beforeEach(() => sandbox.restore());
+test("downstream supports custom methods and stream options", t => {
+    const api = getRouter();
 
-test("Upstream works with stream", async t => {
-    const { request, response } = mockRequestResponse("GET", "/api/up");
-
-    let ended = false;
-
-    const done = response.fullBody?.then(() => { ended = true; });
-    const up = new StringStream();
-
-    api.upstream("/api/up", up as unknown as Readable, { end: false, text: true });
-
-    request.headers.accept = "text/plain";
-    server.request(request, response);
-
-    await up.whenWrote("123\n");
-
-    t.is(response.statusCode, 200, "Got the response");
-    t.is(response.getHeader("content-type"), "text/plain; charset=utf-8", "Got correct content type");
-    t.false(ended, "Didn't end until ended");
-    up.end("abc\n");
-
-    await done;
-
-    t.true(ended, "Did end");
+    t.notThrows(() => {
+        api.downstream("/api/put", new PassThrough(), {
+            checkContentType: false,
+            checkEndHeader: false,
+            end: false,
+            method: "put",
+            postponeContinue: true,
+            text: true
+        });
+    });
 });
 
-test("Downstream works with unended stream", async t => {
-    const pt = new StringStream();
-    const { request, response } = mockRequestResponse("POST", "/api/down-unended", pt);
-    const ended = false;
-    const up = new StringStream();
+test("upstream stream responses tolerate missing response socket", async t => {
+    let handler: Function | undefined;
+    const router = {
+        get(_path: string, registered: Function) {
+            handler = registered;
+        }
+    };
+    const source = new PassThrough();
+    const res = new PassThrough() as any;
 
-    api.downstream("/api/down-unended", up as Writable, { end: false, text: true });
+    res.setHeader = () => undefined;
+    res.writeHead = () => undefined;
+    res.flushHeaders = () => undefined;
+    res.socket = undefined;
 
-    request.headers.accept = "text/plain";
-    server.request(request, response);
+    createStreamHandlers(router as any).upstream("/audit", source, { text: true });
 
-    pt.write("ABC");
-    pt.end("\naaa");
-    await response.fullBody;
+    await t.notThrowsAsync(async () => {
+        await handler?.({ headers: { accept: "text/plain" } }, res, (error?: Error) => {
+            if (error) throw error;
+        });
+    });
 
-    t.is(response.statusCode, 202, "Got accepted response");
-    t.false(ended, "Didn't end until ended");
-    // up.end("abc\n");
+    source.end();
 });
 
-test("Downstream works with unended stream and header", async t => {
-    const pt = new StringStream();
-    const { request, response } = mockRequestResponse("POST", "/api/down-unended", pt);
-    const ended = false;
-    const up = new StringStream();
+test("downstream rejects and destroys the request when its writable closes", async t => {
+    let handler: Function | undefined;
+    const router = {
+        post(_path: string, registered: Function) {
+            handler = registered;
+        }
+    };
+    const request = new PassThrough() as any;
+    request.headers = { "content-type": "application/octet-stream" };
+    const response = new PassThrough() as any;
+    response.writeHead = () => undefined;
+    response.flushHeaders = () => undefined;
+    const writable = new PassThrough();
+    let nextError: Error | undefined;
 
-    api.downstream("/api/down-unended-2", up as Writable, { end: false, text: true });
+    createStreamHandlers(router as any).downstream("/stdin", writable, { checkContentType: false, end: true });
+    const handling = handler!(request, response, (error?: Error) => { nextError = error; });
 
-    request.headers.accept = "text/plain";
-    request.headers["x-end-stream"] = "true";
-    server.request(request, response);
+    await new Promise<void>(resolve => setImmediate(resolve));
+    writable.destroy();
+    await handling;
 
-    pt.write("ABC");
-    pt.end("\naaa");
-    await response.fullBody;
-
-    t.is(response.statusCode, 200, "Got OK response");
-    t.false(ended, "Didn't end until ended");
-    // up.end("abc\n");
+    t.true(request.destroyed);
+    t.truthy(nextError);
 });
 
-test("Downstream works with ended stream", async t => {
-    const pt = new StringStream();
-    const { request, response } = mockRequestResponse("POST", "/api/down-end", pt);
-    const ended = false;
-    const up = new StringStream();
+test("downstream completes normally after request EOF", async t => {
+    let handler: Function | undefined;
+    const router = {
+        post(_path: string, registered: Function) {
+            handler = registered;
+        }
+    };
+    const request = new PassThrough() as any;
+    request.headers = { "content-type": "application/octet-stream" };
+    const response = new PassThrough() as any;
+    response.writeHead = () => undefined;
+    response.flushHeaders = () => undefined;
+    const writable = new PassThrough();
+    let nextError: Error | undefined;
 
-    api.downstream("/api/down-end", up, { end: true, text: true });
+    createStreamHandlers(router as any).downstream("/stdin", writable, { checkContentType: false, end: true });
+    const handling = handler!(request, response, (error?: Error) => { nextError = error; });
+    await new Promise<void>(resolve => setImmediate(resolve));
+    request.end("payload");
+    await handling;
 
-    request.headers.accept = "text/plain";
-    server.request(request, response);
-
-    pt.write("ABC");
-    pt.end("\naaa");
-    await response.fullBody;
-
-    t.is(response.statusCode, 200, "Got OK response");
-    t.false(ended, "Didn't end until ended");
-    // up.end("abc\n");
+    t.is(nextError, undefined);
+    t.true(writable.writableFinished || writable.writableEnded);
 });
 
-test("Downstream works with ended stream and header", async t => {
-    const pt = new StringStream();
-    const { request, response } = mockRequestResponse("POST", "/api/down-end", pt);
-    const ended = false;
-    const up = new StringStream();
+test("downstream propagates a delayed end-finalization error without ending the response", async t => {
+    let handler: Function | undefined;
+    const router = {
+        post(_path: string, registered: Function) {
+            handler = registered;
+        }
+    };
+    const request = new PassThrough() as any;
+    request.headers = { "content-type": "application/octet-stream" };
+    const response = new PassThrough() as any;
+    response.writeHead = () => undefined;
+    response.flushHeaders = () => undefined;
+    let responseEnds = 0;
+    const originalEnd = response.end.bind(response);
+    response.end = (...args: any[]) => {
+        responseEnds++;
+        return originalEnd(...args);
+    };
+    const writable = new Writable({
+        write(_chunk, _encoding, callback) {
+            callback();
+        },
+        final(callback) {
+            setImmediate(() => callback(new Error("delayed final failure")));
+        }
+    });
+    let nextError: Error | undefined;
 
-    api.downstream("/api/down-end", up, { end: true, text: true });
+    createStreamHandlers(router as any).downstream("/stdin", writable, { checkContentType: false, end: true });
+    const handling = handler!(request, response, (error?: Error) => { nextError = error; });
+    await new Promise<void>(resolve => setImmediate(resolve));
+    request.end("payload");
+    await handling;
 
-    request.headers.accept = "text/plain";
-    request.headers["x-end-stream"] = "false";
-    server.request(request, response);
-
-    pt.write("ABC");
-    pt.end("\naaa");
-    await response.fullBody;
-
-    t.is(response.statusCode, 202, "Got accepted response");
-    t.false(ended, "Didn't end until ended");
-    // up.end("abc\n");
+    t.truthy(nextError);
+    t.is(responseEnds, 0);
 });
-
-after(() => sandbox.restore());

@@ -1,0 +1,13 @@
+{
+  "name": "@scramjet/test-missing-import",
+  "version": "0.1.0",
+  "description": "BDD fixture: fails during module load because a dependency is missing.",
+  "main": "index.js",
+  "license": "ISC",
+  "author": "Scramjet <open-source@scramjet.org>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/scramjetorg/transform-hub.git"
+  },
+  "private": true
+}

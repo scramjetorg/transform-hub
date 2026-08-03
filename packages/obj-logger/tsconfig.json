@@ -9,15 +9,5 @@
   ],
   "exclude": [
     "node_modules"
-  ],
-  "typedocOptions": {
-    "entryPoints": [
-      "src/index.ts"
-    ],
-    "out": "../../docs/obj-logger",
-    "plugin": "typedoc-plugin-markdown",
-    "readme": "none",
-    "excludePrivate": "true",
-    "gitRevision": "HEAD"
-  }
+  ]
 }

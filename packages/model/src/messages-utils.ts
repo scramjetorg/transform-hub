@@ -1,5 +1,5 @@
 import { CPMMessageCode, RunnerMessageCode } from "@scramjet/symbols";
-import { CPMMessage, MessageType, RunnerMessage } from "@scramjet/types";
+import { CPMMessage, MessageType, RunnerMessage } from "./types";
 import { getMessage } from "./get-message";
 
 // TODO: this serializes the message to array and deserializeMessage from string.
@@ -12,10 +12,10 @@ import { getMessage } from "./get-message";
  **/
 
 export function serializeMessage<T extends RunnerMessageCode | CPMMessageCode>(
-    { msgCode, ...msg }: MessageType<T>): RunnerMessage| CPMMessage {
+    { msgCode, ...msg }: MessageType<T>): RunnerMessage | CPMMessage {
     // DO TYPEGUARDS...
 
-    const json = JSON.parse(JSON.stringify(msg));
+    const json = structuredClone(msg);
 
     return [msgCode, json];
 }
@@ -38,7 +38,7 @@ export function deserializeMessage(msg: string): MessageType<RunnerMessageCode> 
                 return getMessage(code, data);
         }
         throw new TypeError("Not a recognized array: " + obj);
-    } catch (e: any) {
+    } catch {
         throw new TypeError("Error while parsing a message.");
     }
 }

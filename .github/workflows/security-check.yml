@@ -1,30 +1,65 @@
-name: Security check
+name: Security repository policy
+
 on:
+  pull_request:
+  merge_group:
+    types: [checks_requested]
+  push:
+    branches: [main, devel, feat/manager-oss]
   schedule:
-    - cron: '0 10 * * 1'
+    - cron: "0 10 * * 1"
+
+permissions:
+  contents: read
 
 jobs:
-  security-check:
-    name: Analyze the source code
-
-    runs-on: ubuntu-latest
+  security-policy:
+    name: Security / repository policy
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
-
-    strategy:
-      fail-fast: false
-      matrix:
-        node-version: [18.x]
-
     steps:
-      - uses: actions/checkout@v3
-
-      - name: Setup Nodejs ${{ inputs.node-version }}
-        uses: actions/setup-node@v3
+      # v4.2.2
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          node-version: ${{ inputs.node-version }}
+          fetch-depth: 0
+          persist-credentials: false
 
-      - name: Install dependencies
-        run: yarn install --ignore-engines  --frozen-lockfile
+      - name: Activate Node.js 22 from the GitHub-hosted runner tool cache
+        shell: bash
+        run: |
+          node_bin="$(find "$RUNNER_TOOL_CACHE/node" -mindepth 3 -maxdepth 3 -type d -path '*/22.*/*/bin' | sort -V | tail -n 1)"
+          test -n "$node_bin"
+          export PATH="$node_bin:$PATH"
+          node --version | grep -E '^v22\.'
+          npm --version
+          printf '%s\n' "$node_bin" >> "$GITHUB_PATH"
 
-      - name: Checks for known security issues with the installed packages
-        run: yarn audit
+      - name: Verify repository workflow policy
+        run: npm run check:security-workflow
+
+      - name: Install verified Gitleaks
+        run: npm run security:bootstrap
+
+      - name: Scan the relevant Git history with redaction
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha || github.sha }}
+        run: |
+          case "$EVENT_NAME" in
+            pull_request|merge_group)
+              npm run security:scan-history -- --range "$BASE_SHA..$HEAD_SHA"
+              ;;
+            push|schedule)
+              npm run security:scan-history -- --all
+              ;;
+            *)
+              echo "Unsupported security workflow event: $EVENT_NAME" >&2
+              exit 1
+              ;;
+          esac
+
+      - name: Record external enforcement prerequisites
+        run: |
+          echo "Defense in depth only: organization required workflow and ruleset enforcement remain mandatory."
+          echo "Actionlint and Zizmor remain externally pinned prerequisites until their verified bootstrap is added."

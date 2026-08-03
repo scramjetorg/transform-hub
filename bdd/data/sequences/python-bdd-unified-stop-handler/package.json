@@ -1,0 +1,7 @@
+{
+  "name": "@scramjet/test-python-bdd-unified-stop-handler",
+  "version": "0.1.0",
+  "private": true,
+  "main": "main.py",
+  "engines": { "python3": "3" }
+}

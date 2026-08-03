@@ -1,8 +1,9 @@
-/* eslint-disable no-console */
-import { Readable, Stream, Writable } from "stream";
-import { MaybePromise } from "@scramjet/types";
+import { finished } from "stream/promises";
+import { Readable, Stream, Transform, Writable } from "stream";
+import { MaybePromise } from "@scramjet/runtime-types";
 import { inspect } from "util";
 import { displayFormat, isJsonFormat } from "../types";
+import { ApiCommandError } from "./apiCommandError";
 
 /**
  * Displays object.
@@ -29,19 +30,80 @@ export async function displayStream(
     response: Stream | ReadableStream<any> | Promise<Stream | ReadableStream<any>>,
     output: Writable = process.stdout
 ): Promise<void> {
+    const resp = await response as unknown as Readable & { cleanup?: () => Promise<void> };
+
+    if (!resp) {
+        throw new Error("Stream is not available");
+    }
+
+    let terminalError: Error | undefined;
+    const closeSource = () => {
+        const error = terminalError || new ApiCommandError("CANCELLED", 60, "Output stream closed");
+        terminalError ||= error;
+        if (!resp.destroyed) resp.destroy(error);
+    };
+    const rememberError = (error: Error) => { terminalError ||= error; };
+    output.once("close", closeSource);
+    resp.once("error", rememberError);
     try {
-        const resp = await response as unknown as Readable;
+        resp.pipe(output, { end: false });
+        await finished(resp);
+    } finally {
+        resp.unpipe(output);
+        output.removeListener("close", closeSource);
+        resp.removeListener("error", rememberError);
+        await resp.cleanup?.();
+    }
+}
 
-        if (resp) {
-            resp.pipe(output);
-            return new Promise((res, rej) => resp.on("finish", res).on("error", rej));
+/** Render newline-delimited log records without changing the underlying request stream. */
+export function displayLogStream(
+    response: Stream | ReadableStream<any> | Promise<Stream | ReadableStream<any>>,
+    format: "pretty" | "json" | "raw" | undefined
+): Promise<void> {
+    if (format && !["pretty", "json", "raw"].includes(format)) throw new Error("--log-format must be pretty, json, or raw");
+    if (!format || format === "raw") return displayStream(response);
+
+    let remainder = "";
+    const renderer = new Transform({
+        transform(chunk, _encoding, callback) {
+            remainder += chunk.toString();
+            const lines = remainder.split(/\r?\n/);
+            remainder = lines.pop() || "";
+            for (const line of lines) this.push(renderLogRecord(line, format));
+            callback();
+        },
+        flush(callback) {
+            if (remainder) this.push(renderLogRecord(remainder, format));
+            callback();
         }
+    });
+    return displayStream(Promise.resolve(response).then(stream => {
+        const source = stream as Readable & { cleanup?: () => Promise<void> };
+        const rendered = source.pipe(renderer) as Transform & { cleanup?: () => Promise<void> };
+        // pipe() does not propagate source errors to a Transform.  Preserve the
+        // original error so errorHandler can retain its ApiCommandError exit code.
+        const forwardSourceError = (error: Error) => {
+            if (!rendered.destroyed) rendered.destroy(error);
+        };
+        source.on("error", forwardSourceError);
+        let cleanupResult: Promise<void> | undefined;
+        rendered.cleanup = () => cleanupResult ||= (async () => {
+            source.unpipe(rendered);
+            source.removeListener("error", forwardSourceError);
+            if (!source.destroyed && !source.readableEnded) source.destroy();
+            await source.cleanup?.();
+        })();
+        return rendered;
+    }));
+}
 
-        return Promise.reject(new Error("Stream is not available"));
-    } catch (e: any) {
-        console.error(e && e.stack || e);
-        process.exitCode = e.exitCode || 1;
-        return Promise.reject();
+function renderLogRecord(line: string, format: "pretty" | "json") {
+    try {
+        const record = JSON.parse(line);
+        return format === "json" ? `${JSON.stringify(record)}\n` : `${inspect(record, { depth: null, colors: false })}\n`;
+    } catch {
+        return `${line}\n`;
     }
 }
 

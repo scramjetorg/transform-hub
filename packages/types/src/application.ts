@@ -21,9 +21,11 @@ export type TransformApp<
     Z extends any[] = any[],
     S extends any = any,
     AppConfigType extends AppConfig = AppConfig,
-    ReturnType = Streamable<Produces>
+    ReturnType = Streamable<Produces>,
+    HubClientType = unknown,
+    SpaceClientType = unknown
     > = (
-        this: AppContext<AppConfigType, S>,
+        this: AppContext<AppConfigType, S, HubClientType, SpaceClientType>,
         source: ReadableStream<Consumes>,
         ...args: Z
     ) => MaybePromise<ReturnType>;
@@ -39,8 +41,10 @@ export type ReadableApp<
     Z extends any[] = any[],
     S extends any = any,
     AppConfigType extends AppConfig = AppConfig,
-    VoidType = void
-    > = TransformApp<VoidType, Produces, Z, S, AppConfigType>;
+    VoidType = void,
+    HubClientType = unknown,
+    SpaceClientType = unknown
+    > = TransformApp<VoidType, Produces, Z, S, AppConfigType, Streamable<Produces>, HubClientType, SpaceClientType>;
 /**
  * A Writable App is an app that accepts the data from the platform, performs any number
  * of transforms and then saves it to the data destination by it's own means.
@@ -53,8 +57,10 @@ export type WritableApp<
     Z extends any[] = any[],
     S extends any = any,
     AppConfigType extends AppConfig = AppConfig,
-    VoidType = void
-    > = TransformApp<Consumes, VoidType, Z, S, AppConfigType, void>;
+    VoidType = void,
+    HubClientType = unknown,
+    SpaceClientType = unknown
+    > = TransformApp<Consumes, VoidType, Z, S, AppConfigType, void, HubClientType, SpaceClientType>;
 
 /**
  * An Inert App is an app that doesn't accept data from the platform and doesn't output it.
@@ -65,8 +71,10 @@ export type InertApp<
     Z extends any[] = any[],
     S extends any = any,
     AppConfigType extends AppConfig = AppConfig,
-    VoidType = void
-    > = TransformApp<VoidType, VoidType, Z, S, AppConfigType, void>;
+    VoidType = void,
+    HubClientType = unknown,
+    SpaceClientType = unknown
+    > = TransformApp<VoidType, VoidType, Z, S, AppConfigType, void, HubClientType, SpaceClientType>;
 
 export type ApplicationFunction = ReadableApp | WritableApp | TransformApp | InertApp;
 
@@ -81,19 +89,23 @@ export type Application<
     Produces = any,
     Z extends any[] = any[],
     S extends any = any,
-    AppConfigType extends AppConfig = AppConfig
+    AppConfigType extends AppConfig = AppConfig,
+    HubClientType = unknown,
+    SpaceClientType = unknown
     > =
-    TransformApp<Consumes, Produces, Z, S, AppConfigType> |
-    ReadableApp<Produces, Z, S, AppConfigType> |
-    WritableApp<Consumes, Z, S, AppConfigType> |
-    InertApp<Z, S>;
+    TransformApp<Consumes, Produces, Z, S, AppConfigType, Streamable<Produces>, HubClientType, SpaceClientType> |
+    ReadableApp<Produces, Z, S, AppConfigType, void, HubClientType, SpaceClientType> |
+    WritableApp<Consumes, Z, S, AppConfigType, void, HubClientType, SpaceClientType> |
+    InertApp<Z, S, AppConfigType, void, HubClientType, SpaceClientType>;
 
 export type ApplicationExpose<
     Consumes = any,
     Produces = any,
     Z extends any[] = any[],
     S extends any = any,
-    AppConfigType extends AppConfig = AppConfig
+    AppConfigType extends AppConfig = AppConfig,
+    HubClientType = unknown,
+    SpaceClientType = unknown
     > = {
-        [exposeSequenceSymbol]: Application<Consumes, Produces, Z, S, AppConfigType>;
+        [exposeSequenceSymbol]: Application<Consumes, Produces, Z, S, AppConfigType, HubClientType, SpaceClientType>;
     };

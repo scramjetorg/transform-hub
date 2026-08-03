@@ -28,13 +28,13 @@ export type ReadSequence<Produces, Y extends any[] = any[], Z = any> =
  * outputs the result.
  */
 
-export type TransformSeqence<Consumes, Produces, Z = any, X extends any[] = any[]> =
+export type TransformSequence<Consumes, Produces, Z = any, X extends any[] = any[]> =
     [TFunction<Consumes, Produces>] |
     [...TFunctionChain<Consumes, Z, X>, TFunction<Z, Produces>];
 
 export type TransformAppAcceptableSequence<Consumes, Produces> =
     TFunction<Consumes, Produces> |
     InertSequence |
-    TransformSeqence<Consumes, Produces>
+    TransformSequence<Consumes, Produces>
     ;
 

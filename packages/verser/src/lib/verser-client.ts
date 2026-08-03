@@ -1,15 +1,13 @@
 import { OutgoingHttpHeaders, Agent as HttpAgent } from "http";
 import { Agent as HttpsAgent, request } from "https";
 import { merge, TypedEmitter } from "@scramjet/utility";
-import { IObjectLogger } from "@scramjet/types";
+import { IObjectLogger } from "@scramjet/runtime-types";
 import { VerserClientOptions, VerserClientConnection, RegisteredChannels, RegisteredChannelCallback } from "../types";
-import { Duplex } from "stream";
 import { createConnection, Socket } from "net";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { defaultVerserClientOptions } from "./verser-client-default-config";
 import { URL } from "url";
-
-const BPMux = require("bpmux").BPMux;
+import { BPDuplex, BPMux } from "@scramjet/bpmux";
 
 type Events = {
     error: (err: Error) => void;
@@ -25,7 +23,7 @@ export class VerserClient extends TypedEmitter<Events> {
     /**
      * BPMux instance.
      */
-    private bpmux: any;
+    private bpmux?: BPMux;
 
     /**
      * VerserClient options.
@@ -45,6 +43,8 @@ export class VerserClient extends TypedEmitter<Events> {
      * HTTP Agent but on BPMux'ed stream.
      */
     private _verserAgent?: HttpAgent & { createConnection: typeof createConnection };
+
+    private verserConnections: WeakSet<BPDuplex & Partial<Socket>> = new WeakSet();
 
     /**
      * Connection socket.
@@ -86,6 +86,12 @@ export class VerserClient extends TypedEmitter<Events> {
         this.httpAgent = this.opts.https ? new HttpsAgent() : new HttpAgent();
     }
 
+    public async close() {
+        if (this.socket) {
+            this.socket.destroy();
+        }
+    }
+
     /**
      * Connect to the Verser server using defined configuration.
      *
@@ -104,8 +110,15 @@ export class VerserClient extends TypedEmitter<Events> {
                 path: pathname,
                 href,
                 port,
+                timeout: this.opts.timeout || 5000, // default timeout 5 seconds
                 protocol: this.opts.https ? "https:" : "http:",
                 ca: typeof this.opts.https === "object" ? this.opts.https.ca : undefined,
+            });
+
+            connectRequest.on("timeout", () => {
+                this.logger.error("Connect request timed out");
+                connectRequest.destroy();
+                reject(new Error("Connection timeout"));
             });
 
             connectRequest.on("error", (err) => {
@@ -113,10 +126,10 @@ export class VerserClient extends TypedEmitter<Events> {
                 reject(err);
             });
 
-            connectRequest.once("connect", (res, socket, head) => {
-                this.logger.info("HEAD", head.toString());
+            connectRequest.once("connect", async (res, socket, head) => {
+                this.logger.debug("HEAD", head.toString());
                 this.socket = socket;
-                this.mux();
+                await this.mux();
 
                 resolve({ res, socket });
             });
@@ -132,49 +145,55 @@ export class VerserClient extends TypedEmitter<Events> {
      * If channel is registered, callback will be called with the duplex stream,
      * otherwise stream will be passed to the server.
      */
-    private mux() {
-        this.bpmux = new BPMux(this.socket)
-            .on("peer_multiplex", async (mSocket: Duplex & { _chan: number }) => {
-                const registeredChannelCallback = this.registeredChannels.get(mSocket._chan);
+    private async mux() {
+        return new Promise<void>((resolve) => {
+            this.bpmux = new BPMux(this.socket!)
+                .on("peer_multiplex", async (mSocket) => {
+                    const registeredChannelCallback = this.registeredChannels.get(mSocket._chan);
 
-                if (registeredChannelCallback) {
-                    await registeredChannelCallback(mSocket);
-                } else {
-                    this.opts.server?.emit("connection", mSocket);
-                }
-            })
-            .on("error", (err: Error) => {
-                this.emit("error", err);
-            });
-
-        this._verserAgent = new HttpAgent() as HttpAgent & {
-            createConnection: typeof createConnection
-        }; // lack of types?
-
-        this._verserAgent.createConnection = () => {
-            try {
-                const socket = this.bpmux!.multiplex() as Socket;
-
-                socket.on("error", () => {
-                    this.logger.error("Muxed stream error");
+                    if (registeredChannelCallback) {
+                        await registeredChannelCallback(mSocket);
+                    } else {
+                        this.opts.server?.emit("connection", mSocket);
+                    }
+                })
+                .on("error", (err: Error) => {
+                    this.emit("error", err);
+                })
+                .once("handshake", () => {
+                    this.logger.info("BPMux handshake complete");
+                    resolve();
                 });
 
-                // this socket is to be used as net.Socket but it is not one
-                // and it lacks of following net.Socket methods:
-                socket.setKeepAlive ||= (_enable?: boolean, _initialDelay?: number | undefined) => socket;
-                socket.unref ||= () => socket;
-                socket.setTimeout ||= (_timeout: number, _callback?: () => void) => socket;
+            this._verserAgent = new HttpAgent() as HttpAgent & {
+                createConnection: typeof createConnection
+            }; // lack of types?
 
-                this.logger.info("Creating muxed channel in verser connection");
+            this._verserAgent.createConnection = () => {
+                try {
+                    const socket = this.bpmux!.multiplex() as BPDuplex & Partial<Socket>;
 
-                return socket;
-            } catch (error) {
-                const ret = new Socket();
+                    this.verserConnections.add(socket);
 
-                setImmediate(() => ret.emit("error", error));
-                return ret;
-            }
-        };
+                    socket.on("error", () => {
+                        this.logger.trace("Muxed stream error");
+                    });
+
+                    // this socket is to be used as net.Socket but it is not one
+                    // and it lacks of following net.Socket methods:
+                    socket.setKeepAlive ||= (_enable?: boolean, _initialDelay?: number | undefined) => socket as Socket;
+                    socket.unref ||= () => socket as Socket;
+                    socket.setTimeout ||= (_timeout: number, _callback?: () => void) => socket as Socket;
+
+                    return socket as unknown as Socket;
+                } catch (error) {
+                    const ret = new Socket();
+
+                    setImmediate(() => ret.emit("error", error));
+                    return ret;
+                }
+            };
+        });
     }
 
     /**

@@ -1,3 +1,4 @@
+import { SchemaValidator } from "../validators";
 import ReadOnlyConfiguration from "./readOnlyConfiguration";
 
 /**
@@ -6,8 +7,11 @@ import ReadOnlyConfiguration from "./readOnlyConfiguration";
 export abstract class ReadOnlyConfig<Type extends Object> implements ReadOnlyConfiguration<Type> {
     protected readonly configuration: Type;
     protected readonly isValidConfig: boolean;
+    protected readonly _validator: SchemaValidator | undefined;
 
-    constructor(configuration: Type) {
+    constructor(configuration: Type, validator?: SchemaValidator) {
+        this._validator = validator;
+
         if (this.validate(configuration)) {
             this.isValidConfig = true;
             this.configuration = configuration;
@@ -22,11 +26,14 @@ export abstract class ReadOnlyConfig<Type extends Object> implements ReadOnlyCon
     }
 
     validate(config: Record<string, any>): boolean {
+        if (this._validator) return this._validator.validate(config);
+
         for (const key in config) {
             if (this.validateEntry(key, config[key as keyof Object]) === false) return false;
         }
         return true;
     }
+
     isValid() {
         return this.isValidConfig;
     }

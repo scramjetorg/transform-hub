@@ -1,4 +1,4 @@
-import { ApiVersion } from "@scramjet/types";
+import { ApiVersion } from "@scramjet/runtime-types";
 
 const apiVersionPattern = /^v[0-9]+([.][0-9]+)*$/;
 

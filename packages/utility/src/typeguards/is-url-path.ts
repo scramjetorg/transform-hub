@@ -1,4 +1,4 @@
-import { UrlPath } from "@scramjet/types";
+import { UrlPath } from "@scramjet/runtime-types";
 
 const urlPathPartPattern = /^[\b/](([a-z0-9]+(?:-[a-z0-9]+)*)[\b/]{0,1})*$/;
 

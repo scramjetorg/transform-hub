@@ -1,4 +1,3 @@
-/* eslint-disable no-extra-parens */
 import { CPMMessageCode, RunnerMessageCode } from "@scramjet/symbols";
 import {
     AcknowledgeMessage, AcknowledgeMessageData,
@@ -11,7 +10,7 @@ import {
     MonitoringMessage, MonitoringMessageData,
     StopSequenceMessage, StopSequenceMessageData,
     EventMessageData, EventMessage
-} from "@scramjet/types";
+} from "./types";
 
 export function isStopSequenceMessage(data: object): data is StopSequenceMessageData {
     if (typeof (data as StopSequenceMessageData).timeout !== "number") return false;
@@ -49,7 +48,6 @@ function isMonitoringMessage(data: object): data is MonitoringMessageData {
     return true;
 }
 
-// eslint-disable-next-line complexity
 export const checkMessage = <X extends RunnerMessageCode | CPMMessageCode>(
     msgCode: X,
     msgData: MessageDataType<RunnerMessageCode | CPMMessageCode>

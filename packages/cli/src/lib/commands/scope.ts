@@ -1,70 +1,67 @@
-/* eslint-disable no-console */
-import { CommandDefinition, isProductionEnv } from "../../types";
+import { cmd, type CommandDescriptor } from "@scramjet/config";
+import { isProductionEnv } from "../../types";
 import { listScopes, deleteScope, getScope, scopeExists } from "../helpers/scope";
 import { displayObject } from "../output";
 import { isProfileConfig, ProfileConfig, profileManager } from "../config";
 import { displayProdOnlyMsg } from "../helpers/messages";
 
 /**
- * Initializes `scope` command.
- *
- * @param {Command} program Commander object.
+ * Builds the `scope` command descriptor tree.
  */
-export const scope: CommandDefinition = (program) => {
+export const scopeCommand: CommandDescriptor = cmd("scope", (b) => {
     const isProdEnv = isProductionEnv(profileManager.getProfileConfig().env);
 
     if (!isProdEnv) {
-        program.command("scope", { hidden:true })
-            .action(() => displayProdOnlyMsg("scope"));
-
+        b.hidden(true).action(() => displayProdOnlyMsg("scope"));
         return;
     }
 
-    const scopeCmd = program
-        .command("scope")
-        .addHelpCommand(false)
+    b
         .alias("s")
         .usage("[command] [options...]")
-        .description("/This functionality is under development./ Manage scopes that store pairs of spaces and Hubs used when working");
+        .desc("/This functionality is under development./ Manage scopes that store pairs of spaces and Hubs used when working")
+        .children(
+            cmd("list", (c) => {
+                c.alias("ls").desc("List all created scopes").action(listScopes);
+            }),
+            cmd("print", (c) => {
+                c
+                    .argument("<name>")
+                    .desc("See json file under the scope")
+                    .action((name: string) => {
+                        const scopeConfig = getScope(name);
 
-    scopeCmd.command("list").alias("ls").description("List all created scopes").action(listScopes);
+                        if (!scopeConfig) {
+                            throw new Error(`Couldn't find scope: ${name}`);
+                        }
 
-    scopeCmd
-        .command("print")
-        .argument("<name>")
-        .description("See json file under the scope")
-        .action((name: string) => {
-            const scopeConfig = getScope(name);
-
-            if (!scopeConfig) {
-                throw new Error(`Couldn't find scope: ${name}`);
-            }
-
-            displayObject(scopeConfig, profileManager.getProfileConfig().format);
-        });
-
-    scopeCmd
-        .command("use")
-        .argument("<name>")
-        .description("Work on the selected scope")
-        .action((name: string) => {
-            if (!scopeExists(name)) {
-                throw new Error(`Couldn't find scope: ${name}`);
-            }
-            if (isProfileConfig(profileManager.getProfileConfig())) {
-                (profileManager.getProfileConfig() as ProfileConfig).setScope(name);
-            } else
-                throw new Error("Can't modify user configuration file");
-        });
-
-    scopeCmd
-        .command("delete")
-        .argument("<name>")
-        .description("Delete specific scope")
-        .action((name: string) => {
-            if (profileManager.getProfileConfig().scope === name) {
-                throw new Error(`Can't remove currently used scope ${name}`);
-            }
-            deleteScope(name);
-        });
-};
+                        displayObject(scopeConfig, profileManager.getProfileConfig().format);
+                    });
+            }),
+            cmd("use", (c) => {
+                c
+                    .argument("<name>")
+                    .desc("Work on the selected scope")
+                    .action((name: string) => {
+                        if (!scopeExists(name)) {
+                            throw new Error(`Couldn't find scope: ${name}`);
+                        }
+                        if (isProfileConfig(profileManager.getProfileConfig())) {
+                            (profileManager.getProfileConfig() as ProfileConfig).setScope(name);
+                        } else
+                            throw new Error("Can't modify user configuration file");
+                    });
+            }),
+            cmd("delete", (c) => {
+                c
+                    .argument("<name>")
+                    .desc("Delete specific scope")
+                    .action((name: string) => {
+                        if (profileManager.getProfileConfig().scope === name) {
+                            throw new Error(`Can't remove currently used scope ${name}`);
+                        }
+                        deleteScope(name);
+                    });
+            })
+        );
+});

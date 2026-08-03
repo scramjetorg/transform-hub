@@ -1,7 +1,7 @@
 import { Agent as HTTPAgent } from "http";
 import { Agent as HTTPSAgent } from "https";
 import { ClientError, QueryError } from "./client-error";
-import { Headers, HttpClient, RequestLogger, SendStreamOptions, RequestConfig, GetStreamOptions } from "./types";
+import { Headers, HttpClient, HttpMethod, RequestLogger, SendStreamOptions, GetStreamOptions, RequestConfig } from "./types";
 
 /**
  * Provides HTTP communication methods.
@@ -12,6 +12,8 @@ export abstract class ClientUtilsBase implements HttpClient {
 
     static headers: Headers = {};
     public agent: HTTPAgent | HTTPSAgent = new HTTPAgent();
+    private disposed = false;
+    protected ownsAgent = true;
 
     constructor(
         public apiBase: string,
@@ -19,6 +21,15 @@ export abstract class ClientUtilsBase implements HttpClient {
         normalizeUrlFn?: (url: string) => string
     ) {
         this.normalizeUrlFn = normalizeUrlFn || ((url: string) => url);
+    }
+
+    /** Release keep-alive sockets owned by this client. Safe to call repeatedly. */
+    public dispose(): void {
+        if (this.disposed) return;
+        this.disposed = true;
+        if (!this.ownsAgent) return;
+        if (this.fetch?.dispose) this.fetch.dispose();
+        else (this.agent as any)?.destroy?.();
     }
 
     /**
@@ -58,6 +69,8 @@ export abstract class ClientUtilsBase implements HttpClient {
 
         options.throwOnErrorHttpCode ??= true;
 
+        const requestStack = new Error();
+
         try {
             const response = await this.fetch(input, fetchInit)
                 .then(async (result: any) => {
@@ -88,7 +101,9 @@ export abstract class ClientUtilsBase implements HttpClient {
                     if (error instanceof QueryError) {
                         throw error;
                     }
-                    throw new QueryError(input.toString(), error.code);
+                    const queryError = new QueryError(input.toString(), error.code);
+                    (queryError as Error & { cause?: unknown }).cause = error;
+                    throw queryError;
                 });
 
             if (options.parse === "json") {
@@ -103,9 +118,13 @@ export abstract class ClientUtilsBase implements HttpClient {
                 return response.body as Promise<T>;
             }
 
+            if (options.parse === "response") {
+                return response as T;
+            }
+
             throw new ClientError("BAD_PARAMETERS", `Unknown parse option: ${options.parse}`);
         } catch (error: any) {
-            throw ClientError.from(error);
+            throw ClientError.from(error, error.message, requestStack);
         }
     }
 
@@ -118,6 +137,21 @@ export abstract class ClientUtilsBase implements HttpClient {
      */
     async get<T>(url: string, requestInit: RequestInit = {}): Promise<T> {
         return this.safeRequest<T>(this.normalizeUrlFn(`${this.apiBase}/${url}`), requestInit, { parse: "json" });
+    }
+
+    async request(
+        method: HttpMethod,
+        url: string,
+        requestInit: RequestInit = {}
+    ): Promise<Response> {
+        return this.safeRequest<Response>(
+            this.normalizeUrlFn(`${this.apiBase}/${url}`),
+            {
+                ...requestInit,
+                method
+            },
+            { parse: "response", throwOnErrorHttpCode: false }
+        );
     }
 
     /**

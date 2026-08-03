@@ -1,0 +1,35 @@
+HTTP API server library for router construction, server setup, REST/stream handlers, middleware, and routed forwarding. Used internally by STH and Manager to serve REST APIs and stream data.
+
+## When to use
+
+`@scramjet/api-server` is primarily an internal dependency of STH and Manager. It is useful if you are extending Transform Hub with custom API routes, building middleware, or developing alternative frontends that use the same HTTP infrastructure.
+
+The package provides:
+
+- `createServer()` factory with HTTP/HTTPS server creation and lifecycle management
+- Route registration via an internal router (`CeroRouter`)
+- Handler infrastructure for GET, CRUD, operation, stream, and forwarding handlers
+- Middleware chaining and error handling
+- Strategies for forwarded request routing (round-robin, consistent hash)
+
+## Quick start
+
+```typescript
+import { createServer } from "@scramjet/api-server";
+
+const server = createServer();
+
+// Register a route using the server's handler helpers.
+server.get("/health", async () => ({ status: "ok" }));
+
+await server.listen(8000, "0.0.0.0");
+```
+
+## Stability
+
+This package is **stable** as an internal Transform Hub dependency. Its public API is suitable for extension within the Transform Hub ecosystem.
+
+## See also
+
+- [Transform Hub configuration](../../docs-source/transform-hub/configuration.md) for server configuration context.
+- [API client usage](../../docs-source/api/client-usage.md) for interacting with running servers.

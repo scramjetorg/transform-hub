@@ -1,4 +1,4 @@
-import { InstanceArgs } from "./instance";
+import type { InstanceArgs } from "./instance";
 
 export type PortConfig = `${number}/${"tcp" | "udp"}`
 
@@ -20,6 +20,9 @@ export type SequencePackageJSON = {
     author?: string
     keywords?: string[]
     args?: InstanceArgs
+    exposePath?: string;
+    exposeHost?: string;
+    tags?: string[];
     repository?: {
         type: string;
         url: string;

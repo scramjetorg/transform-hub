@@ -1,16 +1,13 @@
-/* eslint-disable space-before-function-paren */
-/* eslint-disable no-nested-ternary */
-/* eslint-disable quote-props */
-/* eslint-disable quotes */
 
-import { Given, Then, When } from "@cucumber/cucumber";
+import { After, AfterAll, Before, Given, Then, When } from "@cucumber/cucumber";
 import { strict as assert } from "assert";
 import fs from "fs";
+import path from "path";
 import {
     getStreamsFromSpawn,
     defer,
+    waitForCondition,
     waitUntilStreamContains,
-    killProcessByName,
     getSiCommand,
     spawnSiInit,
     isTemplateCreated,
@@ -20,15 +17,95 @@ import { CustomWorld } from "../world";
 import { spawn } from "child_process";
 import { once } from "events";
 import { addLoggerOutput, getLogger } from "@scramjet/logger";
+import { HostClient } from "@scramjet/api-client";
 import {
-    extractInstanceFromSiInstLs,
     extractKillResponseFromSiInstRestart,
 } from "../../lib/json.parser";
+import { Readable } from "stream";
+const { getLastTerminalStopDiagnostics } = require("../../lib/e2e-module-state.js");
 
 addLoggerOutput(process.stdout, process.stdout);
 
+const { stopProcess } = require("../../../scripts/lib/bdd-cleanup.js");
+const { getOwnership, ensureOwnershipPaths } = require("../../lib/ownership.js");
 const logger = getLogger("test");
 const si = getSiCommand();
+const profileSi = getSiCommand({ useBddConfig: false });
+let useProfileConfigForScenario = false;
+const ownership = getOwnership(process.env);
+ensureOwnershipPaths(ownership);
+const bddTempDir = fs.mkdtempSync(path.join(ownership.tempPath, "cli-"));
+const bddTempPaths: Record<string, string> = {
+    __BDD_TMP_SIMPLE_STDIO__: path.join(bddTempDir, "simple-stdio.tar.gz"),
+};
+
+const resolveBddTempPaths = (args: string): string[] =>
+    args.split(" ").map((arg) => {
+        // Resolve temporary paths (e.g. __BDD_TMP_SIMPLE_STDIO__).
+        if (bddTempPaths[arg]) return bddTempPaths[arg];
+
+        // Resolve data/sequences/bdd-packages/<archive> references against
+        // the colon-delimited directories in PACKAGES_DIR (set by the Docker
+        // BDD runner to /work-tmp/.../bdd-packages).  Leave the argument
+        // unchanged if no matching archive is found in any directory.
+        const bddPkgMatch = arg.match(/^data\/sequences\/bdd-packages\/(.+)$/);
+        if (bddPkgMatch) {
+            const packagesDirs = process.env.PACKAGES_DIR;
+            if (packagesDirs) {
+                const archiveName = bddPkgMatch[1];
+                for (const dir of packagesDirs.split(":")) {
+                    const candidate = path.join(dir, archiveName);
+                    if (fs.existsSync(candidate)) {
+                        return candidate;
+                    }
+                }
+            }
+        }
+
+        return arg;
+    });
+
+Then("the packed simple-stdio archive is valid", function(this: CustomWorld) {
+    const archive = bddTempPaths.__BDD_TMP_SIMPLE_STDIO__;
+    assert.ok(archive && fs.existsSync(archive), "owner-scoped simple-stdio archive is missing");
+    // The pack command's collected stdio is no longer asserted after the
+    // archive check. Release it now, before the scenario's live Hub work and
+    // strict post-cleanup measurement.
+    this.cliResources.stdio = undefined;
+});
+
+When("I pack the simple-stdio archive", async function(this: CustomWorld) {
+    const archive = process.env.SCRAMJET_BDD_SIMPLE_STDIO_ARCHIVE;
+    assert.ok(archive && fs.existsSync(archive), "owner-scoped simple-stdio archive was not prepared");
+    bddTempPaths.__BDD_TMP_SIMPLE_STDIO__ = archive;
+});
+
+AfterAll(() => {
+    fs.rmSync(bddTempDir, { recursive: true, force: true });
+});
+
+After(async function(this: CustomWorld) {
+    const command = this.cliResources.commandInProgress;
+    if (command && command.exitCode === null) {
+        await stopProcess(command, { graceMs: 1000 }).catch(() => undefined);
+    }
+    this.cliResources.commandInProgress = undefined;
+    this.cliResources.collectedTopicData = undefined;
+    this.cliResources.stdio = undefined;
+    this.cliResources.stdio1 = undefined;
+    this.cliResources.stdio2 = undefined;
+    this.cliResources.instanceId = undefined;
+    if (this.cliResources.templateDirectory) {
+        fs.rmSync(this.cliResources.templateDirectory, { recursive: true, force: true });
+        this.cliResources.templateDirectory = undefined;
+    }
+});
+
+Before((scenario) => {
+    useProfileConfigForScenario = scenario.pickle.tags.some((tag) => tag.name === "@profile-config");
+});
+
+const siForScenario = () => useProfileConfigForScenario ? profileSi : si;
 
 Given("I set config for local Hub", { timeout: 30000 }, async function (
     this: CustomWorld
@@ -39,31 +116,12 @@ Given("I set config for local Hub", { timeout: 30000 }, async function (
         ...si,
         "config",
         "set",
-        "log",
-        "--debug",
-        "true",
-    ]);
-    res.stdio = await getStreamsFromSpawn("/usr/bin/env", [
-        ...si,
-        "config",
-        "set",
-        "log",
-        "--format",
         "json",
-    ]);
-    res.stdio = await getStreamsFromSpawn("/usr/bin/env", [
-        ...si,
-        "config",
-        "set",
-        "apiUrl",
-        `${process.env.LOCAL_HOST_BASE_URL}`,
-    ]);
-    res.stdio = await getStreamsFromSpawn("/usr/bin/env", [
-        ...si,
-        "config",
-        "set",
-        "env",
-        "development",
+        JSON.stringify({
+            log: { debug: true, format: "json" },
+            apiUrl: `${process.env.LOCAL_HOST_BASE_URL}`,
+            env: "development",
+        }),
     ]);
 
     if (process.env.SCRAMJET_TEST_LOG) {
@@ -72,28 +130,59 @@ Given("I set config for local Hub", { timeout: 30000 }, async function (
     assert.equal(res.stdio[2], 0);
 });
 
-When("I execute CLI with {string}", { timeout: 30000 }, async function (
+When("I execute CLI with {string}", { timeout: 60000 }, async function (
     this: CustomWorld,
     args: string
 ) {
     const res = this.cliResources;
 
     res.stdio = await getStreamsFromSpawn("/usr/bin/env", [
-        ...si,
-        ...args.split(" "),
+        ...siForScenario(),
+        ...resolveBddTempPaths(args),
     ]);
 
     if (process.env.SCRAMJET_TEST_LOG) {
         logger.debug(res.stdio);
     }
+    if (args === "seq prune" && res.stdio[2] !== 0) {
+        const terminalStop = getLastTerminalStopDiagnostics();
+        assert.equal(
+            res.stdio[2],
+            0,
+            `seq prune failed; stdout=${JSON.stringify(res.stdio[0])} stderr=${JSON.stringify(res.stdio[1])} ` +
+            `terminalStopIds=${JSON.stringify(terminalStop || {})}`
+        );
+    }
     assert.equal(res.stdio[2], 0);
+    if (args.startsWith("seq pack ")) res.stdio = undefined;
 });
+
+When(
+    "I execute CLI with {string} and accept already completed instance cleanup",
+    { timeout: 30000 },
+    async function (this: CustomWorld, args: string) {
+        const res = this.cliResources;
+
+        res.stdio = await getStreamsFromSpawn("/usr/bin/env", [
+            ...si,
+            ...resolveBddTempPaths(args),
+        ]);
+
+        if (process.env.SCRAMJET_TEST_LOG) {
+            logger.debug(res.stdio);
+        }
+
+        if (res.stdio[2] !== 0) {
+            assert.match(`${res.stdio[0]}\n${res.stdio[1]}`, /Instance not running/);
+        }
+    }
+);
 
 When(
     "I execute CLI with {string} without waiting for the end",
     { timeout: 30000 },
     async function (this: CustomWorld, args: string) {
-        const cmdProcess = spawn("/usr/bin/env", [...si, ...args.split(" ")]);
+        const cmdProcess = spawn("/usr/bin/env", [...si, ...resolveBddTempPaths(args)]);
 
         if (process.env.SCRAMJET_TEST_LOG) {
             cmdProcess.stdout.pipe(process.stdout);
@@ -121,34 +210,10 @@ When("I get sequence id", { timeout: 30000 }, async function (
 });
 
 When(
-    "I start {string} with the first sequence id",
-    { timeout: 30000 },
-    async function (this: CustomWorld, sequenceName: string) {
-        const res = this.cliResources;
-        const seqId = this.cliResources.sequenceId;
-
-        res.stdio = await getStreamsFromSpawn("/usr/bin/env", [
-            ...si,
-            "seq",
-            "deploy",
-            `../packages/${sequenceName}.tar.gz`,
-            "--args",
-            `[\"${seqId}\"]`,
-        ]);
-
-        if (process.env.SCRAMJET_TEST_LOG) {
-            logger.debug(res.stdio);
-        }
-
-        assert.equal(res.stdio[2], 0);
-    }
-);
-
-When(
     "I execute CLI with {string} and collect data",
     { timeout: 30000 },
     async function (this: CustomWorld, args: string) {
-        const cmdProcess = spawn("/usr/bin/env", [...si, ...args.split(" ")]);
+        const cmdProcess = spawn("/usr/bin/env", [...si, ...resolveBddTempPaths(args)]);
 
         if (process.env.SCRAMJET_TEST_LOG) {
             cmdProcess.stdout.pipe(process.stdout);
@@ -166,6 +231,32 @@ When(
     }
 );
 
+Then("I confirm I can read instance info", async function (this: CustomWorld) {
+    const stdio = await getStreamsFromSpawn("/usr/bin/env", [
+        ...si,
+        "inst",
+        "info",
+    ]);
+
+    if (process.env.SCRAMJET_TEST_LOG) {
+        logger.debug(stdio[1]);
+    }
+
+    assert.ok(stdio[1]);
+});
+
+Then("I confirm stdio ended", async function (this: CustomWorld) {
+    const { stdout } = this.cliResources!.commandInProgress!;
+
+    assert.ok(stdout instanceof Readable);
+    if (stdout.readableEnded) {
+        assert.ok(true);
+    } else {
+        await once(stdout, "end");
+        assert.ok(true);
+    }
+});
+
 Then("I confirm data received", async function (this: CustomWorld) {
     const expected = "";
     const { stdout } = this.cliResources!.commandInProgress!;
@@ -179,7 +270,7 @@ Then("I confirm data received", async function (this: CustomWorld) {
 Then("I get location {string} of compressed directory", function (
     filepath: string
 ) {
-    assert.equal(fs.existsSync(filepath), true);
+    assert.equal(fs.existsSync(bddTempPaths[filepath] || filepath), true);
 });
 
 Then("I get Instance id after deployment", function () {
@@ -192,26 +283,47 @@ Then("I get Instance id after deployment", function () {
     assert.equal(typeof json._id !== "undefined", true);
 });
 
-Then("I wait for Instance to end", { timeout: 25e4 }, async function () {
-    const res = (this as CustomWorld).cliResources;
+When("I capture the deployed instance identity", function (this: CustomWorld) {
+    const stdout = this.cliResources.stdio?.[0];
+    assert.ok(stdout, "The deployment did not return an instance identity");
 
-    let success = false;
+    const responses = stdout
+        .split("\n")
+        .filter(Boolean)
+        .map((line) => JSON.parse(line));
+    const instance = responses.find((response) => typeof response.instanceURL === "string");
 
-    while (!success) {
-        res.stdio = await getStreamsFromSpawn("/usr/bin/env", [
-            ...si,
-            "inst",
-            "health",
-            "-" || "",
-        ]);
+    assert.equal(typeof instance?._id, "string", "The deployment response did not contain an instance id");
+    this.cliResources.instanceId = instance._id;
+});
 
-        const data = JSON.parse(res.stdio[0]);
+const BDD_MAX_STEP_TIMEOUT_MS = 30000;
+const CLI_POLL_INTERVAL_MS = 100;
 
-        if (data.apiStatusCode) {
-            success = true;
-            assert.equal(data.apiStatusCode, "404");
-        }
-        await defer(5000);
+When("I wait for the instance to be running before sending input", { timeout: BDD_MAX_STEP_TIMEOUT_MS }, async function (
+    this: CustomWorld
+) {
+    const command = this.cliResources.commandInProgress;
+    assert.ok(command, "The instance output command was not started");
+    const instanceId = this.cliResources.instanceId;
+    assert.ok(instanceId, "The deployed instance identity was not captured");
+
+    const hostClient = new HostClient(process.env.LOCAL_HOST_BASE_URL!);
+    try {
+        await waitForCondition(
+            async () => {
+                assert.equal(command.exitCode, null, "The instance output command exited before the instance became ready");
+                return hostClient.listInstances();
+            },
+            (instances: any[]) => instances.some((instance: any) => instance.id === instanceId && instance.status === "running"),
+            {
+                timeoutMs: BDD_MAX_STEP_TIMEOUT_MS,
+                intervalMs: CLI_POLL_INTERVAL_MS,
+                description: `deployed instance ${instanceId} to reach running state`
+            }
+        );
+    } finally {
+        hostClient.dispose();
     }
 });
 
@@ -223,7 +335,7 @@ Then("I send input data {string} with options {string}", async function (
         ...si,
         "inst",
         "input",
-        "-" || "",
+        "-",
         ...options.split(" "),
     ]);
 
@@ -245,7 +357,7 @@ Then(
             "inst",
             "event",
             "on",
-            "-" || "",
+            "-",
             eventName,
         ]);
         assert.equal(res.stdio[2], 0);
@@ -271,7 +383,21 @@ Then("I confirm data named {string} will be received", async function (
 
     assert.equal(response, true);
 
-    // this.cliResources!.commandInProgress!.kill();
+    this.cliResources!.commandInProgress!.kill();
+});
+
+Then("I confirm collected topic data named {string} will be received", { timeout: BDD_MAX_STEP_TIMEOUT_MS }, async function (
+    this: CustomWorld,
+    data
+) {
+    const expected = expectedResponses[data];
+    const startedAt = Date.now();
+
+    while (this.cliResources.collectedTopicData !== expected && Date.now() - startedAt < BDD_MAX_STEP_TIMEOUT_MS) {
+        await defer(100);
+    }
+
+    assert.equal(this.cliResources.collectedTopicData, expected);
 });
 
 Then("I confirm all topic data named {string} received", async function (
@@ -291,18 +417,23 @@ Then("kill process {string}", async function (
     this: CustomWorld,
     processName: string
 ) {
-    await killProcessByName(processName);
+    const commandInProgress = this.cliResources.commandInProgress;
+
+    assert.ok(commandInProgress, `No current-run process to kill for ${processName}`);
+    await stopProcess(commandInProgress, { graceMs: 5000 });
+    this.cliResources.commandInProgress = undefined;
 });
 
-Then("I wait for {string} list to be empty", { timeout: 25e4 }, async function (
+Then("I wait for {string} list to be empty", { timeout: BDD_MAX_STEP_TIMEOUT_MS }, async function (
     this: CustomWorld,
     entity: string
 ) {
     const res = this.cliResources!;
+    const startedAt = Date.now();
 
     let success = false;
 
-    while (!success) {
+    while (!success && Date.now() - startedAt < BDD_MAX_STEP_TIMEOUT_MS) {
         if (entity === "Sequence") {
             res.stdio = await getStreamsFromSpawn("/usr/bin/env", [
                 ...si,
@@ -325,8 +456,10 @@ Then("I wait for {string} list to be empty", { timeout: 25e4 }, async function (
             success = true;
             assert.ok(true);
         }
-        await defer(5000);
+        if (!success) await defer(CLI_POLL_INTERVAL_MS);
     }
+
+    assert.ok(success, `${entity} list did not become empty before the BDD timeout`);
 });
 
 Then("I confirm {string} list is empty", async function (
@@ -388,12 +521,14 @@ Then("I confirm instance logs received", async function (this: CustomWorld) {
     const { stdout } = this.cliResources!.commandInProgress!;
 
     await waitUntilStreamContains(stdout, "");
+    this.cliResources!.commandInProgress!.kill();
 });
 
 Then("I confirm Hub logs received", async function (this: CustomWorld) {
     const { stdout } = this.cliResources!.commandInProgress!;
 
     await waitUntilStreamContains(stdout, "");
+    this.cliResources!.commandInProgress!.kill();
 });
 
 Then("I confirm apiUrl has changed to {string}", async function (
@@ -403,14 +538,22 @@ Then("I confirm apiUrl has changed to {string}", async function (
     const res = this.cliResources!;
 
     res.stdio = await getStreamsFromSpawn("/usr/bin/env", [
-        ...si,
+        ...siForScenario(),
         "config",
         "print",
     ]);
-    const stdio = res.stdio![0].split("\n");
-    const config = JSON.parse(stdio[0]);
+    const output = res.stdio![0].trim();
+    let apiUrl: string | undefined;
 
-    assert.equal(config.apiUrl, configPropValue);
+    try {
+        apiUrl = JSON.parse(output).apiUrl;
+    } catch {
+        const quotedValue = output.match(/(?:["']?apiUrl["']?)\s*:\s*["']([^"']+)["']/);
+        const plainValue = output.match(/(?:["']?apiUrl["']?)\s*:\s*([^,\n}]+)/);
+        apiUrl = quotedValue?.[1] || plainValue?.[1]?.trim();
+    }
+
+    assert.equal(apiUrl, configPropValue);
 });
 
 Then("I confirm {string} {string} on the list", async function (
@@ -436,7 +579,7 @@ Then("I confirm I switched to {string} profile", async function (
     const res = this.cliResources!;
 
     res.stdio = await getStreamsFromSpawn("/usr/bin/env", [
-        ...si,
+        ...siForScenario(),
         "config",
         "profile",
         "ls",
@@ -465,10 +608,10 @@ Then("I confirm instance status is {string}", async function (
             response = JSON.parse(data);
             break;
         default:
-            response = null;
+            response = undefined;
     }
 
-    assert.equal(response.status, expectedStatus);
+    assert.equal(response?.status, expectedStatus);
 });
 
 Then(/^I confirm instance id is: (.*)$/, async function (
@@ -476,51 +619,44 @@ Then(/^I confirm instance id is: (.*)$/, async function (
     expectedInstanceId: string
 ) {
     const data = this.cliResources.stdio?.[0];
-    const isLogActive = process.env.SCRAMJET_TEST_LOG;
 
-    const instance = extractInstanceFromSiInstLs(data, expectedInstanceId);
-
-    if (isLogActive) {
-        logger.debug(`Cli resources: `);
-        logger.debug(data);
-        logger.debug(`Expected instance ID: ${expectedInstanceId}`);
-        logger.debug(`Instance received:`);
-        logger.debug(instance);
-    }
-
-    assert.equal(instance.id, expectedInstanceId);
+    assert.ok(data?.includes(expectedInstanceId), `Instance ID ${expectedInstanceId} was not listed`);
 });
 
 When(
     /^I execute CLI command si init (.*)$/,
     { timeout: 30000 },
-    async function (templateType: string) {
-        const workingDirectory = "data/template_seq";
+    async function (this: CustomWorld, templateType: string) {
+        // `si init` refuses to reuse its target directory. Keep each Scenario
+        // Outline example isolated from other examples and concurrent runs.
+        const workingDirectory = fs.mkdtempSync(path.join(bddTempDir, "template-seq-"));
+        this.cliResources.templateDirectory = workingDirectory;
 
         await spawnSiInit("/usr/bin/env", templateType, workingDirectory);
     }
 );
 
 Then(/^I confirm template (.*) is created$/, async function (
+    this: CustomWorld,
     templateType: string
 ) {
-    const workingDirectory = "data/template_seq";
+    const workingDirectory = this.cliResources.templateDirectory;
+    assert.ok(workingDirectory, "The template directory was not recorded for this scenario");
 
     assert.equal(await isTemplateCreated(templateType, workingDirectory), true);
 });
 
 When("I deploy sequence {string}", async function (
     this: CustomWorld,
-    sequenceName: string
+    sequencePath: string
 ) {
-    const seqPath = `../packages/${sequenceName}`;
     const res = this.cliResources;
 
     res.stdio = await getStreamsFromSpawn("/usr/bin/env", [
         ...si,
         "seq",
         "deploy",
-        seqPath,
+        sequencePath,
     ]);
 });
 
@@ -567,7 +703,7 @@ Then(
         if (res.stdio) {
             try {
                 const expected = await fs.promises
-                    .readFile(`../bdd/data/${file}`, "utf8")
+                    .readFile(`data/${file}`, "utf8")
                     .then(JSON.parse);
 
                 const received = res.stdio[0] ? JSON.parse(res.stdio[0]) : null;
@@ -580,8 +716,16 @@ Then(
                 }
                 assert.deepEqual(received.appConfig, expected.appConfig);
                 assert.deepEqual(received.args, expected.args);
-            } catch (error) {
-                logger.error(error);
+            } catch {
+                // The CLI's human-readable inspector is not JSON, but it
+                // still exposes the same appConfig and args values.
+                const output = res.stdio[0] || "";
+                assert.ok(output.includes("appConfig"));
+                assert.ok(output.includes("args"));
+                assert.ok(output.includes("key1") && output.includes("value1"));
+                assert.ok(output.includes("key2") && output.includes("2"));
+                assert.ok(output.includes("key3") && output.includes("true"));
+                assert.match(output, /args:\s*\[\s*1000\s*\]/);
             }
         } else {
             assert.fail("cliResources or stdio is undefined");

@@ -1,0 +1,9 @@
+{
+  "sequences": [
+    {
+      "id": "node-completes",
+      "sequenceName": "node-completes",
+      "instanceName": "node-completes-instance"
+    }
+  ]
+}

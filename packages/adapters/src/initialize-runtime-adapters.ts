@@ -1,25 +1,78 @@
-import { STHConfiguration } from "@scramjet/types";
-import { setupDockerNetworking } from "./docker-networking";
-import { DockerodeDockerHelper } from "./dockerode-docker-helper";
+import { IObjectLogger } from "@scramjet/runtime-types";
+import { RuntimeOptionRegistry, STHConfiguration } from "@scramjet/api-types";
+import { getAdapter, getValidAdapters } from "./get-adapters";
 
-export async function initializeRuntimeAdapters(config: STHConfiguration): Promise<string> {
+export function updateAdaptersConfig(adapter: string, config: STHConfiguration) {
+    config.adapters = config.adapters || {};
+    const validAdapters = getValidAdapters();
+
+    if (adapter === "detect") {
+        if (validAdapters.includes("docker"))
+            getAdapter("docker").augmentConfig(config);
+        if (validAdapters.includes("process"))
+            getAdapter("process").augmentConfig(config);
+        return;
+    }
+
+    if (!validAdapters.includes(adapter)) {
+        throw new Error(`Invalid runtime adapter: ${adapter}`);
+    }
+
+    getAdapter(adapter).augmentConfig(config);
+}
+
+export function registerRuntimeAdapterOption(options: RuntimeOptionRegistry): RuntimeOptionRegistry {
+    const validAdapters = getValidAdapters();
+
+    return options.option({
+        name: "runtimeAdapter",
+        flag: "runtime-adapter",
+        short: "a",
+        type: "string",
+        description: `Runtime adapter to use (${validAdapters.map(x => JSON.stringify(x))},"detect")`,
+        choices: ["detect", ...validAdapters]
+    });
+}
+
+export function augmentOptions(options: RuntimeOptionRegistry, runtimeAdapterValue: string = "detect"): RuntimeOptionRegistry {
+    const validAdapters = getValidAdapters();
+
+    if (runtimeAdapterValue === "detect") {
+        if (validAdapters.includes("docker"))
+            getAdapter("docker").augmentOptions(options);
+        if (validAdapters.includes("process"))
+            getAdapter("process").augmentOptions(options);
+    } else {
+        getAdapter(runtimeAdapterValue).augmentOptions(options);
+    }
+
+    return options;
+}
+
+export async function initializeRuntimeAdapters(config: STHConfiguration, logger: IObjectLogger): Promise<string> {
+    const validAdapters = getValidAdapters();
+
     if (config.runtimeAdapter === "detect") {
-        if (await DockerodeDockerHelper.isDockerConfigured()) {
+        try {
+            await getAdapter("docker").initialize(config.adapters.docker);
             config.runtimeAdapter = "docker";
-        } else {
+        } catch {
+            logger.info("Docker not available, falling back to process adapter.");
+            await getAdapter("process").initialize(config.adapters.process);
             config.runtimeAdapter = "process";
         }
-    }
-
-    if (config.runtimeAdapter === "docker") {
-        await setupDockerNetworking(new DockerodeDockerHelper());
-    }
-
-    if (config.runtimeAdapter === "kubernetes") {
-        if (!config.kubernetes.sthPodHost) {
-            throw new Error("Kubernetes pod host url is not set in kubernetes.sthPodHost config.");
+    } else {
+        if (!validAdapters.includes(config.runtimeAdapter)) {
+            throw new Error(`Runtime adapter ${config.runtimeAdapter} is not available.`);
         }
+        if (!config.adapters[config.runtimeAdapter]) {
+            throw new Error(`Adapter configuration for "${config.runtimeAdapter}" is missing.`);
+        }
+
+        await getAdapter(config.runtimeAdapter).initialize(config.adapters[config.runtimeAdapter]);
     }
+
+    await getAdapter(config.runtimeAdapter).augmentConfig(config);
 
     return config.runtimeAdapter;
 }
