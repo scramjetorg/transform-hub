@@ -92,7 +92,7 @@
 - [x] Task: Apply compatible production dependency updates by owner group.
   - [x] Prioritize archive-processing, Docker adapter, Kubernetes client, HTTP, YAML, WebSocket, and protobuf dependency chains.
     - First isolated group selected: telemetry Loki/protobuf chain.
-  - [~] Update same-major fixes in isolated groups with focused package build and tests before proceeding to the next group.
+  - [x] Update same-major fixes in isolated groups with focused package build and tests before proceeding to the next group.
     - Telemetry: `winston-loki` updated to `^6.1.5` (resolved 6.1.6); focused construction, push, and connection-error tests added and passed, as did telemetry build/typecheck.
     - Shared YAML: config and utility updated to `yaml ^2.9.0`; config tests (62), utility tests (19; one pre-existing skip), typechecks, and builds passed. Added a utility nested-object/array YAML round-trip regression.
     - Kubernetes: `js-yaml ^4.3.0` and `tar ^7.5.21` resolve to 4.3.1/7.5.22; client tree resolves ws 8.21.1 and tar-fs 3.1.3. Kubeconfig YAML and gzip archive regression tests, package tests (4), typecheck, and build passed.
@@ -106,7 +106,7 @@
     - Docker lock resolution updated with npm; intended gRPC/protobuf and tar resolutions verified.
     - Host HTTP lock resolution updated with npm; intended axios chain resolutions verified.
     - CLI lock resolution updated with npm; intended minimatch/brace-expansion resolutions verified.
-- [~] Task: Handle production major-version migrations explicitly.
+- [x] Task: Handle production major-version migrations explicitly.
   - [x] Evaluate `tar`, `dockerode`, `minio`, `uuid`, and other major remediation candidates for API/runtime compatibility.
     - Audit delta after compatible groups: 23 → 12 production findings (critical 2→1, high 9→2, moderate 12→9). Remaining critical/high work is rooted in root tar 6.x/tooling and retained compatibility/major chains; minio 7→8 and uuid 8→14 remain migration candidates.
   - [x] Add or update focused regression coverage before or alongside each approved migration.
@@ -125,7 +125,9 @@
     - Audit improved from 23 to 12 production findings (critical 2→1, high 9→2). Compatible telemetry, YAML, Kubernetes, Docker/gRPC/protobuf, host HTTP, and CLI glob chains are resolved. Residual root tar 6.x and the recorded major migrations remain deferred with owners and revisit conditions.
   - [x] Confirm that production behavior is stable before modifying development or test tooling.
     - No runtime regression was observed in focused owner tests, full build, invariants, or API-node BDD; Phase 4 may evaluate development/tooling findings without altering deferred production migrations.
-- [ ] Task: Conductor - Phase Completion 'Remediate Retained Production Dependency Findings' (Protocol in workflow.md)
+- [x] Task: Conductor - Phase Completion 'Remediate Retained Production Dependency Findings' (Protocol in workflow.md)
+  - Checkpoint: `d585142db097783ee1dcf0a507c313e7359570bc` (`fix: remediate compatible production dependencies (phase 3)`), pushed to the draft PR branch.
+  - Formal phase review: `PASS/accepted`; major compatibility migrations remain deferred as recorded.
 
 ## Phase 4: Update Development and Test Tooling Safely
 
