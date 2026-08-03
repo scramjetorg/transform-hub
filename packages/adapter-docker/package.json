@@ -22,8 +22,7 @@
     "@scramjet/runner": "^2.0.0",
     "@scramjet/utility": "^2.0.0",
     "dockerode": "^4.0.2",
-    "tar": "^7.4.3",
-    "ts.data.json": "^2.2.0"
+    "tar": "^7.4.3"
   },
   "devDependencies": {
     "@scramjet/runtime-types": "^2.0.0",

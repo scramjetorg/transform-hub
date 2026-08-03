@@ -18,7 +18,6 @@
     "dockerode": "^3.3.4",
     "find-package-json": "^1.2.0",
     "freeport": "^1.0.5",
-    "glob": "^7.2.3",
     "n-readlines": "^1.0.1",
     "scramjet": "^4.37.0"
   },

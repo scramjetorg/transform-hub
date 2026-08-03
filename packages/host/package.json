@@ -47,7 +47,6 @@
     "@scramjet/api-types": "^2.0.0",
     "@scramjet/runtime-types": "^2.0.0",
     "@scramjet/types": "^2.0.0",
-    "@types/aws4": "^1.11.0",
     "@types/find-package-json": "^1.2.3",
     "@types/node": "^22.15.0",
     "@types/node-localstorage": "^1.3.3",

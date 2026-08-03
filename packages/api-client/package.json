@@ -16,7 +16,6 @@
     "@scramjet/client-utils": "^2.0.0",
     "@scramjet/runtime-types": "^2.0.0",
     "@scramjet/symbols": "^2.0.0",
-    "n-readlines": "^1.0.1",
     "scramjet": "^4.37.0"
   },
   "devDependencies": {

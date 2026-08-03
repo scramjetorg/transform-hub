@@ -43,24 +43,39 @@
 
 ## Phase 2: Inventory and Remove Proven-Unused Direct Dependencies
 
-- [ ] Task: Rebuild the direct dependency-removal inventory.
-  - [ ] Inspect root and workspace manifests, lockfile paths, source imports, dynamic runtime loading, package scripts, active workflows, fixtures, generated outputs, and documentation.
-  - [ ] Classify every candidate as safe removal, retained runtime/CI/test dependency, or compatibility-sensitive deferral.
-  - [ ] Preserve `@vscode/ripgrep`, BDD/Cucumber dependencies, runtime wrappers, compatibility types, and explicitly retained legacy packages unless new evidence disproves their use.
-- [ ] Task: Obtain cleanup safety review before destructive dependency removal.
-  - [ ] Have the cleanup specialist propose each owner-scoped removal with evidence.
-  - [ ] Have the reviewer approve the bounded removal set before manifests or the lockfile change.
-- [ ] Task: Remove only approved direct dependencies by owner group.
-  - [ ] Update manifests and regenerate `package-lock.json` with npm; do not hand-edit lockfile metadata.
-  - [ ] Verify every removed direct declaration and its direct lockfile entry are absent.
-  - [ ] Preserve behavior and document intentional transitive residuals.
-- [ ] Task: Validate each dependency-removal group.
-  - [ ] Run clean `npm ci` after lockfile changes.
-  - [ ] Run focused package build/type/test commands for each affected owner.
-  - [ ] Run `npm run check:runtime-invariants` when a removed dependency affects runtime, build, or validation tooling.
-- [ ] Task: Review Phase 3 scope and create handoff notes.
-  - [ ] Record each candidate's removed/retained/deferred disposition, lockfile result, validation evidence, and production-audit delta.
-  - [ ] Define the retained production vulnerability owner groups and fixed-version targets for Phase 3.
+- [x] Task: Rebuild the direct dependency-removal inventory.
+  - [x] Inspect root and workspace manifests, lockfile paths, source imports, dynamic runtime loading, package scripts, active workflows, fixtures, generated outputs, and documentation.
+  - [x] Classify every candidate as safe removal, retained runtime/CI/test dependency, or compatibility-sensitive deferral.
+    - Safe-removal candidates: `@types/request` (adapter-process); `@types/aws4` (host); `proxyquire`, `sinon`, and `@types/sinon` (runner); `sinon` and `trouter` (multi-manager); `ws` (adapter-kubernetes and adapter-process) plus adapter-kubernetes `@types/ws`; `ts.data.json` (adapter-docker and adapters); `n-readlines` (api-client); `glob` (bdd); and `nyc` (monitoring-server, obj-logger, runner, runner-node, sequence-test). Root `npm` remains pending workflow/release-policy confirmation.
+    - Deferred compatibility work: move `@types/js-yaml` from adapter-docker to adapter-kubernetes before any removal; retain mismatched `@types/dockerode`, active tar/dockerode version splits, and named legacy packages for Phase 3 evaluation.
+    - Inventory also found `packages/utility` imports undeclared `validator`; this is not a removal candidate and is deferred outside this phase.
+  - [x] Preserve `@vscode/ripgrep`, BDD/Cucumber dependencies, runtime wrappers, compatibility types, and explicitly retained legacy packages unless new evidence disproves their use.
+    - Evidence: `@vscode/ripgrep` powers invariant scripts; BDD/Cucumber and wrapper packages are active command/runtime paths; compatibility types and `scramjet`, `http-status-codes`, and `uuid` retain active consumers.
+- [x] Task: Obtain cleanup safety review before destructive dependency removal.
+  - [x] Have the cleanup specialist propose each owner-scoped removal with evidence.
+  - [x] Have the reviewer approve the bounded removal set before manifests or the lockfile change.
+    - Evidence: cleaner proposal received `PASS/accepted` phase review for the 13 owner manifests and root lockfile only; root `npm` and all compatibility migrations remain excluded.
+- [x] Task: Remove only approved direct dependencies by owner group.
+  - [x] Update manifests and regenerate `package-lock.json` with npm; do not hand-edit lockfile metadata.
+    - Evidence: `npm install --package-lock-only` completed successfully; package postinstall also completed with the pre-existing runner-python host `pyopenssl` resolver warning.
+  - [x] Verify every removed direct declaration and its direct lockfile entry are absent.
+    - Evidence: manifest and `package-lock.json` package-entry verification passed for every reviewer-approved dependency/owner pair.
+  - [x] Preserve behavior and document intentional transitive residuals.
+    - Retained transitive/direct declarations in active owners include `ts.data.json` (adapters-common and adapter-kubernetes), `n-readlines` (bdd), `glob` (root), `sinon`/`trouter` (api-server), and `nyc` (root/logger). Direct lockfile entries may remain only when another retained owner or transitive chain requires them.
+- [x] Task: Validate each dependency-removal group.
+  - [x] Run clean `npm ci` after lockfile changes.
+    - Evidence: supported unguarded `npm ci` passed after the guarded attempt (`ulimit -v 1835008`, `NODE_OPTIONS=--max-old-space-size=1024`) hit a V8 promotion OOM and timed out. The successful clean install preserved the known runner-python host `pyopenssl` resolver warning.
+  - [x] Run focused package build/type/test commands for each affected owner.
+    - Evidence: full `npm run build:packages` passed under the repository guard for every affected owner; `npm run test --workspace=@scramjet/runner` passed (115 tests).
+  - [x] Run `npm run check:runtime-invariants` when a removed dependency affects runtime, build, or validation tooling.
+    - Evidence: passed all 8 runtime-wrapper invariant guards under the repository guard.
+- [x] Task: Review Phase 3 scope and create handoff notes.
+  - [x] Record each candidate's removed/retained/deferred disposition, lockfile result, validation evidence, and production-audit delta.
+    - Removed 19 direct declarations across 13 manifests; all direct manifest/lock entries are absent after npm lockfile regeneration. Retained/deferred declarations and Phase 2 validation are recorded above.
+    - Production audit after removal: 23 findings (2 critical, 9 high, 12 moderate). Critical: archive `tar` and transitive `protobufjs`. High: gRPC, axios/HTTP, js-yaml, minimatch, ws, brace-expansion, form-data, lodash, and tmp; `tmp` is BDD-only.
+  - [x] Define the retained production vulnerability owner groups and fixed-version targets for Phase 3.
+    - Same-major owner groups: adapters (tar 7.5.21+, gRPC 1.13.5+, protobufjs 7.6.5+, ws 7.5.11+/8.21.0+); host (axios 1.18+, form-data 4.0.6+, follow-redirects 1.15.12+, pico-s3 fixed artifact pending confirmation, qs); Kubernetes/config (js-yaml 4.3+, yaml 2.8.3+, minimatch 3.1.4+); telemetry (protobufjs 7.6.5+); CLI/root archive tooling (tar 6.x requires explicit migration decision).
+    - Major migration deferrals requiring focused regression: minio 7→8, uuid 8→14, root tar 6→7, and dependency-owned file-type/ip-address upgrades. Dockerode needs a same-major patch that resolves its uuid/gRPC/protobuf chain.
 - [ ] Task: Conductor - Phase Completion 'Inventory and Remove Proven-Unused Direct Dependencies' (Protocol in workflow.md)
 
 ## Phase 3: Remediate Retained Production Dependency Findings
