@@ -1,6 +1,6 @@
 #!/bin/bash
 
-dependencies_new_versions="$1" # get version from yarn NEXT_VER variable
+dependencies_new_versions="$1" # get version from NEXT_VER variable
 
 find_packages() {
     local dir="$1"

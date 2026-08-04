@@ -59,7 +59,7 @@ if (opts.help || (!opts._.length && !opts.list)) {
     console.error(`       ${spaces} -l,--list - prints list of dirs and exits`);
     console.error(`       ${spaces} -j,--jobs - how many jobs in parallel (default: 16)`);
     console.error(`       ${spaces} -r,--root <root> - main directory (default is cwd, env: WORKSPACE_ROOT)`);
-    console.error(`       ${spaces} -e,--exec - treat <script> as a full command to exec, not a yarn script. `);
+    console.error(`       ${spaces} -e,--exec - treat <script> as a full command to exec, not a package script. `);
 
     process.exit(1);
 }

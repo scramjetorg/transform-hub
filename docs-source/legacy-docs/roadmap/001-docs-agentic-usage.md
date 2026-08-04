@@ -13,7 +13,7 @@ The current documentation assumes a human developer is reading every page, insta
 
 ## Current Behavior
 
-- README and guides describe manual `yarn install`, `yarn build:all`, and `si` CLI usage.
+- README and guides describe manual `npm install`, `npm run build:all`, and `si` CLI usage.
 - No section explains how an automated agent should bootstrap STH, verify readiness, or interact with the API.
 - Sequence templates are described for human copy-paste, not for programmatic generation.
 

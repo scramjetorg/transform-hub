@@ -46,7 +46,7 @@ Maximum number of recent host output bytes retained in memory by BDD host helper
 
 ---
 `BDD_TIMEOUT_MS: number (default: 600000)`
-Hard timeout for `yarn test:bdd:safe` and `yarn test:bdd:ts:safe`. When the timeout is reached, the safe wrapper sends `SIGTERM` to the BDD process group.
+Hard timeout for `npm run test:bdd` and `npm run test:bdd:ts`. When the timeout is reached, the BDD runner sends `SIGTERM` to the BDD process group.
 
 ---
 `BDD_GRACE_MS: number (default: 15000)`
