@@ -15,56 +15,73 @@ type ResponseBody = AsyncIterable<Buffer> & { destroy?: () => void };
 const fingerprint = (certificate: string) => `sha256:${createHash("sha256").update(new X509Certificate(certificate).raw).digest("hex")}`;
 const certDir = join(__dirname, "../../verser/test/cert");
 
-async function closeTrackedSessions(sessions: Set<any>) {
-    const activeSessions = [...sessions];
-    const closedSessions = activeSessions.map(session => session.closed || session.destroyed
-        ? Promise.resolve()
-        : new Promise<void>(resolve => session.once("close", resolve)));
+function trackClose(records: Map<any, Promise<void>>, obj: any) {
+    const tracked = records.get(obj);
+    if (tracked) return tracked;
 
-    for (const session of activeSessions) if (!session.closed && !session.destroyed) session.destroy();
-    await Promise.all(closedSessions);
-    sessions.clear();
+    if (!obj) return Promise.resolve();
+
+    const closed = obj?.closed || obj?.destroyed;
+    const closePromise = new Promise<void>(resolve => {
+        if (closed) {
+            resolve();
+        } else {
+            obj.once("close", resolve);
+        }
+    });
+
+    obj?.on("error", () => undefined);
+    records.set(obj, closePromise);
+
+    return closePromise;
 }
 
-async function closeTrackedTransportSockets(sockets: Set<any>, initialTlsSockets: Set<any>) {
-    // Failed HTTP/2 registration destroys its session before the backing TLS
-    // socket is exposed as an active handle. Wait a turn, then collect the
-    // actual TLS sockets rather than the session's bound socket facade, whose
-    // mutating methods intentionally throw ERR_HTTP2_NO_SOCKET_MANIPULATION.
+async function closeTrackedClientSessions(sessions: Map<any, Promise<void>>) {
+    const activeSessions = [...sessions].filter(([session]) => !session.closed && !session.destroyed);
+    for (const [session] of activeSessions) {
+        if (!session.closed && !session.destroyed) {
+            session.destroy();
+        }
+    }
+
+    await Promise.all(activeSessions.map(([, closePromise]) => closePromise));
+}
+
+async function closeTrackedTransportSockets(sockets: Map<any, Promise<void>>, initialTlsSockets: Set<any>) {
     await new Promise<void>(resolve => setImmediate(resolve));
     const activeSockets = [...new Set([
-        ...sockets,
+        ...sockets.keys(),
         ...(process as any)._getActiveHandles().filter((handle: any) => handle.constructor?.name === "TLSSocket" && !initialTlsSockets.has(handle))
     ])].filter((socket: any) => socket.constructor?.name !== "bound TLSSocket");
-    const closedSockets = activeSockets.map(socket => socket.destroyed
+    const closePromises = activeSockets.map(socket => socket.closed || socket.destroyed
         ? Promise.resolve()
-        : new Promise<void>(resolve => socket.once("close", resolve)));
+        : trackClose(sockets, socket));
 
     for (const socket of activeSockets) {
-        socket.on("error", () => undefined);
-        if (!socket.destroyed) socket.destroy();
+        if (!socket.destroyed) {
+            socket.destroy();
+        }
     }
-    await Promise.all(closedSockets);
+
+    await Promise.all(closePromises);
     if (activeSockets.length > 0) await new Promise(resolve => setTimeout(resolve, 50));
-    sockets.clear();
 }
 
-function trackTransportSocket(sockets: Set<any>, socket: any) {
-    sockets.add(socket);
-    socket.on("error", () => undefined);
-    socket.once("close", () => sockets.delete(socket));
-}
-
-function trackHostTransportSockets(host: VerserHost, sockets: Set<any>) {
+function trackHostTransportSockets(host: VerserHost, sockets: Map<any, Promise<void>>) {
     const server = (host as any).server;
-    const trackSocket = (socket: any) => trackTransportSocket(sockets, socket);
+    const track = (socket: any) => trackClose(sockets, socket);
 
-    server.on("connection", trackSocket);
-    server.on("secureConnection", trackSocket);
+    server.on("connection", track);
+    server.on("secureConnection", track);
     return () => {
-        server.off("connection", trackSocket);
-        server.off("secureConnection", trackSocket);
+        server.off("connection", track);
+        server.off("secureConnection", track);
     };
+}
+
+async function waitSetImmediateTwice() {
+    await new Promise<void>(resolve => setImmediate(resolve));
+    await new Promise<void>(resolve => setImmediate(resolve));
 }
 
 test.before(async () => {
@@ -82,8 +99,9 @@ test.before(async () => {
     let host: VerserHost | undefined;
     let localGuest: Awaited<ReturnType<VerserHost["attachLocalGuest"]>> | undefined;
     const brokers: VerserBroker[] = [];
-    const sessions = new Set<any>();
-    const transportSockets = new Set<any>();
+    const sessions = new Map<any, Promise<void>>();
+    const transportSockets = new Map<any, Promise<void>>();
+    const sessionSockets = new Map<any, Promise<void>>();
     const initialTlsSockets = new Set((process as any)._getActiveHandles().filter((handle: any) => handle.constructor?.name === "TLSSocket"));
     let stopTrackingHostSockets: (() => void) | undefined;
     const connect = http2.connect;
@@ -97,12 +115,15 @@ test.before(async () => {
         responseBody = undefined;
         await Promise.all(brokers.splice(0).map(broker => broker.close("TLS baseline warmup").catch(() => undefined)));
         await localGuest?.close("TLS baseline warmup").catch(() => undefined);
-        await closeTrackedSessions(sessions).catch(() => undefined);
+        await closeTrackedClientSessions(sessions).catch(() => undefined);
         await closeTrackedTransportSockets(transportSockets, initialTlsSockets).catch(() => undefined);
+        // HTTP/2 exposes session.socket as an immutable bound facade. Retain its ownership
+        // record, but never await its close event because it does not mirror the real session.
         await host?.close("TLS baseline warmup").catch(() => undefined);
         stopTrackingHostSockets?.();
         stopTrackingHostSockets = undefined;
         (http2 as any).connect = connect;
+        await waitSetImmediateTwice();
         localGuest = undefined;
         host = undefined;
         ca = undefined;
@@ -142,9 +163,8 @@ test.before(async () => {
         });
         (http2 as any).connect = (...args: any[]) => {
             const session = (connect as any)(...args);
-            sessions.add(session);
-            session.on("error", () => undefined);
-            session.once("close", () => sessions.delete(session));
+            trackClose(sessions, session);
+            trackClose(sessionSockets, session.socket);
             return session;
         };
 
@@ -233,8 +253,9 @@ test("VerserHost authenticates remote TLS brokers and enforces client fingerprin
     });
     let localGuest: Awaited<ReturnType<VerserHost["attachLocalGuest"]>> | undefined;
     const brokers: VerserBroker[] = [];
-    const sessions = new Set<any>();
-    const transportSockets = new Set<any>();
+    const sessions = new Map<any, Promise<void>>();
+    const transportSockets = new Map<any, Promise<void>>();
+    const sessionSockets = new Map<any, Promise<void>>();
     const initialTlsSockets = new Set((process as any)._getActiveHandles().filter((handle: any) => handle.constructor?.name === "TLSSocket"));
     let stopTrackingHostSockets: (() => void) | undefined;
     const connect = http2.connect;
@@ -243,9 +264,8 @@ test("VerserHost authenticates remote TLS brokers and enforces client fingerprin
     (http2 as any).connect = (...args: any[]) => {
         const session = (connect as any)(...args);
 
-        sessions.add(session);
-        session.on("error", () => undefined);
-        session.once("close", () => sessions.delete(session));
+        trackClose(sessions, session);
+        trackClose(sessionSockets, session.socket);
         return session;
     };
     const closeBroker = async (broker: VerserBroker, reason: string) => {
@@ -261,12 +281,15 @@ test("VerserHost authenticates remote TLS brokers and enforces client fingerprin
         responseText = "";
         await Promise.all([...brokers].map(broker => closeBroker(broker, "memory cleanup").catch(() => undefined)));
         await localGuest?.close("memory cleanup").catch(() => undefined);
-        await closeTrackedSessions(sessions).catch(() => undefined);
+        await closeTrackedClientSessions(sessions).catch(() => undefined);
         await closeTrackedTransportSockets(transportSockets, initialTlsSockets).catch(() => undefined);
+        // HTTP/2 exposes session.socket as an immutable bound facade. Retain its ownership
+        // record, but never await its close event because it does not mirror the real session.
         await host?.close("memory cleanup").catch(() => undefined);
         stopTrackingHostSockets?.();
         stopTrackingHostSockets = undefined;
         (http2 as any).connect = connect;
+        await waitSetImmediateTwice();
         localGuest = undefined;
         host = undefined;
         allowedFingerprints = [];
