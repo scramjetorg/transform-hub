@@ -23,7 +23,7 @@
 
 "use strict";
 
-const baseTest = require("ava");
+const baseTest = require("ava").default;
 const {
 	createAvaMemoryGuard,
 	registerAvaMemoryCleanup,

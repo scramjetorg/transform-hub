@@ -1,6 +1,6 @@
 "use strict";
 
-const test = require("ava");
+const test = require("ava").default;
 const { spawn } = require("child_process");
 require("ts-node/register");
 const { ScenarioLifecycle, stopProcess, isAlive } = require("../../scripts/lib/bdd-scenario-lifecycle.js");

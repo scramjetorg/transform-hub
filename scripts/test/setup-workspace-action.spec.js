@@ -1,6 +1,6 @@
 "use strict";
 
-const test = require("ava");
+const test = require("ava").default;
 const { readFileSync, existsSync } = require("node:fs");
 const { resolve } = require("node:path");
 
@@ -251,16 +251,29 @@ test("verify step checks Node major version and npm availability", (t) => {
 	t.true(run.includes("exit 1"), "verify step must fail on mismatch");
 });
 
+test("setup helper installs and verifies the pinned npm version", (t) => {
+	const steps = parseSteps(loadLines());
+	t.truthy(steps, "steps must exist");
+
+	const installNpm = steps.find((s) => stepName(s) === "Install pinned npm");
+	t.truthy(installNpm, "there must be an npm installation step");
+
+	const run = stepRun(installNpm);
+	t.truthy(run, "npm installation step must have a run script");
+	t.true(run.includes("npm install --global --ignore-scripts npm@11.6.2"));
+	t.true(run.includes('test "$(npm --version)" = "11.6.2"'));
+});
+
 test("install step runs npm ci", (t) => {
 	const steps = parseSteps(loadLines());
 	t.truthy(steps, "steps must exist");
 
 	const install = steps.find((s) => {
 		const name = stepName(s);
-		return name && name.includes("Install");
+		return name === "Install dependencies";
 	});
 	t.truthy(install, "there must be an Install step");
-	t.is(stepRun(install), "npm ci", "install step must run 'npm ci'");
+	t.true(stepRun(install).includes("npm ci"), "install step must run 'npm ci'");
 });
 
 test("no shell steps use yarn or pnpm", (t) => {

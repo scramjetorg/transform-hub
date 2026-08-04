@@ -1,7 +1,7 @@
 import test from "ava";
 import { execFileSync, spawnSync } from "child_process";
 import { createHash, X509Certificate } from "crypto";
-import { chmodSync, existsSync, mkdtempSync, readFileSync, writeFileSync } from "fs";
+import { chmodSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "fs";
 import { createServer } from "https";
 import { tmpdir } from "os";
 import { join } from "path";
@@ -13,6 +13,10 @@ function captureOutput(): { output: string[]; restore: () => void } {
     process.stdout.write = ((chunk: string | Uint8Array) => { output.push(chunk.toString()); return true; }) as typeof process.stdout.write;
     return { output, restore: () => { process.stdout.write = original; } };
 }
+
+test.after(async () => {
+    await new Promise<void>(resolve => setImmediate(() => setImmediate(resolve)));
+});
 
 function fixture() {
     const dir = mkdtempSync(join(tmpdir(), "sth-csr-cli-test-"));
@@ -31,6 +35,7 @@ async function run(args: string[]): Promise<string[]> {
 
 test.serial("CSR CLI generates a request and rejects Manager-owned approval", async t => {
     const value = fixture();
+    t.teardown(() => rmSync(value.dir, { recursive: true, force: true }));
     const requestFile = join(value.dir, "request.json");
     const generated = await run(["generate", "--identity-dir", join(value.dir, "hub"), "--hub-id", "hub-test", "--output", requestFile]);
     t.is(generated.join(""), `${requestFile}\n`);
@@ -42,6 +47,7 @@ test.serial("CSR CLI generates a request and rejects Manager-owned approval", as
 
 test.serial("CSR CLI redeems over HTTPS with a pinned CA and installs the certificate", async t => {
     const value = fixture();
+    t.teardown(() => rmSync(value.dir, { recursive: true, force: true }));
     const identity = join(value.dir, "hub");
     const requestFile = join(value.dir, "request.json");
     const grantFile = join(value.dir, "grant.json");
@@ -80,7 +86,9 @@ test.serial("CSR CLI redeems over HTTPS with a pinned CA and installs the certif
         t.false(output.join("").includes("test-bearer"));
         t.true(createHash("sha256").update(readFileSync(value.caCert)).digest("hex").length === 64);
     } finally {
+        server.closeAllConnections();
         await new Promise<void>(resolve => server.close(() => resolve()));
+        await new Promise<void>(resolve => setImmediate(resolve));
     }
 });
 

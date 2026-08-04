@@ -1,6 +1,6 @@
 "use strict";
 
-const test = require("ava");
+const test = require("ava").default;
 require("ts-node").register({ project: require("node:path").resolve(__dirname, "../../bdd/tsconfig.json") });
 const {
     externalClientForUrl,

@@ -1,6 +1,6 @@
 "use strict";
 
-const test = require("ava");
+const test = require("ava").default;
 const { createChunkTiming, summarizeTimingEvents, parseTimingEventLines } = require("../lib/bdd-chunk-timing.js");
 
 test("chunk timing records scenarios, steps, cleanup, and top contributors", t => {

@@ -13,7 +13,7 @@
 
 "use strict";
 
-const test = require("ava");
+const test = require("ava").default;
 const path = require("node:path");
 const fs = require("node:fs");
 const os = require("node:os");
@@ -41,27 +41,40 @@ test("run-bdd.js resolves cucumber-js from bdd/ directory", (t) => {
 	let cli;
 
 	try {
-		cli = require.resolve("@cucumber/cucumber/bin/cucumber-js", { paths: [bddDir] });
+		const cucumberPackage = require.resolve("@cucumber/cucumber/package.json", { paths: [bddDir] });
+		cli = path.resolve(path.dirname(cucumberPackage), "bin", "cucumber-js");
 	} catch {
 		try {
-			cli = require.resolve("cucumber/bin/cucumber-js", { paths: [bddDir] });
+			cli = require.resolve("@cucumber/cucumber/bin/cucumber-js", { paths: [bddDir] });
 		} catch {
-			// neither found — cucumber-js may not be installed.
+			try {
+				cli = require.resolve("cucumber/bin/cucumber-js", { paths: [bddDir] });
+			} catch {
+				// neither found — cucumber-js may not be installed.
+			}
 		}
 	}
 
 	t.truthy(cli, "cucumber-js should be resolvable from bdd/");
+	t.true(fs.existsSync(cli), "resolved cucumber-js CLI should exist");
 	t.true(cli.includes("cucumber"), "resolved path should contain cucumber");
 });
 
 test("Docker BDD runner gets cucumber-js from the root npm install", (t) => {
 	const rootManifest = JSON.parse(fs.readFileSync(path.resolve(__dirname, "../..", "package.json"), "utf8"));
+	const bddManifest = JSON.parse(fs.readFileSync(path.resolve(__dirname, "../../bdd", "package.json"), "utf8"));
 	const dockerRunner = fs.readFileSync(path.resolve(__dirname, "..", "run-bdd-docker.js"), "utf8");
+	const cucumberConfig = fs.readFileSync(path.resolve(__dirname, "../../bdd", "cucumber.js"), "utf8");
 
-	t.is(rootManifest.devDependencies["@cucumber/cucumber"], "^7.3.2");
-	t.is(rootManifest.devDependencies["@cucumber/messages"], "^14.0.0");
-	t.is(rootManifest.devDependencies["@cucumber/pretty-formatter"], "^1.0.0");
+	t.is(rootManifest.devDependencies["@cucumber/cucumber"], "^13.0.0");
+	t.is(rootManifest.devDependencies["@cucumber/messages"], "^34.0.0");
+	t.is(rootManifest.devDependencies["@cucumber/pretty-formatter"], undefined);
 	t.is(rootManifest.devDependencies["scramjet-bdd"], "file:bdd");
+	t.is(bddManifest.devDependencies["@cucumber/cucumber"], "^13.0.0");
+	t.is(bddManifest.devDependencies["@cucumber/messages"], "^34.0.0");
+	t.is(bddManifest.devDependencies["@cucumber/pretty-formatter"], undefined);
+	t.false(cucumberConfig.includes("--publish-quiet"), "Cucumber 13 no longer supports --publish-quiet");
+	t.false(cucumberConfig.includes("@cucumber/pretty-formatter"), "Cucumber 13 uses its built-in pretty formatter");
 	t.true(dockerRunner.includes("PATH=/work/node_modules/.bin:$PATH"));
 	t.false(dockerRunner.includes("yarn"));
 });

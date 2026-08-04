@@ -1,5 +1,4 @@
-import { setWorldConstructor, World, setDefaultTimeout } from "@cucumber/cucumber";
-import { ICreateAttachment, ICreateLog } from "@cucumber/cucumber/lib/runtime/attachment_manager";
+import { type IWorld, setWorldConstructor, setDefaultTimeout } from "@cucumber/cucumber";
 import { HostClient, InstanceClient, ManagerClient, SequenceClient } from "@scramjet/api-client";
 import { MultiManagerClient } from "@scramjet/multi-manager-api-client";
 import { STHRestAPI } from "@scramjet/api-types";
@@ -16,9 +15,10 @@ const defaultTimeout = Number.isFinite(configuredTimeout) && configuredTimeout >
     ? Math.min(configuredTimeout, MAX_TIMEOUT)
     : DEFAULT_TIMEOUT;
 
-export class CustomWorld implements World {
-    readonly attach: ICreateAttachment;
-    readonly log: ICreateLog;
+export class CustomWorld implements IWorld {
+    readonly attach: IWorld["attach"];
+    readonly log: IWorld["log"];
+    readonly link: IWorld["link"];
     readonly parameters: any;
     response?: any;
 
@@ -83,7 +83,7 @@ export class CustomWorld implements World {
     /** @internal Memory guard before-usage snapshot (set by support/memory-hooks.ts). */
     __memoryBeforeUsage?: number;
 
-    constructor({ attach, log, parameters }: any) {
+    constructor({ attach, log, link, parameters }: Pick<IWorld, "attach" | "log" | "link" | "parameters">) {
         // https://nodejs.org/api/dns.html#dnssetdefaultresultorderorder
         const { setDefaultResultOrder } = dns as unknown as { setDefaultResultOrder?: (param: string) => void };
 
@@ -92,6 +92,7 @@ export class CustomWorld implements World {
         }
         this.attach = attach;
         this.log = log;
+        this.link = link;
         this.parameters = parameters;
         this.cliResources.collectedTopicData = "";
     }

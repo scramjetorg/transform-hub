@@ -35,7 +35,10 @@ function installNativeTransport(requests: any[], status = 200) {
                 if (request.path === "/api/v2/ingress/identity") {
                     return { status: 200, body: Readable.from([JSON.stringify({ level: "hub", serviceId: "hub", routeDomain: "route" })]), cleanup: async () => {} };
                 }
-                if (request.body instanceof Readable) request.body.resume();
+                // The stdin command intentionally passes the worker's stdin as
+                // its upload body. Resuming that shared stream leaves AVA's IPC
+                // worker alive after the command assertion has completed.
+                if (request.body instanceof Readable && request.body !== process.stdin) request.body.resume();
                 if (request.method === "GET" && (request.path.endsWith("/logs") || request.path.endsWith("/audit") || request.path.endsWith("/stream"))) {
                     const stream = new PassThrough();
                     setImmediate(() => stream.end("native stream"));
@@ -199,7 +202,7 @@ test.serial("failed native topic controls retain operation error classification"
         createTransport: () => ({
             waitForRoute: async () => {}, close: async () => {}, request: async (request: any) => {
                 if (request.path === "/api/v2/ingress/identity") return { status: 200, body: Readable.from([JSON.stringify({ level: "hub", serviceId: "hub", routeDomain: "route" })]), cleanup: async () => {} };
-                if (request.body instanceof Readable) request.body.resume();
+                if (request.body instanceof Readable && request.body !== process.stdin) request.body.resume();
                 return { status: 200, body: Readable.from([JSON.stringify({ operation: { id: "orders", status: "failed" }, error: { code: "TOPIC_CONTROL_FAILED", message: "topic rejected" } })]), cleanup: async () => {} };
             }
         } as any)

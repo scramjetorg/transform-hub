@@ -14,7 +14,7 @@
 
 "use strict";
 
-const test = require("ava");
+const test = require("ava").default;
 
 // Replicate the isConnectionError logic inline so this test does not depend
 // on BDD TypeScript compilation.  The function under test lives in

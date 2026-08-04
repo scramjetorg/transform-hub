@@ -11,7 +11,7 @@
 
 "use strict";
 
-const test = require("ava");
+const test = require("ava").default;
 const path = require("path");
 const tsNode = require("ts-node");
 

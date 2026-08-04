@@ -1,6 +1,6 @@
 "use strict";
 
-const test = require("ava");
+const test = require("ava").default;
 const modes = require("../run-bdd-modes.js");
 const waves = require("../run-bdd-waves.js");
 const fs = require("node:fs");

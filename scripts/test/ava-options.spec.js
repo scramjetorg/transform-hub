@@ -12,7 +12,7 @@
 
 "use strict";
 
-const test = require("ava");
+const test = require("ava").default;
 
 const {
 	appendNodeOption,
@@ -21,6 +21,7 @@ const {
 	isDisabled,
 	findPackageRoot,
 	resolveAvaCli,
+	avaTypeScriptCompileArgs,
 	maxOldSpaceSize,
 	avaNodeOptions,
 	avaNodeArgs,
@@ -125,6 +126,20 @@ test("resolveAvaCli returns an absolute path to ava CLI", (t) => {
 	t.truthy(cli);
 	t.true(cli.endsWith(".js") || cli.endsWith(".cjs"));
 	t.true(cli.includes("ava"));
+});
+
+test("avaTypeScriptCompileArgs prepares AVA 8 package test output", (t) => {
+	const args = avaTypeScriptCompileArgs(resolve(__dirname, "../../packages/utility"));
+
+	t.truthy(args);
+	t.true(args.args[0].includes("typescript"));
+	t.true(args.outputDir.endsWith("packages/.ava-utility"));
+	t.true(args.stagedProjectDir.endsWith("packages/.ava-utility/utility"));
+	t.deepEqual(args.args.slice(1), [
+		"--incremental", "false", "--outDir", args.outputDir, "--allowJs", "false",
+		"--declaration", "false", "--sourceMap", "false", "--pretty", "false",
+		"--noEmitOnError", "false"
+	]);
 });
 
 // ---------------------------------------------------------------------------
@@ -500,10 +515,10 @@ test("runnerInvocationEnv preserves explicit fast-path opt-outs", (t) => {
 	}
 });
 
-test("preloadGuardPath returns absolute path to ava-guard.cjs", (t) => {
+test("preloadGuardPath returns absolute path to the leak-diagnostic preload", (t) => {
 	const p = preloadGuardPath();
 	t.truthy(p);
-	t.true(p.endsWith("ava-guard.cjs"));
+	t.true(p.endsWith("ava-leak-diagnostics.cjs"));
 });
 
 test("isDirectAvaInvocation returns true when SCRAMJET_AVA_RUNNER is absent", (t) => {
@@ -602,31 +617,105 @@ test("buildAvaArgs detects --concurrency=N format and does not inject duplicate"
 });
 
 // ---------------------------------------------------------------------------
+// buildAvaArgs – SCRAMJET_AVA_NO_WORKER_THREADS injection
+// ---------------------------------------------------------------------------
+
+test("ENV exposes SCRAMJET_AVA_NO_WORKER_THREADS", (t) => {
+	t.is(ENV.NO_WORKER_THREADS, "SCRAMJET_AVA_NO_WORKER_THREADS");
+});
+
+test("buildAvaArgs injects --no-worker-threads when SCRAMJET_AVA_NO_WORKER_THREADS=1", (t) => {
+	const saved = process.env[ENV.NO_WORKER_THREADS];
+	process.env[ENV.NO_WORKER_THREADS] = "1";
+	try {
+		const args = buildAvaArgs([]);
+		t.true(args.includes("--no-worker-threads"), "expected --no-worker-threads injection");
+	} finally {
+		if (saved !== undefined) process.env[ENV.NO_WORKER_THREADS] = saved;
+		else delete process.env[ENV.NO_WORKER_THREADS];
+	}
+});
+
+test("buildAvaArgs does not inject --no-worker-threads by default", (t) => {
+	const saved = process.env[ENV.NO_WORKER_THREADS];
+	delete process.env[ENV.NO_WORKER_THREADS];
+	try {
+		const args = buildAvaArgs([]);
+		t.false(args.includes("--no-worker-threads"), "should not inject when env is unset");
+		t.false(args.includes("--worker-threads"), "should not inject --worker-threads either");
+	} finally {
+		if (saved !== undefined) process.env[ENV.NO_WORKER_THREADS] = saved;
+	}
+});
+
+test("buildAvaArgs does not inject --no-worker-threads when env is disabled", (t) => {
+	const saved = process.env[ENV.NO_WORKER_THREADS];
+	process.env[ENV.NO_WORKER_THREADS] = "0";
+	try {
+		const args = buildAvaArgs([]);
+		t.false(args.includes("--no-worker-threads"), "should not inject when SCRAMJET_AVA_NO_WORKER_THREADS=0");
+	} finally {
+		if (saved !== undefined) process.env[ENV.NO_WORKER_THREADS] = saved;
+		else delete process.env[ENV.NO_WORKER_THREADS];
+	}
+});
+
+test("buildAvaArgs respects explicit --worker-threads over the env", (t) => {
+	const saved = process.env[ENV.NO_WORKER_THREADS];
+	process.env[ENV.NO_WORKER_THREADS] = "1";
+	try {
+		const args = buildAvaArgs(["--worker-threads"]);
+		t.true(args.includes("--worker-threads"), "explicit CLI flag should be preserved");
+		t.false(args.includes("--no-worker-threads"), "env must not inject --no-worker-threads when CLI says --worker-threads");
+	} finally {
+		if (saved !== undefined) process.env[ENV.NO_WORKER_THREADS] = saved;
+		else delete process.env[ENV.NO_WORKER_THREADS];
+	}
+});
+
+test("buildAvaArgs respects explicit --no-worker-threads over the env", (t) => {
+	const saved = process.env[ENV.NO_WORKER_THREADS];
+	process.env[ENV.NO_WORKER_THREADS] = "1";
+	try {
+		const args = buildAvaArgs(["--no-worker-threads"]);
+		// The explicit CLI arg is preserved and the env injection is skipped,
+		// so exactly one --no-worker-threads may be present.
+		const count = args.filter((a) => a === "--no-worker-threads").length;
+		t.is(count, 1, "explicit CLI --no-worker-threads should not be duplicated");
+	} finally {
+		if (saved !== undefined) process.env[ENV.NO_WORKER_THREADS] = saved;
+		else delete process.env[ENV.NO_WORKER_THREADS];
+	}
+});
+
+// ---------------------------------------------------------------------------
 // Bypass‑guard preload injection (via avaNodeOptions)
 // ---------------------------------------------------------------------------
 
-test("avaNodeOptions does not add --require guard when SCRAMJET_AVA_GUARD is unset", (t) => {
+test("avaNodeOptions always adds the leak-diagnostic preload", (t) => {
 	const savedGuard = process.env[ENV.GUARD];
 	const savedJit = process.env[ENV.JITLESS];
 	delete process.env[ENV.GUARD];
 	delete process.env[ENV.JITLESS];
 	try {
 		const opts = avaNodeOptions("");
-		t.false(opts.includes("--require"), "should not inject preload when GUARD is unset");
+		t.true(opts.includes("--require"), "should inject the supported runner preload");
+		t.true(opts.includes("ava-leak-diagnostics.cjs"));
 	} finally {
 		if (savedGuard !== undefined) process.env[ENV.GUARD] = savedGuard;
 		if (savedJit !== undefined) process.env[ENV.JITLESS] = savedJit;
 	}
 });
 
-test("avaNodeOptions does not add --require guard when SCRAMJET_AVA_GUARD=0", (t) => {
+test("avaNodeOptions retains leak diagnostics when the bypass guard is disabled", (t) => {
 	const savedGuard = process.env[ENV.GUARD];
 	const savedJit = process.env[ENV.JITLESS];
 	process.env[ENV.GUARD] = "0";
 	delete process.env[ENV.JITLESS];
 	try {
 		const opts = avaNodeOptions("");
-		t.false(opts.includes("--require"), "should not inject preload when GUARD=0");
+		t.true(opts.includes("--require"), "leak diagnostics must not depend on the bypass guard");
+		t.true(opts.includes("ava-leak-diagnostics.cjs"));
 	} finally {
 		if (savedGuard !== undefined) process.env[ENV.GUARD] = savedGuard;
 		else delete process.env[ENV.GUARD];
@@ -634,7 +723,7 @@ test("avaNodeOptions does not add --require guard when SCRAMJET_AVA_GUARD=0", (t
 	}
 });
 
-test("avaNodeOptions adds --require guard when SCRAMJET_AVA_GUARD=1", (t) => {
+test("avaNodeOptions keeps the diagnostic preload when SCRAMJET_AVA_GUARD=1", (t) => {
 	const savedGuard = process.env[ENV.GUARD];
 	const savedJit = process.env[ENV.JITLESS];
 	process.env[ENV.GUARD] = "1";
@@ -642,7 +731,7 @@ test("avaNodeOptions adds --require guard when SCRAMJET_AVA_GUARD=1", (t) => {
 	try {
 		const opts = avaNodeOptions("");
 		t.true(opts.includes("--require"), "should inject preload when GUARD=1");
-		t.true(opts.includes("ava-guard.cjs"), "preload path should reference ava-guard.cjs");
+		t.true(opts.includes("ava-leak-diagnostics.cjs"), "preload path should reference the runner diagnostics");
 	} finally {
 		if (savedGuard !== undefined) process.env[ENV.GUARD] = savedGuard;
 		else delete process.env[ENV.GUARD];

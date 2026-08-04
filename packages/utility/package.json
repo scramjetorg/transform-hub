@@ -14,15 +14,18 @@
     "test:ava": "node ../../scripts/run-ava.js"
   },
   "ava": {
-    "extensions": [
-      "ts"
-    ],
     "files": [
       "**/*.spec.ts"
     ],
     "require": [
       "ts-node/register"
-    ]
+    ],
+    "typescript": {
+      "compile": false,
+      "rewritePaths": {
+        "./": "../.ava-utility/"
+      }
+    }
   },
   "repository": {
     "type": "git",
@@ -32,9 +35,10 @@
     "url": "https://github.com/scramjetorg/transform-hub/issues"
   },
   "devDependencies": {
+    "@ava/typescript": "^7.0.0",
     "@scramjet/runtime-types": "^2.0.0",
     "@scramjet/types": "^2.0.0",
-    "ava": "^4.3.3",
+    "ava": "^8.0.0",
     "typed-emitter": "^1.4.0"
   },
   "dependencies": {

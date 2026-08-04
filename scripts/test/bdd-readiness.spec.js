@@ -1,6 +1,6 @@
 "use strict";
 
-const test = require("ava");
+const test = require("ava").default;
 const { waitForCondition } = require("../../bdd/lib/readiness.js");
 
 test("readiness polling observes a condition at the bounded 50ms interval", async t => {

@@ -25,19 +25,17 @@
     "scramjet": "^4.37.0"
   },
   "devDependencies": {
+    "@ava/typescript": "^7.0.0",
     "@types/node": "^22.15.0",
     "@types/sinon": "^10.0.13",
     "@types/trouter": "^3.1.1",
-    "ava": "^3.15.0",
+    "ava": "^8.0.0",
     "sinon": "^14.0.1",
     "trouter": "^3.2.0",
     "ts-node": "^10.9.1",
     "typescript": "~4.7.4"
   },
   "ava": {
-    "extensions": [
-      "ts"
-    ],
     "files": [
       "test/0http.spec.ts",
       "test/server.spec.ts",
@@ -51,7 +49,13 @@
     ],
     "require": [
       "ts-node/register"
-    ]
+    ],
+    "typescript": {
+      "compile": false,
+      "rewritePaths": {
+        "./": "../.ava-api-server/"
+      }
+    }
   },
   "repository": {
     "type": "git",

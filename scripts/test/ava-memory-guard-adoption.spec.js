@@ -4,7 +4,7 @@ const { mkdtempSync, rmSync, writeFileSync } = require("node:fs");
 const { spawnSync } = require("node:child_process");
 const { join, resolve } = require("node:path");
 const { tmpdir } = require("node:os");
-const test = require("ava");
+const test = require("ava").default;
 const { inspectAvaMemoryGuardFiles, shouldFail } = require("../lib/ava-memory-guard-adoption.js");
 
 function fixture(contents) {
@@ -28,7 +28,7 @@ test("reports adoption and each allowance registration without confusing runner 
 });
 
 test("strict mode fails for missing adoption, skips, and allowances", (t) => {
-	const entry = fixture("const test = require('ava');\nallowAvaMemoryGrowth(t, options);");
+	const entry = fixture("const test = require('ava').default;\nallowAvaMemoryGrowth(t, options);");
 	t.teardown(() => rmSync(entry.directory, { recursive: true, force: true }));
 	const report = inspectAvaMemoryGuardFiles([entry.file], { SCRAMJET_MEMORY_SKIP: "1", SCRAMJET_MEMORY_SKIP_REASON: "emergency" });
 

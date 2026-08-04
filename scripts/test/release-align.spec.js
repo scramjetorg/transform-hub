@@ -9,7 +9,7 @@
 
 "use strict";
 
-const test = require("ava");
+const test = require("ava").default;
 const fs = require("node:fs");
 const path = require("node:path");
 const { mkdtempSync, mkdirSync, rmSync, writeFileSync, readFileSync, existsSync } = require("node:fs");

@@ -95,7 +95,7 @@ before final measurement using `registerAvaMemoryCleanup(t, fn)`.
 
 **Adoption:** Each package test file that wants strict measurement must opt in explicitly:
 ```typescript
-const baseTest = require("ava");
+const baseTest = require("ava").default;
 const { createAvaMemoryGuard, registerAvaMemoryCleanup } = require("../../scripts/lib/ava-memory-guard");
 const test = createAvaMemoryGuard(baseTest);
 // Use registerAvaMemoryCleanup(t, () => { /* free refs */ }) for cleanup visible to guard.

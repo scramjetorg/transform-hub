@@ -4,7 +4,6 @@ import { Socket } from "net";
 import { PassThrough, Readable } from "stream";
 
 import {
-    CeroError,
     DuplexStream,
     createServer,
     ServerConfiguration,
@@ -14,6 +13,7 @@ import {
     roundRobinStrategy
 } from "@scramjet/api-server";
 import { getObject, getStream, getWritable } from "../src/lib/data-extractors";
+import { CeroError } from "../src/lib/definitions";
 import { mimeAccepts, mimeCompare } from "../src/lib/mime";
 import EventEmitter = require("events");
 

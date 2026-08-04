@@ -18,24 +18,28 @@
     "uuid": "^8.3.2"
   },
   "devDependencies": {
+    "@ava/typescript": "^7.0.0",
     "@scramjet/runtime-types": "^2.0.0",
     "@scramjet/types": "^2.0.0",
     "@types/node": "^22.15.0",
     "@types/uuid": "^8.3.4",
-    "ava": "^3.15.0",
+    "ava": "^8.0.0",
     "ts-node": "^10.9.1",
     "typescript": "~4.7.4"
   },
   "ava": {
-    "extensions": [
-      "ts"
-    ],
     "files": [
       "**/*.spec.ts"
     ],
     "require": [
       "ts-node/register"
-    ]
+    ],
+    "typescript": {
+      "compile": false,
+      "rewritePaths": {
+        "./": "../.ava-model/"
+      }
+    }
   },
   "repository": {
     "type": "git",

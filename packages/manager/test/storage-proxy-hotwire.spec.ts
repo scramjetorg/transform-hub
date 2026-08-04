@@ -1,3 +1,4 @@
+import { createHook } from "async_hooks";
 import test, { ExecutionContext } from "ava";
 import { mkdtemp, rm } from "fs/promises";
 import { tmpdir } from "os";
@@ -18,6 +19,23 @@ const storageConfig = {
 
 function createTempRoot(prefix: string): Promise<string> {
     return mkdtemp(join(tmpdir(), prefix));
+}
+
+async function releasePromiseTimeouts<T>(operation: () => Promise<T>): Promise<T> {
+    const timers = new Set<NodeJS.Timeout>();
+    const hook = createHook({
+        init(_asyncId, type, _triggerAsyncId, resource) {
+            if (type === "Timeout") timers.add(resource as NodeJS.Timeout);
+        }
+    });
+
+    hook.enable();
+    try {
+        return await operation();
+    } finally {
+        hook.disable();
+        for (const timer of timers) clearTimeout(timer);
+    }
 }
 
 function assertStorageProxyRoutes(t: ExecutionContext, recorder: RouteRecorder) {
@@ -100,7 +118,7 @@ test("DiskProxy unit index and object operations work with the default disk clie
     try {
         proxy.index.sequences = [{ id: "seq-1", packageSize: 5, _filename: "seq.tar.gz", _fileId: "file-1" } as any];
 
-        await proxy.saveIndex();
+        await releasePromiseTimeouts(() => proxy.saveIndex());
         proxy.index = { sequences: [], size: 0, version: "1.0" };
         await proxy.loadIndex();
 
@@ -151,7 +169,7 @@ test("DiskProxy loadIndex creates missing indexes converts legacy arrays and pro
         } as any
     });
 
-    await missingProxy.loadIndex();
+    await releasePromiseTimeouts(() => missingProxy.loadIndex());
     t.is(missingSaveCalls, 1);
 
     const legacyRecorder = new RouteRecorder();
@@ -166,7 +184,7 @@ test("DiskProxy loadIndex creates missing indexes converts legacy arrays and pro
         } as any
     });
 
-    await legacyProxy.loadIndex();
+    await releasePromiseTimeouts(() => legacyProxy.loadIndex());
     t.deepEqual(legacyProxy.index, { sequences: [{ id: "seq" } as any], size: 0, version: "1.0" });
     t.is(legacySaveCalls, 1);
 
@@ -208,8 +226,10 @@ test("DiskProxy unit saveIndex handles missing buckets and clearIndex keeps fail
         { id: "keep", packageSize: 5, _filename: "keep.tar.gz", _fileId: "keep.tar.gz" } as any
     ];
 
-    await proxy.saveIndex();
-    await proxy.clearIndex();
+    await releasePromiseTimeouts(async () => {
+        await proxy.saveIndex();
+        await proxy.clearIndex();
+    });
 
     t.is(putObjectCalls.length, 2);
     t.deepEqual(removeObjectCalls, ["manager-storage-hotwire/drop", "manager-storage-hotwire/keep"]);

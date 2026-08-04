@@ -1,4 +1,4 @@
-const test = require("ava");
+const test = require("ava").default;
 const fs = require("fs");
 const fsp = fs.promises;
 const os = require("os");

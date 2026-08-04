@@ -20,7 +20,7 @@
 
 "use strict";
 
-const test = require("ava");
+const test = require("ava").default;
 
 // ts-node/register must be loaded before importing the TS module
 require("ts-node/register");

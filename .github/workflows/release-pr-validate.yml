@@ -119,6 +119,11 @@ jobs:
           node-version: "22"
           cache: ""
 
+      - name: Install pinned npm
+        run: |
+          npm install --global --ignore-scripts npm@11.6.2
+          test "$(npm --version)" = "11.6.2"
+
       - id: trusted_manifest
         name: Release PR / verify trusted prerelease manifest
         env:

@@ -1,6 +1,6 @@
 "use strict";
 
-const test = require("ava");
+const test = require("ava").default;
 const { EventEmitter } = require("node:events");
 const { spawn } = require("node:child_process");
 const fs = require("node:fs");
