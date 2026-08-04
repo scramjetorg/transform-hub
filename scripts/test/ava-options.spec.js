@@ -689,6 +689,103 @@ test("buildAvaArgs respects explicit --no-worker-threads over the env", (t) => {
 });
 
 // ---------------------------------------------------------------------------
+// buildAvaArgs – memory guard mode also forces child-process workers
+// ---------------------------------------------------------------------------
+
+test("buildAvaArgs injects --no-worker-threads in memory guard mode", (t) => {
+	const savedGuard = process.env[ENV.AVA_MEMORY_GUARD];
+	const savedCommon = process.env[ENV.MEMORY_GUARD];
+	const savedWorkers = process.env[ENV.WORKERS];
+	const savedNoWT = process.env[ENV.NO_WORKER_THREADS];
+	process.env[ENV.AVA_MEMORY_GUARD] = "1";
+	delete process.env[ENV.MEMORY_GUARD];
+	delete process.env[ENV.WORKERS];
+	delete process.env[ENV.NO_WORKER_THREADS];
+	try {
+		const args = buildAvaArgs([]);
+		t.true(args.includes("--no-worker-threads"), "guard mode should force child-process workers");
+		t.true(args.includes("--serial"), "guard mode should keep --serial");
+		const concIdx = args.indexOf("--concurrency");
+		t.true(concIdx >= 0, "--concurrency should be present");
+		t.is(args[concIdx + 1], "1");
+	} finally {
+		if (savedGuard !== undefined) process.env[ENV.AVA_MEMORY_GUARD] = savedGuard;
+		else delete process.env[ENV.AVA_MEMORY_GUARD];
+		if (savedCommon !== undefined) process.env[ENV.MEMORY_GUARD] = savedCommon;
+		if (savedWorkers !== undefined) process.env[ENV.WORKERS] = savedWorkers;
+		else delete process.env[ENV.WORKERS];
+		if (savedNoWT !== undefined) process.env[ENV.NO_WORKER_THREADS] = savedNoWT;
+		else delete process.env[ENV.NO_WORKER_THREADS];
+	}
+});
+
+test("buildAvaArgs injects --no-worker-threads when SCRAMJET_MEMORY_GUARD=1", (t) => {
+	const savedGuard = process.env[ENV.AVA_MEMORY_GUARD];
+	const savedCommon = process.env[ENV.MEMORY_GUARD];
+	const savedWorkers = process.env[ENV.WORKERS];
+	const savedNoWT = process.env[ENV.NO_WORKER_THREADS];
+	process.env[ENV.MEMORY_GUARD] = "1";
+	delete process.env[ENV.AVA_MEMORY_GUARD];
+	delete process.env[ENV.WORKERS];
+	delete process.env[ENV.NO_WORKER_THREADS];
+	try {
+		const args = buildAvaArgs([]);
+		t.true(args.includes("--no-worker-threads"), "common guard mode should force child-process workers");
+		t.true(args.includes("--serial"), "common guard mode should keep --serial");
+	} finally {
+		if (savedGuard !== undefined) process.env[ENV.AVA_MEMORY_GUARD] = savedGuard;
+		if (savedCommon !== undefined) process.env[ENV.MEMORY_GUARD] = savedCommon;
+		else delete process.env[ENV.MEMORY_GUARD];
+		if (savedWorkers !== undefined) process.env[ENV.WORKERS] = savedWorkers;
+		else delete process.env[ENV.WORKERS];
+		if (savedNoWT !== undefined) process.env[ENV.NO_WORKER_THREADS] = savedNoWT;
+		else delete process.env[ENV.NO_WORKER_THREADS];
+	}
+});
+
+test("memory guard mode respects explicit --worker-threads", (t) => {
+	const savedGuard = process.env[ENV.AVA_MEMORY_GUARD];
+	const savedCommon = process.env[ENV.MEMORY_GUARD];
+	const savedWorkers = process.env[ENV.WORKERS];
+	process.env[ENV.AVA_MEMORY_GUARD] = "1";
+	delete process.env[ENV.MEMORY_GUARD];
+	delete process.env[ENV.WORKERS];
+	try {
+		const args = buildAvaArgs(["--worker-threads"]);
+		t.true(args.includes("--worker-threads"), "explicit CLI flag should be preserved");
+		t.false(args.includes("--no-worker-threads"), "guard must not inject --no-worker-threads when CLI says --worker-threads");
+	} finally {
+		if (savedGuard !== undefined) process.env[ENV.AVA_MEMORY_GUARD] = savedGuard;
+		else delete process.env[ENV.AVA_MEMORY_GUARD];
+		if (savedCommon !== undefined) process.env[ENV.MEMORY_GUARD] = savedCommon;
+		if (savedWorkers !== undefined) process.env[ENV.WORKERS] = savedWorkers;
+		else delete process.env[ENV.WORKERS];
+	}
+});
+
+test("memory guard mode respects explicit --no-worker-threads", (t) => {
+	const savedGuard = process.env[ENV.AVA_MEMORY_GUARD];
+	const savedCommon = process.env[ENV.MEMORY_GUARD];
+	const savedWorkers = process.env[ENV.WORKERS];
+	process.env[ENV.AVA_MEMORY_GUARD] = "1";
+	delete process.env[ENV.MEMORY_GUARD];
+	delete process.env[ENV.WORKERS];
+	try {
+		const args = buildAvaArgs(["--no-worker-threads"]);
+		// The explicit CLI arg is preserved and the guard injection is
+		// skipped, so exactly one --no-worker-threads may be present.
+		const count = args.filter((a) => a === "--no-worker-threads").length;
+		t.is(count, 1, "explicit CLI --no-worker-threads should not be duplicated in guard mode");
+	} finally {
+		if (savedGuard !== undefined) process.env[ENV.AVA_MEMORY_GUARD] = savedGuard;
+		else delete process.env[ENV.AVA_MEMORY_GUARD];
+		if (savedCommon !== undefined) process.env[ENV.MEMORY_GUARD] = savedCommon;
+		if (savedWorkers !== undefined) process.env[ENV.WORKERS] = savedWorkers;
+		else delete process.env[ENV.WORKERS];
+	}
+});
+
+// ---------------------------------------------------------------------------
 // Bypass‑guard preload injection (via avaNodeOptions)
 // ---------------------------------------------------------------------------
 

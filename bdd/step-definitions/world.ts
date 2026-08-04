@@ -82,6 +82,8 @@ export class CustomWorld implements IWorld {
     __memoryBaseline?: number;
     /** @internal Memory guard before-usage snapshot (set by support/memory-hooks.ts). */
     __memoryBeforeUsage?: number;
+    /** @internal Memory guard post-GC baseline snapshot (set by support/memory-hooks.ts). */
+    __memoryBaselineUsage?: number;
 
     constructor({ attach, log, link, parameters }: Pick<IWorld, "attach" | "log" | "link" | "parameters">) {
         // https://nodejs.org/api/dns.html#dnssetdefaultresultorderorder

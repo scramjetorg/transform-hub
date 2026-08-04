@@ -106,6 +106,20 @@ function checkBddMemorySkip() {
 // ---------------------------------------------------------------------------
 
 /**
+ * Compute the guarded metric total from a raw process.memoryUsage() snapshot.
+ *
+ * Mirrors measureMemoryUsage() (heapUsed + external + arrayBuffers) so a raw
+ * snapshot's components can be compared against the enforced total without a
+ * second measurement.
+ *
+ * @param {object} [raw]  Raw process.memoryUsage() snapshot.
+ * @returns {number}  Combined bytes.
+ */
+function memoryUsageTotal(raw) {
+    return (raw?.heapUsed || 0) + (raw?.external || 0) + (raw?.arrayBuffers || 0);
+}
+
+/**
  * Format a component breakdown string from before/after process.memoryUsage()
  * snapshots, focusing on heapUsed, external, and arrayBuffers.
  *
@@ -128,30 +142,84 @@ function formatComponentBreakdown(before, after) {
 }
 
 /**
+ * Format a single raw process.memoryUsage() snapshot's guarded components
+ * (heapUsed, external, arrayBuffers), one line per component.
+ *
+ * @param {object} usage  Raw process.memoryUsage() snapshot.
+ * @returns {string}  Multi-line component listing.
+ */
+function formatComponentSnapshot(usage) {
+    return ["heapUsed", "external", "arrayBuffers"]
+        .map((key) => `  ${key}: ${usage?.[key] || 0}`)
+        .join("\n");
+}
+
+/**
  * Build an actionable BDD memory guard diagnostics string.
  *
+ * The enforced metric is always the post-GC delta (final - baseline).  When
+ * post-GC component snapshots are provided (baselineUsage / postGcUsage),
+ * the diagnostics additionally distinguish: baseline post-GC components,
+ * pre-final-GC components, bytes reclaimed by the final GC, and post-GC
+ * heapUsed/external/arrayBuffers components.  RSS, when provided, is
+ * diagnostic only and never participates in enforcement.
+ *
  * @param {object} opts
- * @param {string}  opts.scenarioName   Cucumber scenario name.
- * @param {number}  opts.baseline       Pre-scenario post-GC total.
- * @param {number}  opts.final          Post-scenario post-GC total.
- * @param {number}  opts.delta          final - baseline.
- * @param {number}  opts.threshold      Effective threshold in bytes.
- * @param {string}  opts.sourceLabel    Threshold source description.
- * @param {object}  [opts.beforeUsage]  Raw before snapshot for breakdown.
- * @param {object}  [opts.afterUsage]   Raw after snapshot for breakdown.
- * @param {string}  [opts.skipContext]  Skip/exception context description.
+ * @param {string}  opts.scenarioName      Cucumber scenario name.
+ * @param {number}  opts.baseline          Pre-scenario post-GC total.
+ * @param {number}  opts.final             Post-scenario post-GC total.
+ * @param {number}  opts.delta             final - baseline (enforced).
+ * @param {number}  opts.threshold         Effective threshold in bytes.
+ * @param {string}  opts.sourceLabel       Threshold source description.
+ * @param {object}  [opts.beforeUsage]     Raw pre-scenario snapshot (legacy breakdown).
+ * @param {object}  [opts.afterUsage]      Raw pre-final-GC snapshot.
+ * @param {object}  [opts.baselineUsage]   Post-GC baseline component snapshot.
+ * @param {object}  [opts.postGcUsage]     Post-final-GC component snapshot.
+ * @param {number}  [opts.reclaimedBytes]  Bytes reclaimed by the final GC (diagnostic).
+ * @param {number}  [opts.rssBaseline]     Baseline RSS (diagnostic only).
+ * @param {number}  [opts.rssFinal]        Final RSS (diagnostic only).
+ * @param {string}  [opts.skipContext]     Skip/exception context description.
  * @param {Array<Error>} [opts.cleanupErrors] Errors from cleanup callbacks.
  * @returns {string}  Multi-line diagnostics string.
  */
-function buildBddMemoryDiagnostics({ scenarioName, baseline, final, delta, threshold, sourceLabel, beforeUsage, afterUsage, skipContext, cleanupErrors }) {
+function buildBddMemoryDiagnostics(opts) {
+    const {
+        scenarioName, baseline, final, delta, threshold, sourceLabel,
+        beforeUsage, afterUsage, baselineUsage, postGcUsage, reclaimedBytes,
+        rssBaseline, rssFinal, skipContext, cleanupErrors,
+    } = opts || {};
+
     const lines = [];
 
     lines.push(`BDD memory guard: scenario "${scenarioName}" ` + `used ${delta} bytes ` + `(threshold: ${threshold} bytes, source: ${sourceLabel}).`);
 
     lines.push(`  before (total): ${baseline}  after (total): ${final}`);
 
-    if (beforeUsage && afterUsage) {
+    const hasPostGcSnapshots = baselineUsage || postGcUsage;
+
+    if (hasPostGcSnapshots) {
+        // Post-GC component snapshots at the enforcement point: report the
+        // baseline post-GC state, the pre-final-GC state, what the final GC
+        // reclaimed, and the enforced post-GC state — all diagnostic.
+        if (baselineUsage) {
+            lines.push(`  baseline post-GC components:\n${formatComponentSnapshot(baselineUsage)}`);
+        }
+        if (afterUsage) {
+            lines.push(`  pre-final-GC components:\n${formatComponentSnapshot(afterUsage)}`);
+        }
+        if (typeof reclaimedBytes === "number") {
+            lines.push(`  final GC reclaimed: ${reclaimedBytes} bytes`);
+        }
+        if (postGcUsage) {
+            lines.push(`  post-GC enforced components:\n${formatComponentSnapshot(postGcUsage)}`);
+        }
+    } else if (beforeUsage && afterUsage) {
+        // Legacy fallback: pre-GC baseline -> pre-final-GC delta breakdown.
         lines.push(formatComponentBreakdown(beforeUsage, afterUsage));
+    }
+
+    if (rssBaseline !== undefined && rssFinal !== undefined) {
+        lines.push(`  rss (diagnostic): ${rssBaseline} -> ${rssFinal}`);
     }
 
     if (skipContext) {
@@ -212,7 +280,9 @@ module.exports = {
     // Own helpers
     ensureGlobalGc,
     checkBddMemorySkip,
+    memoryUsageTotal,
     formatComponentBreakdown,
+    formatComponentSnapshot,
     buildBddMemoryDiagnostics,
     measureWithGc
 };

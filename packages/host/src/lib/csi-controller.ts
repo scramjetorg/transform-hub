@@ -34,7 +34,7 @@ import { DataStream } from "scramjet";
 
 import { getInstanceAdapter } from "@scramjet/adapters";
 import { ObjLogger } from "@scramjet/obj-logger";
-import { cancellableDefer, CancellablePromise, defer, promiseTimeout, TypedEmitter } from "@scramjet/utility";
+import { cancellableDefer, CancellablePromise, defer, TypedEmitter } from "@scramjet/utility";
 
 import { mapRunnerExitCode } from "./utils";
 import { InstancesStore } from "./instance-store";
@@ -49,6 +49,25 @@ import { createRunnerBrokerRpcTransport, Verser2RunnerBroker, Verser2RunnerTrans
  * and instance adapter will throw an error even when everything was ok.
  */
 const runnerExitDelay = 5000;
+
+type TimeoutPromise<T> = Promise<T> & { cancel(): void };
+
+/**
+ * Race a controller operation against its deadline without leaving the losing
+ * timeout active after the operation settles.
+ */
+function promiseTimeout<T>(promise: Promise<T>, timeout: number, rejectValue: any = undefined): TimeoutPromise<T> {
+    let timer: NodeJS.Timeout | undefined;
+    const clearTimer = () => {
+        if (!timer) return;
+        clearTimeout(timer);
+        timer = undefined;
+    };
+    const deadline = new Promise<never>((_resolve, reject) => {
+        timer = setTimeout(() => reject(rejectValue), timeout);
+    });
+    return Object.assign(Promise.race([promise, deadline]).finally(clearTimer), { cancel: clearTimer });
+}
 
 function describeSequenceError(error: unknown): string {
     if (error instanceof Error) return error.stack || error.message;
@@ -884,8 +903,9 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
 
         const terminalCompletion = this.awaitTerminalCompletion();
         const boundedTerminalCompletion = terminalCompletion ? promiseTimeout(terminalCompletion, runnerExitDelay) : undefined;
+        let stopControl: TimeoutPromise<void> | undefined;
         try {
-            const stopControl = promiseTimeout(this.communicationHandler.sendControlMessage(RunnerMessageCode.STOP, message), runnerExitDelay);
+            stopControl = promiseTimeout(this.communicationHandler.sendControlMessage(RunnerMessageCode.STOP, message), runnerExitDelay);
             await (boundedTerminalCompletion ? Promise.race([stopControl, boundedTerminalCompletion]) : stopControl);
         } catch (error) {
             if (boundedTerminalCompletion) {
@@ -898,6 +918,9 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
                 }
             }
             throw error;
+        } finally {
+            stopControl?.cancel();
+            boundedTerminalCompletion?.cancel();
         }
 
         this.keepAliveRequested = false;
@@ -977,9 +1000,10 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
 
         const terminalCompletion = this.awaitTerminalCompletion();
         const boundedTerminalCompletion = terminalCompletion ? promiseTimeout(terminalCompletion, runnerExitDelay) : undefined;
+        let killControl: TimeoutPromise<void> | undefined;
 
         try {
-            const killControl = promiseTimeout(this.communicationHandler.sendControlMessage(RunnerMessageCode.KILL, {}), runnerExitDelay);
+            killControl = promiseTimeout(this.communicationHandler.sendControlMessage(RunnerMessageCode.KILL, {}), runnerExitDelay);
             await (boundedTerminalCompletion ? Promise.race([killControl, boundedTerminalCompletion]) : killControl);
         } catch (error) {
             if (boundedTerminalCompletion) {
@@ -999,6 +1023,9 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
             await this.removeInstance();
             await this.transitionToTerminal(137, InstanceStatus.ERRORED, "Runner control failed during immediate removal", error);
             return;
+        } finally {
+            killControl?.cancel();
+            boundedTerminalCompletion?.cancel();
         }
 
         // Remove the CSI after the runner terminal promise resolves as well as

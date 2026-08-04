@@ -36,7 +36,7 @@
     "minimist": "^1.2.6",
     "nano": "^10.1.4",
     "node-localstorage": "^3.0.5",
-    "pico-s3": "^2.6.0",
+    "pico-s3": "^2.11.0",
     "rereadable-stream": "^1.4.14",
     "scramjet": "^4.37.0",
     "selfsigned": "^5.5.0",

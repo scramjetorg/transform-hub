@@ -121,8 +121,8 @@ jobs:
 
       - name: Install pinned npm
         run: |
-          npm install --global --ignore-scripts npm@11.6.2
-          test "$(npm --version)" = "11.6.2"
+          npm install --global --ignore-scripts npm@11.19.0
+          test "$(npm --version)" = "11.19.0"
 
       - id: trusted_manifest
         name: Release PR / verify trusted prerelease manifest

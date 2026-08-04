@@ -399,12 +399,14 @@ function buildAvaArgs(cliArgs) {
 
 	args.push(avaCli);
 
-	// Worker-thread mode: SCRAMJET_AVA_NO_WORKER_THREADS forces child-process
-	// workers (worker threads reserve ~605 MiB of address space each, which
-	// OOMs under the repository's tight ulimit cap).  An explicit
-	// --worker-threads / --no-worker-threads CLI flag always wins over the
-	// environment.
-	if (noWorkerThreadsEnabled() && !cliArgs.some((a) => a === "--worker-threads" || a === "--no-worker-threads")) {
+	// Worker-thread mode: child-process workers are forced whenever
+	// SCRAMJET_AVA_NO_WORKER_THREADS is enabled OR memory guard mode is
+	// active.  Worker threads reserve ~605 MiB of address space each and OOM
+	// under the repository's tight ulimit cap (including the memory-guard
+	// commands, where deterministic serial measurement also wants child
+	// processes).  An explicit --worker-threads / --no-worker-threads CLI flag
+	// always wins over the environment.
+	if ((noWorkerThreadsEnabled() || isMemoryGuardEnabled()) && !cliArgs.some((a) => a === "--worker-threads" || a === "--no-worker-threads")) {
 		args.push("--no-worker-threads");
 	}
 

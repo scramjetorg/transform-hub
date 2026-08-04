@@ -28,16 +28,18 @@
 - Runtime wrapper packages (`runner-node`, `runner-python`) are protocol references for child process execution.
 
 ## Testing and generated files
-- Most package tests use AVA with `ts-node/register` and match `**/*.spec.ts`.
+- Package tests use AVA 8 and match `**/*.spec.ts`. AVA 8 imports test files as ESM, so `scripts/run-ava.js` stages TypeScript packages before the run: it copies the package into the `ava.typescript.rewritePaths` output directory (`.ava-<package>/`), compiles it with `typescript/bin/tsc`, symlinks sibling packages, rewrites escaping relative imports, and removes the staged tree after the run. Packages opt into this staging with `ava.typescript.compile: false` (all `packages/*` declare it).
 - Run supported repo/package test commands with their default environment. Prefer a supported runner over raw test-process invocation.
 - AVA package tests run through `scripts/run-ava.js` — the **sole supported** AVA/package-test entrypoint. All package `test`/`test:ava` scripts route through it. Default profile: `--max-old-space-size=2048`, JIT with WASM caps (8192 pages, 256 MB committed code/code space), `TS_NODE_TRANSPILE_ONLY=1`, concurrency 2, runner timeout 600000 ms. `SCRAMJET_TEST_PROFILE=fast` uses 16 AVA workers and an 8 MiB concurrent-mode budget; `SCRAMJET_TEST_PROFILE=phase-final` enables the unchanged strict 524288-byte guard and serial execution. Fast mode never enables concurrent GC measurements; an explicitly enabled guard remains serial. Opt in to jitless with `SCRAMJET_AVA_JITLESS=1`, or ts-node typechecking with `TS_NODE_TRANSPILE_ONLY=0`; package source TypeScript builds remain the correctness gate. Other overrides:
   - `SCRAMJET_AVA_FETCH=0` — adds `--no-experimental-fetch`
   - `SCRAMJET_AVA_WORKERS` — AVA concurrency (default 2)
+  - `SCRAMJET_AVA_NO_WORKER_THREADS` — set to a non-disabled value to force AVA `--no-worker-threads` (child-process workers instead of worker threads, which reserve ~605 MiB address space each and OOM under the documented ulimit cap); memory guard mode forces it too; an explicit `--worker-threads`/`--no-worker-threads` CLI flag always wins
   - `SCRAMJET_AVA_TIMEOUT` — runner-level timeout ms (default 600000)
   - `SCRAMJET_AVA_MAX_OLD_SPACE_SIZE` — override heap limit (default 2048)
   - `SCRAMJET_AVA_GUARD=1` — opt-in bypass guard (warns on direct `npx ava` without runner; only protects runner-spawned/preloaded processes)
 - Profile aliases: `npm run test:packages:fast` and `npm run test:packages:phase-final`; the latter is the package-level proof path and does not raise timeouts or thresholds.
 - Runner regression tests: `npm run test:runner` (scripts/test/*.spec.js).
+- AVA worker leak diagnostics are always on: the runner injects `scripts/lib/ava-leak-diagnostics.cjs` via `--require` into every AVA child (worker-thread and child-process workers alike). It snapshots active resources/handles when the worker starts and, after the first `free-worker` message, reports `[run-ava.js] AVA worker leak after tests completed ...` and exits 1 when a test leaves event-loop resources (e.g. servers) behind; clean workers exit normally. End-to-end coverage lives in `scripts/test/ava-typescript-staging.spec.js`.
 - BDD tests use `scripts/run-bdd.js` (supported entrypoint) or `scripts/run-bdd-docker.js` (internal). The **supported** BDD path under host memory constraints is `--mode=docker` (default), which runs Cucumber inside a Docker container with memory 1536m, CPUs 2, timeout 600000 ms, grace 10000 ms. Direct mode (`--mode=direct`) is for diagnostic/local runs only — under strict host ulimit, step definitions may fail from ssh2/poly1305 WASM allocation.
 - BDD root npm scripts (`test:bdd*`, `test:bdd-ci*`) route through the supported runner.
 - Leak detection: `reportLeakedProcesses()` runs at exit for BDD runner paths, reporting leftover STH/Host/runner/Manager/MultiManager/cucumber processes. Cleanup is current-run scoped.
@@ -54,8 +56,10 @@ after forced GC and fails when growth exceeds a configurable threshold.
 ### AVA memory guard
 
 Enable via `SCRAMJET_AVA_MEMORY_GUARD=1` or the common fallback `SCRAMJET_MEMORY_GUARD=1`.
-The runner (`scripts/run-ava.js`) injects `--expose-gc` and forces serial execution when
-guard mode is enabled.
+The runner (`scripts/run-ava.js`) injects `--expose-gc`, forces serial execution
+(`--serial --concurrency 1`), and runs AVA with `--no-worker-threads` (child-process
+workers) when guard mode is enabled — AVA 8 worker-thread isolates reserve too much
+address space under the documented `ulimit -v` cap.
 
 **Commands:**
 ```bash

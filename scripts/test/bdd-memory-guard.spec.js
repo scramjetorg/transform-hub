@@ -18,7 +18,9 @@ const {
     bddMemoryHeapThresholdBytes,
     ensureGlobalGc,
     checkBddMemorySkip,
+    memoryUsageTotal,
     formatComponentBreakdown,
+    formatComponentSnapshot,
     buildBddMemoryDiagnostics,
     ENV,
 } = require("../lib/bdd-memory-guard.js");
@@ -187,6 +189,30 @@ test("formatComponentBreakdown handles zero/missing values", (t) => {
 });
 
 // ---------------------------------------------------------------------------
+// memoryUsageTotal / formatComponentSnapshot – post-GC snapshot helpers
+// ---------------------------------------------------------------------------
+
+test("memoryUsageTotal computes the enforced metric from a raw snapshot", (t) => {
+    t.is(memoryUsageTotal({ heapUsed: 100, external: 20, arrayBuffers: 5 }), 125);
+    t.is(memoryUsageTotal({ heapUsed: 0 }), 0);
+    t.is(memoryUsageTotal(undefined), 0);
+});
+
+test("formatComponentSnapshot renders one line per component", (t) => {
+    const out = formatComponentSnapshot({ heapUsed: 10, external: 20, arrayBuffers: 30 });
+
+    t.is(out, "  heapUsed: 10\n  external: 20\n  arrayBuffers: 30");
+});
+
+test("formatComponentSnapshot handles missing components", (t) => {
+    const out = formatComponentSnapshot({ heapUsed: 7 });
+
+    t.true(out.includes("  heapUsed: 7"));
+    t.true(out.includes("  external: 0"));
+    t.true(out.includes("  arrayBuffers: 0"));
+});
+
+// ---------------------------------------------------------------------------
 // buildBddMemoryDiagnostics
 // ---------------------------------------------------------------------------
 
@@ -223,6 +249,58 @@ test("buildBddMemoryDiagnostics includes component breakdown when provided", (t)
     t.true(msg.includes("heapUsed"), "should include heapUsed breakdown");
     t.true(msg.includes("external"), "should include external breakdown");
     t.true(msg.includes("arrayBuffers"), "should include arrayBuffers breakdown");
+});
+
+test("buildBddMemoryDiagnostics distinguishes retained vs reclaimed post-GC state", (t) => {
+    const msg = buildBddMemoryDiagnostics({
+        scenarioName: "retained-vs-reclaimed",
+        baseline: 2000,
+        final: 4000,
+        delta: 2000,
+        threshold: 1024,
+        sourceLabel: "env default",
+        // Post-GC baseline components (captured after the Before-hook GC).
+        baselineUsage: { heapUsed: 1500, external: 300, arrayBuffers: 200 },
+        // Pre-final-GC components (captured before the After-hook GC).
+        afterUsage: { heapUsed: 6000, external: 800, arrayBuffers: 400 },
+        // Post-GC enforced components (captured after the final GC).
+        postGcUsage: { heapUsed: 3200, external: 500, arrayBuffers: 300 },
+        // 7200 (pre-GC total) - 4000 (post-GC total) = 3200 reclaimed.
+        reclaimedBytes: 3200,
+    });
+
+    t.true(msg.includes("baseline post-GC components"), "should label baseline post-GC components");
+    t.true(msg.includes("  heapUsed: 1500"), "should report baseline post-GC heapUsed");
+    t.true(msg.includes("pre-final-GC components"), "should label pre-final-GC components");
+    t.true(msg.includes("  heapUsed: 6000"), "should report pre-final-GC heapUsed");
+    t.true(msg.includes("final GC reclaimed: 3200 bytes"), "should report bytes reclaimed by final GC");
+    t.true(msg.includes("post-GC enforced components"), "should label post-GC enforced components");
+    t.true(msg.includes("  heapUsed: 3200"), "should report post-GC enforced heapUsed");
+    t.true(msg.includes("  external: 500"), "should report post-GC enforced external");
+    t.true(msg.includes("  arrayBuffers: 300"), "should report post-GC enforced arrayBuffers");
+    // Enforced metric unchanged.
+    t.true(msg.includes("used 2000 bytes"), "should keep the enforced delta");
+    t.true(msg.includes("before (total): 2000"), "should keep the baseline total");
+    t.true(msg.includes("after (total): 4000"), "should keep the final total");
+    // Post-GC snapshots replace the legacy pre-GC delta breakdown.
+    t.false(msg.includes("\u0394"), "should not mix legacy delta breakdown with post-GC snapshots");
+});
+
+test("buildBddMemoryDiagnostics reports RSS as diagnostic only", (t) => {
+    const msg = buildBddMemoryDiagnostics({
+        scenarioName: "rss-diag",
+        baseline: 1000,
+        final: 3000,
+        delta: 2000,
+        threshold: 1024,
+        sourceLabel: "env default",
+        baselineUsage: { heapUsed: 800, external: 100, arrayBuffers: 100 },
+        postGcUsage: { heapUsed: 2400, external: 400, arrayBuffers: 200 },
+        rssBaseline: 10_000_000,
+        rssFinal: 12_000_000,
+    });
+
+    t.true(msg.includes("rss (diagnostic): 10000000 -> 12000000"), "should label RSS as diagnostic only");
 });
 
 test("buildBddMemoryDiagnostics includes cleanup errors when provided", (t) => {

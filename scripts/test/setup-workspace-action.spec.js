@@ -260,8 +260,8 @@ test("setup helper installs and verifies the pinned npm version", (t) => {
 
 	const run = stepRun(installNpm);
 	t.truthy(run, "npm installation step must have a run script");
-	t.true(run.includes("npm install --global --ignore-scripts npm@11.6.2"));
-	t.true(run.includes('test "$(npm --version)" = "11.6.2"'));
+	t.true(run.includes("npm install --global --ignore-scripts npm@11.19.0"));
+	t.true(run.includes('test "$(npm --version)" = "11.19.0"'));
 });
 
 test("install step runs npm ci", (t) => {
