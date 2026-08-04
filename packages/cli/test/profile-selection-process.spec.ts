@@ -6,6 +6,7 @@ import fs from "fs";
 import http from "http";
 import os from "os";
 import path from "path";
+import { sessionConfigFile } from "../src/lib/paths";
 const CLI_TIMEOUT_MS = 15000;
 const KILL_GRACE_MS = 1000;
 type CliResult = { code: number | null; output: string };
@@ -203,4 +204,108 @@ test.serial("legacy HTTP/v1 profile remains successful without a native broker",
     fs.writeFileSync(path.join(profiles, "default.json"), JSON.stringify({ configVersion: 1, apiUrl: `http://127.0.0.1:${port}/api/v1`, middlewareApiUrl: "", env: "development", scope: "", token: "", log: { debug: false, format: "pretty" } }));
     const result = await invoke(t, home, ["hub", "version"]);
     t.is(result.code, 0, result.output); t.is(requests, 1);
+});
+
+/**
+ * Builds a Node preload fixture that deterministically reproduces the former
+ * direct-write session-config persistence. The generic ConfigFile hook writes
+ * to the target path, which truncates the file before the new content lands;
+ * the fixture leaves a partial file, signals the test, and blocks until the
+ * test confirms a concurrent CLI has had a chance to observe the truncation
+ * window. Atomic persistence never writes to the target path directly (it
+ * writes a unique temporary file and renames it into place), so this pause is
+ * never triggered by the fixed implementation.
+ */
+function writePauseFixture(directory: string) {
+    const target = path.join(directory, "session-write-pause.js");
+    fs.writeFileSync(target, `
+const fs = require("fs");
+const realWriteFileSync = fs.writeFileSync;
+fs.writeFileSync = function (target, data, ...rest) {
+    if (
+        typeof target === "string" &&
+        target.endsWith("session-config.json") &&
+        process.env.SI_TRUNCATE_SIGNAL &&
+        process.env.SI_TRUNCATE_RESUME
+    ) {
+        const text = String(data);
+        realWriteFileSync.call(fs, target, text.slice(0, Math.max(1, Math.floor(text.length / 2))));
+        fs.writeFileSync(process.env.SI_TRUNCATE_SIGNAL, "partial");
+        const deadline = Date.now() + 60000;
+        while (!fs.existsSync(process.env.SI_TRUNCATE_RESUME) && Date.now() < deadline) {
+            Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 25);
+        }
+        realWriteFileSync.call(fs, target, data, ...rest);
+        return;
+    }
+    return realWriteFileSync.apply(this, arguments);
+};`);
+    return target;
+}
+
+test.serial("session-config persistence is atomic: a concurrent CLI never observes the direct-write truncation window", async t => {
+    t.timeout(60000, "Process fixtures may legitimately spend ~16 seconds launching serial ts-node CLI children.");
+    allowAvaMemoryGrowth(t, { threshold: 1048576, reason: "Child-process fixture module compilation retains process-launch metadata in the AVA parent." });
+    const directory = fs.mkdtempSync(path.join(os.tmpdir(), "si-session-atomic-"));
+    registerAvaMemoryCleanup(t, () => fs.rmSync(directory, { recursive: true, force: true }));
+    const home = path.join(directory, "home");
+    fs.mkdirSync(home, { recursive: true });
+    const fixture = writePauseFixture(directory);
+    const signal = path.join(directory, "truncate-signal");
+    const resume = path.join(directory, "truncate-resume");
+
+    // Every CLI process in the same shell session shares this file (keyed by the
+    // Linux session ID under the OS temp directory); a reader starting in the
+    // middle of a direct write would observe a truncated document and fail to
+    // parse it. The teardown always releases a paused writer and guarantees the
+    // shared file is valid JSON for the serial tests that follow.
+    t.teardown(() => {
+        if (fs.existsSync(signal)) fs.writeFileSync(resume, "resume");
+        try {
+            JSON.parse(fs.readFileSync(sessionConfigFile, "utf8"));
+        } catch {
+            fs.writeFileSync(sessionConfigFile, JSON.stringify({ lastPackagePath: "", lastInstanceId: "", lastSequenceId: "", lastSpaceId: "", lastHubId: "", sessionId: "" }, null, 2));
+        }
+    });
+
+    const writer = spawnCli(t, home, ["completion"], { NODE_OPTIONS: `-r ${fixture}`, SI_TRUNCATE_SIGNAL: signal, SI_TRUNCATE_RESUME: resume }, "", 60000);
+
+    // AVA runs teardowns in reverse registration order, so this releases a
+    // paused writer before its spawn teardown can terminate it (terminating a
+    // child blocked in the fixture would leave the teardown promise pending and
+    // hang the test).
+    t.teardown(() => { if (fs.existsSync(signal)) fs.writeFileSync(resume, "resume"); });
+
+    // Wait until the writer either reports a direct target-path write (former
+    // behavior) or completes without ever touching the target path directly
+    // (atomic behavior).
+    const observedTruncation = await new Promise<boolean>((resolve) => {
+        let settled = false;
+        let poll: NodeJS.Timeout;
+        let guard: NodeJS.Timeout;
+        const finish = (observed: boolean) => { if (!settled) { settled = true; clearInterval(poll); clearTimeout(guard); resolve(observed); } };
+        poll = setInterval(() => { if (fs.existsSync(signal)) finish(true); }, 10);
+        guard = setTimeout(() => finish(false), 55000);
+        void writer.result.then(() => finish(false)).catch(() => finish(false));
+    });
+
+    if (observedTruncation) {
+        // The writer is paused with a partial file on disk — the exact window a
+        // concurrent CLI would observe with the former direct writes. A reader
+        // starting now must still boot cleanly; with atomic persistence this
+        // branch is unreachable, with direct writes the reader fails to parse.
+        // The writer is released before the assertions so a failing assertion
+        // never leaves it paused for the teardown to terminate.
+        const reader = await invoke(t, home, ["completion"]);
+        fs.writeFileSync(resume, "resume");
+        const writerResult = await writer.result;
+        t.is(reader.code, 0, reader.output);
+        t.is(writerResult.code, 0, writerResult.output);
+    } else {
+        const writerResult = await writer.result;
+        t.is(writerResult.code, 0, writerResult.output);
+        t.false(fs.existsSync(signal), "a direct write to the session-config path was observed");
+        const reader = await invoke(t, home, ["completion"]);
+        t.is(reader.code, 0, reader.output);
+    }
 });
