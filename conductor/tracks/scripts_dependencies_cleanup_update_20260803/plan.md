@@ -211,12 +211,14 @@
     - Added an AVA smoke using a uniquely labeled local `node:22-alpine` container. It statically skips only when Docker CLI/daemon access or that image is unavailable; unexpected daemon/API failures fail, and `finally` force-removes a created container while allowing only 404 cleanup.
   - [x] Update Dockerode/UUID declarations and lockfile only after focused compatibility coverage is in place; run adapter-Docker tests/build and supported Docker BDD validation.
     - Dockerode now resolves to 5.0.1 for adapter-Docker and BDD, with `@types/dockerode` 4.0.1 retained because Dockerode 5 has no bundled declarations. UUID now resolves to 11.1.1, the newest release with a CommonJS `require` export; its bundled declarations replace `@types/uuid`. Focused adapter-Docker (6), Model (6), and Load-check (4) AVA tests, affected no-emit TypeScript checks, adapter/Model/Load-check builds, and BDD build passed. The daemon smoke passed its full lifecycle. `npm run test:bdd-ci-hub-docker` passed under its unchanged Docker runner caps (1536m, 2 CPUs, 600s, 10s grace) but selected zero current scenarios because all matching Docker scenarios are tagged `@slow`; no test controls were relaxed.
-- [ ] Task: Migrate Manager S3 storage from MinIO 7 to 8 with local endpoint evidence.
-  - [ ] Add a lightweight, short-lived MinIO Docker-container test harness with fixed local credentials, health wait, temporary data, deterministic bucket setup, and container/data cleanup.
-  - [ ] Cover Manager storage upload/download/list/delete plus Host S3 streaming against that local endpoint; avoid LocalStack and external cloud dependencies.
-  - [ ] Update MinIO and its lockfile chain only after the local endpoint coverage passes; run Manager/Host tests, builds, and the targeted Docker BDD path.
-- [ ] Task: Record a future nyc-to-c8 migration handoff without changing coverage tooling in this track.
-  - [ ] Create a current-track handoff note covering c8 as the preferred native-V8 coverage candidate, required AVA/CI/reporting/threshold migration work, and validation criteria for a future new-track command.
+- [x] Task: Migrate Manager S3 storage from MinIO 7 to 8 with local endpoint evidence.
+  - [x] Add a lightweight, short-lived MinIO Docker-container test harness with fixed local credentials, health wait, temporary data, deterministic bucket setup, and container/data cleanup.
+  - [x] Cover Manager storage upload/download/list/delete plus Host S3 streaming against that local endpoint; avoid LocalStack and external cloud dependencies.
+  - [x] Update MinIO and its lockfile chain only after the local endpoint coverage passes; run Manager/Host tests, builds, and the targeted Docker BDD path.
+    - MinIO 8.0.7 uses its promise upload API. The local Docker harness health-checks MinIO, creates a unique bucket, and removes bucket contents/container in cleanup. Supported focused Manager and Host AVA MinIO tests passed against it; Host build passed. Manager's normal pre-test typecheck remains blocked by pre-existing api-router `Error.cause` and manager-router-logging typing failures, so the focused test used its established transpile-only AVA runner. No S3/MinIO BDD scenario exists to target.
+- [x] Task: Record a future nyc-to-c8 migration handoff without changing coverage tooling in this track.
+  - [x] Create a current-track handoff note covering c8 as the preferred native-V8 coverage candidate, required AVA/CI/reporting/threshold migration work, and validation criteria for a future new-track command.
+    - See `handoff-nyc-to-c8.md`; no coverage tooling changed.
 - [ ] Task: Review and checkpoint the CI leak and major migration work.
   - [ ] Request formal review of the resource cleanup, major migrations, local S3 coverage, and validation evidence.
   - [ ] Commit, push, update PR #1080, and record the CI disposition.

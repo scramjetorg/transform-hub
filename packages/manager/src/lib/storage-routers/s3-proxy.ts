@@ -5,7 +5,7 @@ import { APIRoute, ParsedMessage } from "@scramjet/api-types";
 import { ISequenceAdapter } from "@scramjet/runtime-types";
 import { STHConfiguration } from "@scramjet/api-types";
 import { ReasonPhrases } from "http-status-codes";
-import { Client as MinioClient, UploadedObjectInfo } from "minio";
+import { Client as MinioClient } from "minio";
 import { DataStream, StringStream } from "scramjet";
 import { augment } from "@scramjet/adapter-process";
 import { ServerResponse } from "http";
@@ -231,33 +231,37 @@ export class S3Proxy {
                 };
             }
 
-            return await new Promise<{ opStatus: ReasonPhrases, msg?: any }>((resolve, reject) => {
-                this.s3Client.putObject(this.bucket, `${this.id}/${filename}`, packageStream.rewind(), 0, { id: seqConfig.id }, async (error: any, res: UploadedObjectInfo) => {
-                    const msg = JSON.stringify(error ? { error: error.code } : res);
+            try {
+                const result = await this.s3Client.putObject(
+                    this.bucket,
+                    `${this.id}/${filename}`,
+                    packageStream.rewind(),
+                    undefined,
+                    { id: seqConfig.id }
+                );
 
-                    this.logger.info("Ext S3 response", error || res);
+                this.logger.info("Ext S3 response", result);
 
-                    if (error) {
-                        reject({ opStatus: ReasonPhrases.FAILED_DEPENDENCY, msg });
-                    }
+                try {
+                    await this.addSequenceToIndex({ ...seqConfig, _filename: filename, _fileId: fileId });
+                } catch (err: any) {
+                    this.logger.error("Index update failed", err.message);
+                }
 
-                    try {
-                        await this.addSequenceToIndex({ ...seqConfig, _filename: filename, _fileId: fileId });
-                    } catch (err: any) {
-                        this.logger.error("Index update failed", err.message);
-                    }
-
-                    resolve({ opStatus: ReasonPhrases.ACCEPTED, ...res });
-                });
-            }).then(
-                (r) => ({
-                    ...r,
+                return {
+                    opStatus: ReasonPhrases.ACCEPTED,
+                    ...result,
                     ...seqConfig,
                     sequenceDir: undefined,
                     type: undefined
-                }),
-                r => r
-            );
+                };
+            } catch (error: any) {
+                const msg = JSON.stringify({ error: error.code });
+
+                this.logger.info("Ext S3 response", error);
+
+                return { opStatus: ReasonPhrases.FAILED_DEPENDENCY, msg };
+            }
         }, { method: "put" });
 
         this.router.get(`${this.base}`, () => this.index.sequences);
