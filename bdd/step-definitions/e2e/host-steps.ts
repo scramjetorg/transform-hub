@@ -11,6 +11,7 @@ import {
     deleteDirectory,
 } from "../../lib/utils";
 import fs, { createReadStream, existsSync, ReadStream } from "fs";
+import { writeFile, unlink } from "fs/promises";
 import path from "path";
 import { randomUUID } from "crypto";
 import { HostClient, InstanceOutputStream } from "@scramjet/api-client";
@@ -226,6 +227,8 @@ BeforeAll({ timeout: 20e3 }, async () => {
     let apiUrl = process.env.SCRAMJET_HOST_BASE_URL;
     let apiReservation: any;
     let instancesReservation: any;
+    let controlIngressReservation: any;
+    let dynamicVerser2ConfigPath: string | undefined;
 
     if (!apiUrl) {
         apiReservation = await allocateOwnedPort(ownership);
@@ -283,12 +286,35 @@ BeforeAll({ timeout: 20e3 }, async () => {
     process.env[runnerHostPublicUrlEnv] = `https://127.0.0.1:${runnerHostPort}`;
 
     try {
-        await hostUtils.spawnHost([]);
+        // Parallel Docker BDD chunks share the host network namespace. Every
+        // suite Hub enables its verser2 control ingress, whose default listener
+        // is 127.0.0.1:2444 — a concurrently scheduled chunk would race for
+        // that same endpoint and exit with EADDRINUSE before readiness. Give
+        // this chunk's suite Hub an owner-scoped control-ingress port and
+        // forward it through the same temporary verser2 config file that the
+        // child process loads (same pattern as the hub step definitions).
+        controlIngressReservation = await allocateOwnedPort(ownership);
+        const controlIngressPort = controlIngressReservation.port;
+        dynamicVerser2ConfigPath = `data/.hub-verser2-${process.pid}-${Date.now()}.json`;
+        await writeFile(dynamicVerser2ConfigPath, JSON.stringify({
+            verser2: {
+                controlIngress: {
+                    host: {
+                        bindPort: controlIngressPort,
+                        publicUrl: `https://127.0.0.1:${controlIngressPort}`
+                    }
+                }
+            }
+        }));
+
+        await hostUtils.spawnHost([], "--config", dynamicVerser2ConfigPath);
         await retryLoadCheck(
             (signal) => hostClient.getLoadCheck({ signal }),
             "Shared HostClient transport did not become ready before the scenario baseline"
         );
     } finally {
+        if (dynamicVerser2ConfigPath) await unlink(dynamicVerser2ConfigPath).catch(() => undefined);
+        await controlIngressReservation?.release();
         await runnerHostReservation.release();
         await apiReservation?.release();
         await instancesReservation?.release();
@@ -419,6 +445,8 @@ const startHost = async () => {
     let apiUrl = process.env.SCRAMJET_HOST_BASE_URL;
     let apiReservation: any;
     let instancesReservation: any;
+    let controlIngressReservation: any;
+    let dynamicVerser2ConfigPath: string | undefined;
 
     if (!apiUrl) {
         apiReservation = await allocateOwnedPort(ownership);
@@ -454,7 +482,25 @@ const startHost = async () => {
         });
     }
     try {
-        await hostUtils.spawnHost([]);
+        // Same port isolation as the suite Host: a scenario-spawned Hub must
+        // not bind the default control-ingress listener 127.0.0.1:2444 while
+        // other chunks' suite Hubs are running. Own a chunk-scoped port and
+        // hand it to the child through a temporary verser2 config file.
+        controlIngressReservation = await allocateOwnedPort(ownership);
+        const controlIngressPort = controlIngressReservation.port;
+        dynamicVerser2ConfigPath = `data/.hub-verser2-${process.pid}-${Date.now()}.json`;
+        await writeFile(dynamicVerser2ConfigPath, JSON.stringify({
+            verser2: {
+                controlIngress: {
+                    host: {
+                        bindPort: controlIngressPort,
+                        publicUrl: `https://127.0.0.1:${controlIngressPort}`
+                    }
+                }
+            }
+        }));
+
+        await hostUtils.spawnHost([], "--config", dynamicVerser2ConfigPath);
         // Do not release the owned API port until the HTTP server is
         // observable.  spawnHost's process marker can precede socket bind,
         // which otherwise lets the next step race into ECONNREFUSED.
@@ -463,6 +509,8 @@ const startHost = async () => {
             "Started host did not become ready"
         );
     } finally {
+        if (dynamicVerser2ConfigPath) await unlink(dynamicVerser2ConfigPath).catch(() => undefined);
+        await controlIngressReservation?.release();
         await apiReservation?.release();
         await instancesReservation?.release();
     }

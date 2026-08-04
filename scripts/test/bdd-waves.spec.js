@@ -130,6 +130,37 @@ test("resource-owning chunks remain explicitly exclusive", t => {
     t.true(runner.EXCLUSIVE_CHUNKS.every(name => runner.CHUNKS[name]));
 });
 
+test("concurrent Host-owning chunks receive distinct control ingress endpoints", async t => {
+    // Every default chunk that is not an exclusive scheduler barrier spawns a
+    // suite Hub (host-steps BeforeAll) that enables its verser2 control
+    // ingress. Parallel Docker chunks share the host network namespace, so
+    // each of those Hubs must own a distinct control-ingress endpoint instead
+    // of binding the default 127.0.0.1:2444. Mirror the step-definition
+    // allocation (allocateOwnedPort per chunk ownership) and assert the
+    // resulting endpoints are pairwise distinct and never the default port.
+    const { createOwnership, allocateOwnedPort } = require("../../bdd/lib/ownership.js");
+    const hostOwningChunks = runner.DEFAULT_CHUNKS.filter((name) => !runner.EXCLUSIVE_CHUNKS.includes(name));
+    t.true(hostOwningChunks.length >= 2, "parallel scheduling must admit at least two Host-owning chunks concurrently");
+
+    const artifactRoot = fs.mkdtempSync(path.join(os.tmpdir(), "bdd-control-ingress-"));
+    const reservations = [];
+    try {
+        for (const name of hostOwningChunks) {
+            const ownership = createOwnership(process.env, { runId: "control-ingress-regression", chunkId: name, artifactRoot });
+            reservations.push({ name, reservation: await allocateOwnedPort(ownership) });
+        }
+        const ports = reservations.map(({ reservation }) => reservation.port);
+        t.is(new Set(ports).size, ports.length,
+            `concurrent Host-owning chunks must receive distinct control ingress ports, got ${ports.join(", ")}`);
+        for (const { name, reservation } of reservations) {
+            t.not(reservation.port, 2444, `chunk "${name}" must not bind the default control ingress port 2444`);
+        }
+    } finally {
+        for (const { reservation } of reservations) await reservation.release();
+        fs.rmSync(artifactRoot, { recursive: true, force: true });
+    }
+});
+
 // ---------------------------------------------------------------------------
 // parseArgs
 // ---------------------------------------------------------------------------

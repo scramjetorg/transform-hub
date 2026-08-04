@@ -36,7 +36,7 @@ const CHUNKS = Object.freeze({
     "cli-matrix": Object.freeze(["features/e2e/E2E-010-cli.feature"]),
     "topics-api": Object.freeze(["features/e2e/E2E-013-topic.feature"]),
     python: Object.freeze(["features/e2e/E2E-014-python.feature", "features/e2e/E2E-015-unified.feature"]),
-    appcontext: Object.freeze(["features/appcontext/APPCONTEXT-001-full-sequence.feature"]),
+    appcontext: Object.freeze(["features/appcontext/APPCONTEXT-001-full-sequence.feature", "features/appcontext/APPCONTEXT-002-hosted-runtimes.feature"]),
     "node-spawn-core": Object.freeze(["features/e2e/E2E-017a-node-spawn-core.feature"]),
     "node-streaming-stop": Object.freeze(["features/e2e/E2E-017b-node-streaming-stop.feature"]),
     "hub-configuration": Object.freeze(["features/hub/HUB-001-host-config.feature", "features/e2e/E2E-008-host-api.feature"]),
