@@ -548,6 +548,15 @@ test("run-bdd-docker.js samples quickly when chunk policy is active", (t) => {
 	t.true(src.includes("BDD_CHUNK_MEMORY_REPORT_FILE=/work-tmp/chunk-memory.json"));
 });
 
+test("run-bdd-docker.js keeps the Node compile cache outside BDD artifacts", t => {
+	const src = require("node:fs").readFileSync(
+		path.resolve(__dirname, "..", "run-bdd-docker.js"),
+		"utf8"
+	);
+	t.true(src.includes('const BDD_NODE_COMPILE_CACHE_DIR = "/tmp/node-compile-cache"'));
+	t.true(src.includes("`NODE_COMPILE_CACHE=${BDD_NODE_COMPILE_CACHE_DIR}`"));
+});
+
 test("run-bdd-docker.js mounts separate timing report and suppresses memory summary in timing-only mode", t => {
 	const src = require("node:fs").readFileSync(
 		path.resolve(__dirname, "..", "run-bdd-docker.js"),

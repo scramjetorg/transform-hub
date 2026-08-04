@@ -38,6 +38,8 @@ const { createForensicRecorder, parseWaitResult } = require("./lib/bdd-docker-fo
 const { createOwnership, ownershipEnv, encodePart } = require("../bdd/lib/ownership.js");
 
 const DEFAULT_BDD_NODE_IMAGE = "transform-hub-bdd-bun:dev";
+// Node 22's compile cache otherwise follows TMPDIR, which is the mounted BDD artifact root.
+const BDD_NODE_COMPILE_CACHE_DIR = "/tmp/node-compile-cache";
 const BDD_NODE_IMAGE = process.env.BDD_NODE_IMAGE || DEFAULT_BDD_NODE_IMAGE;
 const BDD_DOCKER_MEMORY = memoryLimit();
 const BDD_DOCKER_CPUS = cpuLimit();
@@ -170,6 +172,8 @@ dockerRunArgs.push(
     "HOME=/work-tmp",
     "-e",
     "TMPDIR=/work-tmp",
+    "-e",
+    `NODE_COMPILE_CACHE=${BDD_NODE_COMPILE_CACHE_DIR}`,
     "-e",
     "COREPACK_ENABLE_DOWNLOAD_PROMPT=0"
 );

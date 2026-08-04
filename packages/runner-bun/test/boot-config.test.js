@@ -189,12 +189,11 @@ describe("runner-bun boot config", () => {
         }
     });
 
-    test("package build docker guard targets runner-bun", () => {
+    test("package build docker stages the outer runner contract", () => {
         const packageJsonPath = resolve(import.meta.dir, "../package.json");
         const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8"));
 
         expect(packageJson.scripts.build).toContain("-d .");
-        expect(packageJson.scripts["prebuild:docker"]).toContain("packages/runner-bun");
-        expect(packageJson.scripts["prebuild:docker"]).not.toContain("-d packages/runner ");
+        expect(packageJson.scripts["prebuild:docker"]).toContain("-d packages/runner");
     });
 });

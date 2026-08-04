@@ -142,7 +142,7 @@ class PrePack {
     }
 
     async install(extraParams = "", verbose = false) {
-        return runCommand(`cd ${this.rootDistPackPath} && npx -y npm@8 install${extraParams}`, verbose);
+        return runCommand(`cd ${this.rootDistPackPath} && npx npm install${extraParams}`, verbose);
     }
 
     async isReadable(file) {

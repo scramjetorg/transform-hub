@@ -5,7 +5,7 @@
   "main": "./src/bin/start-runner.ts",
   "scripts": {
     "build": "../../scripts/build-all.js --config-name=tsconfig.build.json --copy-dist",
-    "prebuild:docker": "cd ../.. && scripts/build-all.js --no-install --link-packages -d packages/runner -o ./dist/docker-runner/ --ts-config tsconfig.build.json && cp -r packages/runner-python dist/docker-runner/runner-python",
+    "prebuild:docker": "if [ \"${SCRAMJET_DOCKER_RUNNER_STAGED:-}\" != \"1\" ]; then cd ../.. && scripts/build-all.js --no-install --link-packages -d packages/runner -o ./dist/docker-runner/ --ts-config tsconfig.build.json && cp -r packages/runner-python dist/docker-runner/runner-python; fi",
     "build:docker": "docker build -t scramjetorg/runner:$(git rev-parse HEAD) -t scramjetorg/runner:dev -f Dockerfile ../../",
     "preexport:docker": "mkdir -p ../../dist/docker && rm -rf ../../dist/docker/scramjetorg-runner.tar.gz",
     "export:docker": "npm run build:docker && docker save scramjetorg/runner:$(git rev-parse HEAD) | gzip > ../../dist/docker/scramjetorg-runner.tar.gz",

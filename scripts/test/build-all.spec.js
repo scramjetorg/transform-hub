@@ -11,6 +11,8 @@ const { join, resolve } = require("node:path");
 const { spawnSync } = require("node:child_process");
 
 const buildAll = resolve(__dirname, "..", "build-all.js");
+const prePack = resolve(__dirname, "..", "lib", "pre-pack.js");
+const rootPackage = resolve(__dirname, "..", "..", "package.json");
 
 function createWorkspace(t) {
 	const root = mkdtempSync(join(tmpdir(), "transform-hub-build-all-"));
@@ -48,4 +50,23 @@ test("build-all limits dist workspace installation to release-boundary packages"
 	const distPackage = JSON.parse(readFileSync(join(root, "dist", "package.json"), "utf8"));
 	t.deepEqual(distPackage.workspaces, ["utility"]);
 	t.true(existsSync(join(root, "dist", "verser", "package.json")));
+});
+
+test("build scripts use the repository npm through unversioned npx", (t) => {
+	const buildAllSource = readFileSync(buildAll, "utf8");
+	const prePackSource = readFileSync(prePack, "utf8");
+
+	for (const source of [buildAllSource, prePackSource]) {
+		t.true(source.includes("npx npm install"));
+		t.false(source.includes("npx npm@"));
+	}
+});
+
+test("root build handoffs use the repository npm binary", (t) => {
+	const scripts = JSON.parse(readFileSync(rootPackage, "utf8")).scripts;
+
+	t.true(scripts.build.startsWith("./node_modules/.bin/npm run build:all"));
+	t.true(scripts["build:all"].includes("./node_modules/.bin/npm run build:packages"));
+	t.true(scripts["build:all"].includes("./node_modules/.bin/npm run build:docker"));
+	t.true(scripts["build:docker"].startsWith("./node_modules/.bin/npm run build:docker:stage-runner"));
 });

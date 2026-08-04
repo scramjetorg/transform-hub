@@ -69,6 +69,17 @@ test("packing removes stale archives and rejects changed output", async t => {
     t.throws(() => validateManifest(result.manifestPath), { message: /Archive changed after packing/ });
 });
 
+test("packing rejects a Node compile cache directory in archive output", async t => {
+    const context = workspace();
+    t.context = context;
+    fs.mkdirSync(path.join(context.output, "node-compile-cache"), { recursive: true });
+
+    await t.throwsAsync(
+        () => packFixtureSet({ fixturesDir: context.fixtures, outputDir: context.output, prefix: "bdd-", outputName: name => `${name.slice(4)}.tar.gz` }),
+        { message: "Unexpected archive output directory: node-compile-cache" }
+    );
+});
+
 test("manifest rejects source changes instead of resolving stale output", async t => {
     const context = workspace();
     t.context = context;

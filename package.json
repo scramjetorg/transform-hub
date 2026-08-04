@@ -8,12 +8,13 @@
     "scramjet-transform-hub": "dist/sth/bin/hub.js"
   },
   "scripts": {
-    "build": "npm run build:all",
-    "build:all": "npm run build:packages && npm run build:docker",
+    "build": "./node_modules/.bin/npm run build:all",
+    "build:all": "./node_modules/.bin/npm run build:packages && ./node_modules/.bin/npm run build:docker",
     "build:all-packages": "npm run build:packages",
     "prebuild:packages": "scripts/run-script.js -v -w packages build:only",
     "build:packages": "scripts/build-all.js -v -w packages --ts-config tsconfig.build.json && node scripts/check-runner-python-build-artifact.js",
-    "build:docker": "scripts/run-script.js -w packages build:docker",
+    "build:docker": "./node_modules/.bin/npm run build:docker:stage-runner && SCRAMJET_DOCKER_RUNNER_STAGED=1 scripts/run-script.js -w packages -j 1 build:docker",
+    "build:docker:stage-runner": "rm -rf ./dist/docker-runner && scripts/build-all.js --no-install --link-packages -d packages/runner -o ./dist/docker-runner/ --ts-config tsconfig.build.json && cp -r packages/runner-python ./dist/docker-runner/runner-python",
     "build:docker:runners": "scripts/run-script.js -w runners build:docker",
     "docs:clean": "node ./scripts/docs.js clean",
     "docs:generate": "node ./scripts/docs.js generate",

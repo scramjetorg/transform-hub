@@ -203,7 +203,7 @@ console.time(BUILD_NAME);
 
             const rootNpmrc = join(opts.root, ".npmrc");
             const npmUserconfig = existsSync(rootNpmrc) ? ` --userconfig ${JSON.stringify(rootNpmrc)}` : "";
-            const cmd = `cd ${JSON.stringify(outDir)} && pwd >&2 && npx npm@8 install -q -ws --no-audit${npmUserconfig}`;
+            const cmd = `cd ${JSON.stringify(outDir)} && pwd >&2 && npx npm install -q -ws --no-audit${npmUserconfig}`;
 
             await runCommand(cmd, opts.verbose);
         }
