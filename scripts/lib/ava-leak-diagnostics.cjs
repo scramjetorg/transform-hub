@@ -9,6 +9,7 @@ if (process.env.SCRAMJET_AVA_GUARD === "1") require("./ava-guard.cjs");
 const IGNORABLE_RESOURCE_TYPES = new Set(["MessagePort"]);
 const IGNORABLE_HANDLE_TYPES = new Set(["MessagePort"]);
 const AVA_RESOURCE_BASELINE = new Map([["Timeout", 1]]);
+const AVA_LEAK_GRACE_MS = Number(process.env.SCRAMJET_AVA_LEAK_GRACE_MS || 0);
 let testFile = workerData?.options?.file || "unknown test file";
 let channelResourceBaseline = new Map();
 let channelHandleBaseline = new Map();
@@ -74,6 +75,14 @@ function reportAndExitIfLeaked() {
 	process.stderr.write(message, () => process.exit(1));
 }
 
+function warnIfLeakedBeforeGrace() {
+	const { resources, handles } = findLeakedResources();
+
+	if (resources.length === 0 && handles.length === 0) return;
+
+	process.stderr.write(`[run-ava.js] WARNING: delaying AVA worker leak diagnostics by ${AVA_LEAK_GRACE_MS} ms.\n`);
+}
+
 function observeAvaWorkerChannel(channel) {
 	const onMessage = message => {
 		if (message?.ava?.type === "options" && message.ava.options?.file) {
@@ -92,8 +101,15 @@ function observeAvaWorkerChannel(channel) {
 
 		// AVA schedules its own final unhandled-rejection check after this
 		// acknowledgement. Let that immediate drain before classifying a
-		// resource as leaked, while still checking in the next event-loop turn.
-		setImmediate(() => setImmediate(reportAndExitIfLeaked));
+		// resource as leaked, then always allow the configured grace period.
+		setImmediate(() => setImmediate(() => {
+			if (AVA_LEAK_GRACE_MS > 0) {
+				warnIfLeakedBeforeGrace();
+				setTimeout(reportAndExitIfLeaked, AVA_LEAK_GRACE_MS);
+			} else {
+				reportAndExitIfLeaked();
+			}
+		}));
 	};
 	channel.on("message", onMessage);
 }

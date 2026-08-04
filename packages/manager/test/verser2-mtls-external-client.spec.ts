@@ -1,5 +1,5 @@
 import baseTest from "ava";
-const { createAvaMemoryGuard, registerAvaMemoryCleanup } = require("../../../scripts/lib/ava-memory-guard");
+const { createAvaMemoryGuard } = require("../../../scripts/lib/ava-memory-guard");
 const test: typeof baseTest = createAvaMemoryGuard(baseTest);
 import { execFileSync } from "child_process";
 import { createHash, X509Certificate } from "crypto";
@@ -64,7 +64,6 @@ async function closeTrackedTransportSockets(sockets: Map<any, Promise<void>>, in
     }
 
     await Promise.all(closePromises);
-    if (activeSockets.length > 0) await new Promise(resolve => setTimeout(resolve, 50));
 }
 
 function trackHostTransportSockets(host: VerserHost, sockets: Map<any, Promise<void>>) {
@@ -79,168 +78,78 @@ function trackHostTransportSockets(host: VerserHost, sockets: Map<any, Promise<v
     };
 }
 
-async function waitSetImmediateTwice() {
-    await new Promise<void>(resolve => setImmediate(resolve));
-    await new Promise<void>(resolve => setImmediate(resolve));
+const clientKeyFile = join(certDir, "verser2-client.key");
+const clientCsrFile = join(certDir, "verser2-client.csr");
+const clientCertFile = join(certDir, "verser2-client.crt");
+const untrustedClientKeyFile = join(certDir, "verser2-untrusted-client.key");
+const untrustedClientCertFile = join(certDir, "verser2-untrusted-client.crt");
+const generatedCredentials = [clientKeyFile, clientCsrFile, clientCertFile, untrustedClientKeyFile, untrustedClientCertFile];
+
+let ca: string | undefined;
+let clientCert: string | undefined;
+let clientKey: string | undefined;
+let untrustedClientCert: string | undefined;
+let untrustedClientKey: string | undefined;
+let allowedFingerprints: string[] = [];
+let host: VerserHost | undefined;
+let localGuest: Awaited<ReturnType<VerserHost["attachLocalGuest"]>> | undefined;
+let responseBody: ResponseBody | undefined;
+let stopTrackingHostSockets: (() => void) | undefined;
+const brokers: VerserBroker[] = [];
+const sessions = new Map<any, Promise<void>>();
+const transportSockets = new Map<any, Promise<void>>();
+const sessionSockets = new Map<any, Promise<void>>();
+let initialTlsSockets = new Set<any>();
+const connect = http2.connect;
+
+function cleanupCredentials() {
+    for (const file of generatedCredentials) rmSync(file, { force: true });
+    try {
+        execFileSync(join(certDir, "cleanup-localhost-cert.sh"), { cwd: certDir, stdio: "ignore" });
+    } catch {
+        // Generated credentials must not hide an earlier test failure.
+    }
+}
+
+async function closeBroker(broker: VerserBroker, reason: string) {
+    await broker.close(reason);
+
+    const index = brokers.indexOf(broker);
+    if (index !== -1) brokers.splice(index, 1);
+}
+
+async function connectBroker(id: string, tls: Record<string, string> = {}) {
+    const broker = createVerserBroker({
+        hostUrl: `https://localhost:${host!.address.port}`,
+        brokerId: id,
+        tls: { ca: ca!, ...tls }
+    });
+    brokers.push(broker);
+    await broker.connect();
+    return broker;
 }
 
 test.before(async () => {
-    const clientKeyFile = join(certDir, "verser2-warmup-client.key");
-    const clientCsrFile = join(certDir, "verser2-warmup-client.csr");
-    const clientCertFile = join(certDir, "verser2-warmup-client.crt");
-    const cleanupCredentials = () => {
-        for (const file of [clientKeyFile, clientCsrFile, clientCertFile]) rmSync(file, { force: true });
-        try {
-            execFileSync(join(certDir, "cleanup-localhost-cert.sh"), { cwd: certDir, stdio: "ignore" });
-        } catch {
-            // The warmup cleanup must not hide the setup failure.
-        }
-    };
-    let host: VerserHost | undefined;
-    let localGuest: Awaited<ReturnType<VerserHost["attachLocalGuest"]>> | undefined;
-    const brokers: VerserBroker[] = [];
-    const sessions = new Map<any, Promise<void>>();
-    const transportSockets = new Map<any, Promise<void>>();
-    const sessionSockets = new Map<any, Promise<void>>();
-    const initialTlsSockets = new Set((process as any)._getActiveHandles().filter((handle: any) => handle.constructor?.name === "TLSSocket"));
-    let stopTrackingHostSockets: (() => void) | undefined;
-    const connect = http2.connect;
-    let responseBody: ResponseBody | undefined;
-    let ca: string | undefined;
-    let clientCert: string | undefined;
-    let clientKey: string | undefined;
-    let cleanupPromise: Promise<void> | undefined;
-    const cleanupResources = () => cleanupPromise ||= (async () => {
-        responseBody?.destroy?.();
-        responseBody = undefined;
-        await Promise.all(brokers.splice(0).map(broker => broker.close("TLS baseline warmup").catch(() => undefined)));
-        await localGuest?.close("TLS baseline warmup").catch(() => undefined);
-        await closeTrackedClientSessions(sessions).catch(() => undefined);
-        await closeTrackedTransportSockets(transportSockets, initialTlsSockets).catch(() => undefined);
-        // HTTP/2 exposes session.socket as an immutable bound facade. Retain its ownership
-        // record, but never await its close event because it does not mirror the real session.
-        await host?.close("TLS baseline warmup").catch(() => undefined);
-        stopTrackingHostSockets?.();
-        stopTrackingHostSockets = undefined;
-        (http2 as any).connect = connect;
-        await waitSetImmediateTwice();
-        localGuest = undefined;
-        host = undefined;
-        ca = undefined;
-        clientCert = undefined;
-        clientKey = undefined;
-    })();
-    try {
-        execFileSync(join(certDir, "gen-localhost-cert.sh"), { cwd: certDir, stdio: "ignore" });
-        execFileSync("openssl", ["genrsa", "-out", clientKeyFile, "2048"], { stdio: "ignore" });
-        execFileSync("openssl", ["req", "-new", "-key", clientKeyFile, "-out", clientCsrFile, "-subj", "/CN=verser2-warmup-client"], { stdio: "ignore" });
-        execFileSync("openssl", ["x509", "-req", "-in", clientCsrFile, "-CA", join(certDir, "myCA.pem"), "-CAkey", join(certDir, "myCA.key"), "-passin", "pass:test", "-CAcreateserial", "-out", clientCertFile, "-days", "1", "-sha256"], { stdio: "ignore" });
-        ca = readFileSync(join(certDir, "myCA.pem"), "utf8");
-        clientCert = readFileSync(clientCertFile, "utf8");
-        clientKey = readFileSync(clientKeyFile, "utf8");
-        host = createVerserHost({
-            host: "127.0.0.1",
-            port: 0,
-            tls: {
-                cert: readFileSync(join(certDir, "localhost.crt"), "utf8"),
-                key: readFileSync(join(certDir, "localhost.key"), "utf8"),
-                clientAuth: {
-                    ca,
-                    authorizeRegistration: context => context.metadata.local === true
-                        ? { action: "allow" }
-                        : context.certificate
-                        ? { action: "allow" }
-                        : { action: "close", reason: "client certificate required" }
-                }
-            }
-        });
-        await host.start();
-        stopTrackingHostSockets = trackHostTransportSockets(host, transportSockets);
-        localGuest = await host.attachLocalGuest({
-            guestId: "warmup-local-guest",
-            routedDomains: ["warmup.local"],
-            listener: (_request, response) => response.end("warmup guest")
-        });
-        (http2 as any).connect = (...args: any[]) => {
-            const session = (connect as any)(...args);
-            trackClose(sessions, session);
-            trackClose(sessionSockets, session.socket);
-            return session;
-        };
-
-        const broker = createVerserBroker({
-            hostUrl: `https://localhost:${host.address.port}`,
-            brokerId: "warmup-certificate-success",
-            tls: { ca, cert: clientCert, key: clientKey }
-        });
-        brokers.push(broker);
-        await broker.connect();
-        const response = await broker.request({ targetId: "warmup-local-guest", method: "GET", path: "/" });
-        responseBody = response.body;
-        let body = "";
-        for await (const chunk of responseBody) body += chunk.toString();
-        responseBody.destroy?.();
-        responseBody = undefined;
-        if (response.statusCode !== 200 || body !== "warmup guest") throw new Error("TLS baseline warmup request failed");
-
-        const missingCertificateBroker = createVerserBroker({
-            hostUrl: `https://localhost:${host.address.port}`,
-            brokerId: "warmup-missing-certificate",
-            tls: { ca }
-        });
-        brokers.push(missingCertificateBroker);
-        let rejected = false;
-        try {
-            await missingCertificateBroker.connect();
-        } catch {
-            rejected = true;
-        }
-        if (!rejected) throw new Error("TLS baseline warmup accepted a broker without a client certificate");
-    } finally {
-        try {
-            await cleanupResources();
-        } finally {
-            cleanupCredentials();
-        }
-    }
-});
-
-test("VerserHost authenticates remote TLS brokers and enforces client fingerprint admission", async t => {
-    const clientKeyFile = join(certDir, "verser2-client.key");
-    const clientCsrFile = join(certDir, "verser2-client.csr");
-    const clientCertFile = join(certDir, "verser2-client.crt");
-    const untrustedClientKeyFile = join(certDir, "verser2-untrusted-client.key");
-    const untrustedClientCertFile = join(certDir, "verser2-untrusted-client.crt");
-    const cleanupCredentials = () => {
-        for (const file of [clientKeyFile, clientCsrFile, clientCertFile, untrustedClientKeyFile, untrustedClientCertFile]) rmSync(file, { force: true });
-        try {
-            execFileSync(join(certDir, "cleanup-localhost-cert.sh"), { cwd: certDir, stdio: "ignore" });
-        } catch {
-            // Cleanup must not prevent remaining test-owned resources from closing.
-        }
-    };
-    t.teardown(cleanupCredentials);
+    initialTlsSockets = new Set((process as any)._getActiveHandles().filter((handle: any) => handle.constructor?.name === "TLSSocket"));
     execFileSync(join(certDir, "gen-localhost-cert.sh"), { cwd: certDir, stdio: "ignore" });
     execFileSync("openssl", ["genrsa", "-out", clientKeyFile, "2048"], { stdio: "ignore" });
     execFileSync("openssl", ["req", "-new", "-key", clientKeyFile, "-out", clientCsrFile, "-subj", "/CN=verser2-client"], { stdio: "ignore" });
     execFileSync("openssl", ["x509", "-req", "-in", clientCsrFile, "-CA", join(certDir, "myCA.pem"), "-CAkey", join(certDir, "myCA.key"), "-passin", "pass:test", "-CAcreateserial", "-out", clientCertFile, "-days", "1", "-sha256"], { stdio: "ignore" });
     execFileSync("openssl", ["req", "-x509", "-newkey", "rsa:2048", "-nodes", "-keyout", untrustedClientKeyFile, "-out", untrustedClientCertFile, "-days", "1", "-subj", "/CN=untrusted-client"], { stdio: "ignore" });
-    let ca: string | undefined = readFileSync(join(certDir, "myCA.pem"), "utf8");
-    let serverCert: string | undefined = readFileSync(join(certDir, "localhost.crt"), "utf8");
-    let serverKey: string | undefined = readFileSync(join(certDir, "localhost.key"), "utf8");
-    let clientCert: string | undefined = readFileSync(clientCertFile, "utf8");
-    let clientKey: string | undefined = readFileSync(clientKeyFile, "utf8");
-    let untrustedClientCert: string | undefined = readFileSync(untrustedClientCertFile, "utf8");
-    let untrustedClientKey: string | undefined = readFileSync(untrustedClientKeyFile, "utf8");
-    let allowedFingerprints: string[] = [fingerprint(clientCert)];
-    let host: VerserHost | undefined = createVerserHost({
+    ca = readFileSync(join(certDir, "myCA.pem"), "utf8");
+    clientCert = readFileSync(clientCertFile, "utf8");
+    clientKey = readFileSync(clientKeyFile, "utf8");
+    untrustedClientCert = readFileSync(untrustedClientCertFile, "utf8");
+    untrustedClientKey = readFileSync(untrustedClientKeyFile, "utf8");
+    allowedFingerprints = [fingerprint(clientCert)];
+    host = createVerserHost({
         host: "127.0.0.1",
         port: 0,
         tls: {
-            cert: serverCert!,
-            key: serverKey!,
+            cert: readFileSync(join(certDir, "localhost.crt"), "utf8"),
+            key: readFileSync(join(certDir, "localhost.key"), "utf8"),
             clientAuth: {
-                ca: ca!,
+                ca,
                 authorizeRegistration: context => context.metadata.local === true
                     ? { action: "allow" }
                     : !context.certificate
@@ -251,16 +160,13 @@ test("VerserHost authenticates remote TLS brokers and enforces client fingerprin
             }
         }
     });
-    let localGuest: Awaited<ReturnType<VerserHost["attachLocalGuest"]>> | undefined;
-    const brokers: VerserBroker[] = [];
-    const sessions = new Map<any, Promise<void>>();
-    const transportSockets = new Map<any, Promise<void>>();
-    const sessionSockets = new Map<any, Promise<void>>();
-    const initialTlsSockets = new Set((process as any)._getActiveHandles().filter((handle: any) => handle.constructor?.name === "TLSSocket"));
-    let stopTrackingHostSockets: (() => void) | undefined;
-    const connect = http2.connect;
-    let responseBody: ResponseBody | undefined;
-    let responseText = "";
+    await host.start();
+    stopTrackingHostSockets = trackHostTransportSockets(host, transportSockets);
+    localGuest = await host.attachLocalGuest({
+        guestId: "local-guest",
+        routedDomains: ["local.test"],
+        listener: (_request, response) => response.end("local guest")
+    });
     (http2 as any).connect = (...args: any[]) => {
         const session = (connect as any)(...args);
 
@@ -268,52 +174,34 @@ test("VerserHost authenticates remote TLS brokers and enforces client fingerprin
         trackClose(sessionSockets, session.socket);
         return session;
     };
-    const closeBroker = async (broker: VerserBroker, reason: string) => {
-        await broker.close(reason);
+});
 
-        const index = brokers.indexOf(broker);
-        if (index !== -1) brokers.splice(index, 1);
-    };
-    let cleanupResourcesPromise: Promise<void> | undefined;
-    const cleanupResources = () => cleanupResourcesPromise ||= (async () => {
-        responseBody?.destroy?.();
-        responseBody = undefined;
-        responseText = "";
-        await Promise.all([...brokers].map(broker => closeBroker(broker, "memory cleanup").catch(() => undefined)));
-        await localGuest?.close("memory cleanup").catch(() => undefined);
-        await closeTrackedClientSessions(sessions).catch(() => undefined);
-        await closeTrackedTransportSockets(transportSockets, initialTlsSockets).catch(() => undefined);
-        // HTTP/2 exposes session.socket as an immutable bound facade. Retain its ownership
-        // record, but never await its close event because it does not mirror the real session.
-        await host?.close("memory cleanup").catch(() => undefined);
-        stopTrackingHostSockets?.();
-        stopTrackingHostSockets = undefined;
-        (http2 as any).connect = connect;
-        await waitSetImmediateTwice();
-        localGuest = undefined;
-        host = undefined;
-        allowedFingerprints = [];
-        ca = undefined;
-        serverCert = undefined;
-        serverKey = undefined;
-        clientCert = undefined;
-        clientKey = undefined;
-        untrustedClientCert = undefined;
-        untrustedClientKey = undefined;
-    })();
-    registerAvaMemoryCleanup(t, cleanupResources);
-    t.teardown(cleanupResources);
+test.after(async () => {
+    responseBody?.destroy?.();
+    responseBody = undefined;
+    await Promise.all(brokers.splice(0).map(broker => broker.close("test complete").catch(() => undefined)));
+    await closeTrackedClientSessions(sessions).catch(() => undefined);
+    await closeTrackedTransportSockets(transportSockets, initialTlsSockets).catch(() => undefined);
+    // HTTP/2 exposes session.socket as an immutable bound facade. Retain its ownership
+    // record, but never mutate or await its close event because it does not mirror the
+    // real client transport.
+    await localGuest?.close("test complete").catch(() => undefined);
+    await host?.close("test complete").catch(() => undefined);
+    stopTrackingHostSockets?.();
+    stopTrackingHostSockets = undefined;
+    (http2 as any).connect = connect;
+    localGuest = undefined;
+    host = undefined;
+    allowedFingerprints = [];
+    ca = undefined;
+    clientCert = undefined;
+    clientKey = undefined;
+    untrustedClientCert = undefined;
+    untrustedClientKey = undefined;
+    cleanupCredentials();
+});
 
-    const connectBroker = async (id: string, tls: Record<string, string> = {}) => {
-        const broker = createVerserBroker({
-            hostUrl: `https://localhost:${host!.address.port}`,
-            brokerId: id,
-            tls: { ca: ca!, ...tls }
-        });
-        brokers.push(broker);
-        await broker.connect();
-        return broker;
-    };
+test("VerserHost authenticates remote TLS brokers and enforces client fingerprint admission", async t => {
     const expectBrokerRejection = async (id: string, tls: Record<string, string> = {}) => {
         const broker = createVerserBroker({ hostUrl: `https://localhost:${host!.address.port}`, brokerId: id, tls: { ca: ca!, ...tls } });
         brokers.push(broker);
@@ -328,33 +216,20 @@ test("VerserHost authenticates remote TLS brokers and enforces client fingerprin
         t.true(rejected);
     };
 
-    try {
-        await host.start();
-        stopTrackingHostSockets = trackHostTransportSockets(host, transportSockets);
-        localGuest = await host.attachLocalGuest({
-            guestId: "local-guest",
-            routedDomains: ["local.test"],
-            listener: (_request, response) => response.end("local guest")
-        });
+    const certificateBroker = await connectBroker("certificate-and-fingerprint-success", { cert: clientCert!, key: clientKey! });
+    const response = await certificateBroker.request({ targetId: "local-guest", method: "GET", path: "/" });
+    responseBody = response.body;
+    let responseText = "";
+    for await (const chunk of responseBody) responseText += chunk.toString();
+    responseBody.destroy?.();
+    responseBody = undefined;
+    t.is(response.statusCode, 200);
+    t.is(responseText, "local guest");
+    await closeBroker(certificateBroker, "test complete");
 
-        const certificateBroker = await connectBroker("certificate-and-fingerprint-success", { cert: clientCert!, key: clientKey! });
-        const response = await certificateBroker.request({ targetId: "local-guest", method: "GET", path: "/" });
-        responseBody = response.body;
-        for await (const chunk of responseBody) responseText += chunk.toString();
-        responseBody.destroy?.();
-        responseBody = undefined;
-        t.is(response.statusCode, 200);
-        t.is(responseText, "local guest");
-        await closeBroker(certificateBroker, "test complete");
-        responseText = "";
+    await expectBrokerRejection("missing-certificate");
+    await expectBrokerRejection("untrusted-certificate", { cert: untrustedClientCert!, key: untrustedClientKey! });
 
-        await expectBrokerRejection("missing-certificate");
-        await expectBrokerRejection("untrusted-certificate", { cert: untrustedClientCert!, key: untrustedClientKey! });
-
-        allowedFingerprints = [fingerprint(untrustedClientCert!)];
-        await expectBrokerRejection("fingerprint-denied", { cert: clientCert!, key: clientKey! });
-    } finally {
-        await cleanupResources();
-        cleanupCredentials();
-    }
+    allowedFingerprints = [fingerprint(untrustedClientCert!)];
+    await expectBrokerRejection("fingerprint-denied", { cert: clientCert!, key: clientKey! });
 });

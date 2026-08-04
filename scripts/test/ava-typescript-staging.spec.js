@@ -47,6 +47,8 @@ test("reports and fails promptly for a completed AVA worker with a leaked server
 
 	t.is(result.status, 1, output);
 	t.regex(output, /\[run-ava\.js\] AVA worker leak after tests completed/);
+	t.regex(output, /\[run-ava\.js\] WARNING: delaying AVA worker leak diagnostics by 50 ms/);
+	t.regex(output, /\[run-ava\.js\] AVA run finished in \d+\.\d ms/);
 	t.regex(output, /active resources: TCPServerWrap/);
 	t.regex(output, /active handles: Server \(.*:\d+\)/);
 	t.false(output.includes("Timed out while running tests"));
@@ -59,6 +61,8 @@ test("does not report a leak for a clean AVA worker", (t) => {
 
 	t.is(result.status, 0, output);
 	t.false(output.includes("[run-ava.js] AVA worker leak after tests completed"));
+	t.false(output.includes("[run-ava.js] WARNING: delaying AVA worker leak diagnostics"));
+	t.regex(output, /\[run-ava\.js\] AVA run finished in \d+\.\d ms/);
 });
 
 test("clean AVA worker exits when AVA uses child-process workers", (t) => {

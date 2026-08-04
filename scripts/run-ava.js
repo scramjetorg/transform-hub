@@ -90,6 +90,7 @@ const args = buildAvaArgs(cliArgs);
 const childEnv = {
 	...process.env,
 	NODE_OPTIONS: avaNodeOptions(),
+	SCRAMJET_AVA_LEAK_GRACE_MS: "50",
 	...runnerInvocationEnv(),
 };
 
@@ -235,6 +236,7 @@ const timeout = runnerTimeout();
 
 // Spawn AVA.
 let result;
+const runStartedAt = process.hrtime.bigint();
 
 try {
 	result = spawnSync(process.execPath, args, {
@@ -245,6 +247,9 @@ try {
 } finally {
 	removeTypeScriptOutput();
 }
+
+const runDurationMs = Number(process.hrtime.bigint() - runStartedAt) / 1e6;
+console.error(`[run-ava.js] AVA run finished in ${runDurationMs.toFixed(1)} ms`);
 
 // Report / exit.
 if (result.error) {
