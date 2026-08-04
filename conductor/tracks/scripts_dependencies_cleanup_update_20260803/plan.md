@@ -144,7 +144,7 @@
 - [x] Task: Perform approved tooling migrations with regression evidence.
   - Approval: user selected all identified major tooling migrations (Cucumber, AVA/nyc, esbuild, `@npmcli/run-script`, npm, and BDD dockerode) after reviewing their compatibility scope.
   - [x] Update tool configuration, scripts, tests, and documentation together when a major version requires it.
-    - Cucumber 13, AVA 8/nyc 18, esbuild 0.28, run-script 11, npm 11.6.2, and BDD dockerode 4 changes include their required wrapper/config/test/CI updates.
+    - Cucumber 13, AVA 8/nyc 18, esbuild 0.28, run-script 11, npm 11.19.0, and BDD dockerode 4 changes include their required wrapper/config/test/CI updates.
   - [x] Run `npm run test:packages-no-concurrent`, `npm run test:runner`, and focused BDD paths affected by Cucumber, packaging, or Docker tooling.
     - `npm run test:packages-no-concurrent` passed every workspace package after AVA resource cleanup. `npm run test:runner` under its unchanged `ulimit -v 1835008` completed with 873 passed, 24 failed, and no pending/timeouts. The 24 residual failures are the established unrelated BDD-wave workspace/Docker coverage drift (18), Docker working-set availability (3), docs metadata drift (1), and `verser2-cycle-memory`'s documented `--expose-gc` requirement (2); AVA-migration OOMs, pending worker-profile tests, and worker-exit timeouts are resolved.
     - Focused Docker BDD `E2E-001 TC-002`, Cucumber TypeScript/runner and Docker dry-runs, AVA wrapper/guard/staging tests, and package-level migration checks passed.
@@ -156,7 +156,7 @@
   - Evidence: focused runner tests passed (85), targeted Biome check passed, and no timeout, memory limit, skip, allowance, or assertion was changed. AVA 8 worker-thread isolates reserved approximately 605 MiB of virtual address space each and OOMed under the unchanged 1835008 KiB runner cap even with a 117-byte fixture and only 10–19 MiB live heap; no stream-buffer or log-array retention was found, so no large payload required SHA verification. `test:runner` now selects AVA's child-process workers through `SCRAMJET_AVA_NO_WORKER_THREADS=1`, preserving the cap and propagating to nested runner invocations. The diagnostic preload removes its own IPC listener after AVA completion, while test fixtures explicitly terminate their child workers.
 - [x] Task: Review final-scope readiness and create handoff notes.
   - [x] Record every updated, retained, and deferred tooling dependency with version rationale and validation result.
-    - Updated: Cucumber 7→13 with messages 34, AVA 3/4→8, nyc 15/17→18, esbuild 0.14→0.28, `@npmcli/run-script` 4→11, npm 10→11.6.2, and BDD dockerode 3→4. Each migration received focused runner/config/package or Docker validation; the serial package suite passed.
+    - Updated: Cucumber 7→13 with messages 34, AVA 3/4→8, nyc 15/17→18, esbuild 0.14→0.28, `@npmcli/run-script` 4→11, npm 10→11.19.0, and BDD dockerode 3→4. Each migration received focused runner/config/package or Docker validation; the serial package suite passed.
     - Retained/deferred: production major migrations remain outside this tooling phase as recorded in Phase 3. No tooling migration relaxed a memory threshold, timeout, skip, allowance, or behavioral assertion.
   - [x] Prepare the final audit, documentation, and release-readiness matrix.
     - Phase 4 is ready for Phase 5's comprehensive install/build/lint/audit matrix. Formal Phase 4 review passed after the runner-suite delta and memory-guard evidence were recorded.
@@ -166,17 +166,27 @@
 
 ## Phase 5: Final Audit, Documentation, and Track Closure
 
-- [ ] Task: Run final dependency and cleanup verification.
-  - [ ] Run `npm ci`, `npm run build:packages`, `npm run test:packages-no-concurrent`, `npm run test:runner`, `npm run check:runtime-invariants`, and `npm run lint`.
-  - [ ] Run final `npm audit --omit=dev --json` and `npm audit --json`.
-  - [ ] Record memory-guard commands, thresholds, skips, exceptions, and non-applicable checks for the changed surfaces.
-- [ ] Task: Reconcile every retained, deferred, and residual item.
-  - [ ] Record package/advisory/path, production or development reachability, disposition, rationale, owner, and revisit condition.
-  - [ ] Confirm that no documented compatibility-sensitive script or dependency was removed without an approved migration.
-- [ ] Task: Update contributor and operational documentation when commands, tooling, or supported cleanup behavior changed.
-  - [ ] Keep documentation aligned with actual npm, build, test, runtime, and release behavior.
-- [ ] Task: Perform final review and publish phase evidence.
-  - [ ] Request formal review of the completed cleanup, dependency changes, validation matrix, and residual-risk ledger.
-  - [ ] Commit the completed phase work, record the checkpoint SHA, push the implementation branch, and update the draft pull request.
-  - [ ] Record final scope review and handoff notes for track completion.
-- [ ] Task: Conductor - Phase Completion 'Final Audit, Documentation, and Track Closure' (Protocol in workflow.md)
+- [x] Task: Run final dependency and cleanup verification.
+  - [x] Run `npm ci`, `npm run build:packages`, `npm run test:packages-no-concurrent`, `npm run test:runner`, `npm run check:runtime-invariants`, and `npm run lint`.
+    - `npm ci` and `npm run build:packages` passed, retaining only known host warnings (Node 22.22.1 is below npm 11's declared 22.22.2 engine and runner-python's host `pyopenssl` resolver conflict). The serial package suite passed; all 8 runtime invariants and Biome lint passed. `npm run test:runner` resolved all AVA migration OOM/exit regressions and retains only 24 documented baseline/environment failures. `npm run test:memory-guard-bdd-focused` now avoids AVA address-space OOM with child-process workers; its remaining 3 failures require live Docker working-set availability.
+  - [x] Run final `npm audit --omit=dev --json` and `npm audit --json`.
+    - Final production audit: 5 findings (1 critical, 4 moderate); full audit: 11 (1 critical, 3 high, 6 moderate, 1 low). Compatible updates resolved adapter-process tar, runtime undici, host qs, manager lodash, Kubernetes socks/ip-address, host pico-s3/file-type, and npm's previous bundled advisory set. Production residual chains are now only root/CLI tar, manager minio/fast-xml-parser, and Dockerode/UUID. Full-only findings are npm-bundled or development coverage/build tooling. See `td.md` and Phase 3 dispositions.
+  - [x] Record memory-guard commands, thresholds, skips, exceptions, and non-applicable checks for the changed surfaces.
+    - `npm run test:memory-guard-ava` passed 12 tests under `ulimit -v 1835008`, `NODE_OPTIONS=--max-old-space-size=1024`, and `SCRAMJET_AVA_MEMORY_GUARD=1`, using the unchanged 524288-byte AVA threshold and child-process AVA workers. Focused manager mTLS and CLI guard tests also passed at 524288 bytes. No memory skips, per-test allowances, or threshold/timeout changes were used. BDD's unchanged parent, child-RSS, and Docker-working-set thresholds are 524288, 209715200, and 1073741824 bytes respectively; the Cucumber fixture residual is documented without an exception.
+- [x] Task: Reconcile every retained, deferred, and residual item.
+  - [x] Record package/advisory/path, production or development reachability, disposition, rationale, owner, and revisit condition.
+    - Compatible updates applied: adapter-process tar 7.5.22, runtime undici 7.29.0, host qs 6.15.3, manager lodash 4.18.1, Kubernetes socks 2.8.9/ip-address 10.4.0 without an override, host pico-s3 2.11.0/file-type 21.3.4, and npm 11.19.0. Major production migrations remain deferred exactly as `td.md` records: root/CLI tar 6→7, minio 7→8, Dockerode 4→5, and UUID 8→14. npm-bundled and nyc/Babel-only audit findings are development-tooling residuals pending compatible upstream refresh. The Cucumber 13 fixture investigation is resolved in `td.md`: post-GC external memory remained flat, outputs were SHA-verified small, and permanent component diagnostics now distinguish transient allocations from retention.
+  - [x] Confirm that no documented compatibility-sensitive script or dependency was removed without an approved migration.
+    - Confirmed: only the four Phase 1 approved obsolete assets and the Phase 2 evidence-proven direct declarations were removed. Deferred scripts, production major migrations, compatibility types, and runtime wrappers remain intact.
+- [x] Task: Update contributor and operational documentation when commands, tooling, or supported cleanup behavior changed.
+  - [x] Keep documentation aligned with actual npm, build, test, runtime, and release behavior.
+    - Updated release operations to npm 11.19.0, contributor docs to npm 11+, AGENTS guidance for AVA 8 staging/leak diagnostics/child-process worker mode, and the Conductor tech stack for actual runner defaults and AVA 8 virtual-address behavior.
+- [~] Task: Perform final review and publish phase evidence.
+  - [x] Request formal review of the completed cleanup, dependency changes, validation matrix, and residual-risk ledger.
+    - Formal reviewer: `PASS/accepted`; Oracle production-readiness assessment: `APPROVE`. The final 5 production findings are genuine major/upstream follow-ups with owner/revisit conditions in `td.md`; no compatible production remediation remains.
+  - [x] Commit the completed phase work, record the checkpoint SHA, push the implementation branch, and update the draft pull request.
+    - Checkpoint: `2c666f7c3` (`fix: complete compatible dependency remediation`), with the final Conductor evidence checkpoint pushed to draft PR #1080.
+  - [x] Record final scope review and handoff notes for track completion.
+    - Formal final review: `PASS/accepted`; Oracle production-readiness: `APPROVE`. Final audit is 5 production findings (1 critical, 4 moderate) and 11 full findings (1 critical, 3 high, 6 moderate, 1 low). Remaining production risk is limited to the documented major tar, MinIO, Dockerode, and UUID paths.
+- [x] Task: Conductor - Phase Completion 'Final Audit, Documentation, and Track Closure' (Protocol in workflow.md)
+  - Final memory evidence: `npm run test:memory-guard-ava` passed 12 tests under `ulimit -v 1835008`, `NODE_OPTIONS=--max-old-space-size=1024`, and `SCRAMJET_AVA_MEMORY_GUARD=1` at the unchanged 524288-byte threshold. Focused manager/CLI AVA guards passed at the same threshold. BDD guard diagnostics retained the unchanged 524288-byte parent, 209715200-byte child-RSS, and 1073741824-byte Docker-working-set thresholds; no skip, exception, allowance, timeout, or limit change was made. The focused BDD AVA harness uses child-process workers to avoid AVA 8 address-space reservation; its three remaining live-Docker telemetry failures are documented environment baselines.
