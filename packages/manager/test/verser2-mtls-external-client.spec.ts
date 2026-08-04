@@ -45,6 +45,7 @@ async function closeTrackedTransportSockets(sockets: Set<any>, initialTlsSockets
         if (!socket.destroyed) socket.destroy();
     }
     await Promise.all(closedSockets);
+    if (activeSockets.length > 0) await new Promise(resolve => setTimeout(resolve, 50));
     sockets.clear();
 }
 
