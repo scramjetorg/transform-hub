@@ -131,20 +131,38 @@
 
 ## Phase 4: Update Development and Test Tooling Safely
 
-- [ ] Task: Inventory retained development and test-tooling findings.
-  - [ ] Classify Cucumber, AVA, nyc, esbuild, npm, `@npmcli/run-script`, and their transitive findings by affected command surface and compatibility risk.
-  - [ ] Separate compatible lockfile refreshes from major test-runner, package-manager, or release-tool migrations.
-- [ ] Task: Update compatible development dependencies.
-  - [ ] Apply owner-scoped compatible updates and regenerate the npm lockfile.
-  - [ ] Run each affected package's supported AVA runner command and build/type validation.
-- [ ] Task: Perform approved tooling migrations with regression evidence.
-  - [ ] Update tool configuration, scripts, tests, and documentation together when a major version requires it.
-  - [ ] Run `npm run test:packages-no-concurrent`, `npm run test:runner`, and focused BDD paths affected by Cucumber, packaging, or Docker tooling.
-  - [ ] Do not raise memory limits, add broad skips, or weaken assertions to accommodate an upgrade.
-- [ ] Task: Review final-scope readiness and create handoff notes.
-  - [ ] Record every updated, retained, and deferred tooling dependency with version rationale and validation result.
-  - [ ] Prepare the final audit, documentation, and release-readiness matrix.
-- [ ] Task: Conductor - Phase Completion 'Update Development and Test Tooling Safely' (Protocol in workflow.md)
+- [x] Task: Inventory retained development and test-tooling findings.
+  - [x] Classify Cucumber, AVA, nyc, esbuild, npm, `@npmcli/run-script`, and their transitive findings by affected command surface and compatibility risk.
+    - Compatible refreshes: Cucumber `tmp` 0.2.5→0.2.6+ plus low AVA/nyc transitives. Major migrations: Cucumber 7→13/messages 34, AVA 3/4→8, nyc 15/17→18, esbuild 0.14→0.28, `@npmcli/run-script` 4→11, npm 10→11, and BDD dockerode 3→4.
+  - [x] Separate compatible lockfile refreshes from major test-runner, package-manager, or release-tool migrations.
+    - Root npm policy change and compatibility-risky Cucumber/AVA/nyc/run-script migrations require explicit migration selection; npm 11 is additionally policy-sensitive. Production chains remain excluded.
+- [x] Task: Update compatible development dependencies.
+  - [x] Apply owner-scoped compatible updates and regenerate the npm lockfile.
+    - `npm update tmp diff @tootallnate/once --package-lock-only` reduced full-audit findings from 51 to 49 without manifest changes.
+  - [x] Run each affected package's supported AVA runner command and build/type validation.
+    - Cucumber 13/messages 34 targeted TypeScript and runner tests passed; AVA 8/nyc 18 wrapper, profile, guard, utility, api-router, and logger validations passed; middleware browser, BDD dockerode, run-script, and npm workflow validations passed.
+- [x] Task: Perform approved tooling migrations with regression evidence.
+  - Approval: user selected all identified major tooling migrations (Cucumber, AVA/nyc, esbuild, `@npmcli/run-script`, npm, and BDD dockerode) after reviewing their compatibility scope.
+  - [x] Update tool configuration, scripts, tests, and documentation together when a major version requires it.
+    - Cucumber 13, AVA 8/nyc 18, esbuild 0.28, run-script 11, npm 11.6.2, and BDD dockerode 4 changes include their required wrapper/config/test/CI updates.
+  - [x] Run `npm run test:packages-no-concurrent`, `npm run test:runner`, and focused BDD paths affected by Cucumber, packaging, or Docker tooling.
+    - `npm run test:packages-no-concurrent` passed every workspace package after AVA resource cleanup. `npm run test:runner` under its unchanged `ulimit -v 1835008` completed with 873 passed, 24 failed, and no pending/timeouts. The 24 residual failures are the established unrelated BDD-wave workspace/Docker coverage drift (18), Docker working-set availability (3), docs metadata drift (1), and `verser2-cycle-memory`'s documented `--expose-gc` requirement (2); AVA-migration OOMs, pending worker-profile tests, and worker-exit timeouts are resolved.
+    - Focused Docker BDD `E2E-001 TC-002`, Cucumber TypeScript/runner and Docker dry-runs, AVA wrapper/guard/staging tests, and package-level migration checks passed.
+  - [x] Do not raise memory limits, add broad skips, or weaken assertions to accommodate an upgrade.
+    - Existing memory guard thresholds and assertions were preserved; no broad skip or limit change was introduced.
+- [x] Task: Fail fast on AVA worker exit leaks.
+  - User-directed scope addition after observing low-CPU idle waits during package tests.
+  - Added supported-runner diagnostics that detect retained worker resources after AVA completion, report active resource/handle types, and exit the affected worker immediately.
+  - Evidence: focused runner tests passed (85), targeted Biome check passed, and no timeout, memory limit, skip, allowance, or assertion was changed. AVA 8 worker-thread isolates reserved approximately 605 MiB of virtual address space each and OOMed under the unchanged 1835008 KiB runner cap even with a 117-byte fixture and only 10–19 MiB live heap; no stream-buffer or log-array retention was found, so no large payload required SHA verification. `test:runner` now selects AVA's child-process workers through `SCRAMJET_AVA_NO_WORKER_THREADS=1`, preserving the cap and propagating to nested runner invocations. The diagnostic preload removes its own IPC listener after AVA completion, while test fixtures explicitly terminate their child workers.
+- [x] Task: Review final-scope readiness and create handoff notes.
+  - [x] Record every updated, retained, and deferred tooling dependency with version rationale and validation result.
+    - Updated: Cucumber 7→13 with messages 34, AVA 3/4→8, nyc 15/17→18, esbuild 0.14→0.28, `@npmcli/run-script` 4→11, npm 10→11.6.2, and BDD dockerode 3→4. Each migration received focused runner/config/package or Docker validation; the serial package suite passed.
+    - Retained/deferred: production major migrations remain outside this tooling phase as recorded in Phase 3. No tooling migration relaxed a memory threshold, timeout, skip, allowance, or behavioral assertion.
+  - [x] Prepare the final audit, documentation, and release-readiness matrix.
+    - Phase 4 is ready for Phase 5's comprehensive install/build/lint/audit matrix. Formal Phase 4 review passed after the runner-suite delta and memory-guard evidence were recorded.
+- [x] Task: Conductor - Phase Completion 'Update Development and Test Tooling Safely' (Protocol in workflow.md)
+  - Checkpoint: `1f8e872d50d4f65c55381a17fcdf7f2ec6425ae9` (`chore: update development and test tooling`); pushed to the draft PR branch with this evidence checkpoint.
+  - Formal phase review: `PASS/accepted`; the unchanged 1835008 KiB runner cap and 524288-byte memory-guard threshold remain enforced. No timeout, skip, allowance, or assertion was relaxed.
 
 ## Phase 5: Final Audit, Documentation, and Track Closure
 
