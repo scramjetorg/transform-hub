@@ -181,7 +181,7 @@
 - [x] Task: Update contributor and operational documentation when commands, tooling, or supported cleanup behavior changed.
   - [x] Keep documentation aligned with actual npm, build, test, runtime, and release behavior.
     - Updated release operations to npm 11.19.0, contributor docs to npm 11+, AGENTS guidance for AVA 8 staging/leak diagnostics/child-process worker mode, and the Conductor tech stack for actual runner defaults and AVA 8 virtual-address behavior.
-- [~] Task: Perform final review and publish phase evidence.
+- [x] Task: Perform final review and publish phase evidence.
   - [x] Request formal review of the completed cleanup, dependency changes, validation matrix, and residual-risk ledger.
     - Formal reviewer: `PASS/accepted`; Oracle production-readiness assessment: `APPROVE`. The final 5 production findings are genuine major/upstream follow-ups with owner/revisit conditions in `td.md`; no compatible production remediation remains.
   - [x] Commit the completed phase work, record the checkpoint SHA, push the implementation branch, and update the draft pull request.
