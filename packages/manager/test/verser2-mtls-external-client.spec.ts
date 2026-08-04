@@ -9,6 +9,7 @@ import { createVerserBroker, VerserBroker } from "@signicode/verser2-guest-node"
 import { createVerserHost, VerserHost } from "@signicode/verser2-host";
 
 const http2 = require("http2") as typeof import("http2");
+const tls = require("tls") as typeof import("tls");
 
 type ResponseBody = AsyncIterable<Buffer> & { destroy?: () => void };
 
@@ -47,12 +48,8 @@ async function closeTrackedClientSessions(sessions: Map<any, Promise<void>>) {
     await Promise.all(activeSessions.map(([, closePromise]) => closePromise));
 }
 
-async function closeTrackedTransportSockets(sockets: Map<any, Promise<void>>, initialTlsSockets: Set<any>) {
-    await new Promise<void>(resolve => setImmediate(resolve));
-    const activeSockets = [...new Set([
-        ...sockets.keys(),
-        ...(process as any)._getActiveHandles().filter((handle: any) => handle.constructor?.name === "TLSSocket" && !initialTlsSockets.has(handle))
-    ])].filter((socket: any) => socket.constructor?.name !== "bound TLSSocket");
+async function closeTrackedTransportSockets(sockets: Map<any, Promise<void>>) {
+    const activeSockets = [...sockets.keys()].filter(socket => !socket.destroyed);
     const closePromises = activeSockets.map(socket => socket.closed || socket.destroyed
         ? Promise.resolve()
         : trackClose(sockets, socket));
@@ -98,9 +95,8 @@ let stopTrackingHostSockets: (() => void) | undefined;
 const brokers: VerserBroker[] = [];
 const sessions = new Map<any, Promise<void>>();
 const transportSockets = new Map<any, Promise<void>>();
-const sessionSockets = new Map<any, Promise<void>>();
-let initialTlsSockets = new Set<any>();
 const connect = http2.connect;
+const tlsConnect = tls.connect;
 
 function cleanupCredentials() {
     for (const file of generatedCredentials) rmSync(file, { force: true });
@@ -130,7 +126,6 @@ async function connectBroker(id: string, tls: Record<string, string> = {}) {
 }
 
 test.before(async () => {
-    initialTlsSockets = new Set((process as any)._getActiveHandles().filter((handle: any) => handle.constructor?.name === "TLSSocket"));
     execFileSync(join(certDir, "gen-localhost-cert.sh"), { cwd: certDir, stdio: "ignore" });
     execFileSync("openssl", ["genrsa", "-out", clientKeyFile, "2048"], { stdio: "ignore" });
     execFileSync("openssl", ["req", "-new", "-key", clientKeyFile, "-out", clientCsrFile, "-subj", "/CN=verser2-client"], { stdio: "ignore" });
@@ -171,34 +166,59 @@ test.before(async () => {
         const session = (connect as any)(...args);
 
         trackClose(sessions, session);
-        trackClose(sessionSockets, session.socket);
         return session;
+    };
+    (tls as any).connect = (...args: any[]) => {
+        const socket = (tlsConnect as any)(...args);
+
+        trackClose(transportSockets, socket);
+        return socket;
     };
 });
 
 test.after(async () => {
-    responseBody?.destroy?.();
-    responseBody = undefined;
-    await Promise.all(brokers.splice(0).map(broker => broker.close("test complete").catch(() => undefined)));
-    await closeTrackedClientSessions(sessions).catch(() => undefined);
-    await closeTrackedTransportSockets(transportSockets, initialTlsSockets).catch(() => undefined);
-    // HTTP/2 exposes session.socket as an immutable bound facade. Retain its ownership
-    // record, but never mutate or await its close event because it does not mirror the
-    // real client transport.
-    await localGuest?.close("test complete").catch(() => undefined);
-    await host?.close("test complete").catch(() => undefined);
-    stopTrackingHostSockets?.();
-    stopTrackingHostSockets = undefined;
-    (http2 as any).connect = connect;
-    localGuest = undefined;
-    host = undefined;
-    allowedFingerprints = [];
-    ca = undefined;
-    clientCert = undefined;
-    clientKey = undefined;
-    untrustedClientCert = undefined;
-    untrustedClientKey = undefined;
-    cleanupCredentials();
+    try {
+        responseBody?.destroy?.();
+        responseBody = undefined;
+        try {
+            await Promise.all(brokers.splice(0).map(broker => broker.close("test complete")));
+        } finally {
+            try {
+                await closeTrackedClientSessions(sessions);
+            } finally {
+                // These are real TLS/TCP sockets captured at connection time,
+                // never the immutable HTTP/2 session.socket facade. Closing
+                // them before the host prevents host.close() from waiting on
+                // a peer that the test still owns.
+                try {
+                    await closeTrackedTransportSockets(transportSockets);
+                } finally {
+                    try {
+                        await localGuest?.close("test complete");
+                    } finally {
+                        await host?.close("test complete");
+                    }
+                }
+            }
+        }
+    } finally {
+        try {
+            stopTrackingHostSockets?.();
+        } finally {
+            stopTrackingHostSockets = undefined;
+            (http2 as any).connect = connect;
+            (tls as any).connect = tlsConnect;
+            localGuest = undefined;
+            host = undefined;
+            allowedFingerprints = [];
+            ca = undefined;
+            clientCert = undefined;
+            clientKey = undefined;
+            untrustedClientCert = undefined;
+            untrustedClientKey = undefined;
+            cleanupCredentials();
+        }
+    }
 });
 
 test("VerserHost authenticates remote TLS brokers and enforces client fingerprint admission", async t => {
