@@ -73,7 +73,7 @@ export class RoutedBrokerTimeoutError extends Error {
 }
 
 export class RoutedBrokerRequestError extends Error {
-    constructor(message: string, readonly cause: unknown) {
+    constructor(message: string, readonly cause: Error | undefined) {
         super(message);
         this.name = "RoutedBrokerRequestError";
     }
