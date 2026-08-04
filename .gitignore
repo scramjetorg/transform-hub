@@ -124,6 +124,7 @@ dist
 bdd/.work/
 bdd/reports/*.html
 bdd/*-test-result.txt
+bdd/data/.hub-verser2-*.json
 bdd/Mgr*/
 bdd/mgr-agg-*/
 
