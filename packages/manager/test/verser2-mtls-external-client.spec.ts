@@ -15,7 +15,7 @@ type ResponseBody = AsyncIterable<Buffer> & { destroy?: () => void };
 const fingerprint = (certificate: string) => `sha256:${createHash("sha256").update(new X509Certificate(certificate).raw).digest("hex")}`;
 const certDir = join(__dirname, "../../verser/test/cert");
 
-async function closeTrackedSessions(sessions: Set<any>, initialTlsSockets: Set<any>) {
+async function closeTrackedSessions(sessions: Set<any>) {
     const activeSessions = [...sessions];
     const closedSessions = activeSessions.map(session => session.closed || session.destroyed
         ? Promise.resolve()
@@ -23,16 +23,47 @@ async function closeTrackedSessions(sessions: Set<any>, initialTlsSockets: Set<a
 
     for (const session of activeSessions) if (!session.closed && !session.destroyed) session.destroy();
     await Promise.all(closedSessions);
+    sessions.clear();
+}
 
-    const sockets = (process as any)._getActiveHandles().filter((handle: any) => handle.constructor?.name === "TLSSocket" && !initialTlsSockets.has(handle));
-    const closedSockets = sockets.map((socket: any) => new Promise<void>(resolve => socket.once("close", resolve)));
-    for (const socket of sockets) {
+async function closeTrackedTransportSockets(sockets: Set<any>, initialTlsSockets: Set<any>) {
+    // Failed HTTP/2 registration destroys its session before the backing TLS
+    // socket is exposed as an active handle. Wait a turn, then collect the
+    // actual TLS sockets rather than the session's bound socket facade, whose
+    // mutating methods intentionally throw ERR_HTTP2_NO_SOCKET_MANIPULATION.
+    await new Promise<void>(resolve => setImmediate(resolve));
+    const activeSockets = [...new Set([
+        ...sockets,
+        ...(process as any)._getActiveHandles().filter((handle: any) => handle.constructor?.name === "TLSSocket" && !initialTlsSockets.has(handle))
+    ])].filter((socket: any) => socket.constructor?.name !== "bound TLSSocket");
+    const closedSockets = activeSockets.map(socket => socket.destroyed
+        ? Promise.resolve()
+        : new Promise<void>(resolve => socket.once("close", resolve)));
+
+    for (const socket of activeSockets) {
         socket.on("error", () => undefined);
-        socket.destroy();
+        if (!socket.destroyed) socket.destroy();
     }
     await Promise.all(closedSockets);
-    sessions.clear();
-    initialTlsSockets.clear();
+    sockets.clear();
+}
+
+function trackTransportSocket(sockets: Set<any>, socket: any) {
+    sockets.add(socket);
+    socket.on("error", () => undefined);
+    socket.once("close", () => sockets.delete(socket));
+}
+
+function trackHostTransportSockets(host: VerserHost, sockets: Set<any>) {
+    const server = (host as any).server;
+    const trackSocket = (socket: any) => trackTransportSocket(sockets, socket);
+
+    server.on("connection", trackSocket);
+    server.on("secureConnection", trackSocket);
+    return () => {
+        server.off("connection", trackSocket);
+        server.off("secureConnection", trackSocket);
+    };
 }
 
 test.before(async () => {
@@ -51,7 +82,9 @@ test.before(async () => {
     let localGuest: Awaited<ReturnType<VerserHost["attachLocalGuest"]>> | undefined;
     const brokers: VerserBroker[] = [];
     const sessions = new Set<any>();
+    const transportSockets = new Set<any>();
     const initialTlsSockets = new Set((process as any)._getActiveHandles().filter((handle: any) => handle.constructor?.name === "TLSSocket"));
+    let stopTrackingHostSockets: (() => void) | undefined;
     const connect = http2.connect;
     let responseBody: ResponseBody | undefined;
     let ca: string | undefined;
@@ -63,8 +96,11 @@ test.before(async () => {
         responseBody = undefined;
         await Promise.all(brokers.splice(0).map(broker => broker.close("TLS baseline warmup").catch(() => undefined)));
         await localGuest?.close("TLS baseline warmup").catch(() => undefined);
-        await closeTrackedSessions(sessions, initialTlsSockets).catch(() => undefined);
+        await closeTrackedSessions(sessions).catch(() => undefined);
+        await closeTrackedTransportSockets(transportSockets, initialTlsSockets).catch(() => undefined);
         await host?.close("TLS baseline warmup").catch(() => undefined);
+        stopTrackingHostSockets?.();
+        stopTrackingHostSockets = undefined;
         (http2 as any).connect = connect;
         localGuest = undefined;
         host = undefined;
@@ -97,6 +133,7 @@ test.before(async () => {
             }
         });
         await host.start();
+        stopTrackingHostSockets = trackHostTransportSockets(host, transportSockets);
         localGuest = await host.attachLocalGuest({
             guestId: "warmup-local-guest",
             routedDomains: ["warmup.local"],
@@ -196,7 +233,9 @@ test("VerserHost authenticates remote TLS brokers and enforces client fingerprin
     let localGuest: Awaited<ReturnType<VerserHost["attachLocalGuest"]>> | undefined;
     const brokers: VerserBroker[] = [];
     const sessions = new Set<any>();
+    const transportSockets = new Set<any>();
     const initialTlsSockets = new Set((process as any)._getActiveHandles().filter((handle: any) => handle.constructor?.name === "TLSSocket"));
+    let stopTrackingHostSockets: (() => void) | undefined;
     const connect = http2.connect;
     let responseBody: ResponseBody | undefined;
     let responseText = "";
@@ -221,8 +260,11 @@ test("VerserHost authenticates remote TLS brokers and enforces client fingerprin
         responseText = "";
         await Promise.all([...brokers].map(broker => closeBroker(broker, "memory cleanup").catch(() => undefined)));
         await localGuest?.close("memory cleanup").catch(() => undefined);
-        await closeTrackedSessions(sessions, initialTlsSockets).catch(() => undefined);
+        await closeTrackedSessions(sessions).catch(() => undefined);
+        await closeTrackedTransportSockets(transportSockets, initialTlsSockets).catch(() => undefined);
         await host?.close("memory cleanup").catch(() => undefined);
+        stopTrackingHostSockets?.();
+        stopTrackingHostSockets = undefined;
         (http2 as any).connect = connect;
         localGuest = undefined;
         host = undefined;
@@ -264,6 +306,7 @@ test("VerserHost authenticates remote TLS brokers and enforces client fingerprin
 
     try {
         await host.start();
+        stopTrackingHostSockets = trackHostTransportSockets(host, transportSockets);
         localGuest = await host.attachLocalGuest({
             guestId: "local-guest",
             routedDomains: ["local.test"],

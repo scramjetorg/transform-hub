@@ -190,3 +190,34 @@
     - Formal final review: `PASS/accepted`; Oracle production-readiness: `APPROVE`. Final audit is 5 production findings (1 critical, 4 moderate) and 11 full findings (1 critical, 3 high, 6 moderate, 1 low). Remaining production risk is limited to the documented major tar, MinIO, Dockerode, and UUID paths.
 - [x] Task: Conductor - Phase Completion 'Final Audit, Documentation, and Track Closure' (Protocol in workflow.md)
   - Final memory evidence: `npm run test:memory-guard-ava` passed 12 tests under `ulimit -v 1835008`, `NODE_OPTIONS=--max-old-space-size=1024`, and `SCRAMJET_AVA_MEMORY_GUARD=1` at the unchanged 524288-byte threshold. Focused manager/CLI AVA guards passed at the same threshold. BDD guard diagnostics retained the unchanged 524288-byte parent, 209715200-byte child-RSS, and 1073741824-byte Docker-working-set thresholds; no skip, exception, allowance, timeout, or limit change was made. The focused BDD AVA harness uses child-process workers to avoid AVA 8 address-space reservation and passed on its supported rerun.
+
+## Phase 6: Repair CI Leak and Deferred Production Major Migrations
+
+- [x] Task: Reproduce and repair the Manager mTLS socket leak reported by PR CI.
+  - [x] Identify and close the two retained `TCPSocketWrap`/`TCP` resources in `packages/manager/test/verser2-mtls-external-client.spec.ts` on every test path.
+    - CI's rejected HTTP/2 broker session exposes its real TLS socket one event-loop turn after session teardown. Cleanup now tracks host TCP/TLS transports, waits a turn, and destroys only real `TLSSocket` handles while avoiding HTTP/2's immutable bound-socket facade.
+  - [x] Preserve all test controls: no timeout, memory limit, threshold, skip, allowance, retry, or assertion change.
+  - [x] Run the focused Manager test, full Manager suite, and supported serial package proof; inspect the PR CI result after push.
+    - Focused test passed four consecutive supported runs; Manager suite passed 215 tests; serial package proof passed locally. Formal review returned `PASS/no_issue`. CI revalidation remains pending the Phase 6 push.
+- [x] Task: Migrate root and CLI archive tooling from tar 6 to tar 7.
+  - [x] Inventory root and CLI tar API use before updating direct declarations and the lockfile.
+  - [x] Add focused temporary-fixture coverage for create/package, list/extract, gzip, nested paths, symlinks/permissions, and traversal or malformed-archive rejection.
+  - [x] Update tar to the supported 7.x release and validate archive tooling, affected package builds/tests, and serial package proof.
+    - Root/CLI tar now resolve to the single hoisted 7.5.22 release; adapter-docker's unused declaration and CLI's obsolete `@types/tar` were removed. Process adapter extraction now waits for `Unpack` close rather than input end. Adapter-process (15), CLI (125), archive script fixtures (11), package builds, BDD fixture packing, and pack/list/extract smoke passed. The serial package proof passed before this migration; final Phase 6 proof will rerun after Dockerode and MinIO work. No control relaxation was made.
+- [x] Task: Migrate Dockerode 4 to 5 and resolve its UUID chain.
+  - [x] Inventory adapter-Docker and BDD Dockerode API use, including error/status mapping and lifecycle cleanup.
+    - Direct Dockerode consumers are the adapter helper/types and BDD host/config steps. Dockerode 5 changes `VolumeCreateResponse` to `Name`; existing 304/404 cleanup predicates remain valid.
+  - [x] Add or update a focused Docker-daemon smoke that creates, starts, inspects, logs, stops, and removes a disposable container, with failure cleanup.
+    - Added an AVA smoke using a uniquely labeled local `node:22-alpine` container. It statically skips only when Docker CLI/daemon access or that image is unavailable; unexpected daemon/API failures fail, and `finally` force-removes a created container while allowing only 404 cleanup.
+  - [x] Update Dockerode/UUID declarations and lockfile only after focused compatibility coverage is in place; run adapter-Docker tests/build and supported Docker BDD validation.
+    - Dockerode now resolves to 5.0.1 for adapter-Docker and BDD, with `@types/dockerode` 4.0.1 retained because Dockerode 5 has no bundled declarations. UUID now resolves to 11.1.1, the newest release with a CommonJS `require` export; its bundled declarations replace `@types/uuid`. Focused adapter-Docker (6), Model (6), and Load-check (4) AVA tests, affected no-emit TypeScript checks, adapter/Model/Load-check builds, and BDD build passed. The daemon smoke passed its full lifecycle. `npm run test:bdd-ci-hub-docker` passed under its unchanged Docker runner caps (1536m, 2 CPUs, 600s, 10s grace) but selected zero current scenarios because all matching Docker scenarios are tagged `@slow`; no test controls were relaxed.
+- [ ] Task: Migrate Manager S3 storage from MinIO 7 to 8 with local endpoint evidence.
+  - [ ] Add a lightweight, short-lived MinIO Docker-container test harness with fixed local credentials, health wait, temporary data, deterministic bucket setup, and container/data cleanup.
+  - [ ] Cover Manager storage upload/download/list/delete plus Host S3 streaming against that local endpoint; avoid LocalStack and external cloud dependencies.
+  - [ ] Update MinIO and its lockfile chain only after the local endpoint coverage passes; run Manager/Host tests, builds, and the targeted Docker BDD path.
+- [ ] Task: Record a future nyc-to-c8 migration handoff without changing coverage tooling in this track.
+  - [ ] Create a current-track handoff note covering c8 as the preferred native-V8 coverage candidate, required AVA/CI/reporting/threshold migration work, and validation criteria for a future new-track command.
+- [ ] Task: Review and checkpoint the CI leak and major migration work.
+  - [ ] Request formal review of the resource cleanup, major migrations, local S3 coverage, and validation evidence.
+  - [ ] Commit, push, update PR #1080, and record the CI disposition.
+- [ ] Task: Conductor - Phase Completion 'Repair CI Leak and Deferred Production Major Migrations' (Protocol in workflow.md)

@@ -76,8 +76,11 @@ class ProcessSequenceAdapter implements ISequenceAdapter {
         const uncompress = stream.pipe(x({ C: sequenceDir }));
 
         try {
+            // Await tar extraction completion ("close" on the Unpack stream),
+            // not the input stream "end", so the package is fully written
+            // before it is identified.
             await new Promise((res, rej) => {
-                uncompress.on("end", res);
+                uncompress.on("close", res);
                 uncompress.on("error", (err) => {
                     this.logger.error("Unpacking sequence failed", err);
                     rej(err);

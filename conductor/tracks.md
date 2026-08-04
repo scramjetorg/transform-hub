@@ -24,5 +24,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [x] **Track: scripts and dependencies cleanup + update**
+- [~] **Track: scripts and dependencies cleanup + update**
 *Link: [./tracks/scripts_dependencies_cleanup_update_20260803/](./tracks/scripts_dependencies_cleanup_update_20260803/)*

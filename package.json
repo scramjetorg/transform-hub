@@ -122,9 +122,9 @@
     }
   },
   "devDependencies": {
+    "@ava/typescript": "^7.0.0",
     "@biomejs/biome": "2.5.0",
-	"@ava/typescript": "^7.0.0",
-	"@cucumber/cucumber": "^13.0.0",
+    "@cucumber/cucumber": "^13.0.0",
     "@cucumber/messages": "^34.0.0",
     "@istanbuljs/nyc-config-typescript": "^1.0.2",
     "@npmcli/run-script": "^11.0.0",
@@ -138,9 +138,9 @@
     "minimist": "^1.2.8",
     "npm": "11.19.0",
     "nyc": "^18.0.0",
+    "scramjet-bdd": "file:bdd",
     "semver": "^7.7.1",
-	"scramjet-bdd": "file:bdd",
-    "tar": "^6.2.1",
+    "tar": "^7.5.21",
     "toposort": "^2.0.2",
     "ts-node": "^10.9.2",
     "tsx": "^4.19.3",

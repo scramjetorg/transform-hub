@@ -15,7 +15,7 @@
     "@scramjet/utility": "^2.0.0",
     "@signicode/verser2-guest-node": "0.7.0",
     "@signicode/verser2-host": "0.7.0",
-    "dockerode": "^4.0.2",
+    "dockerode": "^5.0.1",
     "find-package-json": "^1.2.0",
     "freeport": "^1.0.5",
     "n-readlines": "^1.0.1",
@@ -23,7 +23,8 @@
   },
   "devDependencies": {
     "@cucumber/cucumber": "^13.0.0",
-    "@cucumber/messages": "^34.0.0"
+    "@cucumber/messages": "^34.0.0",
+    "@types/dockerode": "^4.0.1"
   },
   "scripts": {
     "build:bdd": "tsc -p tsconfig.json",

@@ -2,7 +2,14 @@ import { RunnerMessageCode } from "@scramjet/symbols";
 import { StopSequenceMessage } from "@scramjet/types";
 import testModel from "ava";
 
-import { MessageUtilities } from "@scramjet/model";
+import { IDProvider, MessageUtilities } from "@scramjet/model";
+
+testModel("IDProvider generates UUIDs validated by the CommonJS UUID runtime", t => {
+    const id = IDProvider.generate();
+
+    t.true(IDProvider.isValid(id));
+    t.false(IDProvider.isValid("not-a-uuid"));
+});
 
 testModel("Serialization must return a message in the correct format", async t => {
     const stopMsg: StopSequenceMessage = { msgCode: RunnerMessageCode.STOP, timeout: 1000, canCallKeepalive: true };

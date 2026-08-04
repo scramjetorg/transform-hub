@@ -4,7 +4,7 @@ const test = require("ava").default;
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
-const { packFixtureSet, validateManifest } = require("../lib/bdd-fixture-archives.js");
+const { packFixtureSet, validateManifest, validateArchive } = require("../lib/bdd-fixture-archives.js");
 
 function workspace() {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), "bdd-archives-test-"));
@@ -25,6 +25,34 @@ test("packing writes an exact source manifest and validates every archive", asyn
     const result = await packFixtureSet({ fixturesDir: context.fixtures, outputDir: context.output, prefix: "bdd-", outputName: name => `${name.slice(4)}.tar.gz` });
     t.deepEqual(result.manifest.archives[0].files.map(file => file.path), ["index.js", "package.json"]);
     t.is(validateManifest(result.manifestPath).archives.length, 1);
+});
+
+test("packing includes, lists and validates nested directory entries", async t => {
+    const context = workspace();
+    t.context = context;
+    const nested = path.join(context.fixtures, "bdd-nested", "sub");
+    fs.mkdirSync(nested, { recursive: true });
+    fs.writeFileSync(path.join(context.fixtures, "bdd-nested", "package.json"), "{\"main\":\"index.js\"}\n");
+    fs.writeFileSync(path.join(context.fixtures, "bdd-nested", "index.js"), "module.exports = async () => {};\n");
+    fs.writeFileSync(path.join(context.fixtures, "bdd-nested", "sub", "leaf.txt"), "leaf\n");
+
+    const result = await packFixtureSet({ fixturesDir: context.fixtures, outputDir: context.output, prefix: "bdd-", outputName: name => `${name.slice(4)}.tar.gz` });
+    const archive = result.manifest.archives.find(entry => entry.name === "bdd-nested");
+
+    t.truthy(archive, "nested fixture should be packed");
+    t.deepEqual(archive.files.map(file => file.path), ["index.js", "package.json", "sub/leaf.txt"]);
+
+    // list: tar.t exposes every nested entry path
+    const listed = [];
+    await require("tar").t({
+        file: path.join(context.output, archive.output),
+        onentry: entry => { if (entry.path) listed.push(entry.path); }
+    });
+    t.deepEqual(listed, ["index.js", "package.json", "sub/leaf.txt"]);
+
+    // validate: nested entries round-trip against the source manifest
+    await validateArchive(path.join(context.output, archive.output), archive.files);
+    t.is(validateManifest(result.manifestPath).archives.length, 2);
 });
 
 test("packing removes stale archives and rejects changed output", async t => {
