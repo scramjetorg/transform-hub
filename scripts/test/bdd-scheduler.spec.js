@@ -1,6 +1,6 @@
 "use strict";
 
-const test = require("ava");
+const test = require("ava").default;
 const { EventEmitter } = require("node:events");
 const { spawn } = require("node:child_process");
 const fs = require("node:fs");
@@ -90,6 +90,49 @@ test("measured default policy has reservations for every manifest chunk", t => {
         t.is(entry.reservation.absolutePeakBytes, 832 * 1024 * 1024, `chunk "${name}" must use aggregate owned-stack peak`);
         t.is(entry.reservation.committedMarginBytes, 64 * 1024 * 1024, `chunk "${name}" must use the evidence margin`);
         t.is(reservationBytes(entry.reservation), 896 * 1024 * 1024, `chunk "${name}" reservation total must be 896 MiB`);
+    }
+});
+
+test("concurrently admitted Host-owning chunks own distinct control ingress endpoints", async t => {
+    // Parallel admission co-schedules multiple Host-owning chunks in one batch
+    // (the default scheduler policy classifies them parallel-ready). Each such
+    // chunk spawns a suite Hub that enables its verser2 control ingress, so a
+    // shared default listener (127.0.0.1:2444) would collide under the host
+    // network namespace. Mirror the parallel scheduler's per-chunk ownership
+    // (runParallelWaves runChunk creates ownership with the shared run ID and
+    // the chunk name) plus the host-steps control-ingress allocation, and
+    // prove the admitted batch receives distinct endpoints.
+    const { allocateOwnedPort } = require("../../bdd/lib/ownership.js");
+    const { DEFAULT_CHUNKS, EXCLUSIVE_CHUNKS } = require("../run-bdd-waves.js");
+    const hostOwning = DEFAULT_CHUNKS.filter((name) => !EXCLUSIVE_CHUNKS.includes(name));
+    t.true(hostOwning.length >= 2, "parallel scheduling must admit at least two Host-owning chunks");
+
+    // Same host-memory budget the real scheduler sees for a full 4-chunk batch
+    // (4 GiB limit minus the 4 x 896 MiB owned-stack reservations).
+    const admitted = admitParallelChunks(hostOwning.slice(0, 4), {
+        hostMemoryBytes: 4 * 1024 * 1024 * 1024 - 4 * 896 * 1024 * 1024,
+    });
+    t.true(admitted.admitted, `parallel scheduler must admit a Host-owning batch together: ${admitted.reasons.join("; ")}`);
+    t.true(admitted.chunkNames.length >= 2, "admitted Host-owning batch must contain at least two chunks");
+
+    const runId = `scheduler-control-ingress-${process.pid}`;
+    const artifactRoot = fs.mkdtempSync(path.join(os.tmpdir(), "bdd-scheduler-ingress-"));
+    const reservations = [];
+    try {
+        for (const chunkId of admitted.chunkNames) {
+            // Same ownership construction as runParallelWaves runChunk.
+            const ownership = createOwnership(process.env, { runId, chunkId, artifactRoot });
+            reservations.push({ chunkId, reservation: await allocateOwnedPort(ownership) });
+        }
+        const ports = reservations.map(({ reservation }) => reservation.port);
+        t.is(new Set(ports).size, ports.length,
+            `concurrently admitted Host-owning chunks must own distinct control ingress ports, got ${ports.join(", ")}`);
+        for (const { chunkId, reservation } of reservations) {
+            t.not(reservation.port, 2444, `chunk "${chunkId}" must not bind the default control ingress port 2444`);
+        }
+    } finally {
+        for (const { reservation } of reservations) await reservation.release();
+        fs.rmSync(artifactRoot, { recursive: true, force: true });
     }
 });
 

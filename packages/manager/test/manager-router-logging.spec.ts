@@ -91,8 +91,8 @@ test.serial("Manager router logging strips target-path queries and excludes obje
             return "secret-token";
         }
     };
-    const failure = new Error("handler failed") as Error & { cause?: unknown };
-    failure.cause = cause;
+    const failure = new Error("handler failed");
+    Object.defineProperty(failure, "cause", { value: cause, enumerable: true });
     const router = {
         lookup: (_request: unknown, _response: unknown, next: (error?: Error) => void) => next(failure)
     };
@@ -118,8 +118,8 @@ test.serial("Manager router logging strips target-path queries and excludes obje
 test.serial("Manager router logging omits primitive cause values", t => {
     for (const cause of ["secret-token", Symbol("secret-symbol")]) {
         const records: Array<{ message: string; details: Record<string, unknown> }> = [];
-        const failure = new Error("handler failed") as Error & { cause?: unknown };
-        failure.cause = cause;
+        const failure = new Error("handler failed");
+        Object.defineProperty(failure, "cause", { value: cause, enumerable: true });
         const router = {
             lookup: (_request: unknown, _response: unknown, next: (error?: Error) => void) => next(failure)
         };

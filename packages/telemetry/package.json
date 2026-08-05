@@ -10,18 +10,21 @@
     "build": "../../scripts/build-all.js --config-name=tsconfig.build.json --copy-dist",
     "clean": "rm -rf ./dist .bic_cache",
     "copy:configs": "cd src; tar c `find -iname *.json` | tar x -C ../dist/",
-    "test": "echo \"Warning: no test specified\""
+    "test": "node ../../scripts/run-ava.js"
   },
   "ava": {
-    "extensions": [
-      "ts"
-    ],
     "files": [
       "**/*.spec.ts"
     ],
     "require": [
       "ts-node/register"
-    ]
+    ],
+    "typescript": {
+      "compile": false,
+      "rewritePaths": {
+        "./": "../.ava-telemetry/"
+      }
+    }
   },
   "repository": {
     "type": "git",
@@ -35,10 +38,11 @@
     "@scramjet/obj-logger": "^2.0.0",
     "@scramjet/utility": "^2.0.0",
     "winston": "^3.8.2",
-    "winston-loki": "^6.0.6"
+    "winston-loki": "^6.1.5"
   },
   "devDependencies": {
+    "@ava/typescript": "^7.0.0",
     "@scramjet/types": "^2.0.0",
-    "ava": "^3.15.0"
+    "ava": "^8.0.0"
   }
 }

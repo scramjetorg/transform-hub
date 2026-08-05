@@ -30,7 +30,14 @@ export abstract class ConfigFile<Type extends Object> extends Config<Type> {
         return super.isValid();
     }
 
-    private createIfNotExistAndWrite(value: any) {
+    /**
+     * Persistence hook invoked after every in-memory configuration mutation.
+     * The default implementation writes directly to the target file, which
+     * truncates it before the new content lands; subclasses that need to
+     * guarantee concurrent readers never observe partial content may override
+     * this hook with an atomic persistence strategy.
+     */
+    protected createIfNotExistAndWrite(value: any): boolean {
         if (!this.fileExist() && !this.file.create())
             return false;
         this.file.write(value);

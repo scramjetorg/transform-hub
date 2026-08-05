@@ -24,7 +24,7 @@
 
 "use strict";
 
-const test = require("ava");
+const test = require("ava").default;
 const path = require("node:path");
 const { existsSync, readFileSync } = require("node:fs");
 const { execFileSync } = require("node:child_process");

@@ -11,7 +11,7 @@
  *
  * Usage (strict – recommended):
  *
- *   const baseTest = require("ava");
+ *   const baseTest = require("ava").default;
  *   const { createAvaMemoryGuard, registerAvaMemoryCleanup }
  *     = require("../../scripts/lib/ava-memory-guard");
  *
@@ -414,7 +414,7 @@ function registerGuarded(method, title, rest, threshold, sourceLabel) {
  * signatures, plus AVA modifiers .serial, .only, .failing, .skip, .todo,
  * and hook pass-throughs .before, .after, .beforeEach, .afterEach.
  *
- * @param {object} rawTest     AVA test object (from require("ava")).
+ * @param {object} rawTest     AVA test object (from require("ava").default).
  * @param {object} [options]   Optional overrides.
  * @param {number} [options.threshold]  File-level threshold in bytes
  *        (must be a positive finite number if provided).

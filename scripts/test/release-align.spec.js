@@ -9,7 +9,7 @@
 
 "use strict";
 
-const test = require("ava");
+const test = require("ava").default;
 const fs = require("node:fs");
 const path = require("node:path");
 const { mkdtempSync, mkdirSync, rmSync, writeFileSync, readFileSync, existsSync } = require("node:fs");
@@ -1185,36 +1185,52 @@ test("runner-python pack content excludes test and docker artifacts", (t) => {
 	t.true(allFiles.includes("dist/__pypackages__"), "files includes vendored deps");
 });
 
-test("runner Docker build stages include runner-python", (t) => {
-	// Verify the Dockerfile has the COPY line for runner-python
+test("runner Docker builds consume the complete prepacked dependency closure", (t) => {
+	// The build-all dependency closure is authoritative; explicit lists drift
+	// when packages are renamed or split.
 	const dockerfile = readFileSync(
 		path.resolve(__dirname, "../../packages/runner/Dockerfile"), "utf8"
 	);
-	t.true(dockerfile.includes("runner-python"),
-		"runner Dockerfile copies runner-python");
+	t.true(dockerfile.includes("COPY ./dist/docker-runner ./dist"),
+		"runner Dockerfile copies the staged dependency closure");
+	t.false(dockerfile.includes("docker-runner/frame-stream"),
+		"runner Dockerfile does not require removed frame-stream package");
 
-	// Verify runner-python Dockerfile also has the COPY line
-	const rpDockerfile = readFileSync(
-		path.resolve(__dirname, "../../packages/runner-python/Dockerfile"), "utf8"
-	);
-	t.true(rpDockerfile.includes("runner-python"),
-		"runner-python Dockerfile copies runner-python");
+	for (const image of ["runner-bun", "runner-python"]) {
+		const runtimeDockerfile = readFileSync(
+			path.resolve(__dirname, `../../packages/${image}/Dockerfile`), "utf8"
+		);
+		t.true(runtimeDockerfile.includes("COPY ./dist/docker-runner ./dist"),
+			`${image} Dockerfile copies the staged dependency closure`);
+	}
 
 	// Verify prebuild:docker script stages runner-python
 	const runnerPkg = JSON.parse(readFileSync(
 		path.resolve(__dirname, "../../packages/runner/package.json"), "utf8"
 	));
 	const prebuild = runnerPkg.scripts["prebuild:docker"];
-	t.true(prebuild.includes("runner-python"),
-		"prebuild:docker includes runner-python staging");
+	t.true(prebuild.includes("packages/runner"),
+		"prebuild:docker stages the outer runner and runtime dependencies");
 	t.true(prebuild.includes("cp -r"),
 		"prebuild:docker uses cp -r for runner-python");
 });
 
-test("runner-python image staging remains a package/Dockerfile contract, not a legacy workflow fixture", (t) => {
+test("Docker build contracts use current prepacked package layouts", (t) => {
 	t.false(existsSync(path.resolve(__dirname, "../../.github/workflows/build-docker-runner-python.yml")));
-	const dockerfile = readFileSync(path.resolve(__dirname, "../../packages/runner-python/Dockerfile"), "utf8");
-	t.true(dockerfile.includes("COPY ./dist/docker-runner/runner-python"));
+
+	const sthDockerfile = readFileSync(path.resolve(__dirname, "../../packages/sth/Dockerfile"), "utf8");
+	t.true(sthDockerfile.includes("COPY ./dist ./dist"));
+	t.false(sthDockerfile.includes("python-runner"));
+
+	const multiManagerDockerfile = readFileSync(path.resolve(__dirname, "../../packages/multi-manager/Dockerfile"), "utf8");
+	t.true(multiManagerDockerfile.includes("COPY ./dist ./dist"));
+	t.false(multiManagerDockerfile.includes("cpm/packages"));
+
+	const multiManagerPkg = JSON.parse(readFileSync(
+		path.resolve(__dirname, "../../packages/multi-manager/package.json"), "utf8"
+	));
+	t.true(multiManagerPkg.scripts["prebuild:docker"].includes("packages/multi-manager"));
+	t.true(multiManagerPkg.scripts["build:docker"].endsWith("-f Dockerfile ../.."));
 });
 
 test("resolveRunnerPythonRoot falls back to local paths when not installed", (t) => {

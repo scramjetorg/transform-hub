@@ -33,6 +33,12 @@ runs:
         cache: ${{ inputs.cache == 'true' && 'npm' || '' }}
         cache-dependency-path: package-lock.json
 
+    - name: Install pinned npm
+      shell: bash
+      run: |
+        npm install --global --ignore-scripts npm@11.19.0
+        test "$(npm --version)" = "11.19.0"
+
     - name: Verify Node.js version and npm availability
       shell: bash
       run: |

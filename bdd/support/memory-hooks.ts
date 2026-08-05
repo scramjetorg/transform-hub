@@ -29,6 +29,7 @@ import { appendFileSync, existsSync, readFileSync, writeFileSync } from "fs";
 
 import {
     measureMemoryUsage,
+    memoryUsageTotal,
     drainAndGc,
     isBddMemoryGuardEnabled,
     bddMemoryHeapThresholdBytes,
@@ -315,7 +316,41 @@ if (isBddMemoryGuardEnabled() && !memorySkip.skip) {
 
 const BASELINE_KEY = "__memoryBaseline";
 const BEFORE_USAGE_KEY = "__memoryBeforeUsage";
+const BASELINE_USAGE_KEY = "__memoryBaselineUsage";
 const getMemoryRegistry = () => require("../lib/memory-registry").memoryRegistry;
+
+/**
+ * Resolve a scenario line from the feature file source when the pickle does
+ * not expose one.
+ *
+ * Runs in its own function so the feature source text (read + split) is
+ * released as soon as the lookup completes — before the After hook's final
+ * memory measurement.
+ *
+ * @param featureUri    Cucumber pickle URI (may be absolute).
+ * @param scenarioName  Exact scenario name.
+ * @returns {number}  Scenario line (1-based), or 0 when not found.
+ */
+function resolveScenarioLineFromFeatureSource(featureUri: string, scenarioName: string): number {
+    const featureCandidates = [
+        featureUri,
+        `bdd/${featureUri}`,
+        `/work/bdd/${featureUri}`,
+    ];
+    for (const featurePath of featureCandidates) {
+        if (!existsSync(featurePath)) continue;
+        const sourceLines = readFileSync(featurePath, "utf8").split(/\r?\n/);
+        const matchedLine = sourceLines.findIndex(line =>
+            /^\s*Scenario(?: Outline)?:\s*/.test(line) &&
+            line.replace(/^\s*Scenario(?: Outline)?:\s*/, "").trim() === scenarioName
+        );
+        if (matchedLine >= 0) {
+            return matchedLine + 1;
+        }
+    }
+    return 0;
+}
+
 let chunkSamplingTimer: ReturnType<typeof setInterval> | undefined;
 const timingEventsPath = process.env.BDD_CHUNK_TIMING_EVENTS_FILE;
 
@@ -355,8 +390,14 @@ Before(async function (scenario: any) {
 
     const baseline = measureMemoryUsage();
 
+    // Post-GC baseline component snapshot for diagnostics.  The enforced
+    // metric remains `baseline` from measureMemoryUsage(); this raw snapshot
+    // is retained only for the failure diagnostics breakdown.
+    const baselineUsage = process.memoryUsage();
+
     this[BASELINE_KEY] = baseline;
     this[BEFORE_USAGE_KEY] = beforeUsage;
+    this[BASELINE_USAGE_KEY] = baselineUsage;
 
     // Feed parent-heap sample into chunk-level tracking. The first scenario's
     // post-GC sample is the parent baseline; the readiness marker is emitted
@@ -450,23 +491,7 @@ After(async function (this: any, scenario: any) {
         scenarioLine = scenario.sourceLocation.line;
     }
     if (scenarioLine === 0 && featureUri && scenarioName) {
-        const featureCandidates = [
-            featureUri,
-            `bdd/${featureUri}`,
-            `/work/bdd/${featureUri}`,
-        ];
-        for (const featurePath of featureCandidates) {
-            if (!existsSync(featurePath)) continue;
-            const sourceLines = readFileSync(featurePath, "utf8").split(/\r?\n/);
-            const matchedLine = sourceLines.findIndex(line =>
-                /^\s*Scenario(?: Outline)?:\s*/.test(line) &&
-                line.replace(/^\s*Scenario(?: Outline)?:\s*/, "").trim() === scenarioName
-            );
-            if (matchedLine >= 0) {
-                scenarioLine = matchedLine + 1;
-                break;
-            }
-        }
+        scenarioLine = resolveScenarioLineFromFeatureSource(featureUri, scenarioName);
     }
 
     if (!isBddMemoryGuardEnabled() || memorySkip.skip || baseline === undefined) {
@@ -488,9 +513,16 @@ After(async function (this: any, scenario: any) {
 
     await drainAndGc();
 
+    // Post-GC component snapshot at the enforcement point.  Diagnostic only:
+    // the enforced metric remains `final` from measureMemoryUsage().
+    const postGcUsage = process.memoryUsage();
     const final = measureMemoryUsage();
     const delta = final - baseline;
     const threshold = bddMemoryHeapThresholdBytes();
+
+    // Bytes the final GC reclaimed between the pre-final-GC snapshot and the
+    // post-GC enforcement snapshot (diagnostic only, never enforced).
+    const reclaimedBytes = Math.max(0, memoryUsageTotal(afterUsage) - final);
 
     // ---- Apply per-scenario exception ----
     let effectiveThreshold = threshold;
@@ -519,8 +551,12 @@ After(async function (this: any, scenario: any) {
             delta,
             threshold: effectiveThreshold,
             sourceLabel: exceptionLabel || bddMemoryThresholdSourceLabel(),
-            beforeUsage: this[BEFORE_USAGE_KEY],
+            baselineUsage: this[BASELINE_USAGE_KEY],
             afterUsage,
+            postGcUsage,
+            reclaimedBytes,
+            rssBaseline: this[BASELINE_USAGE_KEY]?.rss,
+            rssFinal: postGcUsage.rss,
             cleanupErrors: cleanupErrors.length > 0 ? cleanupErrors : undefined,
         });
 
@@ -555,6 +591,7 @@ After(async function (this: any, scenario: any) {
     // Clean up per-scenario state
     delete this[BASELINE_KEY];
     delete this[BEFORE_USAGE_KEY];
+    delete this[BASELINE_USAGE_KEY];
 });
 
 // ---------------------------------------------------------------------------

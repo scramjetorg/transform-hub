@@ -35,7 +35,7 @@ Scramjet Transform Hub is a TypeScript monorepo for supervising sequence deploym
 ### Prerequisites
 
 - Node.js 18+ (20+ recommended)
-- npm 10+
+- npm 11+ (CI pins 11.19.0)
 - Python 3.9+ (for Python sequence development)
 - Bun 1.x (for Bun sequence development)
 

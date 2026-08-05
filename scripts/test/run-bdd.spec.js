@@ -13,7 +13,7 @@
 
 "use strict";
 
-const test = require("ava");
+const test = require("ava").default;
 const path = require("node:path");
 const fs = require("node:fs");
 const os = require("node:os");
@@ -41,29 +41,54 @@ test("run-bdd.js resolves cucumber-js from bdd/ directory", (t) => {
 	let cli;
 
 	try {
-		cli = require.resolve("@cucumber/cucumber/bin/cucumber-js", { paths: [bddDir] });
+		const cucumberPackage = require.resolve("@cucumber/cucumber/package.json", { paths: [bddDir] });
+		cli = path.resolve(path.dirname(cucumberPackage), "bin", "cucumber-js");
 	} catch {
 		try {
-			cli = require.resolve("cucumber/bin/cucumber-js", { paths: [bddDir] });
+			cli = require.resolve("@cucumber/cucumber/bin/cucumber-js", { paths: [bddDir] });
 		} catch {
-			// neither found — cucumber-js may not be installed.
+			try {
+				cli = require.resolve("cucumber/bin/cucumber-js", { paths: [bddDir] });
+			} catch {
+				// neither found — cucumber-js may not be installed.
+			}
 		}
 	}
 
 	t.truthy(cli, "cucumber-js should be resolvable from bdd/");
+	t.true(fs.existsSync(cli), "resolved cucumber-js CLI should exist");
 	t.true(cli.includes("cucumber"), "resolved path should contain cucumber");
 });
 
 test("Docker BDD runner gets cucumber-js from the root npm install", (t) => {
 	const rootManifest = JSON.parse(fs.readFileSync(path.resolve(__dirname, "../..", "package.json"), "utf8"));
+	const bddManifest = JSON.parse(fs.readFileSync(path.resolve(__dirname, "../../bdd", "package.json"), "utf8"));
 	const dockerRunner = fs.readFileSync(path.resolve(__dirname, "..", "run-bdd-docker.js"), "utf8");
+	const cucumberConfig = fs.readFileSync(path.resolve(__dirname, "../../bdd", "cucumber.js"), "utf8");
 
-	t.is(rootManifest.devDependencies["@cucumber/cucumber"], "^7.3.2");
-	t.is(rootManifest.devDependencies["@cucumber/messages"], "^14.0.0");
-	t.is(rootManifest.devDependencies["@cucumber/pretty-formatter"], "^1.0.0");
+	t.is(rootManifest.devDependencies["@cucumber/cucumber"], "^13.0.0");
+	t.is(rootManifest.devDependencies["@cucumber/messages"], "^34.0.0");
+	t.is(rootManifest.devDependencies["@cucumber/pretty-formatter"], undefined);
 	t.is(rootManifest.devDependencies["scramjet-bdd"], "file:bdd");
+	t.is(bddManifest.devDependencies["@cucumber/cucumber"], "^13.0.0");
+	t.is(bddManifest.devDependencies["@cucumber/messages"], "^34.0.0");
+	t.is(bddManifest.devDependencies["@cucumber/pretty-formatter"], undefined);
+	t.false(cucumberConfig.includes("--publish-quiet"), "Cucumber 13 no longer supports --publish-quiet");
+	t.false(cucumberConfig.includes("@cucumber/pretty-formatter"), "Cucumber 13 uses its built-in pretty formatter");
 	t.true(dockerRunner.includes("PATH=/work/node_modules/.bin:$PATH"));
 	t.false(dockerRunner.includes("yarn"));
+});
+
+test("Docker BDD runner builds and preflights its Node 22 and Bun image", (t) => {
+	const dockerRunner = fs.readFileSync(path.resolve(__dirname, "..", "run-bdd-docker.js"), "utf8");
+	const dockerfile = fs.readFileSync(path.resolve(__dirname, "../../docker/Dockerfile.bdd-bun"), "utf8");
+
+	t.true(dockerRunner.includes('const DEFAULT_BDD_NODE_IMAGE = "transform-hub-bdd-bun:dev"'));
+	t.true(dockerRunner.includes('["build", "--file", path.join(repoRoot, "docker", "Dockerfile.bdd-bun")'));
+	t.true(dockerRunner.includes('const runtimePreflight = ["node --version", "npm --version", "bun --version"].join(" && ")'));
+	t.true(dockerRunner.includes("`${runtimePreflight} && ${fixturePacking}"), "preflight runs inside the BDD container before fixtures");
+	t.true(dockerfile.includes("FROM node:22-bookworm-slim"));
+	t.true(dockerfile.includes("/usr/local/bin/bun"));
 });
 
 // ---------------------------------------------------------------------------
@@ -521,6 +546,15 @@ test("run-bdd-docker.js samples quickly when chunk policy is active", (t) => {
 
 	t.true(src.includes('process.env.BDD_CHUNK_MEMORY_SHORT === "1" ? 250 : 1000'));
 	t.true(src.includes("BDD_CHUNK_MEMORY_REPORT_FILE=/work-tmp/chunk-memory.json"));
+});
+
+test("run-bdd-docker.js keeps the Node compile cache outside BDD artifacts", t => {
+	const src = require("node:fs").readFileSync(
+		path.resolve(__dirname, "..", "run-bdd-docker.js"),
+		"utf8"
+	);
+	t.true(src.includes('const BDD_NODE_COMPILE_CACHE_DIR = "/tmp/node-compile-cache"'));
+	t.true(src.includes("`NODE_COMPILE_CACHE=${BDD_NODE_COMPILE_CACHE_DIR}`"));
 });
 
 test("run-bdd-docker.js mounts separate timing report and suppresses memory summary in timing-only mode", t => {

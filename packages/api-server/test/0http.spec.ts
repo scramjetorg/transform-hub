@@ -1,4 +1,4 @@
-import test, { after, beforeEach } from "ava";
+import test from "ava";
 import { createSandbox } from "sinon";
 import http from "http";
 
@@ -7,7 +7,7 @@ import { cero, sequentialRouter } from "@scramjet/api-server";
 const sandbox = createSandbox();
 const { Server } = http;
 
-beforeEach(() => sandbox.restore());
+test.beforeEach(() => sandbox.restore());
 
 test("Exposes interface", t => {
     t.true(typeof cero === "function", "Exposes {cero} as a function");
@@ -25,4 +25,4 @@ test("Creates a standard server by default and hooks up methods", (t) => {
     t.falsy(listenSpy.called, "Doesn't call listen by itself");
 });
 
-after(() => sandbox.restore());
+test.after(() => sandbox.restore());

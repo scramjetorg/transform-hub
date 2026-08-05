@@ -1,4 +1,4 @@
-const test = require("ava");
+const test = require("ava").default;
 const { PassThrough } = require("stream");
 const { collectStreamUntilEndOrSignal } = require("../../bdd/lib/stream-capture.js");
 

@@ -1,6 +1,6 @@
 "use strict";
 
-const test = require("ava");
+const test = require("ava").default;
 
 const { enableAutoMerge, manageReleasePr, releasePrDecision } = require("../release-pr-automation.js");
 

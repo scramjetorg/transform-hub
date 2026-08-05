@@ -14,22 +14,34 @@ import { createControlIngressTls } from "../../../scripts/test/control-ingress-t
 type Result = { code: number | null; output: string };
 const root = resolve(__dirname, "../../..");
 
-function invoke(home: string, args: string[]): Promise<Result> {
+function invoke(t: any, home: string, args: string[]): Promise<Result> {
     const child = spawn(process.execPath, ["-r", "ts-node/register", "packages/cli/src/bin/index.ts", ...args], { cwd: root, env: { ...process.env, HOME: home, NODE_OPTIONS: "--max-old-space-size=512" } });
     let output = "";
     let settled = false;
+    let timedOut = false;
     let timer: NodeJS.Timeout | undefined;
     const result = new Promise<Result>((resolveResult, rejectResult) => {
         child.stdout.on("data", chunk => output += chunk);
         child.stderr.on("data", chunk => output += chunk);
         child.once("error", error => rejectResult(new Error(`CLI spawn failed: ${error.message}`)));
-        child.once("close", code => { settled = true; if (timer) clearTimeout(timer); resolveResult({ code, output }); });
+        child.once("close", code => {
+            settled = true;
+            if (timer) clearTimeout(timer);
+            if (timedOut) rejectResult(new Error(`CLI timed out; termination completed. Output:\n${output}`));
+            else resolveResult({ code, output });
+        });
         timer = setTimeout(() => {
             if (settled) return;
+            timedOut = true;
             child.kill("SIGTERM");
             setTimeout(() => child.kill("SIGKILL"), 1000).unref();
-            rejectResult(new Error(`CLI timed out; termination attempted. Output:\n${output}`));
         }, 30000);
+    });
+    t.teardown(async () => {
+        if (!settled) {
+            child.kill("SIGTERM");
+            await new Promise(resolveClose => child.once("close", resolveClose));
+        }
     });
     return result;
 }
@@ -50,12 +62,17 @@ test.serial("CLI Verser2 process traverses non-mTLS Hub ingress without client c
     let guest: Awaited<ReturnType<ReturnType<typeof createVerserHost>["attachLocalGuest"]>> | undefined;
     let requests = 0;
 
-    registerAvaMemoryCleanup(t, async () => {
+    let cleanupPromise: Promise<void> | undefined;
+    const cleanup = () => cleanupPromise ||= (async () => {
         await guest?.close("test cleanup").catch(() => undefined);
+        guest = undefined;
         await host?.close().catch(() => undefined);
+        host = undefined;
         rmSync(directory, { recursive: true, force: true });
         tls.cleanup();
-    });
+    })();
+    registerAvaMemoryCleanup(t, cleanup);
+    t.teardown(cleanup);
 
     // Create a VerserHost with TLS server identity but NO clientAuth — this is the
     // non-mTLS ingress.  The host encrypts traffic and verifies no client certificate.
@@ -104,14 +121,14 @@ test.serial("CLI Verser2 process traverses non-mTLS Hub ingress without client c
     writeProfile(home, profileValue);
 
     // Issue a raw API version request through the non-mTLS ingress.
-    const result = await invoke(home, ["api", "get", "/version"]);
+    const result = await invoke(t, home, ["api", "get", "/version"]);
     t.is(result.code, 0, `CLI exited with code ${result.code}. Output:\n${result.output}`);
     t.is(requests, 1, "The Host guest must have received exactly one version request");
 
     // Verify that hub-level ingress isolation still works: upstream traversal
     // should be rejected.
     const beforeIsolation = requests;
-    const upstream = await invoke(home, ["api", "get", "/spaces/space-a/version"]);
+    const upstream = await invoke(t, home, ["api", "get", "/spaces/space-a/version"]);
     t.is(upstream.code, 54, `Upstream traversal must be rejected (exit 54). Output:\n${upstream.output}`);
     t.is(requests, beforeIsolation, "No additional requests should reach the guest after rejected upstream traversal");
 });

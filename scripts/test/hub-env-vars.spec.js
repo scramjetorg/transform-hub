@@ -13,7 +13,7 @@
 
 "use strict";
 
-const test = require("ava");
+const test = require("ava").default;
 const fs = require("fs");
 const path = require("path");
 

@@ -21,6 +21,14 @@
  *   SCRAMJET_AVA_FETCH               – set to "0"|"false"|"no"|"off" to add
  *                                      --no-experimental-fetch
  *   SCRAMJET_AVA_WORKERS             – AVA concurrency / worker count (positive integer)
+ *   SCRAMJET_AVA_NO_WORKER_THREADS   – set to a non‑disabled value to inject
+ *                                      AVA --no-worker-threads, forcing
+ *                                      child‑process workers instead of worker
+ *                                      threads (avoids the per‑thread address
+ *                                      space reservation, which OOMs under
+ *                                      tight ulimit caps); an explicit
+ *                                      --worker-threads or --no-worker-threads
+ *                                      CLI argument always wins over the env
  *   SCRAMJET_AVA_TIMEOUT             – runner‑level timeout in milliseconds
  *   SCRAMJET_AVA_RUNNER              – set to "1" by the runner to mark a legitimate
  *                                      invocation (used by the bypass guard preload)
@@ -45,7 +53,7 @@
  */
 
 const { existsSync, readFileSync } = require("node:fs");
-const { dirname, join, resolve } = require("node:path");
+const { basename, dirname, join, resolve } = require("node:path");
 
 // ---------------------------------------------------------------------------
 // Option‑string manipulators (pure, no side effects)
@@ -164,6 +172,54 @@ function resolveAvaCli() {
 	return resolve(packageRoot, bin);
 }
 
+/**
+ * Resolve the TypeScript compiler invocation required by AVA 8 package tests.
+ * AVA 8 imports test files as ESM, so TypeScript package tests use the
+ * @ava/typescript provider to rewrite source paths to precompiled output.
+ *
+ * @param {string} [projectDir=process.cwd()]  Package directory to inspect.
+ * @returns {{ args: string[], outputDir: string, stagedProjectDir: string }|undefined}  Compiler invocation and output location when needed.
+ */
+function avaTypeScriptCompileArgs(projectDir = process.cwd()) {
+	const manifestPath = join(projectDir, "package.json");
+
+	if (!existsSync(manifestPath)) return undefined;
+
+	const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
+
+	if (manifest.ava?.typescript?.compile !== false) return undefined;
+
+	const rewritePaths = Object.values(manifest.ava.typescript.rewritePaths);
+
+	if (rewritePaths.length !== 1) {
+		throw new Error("AVA TypeScript configuration must define exactly one rewrite path.");
+	}
+
+	const outputDir = resolve(projectDir, rewritePaths[0]);
+
+	return {
+		args: [
+			require.resolve("typescript/bin/tsc", { paths: [projectDir] }),
+			"--incremental",
+			"false",
+			"--outDir",
+			outputDir,
+			"--allowJs",
+			"false",
+			"--declaration",
+			"false",
+			"--sourceMap",
+			"false",
+			"--pretty",
+			"false",
+			"--noEmitOnError",
+			"false"
+		],
+		outputDir,
+		stagedProjectDir: join(outputDir, basename(projectDir))
+	};
+}
+
 // ---------------------------------------------------------------------------
 // Env‑var names and defaults
 // ---------------------------------------------------------------------------
@@ -175,6 +231,7 @@ const ENV = Object.freeze({
 	FETCH: "SCRAMJET_AVA_FETCH",
 	MAX_OLD_SPACE: "SCRAMJET_AVA_MAX_OLD_SPACE_SIZE",
 	WORKERS: "SCRAMJET_AVA_WORKERS",
+	NO_WORKER_THREADS: "SCRAMJET_AVA_NO_WORKER_THREADS",
 	TIMEOUT: "SCRAMJET_AVA_TIMEOUT",
 	RUNNER: "SCRAMJET_AVA_RUNNER",
 	GUARD: "SCRAMJET_AVA_GUARD",
@@ -251,7 +308,8 @@ function maxOldSpaceSize() {
  * - Appends --no-experimental-fetch when SCRAMJET_AVA_FETCH is disabled.
  * - Enables JIT with Node's permissive default WASM capabilities; appends --jitless when
  *   SCRAMJET_AVA_JITLESS is explicitly enabled.
- * - Appends --require for the bypass‑guard preload when SCRAMJET_AVA_GUARD=1.
+ * - Appends the runner leak-diagnostic preload. That preload conditionally
+ *   loads the bypass guard when SCRAMJET_AVA_GUARD=1.
  *
  * @param {string} [options=process.env.NODE_OPTIONS || ""]  Base options.
  * @returns {string}  Updated NODE_OPTIONS string.
@@ -272,14 +330,9 @@ function avaNodeOptions(options) {
 	//    AVA can safely inherit it when creating Workers.
 	const withMemoryGuard = isMemoryGuardEnabled() ? appendNodeOption(withJit, "--expose-gc") : withJit;
 
-	// 5. Bypass‑guard preload (opt‑in via SCRAMJET_AVA_GUARD=1)
-	//    NOTE: this guard is only effective for runner‑spawned AVA processes
-	//    or when users preload ava-guard.cjs directly.  Direct `npx ava`
-	//    invocation without NODE_OPTIONS cannot be intercepted by this
-	//    bounded implementation.
-	if (process.env[ENV.GUARD] !== "1") {
-		return withMemoryGuard;
-	}
+	// 5. Runner leak diagnostics. The preload runs in AVA workers and detects
+	//    event-loop resources after the worker signals test completion. It
+	//    conditionally invokes the existing opt-in direct-invocation guard.
 	return appendNodeOption(withMemoryGuard, `--require=${preloadGuardPath()}`);
 }
 
@@ -318,6 +371,23 @@ function avaConcurrency() {
 }
 
 /**
+ * Whether AVA should be forced to use child-process workers instead of worker
+ * threads.
+ *
+ * Enabled when SCRAMJET_AVA_NO_WORKER_THREADS is set to a non-disabled value
+ * (e.g. "1"); disabled-style values ("0", "false", "no", "off") and an unset
+ * variable keep AVA's default worker-thread mode.  Explicit --worker-threads /
+ * --no-worker-threads CLI arguments always take precedence (see buildAvaArgs).
+ *
+ * @returns {boolean}
+ */
+function noWorkerThreadsEnabled() {
+	const value = process.env[ENV.NO_WORKER_THREADS];
+
+	return value !== undefined && !isDisabled(value);
+}
+
+/**
  * Build the full argument list for spawning the AVA child process.
  *
  * @param {string[]} cliArgs  Additional AVA CLI arguments (e.g. from process.argv.slice(2)).
@@ -328,6 +398,17 @@ function buildAvaArgs(cliArgs) {
 	const avaCli = resolveAvaCli();
 
 	args.push(avaCli);
+
+	// Worker-thread mode: child-process workers are forced whenever
+	// SCRAMJET_AVA_NO_WORKER_THREADS is enabled OR memory guard mode is
+	// active.  Worker threads reserve ~605 MiB of address space each and OOM
+	// under the repository's tight ulimit cap (including the memory-guard
+	// commands, where deterministic serial measurement also wants child
+	// processes).  An explicit --worker-threads / --no-worker-threads CLI flag
+	// always wins over the environment.
+	if ((noWorkerThreadsEnabled() || isMemoryGuardEnabled()) && !cliArgs.some((a) => a === "--worker-threads" || a === "--no-worker-threads")) {
+		args.push("--no-worker-threads");
+	}
 
 	// Memory guard mode: enforce serial execution for deterministic memory
 	// measurement.
@@ -529,7 +610,7 @@ function runnerInvocationEnv() {
  * @returns {string}
  */
 function preloadGuardPath() {
-	return resolve(__dirname, "ava-guard.cjs");
+	return resolve(__dirname, "ava-leak-diagnostics.cjs");
 }
 
 /**
@@ -556,6 +637,7 @@ module.exports = {
 	// Path resolution
 	findPackageRoot,
 	resolveAvaCli,
+	avaTypeScriptCompileArgs,
 
 	// Constants
 	ENV,
@@ -568,6 +650,7 @@ module.exports = {
 	avaNodeOptions,
 	avaNodeArgs,
 	avaConcurrency,
+	noWorkerThreadsEnabled,
 	buildAvaArgs,
 	runnerTimeout,
 

@@ -293,7 +293,7 @@ export class DockerodeDockerHelper implements IDockerHelper {
                 "org.scramjet.host.is-sequence": "true"
             }
         }).then((volume) => {
-            return volume.name;
+            return volume.Name;
         });
     }
 

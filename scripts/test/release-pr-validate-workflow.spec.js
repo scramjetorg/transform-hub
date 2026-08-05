@@ -1,6 +1,6 @@
 "use strict";
 
-const test = require("ava");
+const test = require("ava").default;
 const { readFileSync } = require("node:fs");
 const { resolve } = require("node:path");
 
@@ -108,6 +108,8 @@ test("release PR BDD consumes only verified publisher output and exact prereleas
 	t.true(source.includes("npm --prefix .release-prerelease-bdd install --package-lock-only --ignore-scripts --registry https://npm.pkg.github.com"));
 	t.true(source.includes("npm --prefix .release-prerelease-bdd ci --ignore-scripts"));
 	t.true(source.includes("npm run test:bdd-ci-api-node"));
+	t.true(source.includes("npm install --global --ignore-scripts npm@11.19.0"));
+	t.true(source.includes('test "$(npm --version)" = "11.19.0"'));
 	t.true(source.includes("BDD_NODE_IMAGE"));
 	t.true(source.includes('test "$PUBLISHED" = "true"'));
 	t.true(source.includes('test "$BDD_REGISTRY_ENABLED" = "true"'));

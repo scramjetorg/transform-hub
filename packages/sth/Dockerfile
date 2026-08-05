@@ -2,30 +2,7 @@ FROM node:22-bookworm-slim AS builder
 
 WORKDIR /build
 
-COPY ./dist/adapters ./dist/adapters
-COPY ./dist/adapter-process ./dist/adapter-process
-COPY ./dist/adapter-kubernetes ./dist/adapter-kubernetes
-COPY ./dist/adapter-docker ./dist/adapter-docker
-COPY ./dist/adapters-common ./dist/adapters-common
-COPY ./dist/api-client ./dist/api-client
-COPY ./dist/frame-stream ./dist/frame-stream
-COPY ./dist/client-utils ./dist/client-utils
-COPY ./dist/config ./dist/config
-COPY ./dist/api-server ./dist/api-server
-COPY ./dist/host ./dist/host
-COPY ./dist/obj-logger ./dist/obj-logger
-COPY ./dist/model ./dist/model
-COPY ./dist/module-loader ./dist/module-loader
-COPY ./dist/runner ./dist/runner
-COPY ./dist/pre-runner ./dist/pre-runner
-COPY ./dist/python-runner ./dist/python-runner
-COPY ./dist/monitoring-server ./dist/monitoring-server
-COPY ./dist/sth ./dist/sth
-COPY ./dist/symbols ./dist/symbols
-COPY ./dist/load-check ./dist/load-check
-COPY ./dist/utility ./dist/utility
-COPY ./dist/telemetry ./dist/telemetry
-COPY ./dist/package.json ./dist/package.json
+COPY ./dist ./dist
 COPY LICENSE ./
 
 RUN cd dist && npm i --omit=optional --omit=dev --legacy-peer-deps

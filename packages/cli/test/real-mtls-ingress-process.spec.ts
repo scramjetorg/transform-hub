@@ -67,14 +67,21 @@ test.serial("configured CLI processes traverse real mTLS MultiManager, Manager, 
     let multiRequests = 0;
     let managerRequests = 0;
     let hubRequests = 0;
-    registerAvaMemoryCleanup(t, async () => {
+    let cleanupPromise: Promise<void> | undefined;
+    const cleanup = () => cleanupPromise ||= (async () => {
         await multiGuest?.close("test cleanup").catch(() => undefined);
+        multiGuest = undefined;
         await multiHost?.close().catch(() => undefined);
+        multiHost = undefined;
         await stopManagerControlIngress(managerHost).catch(() => undefined);
+        managerHost = undefined;
         await stopHostControlIngress(hubHost).catch(() => undefined);
+        hubHost = undefined;
         rmSync(directory, { recursive: true, force: true });
         tls.cleanup();
-    });
+    })();
+    registerAvaMemoryCleanup(t, cleanup);
+    t.teardown(cleanup);
 
     const ingress = (guestId: string, domain: string) => ({ enabled: true, identityDir: tls.dir, host: { bindHost: "127.0.0.1", bindPort: 0, publicUrl: "https://localhost:2444", tls: { mtlsRequired: true, certFile: tls.serverCertFile, keyFile: tls.serverKeyFile, caFile: tls.caFile, clientAuthCaFile: tls.caFile } }, registration: { allowedClientFingerprints: [tls.allowedFingerprint] }, localBroker: { peerId: `${guestId}.broker`, routeDomain: domain }, localGuest: { peerId: guestId, routeDomain: domain }, guest: { peerId: guestId, routeDomain: domain } });
     const identity = (level: string, serviceId: string, routeDomain: string) => ({ level, serviceId, routeDomain });

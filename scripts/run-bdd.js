@@ -37,7 +37,7 @@
 
 
 const { spawnSync } = require("node:child_process");
-const { resolve } = require("node:path");
+const { dirname, resolve } = require("node:path");
 
 const { reportLeakedProcesses } = require("./lib/bdd-cleanup.js");
 const { bddNodeOptions, bddNodeArgs } = require("./lib/bdd-options.js");
@@ -105,17 +105,24 @@ if (mode === "docker") {
 
 const bddDir = resolve(__dirname, "..", "bdd");
 
-// Resolve cucumber-js CLI from bdd's node_modules.
+// Cucumber 13 restricts deep package imports through `exports`, so resolve the
+// package manifest and derive its documented CLI path instead of requiring the
+// unexported `bin/cucumber-js` subpath.
 let cucumberCli;
 
 try {
-	cucumberCli = require.resolve("@cucumber/cucumber/bin/cucumber-js", { paths: [bddDir] });
+	const cucumberPackage = require.resolve("@cucumber/cucumber/package.json", { paths: [bddDir] });
+	cucumberCli = resolve(dirname(cucumberPackage), "bin", "cucumber-js");
 } catch {
 	try {
-		cucumberCli = require.resolve("cucumber/bin/cucumber-js", { paths: [bddDir] });
+		cucumberCli = require.resolve("@cucumber/cucumber/bin/cucumber-js", { paths: [bddDir] });
 	} catch {
-		console.error("[run-bdd] Cannot resolve cucumber-js from bdd/ directory. Is it installed?");
-		process.exit(1);
+		try {
+			cucumberCli = require.resolve("cucumber/bin/cucumber-js", { paths: [bddDir] });
+		} catch {
+			console.error("[run-bdd] Cannot resolve cucumber-js from bdd/ directory. Is it installed?");
+			process.exit(1);
+		}
 	}
 }
 

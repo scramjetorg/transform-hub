@@ -13,9 +13,26 @@ import { profileManager } from "../src/lib/config";
 import { publicVerser2Profile, resolveVerser2Passphrase, validateVerser2Bootstrap, validateVerser2Profile } from "../src/lib/config/verser2Profile";
 import { Verser2ProfileConfig } from "../src/types";
 
+function setTestPassphrase(t: any, value: string) {
+    const previous = process.env.VERSER2_TEST_PASSPHRASE;
+    let restored = false;
+    const restore = () => {
+        if (restored) return;
+        restored = true;
+        if (previous === undefined) delete process.env.VERSER2_TEST_PASSPHRASE;
+        else process.env.VERSER2_TEST_PASSPHRASE = previous;
+    };
+
+    registerAvaMemoryCleanup(t, restore);
+    t.teardown(restore);
+    process.env.VERSER2_TEST_PASSPHRASE = value;
+    return restore;
+}
+
 baseTest.before(async () => {
     const { directory, config } = fixture();
     const file = path.join(directory, "warmup.json");
+    const previousPassphrase = process.env.VERSER2_TEST_PASSPHRASE;
     process.env.VERSER2_TEST_PASSPHRASE = "warm";
     try {
         validateVerser2Profile(config);
@@ -54,13 +71,24 @@ baseTest.before(async () => {
         draft.promoteVerser2Draft();
     } finally {
         profileManager.useDefaultProfile();
-        delete process.env.VERSER2_TEST_PASSPHRASE;
+        if (previousPassphrase === undefined) delete process.env.VERSER2_TEST_PASSPHRASE;
+        else process.env.VERSER2_TEST_PASSPHRASE = previousPassphrase;
         fs.rmSync(directory, { recursive: true, force: true });
     }
 });
 
-function fixture() {
+function fixture(t?: any) {
     const directory = fs.mkdtempSync(path.join(os.tmpdir(), "scramjet-verser2-profile-"));
+    let cleaned = false;
+    const cleanup = () => {
+        if (cleaned) return;
+        cleaned = true;
+        fs.rmSync(directory, { recursive: true, force: true });
+    };
+    if (t) {
+        registerAvaMemoryCleanup(t, cleanup);
+        t.teardown(cleanup);
+    }
     const file = (name: string, mode: number) => {
         const target = path.join(directory, name);
         fs.writeFileSync(target, name);
@@ -79,20 +107,19 @@ function fixture() {
 }
 
 test("Verser2 profile validates file-backed PEM and environment passphrase references", t => {
-    let fixtureValue: ReturnType<typeof fixture> | undefined = fixture();
+    let fixtureValue: ReturnType<typeof fixture> | undefined = fixture(t);
     const { directory, config } = fixtureValue;
-    registerAvaMemoryCleanup(t, () => { delete process.env.VERSER2_TEST_PASSPHRASE; fs.rmSync(directory, { recursive: true, force: true }); fixtureValue = undefined; });
-    process.env.VERSER2_TEST_PASSPHRASE = "not-stored";
+    const restorePassphrase = setTestPassphrase(t, "not-stored");
     let bootstrapFailed = false;
     try { validateVerser2Bootstrap({ ...config, tls: { ...config.tls, keyFile: config.tls.caFile } }); } catch (_) { bootstrapFailed = true; }
     const checks = [validateVerser2Profile(config), resolveVerser2Passphrase("env://VERSER2_TEST_PASSPHRASE") === "not-stored", !validateVerser2Profile({ ...config, endpoint: "http://localhost:4233" }), !validateVerser2Profile({ ...config, endpoint: "https://user:secret@localhost:4233" }), !validateVerser2Profile({ ...config, endpoint: ["https://localhost"] as any }), !validateVerser2Profile({ ...config, endpoint: {} as any }), validateVerser2Profile({ ...config, tls: { ...config.tls, keyFile: config.tls.caFile } }), bootstrapFailed];
     t.true(checks.every(Boolean));
-    delete process.env.VERSER2_TEST_PASSPHRASE;
+    restorePassphrase();
     fs.rmSync(directory, { recursive: true, force: true });
 });
 
 test("Verser2 profile supports owner-only passphrase files and redacts secret fields", t => {
-    let fixtureValue: ReturnType<typeof fixture> | undefined = fixture();
+    let fixtureValue: ReturnType<typeof fixture> | undefined = fixture(t);
     const { directory, config, file } = fixtureValue;
     registerAvaMemoryCleanup(t, () => { fs.rmSync(directory, { recursive: true, force: true }); fixtureValue = undefined; });
     const secret = file("passphrase", 0o600);
@@ -108,8 +135,8 @@ test("Verser2 profile supports owner-only passphrase files and redacts secret fi
 });
 
 test("legacy profiles remain valid and Verser2 migration/reset preserves HTTP settings", t => {
-    const { directory, config } = fixture();
-    process.env.VERSER2_TEST_PASSPHRASE = "secret";
+    const { directory, config } = fixture(t);
+    const restorePassphrase = setTestPassphrase(t, "secret");
     const profileFile = path.join(directory, "profile.json");
     const profile = new ProfileConfig(profileFile);
     profile.restoreDefault();
@@ -122,12 +149,12 @@ test("legacy profiles remain valid and Verser2 migration/reset preserves HTTP se
     t.true(profile.resetVerser2());
     t.is(profile.get().verser2, undefined);
     t.is(profile.get().apiUrl, legacy.apiUrl);
-    delete process.env.VERSER2_TEST_PASSPHRASE;
+    restorePassphrase();
     fs.rmSync(directory, { recursive: true, force: true });
 });
 
 test("profile schema rejects unknown, inline-secret, and invalid topology/TLS shapes without resolving runtime references", t => {
-    let fixtureValue: ReturnType<typeof fixture> | undefined = fixture();
+    let fixtureValue: ReturnType<typeof fixture> | undefined = fixture(t);
     const { directory, config } = fixtureValue;
     registerAvaMemoryCleanup(t, () => { fs.rmSync(directory, { recursive: true, force: true }); fixtureValue = undefined; });
     const missingReference = { ...config, tls: { ...config.tls, passphraseReference: "env://NOT_PRESENT" } };
@@ -138,7 +165,7 @@ test("profile schema rejects unknown, inline-secret, and invalid topology/TLS sh
 });
 
 test("bootstrap rejects symlinked private material", t => {
-    let fixtureValue: ReturnType<typeof fixture> | undefined = fixture();
+    let fixtureValue: ReturnType<typeof fixture> | undefined = fixture(t);
     const { directory, config } = fixtureValue;
     registerAvaMemoryCleanup(t, () => { fs.rmSync(directory, { recursive: true, force: true }); fixtureValue = undefined; });
     const link = path.join(directory, "key-link.pem");
@@ -150,18 +177,18 @@ test("bootstrap rejects symlinked private material", t => {
 });
 
 test("bootstrap returns opened credential material despite later path replacement", t => {
-    const { directory, config } = fixture();
-    process.env.VERSER2_TEST_PASSPHRASE = "secret";
+    const { directory, config } = fixture(t);
+    const restorePassphrase = setTestPassphrase(t, "secret");
     const material = validateVerser2Bootstrap(config);
     fs.writeFileSync(config.tls.keyFile as string, "replacement");
     t.is(material.key?.toString(), "key.pem");
     t.is(publicVerser2Profile({ ...config, endpoint: "https://user:secret@localhost" } as any).endpoint, undefined);
-    delete process.env.VERSER2_TEST_PASSPHRASE;
+    restorePassphrase();
     fs.rmSync(directory, { recursive: true, force: true });
 });
 
 test("granular Verser2 initialization, update, and field reset preserve legacy profiles", t => {
-    const { directory, config } = fixture();
+    const { directory, config } = fixture(t);
     const profile = new ProfileConfig(path.join(directory, "granular.json"));
     profile.restoreDefault();
     t.true(profile.updateVerser2Draft(current => ({ ...current, endpoint: config.endpoint })));
@@ -179,7 +206,7 @@ test("granular Verser2 initialization, update, and field reset preserve legacy p
 });
 
 test("inactive drafts persist across fresh profiles and reject unsafe leaf entries", t => {
-    const { directory } = fixture();
+    const { directory } = fixture(t);
     const file = path.join(directory, "draft.json");
     const first = new ProfileConfig(file);
     first.restoreDefault();
@@ -198,7 +225,7 @@ test("inactive drafts persist across fresh profiles and reject unsafe leaf entri
 });
 
 test("draft leaves require strict primitive URL, identity, topology, and secret-reference values", t => {
-    const { directory } = fixture();
+    const { directory } = fixture(t);
     const profile = new ProfileConfig(path.join(directory, "strict-draft.json"));
     profile.restoreDefault();
     for (const draft of [
@@ -211,7 +238,7 @@ test("draft leaves require strict primitive URL, identity, topology, and secret-
 });
 
 test("draft promotion is atomic across reload and incomplete drafts remain inactive", t => {
-    const { directory, config } = fixture();
+    const { directory, config } = fixture(t);
     const file = path.join(directory, "promote.json");
     const profile = new ProfileConfig(file);
     profile.restoreDefault();
@@ -230,7 +257,7 @@ test("draft promotion is atomic across reload and incomplete drafts remain inact
 });
 
 test("draft PEM and PFX mutations transition atomically and reset stays inactive", t => {
-    const { directory, config } = fixture();
+    const { directory, config } = fixture(t);
     const profile = new ProfileConfig(path.join(directory, "tls-draft.json"));
     profile.restoreDefault();
     t.true(profile.updateVerser2Draft(() => ({ ...config })));
@@ -252,7 +279,7 @@ test("draft PEM and PFX mutations transition atomically and reset stays inactive
 });
 
 test("failed promotion and reset preserve exact active and persisted state", t => {
-    const { directory, config } = fixture();
+    const { directory, config } = fixture(t);
     const file = path.join(directory, "rollback.json");
     const profile = new ProfileConfig(file);
     profile.restoreDefault();
@@ -273,7 +300,7 @@ test("failed promotion and reset preserve exact active and persisted state", t =
 });
 
 test("candidate persistence preserves restrictive existing mode and uses 0600 for new profiles", t => {
-    const { directory, config } = fixture();
+    const { directory, config } = fixture(t);
     const existingFile = path.join(directory, "mode-existing.json");
     const existing = new ProfileConfig(existingFile);
     existing.restoreDefault();
@@ -287,20 +314,25 @@ test("candidate persistence preserves restrictive existing mode and uses 0600 fo
     }
 
     const newFile = path.join(directory, "mode-new.json");
-    const originalUmask = process.umask(0o022);
+    let originalUmask: number | undefined;
+    try {
+        originalUmask = process.umask(0o022);
+    } catch {
+        // Node Worker threads do not permit changing the process-wide umask.
+    }
     try {
         const fresh = new ProfileConfig(newFile);
         fs.unlinkSync(newFile);
         t.true(fresh.updateVerser2Draft(() => ({ endpoint: config.endpoint })));
         t.is(statMode(newFile), 0o600);
     } finally {
-        process.umask(originalUmask);
+        if (originalUmask !== undefined) process.umask(originalUmask);
     }
     fs.rmSync(directory, { recursive: true, force: true });
 });
 
 test("atomic candidate persistence does not follow a symlinked profile target or leave sibling temps", t => {
-    const { directory, config } = fixture();
+    const { directory, config } = fixture(t);
     const victim = path.join(directory, "victim.json");
     const profilePath = path.join(directory, "profile-link.json");
     fs.writeFileSync(victim, JSON.stringify({ configVersion: 1, apiUrl: "http://127.0.0.1:8000/api/v1", middlewareApiUrl: "", env: "development", scope: "", token: "", log: { debug: false, format: "pretty" } }));
@@ -318,7 +350,7 @@ function statMode(file: string): number {
 }
 
 test("dotted config leaves persist drafts and promote through descriptor actions", async t => {
-    let fixtureValue: ReturnType<typeof fixture> | undefined = fixture();
+    let fixtureValue: ReturnType<typeof fixture> | undefined = fixture(t);
     const { directory, config } = fixtureValue;
     registerAvaMemoryCleanup(t, () => { profileManager.useDefaultProfile(); fs.rmSync(directory, { recursive: true, force: true }); fixtureValue = undefined; });
     const file = path.join(directory, "command-profile.json");

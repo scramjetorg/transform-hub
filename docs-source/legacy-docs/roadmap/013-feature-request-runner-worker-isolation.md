@@ -60,7 +60,7 @@ No breaking changes. The host still launches `packages/runner` as the executable
 - Unit test: sequence wrapper startup does not read runner-owned values from `process.env`; metadata comes from private boot config and pipe wiring.
 - Integration test: start a Node sequence that throws after writing to stdout/stderr; verify the hub receives both streams and a structured failure instead of losing communication immediately.
 - Integration test: start a successful Node sequence and verify existing output, monitoring, and lifecycle behavior remain compatible with current host endpoints.
-- Manual verification: run `yarn start:dev -- --runtime-adapter=process`, deploy a simple Node sequence, then repeat with a sequence that throws and confirm diagnostics are relayed before cleanup.
+- Manual verification: run `npm run start:dev -- --runtime-adapter=process`, deploy a simple Node sequence, then repeat with a sequence that throws and confirm diagnostics are relayed before cleanup.
 
 ## References
 

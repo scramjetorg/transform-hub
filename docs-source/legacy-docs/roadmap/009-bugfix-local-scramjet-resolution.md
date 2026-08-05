@@ -9,11 +9,11 @@
 
 ## Problem Statement
 
-When the repo is built from source, local `@scramjet/*` packages should resolve from the workspace. In some environments, npm or yarn falls back to the public npm registry and installs outdated versions that do not match the current source tree.
+When the repo is built from source, local `@scramjet/*` packages should resolve from the workspace. In some environments, npm falls back to the public npm registry and installs outdated versions that do not match the current source tree.
 
 ## Current Behavior
 
-- A developer runs `yarn install` or `npm install` and sees `@scramjet/api-client` pulled from npm instead of `packages/api-client`.
+- A developer runs `npm install` and sees `@scramjet/api-client` pulled from npm instead of `packages/api-client`.
 - Version mismatches between the local source and the published package cause runtime errors that are hard to trace.
 - This happens most often when lockfiles are stale or when a package version is bumped locally but not yet published.
 
@@ -25,7 +25,7 @@ When the repo is built from source, local `@scramjet/*` packages should resolve 
 ## Proposed Change
 
 1. Ensure every `package.json` that depends on `@scramjet/*` uses workspace ranges (for example, `^1.1.0` where `1.1.0` matches the local version).
-2. Add an `.npmrc` or `.yarnrc` entry that forces workspace resolution: `prefer-workspace-packages=true` for yarn, or ensure npm workspaces are correctly configured.
+2. Ensure npm workspaces are correctly configured so local `@scramjet/*` packages always resolve from the workspace instead of the public registry.
 3. Add a CI check that greps lockfiles for `@scramjet` entries pointing to `https://registry.npmjs.org` and fails the build if any are found.
 
 ## Backwards Compatibility
@@ -35,7 +35,7 @@ No breaking changes. This only affects development builds from source. Published
 ## Testing Plan
 
 - Clean clone test: delete lockfile, run install, and verify every `@scramjet/*` path points into `packages/`.
-- CI gate: a script that parses `yarn.lock` or `package-lock.json` and asserts zero external `@scramjet` resolutions.
+- CI gate: a script that parses `package-lock.json` and asserts zero external `@scramjet` resolutions.
 
 ## References
 

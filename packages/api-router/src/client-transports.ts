@@ -198,7 +198,7 @@ async function readUnaryBody(body: Readable, headers: Record<string, string>, li
     try {
         return JSON.parse(bytes.toString());
     } catch (error) {
-        throw new RoutedBrokerRequestError("Broker response JSON parsing failed", error);
+        throw new RoutedBrokerRequestError("Broker response JSON parsing failed", error instanceof Error ? error : undefined);
     }
 }
 
@@ -342,7 +342,7 @@ export function createVerser2ClientTransport(options: Verser2BrokerLike | Verser
                 if (request.signal?.aborted) throw new RoutedBrokerCancelledError(routeDomain);
                 try { remaining(); } catch (timeout) { throw timeout; }
                 if (error instanceof RoutedBrokerCancelledError || error instanceof RoutedBrokerTimeoutError || error instanceof RoutedBrokerRequestError || error instanceof RoutedBrokerRouteUnavailableError || error instanceof RoutedBrokerDuplicateRouteError) throw error;
-                throw new RoutedBrokerRequestError(`Broker route readiness failed for ${routeDomain}: ${error instanceof Error ? error.message : String(error)}`, error);
+                throw new RoutedBrokerRequestError(`Broker route readiness failed for ${routeDomain}: ${error instanceof Error ? error.message : String(error)}`, error instanceof Error ? error : undefined);
             }
             let dispatch: BrokerDispatch;
             try {
@@ -380,7 +380,7 @@ export function createVerser2ClientTransport(options: Verser2BrokerLike | Verser
                 }
             } catch (error) {
                 if (error instanceof RoutedBrokerTimeoutError || error instanceof RoutedBrokerRequestError || error instanceof RoutedBrokerCancelledError || error instanceof RoutedBrokerRedirectError) throw error;
-                throw new RoutedBrokerRequestError(`Broker request failed for route ${options.routeDomain}: ${error instanceof Error ? error.message : String(error)}`, error);
+                throw new RoutedBrokerRequestError(`Broker request failed for route ${options.routeDomain}: ${error instanceof Error ? error.message : String(error)}`, error instanceof Error ? error : undefined);
             }
 
             const response = dispatch.response;

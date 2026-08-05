@@ -37,7 +37,10 @@ const { dockerOutcomeDiagnostics } = require("./lib/bdd-outcome-diagnostics.js")
 const { createForensicRecorder, parseWaitResult } = require("./lib/bdd-docker-forensics.js");
 const { createOwnership, ownershipEnv, encodePart } = require("../bdd/lib/ownership.js");
 
-const BDD_NODE_IMAGE = process.env.BDD_NODE_IMAGE || "node:22";
+const DEFAULT_BDD_NODE_IMAGE = "transform-hub-bdd-bun:dev";
+// Node 22's compile cache otherwise follows TMPDIR, which is the mounted BDD artifact root.
+const BDD_NODE_COMPILE_CACHE_DIR = "/tmp/node-compile-cache";
+const BDD_NODE_IMAGE = process.env.BDD_NODE_IMAGE || DEFAULT_BDD_NODE_IMAGE;
 const BDD_DOCKER_MEMORY = memoryLimit();
 const BDD_DOCKER_CPUS = cpuLimit();
 const BDD_TIMEOUT_MS = timeoutMs();
@@ -52,6 +55,7 @@ validateEnforcePrerequisites({
 
 const TIMEOUT_EXIT_CODE = 124;
 const MISSING_DEPENDENCY_EXIT_CODE = 127;
+const repoRoot = path.resolve(__dirname, "..");
 
 const separatorIndex = process.argv.indexOf("--");
 const runnerArgs = separatorIndex === -1 ? process.argv.slice(2) : process.argv.slice(2, separatorIndex);
@@ -83,7 +87,31 @@ if (!dockerGid) {
     failPrereq("docker group entry from 'getent group docker' had no GID field.");
 }
 
-const repoRoot = path.resolve(__dirname, "..");
+const ensureDefaultBddImage = () => {
+    if (BDD_NODE_IMAGE !== DEFAULT_BDD_NODE_IMAGE) {
+        return;
+    }
+
+    const imageProbe = spawnSync("docker", ["image", "inspect", BDD_NODE_IMAGE], { stdio: "ignore" });
+
+    if (imageProbe.status === 0) {
+        return;
+    }
+
+    process.stderr.write(`[run-bdd-docker] building ${BDD_NODE_IMAGE} with Node 22 and Bun\n`);
+    const buildResult = spawnSync(
+        "docker",
+        ["build", "--file", path.join(repoRoot, "docker", "Dockerfile.bdd-bun"), "--tag", BDD_NODE_IMAGE, repoRoot],
+        { stdio: "inherit" }
+    );
+
+    if (buildResult.error || buildResult.status !== 0) {
+        failPrereq(`failed to build ${BDD_NODE_IMAGE} from docker/Dockerfile.bdd-bun.`);
+    }
+};
+
+ensureDefaultBddImage();
+
 const ownership = createOwnership(process.env, { artifactRoot: "/work-tmp" });
 const hostOwnershipRoot = path.join(require("node:os").tmpdir(), "scramjet-bdd-runs", encodePart(ownership.runId), "chunks", encodePart(ownership.chunkId));
 fs.mkdirSync(hostOwnershipRoot, { recursive: true });
@@ -145,6 +173,8 @@ dockerRunArgs.push(
     "-e",
     "TMPDIR=/work-tmp",
     "-e",
+    `NODE_COMPILE_CACHE=${BDD_NODE_COMPILE_CACHE_DIR}`,
+    "-e",
     "COREPACK_ENABLE_DOWNLOAD_PROMPT=0"
 );
 
@@ -184,12 +214,13 @@ const fixturePacking = [
     "OUT_DIR=/work-tmp/bdd-packages node scripts/pack-bdd-fixtures.js",
     "OUT_DIR=/work-tmp/python-bdd-packages node scripts/pack-python-bdd-fixtures.js"
 ].join(" && ");
+const runtimePreflight = ["node --version", "npm --version", "bun --version"].join(" && ");
 const packageDirs =
     "PACKAGES_DIR=/work-tmp/appcontext-packages/:/work-tmp/python-bdd-packages/:/work-tmp/bdd-packages/ SCRAMJET_BDD_SIMPLE_STDIO_ARCHIVE=/work-tmp/simple-stdio.tar.gz";
 const innerCommand =
     escapedPassthrough.length > 0
-        ? `${fixturePacking} && ${packageDirs} PATH=/work/node_modules/.bin:$PATH npm --prefix ./bdd run test:bdd -- ${escapedPassthrough}`
-        : `${fixturePacking} && ${packageDirs} PATH=/work/node_modules/.bin:$PATH npm --prefix ./bdd run test:bdd`;
+        ? `${runtimePreflight} && ${fixturePacking} && ${packageDirs} PATH=/work/node_modules/.bin:$PATH npm --prefix ./bdd run test:bdd -- ${escapedPassthrough}`
+        : `${runtimePreflight} && ${fixturePacking} && ${packageDirs} PATH=/work/node_modules/.bin:$PATH npm --prefix ./bdd run test:bdd`;
 
 dockerRunArgs.push(BDD_NODE_IMAGE, "sh", "-c", innerCommand);
 

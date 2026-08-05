@@ -7,7 +7,7 @@
 
 "use strict";
 
-const test = require("ava");
+const test = require("ava").default;
 const { spawnSync } = require("node:child_process");
 const { resolve } = require("node:path");
 

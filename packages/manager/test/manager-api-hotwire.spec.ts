@@ -1,7 +1,7 @@
 import test from "ava";
 import { execFileSync } from "child_process";
 import { X509Certificate } from "crypto";
-import { mkdtempSync, readFileSync } from "fs";
+import { mkdtempSync, readFileSync, rmSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
 import { ObjLogger } from "@scramjet/obj-logger";
@@ -10,14 +10,19 @@ import { PassThrough } from "stream";
 import { ManagerAPIHandler } from "../src/lib/api/manager-api";
 import { RouteRecorder } from "@scramjet/api-server/test/lib/route-recorder";
 
+const activeTimeoutCount = () => process.getActiveResourcesInfo().filter(resource => resource === "Timeout").length;
+
 function createMockSocket(hubId: string): { getPeerCertificate: (detailed?: boolean) => { raw: Buffer } } {
     const dir = mkdtempSync(join(tmpdir(), "api-hotwire-"));
     const keyFile = join(dir, "key.pem");
     const certFile = join(dir, "cert.pem");
-    execFileSync("openssl", ["req", "-x509", "-newkey", "rsa:2048", "-nodes", "-subj", `/CN=${hubId}`, "-days", "1", "-addext", `subjectAltName=DNS:${hubId}`, "-keyout", keyFile, "-out", certFile], { stdio: "ignore" });
-    const certPem = readFileSync(certFile);
-    const cert = new X509Certificate(certPem);
-    return { getPeerCertificate: () => ({ raw: cert.raw }) };
+    try {
+        execFileSync("openssl", ["req", "-x509", "-newkey", "rsa:2048", "-nodes", "-subj", `/CN=${hubId}`, "-days", "1", "-addext", `subjectAltName=DNS:${hubId}`, "-keyout", keyFile, "-out", certFile], { stdio: "ignore" });
+        const cert = new X509Certificate(readFileSync(certFile));
+        return { getPeerCertificate: () => ({ raw: cert.raw }) };
+    } finally {
+        rmSync(dir, { recursive: true, force: true });
+    }
 }
 
 function createManagerStub(recorder: RouteRecorder) {
@@ -103,11 +108,7 @@ test("ManagerAPIHandler unit handlers return version config and paginated list d
         }
     };
 
-    await new ManagerAPIHandler(manager as any, async () => ({
-        logger: { pipe: () => undefined },
-        loadIndex: async () => undefined,
-        router: { lookup: () => undefined }
-    } as any)).attach();
+    await new ManagerAPIHandler(manager as any).attach();
 
     const version = await (recorder.require("get", "/api/v1/version").handler as Function)({});
     const config = await (recorder.require("get", "/api/v1/config").handler as Function)({});
@@ -205,6 +206,12 @@ test("ManagerAPIHandler unit handlers cover store clear delete errors and proxy 
 test("ManagerAPIHandler unit handlers cover registration disconnect and S3 mount", async t => {
     const recorder = new RouteRecorder();
     const disconnected: string[] = [];
+    const s3RouterCalls: any[] = [];
+    const s3Router = {
+        logger: { pipe: () => undefined },
+        loadIndex: async () => undefined,
+        router: { lookup: () => undefined }
+    };
     const manager = {
         ...createManagerStub(recorder),
         config: { apiBase: "/api/v1", s3: { bucket: "bucket", bucketLimit: 1000 } },
@@ -223,13 +230,27 @@ test("ManagerAPIHandler unit handlers cover registration disconnect and S3 mount
         },
         handleSthRegistration: async () => "sth-registered"
     };
+    const timeoutCountBeforeAttach = activeTimeoutCount();
 
-    await new ManagerAPIHandler(manager as any).attach();
+    await new ManagerAPIHandler(manager as any, async (...args: any[]) => {
+        s3RouterCalls.push(args);
+        return s3Router as any;
+    }).attach();
 
     const sthSocket = createMockSocket("sth");
     t.deepEqual(await (recorder.require("op", "/api/v1/sth", "post").handler as Function)({ body: { id: "sth" }, socket: sthSocket }), { id: "sth-registered", opStatus: "Accepted" });
     t.deepEqual(await (recorder.require("op", "/api/v1/sth", "post").handler as Function)({ body: { id: "sth-without-socket" } }), { id: "sth-registered", opStatus: "Accepted" });
     t.true(recorder.has("use", "/api/v1/s3/"));
+    t.deepEqual(s3RouterCalls, [[undefined, {
+        base: "/api/v1/s3",
+        id: "manager-hotwire",
+        bucket: "bucket",
+        bucketLimit: 1000
+    }]]);
+    // DiskProxy.saveIndex races a write with a 5s promiseTimeout. The route
+    // hotwire test owns only route registration, so it must not create that
+    // storage timer; compare with the worker's pre-attach timer baseline.
+    t.is(activeTimeoutCount(), timeoutCountBeforeAttach);
     t.deepEqual(await (recorder.require("op", "/api/v1/disconnect", "post").handler as Function)({ body: { limit: 0 } }), {
         opStatus: "Accepted",
         managerId: "manager-hotwire",

@@ -1,6 +1,6 @@
 "use strict";
 
-const test = require("ava");
+const test = require("ava").default;
 const { rmSync, writeFileSync } = require("node:fs");
 const { dirname, join } = require("node:path");
 

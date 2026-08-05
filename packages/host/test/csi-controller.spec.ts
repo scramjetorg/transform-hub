@@ -120,6 +120,49 @@ test("STOP with canCallKeepalive=true still uses bounded kill fallback when no k
     ]);
 });
 
+test.serial("settled STOP control clears its bounded controller timeout", async t => {
+    const scheduled: Array<{ timer: NodeJS.Timeout; timeout: number | undefined }> = [];
+    const cleared = new Set<NodeJS.Timeout>();
+    const originalSetTimeout = global.setTimeout;
+    const originalClearTimeout = global.clearTimeout;
+    global.setTimeout = ((callback: (...args: any[]) => void, timeout?: number, ...args: any[]) => {
+        const timer = originalSetTimeout(callback, timeout, ...args);
+        scheduled.push({ timer, timeout });
+        return timer;
+    }) as typeof setTimeout;
+    global.clearTimeout = ((timer?: NodeJS.Timeout) => {
+        if (timer) cleared.add(timer);
+        return originalClearTimeout(timer);
+    }) as typeof clearTimeout;
+    t.teardown(() => {
+        global.setTimeout = originalSetTimeout;
+        global.clearTimeout = originalClearTimeout;
+        for (const { timer } of scheduled) originalClearTimeout(timer);
+    });
+
+    let resolveRunner!: (exitcode: number) => void;
+    const runner = new Promise<number>(resolve => { resolveRunner = resolve; });
+    const controller = createController({
+        instancePromise: runner.then(exitcode => ({ message: "completed", exitcode, status: InstanceStatus.COMPLETED })),
+        _instanceAdapter: { remove: async () => undefined },
+        finalize: async () => undefined,
+        emit: () => undefined,
+        communicationHandler: {
+            sendControlMessage: async () => {
+                resolveRunner(0);
+                await new Promise<void>(() => undefined);
+            }
+        },
+        logger: { trace: () => undefined, debug: () => undefined, warn: () => undefined, error: () => undefined }
+    });
+
+    await controller.stop({ timeout: 0, canCallKeepalive: true } as any);
+
+    const controllerDeadlines = scheduled.filter(({ timeout }) => timeout === 5000);
+    t.is(controllerDeadlines.length, 2);
+    t.true(controllerDeadlines.every(({ timer }) => cleared.has(timer)));
+});
+
 test("STOP with canCallKeepalive=true leaves the runner alive when keepalive is issued", async t => {
     const calls: unknown[][] = [];
     const controller = createController({

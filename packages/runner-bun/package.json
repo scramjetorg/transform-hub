@@ -5,10 +5,10 @@
   "main": "./src/index.ts",
   "scripts": {
     "build": "../../scripts/build-all.js --config-name=tsconfig.build.json -d . --copy-dist",
-    "prebuild:docker": "cd ../.. && scripts/build-all.js --no-install --link-packages -d packages/runner-bun -o ./dist/docker-runner/ --ts-config tsconfig.build.json",
+    "prebuild:docker": "if [ \"${SCRAMJET_DOCKER_RUNNER_STAGED:-}\" != \"1\" ]; then cd ../.. && scripts/build-all.js --no-install --link-packages -d packages/runner -o ./dist/docker-runner/ --ts-config tsconfig.build.json; fi",
     "build:docker": "docker build -t scramjetorg/runner-bun:$(git rev-parse HEAD) -t scramjetorg/runner-bun:dev -f Dockerfile ../../",
     "clean": "rm -rf ./dist .bic_cache",
-    "test": "bun test"
+    "test": "bun test ./test"
   },
   "author": "Scramjet <opensource@scramjet.org>",
   "license": "MIT",
