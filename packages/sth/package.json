@@ -42,6 +42,18 @@
     "sth-logo.svg",
     "postinstall.js"
   ],
+  "files": [
+    "**/*.js",
+    "**/*.d.ts",
+    "**/*.json",
+    "!src/**",
+    "!test/**",
+    "!tests/**",
+    "postinstall.js",
+    "sth-logo.svg",
+    "!**/*.map",
+    "!**/*.tsbuildinfo"
+  ],
   "funding": [
     {
       "type": "github",
@@ -68,7 +80,8 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/scramjetorg/transform-hub.git"
+    "url": "https://github.com/scramjetorg/transform-hub.git",
+    "directory": "packages/sth"
   },
   "postBuildOverride": {
     "scripts": {

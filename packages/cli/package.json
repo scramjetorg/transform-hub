@@ -68,8 +68,20 @@
       }
     }
   },
+  "files": [
+    "**/*.js",
+    "**/*.d.ts",
+    "**/*.json",
+    "!src/**",
+    "!test/**",
+    "!tests/**",
+    "scripts/completion",
+    "!**/*.map",
+    "!**/*.tsbuildinfo"
+  ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/scramjetorg/transform-hub.git"
+    "url": "https://github.com/scramjetorg/transform-hub.git",
+    "directory": "packages/cli"
   }
 }

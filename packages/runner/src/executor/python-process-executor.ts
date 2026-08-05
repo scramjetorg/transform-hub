@@ -55,32 +55,35 @@ function resolveRunnerPythonRoot(): string | null {
 /**
  * Build the PYTHONPATH for the runner-python child process.
  *
- * Production layout (installed npm package):
- *   <pkg_root>/dist/src             — real runner_python source package
- *   <pkg_root>/dist/__pypackages__  — vendored pip dependencies
+ * Published flat layout (installed npm package):
+ *   <pkg_root>/src                  — real runner_python source package
+ *   <pkg_root>/__pypackages__       — vendored pip dependencies
  *
  * Local layout (monorepo development):
  *   <pkg_root>/src                  — real runner_python source package
  *   <pkg_root>/__pypackages__       — vendored pip dependencies (installed via install-deps.sh --target __pypackages__)
  *   <pkg_root>/dist/__pypackages__  — vendored pip dependencies (built via install-deps.sh --target dist/__pypackages__)
+ *
+ * Older prepacked layouts keep their Python payload under `dist/`; retain
+ * those paths as a compatibility fallback while preferring the flat tarball.
  */
 function buildPythonPath(existing?: string): string {
     const root = resolveRunnerPythonRoot();
     const candidates: string[] = [];
 
     if (root) {
-        // Production layout (installed package — prepack puts everything under dist/)
-        const prodSrc = resolve(root, "dist/src");
-        const prodVendor = resolve(root, "dist/__pypackages__");
+        // Published flat layout (installed package).
+        const prodSrc = resolve(root, "src");
+        const prodVendor = resolve(root, "__pypackages__");
         if (existsSync(prodSrc)) candidates.push(prodSrc);
         if (existsSync(prodVendor)) candidates.push(prodVendor);
 
-        // Local layout (monorepo development)
-        const localSrc = resolve(root, "src");
-        const localVendor = resolve(root, "__pypackages__");
+        // Backwards-compatible prepacked and local build layouts.
+        const legacyDistSrc = resolve(root, "dist/src");
         const localDistVendor = resolve(root, "dist/__pypackages__");
-        if (existsSync(localSrc)) candidates.push(localSrc);
-        if (existsSync(localVendor)) candidates.push(localVendor);
+        if (existsSync(legacyDistSrc) && !candidates.includes(legacyDistSrc)) {
+            candidates.push(legacyDistSrc);
+        }
         if (existsSync(localDistVendor) && !candidates.includes(localDistVendor)) {
             candidates.push(localDistVendor);
         }

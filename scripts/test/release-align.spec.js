@@ -1177,12 +1177,47 @@ test("runner-python pack content excludes test and docker artifacts", (t) => {
 	t.false(allFiles.includes("wait-for-sequence"), "files excludes wait scripts");
 
 	// Verify required publish content is included
-	t.true(allFiles.includes("dist/LICENSE"), "files includes LICENSE");
-	t.true(allFiles.includes("dist/runner_python"), "files includes runner_python package");
-	t.true(allFiles.includes("dist/src"), "files includes src");
-	t.true(allFiles.includes("dist/pyproject.toml"), "files includes pyproject.toml");
-	t.true(allFiles.includes("dist/requirements.txt"), "files includes requirements.txt");
-	t.true(allFiles.includes("dist/__pypackages__"), "files includes vendored deps");
+	t.true(allFiles.includes("runner_python"), "files includes runner_python package");
+	t.true(allFiles.includes("src/runner_python"), "files includes runner source");
+	t.true(allFiles.includes("pyproject.toml"), "files includes pyproject metadata");
+	t.true(allFiles.includes("requirements.txt"), "files includes requirements metadata");
+	t.true(allFiles.includes("__pypackages__"), "files includes vendored deps");
+	t.false(allFiles.includes("dist/"), "files reflects the flat staged package layout");
+});
+
+test("release package manifests identify their repository directory and limit tarball inputs", (t) => {
+	const repositoryUrl = "https://github.com/scramjetorg/transform-hub.git";
+	const root = path.resolve(__dirname, "../..");
+
+	for (const packageName of boundary.INCLUDED_PACKAGES) {
+		const directory = boundary.includedPackageDir(packageName);
+		const manifest = JSON.parse(readFileSync(path.join(root, directory, "package.json"), "utf8"));
+
+		t.deepEqual(manifest.repository, {
+			type: "git",
+			url: repositoryUrl,
+			directory,
+		}, `${packageName} has exact repository metadata`);
+		t.true(Array.isArray(manifest.files), `${packageName} uses a package allowlist`);
+		const positiveEntries = manifest.files.filter((entry) => !entry.startsWith("!"));
+		t.false(positiveEntries.some((entry) => /\.map$|\.tsbuildinfo$/.test(entry)),
+			`${packageName} allowlist does not admit maps or TypeScript build info`);
+		t.false(positiveEntries.some((entry) => /(?:^|\/)(?:test|tests)(?:\/|$)/.test(entry)),
+			`${packageName} allowlist does not admit tests`);
+		if (packageName !== "@scramjet/runner-python") {
+			t.false(positiveEntries.some((entry) => /(?:^|\/)src(?:\/|$)/.test(entry)),
+				`${packageName} allowlist does not admit source`);
+		}
+	}
+});
+
+test("pre-runner stages its required legal and README assets", (t) => {
+	const manifest = JSON.parse(readFileSync(
+		path.resolve(__dirname, "../../packages/pre-runner/package.json"), "utf8"
+	));
+
+	t.true(manifest.assets.includes("LICENSE"));
+	t.true(manifest.assets.includes("README.md"));
 });
 
 test("runner Docker builds consume the complete prepacked dependency closure", (t) => {
@@ -1294,16 +1329,16 @@ test("buildPythonPath includes src directory from resolved root", (t) => {
 		const candidates = [];
 
 		if (root) {
-			const prodSrc = resolve(root, "dist/src");
-			const prodVendor = resolve(root, "dist/__pypackages__");
+			const prodSrc = resolve(root, "src");
+			const prodVendor = resolve(root, "__pypackages__");
 			if (existsSync(prodSrc)) candidates.push(prodSrc);
 			if (existsSync(prodVendor)) candidates.push(prodVendor);
 
-			const localSrc = resolve(root, "src");
-			const localVendor = resolve(root, "__pypackages__");
+			const legacyDistSrc = resolve(root, "dist/src");
 			const localDistVendor = resolve(root, "dist/__pypackages__");
-			if (existsSync(localSrc)) candidates.push(localSrc);
-			if (existsSync(localVendor)) candidates.push(localVendor);
+			if (existsSync(legacyDistSrc) && !candidates.includes(legacyDistSrc)) {
+				candidates.push(legacyDistSrc);
+			}
 			if (existsSync(localDistVendor) && !candidates.includes(localDistVendor)) {
 				candidates.push(localDistVendor);
 			}

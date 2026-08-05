@@ -12,12 +12,11 @@
         "clean": "rm -rf __pypackages__ dist"
     },
     "files": [
-        "dist/LICENSE",
-        "dist/runner_python",
-        "dist/src",
-        "dist/pyproject.toml",
-        "dist/requirements.txt",
-        "dist/__pypackages__"
+        "runner_python",
+        "src/runner_python",
+        "pyproject.toml",
+        "requirements.txt",
+        "__pypackages__"
     ],
     "dependencies": {
         "@signicode/verser2-guest-python": "0.7.0"
@@ -26,7 +25,8 @@
     "license": "MIT",
     "repository": {
         "type": "git",
-        "url": "https://github.com/scramjetorg/transform-hub.git"
+        "url": "https://github.com/scramjetorg/transform-hub.git",
+        "directory": "packages/runner-python"
     },
     "bugs": {
         "url": "https://github.com/scramjetorg/transform-hub/issues"

@@ -60,8 +60,19 @@
       }
     }
   },
+  "files": [
+    "**/*.js",
+    "**/*.d.ts",
+    "**/*.json",
+    "!src/**",
+    "!test/**",
+    "!tests/**",
+    "!**/*.map",
+    "!**/*.tsbuildinfo"
+  ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/scramjetorg/transform-hub.git"
+    "url": "https://github.com/scramjetorg/transform-hub.git",
+    "directory": "packages/runner"
   }
 }
