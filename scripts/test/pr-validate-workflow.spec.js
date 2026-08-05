@@ -62,6 +62,26 @@ test("fast gates run in the required order after fresh setup", (t) => {
 	}
 });
 
+test("lockfile reproducibility gate runs after checkout and before the workspace install", (t) => {
+	const source = workflowSource();
+	const rootPkg = require("../../package.json");
+
+	t.true(typeof rootPkg.scripts["build:lockfile"] === "string", "root package.json must define build:lockfile");
+	t.regex(
+		rootPkg.scripts["build:lockfile"],
+		/npx\s+--yes\s+npm@11\.19\.0\s+install\s+--package-lock-only\s+--ignore-scripts/,
+		"build:lockfile must rebuild the lock with the pinned npm via npx"
+	);
+
+	const checkout = "uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1";
+	const setup = "uses: ./.github/actions/setup-workspace";
+	const lockfileGate = source.indexOf("npm run build:lockfile");
+
+	t.true(lockfileGate > source.indexOf(checkout), "lockfile gate must run after checkout");
+	t.true(lockfileGate < source.indexOf(setup), "lockfile gate must run before setup-workspace");
+	t.true(source.includes("git diff --exit-code -- package-lock.json"), "lockfile gate must fail on any lockfile diff");
+});
+
 test("AVA, build, and targeted Docker BDD jobs are isolated and ordered", (t) => {
 	const source = workflowSource();
 	t.true(source.includes("ava-pre-build:"));
