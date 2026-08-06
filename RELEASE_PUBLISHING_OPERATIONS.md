@@ -2,7 +2,7 @@
 
 This is an **operator runbook**, not evidence that any external setting below exists. Repository code cannot create npm trusted-publisher registrations, GitHub environments, organization rulesets, or npm package access controls.
 
-This runbook covers production npm publishing. It is separate from GitHub Packages prereleases and dependency checkpoints; see [CHECKPOINTS.md](CHECKPOINTS.md) for checkpoint identity and clean-install fallback rules.
+This runbook covers production npm publishing. It is separate from GitHub Packages prereleases and dependency checkpoints; see [CHECKPOINTS.md](CHECKPOINTS.md) for checkpoint identity and clean-install fallback rules, and [CI_RELEASE_OPERATIONS.md](CI_RELEASE_OPERATIONS.md) for the environment-approved, automatic-GitHub-token GitHub Packages prerelease path.
 
 ## Current workflow status
 

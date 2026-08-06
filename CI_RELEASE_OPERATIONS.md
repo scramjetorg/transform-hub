@@ -21,7 +21,7 @@ removed; `security-check.yml` is retained.
 | `devel-checkpoint-promotion.yml` | Successful `Devel validation` workflow run on same-repository `devel` | `Devel / checkpoint promotion` | Guarded live GHCR checkpoint publication and pointer promotion. |
 | `checkpoint-bootstrap.yml` | Manual trusted-branch selection (`main`, `devel`, or `feat/manager-oss`) | `Checkpoint / trusted publication` | Trusted immutable checkpoint publication and pointer promotion; it fails closed when GHCR publication configuration is absent. |
 | `release-pr-automation.yml` | Successful same-repository `Devel validation` push | `Release PR / automation` | Creates or updates the managed `devel` to `main` PR and requests auto-merge. |
-| `release-pr-validate.yml` | PR to `main`; jobs guard same-repository `devel` to `main` | `Release PR / package validation`, `Release PR / prerelease publication`, `Release PR / prerelease BDD` | Exact prerelease identity, package, and BDD validation path. |
+| `release-pr-validate.yml` | PR to `main`; jobs guard same-repository `devel` to `main` | `Release PR / package validation`, `Release PR / prerelease publication`, `Release PR / prerelease BDD` | Exact prerelease identity, package, and BDD validation path. `prerelease-publication` awaits approval on the `github-packages-prerelease` environment; `prerelease-bdd` stays unattended and read-only. |
 | `main-release.yml` | Push to `main` | `Release / boundary validation`, `Release / npm publish`, `Release / checkpoint promotion` | Protected production npm release and publication-gated checkpoint decision. |
 
 ### Audit outcome and intentional overlap
@@ -43,6 +43,19 @@ track** and is not an active workflow or release handoff.
   validated npm SRI/SHA-256 metadata where available, a generated install lock,
   and verified image digests only. It does not consume ranges, dist-tags, or
   workflow artifacts.
+- The `prerelease-publication` job is bound to the `github-packages-prerelease`
+  environment and awaits environment approval before publishing anything. The
+  environment carries **no secrets**; it holds only the
+  `SCRAMJET_RELEASE_PRERELEASE_PUBLISH=true` and
+  `SCRAMJET_GH_PACKAGES_PRERELEASE_PUBLISHER=github-packages` configuration
+  variables that gate live publication and is restricted to `refs/pull/*/merge`.
+  The `prerelease-bdd` job is deliberately **not** bound to the environment: it
+  only consumes verified prereleases and must never block on approval.
+- Prerelease npm authentication uses the automatic GitHub token only
+  (`${{ github.token }}`, equivalent to `GITHUB_TOKEN`), never a PAT or npm
+  token secret. The publication job authenticates with its `packages: write`
+  scope and the BDD job with its `packages: read` scope, so least privilege is
+  preserved by the job permissions rather than by token selection.
 - Production `main` publication creates an immutable release identity containing
   source/package/toolchain information. Existing npm versions may be reused only
   when their published release identity and final package checksum match exactly.
@@ -80,7 +93,9 @@ or scanner bypass, follow [SECURITY.md](SECURITY.md).
 ## Remote-only validation and prerequisites
 
 The repository cannot prove GitHub required workflows/rulesets, protected
-environment approvals, npm trusted publishers/OIDC, GHCR scoped publishers,
+environment approvals (including the `github-packages-prerelease` approval on
+`Release PR / prerelease publication` and the `production` environment), npm
+trusted publishers/OIDC, GHCR scoped publishers,
 registry retention, Docker Hub credentials, Actionlint, or Zizmor. Operators
 must validate those controls in their respective services before enabling live
 publication. Docker Hub image release design, credential scope, and

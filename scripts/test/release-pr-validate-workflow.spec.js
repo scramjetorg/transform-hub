@@ -43,7 +43,7 @@ test("release PR validation uses a clean, read-only, immutable checkout for buil
 	t.true(source.includes("permissions:\n  contents: read"));
 	t.true(source.includes("permissions:\n      contents: read"));
 	t.false(source.includes("pull_request_target"));
-	t.is((source.match(/packages: write/g) || []).length, 1);
+	t.is((source.match(/^ {6}packages: write$/gm) || []).length, 1, "exactly one job may grant packages: write");
 	t.false(source.includes("id-token: write"));
 	t.false(source.includes("actions/cache"));
 	t.false(source.includes("npm publish"));
@@ -68,7 +68,7 @@ test("release PR package validation installs pinned Bun before package tests", (
 	t.is((source.match(/oven-sh\/setup-bun@/g) || []).length, 1, "Setup Bun must appear only in the package-validation job");
 });
 
-test("release PR prerelease publication is guarded, serialized, and isolated to GitHub Packages", (t) => {
+test("release PR prerelease publication is guarded, serialized, environment-gated, and isolated to GitHub Packages", (t) => {
 	const source = readFileSync(workflowPath, "utf8");
 	t.deepEqual(checkWorkflowSource(source, ".github/workflows/release-pr-validate.yml"), []);
 	t.true(source.includes("prerelease-publication:"));
@@ -79,7 +79,6 @@ test("release PR prerelease publication is guarded, serialized, and isolated to 
 	t.is((source.match(/github\.event\.pull_request\.base\.ref == 'main'/g) || []).length, 3);
 	t.true(source.includes("packages: write"));
 	t.true(source.includes('test "$PRERELEASE_PUBLISH_ENABLED" = "true"'));
-	t.true(source.includes("SCRAMJET_RELEASE_PRERELEASE_PACKAGES_TOKEN"));
 	t.true(source.includes("SCRAMJET_GH_PACKAGES_PRERELEASE_PUBLISHER"));
 	t.true(source.includes("https://npm.pkg.github.com"));
 	t.true(source.includes("@scramjet:registry=https://npm.pkg.github.com"));
@@ -92,8 +91,30 @@ test("release PR prerelease publication is guarded, serialized, and isolated to 
 	t.false(source.includes("registry.npmjs.org"));
 });
 
-test("release PR BDD consumes only verified publisher output and exact prereleases", (t) => {
+test("release PR prerelease publication awaits the github-packages-prerelease environment and uses only the automatic token", (t) => {
 	const source = readFileSync(workflowPath, "utf8");
+	const publicationStart = source.indexOf("  prerelease-publication:\n");
+	const publicationEnd = source.indexOf("  prerelease-bdd:\n");
+	const publication = source.slice(publicationStart, publicationEnd);
+	const packageValidation = source.slice(source.indexOf("  package-validation:\n"), publicationStart);
+	const bdd = source.slice(publicationEnd);
+
+	t.is((source.match(/environment: github-packages-prerelease/g) || []).length, 1, "the environment must be bound exactly once");
+	t.true(publication.includes("environment: github-packages-prerelease"), "the prerelease-publication job must await environment approval");
+	t.false(packageValidation.includes("environment:"), "package validation must not use the environment");
+	t.false(bdd.includes("environment: github-packages-prerelease"), "prerelease BDD must stay outside the environment");
+	t.true(publication.includes("packages: write"), "publication keeps least-privilege packages: write");
+	t.true(bdd.includes("packages: read"), "BDD keeps least-privilege packages: read");
+	t.true(publication.includes("NODE_AUTH_TOKEN: ${{ github.token }}"), "publication npm auth must use the automatic GITHUB_TOKEN");
+	t.false(source.includes("SCRAMJET_RELEASE_PRERELEASE_PACKAGES_TOKEN"), "the removed publish token secret must not be referenced");
+	t.false(source.includes("SCRAMJET_RELEASE_PRERELEASE_PACKAGES_READ_TOKEN"), "the removed read token secret must not be referenced");
+	t.false(source.includes("${{ secrets."), "no PAT or npm token secret expression may be introduced");
+});
+
+test("release PR BDD consumes only verified publisher output and exact prereleases with read-only automatic-token auth", (t) => {
+	const source = readFileSync(workflowPath, "utf8");
+	const bddStart = source.indexOf("  prerelease-bdd:\n");
+	const bdd = source.slice(bddStart);
 	t.true(source.includes("prerelease-bdd:"));
 	t.true(source.includes("name: Release PR / prerelease BDD"));
 	t.true(source.includes("needs: [prerelease-publication]"));
@@ -113,6 +134,8 @@ test("release PR BDD consumes only verified publisher output and exact prereleas
 	t.true(source.includes("BDD_NODE_IMAGE"));
 	t.true(source.includes('test "$PUBLISHED" = "true"'));
 	t.true(source.includes('test "$BDD_REGISTRY_ENABLED" = "true"'));
+	t.true(bdd.includes("NODE_AUTH_TOKEN: ${{ github.token }}"), "BDD read auth must use the automatic GITHUB_TOKEN");
+	t.false(/^ {4}environment:/m.test(bdd), "prerelease BDD must not be bound to the approval environment");
 	t.false(source.includes("live=false"));
 	t.false(source.includes("download-artifact"));
 	t.false(source.includes("upload-artifact"));

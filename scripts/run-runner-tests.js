@@ -1,7 +1,5 @@
 #!/usr/bin/env node
 
-"use strict";
-
 const { spawnSync } = require("node:child_process");
 const { readdirSync } = require("node:fs");
 const { join, resolve } = require("node:path");

@@ -142,6 +142,96 @@ const EXCLUDED_PACKAGES = new Set([
 ]);
 
 /**
+ * Dependency-safe publication plan for the complete 2.0.0 release boundary.
+ *
+ * Each inner array is one atomic release wave. Runtime and optional
+ * first-party dependencies must be in a strictly earlier wave; peer and
+ * development dependencies intentionally do not determine publication order.
+ * This plan is part of the immutable production release identity.
+ */
+const RELEASE_WAVES = [
+	[
+		"@scramjet/logger",
+		"@scramjet/pre-runner",
+		"@scramjet/runner-python",
+		"@scramjet/runtime-types",
+		"@scramjet/symbols",
+		"@scramjet/utility",
+	],
+	["@scramjet/api-types", "@scramjet/obj-logger", "@scramjet/sequence-types"],
+	[
+		"@scramjet/adapters-common",
+		"@scramjet/config",
+		"@scramjet/load-check",
+		"@scramjet/model",
+		"@scramjet/module-loader",
+		"@scramjet/monitoring-server",
+		"@scramjet/telemetry",
+		"@scramjet/types",
+	],
+	["@scramjet/adapter-kubernetes", "@scramjet/api-router", "@scramjet/client-utils"],
+	["@scramjet/api-client", "@scramjet/api-server", "@scramjet/rest-api2"],
+	["@scramjet/multi-manager-api-client", "@scramjet/runner-node"],
+	["@scramjet/middleware-api-client", "@scramjet/runner-bun"],
+	["@scramjet/cli", "@scramjet/runner"],
+	["@scramjet/adapter-docker", "@scramjet/adapter-process", "@scramjet/sequence-test"],
+	["@scramjet/adapters", "@scramjet/manager"],
+	["@scramjet/host", "@scramjet/multi-manager"],
+	["@scramjet/sth"],
+];
+
+/**
+ * Validate a release wave plan against a boundary and, when manifests are
+ * supplied, its first-party runtime dependency graph.
+ *
+ * @param {string[][]} waves
+ * @param {object} [options]
+ * @param {Set<string>} [options.boundary]
+ * @param {Map<string, {packageJson: object}>} [options.manifests]
+ * @returns {Map<string, number>} package-to-zero-based-wave map
+ */
+function validateReleaseWaves(waves, options = {}) {
+	const boundary = options.boundary || INCLUDED_PACKAGES;
+	if (!Array.isArray(waves) || waves.length === 0) throw new Error("Release waves must be a non-empty array.");
+
+	const waveByPackage = new Map();
+	for (const [waveIndex, wave] of waves.entries()) {
+		if (!Array.isArray(wave) || wave.length === 0) throw new Error(`Release wave ${waveIndex + 1} must not be empty.`);
+		for (const name of wave) {
+			if (!boundary.has(name)) throw new Error(`Release wave ${waveIndex + 1} contains a package outside the release boundary: ${name}`);
+			if (waveByPackage.has(name)) throw new Error(`Release wave plan contains ${name} more than once.`);
+			waveByPackage.set(name, waveIndex);
+		}
+	}
+
+	for (const name of boundary) {
+		if (!waveByPackage.has(name)) throw new Error(`Release wave plan omits boundary package ${name}.`);
+	}
+
+	if (options.manifests) {
+		for (const name of boundary) {
+			if (!options.manifests.has(name)) throw new Error(`Release wave dependency validation is missing ${name}.`);
+		}
+		for (const [name, entry] of options.manifests) {
+			if (!boundary.has(name)) throw new Error(`Release wave dependency validation contains a package outside the release boundary: ${name}`);
+			for (const section of ["dependencies", "optionalDependencies"]) {
+				for (const dependency of Object.keys(entry.packageJson[section] || {})) {
+					if (!boundary.has(dependency)) continue;
+					if (waveByPackage.get(dependency) >= waveByPackage.get(name)) {
+						throw new Error(`Release dependency ${name} -> ${dependency} must be in an earlier wave.`);
+					}
+				}
+			}
+		}
+	}
+
+	return waveByPackage;
+}
+
+// Fail immediately if a source edit corrupts the approved static partition.
+validateReleaseWaves(RELEASE_WAVES);
+
+/**
  * Subset of EXCLUDED_PACKAGES that still receive MIT license treatment.
  * These packages remain excluded from version/dep alignment, publish
  * boundaries, and workspace groups, but get the standard MIT LICENSE
@@ -330,6 +420,7 @@ module.exports = {
 	RELEASE_VERSION,
 	INCLUDED_PACKAGES,
 	EXCLUDED_PACKAGES,
+	RELEASE_WAVES,
 	LICENSE_ONLY_PACKAGES,
 	IMAGE_CONFIG_PATH,
 	MIT_LICENSE_TEXT,
@@ -352,4 +443,5 @@ module.exports = {
 	expectedWorkspacePackages,
 	expectedWorkspaceRelease,
 	discoverManifests,
+	validateReleaseWaves,
 };

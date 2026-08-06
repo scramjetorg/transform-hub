@@ -33,7 +33,7 @@ jobs:
         run: node scripts/release-align.js check
 
       - name: Release / clean package build
-        run: npm run build:packages
+        run: node node_modules/npm/bin/npm-cli.js run build:packages
 
   production-publication:
     name: Release / npm publish
@@ -42,6 +42,7 @@ jobs:
     outputs:
       identity: ${{ steps.release_identity.outputs.identity }}
       identity-digest: ${{ steps.release_identity.outputs.identity-digest }}
+      publication-evidence: ${{ steps.publish.outputs.publication-evidence }}
       publication-verified: ${{ steps.publish.outputs.publication-verified }}
     permissions:
       contents: read
@@ -70,12 +71,20 @@ jobs:
         env:
           SOURCE_SHA: ${{ github.sha }}
         run: |
-          node scripts/release-main.js prepare --packages-dir dist --source-sha "$SOURCE_SHA" --node "$(node --version)" --npm "$(npm --version)" --output "$RUNNER_TEMP/main-release.v1.json"
+          node scripts/release-main.js prepare --packages-dir dist --source-sha "$SOURCE_SHA" --node "$(node --version)" --npm "$(node node_modules/npm/bin/npm-cli.js --version)" --output "$RUNNER_TEMP/main-release.v1.json"
           echo "identity=$(base64 -w 0 "$RUNNER_TEMP/main-release.v1.json")" >> "$GITHUB_OUTPUT"
           echo "identity-digest=$(node -p "require(process.env.RUNNER_TEMP + '/main-release.v1.json').identityDigest")" >> "$GITHUB_OUTPUT"
 
+      - name: Release / retain immutable release manifest
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08
+        with:
+          name: main-release-manifest-${{ github.sha }}
+          path: ${{ runner.temp }}/main-release.v1.json
+          if-no-files-found: error
+          retention-days: 90
+
       - id: publish
-        name: Release / publish through npm trusted publishing
+        name: Release / publish all verified npm waves through trusted publishing
         env:
           MAIN_RELEASE_PUBLISH_ENABLED: ${{ vars.SCRAMJET_MAIN_RELEASE_PUBLISH }}
           NPM_CONFIG_PROVENANCE: "true"
@@ -85,12 +94,14 @@ jobs:
           test -n "$ACTIONS_ID_TOKEN_REQUEST_TOKEN"
           test -z "${NPM_TOKEN:-}"
           test -z "${NODE_AUTH_TOKEN:-}"
-          node scripts/release-main.js publish --release "$RUNNER_TEMP/main-release.v1.json" --packages-dir dist
+          node scripts/release-main.js publish --release "$RUNNER_TEMP/main-release.v1.json" --packages-dir dist --output "$RUNNER_TEMP/main-release-publication.v1.json"
+          node -e 'const release = require(process.env.RUNNER_TEMP + "/main-release.v1.json"); const publication = require(process.env.RUNNER_TEMP + "/main-release-publication.v1.json"); require("./scripts/release-main.js").verifyPublication(publication, release);'
+          echo "publication-evidence=$(base64 -w 0 "$RUNNER_TEMP/main-release-publication.v1.json")" >> "$GITHUB_OUTPUT"
           echo "publication-verified=true" >> "$GITHUB_OUTPUT"
 
   main-checkpoint-promotion:
     name: Release / checkpoint promotion
-    if: ${{ needs.production-publication.outputs.publication-verified == 'true' && github.repository == 'scramjetorg/transform-hub' && github.ref == 'refs/heads/main' }}
+    if: ${{ needs.production-publication.outputs.publication-verified == 'true' && needs.production-publication.outputs.publication-evidence != '' && github.repository == 'scramjetorg/transform-hub' && github.ref == 'refs/heads/main' }}
     needs: [production-publication]
     permissions:
       contents: read

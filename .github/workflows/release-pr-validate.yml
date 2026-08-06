@@ -52,6 +52,14 @@ jobs:
     permissions:
       contents: read
       packages: write
+    # Environment-gated publication: this job is bound to the
+    # github-packages-prerelease environment, so it awaits environment approval
+    # before publishing. The environment holds the
+    # SCRAMJET_RELEASE_PRERELEASE_PUBLISH and SCRAMJET_GH_PACKAGES_PRERELEASE_PUBLISHER
+    # configuration variables and carries no secrets. npm authentication uses the
+    # automatic ${{ github.token }} (GITHUB_TOKEN) scoped by this job's
+    # packages: write permission; no PAT or npm token secret is used.
+    environment: github-packages-prerelease
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
@@ -81,7 +89,9 @@ jobs:
       - id: prerelease_publish
         name: Release PR / publish prereleases to GitHub Packages
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.SCRAMJET_RELEASE_PRERELEASE_PACKAGES_TOKEN }}
+          # Automatic GITHUB_TOKEN-derived npm auth for GitHub Packages, scoped to
+          # this job's packages: write permission (no PAT/npm token secret).
+          NODE_AUTH_TOKEN: ${{ github.token }}
           PRERELEASE_PUBLISH_ENABLED: ${{ vars.SCRAMJET_RELEASE_PRERELEASE_PUBLISH }}
           SCRAMJET_GH_PACKAGES_PRERELEASE_PUBLISHER: ${{ vars.SCRAMJET_GH_PACKAGES_PRERELEASE_PUBLISHER }}
         run: |
@@ -103,6 +113,8 @@ jobs:
     name: Release PR / prerelease BDD
     if: ${{ github.event.pull_request.base.ref == 'main' && github.event.pull_request.head.ref == 'devel' && github.event.pull_request.head.repo.full_name == github.repository }}
     needs: [prerelease-publication]
+    # BDD stays outside the github-packages-prerelease environment: it only
+    # consumes verified prereleases with read-only automatic-token auth.
     permissions:
       contents: read
       packages: read
@@ -143,7 +155,9 @@ jobs:
         if: ${{ steps.trusted_manifest.outputs.live == 'true' }}
         env:
           BDD_IMAGES: ${{ vars.SCRAMJET_RELEASE_PRERELEASE_BDD_IMAGES }}
-          NODE_AUTH_TOKEN: ${{ secrets.SCRAMJET_RELEASE_PRERELEASE_PACKAGES_READ_TOKEN }}
+          # Automatic GITHUB_TOKEN-derived npm read auth for GitHub Packages,
+          # scoped to this job's packages: read permission (no PAT/npm token secret).
+          NODE_AUTH_TOKEN: ${{ github.token }}
         run: |
           test -n "$NODE_AUTH_TOKEN"
           test -n "$BDD_IMAGES"
