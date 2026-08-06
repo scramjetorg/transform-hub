@@ -49,7 +49,7 @@
     "check:workflow-policy": "node scripts/check-workflow-policy.js --file scripts/test/fixtures/workflow-policy/compliant.yml",
     "check:ava-memory-guard-adoption": "node scripts/check-ava-memory-guard-adoption.js",
     "check:typings-split": "bash scripts/check-typings-split-boundaries.sh && node node_modules/typescript/bin/tsc -p packages/types/test-typings-split/tsconfig.json --noEmit",
-    "test:runner": "ulimit -v 1835008 2>/dev/null && SCRAMJET_AVA_NO_WORKER_THREADS=1 node scripts/run-ava.js scripts/test/*.spec.js --serial",
+    "test:runner": "ulimit -v 1835008 2>/dev/null && node scripts/run-runner-tests.js",
     "test:security-hooks": "node scripts/run-ava.js scripts/test/security-hooks.spec.js",
     "test:security-ci": "node scripts/run-ava.js scripts/test/security-hooks.spec.js scripts/test/security-ci-workflow.spec.js",
     "test:checkpoint": "node scripts/run-ava.js scripts/test/checkpoint-provenance.spec.js scripts/test/checkpoint-workflow.spec.js",

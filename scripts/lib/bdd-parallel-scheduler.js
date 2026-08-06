@@ -43,6 +43,7 @@ function spawnOwnedChild(options) {
     options.onSpawn?.(child);
     let settled = false;
     let settle;
+    let cancellationTimer;
     /** Set to true when verifyTermination returns false (process group still alive). */
     let _terminationFailed = false;
 
@@ -55,6 +56,10 @@ function spawnOwnedChild(options) {
             if (settled) return;
             _terminationFailed = verified === false;
             settled = true;
+            if (cancellationTimer) {
+                clearTimeout(cancellationTimer);
+                cancellationTimer = undefined;
+            }
             resolve({
                 code: code === null ? 1 : code,
                 signal,
@@ -68,13 +73,16 @@ function spawnOwnedChild(options) {
     const cancel = () => {
         if (settled) return;
         killProcessTree(child, { graceMs: options.killGraceMs });
+        // A synchronous fake ChildProcess may emit "close" from kill(). Do
+        // not create a deadline timer after that close handler has settled.
+        if (settled) return;
         const deadline = Date.now() + (options.cancelDeadlineMs || (options.killGraceMs || 2000) + 250);
         const settleAtDeadline = async () => {
             if (settled) return;
             const verified = await (options.verifyTermination?.(child, deadline) ?? child.exitCode !== null);
             if (settled) return;
             if (!verified && Date.now() < deadline) {
-                setTimeout(settleAtDeadline, Math.min(25, deadline - Date.now()));
+                cancellationTimer = setTimeout(settleAtDeadline, Math.min(25, deadline - Date.now()));
                 return;
             }
             if (settled) return;
@@ -90,13 +98,14 @@ function spawnOwnedChild(options) {
                 ...(options.resultDetails?.() || {})
             });
         };
-        setTimeout(settleAtDeadline, options.killGraceMs || 2000);
+        cancellationTimer = setTimeout(settleAtDeadline, options.killGraceMs || 2000);
     };
     options.signal?.addEventListener("abort", cancel, { once: true });
     if (options.signal?.aborted) cancel();
 
     return promise.finally(() => {
         options.signal?.removeEventListener("abort", cancel);
+        if (cancellationTimer) clearTimeout(cancellationTimer);
         // When TERM→KILL deadline (or close) failed to verify termination,
         // the process group is still alive. Retain PID tracking and evidence
         // (temp dirs, Docker containers) so the caller can detect the leak

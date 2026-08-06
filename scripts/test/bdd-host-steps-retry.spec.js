@@ -38,10 +38,12 @@ test("production start-host path probes readiness after spawn", (t) => {
         path.join(__dirname, "../../bdd/step-definitions/e2e/host-steps.ts"),
         "utf8"
     );
-    const spawnOffset = source.indexOf("await hostUtils.spawnHost([]);", source.indexOf("const startHost"));
+    const startHostOffset = source.indexOf("const startHost");
+    const spawnOffset = source.indexOf("await hostUtils.spawnHost([], \"--config\", dynamicVerser2ConfigPath);", startHostOffset);
     const probeOffset = source.indexOf("await retryLoadCheck(", spawnOffset);
 
     t.true(spawnOffset >= 0, "start-host production path must spawn the host");
+    t.true(spawnOffset > startHostOffset, "start-host production path must provide its owned temporary configuration");
     t.true(probeOffset > spawnOffset, "start-host production path must probe after spawn");
     t.true(probeOffset < source.indexOf("finally", spawnOffset), "owned ports must remain reserved until readiness");
 });

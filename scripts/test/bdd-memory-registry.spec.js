@@ -32,7 +32,7 @@ const {
     MemoryRegistry,
 } = require("../../bdd/lib/memory-registry");
 
-const { execSync, spawn } = require("child_process");
+const { execFileSync, execSync, spawn } = require("child_process");
 const fs = require("fs");
 const os = require("os");
 const path = require("path");
@@ -51,18 +51,66 @@ function isDockerAvailable() {
     }
 }
 
-/** Get the latest running container ID, or null. */
-function getLatestContainerId() {
-    try {
-        const stdout = execSync("docker ps --quiet --latest", {
-            encoding: "utf8",
-            timeout: 5000,
-            stdio: ["ignore", "pipe", "pipe"],
-        }).trim();
-        return stdout || null;
-    } catch {
+/**
+ * Start an owned container that remains observable for the complete assertion.
+ *
+ * Never borrow the latest ambient container: it can belong to another test or
+ * disappear between `docker ps` and the stats request. A local Node image is
+ * an explicit prerequisite for the live Engine checks; the rest of this unit
+ * suite remains Docker-independent.
+ */
+function startOwnedDockerFixture(t) {
+    if (!isDockerAvailable()) {
+        t.pass("Docker daemon unavailable – skipping live Engine assertion");
         return null;
     }
+
+    const image = process.env.SCRAMJET_DOCKER_MEMORY_TEST_IMAGE || "node:22-alpine";
+    try {
+        execFileSync("docker", ["image", "inspect", image], { stdio: "ignore" });
+    } catch {
+        t.pass(`Docker image ${image} is unavailable – skipping live Engine assertion`);
+        return null;
+    }
+
+    let containerId;
+    try {
+        containerId = execFileSync(
+            "docker",
+            [
+                "run", "--detach", "--rm",
+                "--label", `scramjet.memory-registry-test=${process.pid}`,
+                image,
+                "node", "-e", "setInterval(() => {}, 1000)"
+            ],
+            { encoding: "utf8", timeout: 10000, stdio: ["ignore", "pipe", "pipe"] }
+        ).trim();
+        const running = execFileSync(
+            "docker",
+            ["inspect", "--format", "{{.State.Running}}", containerId],
+            { encoding: "utf8", timeout: 5000, stdio: ["ignore", "pipe", "pipe"] }
+        ).trim();
+        if (running !== "true") throw new Error(`owned container is not running: ${running}`);
+    } catch (error) {
+        if (containerId) {
+            try {
+                execFileSync("docker", ["rm", "--force", containerId], { stdio: "ignore" });
+            } catch {
+                // Best effort after an incomplete fixture startup.
+            }
+        }
+        t.fail(`Could not start observable Docker fixture: ${error.message}`);
+        return null;
+    }
+
+    t.teardown(() => {
+        try {
+            execFileSync("docker", ["rm", "--force", containerId], { stdio: "ignore" });
+        } catch {
+            // --rm containers may already have stopped during AVA teardown.
+        }
+    });
+    return containerId;
 }
 
 // ---------------------------------------------------------------------------
@@ -129,17 +177,8 @@ test("getDockerContainerWorkingSetBytes returns null for empty containerId", asy
 });
 
 test("getDockerContainerWorkingSetBytes returns data for a real container when Docker is available", async (t) => {
-    if (!isDockerAvailable()) {
-        t.pass("Docker not available – skipping live container test");
-        return;
-    }
-
-    const containerId = getLatestContainerId();
-
-    if (!containerId) {
-        t.pass("No running containers – skipping live container test");
-        return;
-    }
+    const containerId = startOwnedDockerFixture(t);
+    if (!containerId) return;
 
     const bytes = await getDockerContainerWorkingSetBytes(containerId);
 
@@ -149,17 +188,8 @@ test("getDockerContainerWorkingSetBytes returns data for a real container when D
 });
 
 test("getDockerContainerWorkingSetBytes computes working set from Docker stats when available", async (t) => {
-    if (!isDockerAvailable()) {
-        t.pass("Docker not available – skipping working set test");
-        return;
-    }
-
-    const containerId = getLatestContainerId();
-
-    if (!containerId) {
-        t.pass("No running containers – skipping working set test");
-        return;
-    }
+    const containerId = startOwnedDockerFixture(t);
+    if (!containerId) return;
 
     const bytes = await getDockerContainerWorkingSetBytes(containerId);
 
@@ -357,17 +387,8 @@ test("MemoryRegistry assertAll passes for expected-exit container that is gone",
 });
 
 test("MemoryRegistry assertAll fails for expected-exit container still alive", async (t) => {
-    if (!isDockerAvailable()) {
-        t.pass("Docker not available – skipping live container failure test");
-        return;
-    }
-
-    const containerId = getLatestContainerId();
-
-    if (!containerId) {
-        t.pass("No running containers – skipping live container failure test");
-        return;
-    }
+    const containerId = startOwnedDockerFixture(t);
+    if (!containerId) return;
 
     const registry = new MemoryRegistry();
 
@@ -382,17 +403,8 @@ test("MemoryRegistry assertAll fails for expected-exit container still alive", a
 });
 
 test("MemoryRegistry assertAll does not enforce expected-exit for container on first call", async (t) => {
-    if (!isDockerAvailable()) {
-        t.pass("Docker not available – skipping");
-        return;
-    }
-
-    const containerId = getLatestContainerId();
-
-    if (!containerId) {
-        t.pass("No running containers – skipping");
-        return;
-    }
+    const containerId = startOwnedDockerFixture(t);
+    if (!containerId) return;
 
     const registry = new MemoryRegistry();
 
