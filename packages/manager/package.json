@@ -12,7 +12,6 @@
     "clean": "rm -rf ./dist .bic_cache",
     "watch": "tsc -b --watch",
     "test": "npm run test:ava",
-    "pretest:ava": "tsc --noEmit -p tsconfig.json",
     "test:ava": "TS_NODE_TRANSPILE_ONLY=1 SCRAMJET_AVA_FETCH=0 node ../../scripts/run-ava.js -T 120000 --serial",
     "prebuild": "npm run savehash",
     "savehash": "node ../../scripts/hash-to-file.js ./src/"

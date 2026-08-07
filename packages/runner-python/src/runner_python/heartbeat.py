@@ -13,7 +13,7 @@ import inspect
 import logging
 import json
 import re
-from typing import Any
+from typing import Any, Awaitable, Callable
 
 logger = logging.getLogger(__name__)
 
@@ -167,17 +167,21 @@ async def run_heartbeat(
     monitoring_writer: Any,
     app_context: Any,
     interval: float = 1.0,
+    *,
+    sleeper: Callable[[float], Awaitable[None]] = asyncio.sleep,
 ) -> None:
     """Emit a MONITORING frame every ``interval`` seconds until cancelled.
 
     The first frame is emitted ``interval`` seconds after this coroutine
     starts (i.e. after the handshake completes and the loop is scheduled).
-    Cancellation propagates via ``asyncio.CancelledError`` and is re-raised
-    so callers can ``await`` the task cleanly.
+    ``sleeper`` defaults to :func:`asyncio.sleep`; it is injectable for
+    deterministic cadence tests. Cancellation propagates via
+    ``asyncio.CancelledError`` and is re-raised so callers can ``await`` the
+    task cleanly.
     """
     try:
         while True:
-            await asyncio.sleep(interval)
+            await sleeper(interval)
             try:
                 payload = await _resolve_health(app_context)
             except Exception as error:

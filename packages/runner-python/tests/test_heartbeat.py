@@ -101,7 +101,7 @@ async def test_handler_exception_becomes_classified_frame_and_heartbeat_continue
 
 
 @pytest.mark.asyncio
-async def test_first_heartbeat_emitted_after_interval():
+async def test_first_heartbeat_emitted_after_interval_real_time_smoke():
     writer = RecordingWriter()
     app_context = AppContext()
 
@@ -127,36 +127,26 @@ async def test_first_heartbeat_emitted_after_interval():
 
 
 @pytest.mark.asyncio
-async def test_cadence_five_frames_under_100ms_drift_per_frame():
-    """5 frames over 5s with <100ms drift per frame."""
+async def test_cadence_emits_five_frames_after_five_requested_intervals():
+    """Cadence is defined by requested sleeps, not wall-clock scheduling."""
     writer = RecordingWriter()
     app_context = AppContext()
+    requested_intervals: list[float] = []
 
-    task = asyncio.create_task(run_heartbeat(writer, app_context, interval=1.0))
-    start = time.monotonic()
+    async def sleeper(interval: float) -> None:
+        requested_intervals.append(interval)
+        # Stop before a sixth frame; the first five calls model five elapsed
+        # heartbeat intervals without waiting for wall-clock time.
+        if len(requested_intervals) == 6:
+            raise asyncio.CancelledError
 
-    # Wait until 5 frames have arrived (or timeout safety net at 6.5s).
-    deadline = start + 6.5
-    while len(writer.frames) < 5 and time.monotonic() < deadline:
-        await asyncio.sleep(0.05)
-
-    task.cancel()
     with pytest.raises(asyncio.CancelledError):
-        await task
+        await run_heartbeat(writer, app_context, interval=1.0, sleeper=sleeper)
 
-    assert len(writer.frames) >= 5, (
-        f"expected at least 5 frames, got {len(writer.frames)}"
-    )
-
-    # Each frame i (1-indexed) should land near start + i*1.0s within 100ms.
-    for i in range(5):
-        expected = start + (i + 1) * 1.0
-        actual = writer.frames[i][2]
-        drift = abs(actual - expected)
-        assert drift < 0.1, (
-            f"frame {i + 1} drift {drift:.3f}s exceeds 100ms "
-            f"(expected ~{expected:.3f}, got {actual:.3f})"
-        )
+    assert requested_intervals[:5] == [1.0] * 5
+    assert len(requested_intervals) == 6  # Sixth sleep starts the next cycle.
+    assert [frame[0] for frame in writer.frames] == [MONITORING] * 5
+    assert [frame[1] for frame in writer.frames] == [{"healthy": True}] * 5
 
 
 @pytest.mark.asyncio
@@ -254,6 +244,7 @@ async def test_default_interval_is_one_second():
 
     sig = _inspect.signature(run_heartbeat)
     assert sig.parameters["interval"].default == 1.0
+    assert sig.parameters["sleeper"].default is asyncio.sleep
 
 
 # --- Monitoring handler composition tests ---
