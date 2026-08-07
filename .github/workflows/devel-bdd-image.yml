@@ -68,7 +68,7 @@ jobs:
           docker buildx imagetools inspect "$BDD_IMAGE_REPOSITORY@$BDD_IMAGE_DIGEST" >/dev/null
 
       - name: Devel / attest BDD Node image provenance
-        uses: actions/attest-build-provenance@1a2b1cf9a6ac5b1e57d96d4fc2de2cc4f7b72417
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8
         with:
           subject-name: ghcr.io/scramjetorg/transform-hub/bdd-node
           subject-digest: ${{ steps.build.outputs.digest }}
