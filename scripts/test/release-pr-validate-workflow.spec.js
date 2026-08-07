@@ -148,7 +148,8 @@ test("release PR BDD consumes only verified publisher output and exact prereleas
 	t.true(bdd.includes("--repo scramjetorg/transform-hub"));
 	t.true(bdd.includes("--source-ref refs/heads/devel"));
 	t.true(bdd.includes("--source-digest \"$HEAD_SHA\""));
-	t.true(bdd.includes("--signer-workflow .github/workflows/devel-bdd-image.yml@refs/heads/devel"));
+	t.true(bdd.includes("--signer-workflow scramjetorg/transform-hub/.github/workflows/devel-bdd-image.yml@refs/heads/devel"), "signer workflow must use the full owner/repo/path identity");
+	t.false(bdd.includes("--signer-workflow .github/workflows/devel-bdd-image.yml@refs/heads/devel"), "bare-path signer workflow identity must not be used");
 	t.true(bdd.includes("--predicate-type https://slsa.dev/provenance/v1"));
 	t.true(bdd.includes("--deny-self-hosted-runners"));
 	t.true(bdd.includes("BDD image attestation verification failed for devel source $HEAD_SHA"));
