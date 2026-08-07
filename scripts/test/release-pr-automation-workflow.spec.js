@@ -8,7 +8,7 @@ const { checkWorkflowSource } = require("../check-workflow-policy.js");
 
 const workflowPath = resolve(__dirname, "..", "..", ".github", "workflows", "release-pr-automation.yml");
 
-test("release PR automation is trusted, pinned, and cannot bypass merge protection", (t) => {
+test("release PR automation is trusted, pinned, and never requests auto-merge or admin bypass", (t) => {
 	const source = readFileSync(workflowPath, "utf8");
 	t.deepEqual(checkWorkflowSource(source, ".github/workflows/release-pr-automation.yml"), []);
 	t.true(source.includes("workflow_run:"));
@@ -24,7 +24,12 @@ test("release PR automation is trusted, pinned, and cannot bypass merge protecti
 	t.true(source.includes("persist-credentials: false"));
 	t.true(source.includes("actions/setup-node@820762786026740c76f36085b0efc47a31fe5020"));
 	t.true(source.includes('node-version: "22"'));
-	t.true(source.includes("never admin bypass"));
+	t.true(source.includes("merge remains manual"), "the workflow must state that merging stays an explicit manual operation");
+	t.true(source.includes("never requests auto-merge"), "the workflow must state that no auto-merge is requested");
+	t.true(source.includes("never enables admin bypass"), "the workflow must state the token never enables admin bypass");
+	t.false(source.includes("request auto-merge"), "no step may request auto-merge");
+	t.false(source.includes("pr merge"), "no gh pr merge invocation may appear");
+	t.false(source.includes("--auto"), "no --auto merge flag may appear");
 	t.false(source.includes("pull_request_target"));
 	t.false(source.includes("id-token: write"));
 	t.false(source.includes("packages: write"));

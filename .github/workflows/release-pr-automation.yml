@@ -34,10 +34,12 @@ jobs:
           node-version: "22"
           cache: ""
 
-      - name: Create or update the managed release PR and request auto-merge
+      - name: Create or update the managed release PR (merge remains manual)
         env:
           # Environment secret: a GitHub App or fine-grained token limited to
-          # pull-request creation/update and auto-merge requests, never admin bypass.
+          # pull-request creation/update. Merging stays an explicit manual
+          # operation after required checks; automation never requests auto-merge
+          # and the token never enables admin bypass.
           GH_TOKEN: ${{ secrets.DEVEL_MAIN_PR_AUTOMATION_TOKEN }}
           RELEASE_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
           RELEASE_HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}

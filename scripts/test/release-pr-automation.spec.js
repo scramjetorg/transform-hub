@@ -2,7 +2,7 @@
 
 const test = require("ava").default;
 
-const { enableAutoMerge, manageReleasePr, releasePrDecision } = require("../release-pr-automation.js");
+const { manageReleasePr, releasePrDecision } = require("../release-pr-automation.js");
 
 const INPUT = {
 	conclusion: "success",
@@ -23,7 +23,7 @@ test("release PR decision is idempotent and accepts only successful same-reposit
 	t.is(releasePrDecision({ ...INPUT, pullRequests: [{ number: 1 }, { number: 2 }] }).reason, "multiple-managed-release-prs");
 });
 
-test("managed PR update requests auto-merge without an admin bypass", (t) => {
+test("managed PR update keeps edit behavior without any merge, auto-merge, or admin bypass", (t) => {
 	const calls = [];
 	const runner = (_command, args) => {
 		calls.push(args);
@@ -33,10 +33,33 @@ test("managed PR update requests auto-merge without an admin bypass", (t) => {
 	const result = manageReleasePr(INPUT, runner);
 
 	t.is(result.action, "update");
-	t.is(result.autoMerge.status, "enabled");
-	const mergeArgs = calls.find((args) => args.includes("merge"));
-	t.true(mergeArgs.includes("--auto"));
-	t.false(mergeArgs.includes("--admin"));
+	t.deepEqual(result.pullRequest, { number: 12, url: "https://example.test/12" });
+	t.true(calls.some((args) => args[0] === "pr" && args[1] === "edit"), "normal update behavior must remain");
+	t.false("autoMerge" in result, "the result must not carry an auto-merge request");
+	t.false(calls.some((args) => args[0] === "pr" && args[1] === "merge"), "gh pr merge must never be invoked");
+	t.false(calls.some((args) => args.includes("--auto")), "--auto must never be requested");
+	t.false(calls.some((args) => args.includes("--admin")), "admin bypass must never be used");
+});
+
+test("managed PR creation keeps create behavior without any merge, auto-merge, or admin bypass", (t) => {
+	const calls = [];
+	const runner = (_command, args) => {
+		calls.push(args);
+		if (args.includes("list")) {
+			return JSON.stringify(calls.some((call) => call[0] === "pr" && call[1] === "create")
+				? [{ number: 12, url: "https://example.test/12" }]
+				: []);
+		}
+		return "";
+	};
+	const result = manageReleasePr(INPUT, runner);
+
+	t.is(result.action, "create");
+	t.deepEqual(result.pullRequest, { number: 12, url: "https://example.test/12" });
+	t.true(calls.some((args) => args[0] === "pr" && args[1] === "create"), "normal create behavior must remain");
+	t.false(calls.some((args) => args[0] === "pr" && args[1] === "merge"), "gh pr merge must never be invoked");
+	t.false(calls.some((args) => args.includes("--auto")), "--auto must never be requested");
+	t.false(calls.some((args) => args.includes("--admin")), "admin bypass must never be used");
 });
 
 test("missing automation token reports safely without invoking GitHub CLI", (t) => {
@@ -45,13 +68,4 @@ test("missing automation token reports safely without invoking GitHub CLI", (t) 
 	});
 
 	t.deepEqual(result, { action: "report", reason: "automation-token-unavailable" });
-});
-
-test("auto-merge blockers are reported without a dangerous failure", (t) => {
-	const result = enableAutoMerge("scramjetorg/transform-hub", 12, () => {
-		throw new Error("branch protection blocks auto merge");
-	});
-
-	t.is(result.status, "blocked");
-	t.true(result.message.includes("branch protection"));
 });

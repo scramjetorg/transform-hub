@@ -5,7 +5,7 @@ const { execFileSync } = require("node:child_process");
 const BASE_BRANCH = "main";
 const HEAD_BRANCH = "devel";
 const TITLE = "Release devel into main";
-const BODY = "Managed release PR from the validated devel branch. GitHub branch protection remains the merge authority.";
+const BODY = "Managed release PR from the validated devel branch. Merging remains an explicit manual operation after required checks; this automation never requests auto-merge.";
 
 function releasePrDecision({ repository, headRepository, headBranch, conclusion, pullRequests }) {
     if (conclusion !== "success") return { action: "report", reason: "devel-validation-not-successful" };
@@ -27,18 +27,6 @@ function listReleasePrs(repository, runner) {
     return JSON.parse(output || "[]");
 }
 
-function enableAutoMerge(repository, number, runner) {
-    try {
-        runGh(["pr", "merge", String(number), "--repo", repository, "--auto", "--merge"], runner);
-        return { status: "enabled" };
-    } catch {
-        return {
-            status: "blocked",
-            message: "Auto-merge was not enabled; repository settings, branch protection, or reviews require attention."
-        };
-    }
-}
-
 function manageReleasePr(input, runner = execFileSync) {
     if (!input.token) return { action: "report", reason: "automation-token-unavailable" };
     const pullRequests = listReleasePrs(input.repository, runner);
@@ -54,9 +42,10 @@ function manageReleasePr(input, runner = execFileSync) {
     }
 
     runGh(["pr", "edit", String(pullRequest.number), "--repo", input.repository, "--title", TITLE, "--body", BODY], runner);
+    // Merging stays an explicit manual operation after required checks:
+    // automation never issues a gh pr merge, an auto-merge request, or an admin bypass.
     return {
         action: decision.action,
-        autoMerge: enableAutoMerge(input.repository, pullRequest.number, runner),
         pullRequest: { number: pullRequest.number, url: pullRequest.url }
     };
 }
@@ -79,4 +68,4 @@ function main() {
 
 if (require.main === module) main();
 
-module.exports = { enableAutoMerge, listReleasePrs, manageReleasePr, releasePrDecision };
+module.exports = { listReleasePrs, manageReleasePr, releasePrDecision };
