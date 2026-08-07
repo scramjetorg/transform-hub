@@ -37,7 +37,8 @@ test("devel fast-gates job checks out before Node/npm setup", (t) => {
 	const block = source.slice(checkoutIndex, helperIndex);
 	t.true(block.includes("persist-credentials: false"));
 	t.true(block.includes("ref: ${{ github.sha }}"));
-	t.is((source.match(/cache: "false"/g) || []).length, 1);
+	t.is((source.match(/cache-mode: read-write/g) || []).length, 1, "devel fast gates are trusted push code and use the read-write npm cache");
+	t.false(source.includes("cache: \"false\""), "the legacy boolean cache input must not be used");
 	t.is((source.match(/checkpoint-branch: devel/g) || []).length, 1);
 });
 

@@ -38,8 +38,8 @@ jobs:
 
       - uses: ./.github/actions/setup-workspace
         with:
-          # Always disabled for devel fast gates to avoid cache-poisoning risk.
-          cache: "false"
+          # Devel fast gates are trusted push code: read-write npm tarball cache.
+          cache-mode: read-write
           checkpoint-branch: devel
 
       - name: Repository security policy

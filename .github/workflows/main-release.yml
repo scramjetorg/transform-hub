@@ -27,7 +27,8 @@ jobs:
 
       - uses: ./.github/actions/setup-workspace
         with:
-          cache: "false"
+          # Trusted boundary validation: read-write npm tarball cache.
+          cache-mode: read-write
 
       - name: Release / verify aligned package boundary
         run: node scripts/release-align.js check
@@ -58,7 +59,8 @@ jobs:
 
       - uses: ./.github/actions/setup-workspace
         with:
-          cache: "false"
+          # Production publisher job holds publish credentials: cache stays off.
+          cache-mode: off
 
       - name: Release / verify aligned package boundary
         run: node scripts/release-align.js check
@@ -119,7 +121,8 @@ jobs:
 
       - uses: ./.github/actions/setup-workspace
         with:
-          cache: "false"
+          # Checkpoint promotion job holds GHCR publish credentials: cache stays off.
+          cache-mode: off
 
       - name: Release / build, publish, verify, and promote checkpoint
         env:

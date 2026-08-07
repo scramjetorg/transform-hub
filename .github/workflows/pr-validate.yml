@@ -10,14 +10,25 @@ permissions:
   contents: read
 
 concurrency:
-  group: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || format('merge-group-{0}', github.event.merge_group.head_sha) }}
-  cancel-in-progress: true
+  # Ordinary PR and merge-queue runs cancel their stale predecessors for fast
+  # iteration. An eligible same-repository devel->main release run publishes
+  # prereleases and must never be cancelled partway through its package set, so
+  # it uses a distinct concurrency group with cancellation disabled; a newer
+  # release-PR run waits for the active publication to finish instead.
+  group: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main' && github.event.pull_request.head.ref == 'devel' && github.event.pull_request.head.repo.full_name == github.repository && format('release-pr-{0}', github.event.pull_request.number) || (github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number)) || format('merge-group-{0}', github.event.merge_group.head_sha) }}
+  cancel-in-progress: ${{ !(github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main' && github.event.pull_request.head.ref == 'devel' && github.event.pull_request.head.repo.full_name == github.repository) }}
 
 jobs:
-  base-validation:
-    name: CI / fast gates
+  package-validation:
+    # Single source-validation job for every PR and merge-queue run: lockfile
+    # reproducibility, fast gates, serial AVA package tests, and the package
+    # build share one checkout/install so generic validation is never duplicated
+    # by the release-specific jobs below.
+    name: CI / package validation
+    permissions:
+      contents: read
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 45
     steps:
       # The protected organization-required security workflow remains mandatory.
       # This workflow never grants fork code credentials or promotion capability.
@@ -35,8 +46,9 @@ jobs:
 
       - uses: ./.github/actions/setup-workspace
         with:
-          # Always disabled for PR/merge-group code, including same-repository PRs.
-          cache: "false"
+          # PR/merge-group source jobs only restore a validated npm cache; they
+          # never write caches from untrusted or release-PR code.
+          cache-mode: restore-only
           checkpoint-branch: ${{ github.event.pull_request.base.ref || github.event.merge_group.base_ref || '' }}
 
       - name: Mergeability and merge-queue eligibility
@@ -67,133 +79,20 @@ jobs:
       - name: License validation
         run: npm run check:licenses
 
-  ava-pre-build:
-    name: CI / AVA
-    needs: [base-validation]
-    permissions:
-      contents: read
-    runs-on: ubuntu-24.04
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with:
-          persist-credentials: false
-          ref: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha || github.sha }}
-
-      - uses: ./.github/actions/setup-workspace
-        with:
-          cache: "false"
-          checkpoint-branch: ${{ github.event.pull_request.base.ref || github.event.merge_group.base_ref || '' }}
-
       - name: Setup Bun
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6
         with:
           bun-version: "1"
 
-      - name: Run pre-build package tests
+      - name: Run serial package tests
         run: npm run test:packages-no-concurrent
-
-  package-build:
-    name: CI / package build
-    needs: [ava-pre-build]
-    permissions:
-      contents: read
-    runs-on: ubuntu-24.04
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with:
-          persist-credentials: false
-          ref: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha || github.sha }}
-
-      - uses: ./.github/actions/setup-workspace
-        with:
-          cache: "false"
-          checkpoint-branch: ${{ github.event.pull_request.base.ref || github.event.merge_group.base_ref || '' }}
 
       - name: Build packages
         run: npm run build:packages
 
-  bdd-node:
-    name: CI / BDD Node
-    needs: [package-build]
-    permissions:
-      contents: read
-    runs-on: ubuntu-24.04
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with:
-          persist-credentials: false
-          ref: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha || github.sha }}
-
-      - uses: ./.github/actions/setup-workspace
-        with:
-          cache: "false"
-          checkpoint-branch: ${{ github.event.pull_request.base.ref || github.event.merge_group.base_ref || '' }}
-
-      # PR outputs remain disposable: no build artifact or cache crosses jobs.
-      - name: Build disposable BDD inputs
-        run: npm run build:packages
-
-      - name: Run Docker-backed Node BDD validation
-        run: npm run test:bdd-ci-node
-
-  bdd-python:
-    name: CI / BDD Python
-    needs: [package-build]
-    permissions:
-      contents: read
-    runs-on: ubuntu-24.04
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with:
-          persist-credentials: false
-          ref: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha || github.sha }}
-
-      - uses: ./.github/actions/setup-workspace
-        with:
-          cache: "false"
-          checkpoint-branch: ${{ github.event.pull_request.base.ref || github.event.merge_group.base_ref || '' }}
-
-      # PR outputs remain disposable: no build artifact or cache crosses jobs.
-      - name: Build disposable BDD inputs
-        run: npm run build:packages
-
-      - name: Run Docker-backed Python BDD validation
-        run: npm run test:bdd-ci-python
-
-  bdd-api:
-    name: CI / BDD API
-    needs: [package-build]
-    permissions:
-      contents: read
-    runs-on: ubuntu-24.04
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with:
-          persist-credentials: false
-          ref: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha || github.sha }}
-
-      - uses: ./.github/actions/setup-workspace
-        with:
-          cache: "false"
-          checkpoint-branch: ${{ github.event.pull_request.base.ref || github.event.merge_group.base_ref || '' }}
-
-      # PR outputs remain disposable: no build artifact or cache crosses jobs.
-      - name: Build disposable BDD inputs
-        run: npm run build:packages
-
-      - name: Run Docker-backed API BDD validation
-        run: npm run test:bdd-ci-api-node
-
-  bdd-legacy-coverage:
-    # Durable named coverage replacing the removed Node 18 reusable workflows:
-    # hub, API-topic, unified JS/Python, and process-adapter paths.
-    name: CI / durable legacy BDD coverage
-    needs: [package-build]
+  bdd-core:
+    name: CI / core BDD
+    needs: [package-validation]
     permissions:
       contents: read
     runs-on: ubuntu-24.04
@@ -206,7 +105,45 @@ jobs:
 
       - uses: ./.github/actions/setup-workspace
         with:
-          cache: "false"
+          # PR outputs remain disposable: restore-only cache, no build artifact
+          # or node_modules handoff crosses jobs.
+          cache-mode: restore-only
+          checkpoint-branch: ${{ github.event.pull_request.base.ref || github.event.merge_group.base_ref || '' }}
+
+      # PR outputs remain disposable: no build artifact or cache crosses jobs.
+      - name: Build disposable BDD inputs
+        run: npm run build:packages
+
+      - name: Run Docker-backed Node BDD validation
+        run: npm run test:bdd-ci-node
+
+      - name: Run Docker-backed Python BDD validation
+        run: npm run test:bdd-ci-python
+
+      - name: Run Docker-backed API BDD validation
+        run: npm run test:bdd-ci-api-node
+
+  bdd-extended:
+    # Durable named coverage replacing the removed Node 18 reusable workflows:
+    # hub, API-topic, process-adapter, and unified JS/Python paths run
+    # sequentially with the exact existing command/tag variants.
+    name: CI / extended BDD
+    needs: [package-validation]
+    permissions:
+      contents: read
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha || github.sha }}
+
+      - uses: ./.github/actions/setup-workspace
+        with:
+          # PR outputs remain disposable: restore-only cache, no build artifact
+          # or node_modules handoff crosses jobs.
+          cache-mode: restore-only
           checkpoint-branch: ${{ github.event.pull_request.base.ref || github.event.merge_group.base_ref || '' }}
 
       # PR outputs remain disposable: build durable BDD inputs in this isolated job.
@@ -220,3 +157,169 @@ jobs:
           RUNTIME_ADAPTER=process npm run test:bdd-ci-node
           npm run test:unified-py
           npm run test:unified-js
+
+  prerelease-publication:
+    name: Release PR / prerelease publication
+    if: ${{ github.event.pull_request.base.ref == 'main' && github.event.pull_request.head.ref == 'devel' && github.event.pull_request.head.repo.full_name == github.repository }}
+    needs: [bdd-core, bdd-extended]
+    outputs:
+      prerelease-manifest: ${{ steps.prerelease_manifest.outputs.manifest }}
+      prerelease-manifest-sha256: ${{ steps.prerelease_manifest.outputs.checksum }}
+      prereleases-published: ${{ steps.prerelease_publish.outputs.published }}
+    permissions:
+      contents: read
+      packages: write
+    concurrency:
+      # Serialize live GitHub Packages publication across release PRs: an
+      # in-flight publication completes before the next one starts, and a
+      # newer release run never cancels a publication partway through.
+      group: release-prerelease-publication
+      cancel-in-progress: false
+    # Environment-gated publication: this job is bound to the
+    # github-packages-prerelease environment, so it awaits environment approval
+    # before publishing. The environment holds the
+    # SCRAMJET_RELEASE_PRERELEASE_PUBLISH and SCRAMJET_GH_PACKAGES_PRERELEASE_PUBLISHER
+    # configuration variables and carries no secrets. npm authentication uses the
+    # automatic ${{ github.token }} (GITHUB_TOKEN) scoped by this job's
+    # packages: write permission; no PAT or npm token secret is used.
+    environment: github-packages-prerelease
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - uses: ./.github/actions/setup-workspace
+        with:
+          # The credentialed publication job disables Actions caching entirely:
+          # it restores nothing from a reusable cache before publishing and
+          # writes nothing back from release code.
+          cache-mode: off
+
+      - name: Release PR / build publishable packages
+        run: FLAT_PACKAGES=true MAKE_PUBLIC=true NO_INSTALL=true node scripts/build-all.js -w release --ts-config tsconfig.build.json
+
+      - id: prerelease_manifest
+        name: Release PR / create prerelease manifest
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PRERELEASE_ATTEMPT: r${{ github.run_id }}.a${{ github.run_attempt }}
+        run: |
+          node scripts/release-prerelease.js plan --pr "$PR_NUMBER" --sha "$HEAD_SHA" --attempt "$PRERELEASE_ATTEMPT" --packages-dir dist --output "$RUNNER_TEMP/release-prerelease-manifest.json"
+          echo "manifest=$(base64 -w 0 "$RUNNER_TEMP/release-prerelease-manifest.json")" >> "$GITHUB_OUTPUT"
+          echo "checksum=$(node -p "require(process.env.RUNNER_TEMP + '/release-prerelease-manifest.json').checksum")" >> "$GITHUB_OUTPUT"
+
+      - id: prerelease_publish
+        name: Release PR / publish prereleases to GitHub Packages
+        env:
+          # Automatic GITHUB_TOKEN-derived npm auth for GitHub Packages, scoped to
+          # this job's packages: write permission (no PAT/npm token secret).
+          NODE_AUTH_TOKEN: ${{ github.token }}
+          PRERELEASE_PUBLISH_ENABLED: ${{ vars.SCRAMJET_RELEASE_PRERELEASE_PUBLISH }}
+          SCRAMJET_GH_PACKAGES_PRERELEASE_PUBLISHER: ${{ vars.SCRAMJET_GH_PACKAGES_PRERELEASE_PUBLISHER }}
+        run: |
+          test "$PRERELEASE_PUBLISH_ENABLED" = "true"
+          test "$SCRAMJET_GH_PACKAGES_PRERELEASE_PUBLISHER" = "github-packages"
+          test -n "$NODE_AUTH_TOKEN"
+          export NPM_CONFIG_USERCONFIG="$RUNNER_TEMP/release-prerelease.npmrc"
+          trap 'rm -f "$NPM_CONFIG_USERCONFIG"' EXIT
+          umask 077
+          {
+            printf '%s\n' '@scramjetorg:registry=https://npm.pkg.github.com'
+            printf '%s\n' "//npm.pkg.github.com/:_authToken=$NODE_AUTH_TOKEN"
+            printf '%s\n' 'always-auth=true'
+          } > "$NPM_CONFIG_USERCONFIG"
+          node scripts/release-prerelease.js publish --manifest "$RUNNER_TEMP/release-prerelease-manifest.json" --packages-dir dist
+          echo "published=true" >> "$GITHUB_OUTPUT"
+
+  prerelease-bdd:
+    name: Release PR / prerelease BDD
+    if: ${{ github.event.pull_request.base.ref == 'main' && github.event.pull_request.head.ref == 'devel' && github.event.pull_request.head.repo.full_name == github.repository }}
+    needs: [prerelease-publication]
+    # BDD stays outside the github-packages-prerelease environment: it only
+    # consumes verified prereleases with read-only automatic-token auth.
+    permissions:
+      attestations: read
+      contents: read
+      packages: read
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: "22"
+          package-manager-cache: false
+
+      - name: Install pinned npm
+        run: |
+          npm install --global --ignore-scripts npm@11.19.0
+          test "$(npm --version)" = "11.19.0"
+
+      - name: Install root dependencies
+        # The BDD helper scripts (release-prerelease-bdd.js -> release-boundary.js)
+        # require root dependencies such as glob, so the root node_modules must
+        # exist before the trusted manifest verification step runs.
+        run: npm ci --ignore-scripts
+
+      - id: trusted_manifest
+        name: Release PR / verify trusted prerelease manifest
+        env:
+          EXPECTED_CHECKSUM: ${{ needs.prerelease-publication.outputs.prerelease-manifest-sha256 }}
+          PUBLISHED: ${{ needs.prerelease-publication.outputs.prereleases-published }}
+          PUBLISHER_MANIFEST: ${{ needs.prerelease-publication.outputs.prerelease-manifest }}
+          BDD_REGISTRY_ENABLED: ${{ vars.SCRAMJET_RELEASE_PRERELEASE_BDD == 'true' }}
+        run: |
+          test -n "$PUBLISHER_MANIFEST"
+          printf '%s' "$PUBLISHER_MANIFEST" | base64 --decode > "$RUNNER_TEMP/release-prerelease-manifest.json"
+          node scripts/release-prerelease-bdd.js verify --manifest "$RUNNER_TEMP/release-prerelease-manifest.json" --expected-checksum "$EXPECTED_CHECKSUM"
+          test "$PUBLISHED" = "true"
+          test "$BDD_REGISTRY_ENABLED" = "true"
+          echo "live=true" >> "$GITHUB_OUTPUT"
+
+      - name: Release PR / install verified prereleases and run API BDD
+        if: ${{ steps.trusted_manifest.outputs.live == 'true' }}
+        env:
+          BDD_IMAGE_REPOSITORY: ghcr.io/scramjetorg/transform-hub/bdd-node
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          # Automatic GITHUB_TOKEN-derived npm read auth for GitHub Packages,
+          # scoped to this job's packages: read permission. The same automatic
+          # token reads and verifies the exact devel BDD image before its digest
+          # is pinned for execution.
+          GH_TOKEN: ${{ github.token }}
+          NODE_AUTH_TOKEN: ${{ github.token }}
+        run: |
+          test -n "$NODE_AUTH_TOKEN"
+          test "$HEAD_SHA" = "$(git rev-parse HEAD)"
+          bdd_image_tag="$BDD_IMAGE_REPOSITORY:devel-$HEAD_SHA"
+          printf '%s' "$NODE_AUTH_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+          trap 'docker logout ghcr.io' EXIT
+          bdd_image_digest="$(docker buildx imagetools inspect --format '{{.Manifest.Digest}}' "$bdd_image_tag")"
+          [[ "$bdd_image_digest" =~ ^sha256:[a-f0-9]{64}$ ]]
+          bdd_image_subject="oci://$BDD_IMAGE_REPOSITORY@$bdd_image_digest"
+          if ! gh attestation verify "$bdd_image_subject" --repo scramjetorg/transform-hub --source-ref refs/heads/devel --source-digest "$HEAD_SHA" --signer-workflow scramjetorg/transform-hub/.github/workflows/devel-bdd-image.yml@refs/heads/devel --predicate-type https://slsa.dev/provenance/v1 --deny-self-hosted-runners; then
+            echo "BDD image attestation verification failed for devel source $HEAD_SHA" >&2
+            exit 1
+          fi
+          BDD_IMAGES="$(node -e 'const [repository, digest] = process.argv.slice(1); console.log(JSON.stringify([{ role: "bdd-node", reference: `${repository}@${digest}` }]));' "$BDD_IMAGE_REPOSITORY" "$bdd_image_digest")"
+          export NPM_CONFIG_USERCONFIG="$RUNNER_TEMP/release-prerelease-read.npmrc"
+          trap 'rm -f "$NPM_CONFIG_USERCONFIG"; docker logout ghcr.io' EXIT
+          umask 077
+          {
+            printf '%s\n' '@scramjetorg:registry=https://npm.pkg.github.com'
+            printf '%s\n' "//npm.pkg.github.com/:_authToken=$NODE_AUTH_TOKEN"
+            printf '%s\n' 'always-auth=true'
+          } > "$NPM_CONFIG_USERCONFIG"
+          node scripts/release-prerelease-bdd.js prepare --manifest "$RUNNER_TEMP/release-prerelease-manifest.json" --expected-checksum "${{ needs.prerelease-publication.outputs.prerelease-manifest-sha256 }}" --images-json "$BDD_IMAGES" --install-dir .release-prerelease-bdd --output "$RUNNER_TEMP/release-prerelease-bdd.json"
+          npm --prefix .release-prerelease-bdd install --package-lock-only --ignore-scripts
+          node scripts/release-prerelease-bdd.js verify-lock --lock .release-prerelease-bdd/package-lock.json --record "$RUNNER_TEMP/release-prerelease-bdd.json"
+          npm --prefix .release-prerelease-bdd ci --ignore-scripts
+          node scripts/release-prerelease-bdd.js activate --install-dir .release-prerelease-bdd --record "$RUNNER_TEMP/release-prerelease-bdd.json" --workspace-root .
+          BDD_NODE_IMAGE="$(node -p "require(process.env.RUNNER_TEMP + '/release-prerelease-bdd.json').images.find((image) => image.role === 'bdd-node').reference")" npm run test:bdd-ci-api-node

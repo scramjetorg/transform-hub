@@ -9,26 +9,33 @@ digest requirements remain in [CHECKPOINTS.md](CHECKPOINTS.md).
 
 ## Active workflow and trigger inventory
 
-The final workflow-file audit found exactly these eight active workflow files.
-Legacy Node 18/Yarn reusable workflows and the legacy Docker Hub publisher were
-removed; `security-check.yml` is retained.
+The final workflow-file audit found exactly these seven active workflow files.
+Legacy Node 18/Yarn reusable workflows, the legacy Docker Hub publisher, and the
+former standalone `release-pr-validate.yml` were removed; `security-check.yml`
+is retained.
 
 | Workflow | Trigger | Stable check/job names | Purpose |
 | --- | --- | --- | --- |
-| `pr-validate.yml` | PRs to `main`, `devel`, or `release/**`; merge queue | `CI / fast gates`, `CI / AVA`, `CI / package build`, `CI / BDD Node`, `CI / BDD Python`, `CI / BDD API`, `CI / durable legacy BDD coverage` | Fork-safe, read-only validation. The durable coverage job owns former hub, API-topic, unified JS/Python, and process-adapter coverage. |
+| `pr-validate.yml` | PRs to `main`, `devel`, or `release/**`; merge queue | `CI / package validation`, `CI / core BDD`, `CI / extended BDD`, `Release PR / prerelease publication`, `Release PR / prerelease BDD` | The single fork-safe, read-only validation workflow for every PR and merge-queue run. `CI / package validation` owns lockfile reproducibility, fast gates, Bun setup, serial AVA package tests, and the package build in one checkout/install; `CI / core BDD` and `CI / extended BDD` run the Docker BDD lanes after package validation. The same file also carries the trusted same-repository `devel`→`main` release chain: `Release PR / prerelease publication` (needs both BDD lanes, awaits `github-packages-prerelease` approval) and `Release PR / prerelease BDD` (needs publication, stays unattended and read-only). |
 | `security-check.yml` | PR, merge queue, pushes to trusted branches, weekly schedule | `Security / repository policy` | Redacted history scanning and repository policy defense in depth. |
 | `devel-validate.yml` | Push to `devel` | `Devel / fast gates` | Same-repository devel fast-gates-only validation: lockfile reproducibility, setup-workspace, security workflow policy, lint, typecheck, release alignment, runtime invariants, and license validation. No package build, package tests, Bun setup, or BDD runs. |
 | `devel-bdd-image.yml` | Same-repository push to `devel` | `Devel / publish BDD Node image` | Publishes the `Dockerfile.bdd-bun` image to GHCR under the exact devel source-SHA tag with BuildKit provenance/SBOM and a GitHub artifact attestation for the pushed digest. |
 | `checkpoint-bootstrap.yml` | Manual trusted-branch selection (`main`, `devel`, or `feat/manager-oss`) | `Checkpoint / trusted publication` | Trusted immutable checkpoint publication and pointer promotion; it fails closed when GHCR publication configuration is absent. |
 | `release-pr-automation.yml` | Successful same-repository `Devel validation` push | `Release PR / automation` | Creates or updates the managed `devel` to `main` PR. Merging remains an explicit manual operation after required checks; automation never requests auto-merge or an admin bypass. |
-| `release-pr-validate.yml` | PR to `main`; jobs guard same-repository `devel` to `main` | `Release PR / package validation`, `Release PR / prerelease publication`, `Release PR / prerelease BDD` | Exact prerelease identity, package, and BDD validation path. `prerelease-publication` awaits approval on the `github-packages-prerelease` environment; `prerelease-bdd` stays unattended and read-only. |
 | `main-release.yml` | Push to `main` | `Release / boundary validation`, `Release / npm publish`, `Release / checkpoint promotion` | Protected production npm release and publication-gated checkpoint decision. |
 
 ### Audit outcome and intentional overlap
 
-`pr-validate.yml` owns normal PR and merge-queue validation, including
-`release/**` PRs. `release-pr-validate.yml` adds the narrower trusted
-`devel`→`main` prerelease/release gate; it does not replace general PR checks.
+`pr-validate.yml` is the single PR and release-PR validation path. It owns
+normal PR and merge-queue validation (including `release/**` PRs) and, under the
+same-repository `devel`→`main` guard, the narrower trusted prerelease/release
+chain: `prerelease-publication` natively needs both BDD lanes, and
+`prerelease-bdd` natively needs publication. No generic package or AVA
+validation is duplicated by the release jobs; the shared
+`CI / package validation` job covers every run. The managed `devel`→`main` PR
+is created/updated by `release-pr-automation.yml`; merging that PR remains an
+explicit manual operation after required checks pass, and merging triggers the
+protected `main` production release.
 `security-check.yml` intentionally overlaps all paths because it is
 defense-in-depth and must remain independently visible. No deleted workflow has
 a remaining caller. Automatic Devel checkpoint promotion is disabled: the former
@@ -39,10 +46,27 @@ explicit manual operation through `checkpoint-bootstrap.yml`. Docker Hub image
 publication is **deferred to a follow-up track** and is not an active workflow or
 release handoff.
 
+### Concurrency semantics
+
+Ordinary PR and merge-queue runs cancel their stale predecessors for fast
+iteration. An eligible same-repository `devel`→`main` release run uses a
+distinct concurrency group (`release-pr-<number>`) and disables cancellation, so
+a newer release-PR run waits for the active run instead of cancelling a
+publication partway through. The `prerelease-publication` job additionally
+serializes live GitHub Packages publication across release PRs with its own
+`release-prerelease-publication` group and `cancel-in-progress: false`.
+
 ## Handoffs, identities, and artifacts
 
-- PR and merge-queue outputs are disposable: no cache, artifact, image, package,
-  credential, or promotion capability crosses from untrusted code.
+- PR, merge-queue, and release-PR outputs are disposable: no cache write,
+  artifact, image, package, credential, or promotion capability crosses from
+  untrusted or release code. Ordinary PR source jobs (package validation and
+  both BDD lanes) pass `cache-mode: restore-only` to setup-workspace so they
+  may restore a previously validated npm cache but never write one. The
+  credentialed `prerelease-publication` job passes `cache-mode: off`: it
+  restores nothing from a reusable cache before publishing and writes nothing
+  back from release code. No build artifact or `node_modules` is handed off
+  between jobs.
 - Release-PR prerelease publication emits a canonical manifest/checksum through
   trusted same-workflow job outputs. The BDD job accepts exact package versions,
   validated npm SRI/SHA-256 metadata where available, a generated install lock,
@@ -99,7 +123,12 @@ release handoff.
 
 All maintained paths use GitHub-hosted Node 22 and npm. Local composite setup
 requires caller checkout of an explicit SHA, sets `persist-credentials: false`,
-and performs clean `npm ci`; no path uses Yarn. Release administrators own npm
+and performs clean `npm ci`; no path uses Yarn. Ordinary PR source jobs pass
+`cache-mode: restore-only` and never claim cache writes; the credentialed
+`prerelease-publication` job passes `cache-mode: off` and uses no Actions
+cache. Only trusted push/release/scheduled callers may enable dependency
+caching. Release
+administrators own npm
 trusted-publisher registration, the protected `production` environment, and
 production recovery. CI security administrators own action pin review,
 workflow-policy maintenance, and required-workflow/ruleset administration.

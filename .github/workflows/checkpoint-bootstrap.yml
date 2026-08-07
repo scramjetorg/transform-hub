@@ -46,7 +46,8 @@ jobs:
 
       - uses: ./.github/actions/setup-workspace
         with:
-          cache: "false"
+          # Manual checkpoint publisher holds GHCR publish credentials: cache stays off.
+          cache-mode: off
 
       - name: Build, verify, and promote the trusted immutable checkpoint
         shell: bash

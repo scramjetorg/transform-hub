@@ -30,6 +30,9 @@ test("checkpoint workflow manually publishes only trusted branch checkpoints", (
 	t.true(helperIndex > checkoutIndex);
 	t.true(source.slice(checkoutIndex, helperIndex).includes("persist-credentials: false"));
 	t.true(source.slice(checkoutIndex, helperIndex).includes("ref: ${{ steps.source.outputs.branch }}"));
+	const helperBlock = source.slice(helperIndex, source.indexOf("- name: Build, verify, and promote the trusted immutable checkpoint", helperIndex));
+	t.true(helperBlock.includes("cache-mode: off"), "manual checkpoint publisher with publish credentials keeps the npm cache off");
+	t.false(source.includes("cache: \"false\""), "the legacy boolean cache input must not be used");
 	t.false(source.includes("pull_request_target"));
 	t.false(source.includes("id-token: write"));
 	t.false(source.includes("upload-artifact"));

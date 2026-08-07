@@ -15,7 +15,6 @@ test("active workflow inventory contains only maintained Node 22/npm paths and r
 		"main-release.yml",
 		"pr-validate.yml",
 		"release-pr-automation.yml",
-		"release-pr-validate.yml",
 		"security-check.yml",
 	]);
 	t.true(workflows.includes("security-check.yml"));
@@ -27,13 +26,18 @@ test("active workflow inventory contains only maintained Node 22/npm paths and r
 	}
 });
 
-test("release branch and durable BDD coverage replace deleted Node 18 reusable workflows", (t) => {
+test("unified PR workflow owns normal validation and the release-PR chain in one read-only file", (t) => {
 	const source = readFileSync(resolve(workflowsDir, "pr-validate.yml"), "utf8");
 	t.true(source.includes("release/**"));
-	t.true(source.includes("CI / durable legacy BDD coverage"));
+	t.true(source.includes("CI / package validation"));
+	t.true(source.includes("CI / core BDD"));
+	t.true(source.includes("CI / extended BDD"));
 	t.true(source.includes("test:bdd-ci-hub"));
 	t.true(source.includes("test:bdd-ci-api-topic"));
 	t.true(source.includes("RUNTIME_ADAPTER=process"));
 	t.true(source.includes("test:unified-py"));
 	t.true(source.includes("test:unified-js"));
+	t.true(source.includes("Release PR / prerelease publication"));
+	t.true(source.includes("Release PR / prerelease BDD"));
+	t.true(source.includes("cache-mode: restore-only"));
 });
