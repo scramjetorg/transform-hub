@@ -2,9 +2,10 @@
 
 const { execFileSync } = require("node:child_process");
 const { mkdirSync, readFileSync, renameSync, rmSync, symlinkSync, writeFileSync } = require("node:fs");
-const { dirname, join, resolve } = require("node:path");
+const { dirname, join, relative, resolve, sep } = require("node:path");
 
-const { FORMAT, REGISTRY, manifestChecksum, releasePrereleaseVersion } = require("./release-prerelease.js");
+const { FORMAT, REGISTRY, manifestChecksum, prereleasePackageName, releasePrereleaseVersion } = require("./release-prerelease.js");
+const { INCLUDED_PACKAGES } = require("./lib/release-boundary.js");
 
 const DIGEST = /^sha256:[a-f0-9]{64}$/i;
 const IMAGE_REFERENCE = /^ghcr\.io\/scramjetorg\/[a-z0-9._/-]+@sha256:([a-f0-9]{64})$/i;
@@ -21,7 +22,7 @@ function commandOutput(value) {
     return Buffer.isBuffer(value) ? value.toString("utf8") : String(value || "");
 }
 
-function assertPublisherManifest(manifest, expectedChecksum) {
+function assertPublisherManifest(manifest, expectedChecksum, boundary = INCLUDED_PACKAGES) {
     if (!manifest || manifest.format !== FORMAT) throw new Error("Unsupported prerelease publisher manifest.");
     if (!DIGEST.test(expectedChecksum) || manifest.checksum !== expectedChecksum || manifestChecksum(manifest) !== expectedChecksum) {
         throw new Error("Prerelease publisher manifest SHA-256 verification failed.");
@@ -29,14 +30,26 @@ function assertPublisherManifest(manifest, expectedChecksum) {
     if (manifest.registry !== REGISTRY || !Array.isArray(manifest.packages) || manifest.packages.length === 0) {
         throw new Error("Prerelease publisher manifest has no trusted GitHub Packages package set.");
     }
+    const sourceNames = new Set();
+    const registryNames = new Set();
     for (const entry of manifest.packages) {
-        if (!entry.name?.startsWith("@scramjet/") || entry.version !== releasePrereleaseVersion(entry.sourceVersion, manifest.pullRequest, manifest.sourceSha)) {
-            throw new Error(`Prerelease publisher manifest requires an exact prerelease version for ${entry.name || "an unnamed package"}.`);
+        if (
+            !boundary.has(entry.sourceName) ||
+            entry.name !== prereleasePackageName(entry.sourceName) ||
+            entry.registryName !== entry.name ||
+            entry.version !== releasePrereleaseVersion(entry.sourceVersion, manifest.pullRequest, manifest.sourceSha, manifest.attempt) ||
+            sourceNames.has(entry.sourceName) ||
+            registryNames.has(entry.name)
+        ) {
+            throw new Error(`Prerelease publisher manifest requires an exact source-to-registry prerelease mapping for ${entry.sourceName || entry.name || "an unnamed package"}.`);
         }
         if (entry.version.includes("^") || entry.version.includes("~") || entry.version.includes("*")) {
             throw new Error(`Prerelease publisher manifest forbids ranges for ${entry.name}.`);
         }
+        sourceNames.add(entry.sourceName);
+        registryNames.add(entry.name);
     }
+    if (sourceNames.size !== boundary.size) throw new Error("Prerelease publisher manifest does not contain the complete release package boundary.");
     return manifest;
 }
 
@@ -52,6 +65,15 @@ function assertTarballSha256(value, label) {
     const digest = String(value).startsWith("sha256:") ? String(value) : `sha256:${value}`;
     if (!DIGEST.test(digest)) throw new Error(`${label} must be a SHA-256 digest when supplied.`);
     return digest.toLowerCase();
+}
+
+function assertRegistryTarball(entry, tarball) {
+    if (tarball.protocol !== "https:" || tarball.hostname !== "npm.pkg.github.com") {
+        throw new Error(`Registry tarball for ${entry.name} is not hosted by GitHub Packages.`);
+    }
+    if (!decodeURIComponent(tarball.pathname).includes(`/${entry.name}/`)) {
+        throw new Error(`Registry tarball for ${entry.name} does not identify the mapped GitHub Packages package.`);
+    }
 }
 
 function readRegistryMetadata(entry, runner = execFileSync, environment = process.env) {
@@ -70,12 +92,15 @@ function readRegistryMetadata(entry, runner = execFileSync, environment = proces
     } catch {
         throw new Error(`Registry tarball URL for ${entry.name} is invalid.`);
     }
-    if (tarball.protocol !== "https:" || tarball.hostname !== "npm.pkg.github.com") {
-        throw new Error(`Registry tarball for ${entry.name} is not hosted by GitHub Packages.`);
-    }
+    assertRegistryTarball(entry, tarball);
     return {
         integrity: parseSRI(metadata.dist.integrity, `Registry tarball integrity for ${entry.name}`),
         name: entry.name,
+        packageChecksum: entry.checksum,
+        registryName: entry.name,
+        sourceChecksum: entry.sourceChecksum,
+        sourceName: entry.sourceName,
+        sourceVersion: entry.sourceVersion,
         tarball: tarball.toString(),
         tarballSha256: assertTarballSha256(metadata.dist.sha256 || metadata.dist.tarballSha256, `Registry tarball checksum for ${entry.name}`),
         version: entry.version
@@ -104,12 +129,12 @@ function verifyImages(images, runner = execFileSync, environment = process.env) 
     return verified.sort((left, right) => left.role.localeCompare(right.role));
 }
 
-function consumptionRecord({ manifest, expectedChecksum, images, runner, environment }) {
-    const publisherManifest = assertPublisherManifest(manifest, expectedChecksum);
+function consumptionRecord({ manifest, expectedChecksum, images, runner, environment, boundary = INCLUDED_PACKAGES }) {
+    const publisherManifest = assertPublisherManifest(manifest, expectedChecksum, boundary);
     const packages = publisherManifest.packages.map((entry) => readRegistryMetadata(entry, runner, environment));
     const verifiedImages = verifyImages(images, runner, environment);
     return {
-        format: "transform-hub-release-prerelease-bdd-v1",
+        format: "transform-hub-release-prerelease-bdd-v2",
         manifestChecksum: publisherManifest.checksum,
         packages,
         images: verifiedImages
@@ -151,22 +176,53 @@ function verifyInstallLock(lock, record) {
         } catch {
             throw new Error(`Generated install lock has an invalid tarball URL for ${entry.name}.`);
         }
-        if (resolved.protocol !== "https:" || resolved.hostname !== "npm.pkg.github.com" || !integrityIncludes(installed.integrity, entry.integrity)) {
+        if (resolved.toString() !== entry.tarball || !integrityIncludes(installed.integrity, entry.integrity)) {
             throw new Error(`Generated install lock integrity verification failed for ${entry.name}.`);
         }
+        assertRegistryTarball(entry, resolved);
     }
 }
 
+function isInside(parent, path) {
+    const pathRelative = relative(parent, path);
+    return pathRelative !== "" && !pathRelative.startsWith("..") && !pathRelative.includes(`..${sep}`);
+}
+
+function assertInstalledPackage(source, entry) {
+    const packageJson = JSON.parse(readFileSync(join(source, "package.json"), "utf8"));
+    if (
+        packageJson.name !== entry.name ||
+        packageJson.version !== entry.version ||
+        packageJson.scramjet?.prerelease?.registryName !== entry.registryName ||
+        packageJson.scramjet?.prerelease?.sourceName !== entry.sourceName ||
+        packageJson.scramjet?.prerelease?.sourceChecksum !== entry.sourceChecksum ||
+        packageJson.scramjet?.prerelease?.sourceVersion !== entry.sourceVersion ||
+        packageJson.scramjet?.prerelease?.packageChecksum !== entry.packageChecksum
+    ) {
+        throw new Error(`Installed prerelease package does not match the verified registry identity: ${entry.name}@${entry.version}.`);
+    }
+}
+
+function linkVerifiedPackage(source, destination, installModules, workspaceModules) {
+    if (!isInside(installModules, source) || !isInside(workspaceModules, destination)) {
+        throw new Error("Refusing to link a prerelease package outside node_modules.");
+    }
+    mkdirSync(dirname(destination), { recursive: true });
+    rmSync(destination, { force: true, recursive: true });
+    symlinkSync(source, destination, "dir");
+}
+
 function activateVerifiedPackages({ installDir, record, workspaceRoot }) {
+    const installModules = resolve(installDir, "node_modules");
+    const workspaceModules = resolve(workspaceRoot, "node_modules");
     for (const entry of record.packages) {
-        const source = resolve(installDir, "node_modules", entry.name);
-        const destination = resolve(workspaceRoot, "node_modules", entry.name);
-        if (!source.startsWith(`${resolve(installDir, "node_modules")}/`) || !destination.startsWith(`${resolve(workspaceRoot, "node_modules")}/`)) {
-            throw new Error("Refusing to link a prerelease package outside node_modules.");
-        }
-        mkdirSync(dirname(destination), { recursive: true });
-        rmSync(destination, { force: true, recursive: true });
-        symlinkSync(source, destination, "dir");
+        const source = resolve(installModules, entry.name);
+        assertInstalledPackage(source, entry);
+        linkVerifiedPackage(source, resolve(workspaceModules, entry.name), installModules, workspaceModules);
+        // BDD source intentionally retains public package specifiers.  These
+        // aliases replace workspace/public resolution with the verified mapped
+        // package directory, while package internals resolve @scramjetorg/*.
+        linkVerifiedPackage(source, resolve(workspaceModules, entry.sourceName), installModules, workspaceModules);
     }
 }
 

@@ -102,7 +102,7 @@ jobs:
           trap 'rm -f "$NPM_CONFIG_USERCONFIG"' EXIT
           umask 077
           {
-            printf '%s\n' '@scramjet:registry=https://npm.pkg.github.com'
+            printf '%s\n' '@scramjetorg:registry=https://npm.pkg.github.com'
             printf '%s\n' "//npm.pkg.github.com/:_authToken=$NODE_AUTH_TOKEN"
             printf '%s\n' 'always-auth=true'
           } > "$NPM_CONFIG_USERCONFIG"
@@ -165,13 +165,13 @@ jobs:
           trap 'rm -f "$NPM_CONFIG_USERCONFIG"' EXIT
           umask 077
           {
-            printf '%s\n' '@scramjet:registry=https://npm.pkg.github.com'
+            printf '%s\n' '@scramjetorg:registry=https://npm.pkg.github.com'
             printf '%s\n' "//npm.pkg.github.com/:_authToken=$NODE_AUTH_TOKEN"
             printf '%s\n' 'always-auth=true'
           } > "$NPM_CONFIG_USERCONFIG"
           node scripts/release-prerelease-bdd.js prepare --manifest "$RUNNER_TEMP/release-prerelease-manifest.json" --expected-checksum "${{ needs.prerelease-publication.outputs.prerelease-manifest-sha256 }}" --images-json "$BDD_IMAGES" --install-dir .release-prerelease-bdd --output "$RUNNER_TEMP/release-prerelease-bdd.json"
           npm ci --ignore-scripts
-          npm --prefix .release-prerelease-bdd install --package-lock-only --ignore-scripts --registry https://npm.pkg.github.com
+          npm --prefix .release-prerelease-bdd install --package-lock-only --ignore-scripts
           node scripts/release-prerelease-bdd.js verify-lock --lock .release-prerelease-bdd/package-lock.json --record "$RUNNER_TEMP/release-prerelease-bdd.json"
           npm --prefix .release-prerelease-bdd ci --ignore-scripts
           node scripts/release-prerelease-bdd.js activate --install-dir .release-prerelease-bdd --record "$RUNNER_TEMP/release-prerelease-bdd.json" --workspace-root .

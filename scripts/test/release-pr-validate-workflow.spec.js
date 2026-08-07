@@ -81,7 +81,8 @@ test("release PR prerelease publication is guarded, serialized, environment-gate
 	t.true(source.includes('test "$PRERELEASE_PUBLISH_ENABLED" = "true"'));
 	t.true(source.includes("SCRAMJET_GH_PACKAGES_PRERELEASE_PUBLISHER"));
 	t.true(source.includes("https://npm.pkg.github.com"));
-	t.true(source.includes("@scramjet:registry=https://npm.pkg.github.com"));
+	t.true(source.includes("@scramjetorg:registry=https://npm.pkg.github.com"));
+	t.false(source.includes("@scramjet:registry=https://npm.pkg.github.com"));
 	t.true(source.includes("NPM_CONFIG_USERCONFIG"));
 	t.true(source.includes("release-prerelease.js plan"));
 	t.true(source.includes("release-prerelease.js publish"));
@@ -126,7 +127,8 @@ test("release PR BDD consumes only verified publisher output and exact prereleas
 	t.true(source.includes("release-prerelease-bdd.js prepare"));
 	t.true(source.includes("release-prerelease-bdd.js verify-lock"));
 	t.true(source.includes("release-prerelease-bdd.js activate"));
-	t.true(source.includes("npm --prefix .release-prerelease-bdd install --package-lock-only --ignore-scripts --registry https://npm.pkg.github.com"));
+	t.true(source.includes("npm --prefix .release-prerelease-bdd install --package-lock-only --ignore-scripts"));
+	t.false(source.includes("npm --prefix .release-prerelease-bdd install --package-lock-only --ignore-scripts --registry https://npm.pkg.github.com"));
 	t.true(source.includes("npm --prefix .release-prerelease-bdd ci --ignore-scripts"));
 	t.true(source.includes("npm run test:bdd-ci-api-node"));
 	t.true(source.includes("npm install --global --ignore-scripts npm@11.19.0"));

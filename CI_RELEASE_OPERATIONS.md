@@ -42,7 +42,12 @@ track** and is not an active workflow or release handoff.
   trusted same-workflow job outputs. The BDD job accepts exact package versions,
   validated npm SRI/SHA-256 metadata where available, a generated install lock,
   and verified image digests only. It does not consume ranges, dist-tags, or
-  workflow artifacts.
+  workflow artifacts. Source/public identities remain `@scramjet/*`; the
+  prerelease manifest maps every included source package to its repository-owned
+  GitHub Packages identity `@scramjetorg/<unscoped-name>`. Its staged manifests,
+  first-party dependency declarations, compiled JavaScript, and declarations are
+  rewritten only for that prerelease package graph. Public npm release manifests
+  and `@scramjet/*` production publication are unchanged.
 - The `prerelease-publication` job is bound to the `github-packages-prerelease`
   environment and awaits environment approval before publishing anything. The
   environment carries **no secrets**; it holds only the
@@ -55,7 +60,11 @@ track** and is not an active workflow or release handoff.
   (`${{ github.token }}`, equivalent to `GITHUB_TOKEN`), never a PAT or npm
   token secret. The publication job authenticates with its `packages: write`
   scope and the BDD job with its `packages: read` scope, so least privilege is
-  preserved by the job permissions rather than by token selection.
+  preserved by the job permissions rather than by token selection. Both jobs
+  route only `@scramjetorg` to `https://npm.pkg.github.com`; unscoped and
+  external dependencies retain npm's default registry routing. BDD aliases its
+  source `@scramjet/*` imports only after exact mapped-package lock, tarball,
+  integrity, and installed-package identity verification.
 - Production `main` publication creates an immutable release identity containing
   source/package/toolchain information. Existing npm versions may be reused only
   when their published release identity and final package checksum match exactly.
