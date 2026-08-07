@@ -12,128 +12,50 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  package-build:
-    name: Devel / package build
+  fast-gates:
+    name: Devel / fast gates
     if: ${{ github.repository == 'scramjetorg/transform-hub' && github.event_name == 'push' && github.ref == 'refs/heads/devel' }}
     permissions:
       contents: read
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 20
     steps:
+      # Devel validation is fast-gates-only: it runs the non-build static gates
+      # but never builds packages, runs package tests, installs Bun, or runs BDD.
+      # The independent devel-bdd-image.yml publisher remains the provenance-
+      # attested BDD image source required by Release PR prerelease BDD.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           persist-credentials: false
           ref: ${{ github.sha }}
 
-      - uses: ./.github/actions/setup-workspace
-        with:
-          cache: "false"
-          checkpoint-branch: devel
-
-      - name: Build packages
-        run: npm run build:packages
-
-  ava:
-    name: Devel / AVA
-    if: ${{ github.repository == 'scramjetorg/transform-hub' && github.event_name == 'push' && github.ref == 'refs/heads/devel' }}
-    needs: [package-build]
-    permissions:
-      contents: read
-    runs-on: ubuntu-24.04
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with:
-          persist-credentials: false
-          ref: ${{ github.sha }}
+      # Catch malformed package-lock.json before setup-workspace's npm ci.
+      # Rebuilds the lock with the project-pinned npm via npx and fails on any diff.
+      - name: Validate package-lock.json reproducibility
+        run: |
+          npm run build:lockfile
+          git diff --exit-code -- package-lock.json
 
       - uses: ./.github/actions/setup-workspace
         with:
+          # Always disabled for devel fast gates to avoid cache-poisoning risk.
           cache: "false"
           checkpoint-branch: devel
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6
-        with:
-          bun-version: "1"
+      - name: Repository security policy
+        run: npm run check:security-workflow
 
-      - name: Run package tests
-        run: npm run test:packages-no-concurrent
+      - name: Lint
+        run: npm run lint
 
-  bdd-node:
-    name: Devel / BDD Node
-    if: ${{ github.repository == 'scramjetorg/transform-hub' && github.event_name == 'push' && github.ref == 'refs/heads/devel' }}
-    needs: [package-build]
-    permissions:
-      contents: read
-    runs-on: ubuntu-24.04
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with:
-          persist-credentials: false
-          ref: ${{ github.sha }}
+      - name: Typecheck
+        run: npm run typecheck
 
-      - uses: ./.github/actions/setup-workspace
-        with:
-          cache: "false"
-          checkpoint-branch: devel
+      - name: Dependency and release alignment
+        run: npm run release:align:check
 
-      # Devel validation outputs remain disposable until trusted promotion exists.
-      - name: Build disposable BDD inputs
-        run: npm run build:packages
+      - name: Runtime invariants
+        run: npm run check:runtime-invariants
 
-      - name: Run Docker-backed Node BDD validation
-        run: npm run test:bdd-ci-node
-
-  bdd-python:
-    name: Devel / BDD Python
-    if: ${{ github.repository == 'scramjetorg/transform-hub' && github.event_name == 'push' && github.ref == 'refs/heads/devel' }}
-    needs: [package-build]
-    permissions:
-      contents: read
-    runs-on: ubuntu-24.04
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with:
-          persist-credentials: false
-          ref: ${{ github.sha }}
-
-      - uses: ./.github/actions/setup-workspace
-        with:
-          cache: "false"
-          checkpoint-branch: devel
-
-      # Devel validation outputs remain disposable until trusted promotion exists.
-      - name: Build disposable BDD inputs
-        run: npm run build:packages
-
-      - name: Run Docker-backed Python BDD validation
-        run: npm run test:bdd-ci-python
-
-  bdd-api:
-    name: Devel / BDD API
-    if: ${{ github.repository == 'scramjetorg/transform-hub' && github.event_name == 'push' && github.ref == 'refs/heads/devel' }}
-    needs: [package-build]
-    permissions:
-      contents: read
-    runs-on: ubuntu-24.04
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with:
-          persist-credentials: false
-          ref: ${{ github.sha }}
-
-      - uses: ./.github/actions/setup-workspace
-        with:
-          cache: "false"
-          checkpoint-branch: devel
-
-      # Devel validation outputs remain disposable until trusted promotion exists.
-      - name: Build disposable BDD inputs
-        run: npm run build:packages
-
-      - name: Run Docker-backed API BDD validation
-        run: npm run test:bdd-ci-api-node
+      - name: License validation
+        run: npm run check:licenses

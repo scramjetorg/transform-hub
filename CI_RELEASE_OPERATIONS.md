@@ -9,7 +9,7 @@ digest requirements remain in [CHECKPOINTS.md](CHECKPOINTS.md).
 
 ## Active workflow and trigger inventory
 
-The final workflow-file audit found exactly these nine active workflow files.
+The final workflow-file audit found exactly these eight active workflow files.
 Legacy Node 18/Yarn reusable workflows and the legacy Docker Hub publisher were
 removed; `security-check.yml` is retained.
 
@@ -17,11 +17,10 @@ removed; `security-check.yml` is retained.
 | --- | --- | --- | --- |
 | `pr-validate.yml` | PRs to `main`, `devel`, or `release/**`; merge queue | `CI / fast gates`, `CI / AVA`, `CI / package build`, `CI / BDD Node`, `CI / BDD Python`, `CI / BDD API`, `CI / durable legacy BDD coverage` | Fork-safe, read-only validation. The durable coverage job owns former hub, API-topic, unified JS/Python, and process-adapter coverage. |
 | `security-check.yml` | PR, merge queue, pushes to trusted branches, weekly schedule | `Security / repository policy` | Redacted history scanning and repository policy defense in depth. |
-| `devel-validate.yml` | Push to `devel` | `Devel / package build`, `Devel / AVA`, `Devel / BDD Node`, `Devel / BDD Python`, `Devel / BDD API` | Same-repository devel validation. |
+| `devel-validate.yml` | Push to `devel` | `Devel / fast gates` | Same-repository devel fast-gates-only validation: lockfile reproducibility, setup-workspace, security workflow policy, lint, typecheck, release alignment, runtime invariants, and license validation. No package build, package tests, Bun setup, or BDD runs. |
 | `devel-bdd-image.yml` | Same-repository push to `devel` | `Devel / publish BDD Node image` | Publishes the `Dockerfile.bdd-bun` image to GHCR under the exact devel source-SHA tag with BuildKit provenance/SBOM and a GitHub artifact attestation for the pushed digest. |
-| `devel-checkpoint-promotion.yml` | Successful `Devel validation` workflow run on same-repository `devel` | `Devel / checkpoint promotion` | Guarded live GHCR checkpoint publication and pointer promotion. |
 | `checkpoint-bootstrap.yml` | Manual trusted-branch selection (`main`, `devel`, or `feat/manager-oss`) | `Checkpoint / trusted publication` | Trusted immutable checkpoint publication and pointer promotion; it fails closed when GHCR publication configuration is absent. |
-| `release-pr-automation.yml` | Successful same-repository `Devel validation` push | `Release PR / automation` | Creates or updates the managed `devel` to `main` PR and requests auto-merge. |
+| `release-pr-automation.yml` | Successful same-repository `Devel validation` push | `Release PR / automation` | Creates or updates the managed `devel` to `main` PR. Merging remains an explicit manual operation after required checks; automation never requests auto-merge or an admin bypass. |
 | `release-pr-validate.yml` | PR to `main`; jobs guard same-repository `devel` to `main` | `Release PR / package validation`, `Release PR / prerelease publication`, `Release PR / prerelease BDD` | Exact prerelease identity, package, and BDD validation path. `prerelease-publication` awaits approval on the `github-packages-prerelease` environment; `prerelease-bdd` stays unattended and read-only. |
 | `main-release.yml` | Push to `main` | `Release / boundary validation`, `Release / npm publish`, `Release / checkpoint promotion` | Protected production npm release and publication-gated checkpoint decision. |
 
@@ -32,8 +31,13 @@ removed; `security-check.yml` is retained.
 `devel`→`main` prerelease/release gate; it does not replace general PR checks.
 `security-check.yml` intentionally overlaps all paths because it is
 defense-in-depth and must remain independently visible. No deleted workflow has
-a remaining caller. Docker Hub image publication is **deferred to a follow-up
-track** and is not an active workflow or release handoff.
+a remaining caller. Automatic Devel checkpoint promotion is disabled: the former
+`devel-checkpoint-promotion.yml` workflow was removed and Devel validation is
+fast-gates-only, so a devel push can no longer trigger checkpoint publication or
+pointer promotion. Devel checkpoint publication remains available only as an
+explicit manual operation through `checkpoint-bootstrap.yml`. Docker Hub image
+publication is **deferred to a follow-up track** and is not an active workflow or
+release handoff.
 
 ## Handoffs, identities, and artifacts
 

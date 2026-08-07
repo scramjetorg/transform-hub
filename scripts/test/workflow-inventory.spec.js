@@ -11,7 +11,6 @@ test("active workflow inventory contains only maintained Node 22/npm paths and r
 	t.deepEqual(workflows, [
 		"checkpoint-bootstrap.yml",
 		"devel-bdd-image.yml",
-		"devel-checkpoint-promotion.yml",
 		"devel-validate.yml",
 		"main-release.yml",
 		"pr-validate.yml",

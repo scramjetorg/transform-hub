@@ -18,70 +18,58 @@ test("devel workflow is trusted-ref-only, read-only, and cancellable", (t) => {
 	t.true(source.includes("branches: [devel]"));
 	t.true(source.includes("group: devel-validation"));
 	t.true(source.includes("cancel-in-progress: true"));
-	t.is((source.match(/github\.repository == 'scramjetorg\/transform-hub'/g) || []).length, 5);
-	t.is((source.match(/github\.ref == 'refs\/heads\/devel'/g) || []).length, 5);
-	t.is((source.match(/permissions:\n\s+contents: read/g) || []).length, 6);
+	t.is((source.match(/github\.repository == 'scramjetorg\/transform-hub'/g) || []).length, 1);
+	t.is((source.match(/github\.ref == 'refs\/heads\/devel'/g) || []).length, 1);
+	t.is((source.match(/permissions:\n\s+contents: read/g) || []).length, 2);
 	t.false(source.includes("pull_request"));
 	t.false(source.includes("packages: write"));
 	t.false(source.includes("id-token: write"));
 });
 
-test("devel workflow checks out each isolated job before Node/npm setup", (t) => {
+test("devel fast-gates job checks out before Node/npm setup", (t) => {
 	const source = workflowSource();
 	const checkout = "uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1";
 	const helper = "uses: ./.github/actions/setup-workspace";
-	let offset = 0;
-
-	for (let job = 0; job < 5; job++) {
-		const checkoutIndex = source.indexOf(checkout, offset);
-		const helperIndex = source.indexOf(helper, offset);
-		t.true(checkoutIndex >= offset, `job ${job + 1} must check out`);
-		t.true(helperIndex > checkoutIndex, `job ${job + 1} must invoke setup after checkout`);
-		const block = source.slice(checkoutIndex, helperIndex);
-		t.true(block.includes("persist-credentials: false"));
-		t.true(block.includes("ref: ${{ github.sha }}"));
-		offset = helperIndex + helper.length;
-	}
-	t.is((source.match(/cache: "false"/g) || []).length, 5);
+	const checkoutIndex = source.indexOf(checkout);
+	const helperIndex = source.indexOf(helper);
+	t.true(checkoutIndex >= 0, "the fast-gates job must check out");
+	t.true(helperIndex > checkoutIndex, "setup must run after checkout");
+	const block = source.slice(checkoutIndex, helperIndex);
+	t.true(block.includes("persist-credentials: false"));
+	t.true(block.includes("ref: ${{ github.sha }}"));
+	t.is((source.match(/cache: "false"/g) || []).length, 1);
+	t.is((source.match(/checkpoint-branch: devel/g) || []).length, 1);
 });
 
-test("devel build gates parallel AVA and Docker BDD jobs without promotion", (t) => {
+test("devel workflow is fast-gates-only without builds, package tests, Bun, or BDD", (t) => {
 	const source = workflowSource();
-	t.true(source.includes("package-build:"));
-	t.true(source.includes("name: Devel / package build"));
-	t.true(source.includes("ava:"));
-	t.true(source.includes("name: Devel / AVA"));
-	t.is((source.match(/needs: \[package-build\]/g) || []).length, 4);
-	t.true(source.includes("npm run test:packages-no-concurrent"));
-	t.true(source.includes("npm run test:bdd-ci-node"));
-	t.true(source.includes("npm run test:bdd-ci-python"));
-	t.true(source.includes("npm run test:bdd-ci-api-node"));
-	t.is((source.match(/checkpoint-branch: devel/g) || []).length, 5);
-	t.false(source.includes("SCRAMJET_DEVEL_CHECKPOINT_REFERENCE"));
-	t.true(source.includes("Devel validation outputs remain disposable"));
+	t.true(source.includes("fast-gates:"));
+	t.true(source.includes("name: Devel / fast gates"));
+	t.true(source.includes("npm run build:lockfile"));
+	t.true(source.includes("git diff --exit-code -- package-lock.json"));
+	t.true(source.includes("npm run check:security-workflow"));
+	t.true(source.includes("npm run lint"));
+	t.true(source.includes("npm run typecheck"));
+	t.true(source.includes("npm run release:align:check"));
+	t.true(source.includes("npm run check:runtime-invariants"));
+	t.true(source.includes("npm run check:licenses"));
+	t.false(source.includes("npm run build:packages"));
+	t.false(source.includes("npm run test:packages-no-concurrent"));
+	t.false(source.includes("oven-sh/setup-bun@"));
+	t.false(source.includes("test:bdd"));
+	t.false(source.includes("needs: [package-build]"));
+	t.false(source.includes("package-build:"));
+	t.false(source.includes("checkpoint-promotion:"));
+	t.false(source.includes("checkpoint-pointer-devel"));
 	t.false(source.includes("upload-artifact"));
 	t.false(source.includes("download-artifact"));
 	t.false(source.includes("actions/cache"));
 	t.false(source.includes("docker push"));
-	t.false(source.includes("checkpoint-promotion:"));
-	t.false(source.includes("checkpoint-pointer-devel"));
 });
 
-test("devel AVA job installs pinned Bun before package tests", (t) => {
+test("devel workflow omits PR/merge-queue-only eligibility checks", (t) => {
 	const source = workflowSource();
-	const avaJobStart = source.indexOf("  ava:\n");
-	const avaJobEnd = source.indexOf("  bdd-node:\n");
-	const avaJob = source.slice(avaJobStart, avaJobEnd);
-
-	t.true(avaJob.includes("oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6"), "Bun action must use the pinned commit");
-	t.true(avaJob.includes('bun-version: "1"'), "Bun major-version input must be pinned to 1");
-	t.true(
-		avaJob.indexOf("oven-sh/setup-bun@") > avaJob.indexOf("uses: ./.github/actions/setup-workspace"),
-		"Setup Bun must run after setup-workspace"
-	);
-	t.true(
-		avaJob.indexOf("oven-sh/setup-bun@") < avaJob.indexOf("npm run test:packages-no-concurrent"),
-		"Setup Bun must run before package tests"
-	);
-	t.is((source.match(/oven-sh\/setup-bun@/g) || []).length, 1, "Setup Bun must appear only in the ava job");
+	t.false(source.includes("Mergeability and merge-queue eligibility"));
+	t.false(source.includes("EVENT_NAME"));
+	t.false(source.includes("merge_group"));
 });
