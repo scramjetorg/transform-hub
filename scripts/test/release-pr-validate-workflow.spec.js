@@ -120,6 +120,7 @@ test("release PR BDD consumes only verified publisher output and exact prereleas
 	t.true(source.includes("name: Release PR / prerelease BDD"));
 	t.true(source.includes("needs: [prerelease-publication]"));
 	t.true(source.includes("packages: read"));
+	t.true(source.includes("attestations: read"));
 	t.true(source.includes("prerelease-manifest-sha256"));
 	t.true(source.includes("PUBLISHER_MANIFEST"));
 	t.true(source.includes("release-prerelease-bdd.js verify"));
@@ -134,6 +135,23 @@ test("release PR BDD consumes only verified publisher output and exact prereleas
 	t.true(source.includes("npm install --global --ignore-scripts npm@11.19.0"));
 	t.true(source.includes('test "$(npm --version)" = "11.19.0"'));
 	t.true(source.includes("BDD_NODE_IMAGE"));
+	t.true(bdd.includes("BDD_IMAGE_REPOSITORY: ghcr.io/scramjetorg/transform-hub/bdd-node"));
+	t.true(bdd.includes("HEAD_SHA: ${{ github.event.pull_request.head.sha }}"));
+	t.true(bdd.includes('bdd_image_tag="$BDD_IMAGE_REPOSITORY:devel-$HEAD_SHA"'));
+	t.true(bdd.includes("docker buildx imagetools inspect --format '{{.Digest}}' \"$bdd_image_tag\""));
+	t.true(bdd.includes('reference: `${repository}@${digest}`'));
+	t.true(bdd.includes("docker login ghcr.io"));
+	t.true(bdd.includes("docker logout ghcr.io"));
+	t.true(bdd.includes("GH_TOKEN: ${{ github.token }}"), "attestation verification uses the automatic GitHub token");
+	t.true(bdd.includes("gh attestation verify \"$bdd_image_subject\""));
+	t.true(bdd.includes("--repo scramjetorg/transform-hub"));
+	t.true(bdd.includes("--source-ref refs/heads/devel"));
+	t.true(bdd.includes("--source-digest \"$HEAD_SHA\""));
+	t.true(bdd.includes("--signer-workflow .github/workflows/devel-bdd-image.yml@refs/heads/devel"));
+	t.true(bdd.includes("--predicate-type https://slsa.dev/provenance/v1"));
+	t.true(bdd.includes("--deny-self-hosted-runners"));
+	t.true(bdd.includes("BDD image attestation verification failed for devel source $HEAD_SHA"));
+	t.false(source.includes("SCRAMJET_RELEASE_PRERELEASE_BDD_IMAGES"), "BDD image JSON must not be an operator-supplied variable");
 	t.true(source.includes('test "$PUBLISHED" = "true"'));
 	t.true(source.includes('test "$BDD_REGISTRY_ENABLED" = "true"'));
 	t.true(bdd.includes("NODE_AUTH_TOKEN: ${{ github.token }}"), "BDD read auth must use the automatic GITHUB_TOKEN");
@@ -141,5 +159,40 @@ test("release PR BDD consumes only verified publisher output and exact prereleas
 	t.false(source.includes("live=false"));
 	t.false(source.includes("download-artifact"));
 	t.false(source.includes("upload-artifact"));
-	t.false(source.includes("id-token: write"));
+	t.false(/^ {6}id-token: write$/m.test(bdd), "the read-only BDD job must not mint an OIDC token");
+});
+
+test("release PR BDD fails closed when a SHA tag is repointed to a digest without matching devel provenance", (t) => {
+	const source = readFileSync(workflowPath, "utf8");
+	const bdd = source.slice(source.indexOf("  prerelease-bdd:\n"));
+	const verificationStart = bdd.indexOf('if ! gh attestation verify "$bdd_image_subject"');
+	const verificationEnd = bdd.indexOf("BDD_IMAGES=", verificationStart);
+	const verification = bdd.slice(verificationStart, verificationEnd);
+
+	t.true(verificationStart >= 0, "the digest must be verified before BDD_IMAGES is constructed");
+	t.true(verification.includes('--source-digest "$HEAD_SHA"'));
+	t.true(verification.includes("exit 1"), "an unrelated tag digest must stop the BDD job");
+	t.false(verification.includes("|| true"), "attestation mismatch must not be ignored");
+	const repointedTagVerification = verification.replace('--source-digest "$HEAD_SHA"', '--source-digest "different-source-sha"');
+	t.false(repointedTagVerification.includes('--source-digest "$HEAD_SHA"'), "the policy binding is source-digest specific rather than tag-only");
+});
+
+test("release PR BDD installs root dependencies after pinning npm and before trusted manifest verification", (t) => {
+	const source = readFileSync(workflowPath, "utf8");
+	const bddStart = source.indexOf("  prerelease-bdd:\n");
+	const bdd = source.slice(bddStart);
+
+	// The BDD helper scripts (release-prerelease-bdd.js -> release-boundary.js)
+	// require root dependencies such as glob, so root node_modules must exist
+	// before the trusted manifest verification step runs.
+	const pinNpm = bdd.indexOf("npm install --global --ignore-scripts npm@11.19.0");
+	const pinnedVersion = bdd.indexOf('test "$(npm --version)" = "11.19.0"');
+	const rootInstall = bdd.indexOf("npm ci --ignore-scripts");
+	const verify = bdd.indexOf("release-prerelease-bdd.js verify");
+
+	t.true(pinNpm >= 0, "pinned npm install must exist in the prerelease-bdd job");
+	t.true(pinnedVersion > pinNpm, "pinned npm version must be asserted after install");
+	t.true(rootInstall > pinnedVersion, "root dependency install must run after pinned npm is verified");
+	t.true(rootInstall < verify, "root dependency install must run before trusted manifest verification");
+	t.true(source.includes("Install root dependencies"), "the root dependency install step must be named");
 });

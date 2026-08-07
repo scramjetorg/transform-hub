@@ -9,7 +9,7 @@ digest requirements remain in [CHECKPOINTS.md](CHECKPOINTS.md).
 
 ## Active workflow and trigger inventory
 
-The final workflow-file audit found exactly these eight active workflow files.
+The final workflow-file audit found exactly these nine active workflow files.
 Legacy Node 18/Yarn reusable workflows and the legacy Docker Hub publisher were
 removed; `security-check.yml` is retained.
 
@@ -18,6 +18,7 @@ removed; `security-check.yml` is retained.
 | `pr-validate.yml` | PRs to `main`, `devel`, or `release/**`; merge queue | `CI / fast gates`, `CI / AVA`, `CI / package build`, `CI / BDD Node`, `CI / BDD Python`, `CI / BDD API`, `CI / durable legacy BDD coverage` | Fork-safe, read-only validation. The durable coverage job owns former hub, API-topic, unified JS/Python, and process-adapter coverage. |
 | `security-check.yml` | PR, merge queue, pushes to trusted branches, weekly schedule | `Security / repository policy` | Redacted history scanning and repository policy defense in depth. |
 | `devel-validate.yml` | Push to `devel` | `Devel / package build`, `Devel / AVA`, `Devel / BDD Node`, `Devel / BDD Python`, `Devel / BDD API` | Same-repository devel validation. |
+| `devel-bdd-image.yml` | Same-repository push to `devel` | `Devel / publish BDD Node image` | Publishes the `Dockerfile.bdd-bun` image to GHCR under the exact devel source-SHA tag with BuildKit provenance/SBOM and a GitHub artifact attestation for the pushed digest. |
 | `devel-checkpoint-promotion.yml` | Successful `Devel validation` workflow run on same-repository `devel` | `Devel / checkpoint promotion` | Guarded live GHCR checkpoint publication and pointer promotion. |
 | `checkpoint-bootstrap.yml` | Manual trusted-branch selection (`main`, `devel`, or `feat/manager-oss`) | `Checkpoint / trusted publication` | Trusted immutable checkpoint publication and pointer promotion; it fails closed when GHCR publication configuration is absent. |
 | `release-pr-automation.yml` | Successful same-repository `Devel validation` push | `Release PR / automation` | Creates or updates the managed `devel` to `main` PR and requests auto-merge. |
@@ -65,6 +66,15 @@ track** and is not an active workflow or release handoff.
   external dependencies retain npm's default registry routing. BDD aliases its
   source `@scramjet/*` imports only after exact mapped-package lock, tarball,
   integrity, and installed-package identity verification.
+- A trusted `devel` push publishes `ghcr.io/scramjetorg/transform-hub/bdd-node`
+  under `devel-<full-source-sha>`, then creates a GitHub artifact attestation for
+  the pushed digest. Release-PR BDD resolves that tag once with its read-only
+  automatic token, verifies its attestation against the repository, exact devel
+  source SHA/ref, signer workflow, SLSA provenance predicate, and GitHub-hosted
+  runner policy, then converts the verified digest to a `@sha256` image reference.
+  A tag repointed to an unrelated digest fails before BDD starts. The repository
+  variable `SCRAMJET_RELEASE_PRERELEASE_BDD=true` remains the explicit enablement
+  gate; no operator-managed image digest/JSON variable exists.
 - Production `main` publication creates an immutable release identity containing
   source/package/toolchain information. Existing npm versions may be reused only
   when their published release identity and final package checksum match exactly.

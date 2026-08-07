@@ -10,6 +10,7 @@ test("active workflow inventory contains only maintained Node 22/npm paths and r
 	const workflows = readdirSync(workflowsDir).filter((name) => name.endsWith(".yml")).sort();
 	t.deepEqual(workflows, [
 		"checkpoint-bootstrap.yml",
+		"devel-bdd-image.yml",
 		"devel-checkpoint-promotion.yml",
 		"devel-validate.yml",
 		"main-release.yml",

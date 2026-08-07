@@ -116,6 +116,7 @@ jobs:
     # BDD stays outside the github-packages-prerelease environment: it only
     # consumes verified prereleases with read-only automatic-token auth.
     permissions:
+      attestations: read
       contents: read
       packages: read
     runs-on: ubuntu-24.04
@@ -136,6 +137,12 @@ jobs:
           npm install --global --ignore-scripts npm@11.19.0
           test "$(npm --version)" = "11.19.0"
 
+      - name: Install root dependencies
+        # The BDD helper scripts (release-prerelease-bdd.js -> release-boundary.js)
+        # require root dependencies such as glob, so the root node_modules must
+        # exist before the trusted manifest verification step runs.
+        run: npm ci --ignore-scripts
+
       - id: trusted_manifest
         name: Release PR / verify trusted prerelease manifest
         env:
@@ -154,15 +161,30 @@ jobs:
       - name: Release PR / install verified prereleases and run API BDD
         if: ${{ steps.trusted_manifest.outputs.live == 'true' }}
         env:
-          BDD_IMAGES: ${{ vars.SCRAMJET_RELEASE_PRERELEASE_BDD_IMAGES }}
+          BDD_IMAGE_REPOSITORY: ghcr.io/scramjetorg/transform-hub/bdd-node
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           # Automatic GITHUB_TOKEN-derived npm read auth for GitHub Packages,
-          # scoped to this job's packages: read permission (no PAT/npm token secret).
+          # scoped to this job's packages: read permission. The same automatic
+          # token reads and verifies the exact devel BDD image before its digest
+          # is pinned for execution.
+          GH_TOKEN: ${{ github.token }}
           NODE_AUTH_TOKEN: ${{ github.token }}
         run: |
           test -n "$NODE_AUTH_TOKEN"
-          test -n "$BDD_IMAGES"
+          test "$HEAD_SHA" = "$(git rev-parse HEAD)"
+          bdd_image_tag="$BDD_IMAGE_REPOSITORY:devel-$HEAD_SHA"
+          printf '%s' "$NODE_AUTH_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+          trap 'docker logout ghcr.io' EXIT
+          bdd_image_digest="$(docker buildx imagetools inspect --format '{{.Digest}}' "$bdd_image_tag")"
+          [[ "$bdd_image_digest" =~ ^sha256:[a-f0-9]{64}$ ]]
+          bdd_image_subject="oci://$BDD_IMAGE_REPOSITORY@$bdd_image_digest"
+          if ! gh attestation verify "$bdd_image_subject" --repo scramjetorg/transform-hub --source-ref refs/heads/devel --source-digest "$HEAD_SHA" --signer-workflow .github/workflows/devel-bdd-image.yml@refs/heads/devel --predicate-type https://slsa.dev/provenance/v1 --deny-self-hosted-runners; then
+            echo "BDD image attestation verification failed for devel source $HEAD_SHA" >&2
+            exit 1
+          fi
+          BDD_IMAGES="$(node -e 'const [repository, digest] = process.argv.slice(1); console.log(JSON.stringify([{ role: "bdd-node", reference: `${repository}@${digest}` }]));' "$BDD_IMAGE_REPOSITORY" "$bdd_image_digest")"
           export NPM_CONFIG_USERCONFIG="$RUNNER_TEMP/release-prerelease-read.npmrc"
-          trap 'rm -f "$NPM_CONFIG_USERCONFIG"' EXIT
+          trap 'rm -f "$NPM_CONFIG_USERCONFIG"; docker logout ghcr.io' EXIT
           umask 077
           {
             printf '%s\n' '@scramjetorg:registry=https://npm.pkg.github.com'
