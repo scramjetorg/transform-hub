@@ -23,7 +23,13 @@ test("devel BDD image publication is a trusted, source-SHA-addressed GHCR publis
 	t.true(source.includes("attestations: write"));
 	t.true(source.includes("id-token: write"));
 	t.true(source.includes("steps.source.outputs.sha"));
+	t.true(source.includes("docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c"));
 	t.true(source.includes("docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83"));
+	t.true(
+		source.indexOf("docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c") <
+			source.indexOf("docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83"),
+		"pinned docker/setup-buildx-action must run before docker/build-push-action so the Buildx driver supports attestation"
+	);
 	t.regex(source, /actions\/attest-build-provenance@[a-f0-9]{40}/);
 	t.true(source.includes("subject-name: ghcr.io/scramjetorg/transform-hub/bdd-node"));
 	t.true(source.includes("subject-digest: ${{ steps.build.outputs.digest }}"));

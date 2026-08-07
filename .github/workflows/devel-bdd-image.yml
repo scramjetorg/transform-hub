@@ -46,6 +46,9 @@ jobs:
           test -n "$GITHUB_TOKEN"
           printf '%s' "$GITHUB_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
 
+      - name: Devel / set up Buildx for attestation
+        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c
+
       - id: build
         name: Devel / build and push BDD Node image
         uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83
