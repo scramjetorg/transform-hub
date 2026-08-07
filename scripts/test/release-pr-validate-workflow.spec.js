@@ -138,7 +138,8 @@ test("release PR BDD consumes only verified publisher output and exact prereleas
 	t.true(bdd.includes("BDD_IMAGE_REPOSITORY: ghcr.io/scramjetorg/transform-hub/bdd-node"));
 	t.true(bdd.includes("HEAD_SHA: ${{ github.event.pull_request.head.sha }}"));
 	t.true(bdd.includes('bdd_image_tag="$BDD_IMAGE_REPOSITORY:devel-$HEAD_SHA"'));
-	t.true(bdd.includes("docker buildx imagetools inspect --format '{{.Digest}}' \"$bdd_image_tag\""));
+	t.true(bdd.includes("docker buildx imagetools inspect --format '{{.Manifest.Digest}}' \"$bdd_image_tag\""), "digest consumer must use the {{.Manifest.Digest}} imagetools template");
+	t.false(bdd.includes("docker buildx imagetools inspect --format '{{.Digest}}'"), "obsolete {{.Digest}} imagetools consumer template must not be used");
 	t.true(bdd.includes('reference: `${repository}@${digest}`'));
 	t.true(bdd.includes("docker login ghcr.io"));
 	t.true(bdd.includes("docker logout ghcr.io"));

@@ -11,6 +11,7 @@ const {
 	activateVerifiedPackages,
 	assertPublisherManifest,
 	consumptionRecord,
+	verifyImages,
 	verifyInstallLock,
 	writeInstallManifest,
 } = require("../release-prerelease-bdd.js");
@@ -156,4 +157,21 @@ test("consumption fails closed when registry metadata or image digest verificati
 		environment: {},
 		boundary: TEST_BOUNDARY,
 	}), { message: /Image digest verification failed/i });
+});
+
+test("image digest verification resolves the manifest digest with docker buildx imagetools inspect", (t) => {
+	const invoked = [];
+	const runner = (command, args) => {
+		if (command === "docker") invoked.push(args);
+		return `${IMAGE_DIGEST}\n`;
+	};
+	const reference = `ghcr.io/scramjetorg/transform-hub/bdd-node@${IMAGE_DIGEST}`;
+	const verified = verifyImages([{ role: "bdd-node", reference }], runner, {});
+	t.deepEqual(invoked, [["buildx", "imagetools", "inspect", "--format", "{{.Manifest.Digest}}", reference]],
+		"Buildx must be invoked with the {{.Manifest.Digest}} consumer template on the exact image digest reference");
+	t.true(invoked.length === 1 && invoked[0].includes("{{.Manifest.Digest}}"),
+		"the digest consumer template must be {{.Manifest.Digest}}");
+	t.false(invoked.some((args) => args.includes("{{.Digest}}")),
+		"the obsolete {{.Digest}} consumer template must not be used");
+	t.deepEqual(verified, [{ digest: IMAGE_DIGEST, reference, role: "bdd-node" }]);
 });

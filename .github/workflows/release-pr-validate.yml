@@ -175,7 +175,7 @@ jobs:
           bdd_image_tag="$BDD_IMAGE_REPOSITORY:devel-$HEAD_SHA"
           printf '%s' "$NODE_AUTH_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
           trap 'docker logout ghcr.io' EXIT
-          bdd_image_digest="$(docker buildx imagetools inspect --format '{{.Digest}}' "$bdd_image_tag")"
+          bdd_image_digest="$(docker buildx imagetools inspect --format '{{.Manifest.Digest}}' "$bdd_image_tag")"
           [[ "$bdd_image_digest" =~ ^sha256:[a-f0-9]{64}$ ]]
           bdd_image_subject="oci://$BDD_IMAGE_REPOSITORY@$bdd_image_digest"
           if ! gh attestation verify "$bdd_image_subject" --repo scramjetorg/transform-hub --source-ref refs/heads/devel --source-digest "$HEAD_SHA" --signer-workflow .github/workflows/devel-bdd-image.yml@refs/heads/devel --predicate-type https://slsa.dev/provenance/v1 --deny-self-hosted-runners; then

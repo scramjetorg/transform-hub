@@ -115,7 +115,7 @@ function verifyImages(images, runner = execFileSync, environment = process.env) 
         }
         const expected = `sha256:${image.reference.split("@sha256:")[1].toLowerCase()}`;
         const observed = commandOutput(
-            runner("docker", ["buildx", "imagetools", "inspect", "--format", "{{.Digest}}", image.reference], {
+            runner("docker", ["buildx", "imagetools", "inspect", "--format", "{{.Manifest.Digest}}", image.reference], {
                 env: environment,
                 encoding: "utf8"
             })
