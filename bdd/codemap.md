@@ -8,7 +8,7 @@ BDD smoke and end-to-end validation workspace for Scramjet Transform Hub. It def
 
 - Cucumber test harness: `cucumber.js` loads TypeScript step definitions through `ts-node/register`, excludes `@ignore` and harness self-tests by default, and can emit HTML reports under `reports/`.
 - Shared World object: `step-definitions/world.ts` (`CustomWorld`) centralizes mutable test resources, API clients, spawned processes, selected sequence/instance IDs, and CLI command state.
-- Process fixture pattern: `lib/host-utils.ts` starts either the built hub (`../dist/sth/bin/hub.js`) or source hub (`packages/sth/src/bin/hub.ts`) based on environment flags, tracks child process groups, and installs cleanup handlers.
+- Process fixture pattern: `lib/host-utils.ts` resolves the installed STH CLI through `node_modules/.bin/scramjet-transform-hub` (via the shared `scripts/lib/sth-bin.js` resolver; workspace or verified prerelease install) and executes the selected bin directly, tracks child process groups, and installs cleanup handlers.
 - Utility polling and stream helpers: `lib/utils.ts` provides CLI command selection, spawn output collection, retry loops, file/log assertions, stream-to-string conversion, and profile helpers.
 
 ## Data & Control Flow

@@ -1,11 +1,14 @@
 #!/usr/bin/env node
 
 const { execFileSync } = require("node:child_process");
-const { mkdirSync, readFileSync, renameSync, rmSync, symlinkSync, writeFileSync } = require("node:fs");
+const { existsSync, mkdirSync, readFileSync, realpathSync, renameSync, rmSync, statSync, symlinkSync, writeFileSync } = require("node:fs");
 const { dirname, join, relative, resolve, sep } = require("node:path");
 
 const { FORMAT, REGISTRY, manifestChecksum, prereleasePackageName, releasePrereleaseVersion } = require("./release-prerelease.js");
 const { INCLUDED_PACKAGES } = require("./lib/release-boundary.js");
+
+const STH_SOURCE_NAME = "@scramjet/sth";
+const STH_BIN_NAME = "scramjet-transform-hub";
 
 const DIGEST = /^sha256:[a-f0-9]{64}$/i;
 const IMAGE_REFERENCE = /^ghcr\.io\/scramjetorg\/[a-z0-9._/-]+@sha256:([a-f0-9]{64})$/i;
@@ -228,6 +231,127 @@ function activateVerifiedPackages({ installDir, record, workspaceRoot }) {
         // package directory, while package internals resolve @scramjetorg/*.
         linkVerifiedPackage(source, resolve(workspaceModules, entry.sourceName), installModules, workspaceModules);
     }
+    activateSthBin({ installDir, record, workspaceRoot });
+}
+
+/**
+ * Repoint the canonical root `node_modules/.bin/scramjet-transform-hub` link
+ * at the STH CLI inside the verified installed prerelease package.
+ *
+ * The link is created relative to `node_modules/.bin` so it never embeds a
+ * host-specific absolute path and stays valid when the workspace tree is
+ * relocated (e.g. the Docker bind mount at /work).  The link target must
+ * resolve back inside the verified installed package, and the installed bin
+ * entry itself must not escape the package directory.
+ *
+ * @param {object}  args
+ * @param {string}  args.installDir       Directory containing node_modules of the verified install.
+ * @param {object}  args.record           Verified consumption record.
+ * @param {string}  args.workspaceRoot    Workspace root whose node_modules receives the link.
+ * @returns {{binLinkPath: string, installedBinPath: string, installedPackageDir: string, relativeTarget: string}}
+ */
+function activateSthBin({ installDir, record, workspaceRoot }) {
+    const installModules = resolve(installDir, "node_modules");
+    const workspaceModules = resolve(workspaceRoot, "node_modules");
+
+    const entry = record.packages.find((candidate) => candidate.sourceName === STH_SOURCE_NAME);
+    if (!entry) {
+        throw new Error(`Prerelease activation requires ${STH_SOURCE_NAME} in the verified consumption record.`);
+    }
+
+    const installedPackageDir = resolve(installModules, entry.name);
+    assertInstalledPackage(installedPackageDir, entry);
+
+    const packageJson = JSON.parse(readFileSync(join(installedPackageDir, "package.json"), "utf8"));
+    const binField = packageJson.bin;
+    const binRelative = typeof binField === "string"
+        ? binField
+        : typeof binField === "object" && typeof binField[STH_BIN_NAME] === "string"
+            ? binField[STH_BIN_NAME]
+            : undefined;
+
+    if (!binRelative) {
+        throw new Error(`Installed prerelease package ${entry.name} does not expose the ${STH_BIN_NAME} bin.`);
+    }
+
+    const installedBinPath = resolve(installedPackageDir, binRelative);
+    if (!isInside(installedPackageDir, installedBinPath)) {
+        throw new Error(`Installed prerelease package ${entry.name} bin ${binRelative} escapes the verified package directory.`);
+    }
+    if (!statSync(installedBinPath).isFile()) {
+        throw new Error(`Installed prerelease package ${entry.name} bin ${binRelative} is not a file.`);
+    }
+
+    const binLinkPath = resolve(workspaceModules, ".bin", STH_BIN_NAME);
+    mkdirSync(dirname(binLinkPath), { recursive: true });
+    rmSync(binLinkPath, { force: true });
+
+    // Relative link: valid under Docker relocation because it never embeds a
+    // host path; node_modules/.bin -> ../<installed package>/<bin file>.
+    const relativeTarget = relative(dirname(binLinkPath), installedBinPath);
+    symlinkSync(relativeTarget, binLinkPath, "file");
+
+    // Validate: the link must resolve back inside the verified package.
+    const packageReal = realpathSync(installedPackageDir);
+    const binReal = realpathSync(installedBinPath);
+    if (realpathSync(binLinkPath) !== binReal || !isInside(packageReal, binReal)) {
+        throw new Error(`Activated ${STH_BIN_NAME} bin does not resolve inside the verified package ${entry.name}.`);
+    }
+
+    return { binLinkPath, installedBinPath, installedPackageDir, relativeTarget };
+}
+
+/**
+ * Validate the activated STH CLI through the real release-prerelease path.
+ *
+ * Runs `npx --no-install scramjet-transform-hub --help` from the workspace
+ * root.  `--no-install` is fail-closed: npx is explicitly forbidden from
+ * fetching a package, so an uninstalled or misactivated CLI fails instead of
+ * being resolved from a registry.  When the activated link is correct, npx
+ * executes the installed CLI and the command prints its usage output.
+ *
+ * @param {object}  args
+ * @param {string}  args.workspaceRoot    Workspace root (cwd for the npx run).
+ * @param {Function} [args.runner]        Child-process runner (default execFileSync).
+ * @param {object}  [args.environment]    Child environment (default process.env).
+ * @returns {{command: string[], output: string}}
+ */
+function validateSthCli({ workspaceRoot, runner = execFileSync, environment = process.env }) {
+    const command = ["--no-install", STH_BIN_NAME, "--help"];
+    const root = resolve(workspaceRoot);
+    let output;
+
+    if (!existsSync(root) || !statSync(root).isDirectory()) {
+        throw new Error(`Installed STH CLI validation failed: workspace root ${root} does not exist.`);
+    }
+
+    try {
+        output = commandOutput(
+            runner("npx", command, {
+                cwd: root,
+                env: environment,
+                encoding: "utf8"
+            })
+        );
+    } catch (error) {
+        const details = [
+            `stderr=${JSON.stringify(commandOutput(error.stderr))}`,
+            `stdout=${JSON.stringify(commandOutput(error.stdout))}`,
+            `error=${error.message}`
+        ].join("; ");
+        throw new Error(
+            `Installed STH CLI validation failed: npx --no-install ${STH_BIN_NAME} --help exited non-zero (fail-closed; npx must never implicitly install). ${details}`
+        );
+    }
+
+    if (typeof output !== "string" || !/usage/i.test(output)) {
+        throw new Error(
+            `Installed STH CLI validation failed: npx --no-install ${STH_BIN_NAME} --help did not print CLI usage output. ` +
+            `output=${JSON.stringify(output)}`
+        );
+    }
+
+    return { command: ["npx", ...command], output };
 }
 
 function readOption(args, name) {
@@ -271,7 +395,12 @@ function main() {
             });
             return;
         }
-        throw new Error("Usage: release-prerelease-bdd.js verify|prepare|verify-lock|activate ...");
+        if (command === "validate-cli") {
+            validateSthCli({ workspaceRoot: readOption(args, "--workspace-root") });
+            console.log(JSON.stringify({ mode: "validated" }));
+            return;
+        }
+        throw new Error("Usage: release-prerelease-bdd.js verify|prepare|verify-lock|activate|validate-cli ...");
     } catch (error) {
         console.error(`[release-prerelease-bdd] ${error.message}`);
         process.exitCode = 1;
@@ -281,10 +410,14 @@ function main() {
 if (require.main === module) main();
 
 module.exports = {
+    STH_BIN_NAME,
+    STH_SOURCE_NAME,
     assertPublisherManifest,
     consumptionRecord,
     verifyImages,
     verifyInstallLock,
     writeInstallManifest,
-    activateVerifiedPackages
+    activateVerifiedPackages,
+    activateSthBin,
+    validateSthCli
 };

@@ -6,11 +6,31 @@ import { SIGKILL, SIGTERM } from "constants";
 import { StringDecoder } from "string_decoder";
 import { memoryRegistry } from "../lib/memory-registry";
 const { getOwnership } = require("./ownership.js");
+const { describeSthBinResolution, resolveSthBin } = require("../../scripts/lib/sth-bin.js");
 
-const hostExecutableCommand = process.env.SCRAMJET_SPAWN_TS
-    ? ["/usr/bin/env", "npx", "tsx", "../packages/sth/src/bin/hub.ts"]
-    : ["node", "../dist/sth/bin/hub.js"]
-;
+/**
+ * Select the STH CLI executable command for a locally owned Hub.
+ *
+ * The default path resolves the installed CLI through
+ * node_modules/.bin/scramjet-transform-hub (workspace or verified prerelease
+ * install) and executes the selected bin directly — it is never passed to
+ * `node`.  SCRAMJET_SPAWN_TS keeps the explicit source-launcher dev toggle.
+ */
+function resolveHostExecutableCommand(): string[] {
+    if (process.env.SCRAMJET_SPAWN_TS) {
+        return ["/usr/bin/env", "npx", "tsx", "../packages/sth/src/bin/hub.ts"];
+    }
+
+    const resolved = resolveSthBin();
+
+    if (process.env.SCRAMJET_TEST_LOG) {
+        console.error(`[host-utils] ${describeSthBinResolution(resolved)}`);
+    }
+
+    return [resolved.binPath];
+}
+
+const hostExecutableCommand = resolveHostExecutableCommand();
 
 type NoDefault = ("port"|"instances-server-port"|"cpm-url"|"runtime-adapter"|"instance-lifetime-extension-delay")[];
 type CleanupSignal = "SIGHUP" | "SIGINT" | "SIGTERM";

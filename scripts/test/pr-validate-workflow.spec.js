@@ -353,6 +353,7 @@ test("release PR BDD consumes only verified publisher output and exact prereleas
 	t.true(source.includes("release-prerelease-bdd.js prepare"));
 	t.true(source.includes("release-prerelease-bdd.js verify-lock"));
 	t.true(source.includes("release-prerelease-bdd.js activate"));
+	t.true(source.includes("release-prerelease-bdd.js validate-cli --workspace-root ."));
 	t.true(source.includes("npm --prefix .release-prerelease-bdd install --package-lock-only --ignore-scripts"));
 	t.false(source.includes("npm --prefix .release-prerelease-bdd install --package-lock-only --ignore-scripts --registry https://npm.pkg.github.com"));
 	t.true(source.includes("npm --prefix .release-prerelease-bdd ci --ignore-scripts"));
@@ -387,6 +388,18 @@ test("release PR BDD consumes only verified publisher output and exact prereleas
 	t.false(source.includes("download-artifact"));
 	t.false(source.includes("upload-artifact"));
 	t.false(/^ {6}id-token: write$/m.test(bdd), "the read-only BDD job must not mint an OIDC token");
+});
+
+test("release PR BDD validates the activated installed CLI before invoking BDD", (t) => {
+	const source = workflowSource();
+	const bdd = source.slice(source.indexOf("  prerelease-bdd:\n"));
+	const activate = bdd.indexOf("release-prerelease-bdd.js activate");
+	const validateCli = bdd.indexOf("release-prerelease-bdd.js validate-cli --workspace-root .");
+	const runBdd = bdd.indexOf("npm run test:bdd-ci-api-node");
+
+	t.true(activate >= 0, "verified package activation must exist");
+	t.true(validateCli > activate, "CLI validation must follow activation");
+	t.true(runBdd > validateCli, "BDD must run only after fail-closed CLI validation");
 });
 
 test("release PR BDD fails closed when a SHA tag is repointed to a digest without matching devel provenance", (t) => {

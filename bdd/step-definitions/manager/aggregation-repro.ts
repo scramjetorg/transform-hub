@@ -29,6 +29,7 @@ import { MultiManagerClient } from "@scramjet/multi-manager-api-client";
 import { disposeClient } from "./common";
 import { isSuccessfulReadinessResponse, isTransientReadinessStatus } from "../../lib/readiness-contract";
 const { getOwnership, ensureOwnershipPaths } = require("../../lib/ownership.js");
+const { describeSthBinResolution, resolveSthBin } = require("../../../scripts/lib/sth-bin.js");
 
 const freeport = promisify(require("freeport"));
 const ownership = getOwnership(process.env);
@@ -679,7 +680,18 @@ Given("an STH hub {string} is connected to the aggregation Manager", {
 
     const cmd = process.env.SCRAMJET_SPAWN_TS
         ? ["npx", "ts-node", resolve(cwd, "packages/sth/src/bin/hub.ts")]
-        : ["node", resolve(cwd, "dist/sth/bin/hub.js")];
+        : (() => {
+            // Resolve the installed STH CLI through node_modules/.bin
+            // (workspace or verified prerelease install) and execute the
+            // selected bin directly — never via `node` on a dist path.
+            const resolved = resolveSthBin({ cwd });
+
+            if (process.env.SCRAMJET_TEST_LOG) {
+                console.error(`[aggregation-repro] ${describeSthBinResolution(resolved)}`);
+            }
+
+            return [resolved.binPath];
+        })();
 
     const hubOpts = [
         `--id=${hubName}`,

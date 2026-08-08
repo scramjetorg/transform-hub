@@ -130,7 +130,7 @@
     "@cucumber/messages": "^34.0.0",
     "@istanbuljs/nyc-config-typescript": "^1.0.2",
     "@npmcli/run-script": "^11.0.0",
-    "@types/node": "^22.15.0",
+    "@types/node": "22.15.17",
     "@vscode/ripgrep": "^1.18.0",
     "ava": "^8.0.0",
     "cloc": "^2.11.0",

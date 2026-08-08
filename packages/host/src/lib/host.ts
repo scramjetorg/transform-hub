@@ -920,17 +920,22 @@ export class Host implements IHost, IComponent {
                 await Promise.race([this.connectToCPM(), defer(2500)]);
             }
 
-            this.s3Client = new S3Client({
-                host: `${this.config.cpmUrl}/api/v1`,
-                bucket: `cpm/${this.config.cpmId || (this.config.platform?.space || "").replace(/(.+?):/g, "")}/api/v1/s3`
-            });
-
-            this.s3Client.logger.pipe(this.logger);
+            const cpmStorageId = this.config.cpmId || (this.config.platform?.space || "").replace(/(.+?):/g, "");
+            this.attachS3Client(new S3Client({
+                host: `${this.config.cpmUrl}/api/v1/cpm/${cpmStorageId}/api/v1`,
+                bucket: "s3"
+            }));
         }
 
         await this.performStartup();
 
         this.logger.info("Host running!");
+    }
+
+    private attachS3Client(client: S3Client) {
+        this.s3Client = client;
+        client.logger.pipe(this.logger);
+        if (this.cpmConnector) client.setAgent(this.cpmConnector.getHttpAgent());
     }
 
     public performStop(signal: number): void {
@@ -1567,6 +1572,9 @@ export class Host implements IHost, IComponent {
 
         this.instancesStore = new InstancesStore();
         this.sequenceStore.clear();
+
+        this.s3Client?.dispose();
+        this.s3Client = undefined;
 
         if (this.cpmConnector) {
             this.logger.debug("Disconnecting from CPM");

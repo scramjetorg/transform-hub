@@ -32,6 +32,10 @@ const KNOWN_PROCESS_PATTERNS = [
 	// STH / Host — anchored to our repo paths
 	"packages/sth/src/bin/hub",
 	"dist/sth/bin/hub",
+	// STH CLI resolved through node_modules/.bin (workspace or prerelease
+	// install).  Executing the selected bin directly yields a process whose
+	// command line carries this .bin path as the script argument.
+	"node_modules/.bin/scramjet-transform-hub",
 	// Runner — anchored to our package paths or command flags
 	"packages/runner/src/bin",
 	"dist/runner/bin",

@@ -188,6 +188,47 @@ test("Host replays complete sequence and instance inventory on every reconnected
     ]);
 });
 
+test("Host installs the current CPM agent for storage created after initial communication and refreshes it on reconnect", async t => {
+    const connector = new EventEmitter() as any;
+    const firstAgent = {};
+    const secondAgent = {};
+    const agents = [firstAgent, secondAgent];
+
+    Object.assign(connector, {
+        init: () => {},
+        connect: async () => {},
+        sendSequencesInfo: async () => undefined,
+        sendInstancesInfo: async () => undefined,
+        sendTopicsInfo: async () => undefined,
+        getHttpAgent: () => agents.shift()
+    });
+
+    const host = Object.create(Host.prototype) as Host & Record<string, any>;
+    Object.assign(host, {
+        cpmConnector: connector,
+        cpmInventoryListenerInstalled: false,
+        getSequences: () => [],
+        getInstances: () => [],
+        getTopics: () => [],
+        logger: {}
+    });
+
+    await host.connectToCPM();
+    connector.emit("communicationReady");
+    await new Promise<void>(resolve => setImmediate(resolve));
+
+    const installedAgents: unknown[] = [];
+    (host as any).attachS3Client({
+        logger: { pipe: () => undefined },
+        setAgent: (agent: unknown) => installedAgents.push(agent)
+    });
+    t.deepEqual(installedAgents, [firstAgent]);
+
+    connector.emit("communicationReady");
+    await eventually(() => installedAgents.length === 2);
+    t.deepEqual(installedAgents, [firstAgent, secondAgent]);
+});
+
 test("registration invalidated by concurrent stream close does not mark connected and triggers retry", async t => {
     let resolveRegistration: (() => void) | undefined;
     let registrationReached = false;
