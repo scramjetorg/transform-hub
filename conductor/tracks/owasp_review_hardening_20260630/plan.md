@@ -112,7 +112,7 @@
     - [ ] Identify any residual high-priority risks that should become follow-up tracks.
 - [ ] Task: Final validation
     - [ ] Run the narrowest sufficient final validation based on actual changed packages.
-    - [ ] Prefer existing focused package checks; use `npm run test:packages-no-concurrent`, `npm run build:packages`, or `npm run lint` only when the change scope justifies them.
+    - [ ] Prefer existing focused package checks; use `npm run test:packages`, `npm run build:packages`, or `npm run lint` only when the change scope justifies them.
     - [ ] Record command, result, skipped checks, and rationale.
     - [ ] After automated final verification, amend the single implementation commit and push the branch.
 - [ ] Task: Branching Policy finalization

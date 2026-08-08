@@ -84,8 +84,8 @@ jobs:
         with:
           bun-version: "1"
 
-      - name: Run serial package tests
-        run: npm run test:packages-no-concurrent
+      - name: Run package tests
+        run: npm run test:packages:ci
 
       - name: Build packages
         run: npm run build:packages

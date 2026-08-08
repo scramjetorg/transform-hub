@@ -94,11 +94,11 @@ Generated documentation goes to `docs/` by default (configurable via `SCRAMJET_D
 ### Package unit tests
 
 ```bash
-# Run all package tests concurrently
+# Local default: four package jobs, 3.5 GiB aggregate-RSS budget
 npm run test:packages
 
-# Run package tests serially (CI-safe, avoids resource contention)
-npm run test:packages-no-concurrent
+# GitHub CI: two package jobs, 2.5 GiB aggregate-RSS budget
+npm run test:packages:ci
 
 # Run the supported fast profile (16 cross-package jobs and AVA workers)
 npm run test:packages:fast
@@ -107,7 +107,7 @@ npm run test:packages:fast
 npm run test:packages:phase-final
 ```
 
-Package tests use **AVA** with `ts-node/register` and match `**/*.spec.ts`. Tests run through `scripts/run-ava.js`, which defaults to `NODE_OPTIONS="--max-old-space-size=2048"`, JIT with WASM caps of 8192 pages and 256 MB committed code/code space, and `TS_NODE_TRANSPILE_ONLY=1`. `SCRAMJET_TEST_PROFILE=fast` uses 16 AVA workers and an 8 MiB concurrent-mode budget; it does not enable unsound concurrent per-test GC measurement. `SCRAMJET_TEST_PROFILE=phase-final` serializes packages and AVA and enables the existing strict 524288-byte guard without raising timeouts, thresholds, skips, or allowances. Set `SCRAMJET_AVA_JITLESS=1` or `TS_NODE_TRANSPILE_ONLY=0` for explicit opt-ins. Source TypeScript builds remain the correctness gate. The cross-package runner completes every selected package and reports a nonzero result after collecting failures; use `--fail-fast` (or `SCRAMJET_RUN_SCRIPT_FAIL_FAST=1`) only when early stopping is desired.
+Package tests use **AVA** with `ts-node/register` and match `**/*.spec.ts`. Tests run through `scripts/run-ava.js`, which defaults to `NODE_OPTIONS="--max-old-space-size=2048"`, JIT with WASM caps of 8192 pages and 256 MB committed code/code space, and `TS_NODE_TRANSPILE_ONLY=1`. The local j4 and GitHub j2 limits are aggregate-RSS budgets, not `ulimit -v` caps: AVA worker-thread isolates reserve substantial virtual address space. `SCRAMJET_TEST_PROFILE=fast` uses 16 AVA workers and an 8 MiB concurrent-mode budget; it does not enable unsound concurrent per-test GC measurement. `SCRAMJET_TEST_PROFILE=phase-final` serializes packages and AVA and enables the existing strict 524288-byte guard without raising timeouts, thresholds, skips, or allowances. Set `SCRAMJET_AVA_JITLESS=1` or `TS_NODE_TRANSPILE_ONLY=0` for explicit opt-ins. Source TypeScript builds remain the correctness gate. The cross-package runner completes every selected package and reports a nonzero result after collecting failures; use `--fail-fast` (or `SCRAMJET_RUN_SCRIPT_FAIL_FAST=1`) only when early stopping is desired.
 
 ### BDD integration tests
 
@@ -238,6 +238,6 @@ CI workflow expectations:
 
 1. `npm ci` for clean dependency install
 2. `npm run build:packages` for TypeScript compilation
-3. `npm run test:packages-no-concurrent` for serial tests
+3. `npm run test:packages:ci` for the j2 package-test profile
 4. Selected BDD smoke tests via `test:bdd-ci-*` scripts
 5. `npm run lint:quick` for lint on changed files

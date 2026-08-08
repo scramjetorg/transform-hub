@@ -11,7 +11,7 @@
     "build": "../../scripts/build-all.js --config-name=tsconfig.build.json --copy-dist",
     "clean": "rm -rf ./dist .bic_cache",
     "test": "npm run test:ava",
-    "test:ava": "node ../../scripts/run-ava.js -T 50000 --serial"
+    "test:ava": "node ../../scripts/run-ava.js -T 50000"
   },
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "MIT",

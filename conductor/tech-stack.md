@@ -63,7 +63,7 @@ Scramjet Transform Hub is a TypeScript/Node.js monorepo with multiple packages f
 - **Coverage**: nyc/istanbul tooling.
 - **Runtime parity tests**: used especially for runtime wrapper behavior.
 - **API route/client tests**: package-level route-manifest, OpenAPI, generic-client, no-circumvention, and v1/v2 compatibility tests for migrated API surfaces.
-- **CI-safe command preference**: serial package tests via `npm run test:packages-no-concurrent` when needed.
+- **Package-test command preference**: use `npm run test:packages` locally (j4, 3.5 GiB aggregate-RSS budget) and `npm run test:packages:ci` in GitHub (j2, 2.5 GiB aggregate-RSS budget). These are RSS budgets, not `ulimit -v` caps; phase-final remains serial.
 
 ## Build and Tooling
 

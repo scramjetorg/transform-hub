@@ -94,11 +94,11 @@ test("single package-validation job owns gates, Bun, serial AVA tests, and the p
 	t.false(source.includes("name: CI / package build"));
 	t.true(source.includes("oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6"));
 	t.true(source.includes('bun-version: "1"'));
-	t.true(source.indexOf("oven-sh/setup-bun@") < source.indexOf("npm run test:packages-no-concurrent"));
-	t.true(source.includes("npm run test:packages-no-concurrent"));
-	t.true(source.indexOf("npm run test:packages-no-concurrent") < source.indexOf("run: npm run build:packages"));
+	t.true(source.indexOf("oven-sh/setup-bun@") < source.indexOf("npm run test:packages:ci"));
+	t.true(source.includes("npm run test:packages:ci"));
+	t.true(source.indexOf("npm run test:packages:ci") < source.indexOf("run: npm run build:packages"));
 	t.is((source.match(/npm run build:packages/g) || []).length, 3);
-	t.is((source.match(/npm run test:packages-no-concurrent/g) || []).length, 1);
+	t.is((source.match(/npm run test:packages:ci/g) || []).length, 1);
 	t.is((source.match(/oven-sh\/setup-bun@/g) || []).length, 1, "Setup Bun must appear only in the package-validation job");
 });
 
@@ -332,7 +332,7 @@ test("release prerelease publication builds publishable packages and emits the m
 	t.true(publication.includes("prerelease-manifest: ${{ steps.prerelease_manifest.outputs.manifest }}"));
 	t.true(publication.includes("prerelease-manifest-sha256: ${{ steps.prerelease_manifest.outputs.checksum }}"));
 	t.true(publication.includes("prereleases-published: ${{ steps.prerelease_publish.outputs.published }}"));
-	t.false(publication.includes("npm run test:packages-no-concurrent"), "release jobs must not duplicate generic package validation");
+	t.false(publication.includes("npm run test:packages:ci"), "release jobs must not duplicate generic package validation");
 	t.false(publication.includes("npm run build:packages"), "release jobs must not duplicate the generic package build");
 	t.false(publication.includes("oven-sh/setup-bun@"), "release jobs must not duplicate Bun setup");
 });

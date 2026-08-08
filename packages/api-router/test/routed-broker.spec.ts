@@ -154,7 +154,7 @@ test("routed redirect cleanup aborts and times out without a second dispatch", a
     let calls = 0;
     let brokerAborted = false;
     const client = createVerser2ClientTransport({
-        routeDomain: "space-a", requestTimeoutMs: 5,
+        routeDomain: "space-a", requestTimeoutMs: 50,
         transport: transport({
             async request(request) {
                 calls++;
@@ -194,7 +194,7 @@ test("routed redirect cleanup rejection and cancellation prevent follow-up dispa
 test("routed redirects use one deadline across redirect cleanup and later route readiness", async t => {
     let calls = 0;
     const client = createVerser2ClientTransport({
-        routeDomain: "space-a", requestTimeoutMs: 5,
+        routeDomain: "space-a", requestTimeoutMs: 50,
         transport: transport({
             getRoutes: () => [{ domain: "space-a", targetId: "manager" }, { domain: "hub-a", targetId: "hub" }],
             isRouteReady: domain => domain === "space-a",
@@ -364,21 +364,31 @@ test("managed close owns redirect cleanup after timeout and cancellation races",
     const checks: boolean[] = [];
     for (const mode of ["timeout", "cancel"] as const) {
         let releaseCleanup!: () => void;
+        let markRequestStarted!: () => void;
+        let markCleanupStarted!: () => void;
+        const requestStarted = new Promise<void>(resolve => { markRequestStarted = resolve; });
+        const cleanupStarted = new Promise<void>(resolve => { markCleanupStarted = resolve; });
         const controller = new AbortController();
         controllers.push(controller);
         const client = createVerser2ClientTransport({
-            routeDomain: "space-a", requestTimeoutMs: mode === "timeout" ? 5 : undefined,
+            routeDomain: "space-a", requestTimeoutMs: mode === "timeout" ? 50 : undefined,
             transport: transport({
                 async request() {
+                    markRequestStarted();
                     const body = Readable.from([]);
                     bodies.push(body);
-                    return { status: 308, headers: { "x-scramjet-route-decision": "redirect", "x-scramjet-route-domain": "hub-a", "x-scramjet-route-target-path": "/next" }, body, cleanup: async () => await new Promise<void>(resolve => { releaseCleanup = resolve; releases.push(resolve); }) };
+                    return { status: 308, headers: { "x-scramjet-route-decision": "redirect", "x-scramjet-route-domain": "hub-a", "x-scramjet-route-target-path": "/next" }, body, cleanup: async () => {
+                        markCleanupStarted();
+                        return await new Promise<void>(resolve => { releaseCleanup = resolve; releases.push(resolve); });
+                    } };
                 }
             })
         });
         clients.push(client);
         const pending = client.request({ route: { id: "GET /", method: "get", fullPath: "/" }, signal: controller.signal } as any);
-        if (mode === "cancel") setImmediate(() => controller.abort());
+        await requestStarted;
+        await cleanupStarted;
+        if (mode === "cancel") controller.abort();
         let rejected = false;
         try { await pending; } catch (_) { rejected = true; }
         let closed = false;
@@ -444,18 +454,23 @@ test("routed broker translates initial route readiness timeout", async t => {
 
 test("routed broker transport aborts timed out requests", async t => {
     let aborted = false;
+    let markSignalAttached!: () => void;
+    const signalAttached = new Promise<void>(resolve => { markSignalAttached = resolve; });
     const client = createVerser2ClientTransport({
         routeDomain: "space-a",
-        requestTimeoutMs: 5,
+        requestTimeoutMs: 50,
         transport: transport({
             async request(request) {
                 request.signal?.addEventListener("abort", () => { aborted = true; });
+                markSignalAttached();
                 return await new Promise(() => {});
             }
         })
     });
 
-    await t.throwsAsync(client.request({ route: { id: "GET /", method: "get", fullPath: "/" } } as any), { instanceOf: RoutedBrokerTimeoutError });
+    const pending = client.request({ route: { id: "GET /", method: "get", fullPath: "/" } } as any);
+    await signalAttached;
+    await t.throwsAsync(pending, { instanceOf: RoutedBrokerTimeoutError });
     t.true(aborted);
 });
 
@@ -581,11 +596,15 @@ test("late timeout responses are destroyed and cleaned, preserving cleanup rejec
 test("managed transport close waits for delayed late-response cleanup", async t => {
     let resolveResponse!: (response: any) => void;
     let releaseCleanup!: () => void;
+    let markRequestStarted!: () => void;
+    const requestStarted = new Promise<void>(resolve => { markRequestStarted = resolve; });
     const client = createVerser2ClientTransport({
-        routeDomain: "space-a", requestTimeoutMs: 5,
-        transport: transport({ async request() { return await new Promise(resolve => { resolveResponse = resolve; }); } })
+        routeDomain: "space-a", requestTimeoutMs: 50,
+        transport: transport({ async request() { markRequestStarted(); return await new Promise(resolve => { resolveResponse = resolve; }); } })
     });
-    await t.throwsAsync(client.request({ route: { id: "GET /", method: "get", fullPath: "/" } } as any), { instanceOf: RoutedBrokerTimeoutError });
+    const pending = client.request({ route: { id: "GET /", method: "get", fullPath: "/" } } as any);
+    await requestStarted;
+    await t.throwsAsync(pending, { instanceOf: RoutedBrokerTimeoutError });
     resolveResponse({ status: 200, headers: {}, body: new Readable({ read() {} }), cleanup: async () => await new Promise<void>(resolve => { releaseCleanup = resolve; }) });
     await new Promise(resolve => setImmediate(resolve));
     let closed = false;
@@ -600,8 +619,12 @@ test("managed transport close waits for delayed late-response cleanup", async t 
 test("managed transport close waits when started before a late timeout response settles", async t => {
     let resolveResponse!: (response: any) => void;
     let releaseCleanup!: () => void;
-    const client = createVerser2ClientTransport({ routeDomain: "space-a", requestTimeoutMs: 5, transport: transport({ async request() { return await new Promise(resolve => { resolveResponse = resolve; }); } }) });
-    await t.throwsAsync(client.request({ route: { id: "GET /", method: "get", fullPath: "/" } } as any), { instanceOf: RoutedBrokerTimeoutError });
+    let markRequestStarted!: () => void;
+    const requestStarted = new Promise<void>(resolve => { markRequestStarted = resolve; });
+    const client = createVerser2ClientTransport({ routeDomain: "space-a", requestTimeoutMs: 50, transport: transport({ async request() { markRequestStarted(); return await new Promise(resolve => { resolveResponse = resolve; }); } }) });
+    const pending = client.request({ route: { id: "GET /", method: "get", fullPath: "/" } } as any);
+    await requestStarted;
+    await t.throwsAsync(pending, { instanceOf: RoutedBrokerTimeoutError });
     let closed = false;
     const closing = client.close().then(() => { closed = true; });
     resolveResponse({ status: 200, headers: {}, body: new Readable({ read() {} }), cleanup: async () => await new Promise<void>(resolve => { releaseCleanup = resolve; }) });

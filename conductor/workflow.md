@@ -233,7 +233,8 @@ Choose the narrowest sufficient validation:
 - If a command fails under the default memory guard, classify the failure normally before retrying. Do not silently raise the cap; record the attempted command, cap, failure mode, and reason for any narrower or runner-specific retry.
 
 - Package build: `npm run build:packages`
-- Serial package tests: `npm run test:packages-no-concurrent`
+- Local package tests: `npm run test:packages` (j4, 3.5 GiB aggregate-RSS budget)
+- GitHub package tests: `npm run test:packages:ci` (j2, 2.5 GiB aggregate-RSS budget)
 - Fast package tests: `npm run test:packages:fast`
 - Phase-final package proof: `npm run test:packages:phase-final`
 - Lint/check: `npm run lint` for the active Biome lint surface, or a narrower Biome command when the active track calls for changed/staged-file validation. Use explicit format commands for formatting validation. Do not run legacy ESLint commands during the Biome migration track.

@@ -74,4 +74,4 @@ Use this guide for TypeScript and JavaScript code in Scramjet Transform Hub pack
 - Use `npm` for agent-run commands in this repository.
 - Prefer package-level or changed-area checks over full Docker/BDD workflows unless required.
 - Use `npm run build:packages` for package build validation when needed.
-- Use `npm run test:packages-no-concurrent` for CI-safe package test validation when broad test coverage is required.
+- Use `npm run test:packages:ci` for GitHub package-test validation and `npm run test:packages` for the local j4 default; phase-final remains the serial proof path.

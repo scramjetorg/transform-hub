@@ -10,7 +10,7 @@
     "preexport:docker": "mkdir -p ../../dist/docker && rm -rf ../../dist/docker/scramjetorg-runner.tar.gz",
     "export:docker": "npm run build:docker && docker save scramjetorg/runner:$(git rev-parse HEAD) | gzip > ../../dist/docker/scramjetorg-runner.tar.gz",
     "start": "ts-node ./src/index",
-    "test": "TS_NODE_TRANSPILE_ONLY=1 SCRAMJET_AVA_MAX_OLD_SPACE_SIZE=1024 SCRAMJET_AVA_FETCH=0 node ../../scripts/run-ava.js -T 120000 --serial",
+    "test": "TS_NODE_TRANSPILE_ONLY=1 SCRAMJET_AVA_MAX_OLD_SPACE_SIZE=1024 SCRAMJET_AVA_FETCH=0 node ../../scripts/run-ava.js -T 120000",
     "test:docker": "docker run -i --name runner -v prerunner-$(git rev-parse --short HEAD):/package scramjetorg/runner:$(git rev-parse HEAD)",
     "clean": "rm -rf ./dist .bic_cache",
     "clean:docker": "docker rm -f runner; docker volume rm prerunner-$(git rev-parse HEAD)"

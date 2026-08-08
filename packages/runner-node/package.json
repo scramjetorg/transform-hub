@@ -9,7 +9,7 @@
   "scripts": {
     "build": "../../scripts/build-all.js --config-name=tsconfig.build.json --copy-dist",
     "clean": "rm -rf ./dist .bic_cache",
-    "test": "TS_NODE_TRANSPILE_ONLY=1 SCRAMJET_AVA_MAX_OLD_SPACE_SIZE=1024 SCRAMJET_AVA_FETCH=0 node ../../scripts/run-ava.js -T 120000 --serial"
+    "test": "TS_NODE_TRANSPILE_ONLY=1 SCRAMJET_AVA_MAX_OLD_SPACE_SIZE=1024 SCRAMJET_AVA_FETCH=0 node ../../scripts/run-ava.js -T 120000"
   },
   "author": "Scramjet <opensource@scramjet.org>",
   "license": "MIT",

@@ -14,8 +14,8 @@
   - [ ] Run and retain timestamped `npm audit --omit=dev --json` and `npm audit --json` output at the immutable revision.
   - [ ] Run `npm explain` for every direct finding and record advisory ID, full dependency path, installed/fixed versions, direct/transitive owner, and production/dev reachability.
   - [ ] Classify every finding as retained production, removable, excluded Kubernetes-only, deferred development/tooling, or transitive-only.
-- [ ] Task: Run the immutable serial test, build, and runtime-validation baseline.
-  - [ ] Run `npm run test:packages-no-concurrent`, `npm run build:packages`, and `npm run check:runtime-invariants` with repository memory guidance.
+- [ ] Task: Run the immutable package-test, build, and runtime-validation baseline.
+  - [ ] Run `npm run test:packages`, `npm run build:packages`, and `npm run check:runtime-invariants` with repository memory guidance.
   - [ ] Record commands, environment, Node version, exit status, full output location, and test totals in Phase 1 evidence.
   - [ ] Create `td.md` entries for every failure, classified as pre-existing, environment/tooling, or new; do not repair unrelated baseline failures.
 - [ ] Task: Create the technical-debt and scope ledger.
@@ -128,7 +128,7 @@
   - [ ] For each removal, run affected package build/type checks and focused AVA tests, then verify manifest/lockfile results.
 - [ ] Task: Apply only behavior-preserving compatible test dependency fixes.
   - [ ] Record old/new resolved versions, rationale, impacted workspaces, and focused validation for every update.
-  - [ ] Run `npm run test:packages-no-concurrent` under repository memory guidance and compare command results and failing tests with the Phase 1 baseline.
+  - [ ] Run `npm run test:packages` under repository memory guidance and compare command results and failing tests with the Phase 1 baseline.
   - [ ] Block or revert any new failure; record unchanged baseline failures separately from new deltas.
 - [ ] Task: Record risky test/tooling migrations for Phase 7 reconciliation.
   - [ ] Create one `td.md` record for BDD Dockerode 3→4 and every risky test-runner/tooling major migration.
@@ -152,7 +152,7 @@
   - [ ] State that adapters should be install-time plugins, Kubernetes is optional rather than build-time included, and process/Docker behavior remains retained.
   - [ ] Review the note against implemented STH adapter wiring and record the limitation and follow-up owner.
 - [ ] Task: Run and record the final validation matrix.
-  - [ ] Record command, changed-surface rationale, result, baseline comparison, and skip/failure classification for `npm ci`, `npm run build:packages`, `npm run test:packages-no-concurrent`, `npm run check:runtime-invariants`, and `npm run lint`.
+  - [ ] Record command, changed-surface rationale, result, baseline comparison, and skip/failure classification for `npm ci`, `npm run build:packages`, `npm run test:packages`, `npm run check:runtime-invariants`, and `npm run lint`.
   - [ ] Select named Docker/BDD smoke commands from changed adapter/runtime behavior and record prerequisites, results, and skip reasons.
   - [ ] Record all memory-guard variables, effective thresholds, skips, and exceptions for applicable Node/test validation.
 - [ ] Task: Close audit findings and approved exceptions.

@@ -12,7 +12,7 @@
 - Install deps: `npm ci` for a clean install, `npm install` when updating the lockfile.
 - Build packages only: `npm run build:packages` (`scripts/build-all.js -v -w packages --ts-config tsconfig.build.json`).
 - Full build is expensive: `npm run build` includes packages and Docker builds.
-- Unit/package tests: `npm run test:packages-no-concurrent` is the CI-safe serial variant; `npm run test:packages` runs package tests concurrently.
+- Unit/package tests: `npm run test:packages` is the local default — `scripts/run-script.js -w packages -j 4 test` (four package test processes in parallel) with a 3.5 GiB aggregate-RSS budget. GitHub workflows use `npm run test:packages:ci` (`scripts/run-script.js -w packages -j 2 test`) with a 2.5 GiB aggregate-RSS budget. These are aggregate-RSS budgets, not `ulimit -v` caps: AVA 8 worker-thread isolates reserve large virtual address spaces, so a virtual-memory ulimit is unsuitable as the concurrency bound. `npm run test:packages:phase-final` remains the serial proof path.
 - BDD smoke paths: `npm run test:bdd-ci-api-node`, `npm run test:bdd-ci-node`, `npm run test:bdd-ci-python`, or `npm run test:bdd`.
 - Biome lint/format: `npm run lint`, `npm run lint:quick`, `npm run lint:fix`, `npm run format`, or the lower-level `npm run biome:check`/`npm run biome:lint`/`npm run biome:format` scripts. `lint` runs Biome linting; formatting remains an explicit `format` operation to avoid broad format churn.
 - Biome scripts set `RAYON_NUM_THREADS=12` by default. This passed on the 24-core agent host under the repo virtual-memory cap with ~98 MB max RSS, while 24/default parallelism failed from native allocation pressure; do not silently raise the cap.
