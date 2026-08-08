@@ -17,14 +17,15 @@ function closeServer(server: http.Server): Promise<void> {
 
 function spawnCli(t: any, home: string, args: string[], environment: Record<string, string> = {}, input = "", timeoutMs = CLI_TIMEOUT_MS) {
     const child = spawn(process.execPath, ["-r", "ts-node/register", "packages/cli/src/bin/index.ts", ...args], { cwd: path.resolve(__dirname, "../../.."), env: { ...process.env, HOME: home, ...environment } });
-    let output = ""; let settled = false; let timeout: NodeJS.Timeout | undefined; let killTimer: NodeJS.Timeout | undefined;
+    let output = ""; let settled = false; let timeout: NodeJS.Timeout | undefined; let killTimer: NodeJS.Timeout | undefined; let terminating: Promise<void> | undefined;
     let resolveResult!: (result: CliResult) => void; let rejectResult!: (error: Error) => void;
     const result = new Promise<CliResult>((resolve, reject) => { resolveResult = resolve; rejectResult = reject; });
-    const terminate = async (signal: NodeJS.Signals = "SIGTERM") => {
-        if (settled || child.killed) return;
+    const terminate = (signal: NodeJS.Signals = "SIGTERM") => terminating ||= new Promise<void>(resolve => {
+        if (settled) return resolve();
+        child.once("close", resolve);
         child.kill(signal);
-        await new Promise<void>(resolve => { killTimer = setTimeout(() => { if (!settled) child.kill("SIGKILL"); resolve(); }, KILL_GRACE_MS); });
-    };
+        killTimer = setTimeout(() => { if (!settled) child.kill("SIGKILL"); }, KILL_GRACE_MS);
+    });
     const finish = (code: number | null) => { if (settled) return; settled = true; if (timeout) clearTimeout(timeout); if (killTimer) clearTimeout(killTimer); resolveResult({ code, output }); };
     child.stdout.on("data", chunk => output += chunk); child.stderr.on("data", chunk => output += chunk);
     child.once("error", error => { if (!settled) { settled = true; rejectResult(new Error(`CLI spawn failed: ${error.message}\n${output}`)); } });
@@ -32,10 +33,26 @@ function spawnCli(t: any, home: string, args: string[], environment: Record<stri
     timeout = setTimeout(() => { if (!settled) void terminate().then(() => { if (!settled) { settled = true; rejectResult(new Error(`CLI timed out after ${timeoutMs}ms; SIGTERM/SIGKILL cleanup attempted. Output:\n${output}`)); } }); }, timeoutMs);
     child.stdin.end(input);
     t.teardown(async () => { await terminate(); });
-    return { child, result, signal: (signal: NodeJS.Signals) => child.kill(signal) };
+    return { result, signal: (signal: NodeJS.Signals) => child.kill(signal) };
 }
 
-function profile(directory: string) {
+function waitForFixtureSignal(t: any, signal: string, result: Promise<CliResult>) {
+    return new Promise<void>((resolve, reject) => {
+        let closed = false;
+        let watcher: fs.FSWatcher | undefined;
+        const close = () => { if (!closed) { closed = true; watcher?.close(); } };
+        const check = () => { if (fs.existsSync(signal)) { close(); resolve(); } };
+        watcher = fs.watch(path.dirname(signal), check);
+        t.teardown(close);
+        void result.then(
+            value => { close(); reject(new Error(`CLI exited before fixture signal ${path.basename(signal)} (exit ${value.code}). Output:\n${value.output}`)); },
+            error => { close(); reject(error); }
+        );
+        check();
+    });
+}
+
+function profile(directory: string, timeoutMs?: number) {
     const file = (name: string, mode: number) => {
         const target = path.join(directory, name);
         fs.writeFileSync(target, name);
@@ -44,7 +61,7 @@ function profile(directory: string) {
     };
     return {
         configVersion: 1, apiUrl: "http://127.0.0.1:8000/api/v1", middlewareApiUrl: "", env: "development", scope: "", token: "", log: { debug: false, format: "pretty" },
-        verser2: { endpoint: "https://127.0.0.1:1", brokerId: "profile-selection", ingress: { level: "hub", expectedId: "hub", routeDomain: "hub" }, tls: { caFile: file("ca.pem", 0o644), certFile: file("cert.pem", 0o644), keyFile: file("key.pem", 0o600) }, timeoutMs: 10 }
+        verser2: { endpoint: "https://127.0.0.1:1", brokerId: "profile-selection", ingress: { level: "hub", expectedId: "hub", routeDomain: "hub" }, tls: { caFile: file("ca.pem", 0o644), certFile: file("cert.pem", 0o644), keyFile: file("key.pem", 0o600) }, ...(timeoutMs === undefined ? {} : { timeoutMs }) }
     };
 }
 
@@ -115,15 +132,14 @@ test.serial("local broker fixtures prove native named/raw success, SIGINT cleanu
     registerAvaMemoryCleanup(t, () => fs.rmSync(directory, { recursive: true, force: true }));
     const home = path.join(directory, "home"); const profiles = path.join(home, ".si", "profiles"); fs.mkdirSync(profiles, { recursive: true });
     fs.writeFileSync(path.join(home, ".si", "si-config.json"), JSON.stringify({ profile: "default" }));
-    fs.writeFileSync(path.join(profiles, "default.json"), JSON.stringify(profile(directory)));
+    fs.writeFileSync(path.join(profiles, "default.json"), JSON.stringify(profile(directory, 10)));
     const fixture = nativeFixture(directory);
     const named = await invokeNative(t, home, fixture, ["hub", "version"]);
     const raw = await invokeNative(t, home, fixture, ["api", "get", "/version"]);
     t.is(named.code, 0, named.output); t.is(raw.code, 0, raw.output);
     const cleanup = path.join(directory, "cancel-cleanup"); const ready = path.join(directory, "cancel-ready");
     const cancelling = spawnCli(t, home, ["api", "get", "/wait"], { NODE_OPTIONS: `-r ${fixture}`, SI_FIXTURE_MODE: "cancel", SI_FIXTURE_CLEANUP: cleanup, SI_FIXTURE_READY: ready });
-    for (let attempt = 0; !fs.existsSync(ready) && attempt < 500; attempt++) await new Promise(resolve => setTimeout(resolve, 10));
-    t.true(fs.existsSync(ready)); cancelling.signal("SIGINT");
+    await waitForFixtureSignal(t, ready, cancelling.result); cancelling.signal("SIGINT");
     const cancelled = await cancelling.result;
     t.is(cancelled.code, 60, cancelled.output); t.is(fs.readFileSync(cleanup, "utf8"), "closed");
     const listeners = path.join(directory, "listeners.json");
@@ -145,27 +161,33 @@ test.serial("raw API child fixture covers bodies, streams, confirmations, errors
     fs.writeFileSync(path.join(home, ".si", "si-config.json"), JSON.stringify({ profile: "default" }));
     const selectedProfile = profile(directory); selectedProfile.apiUrl = `http://127.0.0.1:${(httpServer.address() as any).port}/api/v1`;
     fs.writeFileSync(path.join(profiles, "default.json"), JSON.stringify(selectedProfile));
-    const fixture = nativeFixture(directory); const requests = path.join(directory, "requests.jsonl"); const cleanup = path.join(directory, "cleanup");
-    const environment = { SI_FIXTURE_REQUESTS: requests, SI_FIXTURE_CLEANUP: cleanup };
+    const fixture = nativeFixture(directory); const requests = path.join(directory, "requests.jsonl");
+    const environment = { SI_FIXTURE_REQUESTS: requests };
+    const invokeWithCleanup = async (name: string, args: string[], invocationEnvironment: Record<string, string> = {}, input = "") => {
+        const cleanup = path.join(directory, `${name}-cleanup`);
+        const value = await invokeNative(t, home, fixture, args, { ...environment, ...invocationEnvironment, SI_FIXTURE_CLEANUP: cleanup }, input);
+        t.is(fs.readFileSync(cleanup, "utf8"), "closed", `${name} broker cleanup`);
+        return value;
+    };
     const inputFile = path.join(directory, "input.bin"); fs.writeFileSync(inputFile, Buffer.from([3, 4]));
-    const json = await invokeNative(t, home, fixture, ["api", "post", "/json", "--no-confirm", "--json", "{\"value\":1}", "--output", "json"], environment);
-    const file = await invokeNative(t, home, fixture, ["api", "put", "/file", "--no-confirm", "--file", inputFile], environment);
-    const stdin = await invokeNative(t, home, fixture, ["api", "patch", "/stdin", "--no-confirm", "--stdin"], environment, "stdin-body");
-    const binary = await invokeNative(t, home, fixture, ["api", "post", "/binary", "--no-confirm", "--binary", "AQI="], environment);
+    const json = await invokeWithCleanup("json", ["api", "post", "/json", "--no-confirm", "--json", "{\"value\":1}", "--output", "json"]);
+    const file = await invokeWithCleanup("file", ["api", "put", "/file", "--no-confirm", "--file", inputFile]);
+    const stdin = await invokeWithCleanup("stdin", ["api", "patch", "/stdin", "--no-confirm", "--stdin"], {}, "stdin-body");
+    const binary = await invokeWithCleanup("binary", ["api", "post", "/binary", "--no-confirm", "--binary", "AQI="]);
     t.is(json.code, 0, json.output); t.is(file.code, 0, file.output); t.is(stdin.code, 0, stdin.output); t.is(binary.code, 0, binary.output);
-    const interactive = await invokeNative(t, home, fixture, ["api", "delete", "/interactive"], { ...environment, SI_FIXTURE_TTY: "1" }, "yes\n");
+    const interactive = await invokeWithCleanup("interactive", ["api", "delete", "/interactive"], { SI_FIXTURE_TTY: "1" }, "yes\n");
     const rejected = await invokeNative(t, home, fixture, ["api", "delete", "/noninteractive"], environment);
     t.is(interactive.code, 0, interactive.output); t.is(rejected.code, 1); t.regex(rejected.output, /require --no-confirm/);
     const outputFile = path.join(directory, "stream.out");
-    const streamedStdout = await invokeNative(t, home, fixture, ["api", "get", "/stream", "--stream"], { ...environment, SI_FIXTURE_RESPONSE: "stream" });
-    const streamed = await invokeNative(t, home, fixture, ["api", "get", "/stream", "--stream", "-o", outputFile], { ...environment, SI_FIXTURE_RESPONSE: "stream" });
+    const streamedStdout = await invokeWithCleanup("stream-stdout", ["api", "get", "/stream", "--stream"], { SI_FIXTURE_RESPONSE: "stream" });
+    const streamed = await invokeWithCleanup("stream-file", ["api", "get", "/stream", "--stream", "-o", outputFile], { SI_FIXTURE_RESPONSE: "stream" });
     t.is(streamedStdout.code, 0, streamedStdout.output); t.regex(streamedStdout.output, /streamed-output/); t.is(streamed.code, 0, streamed.output); t.is(fs.readFileSync(outputFile, "utf8"), "streamed-output");
-    const apiError = await invokeNative(t, home, fixture, ["api", "get", "/missing"], { ...environment, SI_FIXTURE_RESPONSE: "api-error" });
-    const operationError = await invokeNative(t, home, fixture, ["api", "get", "/failed"], { ...environment, SI_FIXTURE_RESPONSE: "operation-error" });
+    const apiError = await invokeWithCleanup("api-error", ["api", "get", "/missing"], { SI_FIXTURE_RESPONSE: "api-error" });
+    const operationError = await invokeWithCleanup("operation-error", ["api", "get", "/failed"], { SI_FIXTURE_RESPONSE: "operation-error" });
     t.is(apiError.code, 70); t.regex(apiError.output, /API_4XX/); t.is(operationError.code, 70); t.regex(operationError.output, /FIXTURE_FAILED/);
     const recorded = fs.readFileSync(requests, "utf8").trim().split("\n").map(line => JSON.parse(line));
     t.deepEqual(recorded.slice(0, 5).map(request => [request.path, Buffer.from(request.body, "base64").toString()]), [["/api/v2/json", "{\"value\":1}"], ["/api/v2/file", "\u0003\u0004"], ["/api/v2/stdin", "stdin-body"], ["/api/v2/binary", "\u0001\u0002"], ["/api/v2/interactive", ""]]);
-    t.is(httpRequests, 0); t.is(fs.readFileSync(cleanup, "utf8"), "closed");
+    t.is(httpRequests, 0);
 });
 
 test.serial("named stream timeout and SIGINT retain mapped exits after post-handoff cleanup", async t => {
@@ -174,18 +196,17 @@ test.serial("named stream timeout and SIGINT retain mapped exits after post-hand
     registerAvaMemoryCleanup(t, () => fs.rmSync(directory, { recursive: true, force: true }));
     const home = path.join(directory, "home"); const profiles = path.join(home, ".si", "profiles"); fs.mkdirSync(profiles, { recursive: true });
     fs.writeFileSync(path.join(home, ".si", "si-config.json"), JSON.stringify({ profile: "default" }));
-    const profileFile = path.join(profiles, "default.json"); fs.writeFileSync(profileFile, JSON.stringify(profile(directory)));
+    const profileFile = path.join(profiles, "default.json"); fs.writeFileSync(profileFile, JSON.stringify(profile(directory, 10)));
     const fixture = nativeFixture(directory);
     for (const format of ["raw", "pretty", "json"]) {
         const timeoutCleanup = path.join(directory, `timeout-cleanup-${format}`);
         const timedOut = await invokeNative(t, home, fixture, ["hub", "logs", "--log-format", format], { SI_FIXTURE_MODE: "named-stall", SI_FIXTURE_CLEANUP: timeoutCleanup });
         t.is(timedOut.code, 57, timedOut.output); t.regex(timedOut.output, /Error \[TIMEOUT\]/); t.is(fs.readFileSync(timeoutCleanup, "utf8"), "closed");
     }
-    const noTimeout = profile(directory); delete (noTimeout.verser2 as any).timeoutMs; fs.writeFileSync(profileFile, JSON.stringify(noTimeout));
+    fs.writeFileSync(profileFile, JSON.stringify(profile(directory)));
     const cleanup = path.join(directory, "sigint-cleanup"); const handoff = path.join(directory, "sigint-handoff");
     const child = spawnCli(t, home, ["hub", "logs"], { NODE_OPTIONS: `-r ${fixture}`, SI_FIXTURE_MODE: "named-stall", SI_FIXTURE_CLEANUP: cleanup, SI_FIXTURE_HANDOFF: handoff });
-    for (let attempt = 0; !fs.existsSync(handoff) && attempt < 500; attempt++) await new Promise(resolve => setTimeout(resolve, 10));
-    t.true(fs.existsSync(handoff)); child.signal("SIGINT");
+    await waitForFixtureSignal(t, handoff, child.result); child.signal("SIGINT");
     const cancelled = await child.result;
     t.is(cancelled.code, 60, cancelled.output); t.regex(cancelled.output, /Error \[CANCELLED\]/); t.is(fs.readFileSync(cleanup, "utf8"), "closed");
 });

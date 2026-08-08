@@ -7,12 +7,18 @@ import { HostClient as RunnerNodeHostClient } from "../src/host-client";
 
 interface AcceptedConnection {
     channel: number;
-    id: string;
 }
 
-async function startRecordingServer(): Promise<{ server: net.Server; port: number; accepted: AcceptedConnection[]; closeAll: () => Promise<void> }> {
+async function startRecordingServer(): Promise<{
+    port: number;
+    accepted: AcceptedConnection[];
+    waitForChannels: (channels: ReadonlySet<CC>) => Promise<void>;
+    closeAll: () => Promise<void>;
+}> {
     const accepted: AcceptedConnection[] = [];
     const sockets = new Set<net.Socket>();
+    const acceptedWaiters = new Set<() => void>();
+    let closed = false;
 
     const server = net.createServer((socket) => {
         sockets.add(socket);
@@ -22,10 +28,10 @@ async function startRecordingServer(): Promise<{ server: net.Server; port: numbe
         const onData = (chunk: Buffer) => {
             buffer = Buffer.concat([buffer, chunk]);
             if (buffer.length >= 37) {
-                const id = buffer.slice(0, 36).toString("utf8");
                 const channel = parseInt(buffer.slice(36, 37).toString("utf8"), 10);
 
-                accepted.push({ id, channel });
+                accepted.push({ channel });
+                for (const notify of acceptedWaiters) notify();
                 socket.off("data", onData);
                 socket.resume();
             }
@@ -44,25 +50,54 @@ async function startRecordingServer(): Promise<{ server: net.Server; port: numbe
 
     if (!address || typeof address === "string") throw new Error("no port");
 
+    const waitForChannels = (channels: ReadonlySet<CC>) => new Promise<void>((resolve) => {
+        const ready = () => Array.from(channels)
+            .every(channel => accepted.some(connection => connection.channel === channel));
+
+        if (ready()) {
+            resolve();
+            return;
+        }
+
+        const notify = () => {
+            if (ready()) {
+                acceptedWaiters.delete(notify);
+                resolve();
+            }
+        };
+
+        acceptedWaiters.add(notify);
+    });
+
     const closeAll = async () => {
-        for (const s of sockets) s.destroy();
+        if (closed) return;
+        closed = true;
+        const serverClosed = new Promise<void>((resolve, reject) => {
+            server.close(error => error ? reject(error) : resolve());
+        });
+
+        for (const socket of sockets) socket.destroy();
+        await serverClosed;
         sockets.clear();
-        await new Promise<void>(res => { server.close(); setImmediate(() => res()); });
+        acceptedWaiters.clear();
     };
 
-    return { server, port: address.port, accepted, closeAll };
+    return { port: address.port, accepted, waitForChannels, closeAll };
 }
 
 test("runner-node HostClient.init opens ONLY IN/OUT/LOG/REQUESTS when given the runner-node channel set", async t => {
-    const { port, accepted, closeAll } = await startRecordingServer();
+    const { port, accepted, waitForChannels, closeAll } = await startRecordingServer();
     const id = "00000000-0000-0000-0000-00000000abcd"; // 36 bytes
     const channels = new Set<CC>([CC.IN, CC.OUT, CC.LOG, CC.REQUESTS]);
 
     const client = new RunnerNodeHostClient(port, "127.0.0.1");
+    t.teardown(async () => {
+        await client.disconnect(true).catch(() => undefined);
+        await closeAll();
+    });
 
     await client.init(id, channels);
-
-    await new Promise(res => setTimeout(res, 30));
+    await waitForChannels(channels);
 
     const observedChannels = new Set(accepted.map(a => a.channel));
 
@@ -73,8 +108,6 @@ test("runner-node HostClient.init opens ONLY IN/OUT/LOG/REQUESTS when given the 
     t.false(observedChannels.has(CC.CONTROL), "CONTROL must not be opened by runner-node");
     t.false(observedChannels.has(CC.MONITORING), "MONITORING must not be opened by runner-node");
 
-    await client.disconnect(true);
-    await closeAll();
 });
 
 test("runner-node HostClient.disconnect tolerates selectively-opened channel set without crashing on undefined slots", async t => {
@@ -83,20 +116,28 @@ test("runner-node HostClient.disconnect tolerates selectively-opened channel set
     const channels = new Set<CC>([CC.IN, CC.OUT, CC.LOG, CC.REQUESTS]);
 
     const client = new RunnerNodeHostClient(port, "127.0.0.1");
+    t.teardown(async () => {
+        await client.disconnect(true).catch(() => undefined);
+        await closeAll();
+    });
 
     await client.init(id, channels);
 
     await t.notThrowsAsync(client.disconnect(true));
-    await closeAll();
 });
 
 test("runner-node HostClient exposes fail-fast agent when REQUESTS is unsupported", async t => {
-    const { port, accepted, closeAll } = await startRecordingServer();
+    const { port, accepted, waitForChannels, closeAll } = await startRecordingServer();
     const id = "00000000-0000-0000-0000-00000000bbbb";
     const client = new RunnerNodeHostClient(port, "127.0.0.1", "requests disabled");
+    const channels = new Set<CC>([CC.IN, CC.OUT, CC.LOG]);
+    t.teardown(async () => {
+        await client.disconnect(true).catch(() => undefined);
+        await closeAll();
+    });
 
-    await client.init(id, new Set<CC>([CC.IN, CC.OUT, CC.LOG]));
-    await new Promise(res => setTimeout(res, 30));
+    await client.init(id, channels);
+    await waitForChannels(channels);
 
     const observedChannels = new Set(accepted.map(a => a.channel));
 
@@ -109,12 +150,10 @@ test("runner-node HostClient exposes fail-fast agent when REQUESTS is unsupporte
 
     t.is(error.message, "requests disabled");
 
-    await client.disconnect(true);
-    await closeAll();
 });
 
 test("runner-node HostClient uses verser2 Broker agent and omits REQUESTS channel", async t => {
-    const { port, accepted, closeAll } = await startRecordingServer();
+    const { port, accepted, waitForChannels, closeAll } = await startRecordingServer();
     const id = "00000000-0000-0000-0000-00000000cccc";
     const agent = new Agent();
     let connectCalled = 0;
@@ -142,9 +181,14 @@ test("runner-node HostClient uses verser2 Broker agent and omits REQUESTS channe
             };
         }
     );
+    const channels = new Set<CC>([CC.IN, CC.OUT, CC.LOG]);
+    t.teardown(async () => {
+        await client.disconnect(true).catch(() => undefined);
+        await closeAll();
+    });
 
-    await client.init(id, new Set<CC>([CC.IN, CC.OUT, CC.LOG]));
-    await new Promise(res => setTimeout(res, 30));
+    await client.init(id, channels);
+    await waitForChannels(channels);
 
     t.is(client.getApiBase(), "http://sth.domain/api/v1");
     t.is(client.getV2ApiBase(), "http://sth.domain/api/v2");
@@ -160,11 +204,10 @@ test("runner-node HostClient uses verser2 Broker agent and omits REQUESTS channe
 
     await client.disconnect(false);
     t.is(closeReason, "disconnect");
-    await closeAll();
 });
 
 test("runner-node HostClient creates verser2 Broker agent even without hub target domain", async t => {
-    const { port, accepted, closeAll } = await startRecordingServer();
+    const { port, accepted, waitForChannels, closeAll } = await startRecordingServer();
     const id = "00000000-0000-0000-0000-00000000dddd";
     const agent = new Agent();
     let connectCalled = 0;
@@ -188,9 +231,14 @@ test("runner-node HostClient creates verser2 Broker agent even without hub targe
             };
         }
     );
+    const channels = new Set<CC>([CC.IN, CC.OUT, CC.LOG]);
+    t.teardown(async () => {
+        await client.disconnect(true).catch(() => undefined);
+        await closeAll();
+    });
 
-    await client.init(id, new Set<CC>([CC.IN, CC.OUT, CC.LOG]));
-    await new Promise(res => setTimeout(res, 30));
+    await client.init(id, channels);
+    await waitForChannels(channels);
 
     t.is(client.getApiBase(), "http://scramjet-host/api/v1");
     t.is(client.getV2ApiBase(), "http://scramjet-host/api/v2");
@@ -204,6 +252,4 @@ test("runner-node HostClient creates verser2 Broker agent even without hub targe
     }]);
     t.false(new Set(accepted.map(a => a.channel)).has(CC.REQUESTS));
 
-    await client.disconnect(true);
-    await closeAll();
 });
