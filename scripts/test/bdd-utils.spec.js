@@ -11,7 +11,7 @@ const { clearE2eScenarioState } = require("../../bdd/lib/e2e-module-state.js");
 const { waitForInstanceDetachment } = require("../../bdd/lib/instance-detachment.js");
 const { teardownFloodSource } = require("../../bdd/lib/flood-teardown.js");
 tsNode.register({ project: path.resolve(__dirname, "../../bdd/tsconfig.json") });
-const { getSiCommand, waitUntilStreamEquals } = require("../../bdd/lib/utils.ts");
+const { getSiCommand, runProfileCommand, waitUntilStreamEquals } = require("../../bdd/lib/utils.ts");
 const { ClientUtilsBase } = require("../../packages/client-utils/dist/client-utils.js");
 const fetch = require("node-fetch");
 
@@ -34,6 +34,40 @@ test("BDD CLI defaults to the built artifact and preserves explicit source mode"
         if (previousTs === undefined) delete process.env.SCRAMJET_SPAWN_TS;
         else process.env.SCRAMJET_SPAWN_TS = previousTs;
     }
+});
+
+test("profile lifecycle commands fail closed for verified prerelease and normal CLI commands", async t => {
+    const verifiedCommand = ["env", "HOME=/verified-prerelease-cli-home", "/verified/node_modules/.bin/si"];
+    const lifecycle = [
+        ["list"],
+        ["create", "release-profile"],
+        ["use", "release-profile"],
+        ["remove", "release-profile"],
+    ];
+
+    for (const profileArgs of lifecycle) {
+        const error = await t.throwsAsync(runProfileCommand(profileArgs, {
+            command: verifiedCommand,
+            runner: async (command, args) => {
+                t.is(command, "/usr/bin/env");
+                t.deepEqual(args, [...verifiedCommand, "config", "profile", ...profileArgs]);
+                return ["verified stdout", "verified stderr", 23];
+            },
+        }));
+        t.regex(error.message, new RegExp(`profile ${profileArgs.join(" ")} exited 23`));
+        t.regex(error.message, /verified stderr/);
+    }
+
+    const normalCommand = ["node", "../dist/cli/bin"];
+    const result = await runProfileCommand(["list"], {
+        command: normalCommand,
+        runner: async (command, args) => {
+            t.is(command, "/usr/bin/env");
+            t.deepEqual(args, [...normalCommand, "config", "profile", "list"]);
+            return ["", "-> default", 0];
+        },
+    });
+    t.deepEqual(result, ["", "-> default"]);
 });
 
 test("spawnOwnedProcess waits for successful close after the marker", async t => {

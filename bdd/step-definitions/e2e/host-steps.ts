@@ -37,6 +37,7 @@ const { clearE2eScenarioState, setLastTerminalStopDiagnostics } = require("../..
 const { teardownFloodSource } = require("../../lib/flood-teardown.js");
 const { waitForInstanceDetachment } = require("../../lib/instance-detachment.js");
 const { resolveFixturePackagePath } = require("../../lib/fixture-package-path.js");
+const { expectedHostVersion } = require("../../lib/release-prerelease-context.js");
 
 function resolveSequencePackage(packageName: string): string {
     const configuredDirs = (process.env.PACKAGES_DIR || "")
@@ -1071,7 +1072,7 @@ Then("it returns the root package version", function() {
     // Remove git hash from response to not complicate tests.
     delete actualApiResponse.build;
 
-    assert.deepStrictEqual(actualApiResponse, { version, service: "@scramjet/host", apiVersion: "v1" });
+    assert.deepStrictEqual(actualApiResponse, expectedHostVersion(version));
 });
 
 // ? When I get load-check

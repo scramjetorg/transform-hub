@@ -16,11 +16,14 @@ const {
 	verifyInstallLock,
 	writeInstallManifest,
 } = require("../release-prerelease-bdd.js");
+const { expectedHostVersion, selectedSiCommand } = require("../../bdd/lib/release-prerelease-context.js");
+require("ts-node").register({ project: join(__dirname, "../../bdd/tsconfig.json") });
+const { runProfileCommand } = require("../../bdd/lib/utils.ts");
 
 const SHA = "a".repeat(40);
 const IMAGE_DIGEST = `sha256:${"b".repeat(64)}`;
 const SRI = `sha512-${Buffer.alloc(64).toString("base64")}`;
-const TEST_BOUNDARY = new Set(["@scramjet/a", "@scramjet/b", "@scramjet/sth"]);
+const TEST_BOUNDARY = new Set(["@scramjet/a", "@scramjet/b", "@scramjet/cli", "@scramjet/host", "@scramjet/sth"]);
 
 function fixturePackages(t) {
 	const root = mkdtempSync(join(tmpdir(), "release-prerelease-bdd-"));
@@ -28,6 +31,12 @@ function fixturePackages(t) {
 	for (const [directory, manifest] of Object.entries({
 		"scramjet-a": { name: "@scramjet/a", version: "2.0.0", dependencies: { "@scramjet/b": "^2.0.0" } },
 		"scramjet-b": { name: "@scramjet/b", version: "2.0.0" },
+		"scramjet-cli": {
+			name: "@scramjet/cli",
+			version: "2.0.0",
+			bin: { si: "./bin/si.js" },
+		},
+		"scramjet-host": { name: "@scramjet/host", version: "2.0.0" },
 		"scramjet-sth": {
 			name: "@scramjet/sth",
 			version: "2.0.0",
@@ -71,10 +80,10 @@ function trustedRecord(t) {
 	return { manifest, packagesDir, record };
 }
 
-function activatedFixture(t) {
+function activatedFixture(t, { installInWorkspace = false } = {}) {
 	const { manifest, packagesDir, record } = trustedRecord(t);
-	const installDir = join(packagesDir, "installed");
 	const workspaceRoot = join(packagesDir, "workspace");
+	const installDir = installInWorkspace ? join(workspaceRoot, ".release-prerelease-bdd") : join(packagesDir, "installed");
 
 	for (const entry of record.packages) {
 		const packageDir = join(installDir, "node_modules", entry.name);
@@ -84,7 +93,7 @@ function activatedFixture(t) {
 			version: entry.version,
 			bin: entry.sourceName === "@scramjet/sth"
 				? { "scramjet-transform-hub": "./bin/hub.js", sth: "./bin/hub.js" }
-				: undefined,
+				: entry.sourceName === "@scramjet/cli" ? { si: "./bin/si.js" } : undefined,
 			scramjet: {
 				prerelease: {
 					packageChecksum: entry.packageChecksum,
@@ -101,6 +110,14 @@ function activatedFixture(t) {
 			writeFileSync(
 				join(packageDir, "bin", "hub.js"),
 				"#!/usr/bin/env node\nprocess.stdout.write(\"FAKE STH CLI HELP\\nUsage: sth [options...]\\n\");\n",
+				{ mode: 0o755 }
+			);
+		}
+		if (entry.sourceName === "@scramjet/cli") {
+			mkdirSync(join(packageDir, "bin"), { recursive: true });
+			writeFileSync(
+				join(packageDir, "bin", "si.js"),
+				`#!/usr/bin/env node\nconst fs=require("node:fs");const path=require("node:path");fs.mkdirSync(process.env.HOME,{recursive:true});fs.writeFileSync(path.join(process.env.HOME,"verified-cli-invoked"),"${entry.version}");if(process.env.PROFILE_EXIT_CODE){process.stderr.write("profile failure\\n");process.exit(Number(process.env.PROFILE_EXIT_CODE));}process.stdout.write("verified CLI ${entry.version}\\n");\n`,
 				{ mode: 0o755 }
 			);
 		}
@@ -123,6 +140,13 @@ function hermeticNpxEnvironment(extra = {}) {
 	};
 }
 
+function releaseContextRecord(record) {
+	return {
+		...record,
+		packages: record.packages.filter((entry) => ["@scramjet/cli", "@scramjet/host", "@scramjet/sth"].includes(entry.sourceName)),
+	};
+}
+
 test("consumption requires the publisher manifest SHA-256 and exact prerelease versions", (t) => {
 	const packagesDir = fixturePackages(t);
 	const manifest = createManifest({ packagesDir, pullRequest: 42, sha: SHA, attempt: "r100.a1", boundary: TEST_BOUNDARY });
@@ -138,7 +162,7 @@ test("consumption requires the publisher manifest SHA-256 and exact prerelease v
 
 test("consumption records exact GitHub Packages tarball SRI, SHA-256, and image digests", (t) => {
 	const { record } = trustedRecord(t);
-	t.is(record.packages.length, 3);
+	t.is(record.packages.length, 5);
 	t.true(record.packages.every((entry) => entry.integrity === SRI && entry.tarballSha256 === `sha256:${"c".repeat(64)}`));
 	t.deepEqual(record.images, [{ digest: IMAGE_DIGEST, reference: `ghcr.io/scramjetorg/transform-hub/bdd-node@${IMAGE_DIGEST}`, role: "bdd-node" }]);
 });
@@ -276,6 +300,58 @@ test("activation repoints node_modules/.bin/scramjet-transform-hub into the veri
 	const binReal = realpathSync(binLink);
 	t.true(binReal.startsWith(packageReal + sep));
 	t.is(execFileSync(binLink, [], { encoding: "utf8" }), "FAKE STH CLI HELP\nUsage: sth [options...]\n");
+});
+
+test("release activation selects the verified CLI with an isolated profile home and exact Host prerelease identity", async (t) => {
+	const { installDir, record, workspaceRoot } = activatedFixture(t, { installInWorkspace: true });
+	const recordPath = join(installDir, "verified-record.json");
+	writeFileSync(recordPath, `${JSON.stringify(releaseContextRecord(record))}\n`);
+	const environment = {
+		SCRAMJET_RELEASE_PRERELEASE_BDD_INSTALL_DIR: ".release-prerelease-bdd",
+		SCRAMJET_RELEASE_PRERELEASE_BDD_RECORD: ".release-prerelease-bdd/verified-record.json",
+	};
+	const options = { environment, workspaceRoot };
+	const host = record.packages.find((entry) => entry.sourceName === "@scramjet/host");
+	const cli = record.packages.find((entry) => entry.sourceName === "@scramjet/cli");
+
+	t.deepEqual(expectedHostVersion("2.0.0", options), {
+		apiVersion: "v1",
+		service: "@scramjet/host",
+		version: host.version,
+	});
+	const command = selectedSiCommand(options);
+	t.deepEqual(command, ["env", `HOME=${join(installDir, "bdd-cli-home")}`, join(workspaceRoot, "node_modules", ".bin", "si")]);
+	t.is(execFileSync("/usr/bin/env", [...command, "config", "profile", "list"], { encoding: "utf8" }), `verified CLI ${cli.version}\n`);
+	t.is(readFileSync(join(installDir, "bdd-cli-home", "verified-cli-invoked"), "utf8"), cli.version);
+	for (const profileArgs of [["list"], ["create", "release-profile"], ["use", "release-profile"], ["remove", "release-profile"]]) {
+		const error = await t.throwsAsync(runProfileCommand(profileArgs, {
+			command,
+			environment: { ...process.env, PROFILE_EXIT_CODE: "23" },
+		}));
+		t.regex(error.message, new RegExp(`profile ${profileArgs.join(" ")} exited 23`));
+	}
+	t.deepEqual(expectedHostVersion("2.0.0", { environment: {}, workspaceRoot }), {
+		apiVersion: "v1",
+		service: "@scramjet/host",
+		version: "2.0.0",
+	});
+});
+
+test("release context rejects a Host alias that falls back outside the verified prerelease install", (t) => {
+	const { installDir, record, workspaceRoot } = activatedFixture(t, { installInWorkspace: true });
+	writeFileSync(join(installDir, "verified-record.json"), `${JSON.stringify(releaseContextRecord(record))}\n`);
+	const hostAlias = join(workspaceRoot, "node_modules", "@scramjet", "host");
+	rmSync(hostAlias, { force: true, recursive: true });
+	mkdirSync(hostAlias, { recursive: true });
+	writeFileSync(join(hostAlias, "package.json"), "{}\n");
+
+	t.throws(() => expectedHostVersion("2.0.0", {
+		environment: {
+			SCRAMJET_RELEASE_PRERELEASE_BDD_INSTALL_DIR: ".release-prerelease-bdd",
+			SCRAMJET_RELEASE_PRERELEASE_BDD_RECORD: ".release-prerelease-bdd/verified-record.json",
+		},
+		workspaceRoot,
+	}), { message: /refuses source fallback/i });
 });
 
 test("activation refuses a bin entry that escapes the verified package", (t) => {

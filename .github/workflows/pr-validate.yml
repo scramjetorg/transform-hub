@@ -323,4 +323,5 @@ jobs:
           npm --prefix .release-prerelease-bdd ci --ignore-scripts
           node scripts/release-prerelease-bdd.js activate --install-dir .release-prerelease-bdd --record "$RUNNER_TEMP/release-prerelease-bdd.json" --workspace-root .
           node scripts/release-prerelease-bdd.js validate-cli --workspace-root .
-          BDD_NODE_IMAGE="$(node -p "require(process.env.RUNNER_TEMP + '/release-prerelease-bdd.json').images.find((image) => image.role === 'bdd-node').reference")" npm run test:bdd-ci-api-node
+          cp "$RUNNER_TEMP/release-prerelease-bdd.json" .release-prerelease-bdd/verified-record.json
+          SCRAMJET_RELEASE_PRERELEASE_BDD_RECORD=.release-prerelease-bdd/verified-record.json SCRAMJET_RELEASE_PRERELEASE_BDD_INSTALL_DIR=.release-prerelease-bdd BDD_NODE_IMAGE="$(node -p "require(process.env.RUNNER_TEMP + '/release-prerelease-bdd.json').images.find((image) => image.role === 'bdd-node').reference")" npm run test:bdd-ci-api-node

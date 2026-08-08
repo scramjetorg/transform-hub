@@ -9,6 +9,8 @@ const { INCLUDED_PACKAGES } = require("./lib/release-boundary.js");
 
 const STH_SOURCE_NAME = "@scramjet/sth";
 const STH_BIN_NAME = "scramjet-transform-hub";
+const CLI_SOURCE_NAME = "@scramjet/cli";
+const CLI_BIN_NAME = "si";
 
 const DIGEST = /^sha256:[a-f0-9]{64}$/i;
 const IMAGE_REFERENCE = /^ghcr\.io\/scramjetorg\/[a-z0-9._/-]+@sha256:([a-f0-9]{64})$/i;
@@ -232,6 +234,7 @@ function activateVerifiedPackages({ installDir, record, workspaceRoot }) {
         linkVerifiedPackage(source, resolve(workspaceModules, entry.sourceName), installModules, workspaceModules);
     }
     activateSthBin({ installDir, record, workspaceRoot });
+    activateCliBin({ installDir, record, workspaceRoot });
 }
 
 /**
@@ -250,13 +253,11 @@ function activateVerifiedPackages({ installDir, record, workspaceRoot }) {
  * @param {string}  args.workspaceRoot    Workspace root whose node_modules receives the link.
  * @returns {{binLinkPath: string, installedBinPath: string, installedPackageDir: string, relativeTarget: string}}
  */
-function activateSthBin({ installDir, record, workspaceRoot }) {
+function installedPackageBin({ installDir, record, sourceName, binName }) {
     const installModules = resolve(installDir, "node_modules");
-    const workspaceModules = resolve(workspaceRoot, "node_modules");
-
-    const entry = record.packages.find((candidate) => candidate.sourceName === STH_SOURCE_NAME);
+    const entry = record.packages.find((candidate) => candidate.sourceName === sourceName);
     if (!entry) {
-        throw new Error(`Prerelease activation requires ${STH_SOURCE_NAME} in the verified consumption record.`);
+        throw new Error(`Prerelease activation requires ${sourceName} in the verified consumption record.`);
     }
 
     const installedPackageDir = resolve(installModules, entry.name);
@@ -264,14 +265,10 @@ function activateSthBin({ installDir, record, workspaceRoot }) {
 
     const packageJson = JSON.parse(readFileSync(join(installedPackageDir, "package.json"), "utf8"));
     const binField = packageJson.bin;
-    const binRelative = typeof binField === "string"
-        ? binField
-        : typeof binField === "object" && typeof binField[STH_BIN_NAME] === "string"
-            ? binField[STH_BIN_NAME]
-            : undefined;
+    const binRelative = typeof binField === "string" ? binField : typeof binField === "object" && typeof binField[binName] === "string" ? binField[binName] : undefined;
 
     if (!binRelative) {
-        throw new Error(`Installed prerelease package ${entry.name} does not expose the ${STH_BIN_NAME} bin.`);
+        throw new Error(`Installed prerelease package ${entry.name} does not expose the ${binName} bin.`);
     }
 
     const installedBinPath = resolve(installedPackageDir, binRelative);
@@ -282,7 +279,14 @@ function activateSthBin({ installDir, record, workspaceRoot }) {
         throw new Error(`Installed prerelease package ${entry.name} bin ${binRelative} is not a file.`);
     }
 
-    const binLinkPath = resolve(workspaceModules, ".bin", STH_BIN_NAME);
+    return { entry, installedBinPath, installedPackageDir };
+}
+
+function activateVerifiedBin({ installDir, record, workspaceRoot, sourceName, binName }) {
+    const workspaceModules = resolve(workspaceRoot, "node_modules");
+    const { entry, installedBinPath, installedPackageDir } = installedPackageBin({ installDir, record, sourceName, binName });
+
+    const binLinkPath = resolve(workspaceModules, ".bin", binName);
     mkdirSync(dirname(binLinkPath), { recursive: true });
     rmSync(binLinkPath, { force: true });
 
@@ -295,10 +299,18 @@ function activateSthBin({ installDir, record, workspaceRoot }) {
     const packageReal = realpathSync(installedPackageDir);
     const binReal = realpathSync(installedBinPath);
     if (realpathSync(binLinkPath) !== binReal || !isInside(packageReal, binReal)) {
-        throw new Error(`Activated ${STH_BIN_NAME} bin does not resolve inside the verified package ${entry.name}.`);
+        throw new Error(`Activated ${binName} bin does not resolve inside the verified package ${entry.name}.`);
     }
 
     return { binLinkPath, installedBinPath, installedPackageDir, relativeTarget };
+}
+
+function activateSthBin({ installDir, record, workspaceRoot }) {
+    return activateVerifiedBin({ installDir, record, workspaceRoot, sourceName: STH_SOURCE_NAME, binName: STH_BIN_NAME });
+}
+
+function activateCliBin({ installDir, record, workspaceRoot }) {
+    return activateVerifiedBin({ installDir, record, workspaceRoot, sourceName: CLI_SOURCE_NAME, binName: CLI_BIN_NAME });
 }
 
 /**
@@ -334,24 +346,90 @@ function validateSthCli({ workspaceRoot, runner = execFileSync, environment = pr
             })
         );
     } catch (error) {
-        const details = [
-            `stderr=${JSON.stringify(commandOutput(error.stderr))}`,
-            `stdout=${JSON.stringify(commandOutput(error.stdout))}`,
-            `error=${error.message}`
-        ].join("; ");
+        const details = [`stderr=${JSON.stringify(commandOutput(error.stderr))}`, `stdout=${JSON.stringify(commandOutput(error.stdout))}`, `error=${error.message}`].join("; ");
         throw new Error(
             `Installed STH CLI validation failed: npx --no-install ${STH_BIN_NAME} --help exited non-zero (fail-closed; npx must never implicitly install). ${details}`
         );
     }
 
     if (typeof output !== "string" || !/usage/i.test(output)) {
-        throw new Error(
-            `Installed STH CLI validation failed: npx --no-install ${STH_BIN_NAME} --help did not print CLI usage output. ` +
-            `output=${JSON.stringify(output)}`
-        );
+        throw new Error(`Installed STH CLI validation failed: npx --no-install ${STH_BIN_NAME} --help did not print CLI usage output. ` + `output=${JSON.stringify(output)}`);
     }
 
     return { command: ["npx", ...command], output };
+}
+
+function assertConsumptionRecord(record) {
+    if (record?.format !== "transform-hub-release-prerelease-bdd-v2" || !Array.isArray(record.packages)) {
+        throw new Error("Release-prerelease BDD context requires a verified consumption record.");
+    }
+    const entries = new Map();
+    for (const entry of record.packages) {
+        if (
+            !entry ||
+            !INCLUDED_PACKAGES.has(entry.sourceName) ||
+            entry.name !== prereleasePackageName(entry.sourceName) ||
+            entry.registryName !== entry.name ||
+            typeof entry.version !== "string" ||
+            !entry.version.includes("-pr.") ||
+            entries.has(entry.sourceName)
+        ) {
+            throw new Error("Release-prerelease BDD context has an invalid verified package mapping.");
+        }
+        entries.set(entry.sourceName, entry);
+    }
+    return entries;
+}
+
+function activatedAlias({ installModules, workspaceModules, entry }) {
+    const installedPackageDir = resolve(installModules, entry.name);
+    const aliasPath = resolve(workspaceModules, entry.sourceName);
+    assertInstalledPackage(installedPackageDir, entry);
+    if (realpathSync(aliasPath) !== realpathSync(installedPackageDir)) {
+        throw new Error(`Release-prerelease BDD context refuses source fallback for ${entry.sourceName}.`);
+    }
+    return installedPackageDir;
+}
+
+/**
+ * Read the explicit release-prerelease BDD context and prove that the root
+ * aliases and CLI bin still resolve into the verified install. Returns null
+ * outside that explicit context so ordinary workspace BDD remains unchanged.
+ */
+function releasePrereleaseBddContext({ workspaceRoot, recordPath, installDir }) {
+    if (!recordPath && !installDir) return null;
+    if (!recordPath || !installDir) {
+        throw new Error("Release-prerelease BDD context requires both a verified record and install directory.");
+    }
+
+    const root = resolve(workspaceRoot);
+    const resolvedRecordPath = resolve(root, recordPath);
+    const resolvedInstallDir = resolve(root, installDir);
+    if (!isInside(root, resolvedRecordPath) || !isInside(root, resolvedInstallDir)) {
+        throw new Error("Release-prerelease BDD context paths must remain inside the workspace.");
+    }
+
+    const entries = assertConsumptionRecord(parseJson(readFileSync(resolvedRecordPath, "utf8"), "Release-prerelease BDD record"));
+    const host = entries.get("@scramjet/host");
+    const cli = entries.get(CLI_SOURCE_NAME);
+    if (!host || !cli) throw new Error("Release-prerelease BDD context requires verified Host and CLI packages.");
+
+    const installModules = resolve(resolvedInstallDir, "node_modules");
+    const workspaceModules = resolve(root, "node_modules");
+    activatedAlias({ installModules, workspaceModules, entry: host });
+    const cliPackageDir = activatedAlias({ installModules, workspaceModules, entry: cli });
+    const { installedBinPath } = installedPackageBin({ installDir: resolvedInstallDir, record: { packages: [cli] }, sourceName: CLI_SOURCE_NAME, binName: CLI_BIN_NAME });
+    const cliBinPath = resolve(workspaceModules, ".bin", CLI_BIN_NAME);
+    if (realpathSync(cliBinPath) !== realpathSync(installedBinPath) || !isInside(realpathSync(cliPackageDir), realpathSync(cliBinPath))) {
+        throw new Error("Release-prerelease BDD context refuses a CLI bin outside the verified CLI package.");
+    }
+
+    return {
+        cli: { binPath: cliBinPath, configHome: join(resolvedInstallDir, "bdd-cli-home"), version: cli.version },
+        host: { service: host.sourceName, version: host.version },
+        installDir: resolvedInstallDir,
+        recordPath: resolvedRecordPath
+    };
 }
 
 function readOption(args, name) {
@@ -412,12 +490,16 @@ if (require.main === module) main();
 module.exports = {
     STH_BIN_NAME,
     STH_SOURCE_NAME,
+    CLI_BIN_NAME,
+    CLI_SOURCE_NAME,
     assertPublisherManifest,
     consumptionRecord,
     verifyImages,
     verifyInstallLock,
     writeInstallManifest,
     activateVerifiedPackages,
+    activateCliBin,
     activateSthBin,
+    releasePrereleaseBddContext,
     validateSthCli
 };

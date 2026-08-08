@@ -5,6 +5,7 @@ import { exec, spawn } from "child_process";
 import { PassThrough, Readable } from "stream";
 import { getLogger } from "@scramjet/logger";
 const { getBddConfigPath } = require("./bdd-config.js");
+const { selectedSiCommand } = require("./release-prerelease-context.js");
 
 const isLogActive = process.env.SCRAMJET_TEST_LOG;
 const lineByLine = require("n-readlines");
@@ -33,10 +34,16 @@ export function getSiCommand(options: { useBddConfig?: boolean } = {}) {
         throw Error("Both SCRAMJET_SPAWN_JS and SCRAMJET_SPAWN_TS env set");
     }
 
+    const verifiedCommand = selectedSiCommand();
+
+    if (verifiedCommand && (process.env.SCRAMJET_SPAWN_JS || process.env.SCRAMJET_SPAWN_TS)) {
+        throw Error("Release-prerelease BDD must use the activated verified CLI, not a source CLI override");
+    }
+
     // Use the built CLI by default so each BDD subprocess avoids the
     // TypeScript launcher and its per-process transpilation cost. Keep the
     // explicit source-mode switch for development and source-level coverage.
-    let si = ["node", "../dist/cli/bin"];
+    let si = verifiedCommand || ["node", "../dist/cli/bin"];
 
     if (process.env.SCRAMJET_SPAWN_JS) {
         si = ["node", "../dist/cli/bin"];
@@ -215,6 +222,40 @@ export async function getStreamsFromSpawnSuccess(
     return [stdout, stderr];
 }
 
+type ProfileCommandRunner = (
+    command: string,
+    options: string[],
+    environment?: NodeJS.ProcessEnv
+) => Promise<[string, string, any]>;
+
+/**
+ * Run a mutating or inspection-only CLI profile command as a required success.
+ * Generic CLI steps deliberately retain raw exit codes for scenarios that
+ * assert expected errors; profile lifecycle setup is never one of those paths.
+ */
+export async function runProfileCommand(
+    profileArgs: string[],
+    options: {
+        command?: string[];
+        environment?: NodeJS.ProcessEnv;
+        runner?: ProfileCommandRunner;
+    } = {}
+): Promise<[string, string]> {
+    const command = options.command || si;
+    const runner = options.runner || getStreamsFromSpawn;
+    const args = [...command, "config", "profile", ...profileArgs];
+    const [stdout, stderr, code] = await runner("/usr/bin/env", args, options.environment);
+
+    if (code !== 0) {
+        throw new Error(
+            `CLI config profile ${profileArgs.join(" ")} exited ${String(code)}; ` +
+            `stdout=${JSON.stringify(stdout)} stderr=${JSON.stringify(stderr)}`
+        );
+    }
+
+    return [stdout, stderr];
+}
+
 export function removeBoundaryQuotes(str: string) {
     if (str.charAt(0) === '"' && str.charAt(str.length - 1) === '"') {
         return str.substr(1, str.length - 2);
@@ -278,24 +319,18 @@ export async function waitUntilStreamEquals(stream: Readable, expected: string, 
 }
 
 export async function getActiveProfile() {
-    try {
-        const res = await getStreamsFromSpawn("/usr/bin/env", [...si, "config", "profile", "ls"]);
+    const [, stderr] = await runProfileCommand(["list"]);
+    const match = stderr.match(/->\s*([^\n]+)/);
+    const activeProfile = match ? match[1].trim() : null;
 
-        const match = res[1].match(/->\s*([^\n]+)/);
-        const activeProfile = match ? match[1].trim() : null;
-
-        if (isLogActive) {
-            logger.log("Active profile:", activeProfile);
-        }
-        return activeProfile;
-    } catch (error: any) {
-        logger.error(`Error while getting the active profile: ${error.message}`);
-        return "";
+    if (isLogActive) {
+        logger.log("Active profile:", activeProfile);
     }
+    return activeProfile;
 }
 
 export async function createProfile(profileName: string = "test_bdd") {
-    const res = await getStreamsFromSpawn("/usr/bin/env", [...si, "config", "profile", "create", profileName]);
+    const res = await runProfileCommand(["create", profileName]);
 
     if (isLogActive) {
         logger.debug(res);
@@ -303,7 +338,7 @@ export async function createProfile(profileName: string = "test_bdd") {
 }
 
 export async function setProfile(profileName: string = "test_bdd") {
-    const res = await getStreamsFromSpawn("/usr/bin/env", [...si, "config", "profile", "use", profileName]);
+    const res = await runProfileCommand(["use", profileName]);
 
     if (isLogActive) {
         logger.debug(res);
@@ -311,7 +346,7 @@ export async function setProfile(profileName: string = "test_bdd") {
 }
 
 export async function removeProfile(profileName: string) {
-    const res = await getStreamsFromSpawn("/usr/bin/env", [...si, "config", "profile", "remove", profileName]);
+    const res = await runProfileCommand(["remove", profileName]);
 
     if (isLogActive) {
         logger.debug(res);
