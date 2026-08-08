@@ -316,7 +316,7 @@ test("release activation selects the verified CLI with an isolated profile home 
 
 	t.deepEqual(expectedHostVersion("2.0.0", options), {
 		apiVersion: "v1",
-		service: "@scramjet/host",
+		service: "@scramjetorg/host",
 		version: host.version,
 	});
 	const command = selectedSiCommand(options);

@@ -426,7 +426,7 @@ function releasePrereleaseBddContext({ workspaceRoot, recordPath, installDir }) 
 
     return {
         cli: { binPath: cliBinPath, configHome: join(resolvedInstallDir, "bdd-cli-home"), version: cli.version },
-        host: { service: host.sourceName, version: host.version },
+        host: { service: host.name, version: host.version },
         installDir: resolvedInstallDir,
         recordPath: resolvedRecordPath
     };

@@ -19,7 +19,7 @@ function expectedHostVersion(rootVersion, options = {}) {
     const verified = context(options);
     return {
         apiVersion: "v1",
-        service: "@scramjet/host",
+        service: verified ? verified.host.service : "@scramjet/host",
         version: verified ? verified.host.version : rootVersion,
     };
 }
