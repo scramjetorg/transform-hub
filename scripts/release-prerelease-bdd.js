@@ -209,7 +209,11 @@ function linkVerifiedPackage(source, destination, installModules, workspaceModul
     }
     mkdirSync(dirname(destination), { recursive: true });
     rmSync(destination, { force: true, recursive: true });
-    symlinkSync(source, destination, "dir");
+    // Relative from dirname(destination) to source keeps aliases valid when the
+    // complete install/workspace tree is relocated (e.g. a Docker bind mount
+    // changes the checkout root from the GitHub-host path to /work); absolute
+    // targets would dangle after that move.
+    symlinkSync(relative(dirname(destination), source), destination, "dir");
 }
 
 function activateVerifiedPackages({ installDir, record, workspaceRoot }) {

@@ -2,9 +2,9 @@
 
 const test = require("ava").default;
 const { execFileSync } = require("node:child_process");
-const { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } = require("node:fs");
+const { existsSync, mkdtempSync, mkdirSync, readFileSync, readlinkSync, realpathSync, renameSync, rmSync, writeFileSync } = require("node:fs");
 const { tmpdir } = require("node:os");
-const { join } = require("node:path");
+const { dirname, isAbsolute, join, relative, sep } = require("node:path");
 
 const { createManifest } = require("../release-prerelease.js");
 const {
@@ -108,7 +108,7 @@ test("generated install manifests and locks retain only exact verified prereleas
 	t.throws(() => verifyInstallLock(lock, record), { message: /integrity verification/i });
 });
 
-test("activation aliases BDD source imports to installed mapped prereleases without public-package fallback", (t) => {
+test("activation aliases BDD source imports to installed mapped prereleases via relative symlinks that survive relocation", (t) => {
 	const { manifest, packagesDir, record } = trustedRecord(t);
 	const installDir = join(packagesDir, "installed");
 	const workspaceRoot = join(packagesDir, "workspace");
@@ -135,7 +135,57 @@ test("activation aliases BDD source imports to installed mapped prereleases with
 	writeFileSync(join(workspaceRoot, "consumer.js"), "process.stdout.write(require(\"@scramjet/a\"));\n");
 
 	activateVerifiedPackages({ installDir, record, workspaceRoot });
-	t.is(execFileSync(process.execPath, ["consumer.js"], { cwd: workspaceRoot, encoding: "utf8" }), "mapped prerelease dependency");
+
+	// Aliases must be relative to dirname(destination): a Docker bind mount
+	// changes the checkout root, so absolute targets would dangle after moving.
+	for (const entry of record.packages) {
+		for (const aliasName of [entry.name, entry.sourceName]) {
+			const destination = join(workspaceRoot, "node_modules", aliasName);
+			const expectedTarget = relative(dirname(destination), join(installDir, "node_modules", entry.name));
+			t.false(isAbsolute(expectedTarget), `${aliasName} alias target must be relative`);
+			t.is(readlinkSync(destination), expectedTarget, `${aliasName} alias must point relatively to the verified mapped prerelease`);
+		}
+	}
+	const runConsumer = (root) => execFileSync(process.execPath, ["consumer.js"], { cwd: root, encoding: "utf8" });
+	const sourceA = record.packages.find((entry) => entry.sourceName === "@scramjet/a");
+	const resolvesIntoMapped = (root, expectedInstallDir) => {
+		const mappedPackageDir = realpathSync(join(expectedInstallDir, "node_modules", sourceA.name));
+		const resolved = realpathSync(require.resolve("@scramjet/a", { paths: [root] }));
+		return resolved === mappedPackageDir || resolved.startsWith(`${mappedPackageDir}${sep}`);
+	};
+	t.is(runConsumer(workspaceRoot), "mapped prerelease dependency");
+	t.true(resolvesIntoMapped(workspaceRoot, installDir),
+		"source import @scramjet/a must resolve only into the verified mapped prerelease");
+
+	// The identity/security behavior is unchanged: activation still refuses to
+	// link an installed package whose verified registry identity was tampered with.
+	const tamperedInstall = join(packagesDir, "tampered-installed");
+	const tamperedWorkspace = join(packagesDir, "tampered-workspace");
+	mkdirSync(join(tamperedInstall, "node_modules", sourceA.name), { recursive: true });
+	writeFileSync(join(tamperedInstall, "node_modules", sourceA.name, "package.json"), `${JSON.stringify({ name: sourceA.name, version: "0.0.0-tampered" }, null, 2)}\n`);
+	t.throws(() => activateVerifiedPackages({ installDir: tamperedInstall, record, workspaceRoot: tamperedWorkspace }),
+		{ message: /does not match the verified registry identity/ });
+
+	// Simulate a Docker bind mount: relocate the complete install/workspace tree
+	// under a different temporary root; the relative aliases must keep resolving.
+	const relocatedRoot = mkdtempSync(join(tmpdir(), "release-prerelease-bdd-relocated-"));
+	t.teardown(() => rmSync(relocatedRoot, { force: true, recursive: true }));
+	const relocatedInstallDir = join(relocatedRoot, "installed");
+	const relocatedWorkspaceRoot = join(relocatedRoot, "workspace");
+	renameSync(installDir, relocatedInstallDir);
+	renameSync(workspaceRoot, relocatedWorkspaceRoot);
+
+	for (const entry of record.packages) {
+		for (const aliasName of [entry.name, entry.sourceName]) {
+			const destination = join(relocatedWorkspaceRoot, "node_modules", aliasName);
+			const expectedTarget = relative(dirname(destination), join(relocatedInstallDir, "node_modules", entry.name));
+			t.is(readlinkSync(destination), expectedTarget, `${aliasName} alias must stay relative and target the relocated mapped prerelease`);
+			t.true(existsSync(join(dirname(destination), expectedTarget)), `${aliasName} alias must still resolve after relocation`);
+		}
+	}
+	t.is(runConsumer(relocatedWorkspaceRoot), "mapped prerelease dependency");
+	t.true(resolvesIntoMapped(relocatedWorkspaceRoot, relocatedInstallDir),
+		"source import @scramjet/a must resolve only into the relocated verified mapped prerelease");
 });
 
 test("consumption fails closed when registry metadata or image digest verification fails", (t) => {
