@@ -579,18 +579,49 @@ test("routed broker exposes cleanup rejection to an awaiting caller", async t =>
 });
 
 test("late timeout responses are destroyed and cleaned, preserving cleanup rejection", async t => {
-    let resolveResponse!: (response: any) => void;
+    let resolveResponse: ((response: any) => void) | undefined;
+    let markRequestStarted!: () => void;
+    let markCleanupCompleted!: () => void;
+    const requestStarted = new Promise<void>(resolve => { markRequestStarted = resolve; });
+    const cleanupCompleted = new Promise<void>(resolve => { markCleanupCompleted = resolve; });
+    let body: Readable | undefined;
+    let responseDelivered = false;
     let cleaned = 0;
     const client = createVerser2ClientTransport({
-        routeDomain: "space-a", requestTimeoutMs: 5,
-        transport: transport({ async request() { return await new Promise(resolve => { resolveResponse = resolve; }); } })
+        routeDomain: "space-a", requestTimeoutMs: 50,
+        transport: transport({
+            async request() {
+                return await new Promise(resolve => {
+                    resolveResponse = resolve;
+                    markRequestStarted();
+                });
+            }
+        })
     });
-    await t.throwsAsync(client.request({ route: { id: "GET /", method: "get", fullPath: "/" } } as any), { instanceOf: RoutedBrokerTimeoutError });
-    const body = new Readable({ read() {} });
-    resolveResponse({ status: 200, headers: {}, body, async cleanup() { cleaned++; throw new Error("cleanup failed"); } });
-    await new Promise(resolve => setImmediate(resolve));
+    registerAvaMemoryCleanup(t, async () => {
+        if (!responseDelivered && resolveResponse) {
+            responseDelivered = true;
+            body ??= new Readable({ read() {} });
+            resolveResponse({ status: 200, headers: {}, body, async cleanup() { cleaned++; markCleanupCompleted(); throw new Error("cleanup failed"); } });
+        }
+        body?.destroy();
+        await client.close();
+        body = undefined;
+        resolveResponse = undefined;
+    });
+
+    const pending = client.request({ route: { id: "GET /", method: "get", fullPath: "/" } } as any);
+    await requestStarted;
+    await t.throwsAsync(pending, { instanceOf: RoutedBrokerTimeoutError });
+
+    responseDelivered = true;
+    body = new Readable({ read() {} });
+    resolveResponse!({ status: 200, headers: {}, body, async cleanup() { cleaned++; markCleanupCompleted(); throw new Error("cleanup failed"); } });
+    await cleanupCompleted;
+
     t.true(body.destroyed);
     t.is(cleaned, 1);
+    await client.close();
 });
 
 test("managed transport close waits for delayed late-response cleanup", async t => {
@@ -676,13 +707,55 @@ test("managed close propagates a transport close rejection without awaiting a ne
 });
 
 test("unary collection retains timeout ownership after response headers", async t => {
+    let markUnaryCollectionStarted!: () => void;
+    let markCleanupStarted!: () => void;
+    let markCleanupCompleted!: () => void;
+    let releaseCleanup!: () => void;
+    const unaryCollectionStarted = new Promise<void>(resolve => { markUnaryCollectionStarted = resolve; });
+    const cleanupStarted = new Promise<void>(resolve => { markCleanupStarted = resolve; });
+    const cleanupCompleted = new Promise<void>(resolve => { markCleanupCompleted = resolve; });
+    const cleanupGate = new Promise<void>(resolve => { releaseCleanup = resolve; });
+    let body: Readable | undefined;
     let cleaned = 0;
     const client = createVerser2ClientTransport({
-        routeDomain: "space-a", requestTimeoutMs: 5,
-        transport: transport({ async request() { return { status: 200, headers: { "content-type": "text/plain" }, body: new Readable({ read() {} }), async cleanup() { cleaned++; } }; } })
+        routeDomain: "space-a", requestTimeoutMs: 50,
+        transport: transport({
+            async request() {
+                body = new Readable({ read() { markUnaryCollectionStarted(); } });
+                return {
+                    status: 200,
+                    headers: { "content-type": "text/plain" },
+                    body,
+                    async cleanup() {
+                        cleaned++;
+                        markCleanupStarted();
+                        await cleanupGate;
+                        markCleanupCompleted();
+                    }
+                };
+            }
+        })
     });
-    await t.throwsAsync(client.request({ route: { id: "GET /", method: "get", fullPath: "/" } } as any), { instanceOf: RoutedBrokerTimeoutError });
+    registerAvaMemoryCleanup(t, async () => {
+        body?.destroy();
+        releaseCleanup();
+        await client.close();
+        body = undefined;
+    });
+
+    const pending = client.request({ route: { id: "GET /", method: "get", fullPath: "/" } } as any);
+    await unaryCollectionStarted;
+    await t.throwsAsync(pending, { instanceOf: RoutedBrokerTimeoutError });
+    await cleanupStarted;
+
+    t.true(body?.destroyed);
     t.is(cleaned, 1);
+    let cleanupFinished = false;
+    void cleanupCompleted.then(() => { cleanupFinished = true; });
+    t.false(cleanupFinished);
+    releaseCleanup();
+    await cleanupCompleted;
+    await client.close();
 });
 
 test("unary timeout and cancellation reject without waiting for unresolved cleanup", async t => {
