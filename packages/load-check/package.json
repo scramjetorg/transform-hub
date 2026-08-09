@@ -1,50 +1,62 @@
 {
   "name": "@scramjet/load-check",
-  "version": "1.0.1",
+  "version": "2.0.0",
   "description": "This package is part of Scramjet Transform Hub. The package provides health info for STH.",
   "main": "./src/index.ts",
   "scripts": {
     "start": "ts-node ./src/index",
     "build": "../../scripts/build-all.js --config-name=tsconfig.build.json --copy-dist",
-    "build:docs": "typedoc",
     "clean": "rm -rf ./dist .bic_cache",
     "cloc": "cloc src --fullpath --include-lang TypeScript --not-match-d \"(node_modules|test|dist|bdd)\" --by-percent cm",
-    "test": "nyc ava"
+    "test": "nyc node ../../scripts/run-ava.js"
   },
   "author": "Scramjet <open-source@scramjet.org>",
-  "license": "AGPL-3.0",
+  "license": "MIT",
   "dependencies": {
-    "@scramjet/obj-logger": "^1.0.1",
-    "@scramjet/utility": "^1.0.1",
-    "scramjet": "^4.36.9",
+    "@scramjet/obj-logger": "^2.0.0",
+    "@scramjet/utility": "^2.0.0",
+    "scramjet": "^4.37.0",
     "diskusage-ng": "1.0.2",
     "node-os-utils": "1.3.7",
-    "uuid": "^8.3.2"
+    "uuid": "^11.1.1"
   },
   "devDependencies": {
-    "@scramjet/types": "^1.0.1",
-    "@types/node": "15.12.5",
+    "@ava/typescript": "^7.0.0",
+    "@scramjet/runtime-types": "^2.0.0",
+    "@scramjet/types": "^2.0.0",
+    "@types/node": "^22.15.0",
     "@types/node-os-utils": "^1.2.0",
-    "@types/uuid": "^8.3.4",
-    "ava": "^3.15.0",
+    "ava": "^8.0.0",
     "ts-node": "^10.9.1",
-    "typedoc": "0.23.17",
-    "typedoc-plugin-markdown": "3.13.6",
     "typescript": "~4.7.4"
   },
   "ava": {
-    "extensions": [
-      "ts"
-    ],
     "files": [
       "**/*.spec.ts"
     ],
     "require": [
       "ts-node/register"
-    ]
+    ],
+    "typescript": {
+      "compile": false,
+      "rewritePaths": {
+        "./": "../.ava-load-check/"
+      }
+    }
   },
+  "files": [
+    "**/*.js",
+    "**/*.d.ts",
+    "**/*.json",
+    "!src/**",
+    "!test/**",
+    "!tests/**",
+    "!**/*.map",
+    "!**/*.tsbuildinfo"
+  ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/scramjetorg/transform-hub.git"
+    "url": "https://github.com/scramjetorg/transform-hub.git",
+    "directory": "packages/load-check"
   }
 }

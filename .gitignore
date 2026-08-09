@@ -49,8 +49,8 @@ web_modules/
 # Optional npm cache directory
 .npm
 
-# Optional eslint cache
-.eslintcache
+# Verified local security-tool cache
+.security-tools/
 
 # Microbundle cache
 .rpt2_cache/
@@ -124,6 +124,12 @@ dist
 bdd/.work/
 bdd/reports/*.html
 bdd/*-test-result.txt
+bdd/data/.hub-verser2-*.json
+bdd/Mgr*/
+bdd/mgr-agg-*/
+
+# AVA TypeScript staging output
+packages/.ava-*/
 
 # pre-runner sample-package
 packages/pre-runner/sample-package/
@@ -152,13 +158,16 @@ bundle
 
 # build.info.json files
 packages/**/build.info.json
-.eslintcache_scramjet-csi
 bdd/timing-log.ndjson
 timing-log.ndjson
 .all-deps
 
 # private working directories
 /temp
+/conductor/prompts/
+/conductor/active_state.json
+/conductor/sessions.json
+/packages/manager/bucket/
 
 # extra dist dirs
 
@@ -166,3 +175,4 @@ timing-log.ndjson
 
 # Docs
 .nojekyll
+.env

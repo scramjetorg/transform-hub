@@ -1,6 +1,6 @@
-import { ParsedMessage, StreamConfig, StreamInput, StreamOutput } from "@scramjet/types";
+import { IDuplexStream, ParsedMessage, StreamConfig, StreamInput, StreamOutput } from "@scramjet/api-types";
 import { IncomingHttpHeaders, IncomingMessage, ServerResponse } from "http";
-import { Writable, Readable, Duplex } from "stream";
+import { Writable, Readable } from "stream";
 import { DuplexStream } from "../lib/duplex-stream";
 import { getStream, getWritable } from "../lib/data-extractors";
 import { CeroError, SequentialCeroRouter } from "../lib/definitions";
@@ -70,7 +70,6 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
             logger.debug("encoding, cType, readableEncoding", encoding, cType, data.readableEncoding);
 
             res.setHeader("content-type", cType);
-            res.setHeader("transfer-encoding", "chunked");
             res.writeHead(200);
             res.flushHeaders();
 
@@ -79,8 +78,11 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
 
             res
                 .on("error", disconnect)
-                .on("unpipe", disconnect)
-                .socket?.on("end", disconnect).on("close", disconnect);
+                .on("unpipe", disconnect);
+
+            res.socket?.on("end", disconnect);
+            res.socket?.on("close", disconnect);
+            res.once("close", disconnect);
 
             return out.pipe(res);
         } catch (e: any) {
@@ -108,7 +110,6 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
         stream: StreamOutput,
         { json = false, text = false, end: _end = false, encoding = "utf-8", checkContentType = true, checkEndHeader = true, method = "post", postponeContinue = false }: StreamConfig = {}
     ): void => {
-        // eslint-disable-next-line complexity
         router[method](path, async (req: ParsedMessage, res, next) => {
             try {
                 if (checkContentType) {
@@ -129,7 +130,6 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
                 const end = checkEndHeader ? shouldEndTargetStream(req, _end) : _end;
                 const data = await getWritable(stream, req, res);
 
-                // eslint-disable-next-line no-extra-parens
                 if (data && typeof (data as Writable).writable !== "undefined") {
                     if (end) {
                         res.writeHead(200, "OK");
@@ -140,21 +140,64 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
                     res.flushHeaders();
 
                     await new Promise<void>((resolve, reject) => {
+                        let requestEnded = false;
+                        let writableFinalized = false;
+                        let settled = false;
+                        const cleanup = () => {
+                            req.unpipe(data as Writable);
+                            req.off("error", onRequestError);
+                            req.off("end", onRequestEnd);
+                            (data as Writable).off("error", onWritableError);
+                            (data as Writable).off("close", onWritableClose);
+                            (data as Writable).off("finish", onWritableFinish);
+                        };
+                        const finish = (error?: Error) => {
+                            if (settled) return;
+                            settled = true;
+                            cleanup();
+                            if (error) reject(error);
+                            else resolve();
+                        };
+                        const onRequestError = () => {
+                            logger.error("Downstream request error.");
+                            finish(new CeroError("DOWNSTREAM_REQUEST_ERROR"));
+                        };
+                        const onRequestEnd = () => {
+                            requestEnded = true;
+                            logger.debug("Downstream request end.");
+                            if (!end || writableFinalized) finish();
+                        };
+                        const abortDownstream = () => {
+                            req.destroy();
+                            // Let the router's error path own the response. Ending it
+                            // here causes a second response when next() handles the error.
+                            finish(new CeroError("DOWNSTREAM_REQUEST_ERROR"));
+                        };
+                        const onWritableError = () => {
+                            if (!writableFinalized) abortDownstream();
+                        };
+                        const onWritableClose = () => {
+                            if (!writableFinalized) abortDownstream();
+                        };
+                        const onWritableFinish = () => {
+                            writableFinalized = true;
+                            if (requestEnded) finish();
+                        };
+
                         if (encoding) {
                             req.setEncoding(encoding);
                             (data as Writable).setDefaultEncoding(encoding);
                         }
 
                         req
-                            .on("error", reject)
-                            .on("error", () => {
-                                logger.error("Downstream request error.");
-                                reject();
-                            })
-                            .on("end", () => {
-                                logger.debug("Downstream request end.");
-                                resolve();
-                            })
+                            .once("error", onRequestError)
+                            .once("end", onRequestEnd);
+                        (data as Writable)
+                            .once("error", onWritableError)
+                            .once("close", onWritableClose)
+                            .once("finish", onWritableFinish);
+
+                        req
                             .pipe(data as Writable, { end });
 
                         logger.debug("Request data piped");
@@ -182,7 +225,7 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
     };
     const duplex = (
         path: string | RegExp,
-        callback: (stream: Duplex, headers: IncomingHttpHeaders) => void,
+        callback: (stream: IDuplexStream, headers: IncomingHttpHeaders) => void,
         { postponeContinue = false }: StreamConfig = {}
     ): void => {
         router.post(path, (req, res, next) => {

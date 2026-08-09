@@ -1,4 +1,4 @@
-import { Validator } from "@scramjet/types";
+import { Validator } from "@scramjet/runtime-types";
 import { isDefined, isEmptyString } from "../typeguards";
 
 export const definedValidator: Validator = (message: string) => (value: any) =>

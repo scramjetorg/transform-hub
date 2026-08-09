@@ -1,4 +1,4 @@
-import { Validator } from "@scramjet/types";
+import { Validator } from "@scramjet/runtime-types";
 import { FileBuilder } from "../file";
 
 export const fileExistsValidator: Validator = (message: string) => (value: any) => {

@@ -19,16 +19,39 @@ function getDirectoriesFromGlobs(wd, globs, configName) {
                 throw e;
             }
         })
-        .flat()
-    ;
+        .flat();
 
     const packages = matches
         .filter((/** @type {string} x */ x) => !x.match(/(\/|^)node_modules\//))
-        .filter((dir) => { try { return statSync(join(wd, dir)).isDirectory(); } catch { return false; } })
-        .filter((pkg) => existsSync(join(wd, pkg, configName)))
-    ;
+        .filter((dir) => {
+            try {
+                return statSync(join(wd, dir)).isDirectory();
+            } catch {
+                return false;
+            }
+        })
+        .filter((pkg) => existsSync(join(wd, pkg, configName)));
 
-    return packages;
+    /** Deduplicate while preserving first-seen order (overlapping workspace globs
+     *  such as packages/* and modules/* can return the same directory twice). */
+    return [...new Set(packages)];
+}
+
+function findClosestWorkspacePackageJSONLocation(_cwd = ".") {
+    const wd = path.resolve(_cwd);
+    const pathParts = wd.split(path.sep);
+
+    while (pathParts.length) {
+        const pkg = path.resolve(pathParts.join(path.sep), "package.json");
+
+        if (existsSync(pkg)) {
+            const contents = JSON.parse(readFileSync(pkg));
+            if (contents.workspaces) return pkg;
+        }
+        pathParts.pop();
+    }
+
+    return findClosestPackageJSONLocation(wd);
 }
 
 const exists = async (name) => {
@@ -40,16 +63,20 @@ const exists = async (name) => {
     }
 };
 
+function toAbsolutePackageDirs(baseDir, packages) {
+    return packages.map((pkgDir) => path.resolve(baseDir, pkgDir));
+}
+
 function makeTypescriptSolutionForPackageList(packages, configName) {
     const nodeSystem = createSolutionBuilderHost(sys);
 
-    packages.forEach(packageDir => {
+    packages.forEach((packageDir) => {
         if (packageDir) {
             nodeSystem.readDirectory(packageDir);
         }
     });
 
-    const rootnames = packages.map(x => join(x, configName));
+    const rootnames = packages.map((x) => join(x, configName));
     const solution = createSolutionBuilder(nodeSystem, rootnames, {
         dry: false,
         assumeChangesOnlyAffectDirectDependencies: true,
@@ -61,19 +88,18 @@ function makeTypescriptSolutionForPackageList(packages, configName) {
 }
 
 function getTSDirectoriesFromPackage(_cwd = ".", pkg, workspaceFilter = [], tsConfigName = "tsconfig.json") {
-    if (!pkg.workspaces) return [_cwd];
+    const baseDir = path.resolve(_cwd);
+
+    if (!pkg.workspaces) return [baseDir];
 
     const workspaces = Array.isArray(pkg.workspaces) ? { default: pkg.workspaces } : pkg.workspaces;
-    const globs = Object.entries(workspaces)
-        .flatMap(([key, entries]) => {
-            if (workspaceFilter.length)
-                if (!workspaceFilter.includes(key))
-                    return [];
+    const globs = Object.entries(workspaces).flatMap(([key, entries]) => {
+        if (workspaceFilter.length) if (!workspaceFilter.includes(key)) return [];
 
-            return entries;
-        });
+        return entries;
+    });
 
-    return getDirectoriesFromGlobs(cwd(), globs, tsConfigName);
+    return toAbsolutePackageDirs(baseDir, getDirectoriesFromGlobs(baseDir, globs, tsConfigName));
 }
 
 const findClosestPackageJSONLocation = (_cwd = ".") => {
@@ -92,7 +118,6 @@ const findClosestPackageJSONLocation = (_cwd = ".") => {
 };
 
 const readClosestPackageJSON = (wd) => {
-    // eslint-disable-next-line import/no-dynamic-require
     return require(findClosestPackageJSONLocation(wd));
 };
 
@@ -104,7 +129,7 @@ function getPackageList(pkg, configName, opts) {
     if (opts.config) {
         packages = getTSDirectoriesFromPackage(dirname(opts.config), pkg, workspaceFilter, configName);
     } else if (opts.dirs) {
-        packages = getDirectoriesFromGlobs(cwd(), opts._, configName);
+        packages = toAbsolutePackageDirs(cwd(), getDirectoriesFromGlobs(cwd(), opts._, configName));
     } else {
         packages = getTSDirectoriesFromPackage(opts._[0], pkg, workspaceFilter, configName);
     }
@@ -116,46 +141,41 @@ function getPackagesInWorkspace(pkgLocation, workspaces = []) {
     const dir = dirname(pkgLocation);
 
     if (!workspaces.length) {
+        if (!pkg.workspaces) return [dir];
         workspaces.push(...Object.values(pkg.workspaces).flat());
     } else {
         const nre = [];
         const yre = [];
 
-        workspaces.forEach(pt => {
+        workspaces.forEach((pt) => {
             const not = pt.startsWith("!");
             const re = globrex(not ? pt.substr(1) : pt).regex;
 
-            if (not)
-                nre.push((x) => `${x}`.match(re));
-            else
-                yre.push((x) => `${x}`.match(re));
+            if (not) nre.push((x) => `${x}`.match(re));
+            else yre.push((x) => `${x}`.match(re));
         });
 
         workspaces = Object.entries(pkg.workspaces)
             .filter(([x]) => {
-                if (nre.some(re => re(x))) return false;
+                if (nre.some((re) => re(x))) return false;
 
                 if (!yre.length) return true;
-                return yre.some(re => re(x));
+                return yre.some((re) => re(x));
             })
             .map(([, x]) => x)
             .flat();
     }
 
-    return getDirectoriesFromGlobs(dir, workspaces, "package.json");
+    return toAbsolutePackageDirs(dir, getDirectoriesFromGlobs(dir, workspaces, "package.json"));
 }
 
-async function runCommand(cmd, verbose) {
+async function runCommand(cmd, verbose, env = {}) {
     const stack = new Error().stack.split("\n").slice(2).join("\n");
 
     await new Promise((res, rej) => {
-        const proc = exec(cmd)
-            .on(
-                "exit",
-                (err) => err
-                    ? rej(new Error(`Command exited with code ${err}, caused by call\n${stack}\n---`))
-                    : res()
-            );
+        const proc = exec(cmd, { env: { ...process.env, ...env } }).on("exit", (err) =>
+            err ? rej(new Error(`Command exited with code ${err}, caused by call\n${stack}\n---`)) : res()
+        );
 
         if (verbose) {
             console.error("Started command:", cmd);
@@ -170,6 +190,7 @@ module.exports = {
     exists,
     getPackageList,
     findClosestPackageJSONLocation,
+    findClosestWorkspacePackageJSONLocation,
     readClosestPackageJSON,
     getPackagesInWorkspace,
     getTSDirectoriesFromPackage,

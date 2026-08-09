@@ -1,4 +1,4 @@
-"use strict";
+
 
 function getDepTypes(opts) {
     if (opts.a) {

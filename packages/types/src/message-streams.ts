@@ -1,7 +1,8 @@
 import {
     ReadableStream,
     WritableStream,
-    PassThoughStream
+    PassThoughStream,
+    DuplexStream
 } from "./utils";
 
 import { RunnerMessageCode, CPMMessageCode } from "@scramjet/symbols";
@@ -36,7 +37,8 @@ import {
     PingMessageData,
     SequenceStoppedMessageData,
     PangMessageData,
-    EventMessageData
+    EventMessageData,
+    ReadinessMessageData
 } from "./messages";
 import { CPMMessageSTHID, STHIDMessageData } from "./messages/sth-id";
 import { LoadCheckStat } from "./load-check-stat";
@@ -44,6 +46,8 @@ import { NetworkInfo } from "./network-info";
 import { SequenceCompleteMessageData } from "./messages/sequence-complete";
 import { KillMessageData } from "./messages/kill-sequence";
 import { MonitoringReplyMessage, MonitoringReplyMessageData } from "./messages/monitor-reply";
+import { SetMessageData } from "./messages/set";
+import { SpaceEventMessageData, StorageMessageData, StorageUpdateMessageData } from "./messages/event";
 
 export type MessageType<T> =
     T extends RunnerMessageCode.ACKNOWLEDGE ? AcknowledgeMessage :
@@ -57,6 +61,7 @@ export type MessageType<T> =
     T extends RunnerMessageCode.MONITORING_REPLY ? MonitoringReplyMessage :
     T extends RunnerMessageCode.STOP ? StopSequenceMessage :
     T extends RunnerMessageCode.PING ? HandshakeMessage :
+    T extends RunnerMessageCode.READY ? HandshakeMessage :
     T extends RunnerMessageCode.PONG ? HandshakeAcknowledgeMessage :
     T extends CPMMessageCode.STH_ID ? CPMMessageSTHID :
     T extends CPMMessageCode.LOAD ? LoadCheckStatMessage :
@@ -76,7 +81,9 @@ export type MessageDataType<T> =
     T extends RunnerMessageCode.MONITORING_REPLY ? MonitoringReplyMessageData :
     T extends RunnerMessageCode.STOP ? StopSequenceMessageData :
     T extends RunnerMessageCode.PING ? PingMessageData :
+    T extends RunnerMessageCode.READY ? ReadinessMessageData :
     T extends RunnerMessageCode.PONG ? HandshakeAcknowledgeMessageData :
+    T extends RunnerMessageCode.SET ? SetMessageData :
     T extends RunnerMessageCode.PANG ? PangMessageData :
     T extends RunnerMessageCode.SEQUENCE_COMPLETED ? SequenceCompleteMessageData :
     T extends RunnerMessageCode.SEQUENCE_STOPPED ? SequenceStoppedMessageData :
@@ -88,6 +95,9 @@ export type MessageDataType<T> =
     T extends CPMMessageCode.INSTANCE ? InstanceMessage :
     T extends CPMMessageCode.SEQUENCES ? SequenceBulkMessage :
     T extends CPMMessageCode.SEQUENCE ? SequenceMessage :
+    T extends CPMMessageCode.EVENT ? SpaceEventMessageData :
+    T extends RunnerMessageCode.STORAGE ? StorageMessageData :
+    T extends RunnerMessageCode.STORAGE_UPDATE ? StorageUpdateMessageData :
     never
     ;
 
@@ -97,9 +107,10 @@ export type EncodedMessage<
 
 export type ControlMessageCode =
     RunnerMessageCode.KILL | RunnerMessageCode.MONITORING_RATE | RunnerMessageCode.MONITORING_REPLY | RunnerMessageCode.STOP | RunnerMessageCode.EVENT |
-    RunnerMessageCode.PONG |
+    RunnerMessageCode.PONG | RunnerMessageCode.SET |
     CPMMessageCode.STH_ID | CPMMessageCode.KEY_REVOKED | CPMMessageCode.LIMIT_EXCEEDED | CPMMessageCode.ID_DROP |
-    RunnerMessageCode.INPUT_CONTENT_TYPE;
+    RunnerMessageCode.INPUT_CONTENT_TYPE | CPMMessageCode.EVENT |
+    RunnerMessageCode.STORAGE | RunnerMessageCode.STORAGE_UPDATE;
 
 export type EncodedControlMessage = EncodedMessage<ControlMessageCode>;
 
@@ -107,8 +118,9 @@ export type MonitoringMessageCode =
     RunnerMessageCode.ACKNOWLEDGE | RunnerMessageCode.DESCRIBE_SEQUENCE | RunnerMessageCode.STATUS |
     RunnerMessageCode.ALIVE | RunnerMessageCode.ERROR | RunnerMessageCode.MONITORING | RunnerMessageCode.EVENT |
     RunnerMessageCode.PING | RunnerMessageCode.PANG |
-    RunnerMessageCode.SEQUENCE_STOPPED | RunnerMessageCode.SEQUENCE_COMPLETED | CPMMessageCode.LOAD |
-    CPMMessageCode.NETWORK_INFO;
+    RunnerMessageCode.SEQUENCE_STOPPED | RunnerMessageCode.SEQUENCE_COMPLETED | RunnerMessageCode.READY |
+    CPMMessageCode.LOAD | CPMMessageCode.NETWORK_INFO | CPMMessageCode.EVENT |
+    RunnerMessageCode.STORAGE | RunnerMessageCode.STORAGE_UPDATE;
 
 export type EncodedSerializedControlMessage = string;
 export type EncodedSerializedMonitoringMessage = string;
@@ -125,8 +137,7 @@ export type DownstreamStreamsConfig<serialized extends boolean = true> = [
     input: WritableStream<any>,
     output: ReadableStream<any>,
     log: ReadableStream<any>,
-    // @TODO investigate, it seems not to be used anywhere
-    pkg?: WritableStream<Buffer> | undefined,
+    requests?: DuplexStream<Buffer, Buffer>
 ];
 
 export type DownstreamStdioConfig = [ stdin: WritableStream<string>,
@@ -142,7 +153,7 @@ export type UpstreamStreamsConfig<serialized extends boolean = true> = [
     input: ReadableStream<any>,
     output: WritableStream<any>,
     log: WritableStream<any>,
-    pkg?: ReadableStream<Buffer>
+    requests?: DuplexStream<Buffer, Buffer>
 ];
 
 export type PassThroughStreamsConfig<serialized extends boolean = true> = [

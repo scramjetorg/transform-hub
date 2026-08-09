@@ -1,6 +1,6 @@
 
 import { ObjLogger } from "@scramjet/obj-logger";
-import { TelemetryAdaptersConfig } from "@scramjet/types";
+import { TelemetryAdaptersConfig } from "@scramjet/api-types";
 import winston, { createLogger } from "winston";
 import LokiTransport from "winston-loki";
 import { ITelemetryAdapter, logLevel } from "../types";

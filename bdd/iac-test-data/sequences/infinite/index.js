@@ -6,7 +6,7 @@ function incrementLE(buffer) {
     }
 }
 
-module.exports = function(/** @this {import("@scramjet/types").AppContext} */) {
+module.exports = function(/** @this {import("@scramjet/sequence-types").SequenceAppContext} */) {
     const buf = Buffer.alloc(16, 0);
 
     return Readable

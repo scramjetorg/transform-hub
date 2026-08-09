@@ -1,200 +1,307 @@
-import { PassThrough, Readable, Stream, Writable } from "stream";
+import test from "ava";
+import { PassThrough, Readable, Stream } from "stream";
 import { StreamOrigin } from "@scramjet/types";
 import { Topic, TopicEvent } from "../../src/lib/serviceDiscovery/topic";
 import TopicId from "../../src/lib/serviceDiscovery/topicId";
 import { ReadableState, WorkState } from "@scramjet/symbols";
 
-let testTopic: Topic;
 const testOrigin: StreamOrigin = { id: "TestEviroment", type: "hub" };
 
-beforeEach(() => {
-    testTopic = new Topic(new TopicId("TestTopic"), "text/plain", testOrigin, { encoding: "ascii" });
-});
+const waitForEvent = (eventName: string, source: Stream) => {
+    return new Promise<boolean>((resolve, reject) => {
+        const timeout = setTimeout(() => reject("Timeout"), 100);
 
-describe("Event flow", () => {
-    const waitForEvent = (eventName: string, source: Stream) => {
-        return new Promise<boolean>((resolve, reject) => {
-            const timeout = setTimeout(() => reject("Timeout"), 100);
-
-            source.on(eventName, () => {
-                clearTimeout(timeout);
-                resolve(true);
-            });
-        });
-    };
-
-    describe("Duplex events", () => {
-        test("Data event", async () => {
-            const provider = new PassThrough();
-            const consumer = new PassThrough();
-            const eventOccured = waitForEvent("data", testTopic);
-
-            provider.pipe(testTopic).pipe(consumer);
-
-            consumer.on("readable", () => { consumer.read(); });
-            provider.write("some text123");
-
-            await expect(eventOccured).resolves.toBe(true);
-        });
-        test("Pause event", async () => {
-            const eventOccured = waitForEvent("pause", testTopic);
-
-            testTopic.pause();
-            await expect(eventOccured).resolves.toBe(true);
-        });
-        test("Readable event", async () => {
-            const eventOccured = waitForEvent("readable", testTopic);
-
-            testTopic.write("some text");
-            await expect(eventOccured).resolves.toBe(true);
-        });
-        test("Resume event", async () => {
-            const eventOccured = waitForEvent("resume", testTopic);
-
-            testTopic.resume();
-            await expect(eventOccured).resolves.toBe(true);
+        source.on(eventName, () => {
+            clearTimeout(timeout);
+            resolve(true);
         });
     });
-    describe("Topic events", () => {
-        let testProvider: Readable;
-        let testConsumer: Writable;
+};
 
-        beforeEach(() => {
-            testProvider = new PassThrough({ encoding: "ascii" });
-            testConsumer = new PassThrough({ encoding: "ascii" });
-        });
+const createWaitingPromise = (): [Promise<void>, () => void, (_: any) => void] => {
+    let res = () => { };
+    let rej = (_reason: any) => { };
+    const promise = new Promise<void>((resolve, reject) => { res = resolve; rej = reject; });
 
-        test("State when error", async () => {
-            const eventOccured = waitForEvent("error", testTopic);
+    return [promise, res, rej];
+};
 
-            testTopic.destroy(new Error("Test Error"));
-            await eventOccured;
-            expect(testTopic.state()).toBe(WorkState.Error);
-        });
+// ── Duplex events ───────────────────────────────────────────────
 
-        test("State flowing", async () => {
-            testProvider.pipe(testTopic);
-            testTopic.pause();
-            expect(testTopic.state()).toBe(ReadableState.Pause);
-            const eventPromise = waitForEvent(TopicEvent.StateChanged, testTopic);
+test("Topic event flow: data event", async t => {
+    const testTopic = new Topic(new TopicId("TestTopic"), "text/plain", testOrigin, { encoding: "ascii" });
+    const provider = new PassThrough();
+    const consumer = new PassThrough();
+    const eventOccured = waitForEvent("data", testTopic);
 
-            testTopic.pipe(testConsumer);
-            await eventPromise;
-            expect(testTopic.state()).toBe(WorkState.Flowing);
-        });
-    });
+    provider.pipe(testTopic).pipe(consumer);
+
+    consumer.on("readable", () => { consumer.read(); });
+    provider.write("some text123");
+
+    t.true(await eventOccured);
 });
 
-describe("Data flow", () => {
+test("Topic event flow: pause event", async t => {
+    const testTopic = new Topic(new TopicId("TestTopic"), "text/plain", testOrigin, { encoding: "ascii" });
+    const eventOccured = waitForEvent("pause", testTopic);
+
+    testTopic.pause();
+    t.true(await eventOccured);
+});
+
+test("Topic event flow: readable event", async t => {
+    const testTopic = new Topic(new TopicId("TestTopic"), "text/plain", testOrigin, { encoding: "ascii" });
+    const eventOccured = waitForEvent("readable", testTopic);
+
+    testTopic.write("some text");
+    t.true(await eventOccured);
+});
+
+test("Topic event flow: resume event", async t => {
+    const testTopic = new Topic(new TopicId("TestTopic"), "text/plain", testOrigin, { encoding: "ascii" });
+    const eventOccured = waitForEvent("resume", testTopic);
+
+    testTopic.resume();
+    t.true(await eventOccured);
+});
+
+// ── Topic events ────────────────────────────────────────────────
+
+test("Topic event flow: state when error", async t => {
+    const testTopic = new Topic(new TopicId("TestTopic"), "text/plain", testOrigin, { encoding: "ascii" });
+    const eventOccured = waitForEvent("error", testTopic);
+
+    testTopic.destroy(new Error("Test Error"));
+    await eventOccured;
+    t.is(testTopic.state(), WorkState.Error);
+});
+
+test("Topic event flow: state flowing", async t => {
+    const testTopic = new Topic(new TopicId("TestTopic"), "text/plain", testOrigin, { encoding: "ascii" });
+    const testProvider = new PassThrough({ encoding: "ascii" });
+    const testConsumer = new PassThrough({ encoding: "ascii" });
+
+    testProvider.pipe(testTopic);
+    testTopic.pause();
+    t.is(testTopic.state(), ReadableState.Pause);
+    const eventPromise = waitForEvent(TopicEvent.StateChanged, testTopic);
+
+    testTopic.pipe(testConsumer);
+    await eventPromise;
+    t.is(testTopic.state(), WorkState.Flowing);
+});
+
+// ── Data flow ───────────────────────────────────────────────────
+
+test("Topic data flow: basic flow", async t => {
+    const testTopic = new Topic(new TopicId("TestTopic"), "text/plain", testOrigin, { encoding: "ascii" });
     const testText = "Lorem ipsum dolor sit amet, consectetur adipiscing elit.";
+    const topicFinished = new Promise(resolve => testTopic.on("readable", () => {
+        resolve(testTopic.read());
+    }));
 
-    const createWaitingPromise = (): [Promise<void>, () => void, (_: any) => void] => {
-        let res = () => { };
-        let rej = (_reason: any) => { };
-        const promise = new Promise<void>((resolve, reject) => { res = resolve; rej = reject; });
+    testTopic.write(testText);
+    const result = await topicFinished;
 
-        return [promise, res, rej];
-    };
+    t.is(result, testText);
+});
 
-    test("Basic flow", async () => {
-        const topicFinished = new Promise(resolve => testTopic.on("readable", () => {
-            resolve(testTopic.read());
-        }));
+test("Topic data flow: piped flow", async t => {
+    const testTopic = new Topic(new TopicId("TestTopic"), "text/plain", testOrigin, { encoding: "ascii" });
+    const testText = "Lorem ipsum dolor sit amet, consectetur adipiscing elit.";
+    const testProvider = new PassThrough();
+    const testConsumer = new PassThrough({ encoding: "utf-8" });
 
-        testTopic.write(testText);
-        const result = await topicFinished;
+    testProvider.pipe(testTopic).pipe(testConsumer);
 
-        expect(result).toBe(testText);
-    });
-    test("Piped flow", async () => {
-        const testProvider = new PassThrough();
-        const testConsumer = new PassThrough({ encoding: "utf-8" });
+    const readPromise = new Promise(resolve => testConsumer.on("readable", () => {
+        resolve(testConsumer.read());
+    }));
 
-        testProvider.pipe(testTopic).pipe(testConsumer);
+    testProvider.push(testText);
+    const readValue = await readPromise;
 
-        const readPromise = new Promise(resolve => testConsumer.on("readable", () => {
-            resolve(testConsumer.read());
-        }));
+    t.is(readValue, testText);
+});
 
-        testProvider.push(testText);
-        const readValue = await readPromise;
+test("Topic data flow: drops payloads published without a subscriber", async t => {
+    const topic = new Topic(new TopicId("live-only"), "text/plain", testOrigin);
+    topic.write("not replayed");
 
-        expect(readValue).toBe(testText);
-    });
-    test("Many Providers writing", async () => {
-        const [startGeneratingPromise, startGenerating] = createWaitingPromise();
+    const consumer = new PassThrough();
+    topic.pipe(consumer);
+    await new Promise<void>(resolve => setImmediate(resolve));
 
-        async function* generator(from: number, to: number) {
-            let i = from;
+    t.is(consumer.read(), null);
+    consumer.destroy();
+    topic.destroy();
+});
 
-            while (i <= to) {
-                await startGeneratingPromise;
-                yield Number(i++).toString();
-            }
+test("Topic data flow: retains one first ingress chunk until a consumer pipe attaches", async t => {
+    const topic = new Topic(new TopicId("first-ingress"), "text/plain", testOrigin);
+    const provider = new PassThrough();
+    const consumer = new PassThrough();
+    const received: string[] = [];
+
+    consumer.on("data", chunk => received.push(chunk.toString()));
+    topic.acceptPipe(provider);
+    provider.write("first");
+    await new Promise<void>(resolve => setImmediate(resolve));
+
+    t.deepEqual(received, []);
+    topic.pipe(consumer);
+    await new Promise<void>(resolve => setImmediate(resolve));
+    provider.write("second");
+    await new Promise<void>(resolve => setImmediate(resolve));
+
+    t.deepEqual(received, ["first", "second"]);
+    provider.destroy();
+    consumer.destroy();
+    topic.destroy();
+});
+
+test("Topic data flow: cancelled first ingress releases the pending chunk without delivery", async t => {
+    const topic = new Topic(new TopicId("cancelled-ingress"), "text/plain", testOrigin);
+    const provider = new PassThrough();
+    const consumer = new PassThrough();
+    const received: string[] = [];
+    const error = new Error("ingress failed");
+
+    consumer.on("data", chunk => received.push(chunk.toString()));
+    provider.on("error", () => undefined);
+    topic.acceptPipe(provider);
+    provider.write("first");
+    const topicError = new Promise<Error>(resolve => topic.once("error", resolve));
+    provider.destroy(error);
+
+    t.is(await topicError, error);
+    topic.pipe(consumer);
+    await new Promise<void>(resolve => setImmediate(resolve));
+
+    t.deepEqual(received, []);
+    t.true(topic.destroyed);
+    consumer.destroy();
+});
+
+test("Topic data flow: aborted first ingress releases the pending chunk without duplicate delivery", async t => {
+    const topic = new Topic(new TopicId("aborted-ingress"), "text/plain", testOrigin);
+    const provider = new PassThrough() as PassThrough & { aborted?: boolean };
+    const consumer = new PassThrough();
+    const received: string[] = [];
+
+    consumer.on("data", chunk => received.push(chunk.toString()));
+    topic.acceptPipe(provider);
+    provider.write("first");
+    const topicError = new Promise<Error>(resolve => topic.once("error", resolve));
+    provider.emit("aborted");
+
+    await topicError;
+    topic.pipe(consumer);
+    await new Promise<void>(resolve => setImmediate(resolve));
+
+    t.deepEqual(received, []);
+    t.true(topic.destroyed);
+    consumer.destroy();
+});
+
+test("Topic data flow: many providers writing", async t => {
+    const testTopic = new Topic(new TopicId("TestTopic"), "text/plain", testOrigin, { encoding: "ascii" });
+
+    const [startGeneratingPromise, startGenerating] = createWaitingPromise();
+
+    async function* generator(from: number, to: number) {
+        let i = from;
+
+        while (i <= to) {
+            await startGeneratingPromise;
+            yield Number(i++).toString();
         }
+    }
 
-        const createStreamProvider =
-            (name: string, from: number, to: number): [Readable, Promise<void>] => {
-                const gen = generator(from, to);
-                const provider = Readable.from(gen).setEncoding("ascii");
-                const [streamEndPromise, streamEnd, streamError] = createWaitingPromise();
+    const createStreamProvider =
+        (from: number, to: number): [Readable, Promise<void>] => {
+            const gen = generator(from, to);
+            const provider = Readable.from(gen).setEncoding("ascii");
+            const [streamEndPromise, streamEnd, streamError] = createWaitingPromise();
 
-                provider.on("close", streamEnd).on("error", streamError);
-                return [provider, streamEndPromise];
-            };
+            provider.on("close", streamEnd).on("error", streamError);
+            return [provider, streamEndPromise];
+        };
 
-        const [provider1, provider1End] = createStreamProvider("TestReadStream1", 1, 10);
-        const [provider2, provider2End] = createStreamProvider("TestReadStream2", 11, 20);
-        const [provider3, provider3End] = createStreamProvider("TestReadStream3", 21, 30);
+    const [provider1, provider1End] = createStreamProvider(1, 10);
+    const [provider2, provider2End] = createStreamProvider(11, 20);
+    const [provider3, provider3End] = createStreamProvider(21, 30);
 
-        provider1.pipe(testTopic, { end: false });
-        provider2.pipe(testTopic, { end: false });
-        provider3.pipe(testTopic, { end: false });
+    provider1.pipe(testTopic, { end: false });
+    provider2.pipe(testTopic, { end: false });
+    provider3.pipe(testTopic, { end: false });
 
-        const result: number[] = [];
+    const result: number[] = [];
 
-        testTopic.on("data", (chunk) => { result.push(Number(chunk)); });
+    testTopic.on("data", (chunk) => { result.push(Number(chunk)); });
 
-        startGenerating();
-        await Promise.all([provider1End, provider2End, provider3End]);
-        result.sort((a: number, b: number) => a - b);
-        const expectedResult = [...Array(30).keys()].map(val => val + 1);
-        const match = result.length === expectedResult.length &&
-            !expectedResult.some((value, index) => result[index] !== value);
+    startGenerating();
+    await Promise.all([provider1End, provider2End, provider3End]);
+    result.sort((a: number, b: number) => a - b);
+    const expectedResult = [...Array(30).keys()].map(val => val + 1);
+    const match = result.length === expectedResult.length &&
+        !expectedResult.some((value, index) => result[index] !== value);
 
-        expect(match).toBe(true);
+    t.true(match);
+});
+
+test("Topic data flow: many consumers reading", async t => {
+    const testTopic = new Topic(new TopicId("TestTopic"), "text/plain", testOrigin, { encoding: "ascii" });
+    const testText = "Lorem ipsum dolor sit amet, consectetur adipiscing elit.";
+    const consumer1 = new PassThrough({ encoding: "ascii" });
+    const consumer2 = new PassThrough({ encoding: "ascii" });
+    const consumer3 = new PassThrough({ encoding: "ascii" });
+
+    const result = ["", "", ""];
+    const [readed1Promise, readed1] = createWaitingPromise();
+    const [readed2Promise, readed2] = createWaitingPromise();
+    const [readed3Promise, readed3] = createWaitingPromise();
+
+    consumer1.on("readable", () => {
+        result[0] = consumer1.read();
+        readed1();
     });
-    test("Many Consumers reading", async () => {
-        const consumer1 = new PassThrough({ encoding: "ascii" });
-        const consumer2 = new PassThrough({ encoding: "ascii" });
-        const consumer3 = new PassThrough({ encoding: "ascii" });
-
-        const result = ["", "", ""];
-        const [readed1Promise, readed1] = createWaitingPromise();
-        const [readed2Promise, readed2] = createWaitingPromise();
-        const [readed3Promise, readed3] = createWaitingPromise();
-
-        consumer1.on("readable", () => {
-            result[0] = consumer1.read();
-            readed1();
-        });
-        consumer2.on("readable", () => {
-            result[1] = consumer2.read();
-            readed2();
-        });
-        consumer3.on("readable", () => {
-            result[2] = consumer3.read();
-            readed3();
-        });
-
-        testTopic.pipe(consumer1);
-        testTopic.pipe(consumer2);
-        testTopic.pipe(consumer3);
-        testTopic.write(testText);
-
-        await Promise.all([readed1Promise, readed2Promise, readed3Promise]);
-        expect(result[0]).toBe(testText);
-        expect(result[1]).toBe(testText);
-        expect(result[2]).toBe(testText);
+    consumer2.on("readable", () => {
+        result[1] = consumer2.read();
+        readed2();
     });
+    consumer3.on("readable", () => {
+        result[2] = consumer3.read();
+        readed3();
+    });
+
+    testTopic.pipe(consumer1);
+    testTopic.pipe(consumer2);
+    testTopic.pipe(consumer3);
+    testTopic.write(testText);
+
+    await Promise.all([readed1Promise, readed2Promise, readed3Promise]);
+    t.is(result[0], testText);
+    t.is(result[1], testText);
+    t.is(result[2], testText);
+});
+
+// ── TopicId validation ─────────────────────────────────────────
+
+test("TopicId validation: accepts dotted topic names", t => {
+    t.true(TopicId.validate("receipt.request.v1"));
+    t.true(TopicId.validate("receipt.response.v1"));
+    t.true(TopicId.validate("receipt.signed.v1"));
+});
+
+test("TopicId validation: keeps existing underscore and dash names valid", t => {
+    t.true(TopicId.validate("plain_topic"));
+    t.true(TopicId.validate("plain-topic+v1"));
+});
+
+test("TopicId validation: rejects whitespace empty strings and backslashes", t => {
+    t.false(TopicId.validate("bad space"));
+    t.false(TopicId.validate(""));
+    t.false(TopicId.validate("bad\\topic"));
 });

@@ -9,15 +9,5 @@
   ],
   "exclude": [
     "node_modules"
-  ],
-  "typedocOptions": {
-    "entryPoints": [
-      "src/index.ts"
-    ],
-    "out": "../../docs/load-check",
-    "plugin": "typedoc-plugin-markdown",
-    "excludePrivate": "true",
-    "gitRevision": "HEAD",
-    "sort": "alphabetical"
-  }
+  ]
 }

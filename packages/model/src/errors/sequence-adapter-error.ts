@@ -1,4 +1,4 @@
-import { SequenceAdapterErrorCode } from "@scramjet/types";
+import { SequenceAdapterErrorCode } from "@scramjet/runtime-types";
 import { AppError } from "./app-error";
 
 export class SequenceAdapterError extends AppError {

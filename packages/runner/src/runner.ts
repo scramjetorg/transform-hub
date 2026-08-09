@@ -1,43 +1,51 @@
 import { RunnerError } from "@scramjet/model";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { InstanceStatus, RunnerExitCode, RunnerMessageCode } from "@scramjet/symbols";
+import { AppConfig, HasTopicInformation, IComponent, IObjectLogger, MaybePromise, Streamable, SynchronousStreamable } from "@scramjet/runtime-types";
+import type { SequenceApplicationFunction, SequenceApplicationInterface } from "@scramjet/sequence-types";
 import {
-    AppConfig,
-    ApplicationFunction,
-    ApplicationInterface,
     EncodedControlMessage,
     EncodedMonitoringMessage,
     EventMessageData,
     HandshakeAcknowledgeMessageData,
-    HasTopicInformation,
-    IComponent,
     IHostClient,
-    IObjectLogger,
-    MaybePromise,
     MonitoringRateMessageData,
     PangMessageData,
     RunnerConnectInfo,
     SequenceInfo,
+    SetMessageData,
     StopSequenceMessageData,
-    Streamable,
-    SynchronousStreamable
-} from "@scramjet/types";
+    StorageMessageData,
+    StorageUpdateMessageData
+} from "@scramjet/runtime-types";
+import { APIExpose } from "@scramjet/api-types";
 import { defer, promiseTimeout } from "@scramjet/utility";
 
+// Dual-client pattern: v1 HostClient is retained for legacy AppContext compatibility;
+// v2 fluent clients are used for new Hub/Space client paths.
 import { HostClient as HostApiClient } from "@scramjet/api-client";
-import { ClientUtilsCustomAgent } from "@scramjet/client-utils";
+import { ClientUtils, ClientUtilsCustomAgent } from "@scramjet/client-utils";
+import { ApiClientTransport, createHubClient, createSpaceClient, HubClient, SpaceClient } from "@scramjet/rest-api2";
 
 import { BufferStream, DataStream, StringStream } from "scramjet";
 
 import { EventEmitter } from "events";
-import { WriteStream, createWriteStream, writeFileSync } from "fs";
+import { WriteStream, constants, createWriteStream, writeFileSync } from "fs";
 import { Readable, Writable } from "stream";
 
 import { RunnerAppContext, RunnerProxy } from "./runner-app-context";
 import { mapToInputDataStream, readInputStreamHeaders, inputStreamInitLogger } from "./input-stream";
 import { MessageUtils } from "./message-utils";
+import { createServer } from "@scramjet/api-server";
+import { AddressInfo } from "net";
+import { LocalStorageAgent, LocalStorageAgentHost } from "./local-storage-agent";
+import { setTimeout as setTimeoutPromise } from "timers/promises";
+import { writeFile, unlink, access } from "fs/promises";
+import { shouldForwardRunnerLogs } from "./runner-log-forwarding";
 
 let exitHandled = false;
+
+const TIMEOUT = Symbol("timeout");
 
 function onBeforeExit(code: number) {
     if (exitHandled) return;
@@ -50,25 +58,15 @@ function onBeforeExit(code: number) {
 }
 
 function onException(_error: Error) {
-    console.error(_error);
+    console.error({ _error, stack: _error?.stack });
+    process.exitCode = RunnerExitCode.UNCAUGHT_EXCEPTION;
     onBeforeExit(RunnerExitCode.UNCAUGHT_EXCEPTION);
+    process.exit();
 }
 
 process.once("beforeExit", onBeforeExit);
 process.once("uncaughtException", onException);
-
-// async function flushStream(source: Readable | undefined, target: Writable) {
-//     if (!source) return;
-
-//     source
-//         .unpipe(target)
-//         .pause();
-
-//     if (source.readableLength > 0) {
-//         target.end(source.readableLength);
-//     }
-//     await new Promise(res => target.once("close", res));
-// }
+process.once("unhandledRejection", onException);
 
 type MaybeArray<T> = T | T[];
 type Primitives = string | number | boolean | void | null;
@@ -77,9 +75,105 @@ type OverrideConfig = {
     drainCb: (...x: any[]) => void;
     errorCb: (...x: any[]) => void;
 };
+type RestApi2TransportRequest = Parameters<ApiClientTransport["request"]>[0];
 
-export function isSynchronousStreamable(obj: SynchronousStreamable<any> | Primitives):
-    obj is SynchronousStreamable<any> {
+function materializePath(path: string, params: unknown): string {
+    if (!params || typeof params !== "object") {
+        return path;
+    }
+
+    return Object.entries(params as Record<string, string>).reduce((current, [key, value]) => current.replace(`:${key}`, encodeURIComponent(String(value))), path);
+}
+
+function appendQuery(url: string, query: unknown): string {
+    if (!query || typeof query !== "object") {
+        return url;
+    }
+
+    const params = new URLSearchParams();
+
+    for (const [key, value] of Object.entries(query as Record<string, unknown>)) {
+        if (value !== undefined) {
+            params.set(key, String(value));
+        }
+    }
+
+    const text = params.toString();
+
+    return text ? `${url}?${text}` : url;
+}
+
+function responseHeaders(response: Response): Record<string, string> {
+    const headers: Record<string, string> = {};
+
+    response.headers.forEach((value, key) => {
+        headers[key] = value;
+    });
+
+    return headers;
+}
+
+/**
+ * Wraps JSON parse errors from RestAPI2 v2 client flows with a clear,
+ * actionable message.  Without this, route-metadata redirects (308) or
+ * empty-body CPM proxy responses surface as a bare SyntaxError that is
+ * indistinguishable from a genuine JSON bug.
+ *
+ * Only SyntaxErrors mentioning JSON parsing are caught; other errors
+ * propagate unchanged.
+ */
+function normalizeRestApiResponseError(original: unknown, routePath: string, status?: number): Error {
+    if (original instanceof SyntaxError && /JSON|parse|end of input|Unexpected/.test(original.message)) {
+        const code = status !== undefined ? ` status=${status}` : "";
+        return new Error(
+            `RestAPI2 response parse error for ${routePath}${code}: ${original.message}. ` +
+                `This may be caused by a 308 route-metadata redirect or an empty-body response ` +
+                `from the Hub CPM proxy. Configure hubTargetDomain for direct Manager/space v2 ` +
+                `routing, or handle route-aware responses explicitly.`
+        );
+    }
+
+    return original instanceof Error ? original : new Error(String(original));
+}
+
+function createRestApi2Transport(clientUtils: ClientUtilsCustomAgent): ApiClientTransport {
+    return {
+        async request<T>(request: RestApi2TransportRequest) {
+            const path = appendQuery(materializePath(request.route.fullPath, request.params), request.query).replace(/^\//, "");
+            let response: Response;
+
+            try {
+                response = await clientUtils.request(request.route.method as any, path, {
+                    headers: { ...request.headers },
+                    body: request.body === undefined ? undefined : JSON.stringify(request.body)
+                });
+            } catch (err) {
+                // Catches JSON parse errors from the verser-common/agent layer
+                // before a Response object is formed (e.g. empty-body 308).
+                throw normalizeRestApiResponseError(err, request.route.fullPath);
+            }
+
+            const text = await response.text();
+            let body: T | undefined;
+
+            if (text) {
+                try {
+                    body = JSON.parse(text) as T;
+                } catch (err) {
+                    throw normalizeRestApiResponseError(err, request.route.fullPath, response.status);
+                }
+            }
+
+            return {
+                status: response.status,
+                headers: responseHeaders(response),
+                body: body as T
+            };
+        }
+    };
+}
+
+export function isSynchronousStreamable(obj: SynchronousStreamable<any> | Primitives): obj is SynchronousStreamable<any> {
     return !["string", "number", "boolean", "undefined", "null"].includes(typeof obj);
 }
 
@@ -89,12 +183,10 @@ function revertStandardStream(oldStream: Writable) {
     if (overrideMap.has(oldStream)) {
         const { write, drainCb, errorCb } = overrideMap.get(oldStream) as OverrideConfig;
 
-        // @ts-ignore - this is ok, we're doing this on purpose!
-        delete oldStream.write;
+        delete (oldStream as Omit<Writable, "write"> & { write?: Writable["write"] }).write;
 
         // if prototypic write is there, then no change needed
-        if (oldStream.write !== write)
-            oldStream.write = write;
+        if (oldStream.write !== write) oldStream.write = write;
 
         oldStream.off("drain", drainCb);
         oldStream.off("error", errorCb);
@@ -108,11 +200,26 @@ function overrideStandardStream(oldStream: Writable, newStream: Writable) {
         revertStandardStream(oldStream);
     }
 
-    const write = oldStream.write;
+    type WriteCallback = (error: Error | null | undefined) => void;
+    type StandardWrite = (chunk: any, encoding?: BufferEncoding | WriteCallback, callback?: WriteCallback) => boolean;
+    const write: StandardWrite = oldStream.write.bind(oldStream) as StandardWrite;
+    const replacementWrite: StandardWrite = newStream.write.bind(newStream) as StandardWrite;
 
     if (process.env.PRINT_TO_STDOUT) {
-        // @ts-ignore
-        oldStream.write = (...args) => { write.call(oldStream, ...args); return newStream.write(...args); };
+        oldStream.write = (chunk: any, encoding?: BufferEncoding | ((error: Error | null | undefined) => void), callback?: (error: Error | null | undefined) => void) => {
+            if (typeof encoding === "function") {
+                write.call(oldStream, chunk, encoding);
+                return replacementWrite(chunk, encoding);
+            }
+
+            if (encoding === undefined) {
+                write.call(oldStream, chunk, callback);
+                return replacementWrite(chunk, callback);
+            }
+
+            write.call(oldStream, chunk, encoding, callback);
+            return replacementWrite(chunk, encoding, callback);
+        };
     } else {
         oldStream.write = newStream.write.bind(newStream);
     }
@@ -126,14 +233,23 @@ function overrideStandardStream(oldStream: Writable, newStream: Writable) {
     overrideMap.set(oldStream, { write, drainCb, errorCb });
 }
 
+type RunnerArgs = {
+    sequencePath: string;
+    hostClient: IHostClient;
+    instanceId: string;
+    connectInfo: SequenceInfo;
+    runnerConnectInfo: RunnerConnectInfo;
+};
+
 /**
  * Runtime environment for sequence code.
  * Communicates with Host with data transferred to/from Sequence, health info,
  * reacts to control messages such as stopping etc.
  */
 export class Runner<X extends AppConfig> implements IComponent {
+    private localCache: Record<string, string | null> = {};
     private emitter;
-    private _context?: RunnerAppContext<X, any>;
+    private _context?: RunnerAppContext<X, any, HubClient, SpaceClient>;
     private monitoringInterval?: NodeJS.Timeout;
     private keepAliveRequested?: boolean;
 
@@ -164,28 +280,42 @@ export class Runner<X extends AppConfig> implements IComponent {
         appConfig: {}
     };
 
-    instanceOutput?: Readable & HasTopicInformation | void;
+    instanceOutput?: (Readable & HasTopicInformation) | void;
+    sequencePath: string;
+    hostClient: IHostClient;
+    instanceId: string;
+    api: APIExpose;
+    reconnect: boolean;
+    shouldWriteDegraded: boolean;
 
-    constructor(
-        private sequencePath: string,
-        private hostClient: IHostClient,
-        private instanceId: string,
-        sequenceInfo: SequenceInfo,
-        runnerConnectInfo: RunnerConnectInfo
-    ) {
-        this.sequenceInfo = sequenceInfo;
+    constructor({ sequencePath, hostClient, instanceId, connectInfo, runnerConnectInfo }: RunnerArgs) {
+        this.sequencePath = sequencePath;
+        this.hostClient = hostClient;
+        this.instanceId = instanceId;
+        this.sequenceInfo = connectInfo;
         this.emitter = new EventEmitter();
+        this.reconnect = !!runnerConnectInfo.reconnect;
+        this.shouldWriteDegraded = !!runnerConnectInfo.writeDegraded;
+
+        this.api = createServer(undefined, {
+            defaultRoute: (req, res) => {
+                this.logger.debug("API unhandled request", req.url);
+
+                res.writeHead(404);
+                res.end("Not Found");
+            }
+        });
 
         this.runnerConnectInfo = runnerConnectInfo;
 
-        this.logger = new ObjLogger(this, { id: instanceId });
+        this.logger = new ObjLogger(this, { id: instanceId }, runnerConnectInfo.logLevel || "DEBUG");
 
         hostClient.logger.pipe(this.logger);
         inputStreamInitLogger.pipe(this.logger);
 
-        if (process.env.PRINT_TO_STDOUT) {
-            this.logger.addOutput(process.stdout);
-        }
+        // if (process.env.PRINT_TO_STDOUT) {
+        //     this.logger.addOutput(process.stdout);
+        // }
 
         if (process.env.RUNNER_LOG_FILE) {
             this.logFile ||= createWriteStream(process.env.RUNNER_LOG_FILE);
@@ -206,7 +336,17 @@ export class Runner<X extends AppConfig> implements IComponent {
         });
     }
 
-    get context(): RunnerAppContext<X, any> {
+    async onStorageMessage(data: { values: Record<string, string> }) {
+        // this.logger.debug("Received local storage state from Host", data.values);  // <-- uncomment for debugging
+        Object.keys(this.localCache).forEach((k) => delete this.localCache[k]);
+        Object.assign(this.localCache, data.values);
+    }
+
+    async onStorageUpdateMessage(data: { key: string; value: string | null }) {
+        (this.context.localStorage as any).handleBroadcastUpdate(data);
+    }
+
+    get context(): RunnerAppContext<X, any, HubClient, SpaceClient> {
         if (!this._context) {
             this.logger.error("Uninitialized context");
 
@@ -215,10 +355,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
         return this._context;
     }
-
     async controlStreamHandler([code, data]: EncodedControlMessage) {
-        this.logger.debug("Control message received", code, data);
-
         if (this.monitoringMessageReplyTimeout) {
             clearTimeout(this.monitoringMessageReplyTimeout);
         }
@@ -231,26 +368,45 @@ export class Runner<X extends AppConfig> implements IComponent {
                 await this.handleKillRequest();
                 break;
             case RunnerMessageCode.STOP:
-                await this.addStopHandlerRequest(data as StopSequenceMessageData);
+                await this.handleStopRequest(data as StopSequenceMessageData);
                 break;
             case RunnerMessageCode.PONG:
-                this.handshakeResolver?.res(data);
+                this.handlePongRequest(data as HandshakeAcknowledgeMessageData);
                 break;
-            case RunnerMessageCode.EVENT:
+            case RunnerMessageCode.EVENT: {
                 const eventData = data as EventMessageData;
 
                 this.emitter.emit(eventData.eventName, eventData.message);
                 break;
+            }
             case RunnerMessageCode.MONITORING_REPLY:
+                break;
+            case RunnerMessageCode.STORAGE:
+                await this.onStorageMessage(data as StorageMessageData);
+                break;
+            case RunnerMessageCode.STORAGE_UPDATE:
+                await this.onStorageUpdateMessage(data as StorageUpdateMessageData);
                 break;
             default:
                 break;
         }
     }
 
+    private handlePongRequest(data: HandshakeAcknowledgeMessageData) {
+        this.handshakeResolver?.res(data);
+        this.handleSetRequest(data);
+    }
+
+    private handleSetRequest(data: SetMessageData) {
+        if (data.logLevel) {
+            this.logger.logLevel = data.logLevel;
+
+            if (this._context) this._context.logger.logLevel = data.logLevel;
+        }
+    }
+
     defineControlStream() {
-        StringStream
-            .from(this.hostClient.controlStream)
+        StringStream.from(this.hostClient.controlStream)
             .JSONParse()
             .each(async ([code, data]: EncodedControlMessage) => this.controlStreamHandler([code, data]))
             .on("error", (error) => {
@@ -268,11 +424,12 @@ export class Runner<X extends AppConfig> implements IComponent {
                 this.logger.error("mapToInputDataStream", error);
                 // TODO: we should be doing some error handling here:
                 // TODO: remove the stream, mark as bad, kill the instance maybe?
-            }).pipe(this.inputDataStream);
+            })
+            .pipe(this.inputDataStream);
     }
 
     async handleMonitoringRequest(data: MonitoringRateMessageData): Promise<void> {
-        this.logger.info("handleMonitoringRequest");
+        this.logger.debug("handleMonitoringRequest");
 
         if (this.monitoringInterval) {
             clearInterval(this.monitoringInterval);
@@ -281,34 +438,102 @@ export class Runner<X extends AppConfig> implements IComponent {
         let working = false;
 
         this.monitoringInterval = setInterval(async () => {
-            this.logger.info("working", working);
-
             if (working) {
-                //return;
+                return;
             }
 
             working = true;
-            await this.reportHealth(1000);
+            await this.reportHealth(5_000);
             working = false;
-        }, 1000 / data.monitoringRate);//.unref();
+        }, data.monitoringRate).unref();
     }
 
-    private async reportHealth(timeout?: number) {
-        this.logger.info("Report health");
+    private async wasDegraded(): Promise<boolean> {
+        try {
+            await access("/tmp/degraded", constants.R_OK);
+            return true;
+        } catch {
+            return false;
+        }
+    }
 
-        const { healthy } = await this.context.monitor();
-
-        if (timeout) {
-            this.monitoringMessageReplyTimeout = setTimeout(async () => {
-                this.logger.warn("Monitoring Reply Timeout");
-
-                await this.handleDisconnect();
-            }, timeout);
+    private async writeDegraded(degraded: boolean) {
+        if (!this.shouldWriteDegraded) {
+            return;
         }
 
-        MessageUtils.writeMessageOnStream(
-            [RunnerMessageCode.MONITORING, { healthy }], this.hostClient.monitorStream
-        );
+        try {
+            const wasDegraded = await this.wasDegraded();
+
+            if (wasDegraded === degraded) {
+                return;
+            }
+
+            if (degraded) {
+                await unlink("/tmp/degraded").catch(() => {});
+            } else {
+                await writeFile("/tmp/degraded", "true");
+            }
+        } catch (e: any) {
+            this.logger.error("Error while writing degraded message", e);
+        }
+    }
+
+    private async reportHealth(timeout?: number): Promise<void> {
+        // this.logger.info("Report health");
+
+        let healthy = false;
+
+        try {
+            const message = timeout ? await promiseTimeout(this.context.monitor(), timeout, TIMEOUT) : await this.context.monitor();
+
+            MessageUtils.writeMessageOnStream([RunnerMessageCode.MONITORING, message], this.hostClient.monitorStream);
+
+            healthy = message.healthy;
+        } catch (e: any) {
+            if (e === TIMEOUT) {
+                this.logger.error("Timeout while waiting for monitoring message reply");
+
+                MessageUtils.writeMessageOnStream(
+                    [
+                        RunnerMessageCode.MONITORING,
+                        {
+                            healthy: false,
+                            error: {
+                                code: "E_TIMEOUT",
+                                message: "Timeout while waiting for monitoring message reply"
+                            }
+                        }
+                    ],
+                    this.hostClient.monitorStream
+                );
+            } else if (e.message) {
+                this.logger.error("Error while waiting for monitoring message reply", e.message);
+
+                MessageUtils.writeMessageOnStream(
+                    [
+                        RunnerMessageCode.MONITORING,
+                        {
+                            healthy: false,
+                            error: {
+                                code: `${e.code || "E_UNKNOWN"}`,
+                                message: `${e.message}`.slice(0, 256),
+                                stack: e.stack ? `${e.stack}`.slice(0, 4096) : undefined
+                            }
+                        }
+                    ],
+                    this.hostClient.monitorStream
+                );
+            } else {
+                this.logger.error("Error while waiting for monitoring message reply", e);
+
+                MessageUtils.writeMessageOnStream([RunnerMessageCode.MONITORING, { healthy: false }], this.hostClient.monitorStream);
+            }
+
+            healthy = false;
+        }
+
+        this.writeDegraded(healthy).catch(() => {});
     }
 
     async handleDisconnect() {
@@ -325,8 +550,21 @@ export class Runner<X extends AppConfig> implements IComponent {
         try {
             await this.hostClient.disconnect(!this.connected);
             await defer(10000);
-        } catch (e) {
+        } catch {
             this.logger.error("Disconnect failed");
+        }
+
+        if (!this.reconnect) {
+            await Promise.all([
+                new Promise<void>((res) => {
+                    this.api.server.close(() => {
+                        this.logger.debug("API server closed");
+                        res();
+                    });
+                })
+            ]);
+
+            return this.exit(RunnerExitCode.DISCONNECTED);
         }
 
         this.logger.info("Reinitializing....");
@@ -340,6 +578,8 @@ export class Runner<X extends AppConfig> implements IComponent {
         if (this.provides) {
             this.sendPang({ provides: this.provides, contentType: this.providesContentType });
         }
+
+        return Promise.resolve();
     }
 
     async handleKillRequest(): Promise<void> {
@@ -348,28 +588,25 @@ export class Runner<X extends AppConfig> implements IComponent {
         this.context.killHandler();
 
         if (!this.stopExpected) {
-            this.logger.trace(`Exiting (unexpected, ${RunnerExitCode.KILLED})`);
+            this.logger.warn(`Exiting (unexpected, ${RunnerExitCode.KILLED})`);
             this.status = InstanceStatus.KILLING;
 
             return this.exit(RunnerExitCode.KILLED);
         }
 
-        this.logger.trace("Exiting (expected)");
+        this.logger.info("Exiting (expected)");
         this.status = InstanceStatus.STOPPING;
 
         return this.exit(RunnerExitCode.STOPPED);
     }
 
-    async addStopHandlerRequest(data: StopSequenceMessageData): Promise<void> {
+    async handleStopRequest(data: StopSequenceMessageData): Promise<void> {
         this.keepAliveRequested = false;
 
         let sequenceError;
 
         try {
-            await this.context.stopHandler(
-                data.timeout,
-                data.canCallKeepalive
-            );
+            await this.context.stopHandler(data.timeout, data.canCallKeepalive);
         } catch (err: any) {
             sequenceError = err;
 
@@ -379,9 +616,7 @@ export class Runner<X extends AppConfig> implements IComponent {
         if (!data.canCallKeepalive || !this.keepAliveRequested) {
             this.status = InstanceStatus.STOPPING;
 
-            MessageUtils.writeMessageOnStream(
-                [RunnerMessageCode.SEQUENCE_STOPPED, { sequenceError }], this.hostClient.monitorStream
-            );
+            MessageUtils.writeMessageOnStream([RunnerMessageCode.SEQUENCE_STOPPED, { sequenceError }], this.hostClient.monitorStream);
         }
 
         this.stopExpected = true;
@@ -395,31 +630,40 @@ export class Runner<X extends AppConfig> implements IComponent {
         await defer(200);
 
         this.cleanup()
-            .then((code) => { process.exitCode = exitCode || code; }, (e) => console.error(e?.stack))
-            .finally(() => { onBeforeExit(process.exitCode!); process.exit(); });
+            .then(
+                (code) => {
+                    process.exitCode = exitCode || code;
+                },
+                (e) => console.error(e?.stack)
+            )
+            .finally(() => {
+                if (typeof process.exitCode === "number") onBeforeExit(process.exitCode);
+
+                process.exit();
+            });
     }
 
-    async premain(): Promise<{ appConfig: AppConfig, args: any}> {
+    async premain(): Promise<{ appConfig: AppConfig; args: any }> {
         this.logger.debug("premain");
 
         try {
             this.logger.debug("connecting...");
-            await promiseTimeout(this.hostClient.init(this.instanceId), 10000);
+            await promiseTimeout(this.hostClient.init(this.instanceId), 10_000);
             this.logger.debug("connected");
             this.connected = true;
 
-            await this.handleMonitoringRequest({ monitoringRate: 1 });
+            await this.handleMonitoringRequest({ monitoringRate: 10000 });
         } catch (e) {
             this.connected = false;
             this.logger.warn("Can't connect to Host", e);
 
-            await defer(10000);
+            await defer(10_000);
 
             return await this.premain();
         }
 
         this.logger.debug("Redirecting outputs");
-        this.redirectOutputs();
+        this.setupOutputs();
 
         this.logger.debug("Defining control stream");
         this.defineControlStream();
@@ -428,25 +672,43 @@ export class Runner<X extends AppConfig> implements IComponent {
             await this.setInputContentType({ headers: { "content-type": this.inputContentType } });
         }
 
-        this.hostClient.stdinStream
-            .on("data", (chunk) => process.stdin.unshift(chunk))
-            .on("end", () => process.stdin.emit("end"));
+        this.hostClient.stdinStream.on("data", (chunk: Buffer) => process.stdin.unshift(chunk)).on("end", () => process.stdin.emit("end"));
 
         process.stdin.on("pause", () => this.hostClient.stdinStream.pause());
         process.stdin.on("resume", () => this.hostClient.stdinStream.resume());
 
         this.logger.debug("Streams initialized");
 
-        this.sendHandshakeMessage();
+        const { args, appConfig, exposePath, exposeHost } = {
+            exposeHost: process.env.EXPOSE_HOST,
+            ...this.runnerConnectInfo
+        };
 
-        const { args, appConfig } = this.runnerConnectInfo;
+        if (exposePath && !this.api.server.listening) {
+            this.logger.debug("Starting API server", { exposePath, exposeHost, envHost: process.env.EXPOSE_HOST });
+
+            const [exposedPort, exposedHost] = await new Promise<[number, string]>((res) => {
+                this.api.server.listen(0, exposeHost || "localhost", () => {
+                    const address = this.api.server.address() as AddressInfo;
+                    const port = address.port;
+                    const host = address.address;
+
+                    this.logger.debug("API server started", [port, host]);
+                    res([port, host]);
+                });
+            });
+
+            this.runnerConnectInfo.exposePort = exposedPort;
+            this.runnerConnectInfo.exposeHost = exposedHost;
+        }
+
+        this.sendHandshakeMessage();
 
         return { appConfig, args };
     }
 
     sendPang(args: PangMessageData) {
-        MessageUtils.writeMessageOnStream(
-            [RunnerMessageCode.PANG, args], this.hostClient.monitorStream);
+        MessageUtils.writeMessageOnStream([RunnerMessageCode.PANG, args], this.hostClient.monitorStream);
     }
 
     async main() {
@@ -455,7 +717,7 @@ export class Runner<X extends AppConfig> implements IComponent {
         this.initAppContext(appConfig as X);
 
         await this.reportHealth();
-        await this.handleMonitoringRequest({ monitoringRate: 1 });
+        await this.handleMonitoringRequest({ monitoringRate: 10000 });
 
         let sequence: any[] = [];
 
@@ -479,9 +741,14 @@ export class Runner<X extends AppConfig> implements IComponent {
                 sequence.shift();
             } else {
                 MessageUtils.writeMessageOnStream(
-                    [RunnerMessageCode.PANG, {
-                        requires: ""
-                    }], this.hostClient.monitorStream);
+                    [
+                        RunnerMessageCode.PANG,
+                        {
+                            requires: ""
+                        }
+                    ],
+                    this.hostClient.monitorStream
+                );
 
                 readInputStreamHeaders(this.hostClient.inputStream)
                     .then((headers) => this.setInputContentType(headers))
@@ -499,6 +766,8 @@ export class Runner<X extends AppConfig> implements IComponent {
             }
 
             this.status = InstanceStatus.ERRORED;
+
+            await setTimeoutPromise(10000);
 
             return this.exit(RunnerExitCode.SEQUENCE_FAILED_ON_START);
         }
@@ -542,7 +811,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
         try {
             this.logger.info("Cleaning up streams");
-        } catch (e: any) {
+        } catch {
             this.status = InstanceStatus.ERRORED;
 
             exitcode = RunnerExitCode.CLEANUP_FAILED;
@@ -560,18 +829,18 @@ export class Runner<X extends AppConfig> implements IComponent {
         this.logger.addOutput(process.stderr);
     }
 
-    private redirectOutputs() {
-        this.logger.pipe(this.hostClient.logStream, { stringified: true });
+    private setupOutputs() {
+        if (shouldForwardRunnerLogs(this.runnerConnectInfo)) {
+            this.logger.pipe(this.hostClient.logStream, { stringified: true });
+        }
 
         if (!this.shouldSerialize) {
             this.instanceOutput?.pipe(this.hostClient.outputStream);
         }
 
-        this.outputDataStream
-            .JSONStringify()
-            .pipe(this.hostClient.outputStream);
+        this.outputDataStream.JSONStringify().pipe(this.hostClient.outputStream);
 
-        if (process.env.PRINT_TO_STDOUT) {
+        if (process.env.PRINT_TO_STDOUT && this.logFile) {
             process.stdout.pipe(this.logFile!);
             process.stderr.pipe(this.logFile!);
         }
@@ -587,12 +856,33 @@ export class Runner<X extends AppConfig> implements IComponent {
      * @param config Configuration for App.
      */
     initAppContext(config: X) {
-        const hostClientUtils = new ClientUtilsCustomAgent("http://scramjet-host/api/v1", this.hostClient.getAgent());
+        const hostClientUtils: ClientUtils = new ClientUtilsCustomAgent("http://scramjet-host/api/v1", this.hostClient.getAgent());
         const hostApiClient = new HostApiClient("http://scramjet-host/api/v1", hostClientUtils);
 
-        const managerApiClient = hostApiClient.getManagerClient(
-            "/api/v1"
-        );
+        const localStorageHost: LocalStorageAgentHost = {
+            localCache: this.localCache,
+            writeMonitoringMessage: (msg: EncodedMonitoringMessage) => {
+                this.writeMonitoringMessage(msg);
+            }
+        };
+
+        const localStorageAgent = new LocalStorageAgent(localStorageHost);
+
+        const managerApiClient = hostApiClient.getManagerClient("/api/v1");
+        const hubTargetDomain = process.env.HUB_TARGET_DOMAIN;
+        const hubApiBase = hubTargetDomain ? `http://${hubTargetDomain}` : "http://scramjet-host";
+        const restApi2Transport = createRestApi2Transport(new ClientUtilsCustomAgent(hubApiBase, this.hostClient.getAgent()));
+        const v2HubClient = createHubClient({ transport: restApi2Transport, basePath: "/api/v2" });
+
+        // Space v2 client: direct Manager/space routing when SPACE_TARGET_DOMAIN
+        // env is available, otherwise Hub-local v2 fallback.
+        const spaceTargetDomain = process.env.SPACE_TARGET_DOMAIN;
+        const v2SpaceClient = spaceTargetDomain
+            ? createSpaceClient({
+                  transport: createRestApi2Transport(new ClientUtilsCustomAgent(`http://${spaceTargetDomain}`, this.hostClient.getAgent())),
+                  basePath: "/api/v2"
+              })
+            : createSpaceClient({ transport: restApi2Transport, basePath: "/api/v2" });
 
         const runner: RunnerProxy = {
             keepAliveIssued: () => this.keepAliveIssued(),
@@ -610,7 +900,12 @@ export class Runner<X extends AppConfig> implements IComponent {
             runner,
             hostApiClient,
             managerApiClient,
-            this.instanceId
+            v2HubClient,
+            v2SpaceClient,
+            this.instanceId,
+            this.logger.logLevel,
+            this.api,
+            localStorageAgent
         );
         this._context.logger.pipe(this.logger);
 
@@ -624,20 +919,25 @@ export class Runner<X extends AppConfig> implements IComponent {
 
     sendHandshakeMessage() {
         // TODO: send connection info
-        MessageUtils.writeMessageOnStream([
-            RunnerMessageCode.PING, {
-                id: this.instanceId,
-                sequenceInfo: this.sequenceInfo,
-                created: this.created,
-                payload: {
-                    ...this.runnerConnectInfo,
-                    system: {
-                        processPID: process.pid.toString()
-                    }
-                },
-                status: this.status,
-                inputHeadersSent: !!this.inputContentType
-            }], this.hostClient.monitorStream);
+        MessageUtils.writeMessageOnStream(
+            [
+                RunnerMessageCode.PING,
+                {
+                    id: this.instanceId,
+                    sequenceInfo: this.sequenceInfo,
+                    created: this.created,
+                    payload: {
+                        ...this.runnerConnectInfo,
+                        system: {
+                            processPID: process.pid.toString()
+                        }
+                    },
+                    status: this.status,
+                    inputHeadersSent: !!this.inputContentType
+                }
+            ],
+            this.hostClient.monitorStream
+        );
 
         this.logger.trace("Handshake sent");
     }
@@ -648,13 +948,9 @@ export class Runner<X extends AppConfig> implements IComponent {
         });
     }
 
-    getSequence(): ApplicationInterface[] {
-        /* eslint-disable-next-line import/no-dynamic-require */
+    getSequence(): SequenceApplicationInterface[] {
         const sequenceFromFile = require(this.sequencePath);
-        const _sequence: MaybeArray<ApplicationFunction> =
-            Object.prototype.hasOwnProperty.call(sequenceFromFile, "default")
-                ? sequenceFromFile.default
-                : sequenceFromFile;
+        const _sequence: MaybeArray<SequenceApplicationFunction> = Object.prototype.hasOwnProperty.call(sequenceFromFile, "default") ? sequenceFromFile.default : sequenceFromFile;
 
         const sequenceArr = Array.isArray(_sequence) ? _sequence : [_sequence];
 
@@ -665,7 +961,6 @@ export class Runner<X extends AppConfig> implements IComponent {
         return sequenceArr;
     }
 
-    // eslint-disable-next-line complexity
     async runSequence(sequence: any[], args: any[] = []): Promise<void> {
         /**
          * @analyze-how-to-pass-in-out-streams
@@ -690,11 +985,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
                 this.status = InstanceStatus.RUNNING;
 
-                out = func.call(
-                    this.context,
-                    this.instanceOutput,
-                    ...args
-                );
+                out = func.call(this.context, this.instanceOutput, ...args);
 
                 this.logger.debug("Function called", sequence.length - itemsLeftInSequence - 1);
             } catch (error: any) {
@@ -745,8 +1036,7 @@ export class Runner<X extends AppConfig> implements IComponent {
             }
         }
 
-        // eslint-disable-next-line complexity
-        await new Promise<void>((res) => {
+        await new Promise<void>((res, rej) => {
             /**
              * @analyze-how-to-pass-in-out-streams
              * We need to make sure to close input and output streams
@@ -764,13 +1054,11 @@ export class Runner<X extends AppConfig> implements IComponent {
 
                 res();
             } else if (this.instanceOutput && this.hostClient.outputStream) {
-                this.logger.trace("Piping Sequence output", typeof this.instanceOutput);
+                this.logger.info("Piping Sequence output", typeof this.instanceOutput);
 
-                this.shouldSerialize = this.instanceOutput.contentType &&
-                ["application/x-ndjson", "text/x-ndjson"].includes(this.instanceOutput.contentType) ||
-                this.instanceOutput instanceof DataStream && !(
-                    this.instanceOutput instanceof StringStream || this.instanceOutput instanceof BufferStream
-                );
+                this.shouldSerialize =
+                    (this.instanceOutput.contentType && ["application/x-ndjson", "text/x-ndjson"].includes(this.instanceOutput.contentType)) ||
+                    (this.instanceOutput instanceof DataStream && !(this.instanceOutput instanceof StringStream || this.instanceOutput instanceof BufferStream));
 
                 if (!this.shouldSerialize && this.instanceOutput.readableEncoding) {
                     this.hostClient.outputStream.setDefaultEncoding(this.instanceOutput.readableEncoding);
@@ -780,30 +1068,36 @@ export class Runner<X extends AppConfig> implements IComponent {
                 this.logger.info("Stream encoding is", this.instanceOutput.readableEncoding);
 
                 this.instanceOutput
+                    .on("error", (e) => {
+                        this.logger.error("Sequence output stream error", e);
+                        this.status = InstanceStatus.ERRORED;
+
+                        rej(new RunnerError("SEQUENCE_RUNTIME_ERROR", e));
+                    })
                     .once("end", () => {
-                        this.logger.debug("Sequence stream ended");
+                        this.logger.info("Sequence stream ended");
                         res();
                     })
-                    .pipe(this.shouldSerialize
-                        ? this.outputDataStream
-                        : this.hostClient.outputStream
-                    );
+                    .pipe(this.shouldSerialize ? this.outputDataStream : this.hostClient.outputStream);
 
                 this.provides = intermediate.topic || "";
                 this.providesContentType = intermediate.contentType || "";
 
                 this.sendPang({ provides: this.provides, contentType: this.providesContentType });
                 MessageUtils.writeMessageOnStream(
-                    [RunnerMessageCode.PANG, {
-                        provides: intermediate.topic || "",
-                        contentType: intermediate.contentType || "",
-                        outputEncoding: this.instanceOutput.readableEncoding
-                    }],
-                    this.hostClient.monitorStream,
+                    [
+                        RunnerMessageCode.PANG,
+                        {
+                            provides: intermediate.topic || "",
+                            contentType: intermediate.contentType || "",
+                            outputEncoding: this.instanceOutput.readableEncoding
+                        }
+                    ],
+                    this.hostClient.monitorStream
                 );
             } else {
-            // TODO: this should push a PANG message with the sequence description
-                this.logger.debug("Sequence did not output a stream");
+                // TODO: this should push a PANG message with the sequence description
+                this.logger.info("Sequence did not output a stream");
                 res();
             }
         });

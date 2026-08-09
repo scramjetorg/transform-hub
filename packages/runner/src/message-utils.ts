@@ -1,4 +1,5 @@
-import { EncodedMonitoringMessage, WritableStream } from "@scramjet/types";
+import { WritableStream } from "@scramjet/runtime-types";
+import { EncodedMonitoringMessage } from "@scramjet/runtime-types";
 
 export class MessageUtils {
     public static writeMessageOnStream([code, data]: EncodedMonitoringMessage, streamToWrite: WritableStream<any>) {

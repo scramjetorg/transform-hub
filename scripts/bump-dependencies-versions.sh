@@ -1,6 +1,6 @@
 #!/bin/bash
 
-dependencies_new_versions="$1" # get version from yarn NEXT_VER variable
+dependencies_new_versions="$1" # get version from NEXT_VER variable
 
 find_packages() {
     local dir="$1"
@@ -52,15 +52,14 @@ process_package_json() {
 
 #bump version in image-config file
 bump_image_config() {
-    local file="packages/sth-config/src/image-config.json"
-    local temp_file="temp.json"
+    local file="packages/config/src/sth/image-config.ts"
+    local temp_file="temp.ts"
 
-    jq --arg dependencies_new_versions "$dependencies_new_versions" \
-        '.runner |= with_entries(.value |= sub(":.*$"; ":" + $dependencies_new_versions)) |
-        .prerunner |= sub(":.*$"; ":" + $dependencies_new_versions)' "$file" > "$temp_file" \
-        && mv "$temp_file" "$file"
+    # Replace version strings in image-config.ts (TypeScript export of image config)
+    # Format: "scramjetorg/runner:1.2.3" -> "scramjetorg/runner:<new_version>"
+    sed -i "s|\(scramjetorg/[^:]*\):[0-9.]*\"|\1:$dependencies_new_versions\"|g" "$file"
 
-    echo "Updated image-config.json to $dependencies_new_versions"
+    echo "Updated image-config.ts to $dependencies_new_versions"
 }
 
 find_packages "bdd/"

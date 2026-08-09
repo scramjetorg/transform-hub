@@ -1,0 +1,8 @@
+{
+  "track_id": "verser2_v040_upgrade_20260616",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-06-16T00:00:22Z",
+  "updated_at": "2026-06-16T00:00:22Z",
+  "description": "Update verser2 to v0.4.0 and migrate communication to native redirects and upstream tunnels."
+}

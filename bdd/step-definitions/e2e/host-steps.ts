@@ -1,93 +1,105 @@
-/* eslint-disable no-loop-func */
-/* eslint-disable no-console */
-// eslint-disable-next-line no-extra-parens
 import { Given, When, Then, Before, After, BeforeAll, AfterAll } from "@cucumber/cucumber";
 import { strict as assert } from "assert";
 import {
-    removeBoundaryQuotes,
     defer,
+    retryLoadCheck,
     waitUntilStreamEquals,
     waitUntilStreamStartsWith,
     waitUntilStreamContains,
-    removeProfile,
-    createProfile,
-    setProfile,
+    waitForCondition,
     createDirectory,
     deleteDirectory,
-    getActiveProfile
 } from "../../lib/utils";
 import fs, { createReadStream, existsSync, ReadStream } from "fs";
+import { writeFile, unlink } from "fs/promises";
+import path from "path";
+import { randomUUID } from "crypto";
 import { HostClient, InstanceOutputStream } from "@scramjet/api-client";
 import { HostUtils } from "../../lib/host-utils";
 import { PassThrough, Readable, Stream, Writable } from "stream";
-import crypto, { BinaryLike } from "crypto";
-import { promisify } from "util";
 import Dockerode from "dockerode";
 import { CustomWorld } from "../world";
 
 import findPackage from "find-package-json";
-import { readFile } from "fs/promises";
 import { BufferStream } from "scramjet";
 import { expectedResponses } from "./expectedResponses";
-import { exec } from "child_process";
+import { collectStreamUntilEndOrSignal } from "../../lib/stream-capture";
+import { restoreSavedHostEnv } from "../hub/config";
+import { memoryRegistry } from "../../lib/memory-registry";
+import {
+    externalClientForUrl,
+    selectScenarioClient,
+    withSelectedClient
+} from "../../lib/client-ownership";
+const { writeBddConfig, cleanupBddConfig } = require("../../lib/bdd-config.js");
+const { getOwnership, allocateOwnedPort } = require("../../lib/ownership.js");
+const { clearE2eScenarioState, setLastTerminalStopDiagnostics } = require("../../lib/e2e-module-state.js");
+const { teardownFloodSource } = require("../../lib/flood-teardown.js");
+const { waitForInstanceDetachment } = require("../../lib/instance-detachment.js");
+const { resolveFixturePackagePath } = require("../../lib/fixture-package-path.js");
+const { expectedHostVersion } = require("../../lib/release-prerelease-context.js");
+
+function resolveSequencePackage(packageName: string): string {
+    const configuredDirs = (process.env.PACKAGES_DIR || "")
+        .split(":")
+        .map((dir) => dir.trim())
+        .filter(Boolean);
+    const searchDirs = configuredDirs;
+
+    for (const dir of searchDirs) {
+        const candidate = dir.endsWith("/") ? `${dir}${packageName}` : `${dir}/${packageName}`;
+
+        if (existsSync(candidate)) {
+            return candidate;
+        }
+    }
+
+    assert.fail(
+        `"${packageName}" does not exist in package search dirs: ${searchDirs.join(", ")}. ` +
+            "Set PACKAGES_DIR to a local fixture directory."
+    );
+}
+
+function resolveOwnedArchive(packagePath: string): string {
+    if (packagePath === "__BDD_TMP_SIMPLE_STDIO__") {
+        if (process.env.SCRAMJET_BDD_SIMPLE_STDIO_ARCHIVE) return process.env.SCRAMJET_BDD_SIMPLE_STDIO_ARCHIVE;
+        const tempPath = getOwnership(process.env).tempPath;
+        const cliDir = fs.readdirSync(tempPath).find((entry) => entry.startsWith("cli-") && fs.statSync(path.join(tempPath, entry)).isDirectory());
+        if (cliDir) return path.join(tempPath, cliDir, "simple-stdio.tar.gz");
+    }
+    return resolveFixturePackagePath(packagePath);
+}
 
 let hostClient: HostClient;
 let actualHealthResponse: any;
 let actualStatusResponse: any;
 let actualApiResponse: any;
-let actualLogResponse: any;
 let containerId: string;
 let processId: number;
 let streams: { [key: string]: Promise<string | undefined> } = {};
-let activeProfile: any;
+let streamContains: { [key: string]: Promise<Readable> } = {};
+let runnerEnded: Promise<void> = Promise.resolve();
+let signalRunnerEnded: () => void = () => undefined;
 
-const freeport = promisify(require("freeport"));
-
-const profileName = "test_bdd";
 const version = findPackage(__dirname).next().value?.version || "unknown";
 const hostUtils = new HostUtils();
-const testPath = "../packages/reference-apps/hello-alice-out/";
 const dockerode = new Dockerode();
-const getHostClient = ({ resources }: CustomWorld): HostClient => resources.hostClient || hostClient;
+const ownership = getOwnership(process.env);
+let externalHostBaseUrl: string | undefined;
+let scenarioHostClient: HostClient | undefined;
+const getHostClient = ({ resources }: CustomWorld): HostClient =>
+    selectScenarioClient(resources.hostClient, hostClient)!;
 const actualResponse = () => actualStatusResponse || actualHealthResponse;
 const startWith = async function(this: CustomWorld, instanceArg: string) {
     this.resources.instance = await this.resources.sequence!.start({
         appConfig: {},
         args: instanceArg.split(" ")
     });
-};
-const assetsLocation = process.env.SCRAMJET_ASSETS_LOCATION || "https://assets.scramjet.org/";
-const streamToString = async (stream: Stream): Promise<string> => {
-    const chunks = [];
-    const strings = stream.pipe(new PassThrough({ encoding: "utf-8" }));
-
-    for await (const chunk of strings) {
-        chunks.push(chunk);
-    }
-
-    return chunks.join("");
-};
-const streamToBinary = async (stream: Readable): Promise<BinaryLike> => {
-    const chunks: Uint8Array[] = [];
-
-    return new Promise((resolve, reject) => {
-        stream.on("data", (chunk: Buffer | Uint8Array) => {
-            chunks.push(chunk instanceof Buffer ? chunk : Uint8Array.from(chunk));
-        });
-
-        stream.on("end", () => {
-            const binaryData = Buffer.concat(chunks);
-
-            resolve(binaryData);
-        });
-
-        stream.on("error", (error: Error) => {
-            reject(error);
-        });
-    });
+    this.resources.sequence = undefined;
 };
 const waitForContainerToClose = async () => {
     if (!containerId) assert.fail();
+    const startedAt = Date.now();
 
     let containers = await dockerode.listContainers();
 
@@ -100,21 +112,59 @@ const waitForContainerToClose = async () => {
             containers = await dockerode.listContainers();
             containerExist = containers.filter((containerInfo) => containerInfo.Id === containerId).length > 0;
             await defer(500);
-        } while (containerExist);
+        } while (containerExist && Date.now() - startedAt < 30000);
+
+        assert.ok(!containerExist, "Runner container did not close before the BDD timeout");
     }
 };
 
 const waitForProcessToEnd = async (pid: number) => {
-    // eslint-disable-next-line no-constant-condition
-    while (true) {
-        const proc = exec(`ps -p ${pid}`);
+    const startedAt = Date.now();
 
-        const exitCode = await new Promise<number>((res) => proc.on("exit", res));
+    while (Date.now() - startedAt < 30000) {
+        let running = false;
+        try {
+            process.kill(pid, 0);
+            const stat = fs.readFileSync(`/proc/${pid}/stat`, "utf8");
+            const stateStart = stat.lastIndexOf(") ") + 2;
+            running = stat[stateStart] !== "Z";
+        } catch {
+            running = false;
+        }
 
-        if (exitCode > 0) {
+        if (!running) {
             return;
         }
         await defer(500);
+    }
+
+    assert.fail(`Process ${pid} did not end before the BDD timeout`);
+};
+
+const getOwnedLiveRunnerPid = async (): Promise<number | undefined> => {
+    // Let ChildProcess exit listeners reconcile runners that finished naturally
+    // before cleanup.  Only a still-tracked, live process owned by this
+    // scenario may be classified as an expected cleanup exit.
+    await memoryRegistry.drainExitEvents();
+    if (!processId) return undefined;
+
+    const tracked = memoryRegistry.trackedProcesses.get(processId);
+    if (!tracked || tracked.label !== "runner:process") return undefined;
+
+    try {
+        process.kill(processId, 0);
+        const stat = fs.readFileSync(`/proc/${processId}/stat`, "utf8");
+        const stateStart = stat.lastIndexOf(") ") + 2;
+        if (stat[stateStart] === "Z") {
+            await memoryRegistry.drainExitEvents();
+            return undefined;
+        }
+        return processId;
+    } catch {
+        // The PID is already gone; give its pending ChildProcess exit event a
+        // final chance to reconcile before cleanup proceeds.
+        await memoryRegistry.drainExitEvents();
+        return undefined;
     }
 };
 
@@ -140,14 +190,27 @@ const waitForProcessToEnd = async (pid: number) => {
 
 const killAllRunners = async () => {
     if (process.env.RUNTIME_ADAPTER === "process") {
-        exec("killall runner");
+        if (processId) {
+            try {
+                process.kill(processId, "SIGTERM");
+                await waitForProcessToEnd(processId);
+            } catch (error: any) {
+                let alreadyGone = false;
+                try {
+                    process.kill(processId, 0);
+                } catch (probeError: any) {
+                    alreadyGone = probeError?.code === "ESRCH";
+                }
+                if (!alreadyGone) throw error;
+            }
+        }
     }
 
     if (process.env.RUNTIME_ADAPTER === "docker") {
         await Promise.all(
             (await dockerode.listContainers())
                 .map(async container => {
-                    if (container.Labels["scramjet.instance.id"]) {
+                    if (container.Labels["scramjet.bdd.run-id"] === ownership.runId && container.Labels["scramjet.bdd.chunk-id"] === ownership.chunkId) {
                         return dockerode.getContainer(container.Id).kill();
                     }
 
@@ -162,13 +225,17 @@ BeforeAll({ timeout: 20e3 }, async () => {
         return;
     }
 
-    activeProfile = await getActiveProfile();
-
     let apiUrl = process.env.SCRAMJET_HOST_BASE_URL;
+    let apiReservation: any;
+    let instancesReservation: any;
+    let controlIngressReservation: any;
+    let dynamicVerser2ConfigPath: string | undefined;
 
     if (!apiUrl) {
-        const apiPort = await freeport();
-        const instancesServerPort = await freeport();
+        apiReservation = await allocateOwnedPort(ownership);
+        instancesReservation = await allocateOwnedPort(ownership);
+        const apiPort = apiReservation.port;
+        const instancesServerPort = instancesReservation.port;
 
         process.env.LOCAL_HOST_PORT = apiPort.toString();
         apiUrl = process.env.LOCAL_HOST_BASE_URL = `http://127.0.0.1:${apiPort}/api/v1`;
@@ -177,7 +244,14 @@ BeforeAll({ timeout: 20e3 }, async () => {
 
         console.error(`Starting host on port: ${apiPort}`);
     }
+    hostClient?.dispose();
     hostClient = new HostClient(apiUrl);
+    // Prepare before Cucumber's memory baseline.  Wave/chunk Docker execution
+    // may not expose the selected feature path in the inner process argv/env;
+    // the tagged E2E-003 hook still needs its client before the baseline.
+    scenarioHostClient = new HostClient(apiUrl);
+    externalHostBaseUrl = apiUrl;
+    writeBddConfig({ apiUrl });
 
     if (process.env.SCRAMJET_TEST_LOG) {
         hostClient.client.addLogger({
@@ -197,43 +271,167 @@ BeforeAll({ timeout: 20e3 }, async () => {
             }
         });
     }
-    await hostUtils.spawnHost([]);
-    await createProfile(profileName);
-    await setProfile(profileName);
+    // Do not claim the historical fixed runner-host port. Other BDD chunks or
+    // a stale Hub from an interrupted run may still own it, which makes this
+    // BeforeAll Hub exit with EADDRINUSE before readiness.
+    const runnerHostPortEnv = "SCRAMJET_VERSER2_RUNNER_HOST_BIND_PORT";
+    const runnerHostEnabledEnv = "SCRAMJET_VERSER2_RUNNER_HOST_ENABLED";
+    const runnerHostPublicUrlEnv = "SCRAMJET_VERSER2_RUNNER_HOST_PUBLIC_URL";
+    const savedRunnerHostPort = process.env[runnerHostPortEnv];
+    const savedRunnerHostEnabled = process.env[runnerHostEnabledEnv];
+    const savedRunnerHostPublicUrl = process.env[runnerHostPublicUrlEnv];
+    process.env[runnerHostEnabledEnv] = "true";
+    const runnerHostReservation = await allocateOwnedPort(ownership);
+    const runnerHostPort = runnerHostReservation.port;
+    process.env[runnerHostPortEnv] = String(runnerHostPort);
+    process.env[runnerHostPublicUrlEnv] = `https://127.0.0.1:${runnerHostPort}`;
+
+    try {
+        // Parallel Docker BDD chunks share the host network namespace. Every
+        // suite Hub enables its verser2 control ingress, whose default listener
+        // is 127.0.0.1:2444 — a concurrently scheduled chunk would race for
+        // that same endpoint and exit with EADDRINUSE before readiness. Give
+        // this chunk's suite Hub an owner-scoped control-ingress port and
+        // forward it through the same temporary verser2 config file that the
+        // child process loads (same pattern as the hub step definitions).
+        controlIngressReservation = await allocateOwnedPort(ownership);
+        const controlIngressPort = controlIngressReservation.port;
+        dynamicVerser2ConfigPath = `data/.hub-verser2-${process.pid}-${Date.now()}.json`;
+        await writeFile(dynamicVerser2ConfigPath, JSON.stringify({
+            verser2: {
+                controlIngress: {
+                    host: {
+                        bindPort: controlIngressPort,
+                        publicUrl: `https://127.0.0.1:${controlIngressPort}`
+                    }
+                }
+            }
+        }));
+
+        await hostUtils.spawnHost([], "--config", dynamicVerser2ConfigPath);
+        await retryLoadCheck(
+            (signal) => hostClient.getLoadCheck({ signal }),
+            "Shared HostClient transport did not become ready before the scenario baseline"
+        );
+    } finally {
+        if (dynamicVerser2ConfigPath) await unlink(dynamicVerser2ConfigPath).catch(() => undefined);
+        await controlIngressReservation?.release();
+        await runnerHostReservation.release();
+        await apiReservation?.release();
+        await instancesReservation?.release();
+        if (savedRunnerHostPort === undefined) delete process.env[runnerHostPortEnv];
+        else process.env[runnerHostPortEnv] = savedRunnerHostPort;
+        if (savedRunnerHostEnabled === undefined) delete process.env[runnerHostEnabledEnv];
+        else process.env[runnerHostEnabledEnv] = savedRunnerHostEnabled;
+        if (savedRunnerHostPublicUrl === undefined) delete process.env[runnerHostPublicUrlEnv];
+        else process.env[runnerHostPublicUrlEnv] = savedRunnerHostPublicUrl;
+    }
 });
 
 AfterAll(async () => {
-    if (!process.env.NO_HOST) {
-        try {
-            await hostUtils.stopHost();
-        } catch {
-            throw new Error("Host unexpected closed");
+    try {
+        if (!process.env.NO_HOST) {
+            try {
+                await hostUtils.stopHost();
+            } catch {
+                throw new Error("Host unexpected closed");
+            }
         }
+    } finally {
+        hostClient?.dispose();
+        hostClient = undefined as unknown as HostClient;
+        scenarioHostClient?.dispose();
+        scenarioHostClient = undefined;
     }
-    await setProfile(activeProfile);
-    await removeProfile(profileName);
+    cleanupBddConfig();
 });
 
 Before(() => {
     actualHealthResponse = "";
     actualStatusResponse = "";
-    actualLogResponse = "";
     streams = {};
+    streamContains = {};
+    runnerEnded = new Promise<void>(resolve => {
+        signalRunnerEnded = resolve;
+    });
+});
+
+Before({ tags: "@scenario-host-client" }, function(this: CustomWorld) {
+    assert.ok(scenarioHostClient, "Scenario-owned HostClient was not prepared before the memory baseline");
+    this.resources.hostClient = scenarioHostClient;
 });
 
 After({ tags: "@runner-cleanup" }, killAllRunners);
-After({}, async () => {
-    let insts = [];
-
+After({}, async function (this: any) {
     try {
-        insts = await hostClient.listInstances();
-    } catch (_e) {
-        return;
-    }
+        // Restore host env vars (LOCAL_HOST_*, SCRAMJET_HOST_*) that may have been
+        // overridden by a @starts-host scenario.  If the scenario did not touch
+        // these vars, the call is a no-op.
+        restoreSavedHostEnv(this.resources);
 
-    await Promise.all(
-        insts.map(i => hostClient.getInstanceClient(i.id).kill({ removeImmediately: true }).catch(_e => {}))
-    );
+        // Abort flood input before instance/runner teardown and await its
+        // bounded settlement so stream cleanup cannot race lifecycle checks.
+        await teardownFloodSource(this.resources);
+
+        let insts: any[] = [];
+
+        try {
+            insts = await withSelectedClient(this.resources.hostClient, hostClient, client => client.listInstances());
+        } catch (_e) {
+            // Host teardown can race the scenario hook; still release all local
+            // module state below even when the cleanup query is unavailable.
+            insts = [];
+        }
+
+        const runnerPidToClean = await getOwnedLiveRunnerPid();
+        if (runnerPidToClean) {
+            // Instance kill is the lifecycle operation under test.  Mark the
+            // runner before issuing it so the subsequent, intentional exit
+            // (SIGTERM is reported by the process adapter as 138) is not
+            // mistaken for a leaked/unexpected runner.  Waiting here is
+            // important: AfterAll must not stop the Hub while its adapter is
+            // still processing the runner's exit event.
+            memoryRegistry.markProcessesAsExpectedToExit([runnerPidToClean]);
+        }
+
+        await Promise.all(
+            insts.map((i: any) =>
+                withSelectedClient(this.resources.hostClient, hostClient, client =>
+                    client.getInstanceClient(i.id).kill({ removeImmediately: true }).catch((_e: unknown) => {})
+                )
+            )
+        );
+
+        if (runnerPidToClean) {
+            await waitForProcessToEnd(runnerPidToClean);
+        }
+
+        // Destroy lingering topic outStream to prevent ECONNRESET on cleanup.
+        if (this.resources.outStream) {
+            this.resources.outStream.destroy();
+            this.resources.outStream = undefined;
+        }
+        // Module state is outside CustomWorld and must be released explicitly.
+        streams = {};
+        streamContains = {};
+        actualHealthResponse = undefined;
+        actualStatusResponse = undefined;
+        actualApiResponse = undefined;
+        containerId = undefined as unknown as string;
+        processId = undefined as unknown as number;
+        hostUtils.output = "";
+    } finally {
+        // Scenario-owned clients are disposed only after all scenario cleanup
+        // operations. The module-level suite client remains shared and usable.
+        const state = clearE2eScenarioState(this.resources, {
+            scenarioHostClient,
+            runnerEnded,
+            signalRunnerEnded,
+        });
+        scenarioHostClient = state.scenarioHostClient;
+        runnerEnded = state.runnerEnded;
+        signalRunnerEnded = state.signalRunnerEnded;
+    }
 });
 
 Before({ tags: "@test-si-init" }, function() {
@@ -246,10 +444,16 @@ After({ tags: "@test-si-init" }, function() {
 
 const startHost = async () => {
     let apiUrl = process.env.SCRAMJET_HOST_BASE_URL;
+    let apiReservation: any;
+    let instancesReservation: any;
+    let controlIngressReservation: any;
+    let dynamicVerser2ConfigPath: string | undefined;
 
     if (!apiUrl) {
-        const apiPort = await freeport();
-        const instancesServerPort = await freeport();
+        apiReservation = await allocateOwnedPort(ownership);
+        instancesReservation = await allocateOwnedPort(ownership);
+        const apiPort = apiReservation.port;
+        const instancesServerPort = instancesReservation.port;
 
         process.env.LOCAL_HOST_PORT = apiPort.toString();
         apiUrl = process.env.LOCAL_HOST_BASE_URL = `http://127.0.0.1:${apiPort}/api/v1`;
@@ -278,7 +482,39 @@ const startHost = async () => {
             }
         });
     }
-    await hostUtils.spawnHost([]);
+    try {
+        // Same port isolation as the suite Host: a scenario-spawned Hub must
+        // not bind the default control-ingress listener 127.0.0.1:2444 while
+        // other chunks' suite Hubs are running. Own a chunk-scoped port and
+        // hand it to the child through a temporary verser2 config file.
+        controlIngressReservation = await allocateOwnedPort(ownership);
+        const controlIngressPort = controlIngressReservation.port;
+        dynamicVerser2ConfigPath = `data/.hub-verser2-${process.pid}-${Date.now()}.json`;
+        await writeFile(dynamicVerser2ConfigPath, JSON.stringify({
+            verser2: {
+                controlIngress: {
+                    host: {
+                        bindPort: controlIngressPort,
+                        publicUrl: `https://127.0.0.1:${controlIngressPort}`
+                    }
+                }
+            }
+        }));
+
+        await hostUtils.spawnHost([], "--config", dynamicVerser2ConfigPath);
+        // Do not release the owned API port until the HTTP server is
+        // observable.  spawnHost's process marker can precede socket bind,
+        // which otherwise lets the next step race into ECONNREFUSED.
+        await retryLoadCheck(
+            (signal) => hostClient.getLoadCheck({ signal }),
+            "Started host did not become ready"
+        );
+    } finally {
+        if (dynamicVerser2ConfigPath) await unlink(dynamicVerser2ConfigPath).catch(() => undefined);
+        await controlIngressReservation?.release();
+        await apiReservation?.release();
+        await instancesReservation?.release();
+    }
 };
 
 Given("start host", () => startHost());
@@ -308,38 +544,55 @@ Then("end fake stream", async function(this: CustomWorld): Promise<void> {
 
 Given("host is running", async function(this: CustomWorld) {
     const apiUrl = process.env.SCRAMJET_HOST_BASE_URL;
+    const scenarioClient = this.resources.hostClient;
 
-    if (apiUrl) {
-        hostClient = this.resources.hostClient = new HostClient(apiUrl);
+    if (apiUrl && !scenarioClient) {
+        const selected = externalClientForUrl(hostClient, externalHostBaseUrl, apiUrl, () => new HostClient(apiUrl));
+        hostClient = selected.client;
+        externalHostBaseUrl = selected.url;
     }
 
-    assert.ok(await hostClient.getLoadCheck());
+    // Bounded retry with backoff to handle ECONNREFUSED race between
+    // host process printing "Host running!" and HTTP server binding.
+    // Delegates to the shared retryLoadCheck helper for consistent
+    // transient-connection retry semantics across all host steps.
+    await retryLoadCheck(
+        (signal) => getHostClient(this).getLoadCheck({ signal }),
+        "Host did not become ready"
+    );
 });
 
 Then("host is still running", async function(this: CustomWorld) {
-    assert.ok(await getHostClient(this).getLoadCheck());
+    // Bounded retry with backoff to handle transient connection errors
+    // between host keep-alive checks (same semantics as "host is running").
+    // Delegates to the shared retryLoadCheck helper for consistent
+    // transient-connection retry semantics across all host steps.
+    await retryLoadCheck(
+        (signal) => getHostClient(this).getLoadCheck({ signal }),
+        "Host is no longer running"
+    );
 });
 
 When("wait for {string} ms", async (timeoutMs: number) => {
     await defer(timeoutMs);
 });
 
-When("find and upload sequence {string}", { timeout: 50000 }, async function(this: CustomWorld, packageName: string) {
-    const packagePath = `${process.env.PACKAGES_DIR}${packageName}`;
-
-    if (!existsSync(packagePath)) assert.fail(`"${packagePath}" does not exist, did you forget to set PACKAGES_DIR?`);
+When("find and upload sequence {string}", { timeout: 30000 }, async function(this: CustomWorld, packageName: string) {
+    const packagePath = resolveSequencePackage(packageName);
 
     this.resources.sequence = await getHostClient(this).sendSequence(createReadStream(packagePath));
 });
 
-When("sequence {string} loaded", { timeout: 50000 }, async function(this: CustomWorld, packagePath: string) {
-    if (!existsSync(packagePath)) assert.fail(`"${packagePath}" does not exist, did you forget 'yarn build:refapps'?`);
+When("sequence {string} loaded", { timeout: 30000 }, async function(this: CustomWorld, packagePath: string) {
+    packagePath = resolveOwnedArchive(packagePath);
+    if (!existsSync(packagePath)) assert.fail(`"${packagePath}" does not exist, check the configured local fixture path.`);
 
     this.resources.sequence = await getHostClient(this).sendSequence(createReadStream(packagePath));
 });
 
 When("sequence {string} is loaded", { timeout: 15000 }, async function(this: CustomWorld, packagePath: string) {
-    if (!existsSync(packagePath)) assert.fail(`"${packagePath}" does not exist, did you forget 'yarn build:refapps'?`);
+    packagePath = resolveOwnedArchive(packagePath);
+    if (!existsSync(packagePath)) assert.fail(`"${packagePath}" does not exist, check the configured local fixture path.`);
 
     this.resources.sequence = await getHostClient(this).sendSequence(createReadStream(packagePath));
     console.log("Package successfully loaded, sequence started.");
@@ -347,20 +600,21 @@ When("sequence {string} is loaded", { timeout: 15000 }, async function(this: Cus
 
 When("instance started", async function(this: CustomWorld) {
     this.resources.instance = await this.resources.sequence!.start({ appConfig: {}, args: [] });
+    this.resources.sequence = undefined;
 });
-
-When(
-    "instance started with url from assets argument {string}",
-    { timeout: 25000 },
-    async function(this: CustomWorld, assetUrl: string) {
-        return startWith.call(this, `${assetsLocation}${assetUrl}`);
-    }
-);
 
 When("instance started with arguments {string}", { timeout: 25000 }, startWith);
 
+Then("instance is ready for stdin", async function(this: CustomWorld) {
+    await waitForCondition(
+        () => this.resources.instance!.getHealth(),
+        (health: any) => health?.healthy === true || health?.healthy === "true",
+        { timeoutMs: 10000, intervalMs: 50, description: "instance stdin readiness" }
+    );
+});
+
 When("start Instance by name {string}", async function(this: CustomWorld, name: string) {
-    this.resources.sequence = hostClient.getSequenceClient(name);
+    this.resources.sequence = getHostClient(this).getSequenceClient(name);
     this.resources.instance = await this.resources.sequence!.start({
         appConfig: {}
     });
@@ -371,11 +625,47 @@ When("start Instance by name {string} with JSON arguments {string}", async funct
 
     if (!Array.isArray(instanceArgs)) throw new Error("Args must be an array");
 
-    this.resources.sequence = hostClient.getSequenceClient(name);
+    this.resources.sequence = getHostClient(this).getSequenceClient(name);
     this.resources.instance = await this.resources.sequence!.start({
         appConfig: {},
         args: instanceArgs
     });
+});
+
+When("starting Instance by name {string} fails", async function(this: CustomWorld, name: string) {
+    this.resources.sequence = getHostClient(this).getSequenceClient(name);
+
+    try {
+        this.resources.instance = await this.resources.sequence!.start({
+            appConfig: {},
+            args: []
+        });
+    } catch (error) {
+        this.resources.lastError = error;
+        return;
+    }
+
+    assert.fail(`Expected instance ${name} to fail during start`);
+});
+
+When("starting Instance by name {string} with JSON arguments {string} fails", async function(this: CustomWorld, name: string, args: string) {
+    const instanceArgs: any = JSON.parse(args);
+
+    if (!Array.isArray(instanceArgs)) throw new Error("Args must be an array");
+
+    this.resources.sequence = getHostClient(this).getSequenceClient(name);
+
+    try {
+        this.resources.instance = await this.resources.sequence!.start({
+            appConfig: {},
+            args: instanceArgs
+        });
+    } catch (error) {
+        this.resources.lastError = error;
+        return;
+    }
+
+    assert.fail(`Expected instance ${name} to fail during start`);
 });
 
 When("remember last instance as {string}", function(this: CustomWorld, seq: string) {
@@ -427,131 +717,26 @@ When(
 );
 
 When(
-    "instance started with arguments {string} and write stream to {string} and timeout after {int} seconds",
-    { timeout: -1 },
-    async function(this: CustomWorld, instanceArg: string, fileName: string, timeout: number) {
-        this.resources.instance = await this.resources.sequence!.start({
-            appConfig: {},
-            args: instanceArg.split(" ")
-        });
-
-        const stream: any = await this.resources.instance?.getStream("stdout");
-        const writeStream = fs.createWriteStream(fileName);
-
-        stream.pipe(writeStream);
-
-        actualHealthResponse = await this.resources.instance?.getHealth();
-
-        await Promise.race([
-            new Promise((res, rej) => {
-                writeStream.on("error", rej);
-                stream.on("end", res);
-            }),
-            new Promise((res) => setTimeout(res, 1000 * timeout))
-        ]);
-    }
-);
-
-When(
-    "get {string} with instanceId and wait for it to finish",
-    { timeout: 500000 },
-    async function(this: CustomWorld, outputStream: InstanceOutputStream) {
-        const out = await this.resources.instance?.getStream(outputStream);
-
-        out!.pipe(process.stdout);
-
-        if (!out) assert.fail("No output!");
-
-        actualLogResponse = await streamToString(out);
-    }
-);
-
-Then("file {string} is generated", async (filename) => {
-    assert.ok(await promisify(fs.exists)(`${filename}`));
-});
-
-When(
-    "response in every line contains {string} followed by name from file {string} finished by {string}",
-    async (greeting: string, file2: any, suffix: string) => {
-        const input = JSON.parse(fs.readFileSync(`${testPath}${file2}`, "utf8"));
-        const lines: string[] = actualLogResponse.split("\n");
-
-        let i: number;
-
-        for (i = 0; i < input.length; i++) {
-            const line1: string = input[i].name;
-
-            assert.deepEqual(greeting + line1 + suffix, removeBoundaryQuotes(lines[i]));
-        }
-
-        assert.equal(i, input.length, "incorrect number of elements compared");
-    }
-);
-
-When("response data is equal {string}", async (respNumber: any) => {
-    assert.equal(actualLogResponse, respNumber);
-});
-
-Given("file in the location {string} exists on hard drive", async (filename: any) => {
-    assert.ok(await promisify(fs.exists)(filename));
-});
-
-When("compare checksums of content sent from file {string}", async function(this: CustomWorld, filePath: string) {
-    const readStream = fs.createReadStream(filePath);
-    const hex: string = crypto
-        .createHash("md5")
-        .update(await readFile(filePath))
-        .digest("hex");
-
-    await this.resources.instance?.sendStream(
-        "input",
-        readStream,
-        {},
-        {
-            type: "application/octet-stream",
-            end: true
-        }
-    );
-
-    const output = await this.resources.instance?.getStream("output");
-
-    if (!output) assert.fail("No output!");
-
-    const outputString = await streamToString(output);
-
-    assert.equal(outputString, hex);
-
-    await this.resources.instance?.sendInput("null");
-});
-
-When("confirm file checksum match output checksum", async function(this: CustomWorld) {
-    // the random.bin hex is written to instance stdout
-    const stdout = await this.resources.instance!.getStream("stdout");
-    const fileHexFromStdout = await streamToString(stdout);
-    const output = await this.resources.instance?.getStream("output");
-
-    if (!output || !stdout) assert.fail("No output or stdout, or both.");
-
-    const dataFromOutput = await streamToBinary(output);
-    const outputHex: string = crypto
-        .createHash("sha256")
-        .update(dataFromOutput)
-        .digest("hex");
-
-    assert.strictEqual(outputHex, fileHexFromStdout.trim());
-});
-
-When(
     "send stop message to instance with arguments timeout {int} and canCallKeepAlive {string}",
     async function(this: CustomWorld, timeout: number, canCallKeepalive: string) {
-        const resp = await this.resources.instance?.stop(timeout, canCallKeepalive === "true");
+        const instance = this.resources.instance;
+        assert.ok(instance, "No active instance to stop");
+        if (timeout === 0 && canCallKeepalive === "false") {
+            const info = await instance.getInfo();
+            const sequenceId = (info as any).sequenceId || info.sequence?.id;
+            assert.ok(sequenceId, `Terminally stopped instance ${instance.id} has no sequence association`);
+            this.resources.terminalStopDetachment = { instanceId: instance.id, sequenceId };
+            setLastTerminalStopDiagnostics({ instanceId: instance.id, sequenceId });
+        }
+
+        const resp = await instance.stop(timeout, canCallKeepalive === "true");
 
         assert.ok(resp);
     }
 );
 
-When("send kill message to instances of sequence {string}", async function(id) {
-    const seqClient = hostClient.getSequenceClient(id);
+When("send kill message to instances of sequence {string}", async function(this: CustomWorld, id: string) {
+    const seqClient = getHostClient(this).getSequenceClient(id);
     const instances = await seqClient.listInstances();
 
     for (const instanceId of instances) {
@@ -561,18 +746,51 @@ When("send kill message to instances of sequence {string}", async function(id) {
     }
 });
 
-When("send kill message to instance", async function(this: CustomWorld) {
-    const resp = await this.resources.instance?.kill();
+Then("instances of sequence {string} are available", { timeout: 10000 }, async function(this: CustomWorld, id: string) {
+    const seqClient = getHostClient(this).getSequenceClient(id);
+    const startedAt = Date.now();
+    let instanceIds = await seqClient.listInstances();
 
-    assert.ok(resp);
+    while (!instanceIds.length && Date.now() - startedAt < 10000) {
+        await defer(100);
+        instanceIds = await seqClient.listInstances();
+    }
+
+    assert.ok(instanceIds.length, `No instances found for sequence ${id}`);
 });
 
-// eslint-disable-next-line complexity
-When("get runner PID", { timeout: 31000 }, async function(this: CustomWorld) {
+When("send kill message to instance", async function(this: CustomWorld) {
+    const instance = this.resources.instance;
+    assert.ok(instance, "No active instance to kill");
+    const instanceId = instance.id;
+    const instanceInfo = await instance.getInfo();
+    const sequenceId = (instanceInfo as any).sequenceId || instanceInfo.sequence?.id;
+    assert.ok(sequenceId, `Killed instance ${instanceId} has no sequence association`);
+
+    const resp = await instance.kill();
+
+    assert.ok(resp);
+    const client = getHostClient(this);
+    const sequenceClient = client.getSequenceClient(sequenceId);
+    await waitForInstanceDetachment({
+        instanceId,
+        sequenceId,
+        listInstanceIds: async () => (await client.listInstances()).map((candidate: any) => candidate.id),
+        listSequenceInstanceIds: async () => await sequenceClient.listInstances(),
+        timeoutMs: 10000,
+        intervalMs: 50,
+    });
+    // The kill response is the terminal assertion for this client. Release the
+    // scenario-local proxy before the runner-exit and host-readiness checks so
+    // its request/response state cannot survive the strict guard boundary.
+    this.resources.instance = undefined;
+});
+
+When("get runner PID", { timeout: 30000 }, async function(this: CustomWorld) {
     let success: any;
     let tries = 0;
 
-    const adapter = process.env.RUNTIME_ADAPTER;
+    const adapter = process.env.RUNTIME_ADAPTER || "process";
 
     while (!success && tries < 3) {
         const health = await this.resources.instance?.getHealth();
@@ -588,14 +806,25 @@ When("get runner PID", { timeout: 31000 }, async function(this: CustomWorld) {
 
                 if (containerId) {
                     console.log("Container is identified.", containerId);
+                    this.scenarioLifecycle.ownContainer(containerId, "runner:docker", async () => {
+                        const container = dockerode.getContainer(containerId);
+                        try {
+                            await container.stop({ t: 10 });
+                        } catch {
+                            await container.kill();
+                        }
+                    });
                 }
                 break;
             case "process":
                 const res = health?.processId;
 
+                console.log("Health", health);
+
                 if (res) {
                     processId = success = res;
                     console.log("Process is identified.", processId);
+                    this.scenarioLifecycle.ownProcess(processId, "runner:process");
                 }
                 break;
             default:
@@ -605,7 +834,7 @@ When("get runner PID", { timeout: 31000 }, async function(this: CustomWorld) {
         tries++;
 
         if (!success) {
-            await defer(1000);
+            await defer(50);
         }
     }
 
@@ -614,23 +843,55 @@ When("get runner PID", { timeout: 31000 }, async function(this: CustomWorld) {
     }
 });
 
-When("runner has ended execution", { timeout: 20000 }, async () => {
+When("runner has ended execution", { timeout: 30000 }, async function(this: CustomWorld) {
     if (process.env.RUNTIME_ADAPTER === "kubernetes") {
         // @TODO
         return;
     }
 
-    if (process.env.RUNTIME_ADAPTER === "process") {
+    if (!process.env.RUNTIME_ADAPTER || process.env.RUNTIME_ADAPTER === "process") {
         if (!processId) assert.fail("There is no process ID");
 
         await waitForProcessToEnd(processId);
+        memoryRegistry.markProcessesAsExpectedToExit([processId]);
         console.log("Process has ended.");
     } else {
         if (!containerId) assert.fail("There is no container ID");
 
         await waitForContainerToClose();
+        memoryRegistry.markContainersAsExpectedToExit([containerId]);
         console.log("Container is closed.");
     }
+
+    const terminalStop = this.resources.terminalStopDetachment;
+    if (terminalStop) {
+        const processEndedAt = Date.now();
+        const client = getHostClient(this);
+        const sequenceClient = client.getSequenceClient(terminalStop.sequenceId);
+        await waitForInstanceDetachment({
+            instanceId: terminalStop.instanceId,
+            sequenceId: terminalStop.sequenceId,
+            listInstanceIds: async () => (await client.listInstances()).map((candidate: any) => candidate.id),
+            listSequenceInstanceIds: async () => await sequenceClient.listInstances(),
+            // CSI finalization has a configured lifetime-extension window;
+            // observe that bounded lifecycle rather than inserting a sleep.
+            // BDD-generated Host configuration bounds finalization to 1s;
+            // retain only a small diagnostic margin without sleeping or
+            // bypassing the production finalization path.
+            timeoutMs: 5000,
+            intervalMs: 50,
+        });
+        console.log(`Oracle detachment timestamps instance=${terminalStop.instanceId} sequence=${terminalStop.sequenceId} processEndedAt=${processEndedAt} detachedAt=${Date.now()} hostDetachmentDiagnosticBoundMs=5000 runnerExitTimeoutMs=1000`);
+        // Release the instance/sequence-facing clients before the strict
+        // scenario measurement; no generic delay or prune is used.
+        this.resources.instance = undefined;
+        this.resources.terminalStopDetachment = undefined;
+    }
+
+    // The runner can exit before the transport closes its stdout stream. Give
+    // retained streams a bounded drain signal instead of waiting for end
+    // indefinitely in the following assertion step.
+    signalRunnerEnded();
 });
 
 When(
@@ -655,31 +916,36 @@ Then("get event {string} from instance", { timeout: 10000 }, async function(this
 When("wait for instance healthy is {string}", async function(this: CustomWorld, resp: string) {
     let healthy = "false";
 
-    if (resp === "false") {
-        console.log(`Response body is ${healthy}`);
-    } else {
-        do {
+    await waitForCondition(
+        async () => {
             actualHealthResponse = await this.resources.instance?.getHealth();
-            healthy = actualResponse().healthy.toString();
-
-            if (typeof actualResponse() === "undefined") {
-                console.log("actualResponse is undefined");
-            } else {
-                console.log(`Response body is ${healthy}`);
-            }
-
-            await defer(100);
-        } while (!healthy);
-    }
+            healthy = actualResponse()?.healthy?.toString() || "false";
+            return healthy;
+        },
+        (value) => value === resp,
+        { timeoutMs: 10000, intervalMs: 50, description: "instance health" }
+    );
 
     assert.equal(healthy, resp);
 });
 
 Then("get instance info", async function(this: CustomWorld) {
-    const info = this.resources.instance?.getInfo();
+    const info = await this.resources.instance?.getInfo();
 
     assert.ok(info, "No response on info");
 });
+
+Then("release canonical smoke buffers", async function(this: CustomWorld) {
+    this.resources.instance = undefined;
+    this.resources.sequence = undefined;
+    this.resources.outStream?.destroy();
+    this.resources.outStream = undefined;
+    this.cliResources.stdio = undefined;
+    this.cliResources.stdio1 = undefined;
+    this.cliResources.stdio2 = undefined;
+    await new Promise<void>((resolve) => setImmediate(resolve));
+});
+
 
 Then("instance response body is {string}", async (expectedResp: string) => {
     const resp = JSON.stringify(actualResponse());
@@ -698,6 +964,9 @@ When("send stdin to instance with contents of file {string}", async function(thi
 });
 
 When("flood the stdin stream with {int} kilobytes", async function(this: CustomWorld, kbytes: number) {
+    if (!hostUtils.hasLocallyOwnedHubChild()) {
+        throw new Error("E2E-012 flood acknowledgement requires a locally owned Hub child; external Hub and NO_HOST modes are unsupported");
+    }
     let i = 0;
 
     await new Promise<void>((res, rej) => {
@@ -708,17 +977,56 @@ When("flood the stdin stream with {int} kilobytes", async function(this: CustomW
             }
         });
 
-        this.resources.instance?.sendStream("stdin", stream).catch(() => 0); // ignore the outcome.
+        this.resources.floodStream = stream;
+        const abortController = new AbortController();
+        const correlationId = randomUUID();
+        this.resources.floodCorrelationId = correlationId;
+        this.resources.floodAbortController = abortController;
+        this.resources.floodSourceClosedPromise = new Promise<void>((resolve, reject) => {
+            stream.once("close", resolve);
+            stream.once("end", resolve);
+            stream.once("error", reject);
+        });
+        this.resources.floodSendPromise = this.resources.instance?.sendStream("stdin", stream, {
+            signal: abortController.signal,
+            headers: { "x-scramjet-flood-correlation-id": correlationId },
+        });
+        this.resources.floodResponseClosedPromise = this.resources.floodSendPromise?.then((responseStream: any) => new Promise<void>((resolve, reject) => {
+            if (responseStream?.readableEnded || responseStream?.complete) {
+                resolve();
+                return;
+            }
+            let settled = false;
+            const finish = (error?: unknown) => {
+                if (settled) return;
+                settled = true;
+                responseStream?.removeListener?.("close", onClose);
+                responseStream?.removeListener?.("end", onEnd);
+                responseStream?.removeListener?.("error", onError);
+                if (error) reject(error);
+                else resolve();
+            };
+            const onClose = () => finish();
+            const onEnd = () => finish();
+            const onError = (error: unknown) => finish(error);
+            responseStream?.once?.("close", onClose);
+            responseStream?.once?.("end", onEnd);
+            responseStream?.once?.("error", onError);
+        }));
+        this.resources.floodHubRequestLifecycleWaiter = hostUtils.createStructuredOutputWaiter("abort-close", "/stdin", correlationId);
+        this.resources.markFloodRunnerExpected = () => {
+            if (processId) memoryRegistry.markProcessesAsExpectedToExit([processId]);
+        };
 
+        const onEnd = () => rej(new Error(`Flood stream ended after ${i}kb`));
+        const onPause = () => {
+            stream.removeListener("end", onEnd);
+            console.log(`Stream paused, sent ${i}kb`);
+            res();
+        };
         stream
-            .once("pause", () => {
-                console.log(`Stream paused, sent ${i}kb`);
-                res();
-            })
-            .on("pause", () => {
-                console.log(`=== Stream paused, sent ${i}kb`);
-            })
-            .once("end", rej);
+            .once("pause", onPause)
+            .once("end", onEnd);
     });
 });
 
@@ -726,7 +1034,21 @@ When("keep instance streams {string}", async function(this: CustomWorld, streamN
     streamNames.split(",").map((streamName: InstanceOutputStream) => {
         if (!this.resources.instance) assert.fail("Instance not existent");
 
-        streams[streamName] = this.resources.instance.getStream(streamName).then((data) => streamToString(data));
+        const dataPromise = this.resources.instance.getStream(streamName);
+        // The response stream has one producer owner. Tee it immediately so
+        // the live "contains" assertion can observe bytes before the runner
+        // ends, while the kept-stream assertion independently drains a buffer.
+        // Attaching two readers to the broker response itself races teardown
+        // and can cause ERR_STREAM_PREMATURE_CLOSE.
+        const tee = dataPromise.then(data => {
+            const live = new PassThrough();
+            const buffered = new PassThrough();
+            data.pipe(live);
+            data.pipe(buffered);
+            return { live, buffered };
+        });
+        streams[streamName] = tee.then(({ buffered }) => collectStreamUntilEndOrSignal(buffered, runnerEnded));
+        streamContains[streamName] = tee.then(({ live }) => live);
     });
 });
 
@@ -750,7 +1072,7 @@ Then("it returns the root package version", function() {
     // Remove git hash from response to not complicate tests.
     delete actualApiResponse.build;
 
-    assert.deepStrictEqual(actualApiResponse, { version, service: "@scramjet/host", apiVersion: "v1" });
+    assert.deepStrictEqual(actualApiResponse, expectedHostVersion(version));
 });
 
 // ? When I get load-check
@@ -799,7 +1121,7 @@ When(
 When("delete sequence and volumes", async function(this: CustomWorld) {
     const sequenceId = this.resources.sequence!.id;
 
-    await hostClient.deleteSequence(sequenceId);
+    await getHostClient(this).deleteSequence(sequenceId);
 });
 
 When("confirm that sequence and volumes are removed", async function(this: CustomWorld) {
@@ -807,8 +1129,8 @@ When("confirm that sequence and volumes are removed", async function(this: Custo
 
     if (!sequenceId) assert.fail();
 
-    const sequences = await hostClient.listSequences() || [];
-    const sequenceExist = !!sequences.find((sequenceInfo) => sequenceId === sequenceInfo.id);
+    const sequences = await getHostClient(this).listSequences() || [];
+    const sequenceExist = !!sequences.find((sequenceInfo: any) => sequenceId === sequenceInfo.id);
 
     assert.equal(sequenceExist, false);
 });
@@ -879,6 +1201,17 @@ Then("{string} is {string}", async function(this: CustomWorld, stream, text) {
     assert.equal(text, response);
 });
 
+Then("release completed finite output resources", async function(this: CustomWorld) {
+    this.resources.instance = undefined;
+    this.resources.sequence = undefined;
+    this.resources.outStream?.destroy();
+    this.resources.outStream = undefined;
+    actualStatusResponse = undefined;
+    actualHealthResponse = undefined;
+    actualApiResponse = undefined;
+    await new Promise<void>(resolve => setImmediate(resolve));
+});
+
 Then("{string} will be data named {string}", async function(this: CustomWorld, streamName, dataName) {
     const stream = await this.resources.instance!.getStream(streamName);
     const response = await waitUntilStreamEquals(stream, expectedResponses[dataName]);
@@ -887,6 +1220,12 @@ Then("{string} will be data named {string}", async function(this: CustomWorld, s
 });
 
 Then("{string} contains {string}", async function(this: CustomWorld, stream, text) {
+    if (Object.prototype.hasOwnProperty.call(streamContains, stream)) {
+        const data = await streamContains[stream];
+        if (!data) assert.fail("No output!");
+        await waitUntilStreamContains(data, text);
+        return;
+    }
     const output = (await this.resources.instance?.getStream(stream))?.pipe(new PassThrough({ encoding: "utf-8" }));
 
     if (!output) assert.fail("No output!");
@@ -928,7 +1267,7 @@ Then(
         ps.write(data);
         ps.end();
 
-        assert.ok(sendData);
+        await sendData;
     }
 );
 
@@ -946,6 +1285,7 @@ Then("send json data {string} named {string}", async (data: any, topic: string) 
     ps.write(data);
     ps.end();
 
+    await sendData;
     assert.ok(sendData);
 });
 
@@ -966,15 +1306,13 @@ Then("confirm data defined as {string} will be received", async function(this: C
 });
 
 Then("send data from file {string} named {string}", async (path: any, topic: string) => {
+    await fs.promises.access(path);
     const readStream = fs.createReadStream(path);
-    const sendData = hostClient.sendNamedData<Writable>(topic, readStream, {}, "application/x-ndjson", true);
 
-    readStream.push(null);
-
-    assert.ok(sendData);
+    await hostClient.sendNamedData<Writable>(topic, readStream, {}, "application/x-ndjson", true);
 });
 
-Then("get output without waiting for the end", { timeout: 6e4 }, async function(this: CustomWorld) {
+Then("get output without waiting for the end", { timeout: 30000 }, async function(this: CustomWorld) {
     const output = await this.resources.instance!.getStream("output");
 
     this.resources.outStream = output;
@@ -994,7 +1332,7 @@ Given("topic {string} is created", async function(this: CustomWorld, topicId: st
 Then("confirm topics contain {string}", async function(this: CustomWorld, topicId: string) {
     const topics = await hostClient.getTopics();
 
-    const topic = topics.find((topicElement) => topicElement.topicName === topicId);
+    const topic = topics.find((topicElement: any) => topicElement.topicName === topicId);
 
     assert.notEqual(topic, undefined);
 });
@@ -1005,7 +1343,7 @@ Then("remove topic {string}", async function(this: CustomWorld, topicId: string)
 
 Then("confirm topic {string} is removed", async function(this: CustomWorld, topicName: string) {
     const topics = await hostClient.getTopics();
-    const removedTopic = topics.find((topicElement) => topicElement.topicName === topicName);
+    const removedTopic = topics.find((topicElement: any) => topicElement.topicName === topicName);
 
     assert.equal(removedTopic, undefined);
 

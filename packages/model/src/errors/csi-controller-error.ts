@@ -1,4 +1,4 @@
-import { CSIControllerErrorCode } from "@scramjet/types";
+import { CSIControllerErrorCode } from "@scramjet/runtime-types";
 import { AppError } from "./app-error";
 
 export type ICSIControllerErrorData = any;

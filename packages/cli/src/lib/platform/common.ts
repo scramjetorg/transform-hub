@@ -3,9 +3,10 @@ import { sessionConfig, profileManager, ProfileConfig } from "../config";
 import { displayError, displayMessage } from "../output";
 import { ClientUtils, ClientUtilsCustomAgent } from "@scramjet/client-utils";
 import { configEnv, isProductionEnv } from "../../types";
-import { Command } from "commander";
 import http from "http";
 import https from "https";
+import { CapabilityUnavailableError } from "../capabilities";
+import { shouldAttachApiClientLogger } from "../api-client-logging";
 
 /**
  * Returns host client for host pointed by command options.
@@ -13,7 +14,9 @@ import https from "https";
  * @returns {MiddlewareClient} Host client.
  */
 export const getMiddlewareClient = (): MiddlewareClient => {
-    const { middlewareApiUrl, log:{ debug } } = profileManager.getProfileConfig().get();
+    const configuration = profileManager.getProfileConfig().get();
+    if (configuration.verser2) throw new CapabilityUnavailableError("Middleware-owned command");
+    const { middlewareApiUrl, log:{ debug, apiClients } } = configuration;
 
     if (!middlewareApiUrl) {
         throw new Error("Middleware API URL is not specified");
@@ -25,7 +28,7 @@ export const getMiddlewareClient = (): MiddlewareClient => {
         new ClientUtilsCustomAgent(middlewareApiUrl, new agent({ keepAlive: true }))
     );
 
-    if (debug) {
+    if (shouldAttachApiClientLogger(debug, apiClients)) {
         middlewareClient.client.addLogger({
             ok(result: any) {
                 const { status, statusText, url } = result;
@@ -91,7 +94,6 @@ export const setPlatformDefaults = async () => {
 
 const profileConfig = profileManager.getProfileConfig();
 const platformRequirementsValid = (
-    program: Command & { _helpShortFlag?: any, _helpLongFlag?: any },
     token: string,
     env: configEnv,
     middlewareApiUrl: string
@@ -99,19 +101,20 @@ const platformRequirementsValid = (
     token &&
     isProductionEnv(env) &&
     middlewareApiUrl &&
-    !process.argv.includes(program._helpShortFlag) &&
-    !process.argv.includes(program._helpLongFlag);
+    !process.argv.includes("--help") &&
+    !process.argv.includes("-h");
 
-export const initPlatform = async (program: Command) => {
+export const initPlatform = async () => {
     if (!isProductionEnv(profileConfig.env)) return;
-    const { token, env, middlewareApiUrl } = profileConfig.get();
+    const { token, env, middlewareApiUrl, verser2 } = profileConfig.get();
+    if (verser2) return;
 
     /**
      * Set the default values for platform only when all required settings
      * are provided in the profile configuration.
      * Do not set the default platform values when displaying the help commands.
      */
-    if (platformRequirementsValid(program, token, env, middlewareApiUrl)) {
+    if (platformRequirementsValid(token, env, middlewareApiUrl)) {
         ClientUtils.setDefaultHeaders({ Authorization: `Bearer ${token}`, });
 
         await setPlatformDefaults();

@@ -1,0 +1,82 @@
+name: Devel BDD image publication
+
+on:
+  push:
+    branches: [devel]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: devel-bdd-node-image-${{ github.sha }}
+  # A source-SHA image publication must complete once it starts so a release PR
+  # can resolve that exact image to a digest.
+  cancel-in-progress: false
+
+jobs:
+  publish-bdd-node-image:
+    name: Devel / publish BDD Node image
+    if: ${{ github.repository == 'scramjetorg/transform-hub' && github.event_name == 'push' && github.ref == 'refs/heads/devel' }}
+    permissions:
+      contents: read
+      attestations: write
+      id-token: write
+      packages: write
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          ref: ${{ github.sha }}
+
+      - id: source
+        name: Devel / verify BDD image source identity
+        shell: bash
+        run: |
+          source_sha="$(git rev-parse HEAD)"
+          test "$source_sha" = "$GITHUB_SHA"
+          printf 'sha=%s\n' "$source_sha" >> "$GITHUB_OUTPUT"
+
+      - name: Devel / authenticate automatic token to GHCR
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          test -n "$GITHUB_TOKEN"
+          printf '%s' "$GITHUB_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+
+      - name: Devel / set up Buildx for attestation
+        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c
+
+      - id: build
+        name: Devel / build and push BDD Node image
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83
+        with:
+          context: .
+          file: docker/Dockerfile.bdd-bun
+          platforms: linux/amd64
+          provenance: mode=max
+          push: true
+          sbom: true
+          tags: ghcr.io/scramjetorg/transform-hub/bdd-node:devel-${{ steps.source.outputs.sha }}
+
+      - name: Devel / verify pushed BDD Node image digest
+        shell: bash
+        env:
+          BDD_IMAGE_REPOSITORY: ghcr.io/scramjetorg/transform-hub/bdd-node
+          BDD_IMAGE_DIGEST: ${{ steps.build.outputs.digest }}
+        run: |
+          [[ "$BDD_IMAGE_DIGEST" =~ ^sha256:[a-f0-9]{64}$ ]]
+          docker buildx imagetools inspect "$BDD_IMAGE_REPOSITORY@$BDD_IMAGE_DIGEST" >/dev/null
+
+      - name: Devel / attest BDD Node image provenance
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8
+        with:
+          subject-name: ghcr.io/scramjetorg/transform-hub/bdd-node
+          subject-digest: ${{ steps.build.outputs.digest }}
+          push-to-registry: true
+
+      - name: Devel / remove GHCR credentials
+        if: ${{ always() }}
+        run: docker logout ghcr.io

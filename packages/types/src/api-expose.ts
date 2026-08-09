@@ -5,6 +5,7 @@ import { ICommunicationHandler } from "./communication-handler";
 import { ControlMessageCode, MonitoringMessageCode } from "./message-streams";
 import { IObjectLogger } from "./object-logger";
 import { MaybePromise } from "./utils";
+import { ListenOptions } from "net";
 
 export type ParsedMessage = IncomingMessage & {
     body?: any;
@@ -89,6 +90,32 @@ export interface APIError extends Error {
     cause?: Error;
 }
 
+export type ForwardStrategy = (req: IncomingMessage, urls: string[]) => MaybePromise<[string, string]>;
+
+export type IDuplexStream = Duplex & {
+    input: Readable;
+    output: Writable;
+};
+
+// listen(port?: number, hostname?: string, backlog?: number, listeningListener?: () => void): this;
+// listen(port?: number, hostname?: string, listeningListener?: () => void): this;
+// listen(port?: number, backlog?: number, listeningListener?: () => void): this;
+// listen(port?: number, listeningListener?: () => void): this;
+// listen(path: string, backlog?: number, listeningListener?: () => void): this;
+// listen(path: string, listeningListener?: () => void): this;
+// listen(options: ListenOptions, listeningListener?: () => void): this;
+// listen(handle: any, backlog?: number, listeningListener?: () => void): this;
+// listen(handle: any, listeningListener?: () => void): this;
+
+export type ListenArgs =
+    [ number, string?, number? ] |
+    [ number, number ] |
+    [ string, number? ] |
+    [ ListenOptions ] |
+    [ any, number? ] |
+    []
+;
+
 export interface APIBase {
     /**
      * Simple POST/DELETE request hook.
@@ -153,7 +180,9 @@ export interface APIBase {
      * @param path the request path as string or regex
      * @param callback A method to be called when the stream is ready.
      */
-    duplex(path: string | RegExp, callback: (stream: Duplex, headers: IncomingHttpHeaders) => void): void;
+    duplex(path: string | RegExp, callback: (stream: IDuplexStream, headers: IncomingHttpHeaders) => void): void;
+
+    forward(path: string, urls: string[], strategy?: ForwardStrategy): void;
 
     /**
      * Allows to register middlewares for specific paths, for all HTTP methods.
@@ -172,9 +201,36 @@ export interface APIExpose extends APIBase {
 
     log: DataStream;
     opLogger?: IObjectLogger;
+
+    create(path: string | RegExp, handler: Middleware): void;
+    delete(path: string | RegExp, handler: Middleware): void;
+    update(path: string | RegExp, handler: Middleware): void;
+    read(path: string | RegExp, handler: Middleware): void;
+    all(path: string | RegExp, handler: Middleware): void;
+    head(path: string | RegExp, handler: Middleware): void;
+    patch(path: string | RegExp, handler: Middleware): void;
+    options(path: string | RegExp, handler: Middleware): void;
+    connect(path: string | RegExp, handler: Middleware): void;
+    trace(path: string | RegExp, handler: Middleware): void;
+
     decorate(path: string | RegExp, ...decorators: Decorator[]): void;
 }
 
+export type APIMethods = "create" | "delete" | "update" | "read" | "use" | "op" | "get" | "duplex" | "upstream" | "downstream" | "forward";
+
 export interface APIRoute extends APIBase {
     lookup: Middleware;
+}
+
+export interface APIServer extends APIExpose {
+
+    /**
+     * Listens for connections on the specified host and port or path.
+     *
+     * Resolves when the server is ready to accept connections.
+     *
+     * @example
+     * await router.listen(3000, "localhost");
+     */
+    listen: (...args: ListenArgs) => Promise<void>;
 }

@@ -1,11 +1,9 @@
 import { InstanceStatus, RunnerExitCode } from "@scramjet/symbols";
-import { SequenceInfo } from "@scramjet/types";
+import { SequenceInfo } from "@scramjet/runtime-types";
 
-// eslint-disable-next-line complexity
 export const mapRunnerExitCode = async (exitcode: number, sequence: SequenceInfo): Promise<
 { message: string, exitcode: number, status: InstanceStatus }
 > => {
-// eslint-disable-next-line default-case
     switch (exitcode) {
         case RunnerExitCode.INVALID_ENV_VARS: {
             return Promise.reject({
@@ -51,8 +49,8 @@ export const mapRunnerExitCode = async (exitcode: number, sequence: SequenceInfo
             });
         }
         case RunnerExitCode.KILLED: {
-            return Promise.resolve({
-                message: "Instance killed", exitcode: RunnerExitCode.KILLED, status: InstanceStatus.COMPLETED
+            return Promise.reject({
+                message: "Instance killed", exitcode: RunnerExitCode.KILLED, status: InstanceStatus.ERRORED
             });
         }
         case RunnerExitCode.STOPPED: {
@@ -62,7 +60,7 @@ export const mapRunnerExitCode = async (exitcode: number, sequence: SequenceInfo
         }
     }
 
-    if (exitcode > 0) {
+    if (exitcode !== 0) {
         return Promise.reject({ message: "Runner failed", exitcode, status: InstanceStatus.ERRORED });
     }
 

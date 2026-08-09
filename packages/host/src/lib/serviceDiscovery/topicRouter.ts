@@ -1,38 +1,39 @@
-/* eslint-disable complexity */
-import { ObjLogger } from "@scramjet/obj-logger";
-import { APIExpose, ContentType, IObjectLogger, OpResponse, ParsedMessage, StreamOrigin, TopicState } from "@scramjet/types";
-import { ReasonPhrases } from "http-status-codes";
-import { ServiceDiscovery } from "./sd-adapter";
-import { IncomingMessage } from "http";
-import { isContentType } from "./contentType";
-import TopicId from "./topicId";
 import { CeroError } from "@scramjet/api-server";
+import { APIExpose, ParsedMessage } from "@scramjet/api-types";
+import { ObjLogger } from "@scramjet/obj-logger";
+import { IObjectLogger } from "@scramjet/runtime-types";
+import { IncomingMessage } from "http";
+import { ReasonPhrases } from "http-status-codes";
+import { ContentType, OpResponse, StreamOrigin, TopicState } from "../types/from-types";
+import { isContentType } from "./contentType";
+import { ServiceDiscovery } from "./sd-adapter";
+import TopicId from "./topicId";
 
 type TopicsPostReq = IncomingMessage & {
     body?: {
-        id?: string,
-        "content-type"?: string,
+        id?: string;
+        "content-type"?: string;
     };
 };
 
 type TopicsPostRes = {
-    id: string
-    origin: StreamOrigin
-    state: TopicState
-    contentType: ContentType
-}
+    id: string;
+    origin: StreamOrigin;
+    state: TopicState;
+    contentType: ContentType;
+};
 
 type TopicDeleteReq = IncomingMessage & {
-    params?: { topic?: string }
-}
+    params?: { topic?: string };
+};
 
 type TopicStreamReq = ParsedMessage & {
     headers?: {
-        "content-type"?: string,
-        cpm?: string
-    },
-    params?: { topic?: string }
-}
+        "content-type"?: string;
+        cpm?: string;
+    };
+    params?: { topic?: string };
+};
 
 const missingBodyId = "Missing body param: id";
 const invalidContentTypeMsg = "Unsupported content-type";
@@ -69,12 +70,18 @@ class TopicRouter {
 
         const topic = this.serviceDiscovery.createTopicIfNotExist({ topic: topicId, contentType });
 
+        await this.serviceDiscovery.update({
+            contentType,
+            topicName: topicId.toString(),
+            status: "add"
+        });
+
         return {
             opStatus: ReasonPhrases.OK,
             id: topic.id(),
             origin: topic.origin(),
             state: topic.state(),
-            contentType: topic.options().contentType,
+            contentType: topic.options().contentType
         };
     }
 
@@ -117,23 +124,68 @@ class TopicRouter {
             };
         }
 
+        // Register these before the service-discovery update.  A short request can
+        // finish while the update is in flight; registering them afterwards loses
+        // the end event and leaves the HTTP handler waiting forever.
+        let requestSettled = false;
+        let requestEnded = false;
+        let resolveRequest!: () => void;
+        let rejectRequest!: (error: Error) => void;
+        const requestCompletion = new Promise<void>((resolve, reject) => {
+            resolveRequest = resolve;
+            rejectRequest = reject;
+        });
+        const completeRequest = () => {
+            if (requestSettled) return;
+            requestSettled = true;
+            resolveRequest();
+        };
+        const endRequest = () => {
+            requestEnded = true;
+            completeRequest();
+        };
+        const closeRequest = () => {
+            if (requestEnded) return;
+            failRequest();
+        };
+        const failRequest = () => {
+            if (requestSettled) return;
+            requestSettled = true;
+            rejectRequest(new CeroError("DOWNSTREAM_REQUEST_ERROR"));
+        };
+
+        req.once("end", endRequest);
+        req.once("close", closeRequest);
+        req.once("aborted", failRequest);
+        req.once("error", failRequest);
+
+        const cleanupRequestListeners = () => {
+            req.removeListener("end", endRequest);
+            req.removeListener("close", closeRequest);
+            req.removeListener("aborted", failRequest);
+            req.removeListener("error", failRequest);
+        };
+
         topic.acceptPipe(req);
 
-        if (!cpm) {
-            await this.serviceDiscovery.update({
-                provides: topic.id(),
-                contentType: contentType,
-                topicName: topic.id(),
-                status: "add"
-            });
-        } else {
-            this.logger.debug(`Incoming Downstream CPM request for topic: '${topic.id()}, ${topic.contentType}'`);
+        try {
+            if (!cpm) {
+                await Promise.all([
+                    this.serviceDiscovery.update({
+                        provides: topic.id(),
+                        contentType: contentType,
+                        topicName: topic.id(),
+                        status: "add"
+                    }),
+                    requestCompletion
+                ]);
+            } else {
+                this.logger.debug(`Incoming Downstream CPM request for topic: '${topic.id()}, ${topic.contentType}'`);
+                await requestCompletion;
+            }
+        } finally {
+            cleanupRequestListeners();
         }
-
-        await new Promise<void>(resolve => {
-            req.on("close", () => resolve());
-            req.on("end", () => resolve());
-        });
 
         return { opStatus: ReasonPhrases.OK };
     }
@@ -166,7 +218,7 @@ class TopicRouter {
             }
 
             return topic;
-        } catch (e: any) {
+        } catch {
             throw new CeroError("ERR_INVALID_CONTENT_TYPE", undefined, invalidContentTypeMsg);
         }
     }

@@ -1,0 +1,140 @@
+name: Main production release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: main-production-release
+  cancel-in-progress: false
+
+jobs:
+  release-validation:
+    name: Release / boundary validation
+    if: ${{ github.repository == 'scramjetorg/transform-hub' && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    permissions:
+      contents: read
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          ref: ${{ github.sha }}
+
+      - uses: ./.github/actions/setup-workspace
+        with:
+          # Trusted boundary validation: read-write npm tarball cache.
+          cache-mode: read-write
+
+      - name: Release / verify aligned package boundary
+        run: node scripts/release-align.js check
+
+      - name: Release / clean package build
+        run: node node_modules/npm/bin/npm-cli.js run build:packages
+
+  production-publication:
+    name: Release / npm publish
+    if: ${{ github.repository == 'scramjetorg/transform-hub' && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    needs: [release-validation]
+    outputs:
+      identity: ${{ steps.release_identity.outputs.identity }}
+      identity-digest: ${{ steps.release_identity.outputs.identity-digest }}
+      publication-evidence: ${{ steps.publish.outputs.publication-evidence }}
+      publication-verified: ${{ steps.publish.outputs.publication-verified }}
+    permissions:
+      contents: read
+      id-token: write
+    environment: production
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          ref: ${{ github.sha }}
+
+      - uses: ./.github/actions/setup-workspace
+        with:
+          # Production publisher job holds publish credentials: cache stays off.
+          cache-mode: off
+
+      - name: Release / verify aligned package boundary
+        run: node scripts/release-align.js check
+
+      - name: Release / clean publishable package build
+        run: FLAT_PACKAGES=true MAKE_PUBLIC=true NO_INSTALL=true node scripts/build-all.js -w release --ts-config tsconfig.build.json
+
+      - id: release_identity
+        name: Release / create immutable release identity
+        env:
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          node scripts/release-main.js prepare --packages-dir dist --source-sha "$SOURCE_SHA" --node "$(node --version)" --npm "$(node node_modules/npm/bin/npm-cli.js --version)" --output "$RUNNER_TEMP/main-release.v1.json"
+          echo "identity=$(base64 -w 0 "$RUNNER_TEMP/main-release.v1.json")" >> "$GITHUB_OUTPUT"
+          echo "identity-digest=$(node -p "require(process.env.RUNNER_TEMP + '/main-release.v1.json').identityDigest")" >> "$GITHUB_OUTPUT"
+
+      - name: Release / retain immutable release manifest
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08
+        with:
+          name: main-release-manifest-${{ github.sha }}
+          path: ${{ runner.temp }}/main-release.v1.json
+          if-no-files-found: error
+          retention-days: 90
+
+      - id: publish
+        name: Release / publish all verified npm waves through trusted publishing
+        env:
+          MAIN_RELEASE_PUBLISH_ENABLED: ${{ vars.SCRAMJET_MAIN_RELEASE_PUBLISH }}
+          NPM_CONFIG_PROVENANCE: "true"
+        run: |
+          test "$MAIN_RELEASE_PUBLISH_ENABLED" = "true"
+          test -n "$ACTIONS_ID_TOKEN_REQUEST_URL"
+          test -n "$ACTIONS_ID_TOKEN_REQUEST_TOKEN"
+          test -z "${NPM_TOKEN:-}"
+          test -z "${NODE_AUTH_TOKEN:-}"
+          node scripts/release-main.js publish --release "$RUNNER_TEMP/main-release.v1.json" --packages-dir dist --output "$RUNNER_TEMP/main-release-publication.v1.json"
+          node -e 'const release = require(process.env.RUNNER_TEMP + "/main-release.v1.json"); const publication = require(process.env.RUNNER_TEMP + "/main-release-publication.v1.json"); require("./scripts/release-main.js").verifyPublication(publication, release);'
+          echo "publication-evidence=$(base64 -w 0 "$RUNNER_TEMP/main-release-publication.v1.json")" >> "$GITHUB_OUTPUT"
+          echo "publication-verified=true" >> "$GITHUB_OUTPUT"
+
+  main-checkpoint-promotion:
+    name: Release / checkpoint promotion
+    if: ${{ needs.production-publication.outputs.publication-verified == 'true' && needs.production-publication.outputs.publication-evidence != '' && github.repository == 'scramjetorg/transform-hub' && github.ref == 'refs/heads/main' }}
+    needs: [production-publication]
+    permissions:
+      contents: read
+      packages: write
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    concurrency:
+      group: checkpoint-pointer-main
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          ref: ${{ github.sha }}
+
+      - uses: ./.github/actions/setup-workspace
+        with:
+          # Checkpoint promotion job holds GHCR publish credentials: cache stays off.
+          cache-mode: off
+
+      - name: Release / build, publish, verify, and promote checkpoint
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          SCRAMJET_GHCR_SCOPED_PUBLISHER: ${{ vars.SCRAMJET_GHCR_SCOPED_PUBLISHER }}
+        run: |
+          current_sha="$(git ls-remote origin refs/heads/main | cut -f1)"
+          source_sha="$(git rev-parse HEAD)"
+          test -n "$current_sha"
+          test "$SCRAMJET_GHCR_SCOPED_PUBLISHER" = "true"
+          test -n "$GITHUB_TOKEN"
+          node scripts/checkpoint/plan.js --dry-run --branch main --source-sha "$source_sha" --current-sha "$current_sha" --output "$RUNNER_TEMP/checkpoint-promotion"
+          printf '%s' "$GITHUB_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+          trap 'docker logout ghcr.io' EXIT
+          node scripts/checkpoint/publish.js --plan "$RUNNER_TEMP/checkpoint-promotion/checkpoint-plan.v1.json" --branch main --source-sha "$source_sha" --current-sha "$current_sha" --npm-cache "$HOME/.npm"

@@ -6,6 +6,7 @@ import { SessionConfig } from "./sessionConfig";
 import { ProfileManager } from "./profileManager";
 import ProfileConfig from "./profileConfig";
 import ReadOnlyProfileConfig from "./readOnlyProfileConfig";
+import { parseConfigSelection } from "./args";
 
 export { ProfileConfig, ReadOnlyProfileConfig };
 export { isProfileConfig } from "./profileManager";
@@ -17,7 +18,6 @@ export const sessionConfig = new SessionConfig();
 
 profileManager.setConfigProfile(profileManager.getProfileName());
 
-// eslint-disable-next-line complexity
 export const initConfig = () => {
     let profile = siConfig.profile;
 
@@ -26,16 +26,12 @@ export const initConfig = () => {
         profile = defaultConfigName;
     }
 
-    if (process.argv.includes("--config-path")) {
-        const idx = process.argv.lastIndexOf("--config-path");
+    const configSelection = parseConfigSelection(process.argv.slice(2));
 
-        if (process.argv.length <= idx + 1) throw Error("--config-path argument missing");
-        profileManager.setFlagProfilePath(process.argv[idx + 1]);
-    } else if (process.argv.includes("--config")) {
-        const idx = process.argv.lastIndexOf("--config");
-
-        if (process.argv.length <= idx + 1) throw Error("--config argument missing");
-        profileManager.setFlagProfile(process.argv[idx + 1]);
+    if (configSelection?.kind === "readonly-path") {
+        profileManager.setFlagProfilePath(configSelection.value);
+    } else if (configSelection?.kind === "path") {
+        profileManager.setFlagConfigPath(configSelection.value);
     } else if (envs.siConfigPathEnv) profileManager.setEnvProfilePath(envs.siConfigPathEnv);
     else if (envs.siConfigEnv) profileManager.setEnvProfile(envs.siConfigEnv);
     else profileManager.setConfigProfile(profile);

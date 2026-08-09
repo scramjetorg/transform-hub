@@ -1,0 +1,61 @@
+name: Devel validation
+
+on:
+  push:
+    branches: [devel]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: devel-validation
+  cancel-in-progress: true
+
+jobs:
+  fast-gates:
+    name: Devel / fast gates
+    if: ${{ github.repository == 'scramjetorg/transform-hub' && github.event_name == 'push' && github.ref == 'refs/heads/devel' }}
+    permissions:
+      contents: read
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      # Devel validation is fast-gates-only: it runs the non-build static gates
+      # but never builds packages, runs package tests, installs Bun, or runs BDD.
+      # The independent devel-bdd-image.yml publisher remains the provenance-
+      # attested BDD image source required by Release PR prerelease BDD.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          ref: ${{ github.sha }}
+
+      # Catch malformed package-lock.json before setup-workspace's npm ci.
+      # Rebuilds the lock with the project-pinned npm via npx and fails on any diff.
+      - name: Validate package-lock.json reproducibility
+        run: |
+          npm run build:lockfile
+          git diff --exit-code -- package-lock.json
+
+      - uses: ./.github/actions/setup-workspace
+        with:
+          # Devel fast gates are trusted push code: read-write npm tarball cache.
+          cache-mode: read-write
+          checkpoint-branch: devel
+
+      - name: Repository security policy
+        run: npm run check:security-workflow
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Dependency and release alignment
+        run: npm run release:align:check
+
+      - name: Runtime invariants
+        run: npm run check:runtime-invariants
+
+      - name: License validation
+        run: npm run check:licenses

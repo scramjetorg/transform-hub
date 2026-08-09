@@ -10,6 +10,8 @@ export type Instance = {
     provides?: string,
     requires?: string,
     sequence: SequenceInfoInstance,
+    /** Public instance label (optional) */
+    instanceName?: string,
     ports?: Record<string, number>,
     created?: Date,
     started?: Date,

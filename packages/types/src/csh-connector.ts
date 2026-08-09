@@ -32,5 +32,5 @@ export interface IHostClient extends IComponent {
 
     logStream: UpstreamStreamsConfig[CC.LOG]
 
-    packageStream: UpstreamStreamsConfig[CC.PACKAGE]
+    requestsStream?: UpstreamStreamsConfig[CC.REQUESTS]
 }

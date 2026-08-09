@@ -1,0 +1,110 @@
+name: Setup workspace
+description: >
+  Configure Node 22 after the caller has checked out an explicit ref,
+  verify the toolchain, and run a pristine `npm ci`.
+
+  `cache-mode` controls npm tarball caching through an explicit Actions cache
+  of the npm cache directory (never node_modules): `off` (default) never reads
+  or writes an Actions cache, `restore-only` restores an existing cache before
+  install, and `read-write` additionally saves after a successful install.
+  Only trusted callers (push, release, or scheduled workflows) should use
+  read-write to mitigate supply-chain risk from cache poisoning.
+  restore-only may only restore a previously validated cache and never saves.
+  A verified dependency checkpoint remains the preferred source:
+  when it supplies `CHECKPOINT_NPM_CACHE`, Actions-cache restore/save is
+  skipped and the verified checkpoint cache is used for `npm ci`.
+
+  Callers must perform credential-safe checkout first. node_modules is never
+  cached or handed off across jobs.
+
+inputs:
+  cache-mode:
+    description: >
+      npm tarball cache handling. "off" (default) never reads or writes an
+      Actions cache; "restore-only" restores an existing cache before install;
+      "read-write" also saves after a successful install when no exact cache
+      was restored. Use read-write only for trusted callers that have independently
+      evaluated the cache-poisoning risk.
+    required: false
+    default: "off"
+  checkpoint-branch:
+    description: Trusted checkpoint branch to verify before installing dependencies.
+    required: false
+    default: ""
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+      with:
+        node-version: "22"
+        # The automatic package-manager cache is disabled; npm tarball caching
+        # is handled explicitly below with pinned actions/cache steps.
+        package-manager-cache: false
+
+    - name: Validate cache mode
+      shell: bash
+      run: |
+        case "${{ inputs.cache-mode }}" in
+          off|restore-only|read-write) ;;
+          *) echo "Unsupported cache-mode: ${{ inputs.cache-mode }}" >&2; exit 1 ;;
+        esac
+
+    - name: Install pinned npm
+      shell: bash
+      run: |
+        npm install --global --ignore-scripts npm@11.19.0
+        test "$(npm --version)" = "11.19.0"
+
+    - name: Verify Node.js version and npm availability
+      shell: bash
+      run: |
+        MAJOR=$(node -e "process.stdout.write(process.version.slice(1).split('.')[0])")
+        if [ "$MAJOR" -ne 22 ]; then
+          echo "Node.js major version is $MAJOR, expected 22"
+          exit 1
+        fi
+        npm --version >/dev/null 2>&1 || { echo "npm not available"; exit 1; }
+
+    - name: Resolve npm cache directory and epoch
+      id: npm-cache
+      shell: bash
+      run: |
+        npm_cache_dir="$(npm config get cache)"
+        test -n "$npm_cache_dir"
+        printf 'cache-dir=%s\n' "$npm_cache_dir" >> "$GITHUB_OUTPUT"
+        # Daily epoch rotates the exact cache key so entries stay fresh and no
+        # manual invalidation is needed; the remaining key components pin the
+        # platform, toolchain, and exact root lockfile.
+        printf 'epoch=%s\n' "$(( $(date +%s) / 86400 ))" >> "$GITHUB_OUTPUT"
+
+    - name: Restore verified dependency checkpoint
+      if: ${{ inputs.checkpoint-branch != '' }}
+      shell: bash
+      run: node scripts/checkpoint/consume.js --branch "${{ inputs.checkpoint-branch }}"
+
+    - name: Restore npm tarball cache
+      id: npm-cache-restore
+      if: ${{ inputs.cache-mode != 'off' && env.CHECKPOINT_NPM_CACHE == '' }}
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+      with:
+        path: ${{ steps.npm-cache.outputs.cache-dir }}
+        key: npm-${{ steps.npm-cache.outputs.epoch }}-${{ runner.os }}-${{ runner.arch }}-node22-npm11.19.0-${{ hashFiles('package-lock.json') }}
+
+    - name: Install dependencies
+      shell: bash
+      run: |
+        if [ -n "${CHECKPOINT_NPM_CACHE:-}" ]; then
+          npm ci --cache "$CHECKPOINT_NPM_CACHE"
+        elif [ "${{ steps.npm-cache-restore.outputs.cache-hit }}" = "true" ]; then
+          npm ci --cache "${{ steps.npm-cache.outputs.cache-dir }}"
+        else
+          npm ci
+        fi
+
+    - name: Save npm tarball cache
+      if: ${{ inputs.cache-mode == 'read-write' && steps.npm-cache-restore.outputs.cache-hit != 'true' && env.CHECKPOINT_NPM_CACHE == '' }}
+      uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+      with:
+        path: ${{ steps.npm-cache.outputs.cache-dir }}
+        key: npm-${{ steps.npm-cache.outputs.epoch }}-${{ runner.os }}-${{ runner.arch }}-node22-npm11.19.0-${{ hashFiles('package-lock.json') }}

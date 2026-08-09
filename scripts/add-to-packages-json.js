@@ -1,26 +1,25 @@
 #!/usr/bin/env node
-/* eslint-disable padding-line-between-statements */
 
 const { glob } = require("glob");
 const { readFileSync, writeFileSync } = require("fs");
 const { resolve } = require("path");
-const cwd = resolve(__dirname, "../");
 const options = {};
 const [path, _value, match] = process.argv.slice(2).reduce((acc, x) => {
     if (x.startsWith("--"))
         if (x.includes("=")) {
             const [k, v] = x.substr(2).split("="); options[k] = v;
         } else options[x.substr(2)] = true;
-    else if (x.startsWith("-")) x.substr(1).split("").forEach(y => { options[y] = true; });
-    else acc.push(x);
-    return acc;
-}, []);
+        else if (x.startsWith("-")) x.substr(1).split("").forEach(y => { options[y] = true; });
+        else acc.push(x);
+        return acc;
+    }, []);
 
-if (!path || options.help || options.h || options["?"]) {
-    console.error(`Usage: ${process.argv[1]} [--pattern=<json-glob>] [--delete|-d] [--override|-o] <key-path> [<value>] [<name-match>]`);
-    process.exit(1);
-}
+    if (!path || options.help || options.h || options["?"]) {
+        console.error(`Usage: ${process.argv[1]} [--cwd=<path>] [--pattern=<json-glob>] [--delete|-d] [--override|-o] <key-path> [<value>] [<name-match>]`);
+        process.exit(1);
+    }
 
+const cwd = options.cwd ? resolve(process.cwd(), options.cwd) : resolve(__dirname, "../");
 const chunks = path.split(".");
 const key = chunks.pop();
 const re = match ? require("globrex")(match).regex : "";
@@ -38,7 +37,6 @@ for (const file of packages) {
 
     try {
         const str = readFileSync(resolve(cwd, file), { encoding: "utf-8" });
-        // eslint-disable-next-line import/no-dynamic-require
         const contents = JSON.parse(str);
 
         if (del || value) {

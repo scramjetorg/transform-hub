@@ -1,45 +1,58 @@
 {
   "name": "@scramjet/sth",
-  "version": "1.0.1",
+  "version": "2.0.0",
   "description": "Scramjet Transform Hub is a deployment and execution platform. Once installed on a server, it will allow you to start your programs and keep them running on a remote machine. You will be able to start programs in the background or connect to them and see their output directly on your terminal. You will be able to pipe your local data to the program as if it was running from your terminal. You can start your server in AWS, Google Cloud or Azure, start it on your local machine, install it on a Raspberry Pi or wherever else you'd like.",
   "main": "src/index.ts",
   "bin": {
     "scramjet-transform-hub": "src/bin/hub.ts",
-    "sth": "src/bin/hub.ts"
+    "sth": "src/bin/hub.ts",
+    "sth-csr-enrollment": "src/bin/csr-enrollment.ts"
   },
   "scripts": {
     "start": "ts-node ./src/index",
-    "build:docs": "typedoc",
     "build": "../../scripts/build-all.js --config-name=tsconfig.build.json --copy-dist",
     "prebuild:docker": "cd ../.. && scripts/build-all.js --no-install --link-packages -d packages/sth --ts-config tsconfig.build.json",
-    "build:docker": "docker build -t scramjetorg/sth:$(git rev-parse HEAD) -f Dockerfile ../../",
+    "build:docker": "docker build -t scramjetorg/sth:$(git rev-parse HEAD) -t scramjetorg/sth:dev -f Dockerfile ../../",
     "clean": "rm -rf ./dist .bic_cache",
-    "test": "echo no tests yet -- # npm run test:ava",
-    "test:ava": "ava"
+    "test": "npm run test:ava",
+    "test:ava": "node ../../scripts/run-ava.js"
   },
   "author": "Scramjet <open-source@scramjet.org>",
-  "license": "AGPL-3.0",
+  "license": "MIT",
   "dependencies": {
-    "@scramjet/host": "^1.0.1",
-    "@scramjet/obj-logger": "^1.0.1",
-    "@scramjet/sth-config": "^1.0.1",
-    "@scramjet/utility": "^1.0.1",
-    "commander": "^8.3.0"
+    "@scramjet/adapters": "2.0.0",
+    "@scramjet/api-types": "^2.0.0",
+    "@scramjet/config": "^2.0.0",
+    "@scramjet/host": "^2.0.0",
+    "@scramjet/obj-logger": "^2.0.0",
+    "@scramjet/utility": "^2.0.0"
   },
   "devDependencies": {
-    "@scramjet/model": "^1.0.1",
-    "@scramjet/types": "^1.0.1",
-    "@types/node": "15.12.5",
-    "ava": "^3.15.0",
+    "@ava/typescript": "^7.0.0",
+    "@scramjet/model": "^2.0.0",
+    "@scramjet/runtime-types": "^2.0.0",
+    "@scramjet/types": "^2.0.0",
+    "@types/node": "^22.15.0",
+    "ava": "^8.0.0",
     "ts-node": "^10.9.1",
-    "typedoc": "0.23.17",
-    "typedoc-plugin-markdown": "3.13.6",
     "typescript": "~4.7.4"
   },
   "readme": "README.md",
   "assets": [
     "sth-logo.svg",
     "postinstall.js"
+  ],
+  "files": [
+    "**/*.js",
+    "**/*.d.ts",
+    "**/*.json",
+    "!src/**",
+    "!test/**",
+    "!tests/**",
+    "postinstall.js",
+    "sth-logo.svg",
+    "!**/*.map",
+    "!**/*.tsbuildinfo"
   ],
   "funding": [
     {
@@ -52,19 +65,23 @@
     }
   ],
   "ava": {
-    "extensions": [
-      "ts"
-    ],
     "files": [
       "**/*.spec.ts"
     ],
     "require": [
       "ts-node/register"
-    ]
+    ],
+    "typescript": {
+      "compile": false,
+      "rewritePaths": {
+        "./": "../.ava-sth/"
+      }
+    }
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/scramjetorg/transform-hub.git"
+    "url": "https://github.com/scramjetorg/transform-hub.git",
+    "directory": "packages/sth"
   },
   "postBuildOverride": {
     "scripts": {

@@ -1,4 +1,4 @@
-import { TelemetryAdaptersConfig } from "@scramjet/types";
+import { TelemetryAdaptersConfig } from "@scramjet/api-types";
 import { ITelemetryAdapter } from "./types";
 
 const adapters = new Map<string, string>([

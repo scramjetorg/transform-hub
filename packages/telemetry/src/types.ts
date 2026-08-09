@@ -1,5 +1,5 @@
 import { ObjLogger } from "@scramjet/obj-logger";
-import { TelemetryAdaptersConfig } from "@scramjet/types";
+import { TelemetryAdaptersConfig } from "@scramjet/api-types";
 
 export type logLevel = "debug" | "info" | "warn" | "error";
 

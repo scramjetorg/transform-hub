@@ -26,7 +26,7 @@ class PrePack {
         const packageDirName = this.currDir.split("/").pop();
 
         if (this.options.distPackDir) {
-            this.rootDistPackPath = join(this.options.distPackDir, packageDirName);
+            this.rootDistPackPath = join(this.options.outDir, packageDirName);
         } else if (this.options.rootDistPack) {
             this.rootDistPackPath = this.options.rootDistPack;
         } else if (this.options.localCopy) {
@@ -52,7 +52,7 @@ class PrePack {
                 if (!this.currPackageJson.name)
                     throw new Error("Package has no name!");
 
-                this.rootDistPackPath = path.join(this.rootDir, "dist", this.currPackageJson.name.replace(/[^\w\d]+/g, "-").replace(/^\-|\-$/, ""));
+                this.rootDistPackPath = path.join(this.options.outDir, this.currPackageJson.name.replace(/[^\w\d]+/g, "-").replace(/^\-|\-$/, ""));
             }
 
             await this.readRootPackage();
@@ -117,7 +117,7 @@ class PrePack {
                 const contents = await fse.readJSON(packageJson);
 
                 return [contents.name, path.basename(path.dirname(packageJson))];
-            } catch (e) {
+            } catch {
                 console.warn(`Can't read package.json (${packageJson}) `);
                 return null;
             }
@@ -142,7 +142,7 @@ class PrePack {
     }
 
     async install(extraParams = "", verbose = false) {
-        return runCommand(`cd ${this.rootDistPackPath} && npx -y npm@8 install${extraParams}`, verbose);
+        return runCommand(`cd ${this.rootDistPackPath} && npx npm install${extraParams}`, verbose);
     }
 
     async isReadable(file) {
@@ -152,9 +152,11 @@ class PrePack {
     async copyFiles() {
         // we should copy these from packages if exist.
         const copies = [
-            this.copyToDist(this.rootDir, this.LICENSE_FILENAME)
         ];
 
+        if (await this.isReadable(path.join(this.currDir, this.LICENSE_FILENAME))) {
+            copies.push(this.copyToDist(this.rootDir, this.LICENSE_FILENAME));
+        }
         if (await this.isReadable(path.join(this.currDir, "README.md"))) {
             copies.push(this.copyToDist(this.currDir, "README.md"));
         }
@@ -206,7 +208,6 @@ class PrePack {
         return { ...dependencies };
     }
 
-    // eslint-disable-next-line complexity
     async transformPackageJson() {
         const content = this.currPackageJson;
 
@@ -214,7 +215,7 @@ class PrePack {
 
         const dependencies = this.localizeDependencies(content.dependencies);
         const {
-            bin: _bin, main: _main, browser: _browser,
+            bin: _bin, main: _main, browser: _browser, types: _types,
             name, version, description, keywords,
             files = this.rootPackageJson.files,
             license = this.rootPackageJson.license,
@@ -229,24 +230,32 @@ class PrePack {
             os = this.rootPackageJson.os,
             cpu = this.rootPackageJson.cpu,
             publishConfig = this.rootPackageJson.publishConfig,
+            exposePath = this.currPackageJson.exposePath,
+            tags = this.currPackageJson.tags,
             man, directories, config, peerDependencies, scramjet,
             peerDependenciesMeta, bundledDependencies, optionalDependencies, postBuildOverride
         } = content;
         const priv = !this.options.public && this.rootPackageJson.private;
-        const srcRe = (str, rp = ".js") => str.replace(/^(?:\.\/)?src\//, "./").replace(/.ts$/, rp);
+        const srcRe = (str, rp = ".js") => str.replace(/^(?:\.\/)?src\//, "./").replace(/\.ts$/, rp);
         const main = _main && srcRe(_main);
         const browser = _browser && srcRe(_browser);
         const bin = _bin && (typeof _bin === "string"
             ? srcRe(_bin)
-            : Object.entries(_bin)
+            : Object.fromEntries(
+                Object.entries(_bin)
                 .map(([k, v]) => [k, srcRe(v)])
-                // eslint-disable-next-line no-return-assign,no-sequences
-                .reduce((acc, [k, v]) => (acc[k] = srcRe(v), acc), {})
+            )
         );
-        const types = content.types || !_main || !_main.endsWith(".ts")
-            ? content.types
-            : srcRe(_main, ".d.ts")
-        ;
+
+        let types;
+
+        if (_types) {
+            types = _types && srcRe(_types, ".ts");
+        } else if (main && main.endsWith(".ts")) {
+            types = _types;
+        } else {
+            types = main && srcRe(main, ".d.ts");
+        }
 
         if (typeof bin === "object") await this.fixShebang(bin);
 
@@ -265,7 +274,7 @@ class PrePack {
             license, author, contributors, funding, files, main, types,
             bin, man, directories, repository, config, browser,
             dependencies, peerDependencies, peerDependenciesMeta,
-            bundledDependencies, optionalDependencies,
+            bundledDependencies, optionalDependencies, exposePath, tags,
             engines, os, cpu, private: priv, publishConfig, scramjet, scripts: _scripts
         };
 

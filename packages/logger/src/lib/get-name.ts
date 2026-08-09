@@ -1,4 +1,3 @@
-// eslint-disable-next-line complexity
 function getActualName(nameSource: any): string {
     if (!nameSource)
         return "logger";
@@ -13,7 +12,6 @@ function getActualName(nameSource: any): string {
     if (typeof nameSource.name === "string")
         return `${typeof nameSource}:${nameSource.name}`;
 
-    // eslint-disable-next-line no-proto
     const proto = Object.getPrototypeOf(nameSource);
 
     if (proto && proto.constructor && proto.constructor.name)

@@ -1,0 +1,8 @@
+{
+  "track_id": "scripts_dependencies_cleanup_update_20260803",
+  "type": "chore",
+  "status": "new",
+  "created_at": "2026-08-03T11:03:27Z",
+  "updated_at": "2026-08-03T11:03:27Z",
+  "description": "scripts and dependencies cleanup + update. Include an extended interview regarding clear and potential removal candidates. Sequence the work as script removal, then dependency removal, then dependency updates."
+}

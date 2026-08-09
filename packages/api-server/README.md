@@ -1,56 +1,57 @@
-# Scramjet Transform Hub API Server <!-- omit in toc -->
+# @scramjet/api-server
 
-This package is part of [Scramjet Transform Hub](https://www.npmjs.org/package/@scramjet/sth). The package provides the API Server used by STH to expose the interface.
+HTTP API server library for router construction, server setup, REST/stream handlers, middleware, and routed forwarding. Used internally by STH and Manager to serve REST APIs and stream data.
 
-## Docs
+## When to use
 
-See the code documentation here: [scramjetorg/transform-hub/docs/api-server/modules.md](https://github.com/scramjetorg/transform-hub/tree/HEAD/docs/api-server/modules.md)
+`@scramjet/api-server` is primarily an internal dependency of STH and Manager. It is useful if you are extending Transform Hub with custom API routes, building middleware, or developing alternative frontends that use the same HTTP infrastructure.
 
-## Scramjet Transform Hub
+The package provides:
 
-This package is part of [Scramjet Transform Hub](https://www.npmjs.org/package/@scramjet/sth).
+- `createServer()` factory with HTTP/HTTPS server creation and lifecycle management
+- Route registration via an internal router (`CeroRouter`)
+- Handler infrastructure for GET, CRUD, operation, stream, and forwarding handlers
+- Middleware chaining and error handling
+- Strategies for forwarded request routing (round-robin, consistent hash)
 
-Scramjet Transform Hub is a deployment and execution platform. Once installed on a server, it will allow you to start your programs and keep them running on a remote machine. You will be able to start programs in the background or connect to them and see their output directly on your terminal. You will be able to pipe your local data to the program, as if it was running from your terminal. You can start your server in AWS, Google Cloud or Azure, start it on your local machine, install it on a Raspberry Pi or wherever else you'd like.
+## Quick start
 
-## Use cases
+```typescript
+import { createServer } from "@scramjet/api-server";
 
-There's no limit what you can use it for. You want a stock checker? A chat bot? Maybe you'd like to automate your home? Retrieve sensor data? Maybe you have a lot of data and want to transfer and wrangle it? You have a database of cities and you'd like to enrich your data? You do machine learning and you want to train your set while the data is fetched in real time? Hey, you want to use it for something else and ask us if that's a good use? Ask us [via email](mailto:get@scramjet.org) or hop on our [Scramjet Discord](https://scr.je/join-community-mg1)!
+const server = createServer();
 
-## Some important links
+// Register a route using the server's handler helpers.
+server.get("/health", async () => ({ status: "ok" }));
 
-* Scramjet, the company behind [Transform Hub](https://scramjet.org)
-* The [Scramjet Framework - functional reactive stream processing framework](https://framework.scramjet.org)
-* The [Transform Hub repo on github](https://github.com/scramjetorg/transform-hub)
-* You can see the [Scramjet Transform Hub API docs here](https://github.com/scramjetorg/transform-hub/tree/HEAD/docs/api-client/README.md)
-* You can see the [CLI documentation here](https://github.com/scramjetorg/transform-hub/tree/HEAD/packages/cli/README.md), but `si help` should also be quite effective.
-* Don't forget to ⭐ this repo if you like it, `subscribe` to releases and keep visiting us for new versions and updates.
-* You can [open an issue - file a bug report or a feature request here](https://github.com/scramjetorg/transform-hub/issues/new/choose)
+await server.listen(8000, "0.0.0.0");
+```
 
-## License and contributions
+## Stability
 
-This module is licensed under AGPL-3.0 license.
+This package is **stable** as an internal Transform Hub dependency. Its public API is suitable for extension within the Transform Hub ecosystem.
 
-The Scramjet Transform Hub project is dual-licensed under the AGPL-3.0 and MIT licenses. Parts of the project that are linked with your programs are MIT licensed, the rest is AGPL.
+## See also
 
-## Contributions
+- [Transform Hub configuration](../../docs-source/transform-hub/configuration.md) for server configuration context.
+- [API client usage](../../docs-source/api/client-usage.md) for interacting with running servers.
 
-We accept valid contributions and we will be publishing a more specific project roadmap so contributors can propose features and also help us implement them. We kindly ask you that contributed commits are Signed-Off `git commit --sign-off`.
+## Install
 
-We provide support for contributors via test cases. If you expect a certain type of workflow to be officially supported, please specify and implement a test case in `Gherkin` format in `bdd` directory and include it in your pull request. More info about our BDD test you will find [here](https://github.com/scramjetorg/transform-hub/tree/HEAD/bdd/README.md).
+```bash
+npm install @scramjet/api-server
+```
 
-### Help wanted 👩‍🎓🧑👱‍♀️
+## Import
 
-The project need's your help! There's lots of work to do and we have a lot of plans. If you want to help and be part of the Scramjet team, please reach out to us, [on discord](https://scr.je/join-community-mg1) or email us: [opensource@scramjet.org](mailto:opensource@scramjet.org).
+```typescript
+import { /* ... */ } from "@scramjet/api-server";
+```
 
-### Donation 💸
+## Documentation
 
-Do you like this project? It helped you to reduce time spent on delivering your solution? You are welcome to buy us a coffee ☕ Thanks a lot! 😉
+See the [package docs](../../docs-source/README.md) for full documentation.
 
-[You can sponsor us on github](https://github.com/sponsors/scramjetorg)
+---
 
-* There's also a Paypal donation link if you prefer that:
-
-[![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=7F7V65C43EBMW)
-
-
-
+<!-- Generated by scripts/docs.js from docs-source/readmes/packages/api-server.md. Do not edit this file directly. -->

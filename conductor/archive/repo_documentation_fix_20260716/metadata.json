@@ -1,0 +1,8 @@
+{
+  "track_id": "repo_documentation_fix_20260716",
+  "type": "chore",
+  "status": "new",
+  "created_at": "2026-07-16T00:00:00Z",
+  "updated_at": "2026-07-16T00:00:00Z",
+  "description": "Make repository documentation usable by migrating generated docs, documenting Manager and security, improving product and package copy, and generating documentation indexes."
+}

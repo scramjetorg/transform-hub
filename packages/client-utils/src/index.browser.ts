@@ -17,6 +17,15 @@ export class ClientUtils extends ClientUtilsBase implements HttpClient {
     }
 }
 
+export class ClientUtilsCustomAgent extends ClientUtilsBase implements HttpClient {
+    constructor(
+        apiBase: string,
+        _agent: HttpClient,
+    ) {
+        super(apiBase, window.fetch.bind(window), normalizeUrl);
+    }
+}
+
 export { ClientError, ClientErrorCode } from "./client-error";
 export { RequestLogger } from "./types";
 

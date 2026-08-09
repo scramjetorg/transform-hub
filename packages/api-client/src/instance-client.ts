@@ -1,6 +1,6 @@
 import { RunnerMessageCode } from "@scramjet/symbols";
-import { EncodedControlMessage, STHRestAPI, StopSequenceMessageData, KillMessageData } from "@scramjet/types";
-import { ClientProvider, HttpClient, SendStreamOptions } from "@scramjet/client-utils";
+import { EncodedControlMessage, STHRestAPI, StopSequenceMessageData, KillMessageData } from "@scramjet/api-types";
+import { ClientProvider, HttpClient, HttpMethod, SendStreamOptions } from "@scramjet/client-utils";
 
 export type InstanceInputStream = "stdin" | "input";
 export type InstanceOutputStream = "stdout" | "stderr" | "output" | "log";
@@ -133,6 +133,27 @@ export class InstanceClient {
      */
     async getHealth() {
         return this.clientUtils.get<STHRestAPI.GetHealthResponse>(`${this.instanceURL}/health`);
+    }
+
+    getRPCClient(): HttpClient {
+        const clientUtils = this.clientUtils;
+        const instanceURL = this.instanceURL;
+
+        const rewriteURL = (url: string) => {
+            if (url.startsWith("/")) url = url.slice(1);
+            return `${instanceURL}/rpc/${url}`;
+        };
+
+        return {
+            get: (url: string, ...args) => clientUtils.get(rewriteURL(url), ...args),
+            post: (url: string, ...args) => clientUtils.post(rewriteURL(url), ...args),
+            put: (url: string, ...args) => clientUtils.put(rewriteURL(url), ...args),
+            delete: (url: string, ...args) => clientUtils.delete(rewriteURL(url), ...args),
+            getStream: (url: string, ...args) => clientUtils.getStream(rewriteURL(url), ...args),
+            sendStream: (url: string, ...args) => clientUtils.sendStream(rewriteURL(url), ...args),
+            request: (method: HttpMethod, url: string, ...args) => clientUtils.request(method, rewriteURL(url), ...args),
+            addLogger: (logger) => clientUtils.addLogger(logger),
+        };
     }
 
     /**

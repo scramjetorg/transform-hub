@@ -1,0 +1,6 @@
+{
+  "name": "@scramjet/bdd-args-to-output",
+  "version": "1.0.0",
+  "main": "index.js",
+  "private": true
+}

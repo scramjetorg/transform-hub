@@ -17,8 +17,17 @@ export default class ReadOnlyProfileConfig extends ReadOnlyConfigFileDefault<Pro
     get token() { return this.get().token; }
     protected get log() { return this.get().log; }
     get debug() { return this.get().log.debug; }
+    get apiClients() { return this.get().log.apiClients !== false; }
     get format() { return this.get().log.format; }
     get path() { return this.file.path; }
+    get(): ProfileConfigEntity {
+        const stored = super.get() as ProfileConfigEntity;
+        const { verser2Draft: _draft, ...active } = stored;
+        return active;
+    }
+    getEntry(key: keyof ProfileConfigEntity): any | null {
+        return key === "verser2Draft" ? null : super.getEntry(key);
+    }
 
     validate(config: Object): boolean {
         if (!validateProfileKeysSize(config))

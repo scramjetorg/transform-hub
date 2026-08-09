@@ -1,6 +1,19 @@
+import { StorageAdapterType } from "./local-storage";
 import { MonitoringServerConfig } from "./monitoring-server";
 import { LogLevel } from "./object-logger";
 import { TelemetryConfig } from "./telemetry-config";
+import { STHOutboundVerser2Config } from "./verser2-transport-configuration";
+
+export type AdapterConfig = {
+    /**
+     * The adapter module name
+     */
+    name: string;
+    /**
+     * Adapter configuration
+     */
+    [key: string]: any;
+};
 
 export type ContainerConfiguration = {
     /**
@@ -12,7 +25,7 @@ export type ContainerConfiguration = {
      * Maximum memory container can allocate (megabytes).
      */
     maxMem: number;
-}
+};
 
 export type ContainerConfigurationWithExposedPorts = {
     /**
@@ -21,10 +34,10 @@ export type ContainerConfigurationWithExposedPorts = {
     hostIp: string;
 
     /**
-    * Host port number that the container's port is mapped to.
-    */
-    exposePortsRange: [number, number]
-}
+     * Host port number that the container's port is mapped to.
+     */
+    exposePortsRange: [number, number];
+};
 
 /**
  * PreRunner container configuration.
@@ -71,13 +84,13 @@ export type HostConfig = {
     infoFilePath: string;
 
     federationControl: boolean;
-}
+};
 
 export type K8SAdapterConfiguration = {
     /**
      * The Kubernetes namespace to use for running sequences
      */
-    namespace: string,
+    namespace: string;
 
     /**
      * Quota object name to determine namespace limits.
@@ -85,26 +98,54 @@ export type K8SAdapterConfiguration = {
     quotaName?: string;
 
     /**
+     * Default pull policy for the runner images.
+     */
+    defaultPullPolicy?: "IfNotPresent" | "Always" | "Never";
+
+    /**
      * Authentication configuration path
      */
-    authConfigPath?: string,
+    authConfigPath?: string;
     /**
      * The host where to start STH Pods
      */
-    sthPodHost: string,
+    sthPodHost: string;
     /**
      * Runner images to use
      */
-    runnerImages: { python3: string, node: string },
+    runnerImages: { python3: string; node: string; bun: string };
     /**
      * Path to store sequences
      */
-    sequencesRoot: string,
-    timeout?: string,
-    runnerResourcesRequestsMemory?: string,
-    runnerResourcesRequestsCpu?: string,
-    runnerResourcesLimitsMemory?: string,
-    runnerResourcesLimitsCpu?: string
+    sequencesRoot: string;
+    timeout?: number;
+    runnerResourcesRequestsMemory?: string;
+    runnerResourcesRequestsCpu?: string;
+    runnerResourcesLimitsMemory?: string;
+    runnerResourcesLimitsCpu?: string;
+};
+
+export type DockerAdapterConfiguration = {
+    /**
+     * PreRunner container configuration.
+     */
+    prerunner: PreRunnerContainerConfiguration;
+    /**
+     * Runner container configuration.
+     */
+    runner: RunnerContainerConfiguration;
+    runnerImages: {
+        python3: string;
+        node: string;
+        bun: string;
+    };
+};
+
+export interface CouchDbAdapterConf {
+    url: string;
+    dbName?: string;
+    user?: string;
+    pass?: string;
 }
 
 export type STHConfiguration = {
@@ -126,12 +167,20 @@ export type STHConfiguration = {
     /**
      * Logging level.
      */
-    logLevel: LogLevel
+    logLevel: LogLevel;
 
     /**
      * Enable colors in logging.
      */
-    logColors: boolean,
+    logColors: boolean;
+
+    /**
+     * Logging behavior.
+     */
+    log: {
+        /** Forward runner/sequence log-channel records into the host logger. */
+        forwardRunner: boolean;
+    };
 
     /**
      * CPM url.
@@ -139,18 +188,13 @@ export type STHConfiguration = {
     cpmUrl: string;
 
     /**
-     * Path to the certificate authority file for verifying self-signed CPM certs
-     */
-    cpmSslCaPath?: string;
-
-    /**
      * CPM id.
      */
     cpmId: string;
 
     cpm: {
-        maxReconnections: number,
-        reconnectionDelay: number
+        maxReconnections: number;
+        reconnectionDelay: number;
     };
 
     platform?: {
@@ -158,7 +202,7 @@ export type STHConfiguration = {
         apiVersion: string;
         api: string;
         space: string;
-        hostType: "hub" | "federation"
+        hostType: "hub" | "federation";
     };
 
     /**
@@ -169,21 +213,7 @@ export type STHConfiguration = {
     /**
      * Docker related configuration.
      */
-    docker: {
-        /**
-         * PreRunner container configuration.
-         */
-        prerunner: PreRunnerContainerConfiguration,
-
-        /**
-         * Runner container configuration.
-         */
-        runner: RunnerContainerConfiguration,
-        runnerImages: {
-            python3: string,
-            node: string,
-        },
-    },
+    docker: DockerAdapterConfiguration;
 
     /**
      * Host configuration.
@@ -208,7 +238,7 @@ export type STHConfiguration = {
          * Free disk space required to start Instance. In megabytes.
          */
         freeSpace: number;
-    },
+    };
 
     /**
      * The amount of memory that must remain free. In megabytes.
@@ -224,29 +254,49 @@ export type STHConfiguration = {
      * Which sequence and instance adapters should STH use.
      * One of 'docker', 'process', 'kubernetes', 'detect'
      */
-    runtimeAdapter: string,
+    runtimeAdapter: string;
 
     /**
      * Kubernetes adapter configuration
      */
-    kubernetes: Partial<K8SAdapterConfiguration>,
+    kubernetes: Partial<K8SAdapterConfiguration>;
+
+    /**
+     * The type of storage adapter to use
+     */
+    localStorageAdapter: StorageAdapterType;
+
+    /**
+     * Storage path for file-based adapter
+     */
+    localStoragePath: string;
 
     /**
      * Only used when `noDocker` is true
      * Where should ProcessSequenceAdapter save new Sequences
      */
-    sequencesRoot: string,
+    sequencesRoot: string;
+
+    /**
+     * Instance reconnect feature toggle
+     */
+    instanceReconnect: boolean;
 
     /**
      * Provides the location of a config file with the list of sequences
      * to be started along with the host
      */
-    startupConfig: string,
+    startupConfig: string;
+
+    /**
+     * Should the hub kill all instances when it exits
+     */
+    killOnExit: boolean;
 
     /**
      * Should the hub exit when the last instance ends
      */
-    exitWithLastInstance: boolean,
+    exitWithLastInstance: boolean;
 
     /**
      * Various timeout and interval configurations
@@ -255,7 +305,7 @@ export type STHConfiguration = {
         /**
          * Heartbeat interval in miliseconds
          */
-        heartBeatInterval: number,
+        heartBeatInterval: number;
 
         /**
          * Time to wait after Runner container exit.
@@ -267,6 +317,9 @@ export type STHConfiguration = {
          * Time to wait before CSIController emits `end` event.
          */
         instanceLifetimeExtensionDelay: number;
+
+        /** Maximum time allowed for a configured startup entry to become established. */
+        startupTimeout?: number;
     };
 
     telemetry: TelemetryConfig;
@@ -274,8 +327,16 @@ export type STHConfiguration = {
     monitorgingServer?: MonitoringServerConfig;
 
     runnerEnvs?: Record<string, string>;
-}
 
-export type PublicSTHConfiguration = Omit<Omit<Omit<STHConfiguration, "sequencesRoot">, "cpmSslCaPath">, "kubernetes"> & {
-    kubernetes: Omit<Omit<Partial<K8SAdapterConfiguration>, "authConfigPath">, "sequencesRoot">
+    adapters: Record<string, AdapterConfig>;
+
+    couchdb?: CouchDbAdapterConf;
+
+    strictPlatformConnection?: boolean;
+
+    verser2: STHOutboundVerser2Config;
+};
+
+export type PublicSTHConfiguration = Omit<Omit<STHConfiguration, "sequencesRoot">, "kubernetes"> & {
+    kubernetes: Omit<Omit<Partial<K8SAdapterConfiguration>, "authConfigPath">, "sequencesRoot">;
 };

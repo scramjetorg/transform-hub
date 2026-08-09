@@ -6,3 +6,10 @@
 **/Dockerfile*
 **/Jenkinsfile*
 **/docs/
+.husky
+.opencode
+.vscode
+.work
+conductor
+coverage
+images

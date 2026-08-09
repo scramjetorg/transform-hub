@@ -1,0 +1,17 @@
+Internal MultiManager / sub-Manager lifecycle client for Scramjet Transform Hub. Provides typed HTTP client methods for orchestrating multiple Manager instances — creating, deleting, and querying sub-Managers — from the MultiManager control plane.
+
+## When to use
+
+Use `@scramjet/multi-manager-api-client` when you are working on the MultiManager layer and need typed client calls for sub-Manager lifecycle management. This is an **internal** package, not a public API client.
+
+For public-facing API access, prefer [@scramjet/rest-api2](../rest-api2/README.md) or [@scramjet/api-client](../api-client/README.md) for v1 compatibility.
+
+## Stability
+
+This package is **stable** and actively maintained as part of the MultiManager infrastructure. It is not a public replacement for `@scramjet/rest-api2`.
+
+## See also
+
+- [@scramjet/multi-manager](../multi-manager/README.md) for the MultiManager overview.
+- [@scramjet/api-client](../api-client/README.md) for the public v1 API client.
+- [@scramjet/rest-api2](../rest-api2/README.md) for the public v2 API client.

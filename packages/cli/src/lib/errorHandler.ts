@@ -1,9 +1,9 @@
-/* eslint-disable no-console */
 
 import { ClientError } from "@scramjet/client-utils";
 import { displayFormat } from "../types";
 import { profileManager } from "./config";
 import { displayError, displayObject } from "./output";
+import { ApiCommandError } from "./apiCommandError";
 
 async function jsonize(err: ClientError) {
     if (!err.toJSON) return undefined;
@@ -33,7 +33,12 @@ export const errorHandler = async (err: Error) => {
 
     const { format, debug } = getLogParams();
 
-    if (err instanceof ClientError) {
+    if (err instanceof ApiCommandError) {
+        process.exitCode = err.exitCode;
+        const outputJson = process.argv.includes("--output=json") || process.argv.includes("--output") && process.argv[process.argv.indexOf("--output") + 1] === "json";
+        if (outputJson) process.stderr.write(`${JSON.stringify({ error: true, code: err.code, message: err.message, exitCode: err.exitCode })}\n`);
+        else displayError(`Error [${err.code}]: ${err.message}`);
+    } else if (err instanceof ClientError) {
         if (debug)
             displayObject({
                 error: true,

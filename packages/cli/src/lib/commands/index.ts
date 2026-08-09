@@ -1,32 +1,36 @@
-import { CommandDefinition } from "../../types";
-import { config } from "./config";
-import { hub } from "./hub";
-import { instance } from "./instance";
-import { scope } from "./scope";
-import { sequence } from "./sequence";
-import { space } from "./space";
-import { topic } from "./topic";
-import { completion } from "./completion";
-import { util } from "./util";
-import { init } from "./init";
+import type { CommandDescriptor } from "@scramjet/config";
 import { isDevelopment } from "../../utils/envs";
-import { store } from "./store";
-import { developerTools } from "./developerTools";
-import { si } from "./si";
-import { isLinuxOS } from "../helpers/isLinux";
 
-export const commands: CommandDefinition[] = [
-    si,
-    isLinuxOS() ? completion : () => {},
-    config,
-    scope,
-    space,
-    hub,
-    sequence,
-    instance,
-    topic,
-    init,
-    store,
-    util,
-    isDevelopment() ? developerTools : () => {}
-];
+/** Build descriptors only after CLI configuration has selected the active profile. */
+export async function getCommandDescriptors(): Promise<CommandDescriptor[]> {
+    const [
+        { configCommand },
+        { scopeCommand },
+        { spaceCommand },
+        { hubCommand },
+        { sequenceCommand },
+        { instanceCommand },
+        { topicCommand },
+        { initCommand },
+        { storeCommand },
+        { utilCommand },
+        { apiCommand }
+    ] = await Promise.all([
+        import("./config"),
+        import("./scope"),
+        import("./space"),
+        import("./hub"),
+        import("./sequence"),
+        import("./instance"),
+        import("./topic"),
+        import("./init"),
+        import("./store"),
+        import("./util"),
+        import("./api")
+    ]);
+    const descriptors = [configCommand, scopeCommand, spaceCommand, hubCommand, sequenceCommand, instanceCommand, topicCommand, initCommand, storeCommand, utilCommand, apiCommand];
+
+    descriptors.push((await import("./completion")).completionCommand);
+    if (isDevelopment()) descriptors.push((await import("./developerTools")).developerToolsCommand);
+    return descriptors;
+}

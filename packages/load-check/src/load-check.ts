@@ -1,5 +1,6 @@
 import { ObjLogger } from "@scramjet/obj-logger";
-import { IComponent, LoadCheckStat, LoadCheckRequirements, LoadCheckContstants } from "@scramjet/types";
+import { IComponent } from "@scramjet/runtime-types";
+import { LoadCheckStat, LoadCheckRequirements, LoadCheckContstants } from "@scramjet/runtime-types";
 import { defer } from "@scramjet/utility";
 
 import { DataStream, StringStream } from "scramjet";
@@ -126,7 +127,7 @@ export class LoadCheck implements IComponent {
                 while (true) {
                     yield _this.getLoadCheck();
 
-                    await defer(1000);
+                    await defer(10_000);
                 }
             }
         ).JSONStringify();

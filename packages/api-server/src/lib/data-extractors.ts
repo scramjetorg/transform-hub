@@ -1,4 +1,4 @@
-import { ParsedMessage, StreamInput, StreamOutput } from "@scramjet/types";
+import { ParsedMessage, StreamInput, StreamOutput } from "@scramjet/api-types";
 import { ServerResponse, IncomingMessage } from "http";
 import { Readable, Writable } from "stream";
 import { CeroError } from "./definitions";
@@ -54,7 +54,6 @@ export async function getStream(
 ): Promise<Readable> {
     if (!stream)
         throw new CeroError("ERR_FAILED_FETCH_DATA");
-    // eslint-disable-next-line no-extra-parens
     else if (typeof (stream as Readable).readable === "boolean")
         return stream as Readable;
     else if (stream instanceof Promise)

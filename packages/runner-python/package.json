@@ -1,0 +1,35 @@
+{
+    "name": "@scramjet/runner-python",
+    "version": "2.0.0",
+    "description": "Python runtime wrapper for packages/runner — python3 runner_python process launcher.",
+    "scripts": {
+        "build": "bash scripts/build-dist.sh && node scripts/assert-dist-artifact.js",
+        "build:only": "npm run build",
+        "prepack": "npm run build",
+        "install:deps": "bash scripts/install-deps.sh --dev --target __pypackages__",
+        "test:artifact": "node scripts/assert-dist-artifact.js",
+        "test": "PYTHONPATH=__pypackages__:src:$PYTHONPATH python3 -m pytest",
+        "clean": "rm -rf __pypackages__ dist"
+    },
+    "files": [
+        "runner_python",
+        "src/runner_python",
+        "pyproject.toml",
+        "requirements.txt",
+        "__pypackages__"
+    ],
+    "dependencies": {
+        "@signicode/verser2-guest-python": "0.7.0"
+    },
+    "author": "Scramjet <open-source@scramjet.org>",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/scramjetorg/transform-hub.git",
+        "directory": "packages/runner-python"
+    },
+    "bugs": {
+        "url": "https://github.com/scramjetorg/transform-hub/issues"
+    },
+    "homepage": "https://github.com/scramjetorg/transform-hub#readme"
+}

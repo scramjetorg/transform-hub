@@ -5,10 +5,10 @@ export type CPMConnectorOptions = {
     description: STHConfiguration["description"];
     tags: STHConfiguration["tags"];
     infoFilePath: STHConfiguration["host"]["infoFilePath"];
-    cpmSslCaPath?: STHConfiguration["cpmSslCaPath"];
     maxReconnections: STHConfiguration["cpm"]["maxReconnections"];
     reconnectionDelay: STHConfiguration["cpm"]["reconnectionDelay"];
     apiKey?: string;
     apiVersion: string;
     hostType?: NonNullable<STHConfiguration["platform"]>["hostType"];
+    verser2: STHConfiguration["verser2"];
 }

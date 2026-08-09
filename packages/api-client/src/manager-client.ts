@@ -1,52 +1,83 @@
 /// <reference path="./definitions.d.ts" />
 
-// eslint-disable-next-line import/no-cycle
-import { HostClient } from "./host-client";
 import { ClientUtils, ClientProvider, HttpClient, ClientUtilsCustomAgent } from "@scramjet/client-utils";
-import { MRestAPI, LoadCheckStat } from "@scramjet/types";
+import { ApiClientFactory, MRestAPI } from "@scramjet/api-types";
+import { LoadCheckStat } from "@scramjet/runtime-types";
 import { Readable } from "stream";
+import type { HostClient } from "./host-client";
 
-export class ManagerClient implements ClientProvider {
+function createV2Client(apiBase: string, utils: ClientUtils): ClientUtils {
+    const v2ApiBase = apiBase.replace(/\/api\/v1\/?$/, "/api/v2");
+
+    return utils instanceof ClientUtilsCustomAgent ? new ClientUtilsCustomAgent(v2ApiBase, utils.agent) : new ClientUtils(v2ApiBase);
+}
+
+export class ManagerClient<THostClient = HostClient> implements ClientProvider {
     apiBase: string;
 
     #_client: ClientUtils;
+    #_v2Client: ClientUtils;
+    #disposed = false;
 
     get client(): ClientUtils {
         return this.#_client;
     }
 
-    constructor(apiBase: string, utils = new ClientUtils(apiBase)) {
+    #hostClientFactory?: ApiClientFactory<THostClient, ClientUtils>;
+    #hostClients = new Set<{ dispose?: () => void }>();
+
+    constructor(apiBase: string, utils = new ClientUtils(apiBase), hostClientFactory?: ApiClientFactory<THostClient, ClientUtils>, v2Utils?: ClientUtils) {
         this.apiBase = apiBase.replace(/\/$/, "");
 
         this.#_client = utils;
+        this.#_v2Client = v2Utils || createV2Client(this.apiBase, this.client);
+        this.#hostClientFactory = hostClientFactory;
     }
 
-    getHostClient(id: string, hostApiBase = "/api/v1") {
-        return new HostClient(
-            `${this.apiBase}/sth/${id}${hostApiBase}`,
-            new ClientUtilsCustomAgent(`${this.apiBase}/sth/${id}${hostApiBase}`, this.client.agent)
-        );
+    /** Dispose v1/v2 transports and any child host clients created by this manager. */
+    dispose(): void {
+        if (this.#disposed) return;
+        this.#disposed = true;
+        for (const hostClient of this.#hostClients) hostClient.dispose?.();
+        this.#hostClients.clear();
+        this.#_v2Client.dispose();
+        this.#_client.dispose();
+    }
+
+    getHostClient(id: string, hostApiBase = "/api/v1"): THostClient {
+        const apiBase = `${this.apiBase}/sth/${id}${hostApiBase}`;
+        const utils = new ClientUtilsCustomAgent(apiBase, this.client.agent);
+
+        if (!this.#hostClientFactory) throw new Error("Host client factory is not configured");
+
+        const hostClient = this.#hostClientFactory(apiBase, utils);
+        this.#hostClients.add(hostClient as unknown as { dispose?: () => void });
+        return hostClient;
     }
 
     async getHosts() {
         return this.client.get<MRestAPI.GetHostInfoResponse[]>("list");
     }
 
+    /**
+     * Returns list of all entities on Host.
+     * @param {string} sequenceUrl base url exposed from sequence.
+     * @param {string} hostTag host tag.
+     * @returns {Promise<STHRestAPI.GetEntitiesResponse>} Promise resolving to list of entities.
+     */
+    async listHostsWithFilter(sequenceUrl: string, hostTag: string) {
+        return this.client.get<MRestAPI.GetHostInfoResponse[]>(`${sequenceUrl}/${hostTag}/hosts`);
+    }
+
     async getVersion(): Promise<MRestAPI.GetVersionResponse> {
         return this.client.get<MRestAPI.GetVersionResponse>("version");
     }
 
-    async getLoad() {
+    async getLoad(): Promise<LoadCheckStat> {
         return this.client.get<LoadCheckStat>("load");
     }
 
-    async sendNamedData<T>(
-        topic: string,
-        stream: Parameters<HttpClient["sendStream"]>[1],
-        requestInit?: RequestInit,
-        contentType?: string,
-        end?: boolean
-    ) {
+    async sendNamedData<T>(topic: string, stream: Parameters<HttpClient["sendStream"]>[1], requestInit?: RequestInit, contentType?: string, end?: boolean) {
         return this.client.sendStream<T>(`topic/${topic}`, stream, requestInit, { type: contentType, end: end });
     }
 
@@ -62,52 +93,86 @@ export class ManagerClient implements ClientProvider {
         return this.client.getStream("audit", requestInit);
     }
 
-    async getConfig() {
-        return this.client.get<any>("config");
+    async getConfig(): Promise<MRestAPI.GetConfigResponse> {
+        const response = await this.#_v2Client.get<{ config?: any } | any>("config");
+
+        return response && typeof response === "object" && "config" in response ? (response as MRestAPI.GetConfigResponse) : ({ config: response } as MRestAPI.GetConfigResponse);
     }
 
-    async getAllSequences() {
-        return this.client.get<MRestAPI.GetSequencesResponse>("all_sequences");
+    async getAllSequences(): Promise<MRestAPI.GetSequencesResponse> {
+        const response = await this.#_v2Client.get<{ items?: MRestAPI.GetSequencesResponse } | MRestAPI.GetSequencesResponse>("all_sequences");
+
+        return response && typeof response === "object" && "items" in response ? (response.items ?? []) : (response as MRestAPI.GetSequencesResponse);
     }
 
-    async getSequences() {
-        return this.client.get<MRestAPI.GetSequencesResponse>("sequences");
+    async getSequences(): Promise<MRestAPI.GetSequenceIDSResponse> {
+        const response = await this.#_v2Client.get<{ items?: Array<{ id: string } | string> } | MRestAPI.GetSequencesResponse>("sequences");
+
+        return response && typeof response === "object" && "items" in response
+            ? response.items?.map((item: any) => (typeof item === "string" ? item : item.id)) || []
+            : (response as MRestAPI.GetSequenceIDSResponse | MRestAPI.GetSequencesResponse).map((item: any) => (typeof item === "string" ? item : item.id));
     }
 
-    async getInstances() {
-        return this.client.get<MRestAPI.GetInstancesResponse>("instances");
+    async getInstances(): Promise<MRestAPI.GetInstancesResponse> {
+        const response = await this.#_v2Client.get<{ items?: MRestAPI.GetInstancesResponse } | MRestAPI.GetInstancesResponse>("instances");
+
+        return response && typeof response === "object" && "items" in response ? (response.items ?? []) : (response as MRestAPI.GetInstancesResponse);
     }
 
     async getTopics() {
         return this.client.get<MRestAPI.GetTopicsResponse>("topics");
     }
 
-    async getStoreItems() {
+    async getTopicsV2(): Promise<{ items: Array<{ name: string; contentType: string; origin?: { type: "hub" | "space"; id: string } }> }> {
+        return this.#_v2Client.get("topics");
+    }
+
+    async getTopicInfoV2(topic: string): Promise<{ name: string; contentType: string; origin?: { type: "hub" | "space"; id: string } }> {
+        return this.#_v2Client.get(`topics/${topic}`);
+    }
+
+    async getTopicV2(topic: string, requestInit?: RequestInit, contentType: string = "application/x-ndjson") {
+        return this.#_v2Client.getStream(`topics/${topic}/stream`, requestInit, { type: contentType });
+    }
+
+    async sendTopicV2<T>(
+        topic: string,
+        stream: Parameters<HttpClient["sendStream"]>[1],
+        requestInit: RequestInit = {},
+        contentType: string = "application/x-ndjson",
+        end?: boolean
+    ) {
+        return this.#_v2Client.sendStream<T>(`topics/${topic}/stream`, stream, requestInit, { type: contentType, end });
+    }
+
+    async getStoreItems(): Promise<MRestAPI.GetStoreItemsResponse> {
         return this.client.get<MRestAPI.GetStoreItemsResponse>("s3");
     }
 
-    async putStoreItem(
-        sequencePackage: Readable,
-        id: string = ""
-    ) {
-        return this.client.sendStream<MRestAPI.PutStoreItemResponse>(`s3/${id}`, sequencePackage, { method: "put" }, {
-            parseResponse: "json"
-        });
+    async putStoreItem(sequencePackage: Readable, id: string = ""): Promise<MRestAPI.PutStoreItemResponse> {
+        return this.client.sendStream<MRestAPI.PutStoreItemResponse>(
+            `s3/${id}`,
+            sequencePackage,
+            { method: "put" },
+            {
+                parseResponse: "json"
+            }
+        );
     }
 
-    async deleteStoreItem(id: string) {
+    async deleteStoreItem(id: string): Promise<void> {
         await this.client.delete<any>(`s3/${id}`);
     }
 
-    async clearStore() {
+    async clearStore(): Promise<void> {
         await this.client.delete<any>("store");
     }
 
-    async disconnectHubs(opts: MRestAPI.PostDisconnectPayload) {
+    async disconnectHubs(opts: MRestAPI.PostDisconnectPayload): Promise<MRestAPI.PostDisconnectResponse> {
         return this.client.post<MRestAPI.PostDisconnectResponse>("disconnect", opts, {}, { json: true, parse: "json" });
     }
 
-    async deleteHub(id: string, force: boolean) {
+    async deleteHub(id: string, force: boolean): Promise<MRestAPI.HubDeleteResponse> {
         return this.client.delete<MRestAPI.HubDeleteResponse>(`sth/${id}`, {
             headers: { "x-force": force.toString(), "content-type": "application/json" }
         });

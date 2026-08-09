@@ -1,0 +1,15 @@
+{
+  "runtimeAdapter": "process",
+  "identifyExisting": true,
+  "sequencesRoot": "bdd/data/sequences",
+  "startupConfig": "bdd/data/logging-sequence-startup-config.json",
+  "killOnExit": true,
+  "logLevel": "TRACE",
+  "host": {
+    "port": 8000,
+    "instancesServerPort": 18000
+  },
+  "timings": {
+    "instanceLifetimeExtensionDelay": 100
+  }
+}

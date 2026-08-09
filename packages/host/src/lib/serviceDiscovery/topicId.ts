@@ -11,7 +11,7 @@ class TopicId {
         return TopicId.validate(this.topicName);
     }
     static validate(topicName: string) {
-        if (topicName.match(/^[\\a-zA-Z0-9_+-]+$/)) return true;
+        if (topicName.match(/^[A-Za-z0-9_.+-]+$/)) return true;
         return false;
     }
 }

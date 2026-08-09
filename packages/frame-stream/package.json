@@ -1,0 +1,46 @@
+{
+  "name": "@scramjet/frame-stream",
+  "version": "5.0.0",
+  "description": "Length-prefixed message framing for Node.js streams.",
+  "keywords": [
+    "socket",
+    "tcp",
+    "framing",
+    "streams"
+  ],
+  "assets": [
+    {
+      "src": "lib/index.js",
+      "dest": "lib/index.js"
+    },
+    {
+      "src": "typings/index.d.ts",
+      "dest": "typings/index.d.ts"
+    },
+    {
+      "src": "LICENSE",
+      "dest": "LICENSE"
+    }
+  ],
+  "main": "lib/",
+  "typings": "typings/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/davedoesdev/frame-stream.git"
+  },
+  "author": "Markus Ast <npm.m@rkusa.st>",
+  "contributors": [
+    {
+      "name": "Budleigh Salterton",
+      "email": "cz@scramjet.org"
+    }
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/davedoesdev/frame-stream/issues"
+  },
+  "homepage": "https://github.com/davedoesdev/frame-stream",
+  "engines": {
+    "node": ">=18"
+  }
+}

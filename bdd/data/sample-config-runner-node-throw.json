@@ -1,0 +1,9 @@
+{
+  "sequences": [
+    {
+      "id": "throw-after-stdout",
+      "sequenceName": "throw-after-stdout",
+      "instanceName": "throw-after-stdout-instance"
+    }
+  ]
+}

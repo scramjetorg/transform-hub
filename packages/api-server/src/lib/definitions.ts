@@ -1,9 +1,11 @@
-import { APIError, Middleware, NextCallback } from "@scramjet/types";
+import { APIError, Middleware, NextCallback } from "@scramjet/api-types";
 import { Server, IncomingMessage, ServerResponse } from "http";
 import TRouter from "trouter";
 
 export type CeroMiddleware = Middleware;
 export type CeroDefaultRoute = Middleware;
+
+export type Handler = (path: string, ...middlewares: CeroMiddleware[]) => void;
 
 export interface CeroRouter extends TRouter<CeroMiddleware> {
     use(path: string|RegExp, ...middlewares: CeroMiddleware[]): this;
@@ -26,10 +28,12 @@ const codelist = {
     ERR_NOT_CURRENTLY_AVAILABLE: [412, "Not currently available"],
     ERR_FAILED_FETCH_DATA: [500, "Failed to fetch data"],
     ERR_FAILED_TO_SERIALIZE: [500, "Failed to serialize data"],
+    ERR_BAD_GATEWAY: [502, "Bad gateway"],
     ERR_INTERNAL_ERROR: [500, "Internal error occurred"],
     ERR_INVALID_CONTENT_TYPE: [415, "Invalid content-type"],
     ERR_CANNOT_PARSE_CONTENT: [400, "Could not parse content"],
-    ERR_UNSUPPORTED_ENCODING: [400, "Invalid encoding in content-type"]
+    ERR_UNSUPPORTED_ENCODING: [400, "Invalid encoding in content-type"],
+    DOWNSTREAM_REQUEST_ERROR: [400, "Error in stream processing"]
 };
 
 export type CeroCode = keyof typeof codelist;
@@ -39,7 +43,6 @@ export class CeroError extends Error implements APIError {
     httpMessage: string;
     cause?: Error;
     type: CeroCode;
-    private _oldStack: typeof Error.prototype.stack;
 
     constructor(errCode: CeroCode, cause?: Error, extraMessage?: string) {
         const [code, defaultMessage] = codelist[errCode] as [number, string];
@@ -50,18 +53,19 @@ export class CeroError extends Error implements APIError {
         this.code = code;
         this.type = errCode;
 
-        this._oldStack = this.stack;
-
-        if (cause instanceof CeroError) return cause;
+        if (cause instanceof CeroError) {
+            // biome-ignore lint/correctness/noConstructorReturn: preserve existing CeroError identity behavior.
+            return cause;
+        }
         if (cause) this.cause = cause;
     }
 
     get stack() {
-        return `${this.cause ? this.cause.stack : this._oldStack}`;
+        return `${this.cause ? this.cause.stack : super.stack}`;
     }
 }
 
-export type CeroErrorHandler = (err: CeroError, req: IncomingMessage, res: ServerResponse) => void;
+export type CeroErrorHandler = (err: CeroError, req: IncomingMessage, res: ServerResponse & { errorMessage?: string}) => void;
 
 export type CeroRouterConfig = Partial<{
     defaultRoute: CeroDefaultRoute;

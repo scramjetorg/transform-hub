@@ -1,7 +1,14 @@
 import ProfileConfig from "../src/lib/config/profileConfig";
 
-import test from "ava";
+import baseTest from "ava";
+const { createAvaMemoryGuard } = require("../../../scripts/lib/ava-memory-guard");
+const test: typeof baseTest = createAvaMemoryGuard(baseTest);
 import { defaultConfigProfileFile } from "../src/lib/paths";
+import { parseConfigSelection } from "../src/lib/config/args";
+import { ProfileManager, isProfileConfig } from "../src/lib/config/profileManager";
+import fs from "fs";
+import os from "os";
+import path from "path";
 
 test("CliConfig validation test", t => {
     const cliConfig = new ProfileConfig(defaultConfigProfileFile);
@@ -30,4 +37,60 @@ test("CliConfig validation test", t => {
     testConfigValidation("middlewareApiUrl", [...validUrl, ""], middlewareInvalidUrl);
     testConfigValidation("env", validEnv, invalidDataWithEmpty);
     testConfigValidation("token", validToken, invalidData);
+});
+
+test("config path flags select a file and stop at the child command", t => {
+    t.deepEqual(parseConfigSelection(["-c", "/tmp/bdd.json", "config", "print"]), {
+        kind: "path",
+        value: "/tmp/bdd.json",
+    });
+    t.deepEqual(parseConfigSelection(["--config=/tmp/bdd.json", "hub", "load"]), {
+        kind: "path",
+        value: "/tmp/bdd.json",
+    });
+    t.deepEqual(parseConfigSelection(["seq", "pack", "-c"]), undefined);
+    t.deepEqual(parseConfigSelection(["--config-path", "/tmp/readonly.json", "config", "print"]), {
+        kind: "readonly-path",
+        value: "/tmp/readonly.json",
+    });
+});
+
+test("config path flags require a value", t => {
+    t.throws(() => parseConfigSelection(["-c"]), { message: "-c argument missing" });
+    t.throws(() => parseConfigSelection(["--config"]), { message: "--config argument missing" });
+    t.throws(() => parseConfigSelection(["--config="]), { message: "--config argument missing" });
+});
+
+test("mutable -c config path receives config mutations", t => {
+    const manager = ProfileManager.getInstance();
+    const directory = fs.mkdtempSync(path.join(os.tmpdir(), "scramjet-cli-config-test-"));
+    const configPath = path.join(directory, "config.json");
+    const defaults = new ProfileConfig(defaultConfigProfileFile).getDefault();
+
+    fs.writeFileSync(configPath, JSON.stringify(defaults, null, 2));
+    manager.useDefaultProfile();
+    manager.setFlagConfigPath(configPath);
+
+    const selected = manager.getProfileConfig();
+    t.true(isProfileConfig(selected));
+    if (isProfileConfig(selected)) selected.setApiUrl("http://127.0.0.1:8888/api/v1");
+    t.is(JSON.parse(fs.readFileSync(configPath, "utf8")).apiUrl, "http://127.0.0.1:8888/api/v1");
+
+    manager.useDefaultProfile();
+    fs.rmSync(directory, { recursive: true, force: true });
+});
+
+test("--config-path remains read-only", t => {
+    const manager = ProfileManager.getInstance();
+    const directory = fs.mkdtempSync(path.join(os.tmpdir(), "scramjet-cli-readonly-test-"));
+    const configPath = path.join(directory, "config.json");
+    const defaults = new ProfileConfig(defaultConfigProfileFile).getDefault();
+
+    fs.writeFileSync(configPath, JSON.stringify(defaults, null, 2));
+    manager.useDefaultProfile();
+    manager.setFlagProfilePath(configPath);
+
+    t.false(isProfileConfig(manager.getProfileConfig()));
+    manager.useDefaultProfile();
+    fs.rmSync(directory, { recursive: true, force: true });
 });

@@ -1,0 +1,20 @@
+{
+  "sequences": [
+    {
+      "id": "hello-1",
+      "sequenceName": "hello-1",
+      "instanceName": "hub-1-hello-main",
+      "args": [],
+      "keepAlive": true
+    },
+    {
+      "id": "api-server",
+      "sequenceName": "api-server",
+      "instanceName": "hub-1-api-main",
+      "args": [],
+      "keepAlive": true,
+      "required": true,
+      "restartLimit": 1
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "name": "@scramjet/runner-bun",
+  "version": "2.0.0",
+  "description": "Bun sequence runtime wrapper for Scramjet Transform Hub runner isolation.",
+  "main": "./src/index.ts",
+  "scripts": {
+    "build": "../../scripts/build-all.js --config-name=tsconfig.build.json -d . --copy-dist",
+    "prebuild:docker": "if [ \"${SCRAMJET_DOCKER_RUNNER_STAGED:-}\" != \"1\" ]; then cd ../.. && scripts/build-all.js --no-install --link-packages -d packages/runner -o ./dist/docker-runner/ --ts-config tsconfig.build.json; fi",
+    "build:docker": "docker build -t scramjetorg/runner-bun:$(git rev-parse HEAD) -t scramjetorg/runner-bun:dev -f Dockerfile ../../",
+    "clean": "rm -rf ./dist .bic_cache",
+    "test": "bun test ./test"
+  },
+  "author": "Scramjet <opensource@scramjet.org>",
+  "license": "MIT",
+  "dependencies": {
+    "@scramjet/runner-node": "^2.0.0",
+    "@signicode/verser2-guest-bun": "0.7.0"
+  },
+  "devDependencies": {
+    "@scramjet/runtime-types": "^2.0.0",
+    "@scramjet/types": "^2.0.0",
+    "@types/node": "^22.15.0",
+    "typescript": "~4.7.4"
+  },
+  "files": [
+    "**/*.js",
+    "**/*.d.ts",
+    "**/*.json",
+    "!src/**",
+    "!test/**",
+    "!tests/**",
+    "!**/*.map",
+    "!**/*.tsbuildinfo"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/scramjetorg/transform-hub.git",
+    "directory": "packages/runner-bun"
+  }
+}

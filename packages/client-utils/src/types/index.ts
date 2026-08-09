@@ -2,12 +2,26 @@ import { Readable } from "stream";
 import { ClientError } from "../client-error";
 
 /**
+ * HTTP method literals.
+ */
+export type HttpMethod = "get" | "head" | "post" | "put" | "delete" | "connect" | "trace" | "patch";
+
+/**
+ * Request configuration for HTTP client methods.
+ */
+export type RequestConfig = {
+    parse: "json" | "text" | "stream" | "response";
+    json?: boolean;
+    throwOnErrorHttpCode?: boolean;
+}
+
+/**
  * Options for sending sending stream.
  */
 export type SendStreamOptions = Partial<{
     type: string;
     end: boolean;
-    parseResponse?: "json" | "text" | "stream";
+    parseResponse?: "json" | "text" | "stream" | "response";
 }>;
 
 /**
@@ -34,31 +48,16 @@ export type RequestLogger = {
 };
 
 /**
- * Request configuration.
- */
-export type RequestConfig = {
-    /**
-     * How to parse response.
-     */
-    parse: "json" | "text" | "stream"
-
-    /**
-     * Defines if payload should be stringified.
-     */
-    json?: boolean;
-
-    throwOnErrorHttpCode?: boolean
-};
-
-/**
  * Environmentally independent HttpClient interface.
  */
 export interface HttpClient {
-    addLogger(logger: RequestLogger): void;
+    addLogger(logger: Partial<RequestLogger>): void;
     get<T>(url: string, requestInit?: RequestInit): Promise<T>;
     getStream(url: string, requestInit?: RequestInit): Promise<any>;
     post<T>(url: string, data: any, requestInit?: RequestInit, options?: { json: boolean } & RequestConfig): Promise<T>;
+    put<T>(url: string, data: any, requestInit?: RequestInit, options?: { json: boolean } & RequestConfig): Promise<T>;
     delete<T>(url: string, requestInit?: RequestInit): Promise<T>;
+    request(method: HttpMethod, url: string, requestInit?: RequestInit, options?: RequestConfig): Promise<Response>;
     sendStream<T>(url: string, stream: any, requestInit?: RequestInit, options?: SendStreamOptions): Promise<T>;
 }
 

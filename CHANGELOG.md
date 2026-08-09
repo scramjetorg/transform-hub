@@ -2,6 +2,378 @@
 
 This is the changelog for Scramjet Transform Hub. It holds only notable commits, others are grouped without commit info.
 
+## [Pre-2.0.0]
+
+This is a historical release record of completed work and is not an npm publication or release.
+
+### 2024-03
+
+## Features
+
+* Added CLI topic-create connection handling and completed the topic service-discovery routing path.
+* Added runtime-configurable log levels for runners and CSI, including protocol messages, DTO validation, and logger support.
+* Passed development environment variables through the process runner.
+
+## Changed
+
+* Improved space-client response handling and Kubernetes behavior when a pod no longer exists.
+
+## Fixed
+
+* Fixed null CSI configuration handling.
+* Fixed reconnect logging and a runner memory leak, including output-stream error handling.
+* Updated the `follow-redirects` dependency to address its security and maintenance fixes.
+
+### 2024-04
+
+## Fixed
+
+* Corrected post-rebase dependency and adapter package state so the workspace could be rebuilt reliably.
+* Fixed HTTP response handling that could attempt to send headers twice.
+* Preserved the Kubernetes pod-not-found fix through its merged regression coverage.
+
+### 2024-10
+
+## Changed
+
+* Split Docker, Kubernetes, and process adapters out of the main STH package and gave each adapter its own package boundary.
+* Moved adapter defaults and runtime-adapter options out of the general STH configuration into adapter-owned configuration modules.
+* Added lazy Kubernetes-client loading and reduced adapter memory footprint during initialization.
+* Improved adapter initialization, package identification, and build integration across source and Docker workflows.
+
+## Fixed
+
+* Fixed Dockerode integration and runner Docker builds after the adapter refactor.
+* Fixed reconnect logging and memory handling in Host, runner, and CSI paths.
+* Fixed platform compilation and refapp locations used by the E2E suite.
+* Updated CI workflows and lockfiles for the refactored adapter packages.
+
+### 2024-11
+
+## Changed
+
+* Improved runtime configuration construction and added browser custom-agent support to the client utilities.
+* Added a Docker build context for producing Transform Hub packages more quickly.
+
+## Fixed
+
+* Fixed adapter detection and schema-validation typings after the configuration refactor.
+
+### 2025-01
+
+## Changed
+
+* Reworked deprecated dependency usage and Kubernetes client handling for current supported package versions.
+* Updated dependency metadata and lockfiles while preserving the adapter package boundaries.
+
+## Fixed
+
+* Removed deprecated package references that caused installation and build failures.
+
+### 2025-02
+
+## Features
+
+* Added RPC expose forwarding with route strategies, instance integration, and an initial API-server BDD fixture.
+* Added CRUD handler registration and expanded RPC-focused integration tests.
+
+## Changed
+
+* Added a working STH RPC configuration and moved the BDD support utilities to `tsx`.
+* Added an opt-in switch to disable automatic runner reconnection.
+* Removed the legacy Verser export from the active type surface.
+
+## Fixed
+
+* Updated the repository and refapp dependencies for Node 18 compatibility.
+* Hardened RPC forwarding, instance routing, and runner wiring through iterative integration fixes.
+
+### 2025-03
+
+## Features
+
+* Added file-backed local storage for sequences and runners, with configurable storage paths and storage protocol messages.
+* Added a CouchDB storage adapter, configuration, lifecycle cleanup, and adapter unit tests.
+* Refactored Host and CSI APIs into independently testable handlers and controllers.
+
+## Changed
+
+* Added the API server to runner Docker builds and synchronized package dependencies for the new storage and API surfaces.
+* Improved local-storage documentation and type ownership for storage adapters.
+
+## Fixed
+
+* Corrected storage adapter imports, naming, async length handling, initialization, and package dependency placement.
+* Removed redundant local-storage selection and noisy data-receive logging.
+
+### 2025-04
+
+## Features
+
+* Added Kubernetes pod tags and Docker runner-image export support.
+* Exposed RPC clients through InstanceClient and expanded API-server forwarding capabilities.
+
+## Changed
+
+* Moved sequence package identification and adapter dependency utilities into `adapters-common`.
+* Reworked adapter packaging to use the tar module and shared package-identification logic.
+
+## Fixed
+
+* Fixed numeric error-code serialization and prevented API request responses from being printed unintentionally.
+* Restored missing tags from configuration and repaired the linter/tooling integration.
+
+### 2025-05
+
+## Features
+
+* Added Kubernetes readiness reporting, explicit host exposure, and improved IP selection for process and Kubernetes runners.
+* Added a local BPMux fork and upgraded the verser2 integration with reconnection and cleanup handling.
+* Added Node 22 validation, TypeScript-mode runner support, and the `frame-stream` package for shared framing.
+
+## Changed
+
+* Reduced health-reporting CPU use and made CPM disconnection and instance cleanup safer.
+* Exposed ManagerClient from the shared types and reorganized Host domain types for clearer boundaries.
+
+## Fixed
+
+* Fixed Kubernetes adapter configuration, build/runtime errors, full-stack error reporting, and cleanup after host exit.
+
+### 2025-06
+
+## Changed
+
+* Updated Dockerfiles and runtime images to Node 22 Bookworm Slim.
+* Added the initial STH-side Space Events implementation.
+* Tuned monitoring intervals to reduce unnecessary health traffic.
+
+## Fixed
+
+* Fixed monitoring cadence and follow-up adapter/runtime integration issues from the Node 22 migration.
+
+### 2025-07
+
+## Fixed
+
+* Fixed tag iteration in Hub operations.
+
+### 2026-02
+
+## Fixed
+
+* Added credential refresh and fresh API-client creation after Hub API requests begin returning 401 responses.
+* Improved logging while failing adapter pods are removed.
+
+### 2026-05
+
+## Features
+
+* Added stable startup naming and required-restart handling for Hosts, sequences, and instances, with BDD coverage.
+* Delivered runner-node spawn isolation with a separate Node runtime wrapper, process executor, lifecycle observers, stream forwarding, and extensive protocol tests; exposed API/AppContext work remained deferred.
+* Added BDD runner containerization and safe execution fixtures for runner-node completion, errors, streaming, and harness timeouts.
+
+## Changed
+
+* Added split-runner transport contracts, ordering/lifecycle specifications, metadata boot configuration, and safe host-input channel closure.
+
+## Fixed
+
+* Fixed runner-node handshakes, PING emission, exit tracking, and forward-handler compatibility during the runtime split.
+
+### 2026-06
+
+## Features
+
+* Added `@scramjet/sequence-test`, a scoped test-runner-agnostic sequence harness with lifecycle, input/output, monitoring, logs, API requests, fixtures, and Hub/context assertions.
+* Added richer targeted Hub-harness behavior for package metadata, API calls, topics, RPC, lifecycle, events, local storage, logging, and exposed API registration.
+* Created `@scramjet/config` with Zod-backed config files, JSON/YAML loading, environment and CLI precedence, masked output, and typed validation errors.
+* Replaced direct Commander usage with Scramjet-owned runtime option registries and added an invariant guard against reintroducing it.
+* Added `@scramjet/api-router` and `@scramjet/rest-api2` as schema-aware routing, OpenAPI, transport, and generic-client foundations.
+* Delivered the API revamp across Host, Manager, and MultiManager with v2 route contracts and bindings while preserving v1 compatibility.
+* Finalized the public Root → Space → Hub → Instance v2 route tree and fluent clients, including runtime binding and OpenAPI coverage guards.
+* Added v2 health/readiness, aggregation metadata, host identity, sequence clients, and `hubClient()`/`spaceClient()` AppContext accessors while retaining legacy accessors.
+* Added full API Verser2 forwarding for v2 instance RPC, trusted downward tunnels, authorized upward route resolution, header sanitization, and configurable waiting streams.
+* Upgraded Verser2 integration to native 308 redirects and upstream Host federation, with an isolated routing BDD gate.
+* Removed active legacy Verser/BPMux callsites, migration modes, socket transport paths, and active dependencies; standalone legacy packages remain buildable.
+* Added public npmjs resolution for Verser2 packages and removed public GitHub Packages token requirements.
+* Added runtime-neutral, sequence-author, and API-facing type packages through the typings split, while retaining `@scramjet/types` as a deprecated compatibility barrel.
+* Added local AppContext fixtures, sequence-test validation commands, and full AppContext BDD coverage, including cross-hub topic forwarding fixes.
+* Added Python runner scaffolding, protocol modules, pytest infrastructure, golden parity fixtures, and sequence-format parity; end-to-end Python BDD/refapp completion remained pending.
+* Added Bun runner scaffolding, boot-config validation, executor selection, and Node-delegating wrapper parity tests; end-to-end Bun BDD completion remained pending.
+
+## Changed
+
+* Migrated repository linting and formatting from ESLint/Prettier to Biome, with bounded parallelism and memory-safe AVA defaults.
+* Added supported AVA and BDD runners with memory limits, Docker-default BDD execution, bounded process cleanup, leak detection, and documented safe commands.
+* Added STH configuration/startup JSON schemas and agentic usage guidance for headless sequence deployment.
+* Replaced the old documentation pipeline with prose-first `docs-source/`, curated references, generated READMEs, API v2 references, CLI references, and deterministic exports.
+* Added runner host identity derivation from stable Host IDs to prevent multi-STH broker collisions.
+* Added Manager aggregation registration ordering, rollback cleanup, communication-ready inventory snapshots, raw/wrapped event normalization, and Kubernetes BDD regression coverage.
+* Established the supported Verser2 topology of runtime wrappers through the STH-local Host, with separate trust domains, inline CA handoff, and explicit unsupported route classes.
+
+## Fixed
+
+* Fixed API route trust and spoofing boundaries, route-domain handling, response forwarding, and external upward 308 behavior.
+* Fixed Host/Manager/MultiManager readiness and aggregation state so inventory and health summaries remain deterministic.
+* Fixed AppContext event visibility, local-storage monitoring/control roundtrips, exposed API lifetime metadata, and standalone local-space routing.
+
+### 2026-07
+
+## Features
+
+* Completed the cleanup roadmap by retiring proven-dead documentation/refapp surfaces, replacing stale Python refapps with local fixtures, and recording retained compatibility boundaries.
+* Added deterministic documentation indexes, controlled-deployment CSR enrollment guidance and commands, and Manager pre-test typechecking with hardened command diagnostics.
+
+## Changed
+
+* Moved generated documentation ownership to `docs/`, protected README synchronization, and separated Hub and Manager product/security documentation.
+* Completed Python sequence contract documentation and parity validation, while explicitly retaining deferred local-only AppContext capabilities and future Python BDD/refapp work.
+
+## Fixed
+
+* Hardened BDD teardown with current-run process scoping, awaited TERM-to-KILL escalation, temporary cleanup, and opt-in leak failure.
+
+## [2.0.0] - 2026-07-30
+
+Repository-scoped release record for the 2.0.0 baseline assembled on 2026-07-30
+(commit `db54d058fb4d71dca958272ca67fccff793a9970`).  This section documents the
+aligned package set, MIT license migration, breaking changes, and material
+highlights since the 1.0.1 release.  It is not an npm publication or GitHub
+release; see the appendix for the tracked inventory boundary.
+
+### Release scope and aligned package set
+
+The 2.0.0 candidate set aligns the following included first-party `@scramjet/*`
+workspaces to version 2.0.0 under the MIT license.  Excluded packages retain
+their existing versions and licensing.
+
+| Package(s) | Prior version | License change | 2.0.0 disposition |
+| --- | --- | --- | --- |
+| `@scramjet/sth`, `@scramjet/cli` | 1.1.0 | AGPL-3.0 → MIT | 2.0.0, MIT |
+| `@scramjet/manager`, `@scramjet/multi-manager` | 0.35.1 | AGPL-3.0 → MIT | 2.0.0, MIT |
+| `@scramjet/host`, `@scramjet/pre-runner` | 1.1.0 | AGPL-3.0 → MIT | 2.0.0, MIT |
+| `@scramjet/runner`, `@scramjet/runner-node`, `@scramjet/runner-bun` | 1.1.0 | MIT (retained) | 2.0.0, MIT |
+| `@scramjet/api-client`, `@scramjet/client-utils`, `@scramjet/sequence-test` | 1.1.0 | MIT (retained) | 2.0.0, MIT |
+| `@scramjet/config`, `@scramjet/rest-api2`, `@scramjet/api-router`, `@scramjet/api-server` | 1.1.0 | AGPL-3.0 → MIT | 2.0.0, MIT |
+| `@scramjet/api-types`, `@scramjet/runtime-types`, `@scramjet/sequence-types`, `@scramjet/types` | 1.1.0 | AGPL-3.0 → MIT | 2.0.0, MIT |
+| `@scramjet/symbols`, `@scramjet/model` | 1.1.0 | AGPL-3.0 → MIT | 2.0.0, MIT |
+| `@scramjet/utility`, `@scramjet/telemetry` | 1.1.0 | ISC → MIT | 2.0.0, MIT |
+| `@scramjet/adapters`, `@scramjet/adapters-common`, `@scramjet/adapter-docker`, `@scramjet/adapter-kubernetes`, `@scramjet/adapter-process` | 1.1.0 | AGPL-3.0 → MIT | 2.0.0, MIT |
+| `@scramjet/load-check`, `@scramjet/monitoring-server`, `@scramjet/obj-logger`, `@scramjet/logger`, `@scramjet/module-loader` | 1.1.0 | AGPL-3.0 → MIT | 2.0.0, MIT |
+| `@scramjet/middleware-api-client`, `@scramjet/multi-manager-api-client` | 1.1.0 | AGPL-3.0 → MIT | 2.0.0, MIT |
+| `@scramjet/runner-python` | — | — | 2.0.0, MIT (release target) |
+| `scramjet-bdd` | 1.1.0 | ISC → MIT | Version/publish excluded; MIT metadata only |
+
+**Excluded from the 2.0.0 set** (preserved at prior version and license):
+
+| Package | Preserved version | License |
+| --- | --- | --- |
+| `@scramjet/verser` | 1.1.0 | AGPL-3.0 |
+| `@scramjet/bpmux` | 9.0.0 | MIT (upstream-derived) |
+| `@scramjet/frame-stream` | 5.0.0 | MIT (upstream-derived) |
+
+### MIT license migration
+
+The license for included first-party packages has migrated from
+AGPL-3.0 (or, in the case of `@scramjet/utility`, `@scramjet/telemetry`, and
+`scramjet-bdd`, ISC) to the MIT license.  Packages that were already MIT
+retain their existing terms.
+
+Each migrated package includes an updated `LICENSE` file and MIT notice.
+Upstream-derived packages (`@scramjet/bpmux`, `@scramjet/frame-stream`)
+preserve their existing attributions.  The `scramjet-bdd` test-only workspace
+receives MIT metadata and a notice file without entering the 2.0.0 version or
+publish set.
+
+### Runner Python release target
+
+`@scramjet/runner-python` is included in the 2.0.0 release set as a publishable package target
+under the MIT license.  The package includes:
+
+- Python sequence protocol modules and contract documentation
+- Pytest infrastructure and golden-parity fixtures
+- Sequence-format parity validation
+- Python sequence contract documentation and parity validation (2026-07)
+
+### Breaking changes and migration guidance
+
+1. **Adapter package split** — Docker, Kubernetes, and process adapters moved
+   out of `@scramjet/sth` into their own packages
+   (`@scramjet/adapter-docker`, `@scramjet/adapter-kubernetes`,
+   `@scramjet/adapter-process`) with a shared `@scramjet/adapters-common`
+   dependency.  Imports from the STH package must be updated to reference the
+   adapter-specific packages.
+
+2. **Legacy Verser/BPMux removal** — Active callsites for the original Verser
+   and BPMux transports have been removed.  Standalone legacy packages remain
+   buildable.  Users depending on the legacy transport layer must migrate to
+   Verser2.
+
+3. **Commander replacement** — Direct Commander usage has been replaced with
+   Scramjet-owned runtime option registries (`@scramjet/config`).  Argument
+   parsing across STH, CLI, and runner surfaces now uses the new option
+   registry.  An invariant guard prevents reintroduction of Commander.
+
+4. **Lint/format tooling migration** — ESLint and Prettier have been replaced
+   by Biome across the repository.  Legacy ESLint configurations are no longer
+   maintained.
+
+5. **Type package deprecation** — `@scramjet/types` is deprecated in favor of
+   the split type packages:
+   - `@scramjet/runtime-types` for runtime-neutral contracts
+   - `@scramjet/sequence-types` for sequence-author types
+   - `@scramjet/api-types` for API DTOs and client stubs
+
+   Existing imports continue to resolve through the compatibility barrel.
+
+6. **Manager and MultiManager version alignment** — Both packages have been
+   aligned from 0.35.1 to 2.0.0.  Internal `@scramjet/manager: ^0.35.1`
+   dependency references are updated to `^2.0.0`.
+
+### Shipped track highlights
+
+The following material work was completed between the 1.0.1 release
+(2024-03-13) and this 2.0.0 baseline.  See the Pre-2.0.0 section above for
+the full historical record.
+
+- **2024-10/11**: Docker, Kubernetes, and process adapters split from STH
+- **2025-02/05**: RPC/API/storage foundations, Node 22 support, local BPMux
+  fork, frame-stream package
+- **2026-05**: Runner-node isolation, process executor, lifecycle/stream
+  forwarding, BDD runner-container fixtures
+- **2026-06**: Sequence-test and Config packages, Commander replacement,
+  API v2 and Verser2 topology, typings split, Biome migration,
+  memory-safe tooling (AVA/BDD memory guards), Python and Bun runner
+  scaffolding
+- **2026-07**: Cleanup roadmap, documentation ownership migration,
+  Python sequence contract documentation, BDD teardown hardening
+
+### Acknowledgments
+
+This release includes contributions from: @patuwwy, @piotrek6641, @gzukowski,
+@a-tylenda, @alicja-gruzdz, @karoltylenda, @MichalCz, @ErykSol, @S4adam,
+@mcdominik, @tomekcrm, @kociolekscramjet, @daro1337, @Tatarinho, @gierwialo,
+@RayNawfal, and dependabot.
+
+The 2.0.0 alignment and MIT licensing migration were prepared on behalf of the
+Scramjet organization.
+
+### Appendix: Source and package-version evidence
+
+- **1.0.1 release point**: Commit
+  `7f97c217b958bb8723d390d5d75336cf38361392` (tag `v1.0.1`,
+  2024-03-13T11:38:48Z)
+- **Pre-2.0.0 baseline**: Commit
+  `db54d058fb4d71dca958272ca67fccff793a9970` (2026-07-30T00:16:50Z)
+- **Range**: 967 commits between release points; 271 first-parent commits
+- **Track inventory**:
+  `conductor/archive/release_2_0_0_package_alignment_mit_license_20260729/inventory.md`
+  — reconciled package boundary, excluded packages, release tooling safeguards
+- **Release history evidence**:
+  `conductor/archive/release_2_0_0_package_alignment_mit_license_20260729/release-history.md`
+  — curated evidence from the Pre-2.0.0 historical entries and git history
+
 ## [1.0.1] - 2024-03-13
 
 ## Fixed

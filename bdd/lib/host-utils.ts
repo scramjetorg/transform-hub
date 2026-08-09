@@ -1,37 +1,173 @@
 import { HostClient } from "@scramjet/api-client";
 import { strict as assert } from "assert";
 import { ChildProcess, spawn } from "child_process";
-import { SIGTERM } from "constants";
-import path from "path";
+import { once } from "events";
+import { SIGKILL, SIGTERM } from "constants";
 import { StringDecoder } from "string_decoder";
+import { memoryRegistry } from "../lib/memory-registry";
+const { getOwnership } = require("./ownership.js");
+const { describeSthBinResolution, resolveSthBin } = require("../../scripts/lib/sth-bin.js");
 
-const hostExecutableCommand = process.env.SCRAMJET_SPAWN_TS
-    ? [path.resolve(require.resolve("ts-node"), "../bin.js"), "../packages/sth/src/bin/hub.ts"]
-    : ["node", "../dist/sth/bin/hub.js"]
-;
+/**
+ * Select the STH CLI executable command for a locally owned Hub.
+ *
+ * The default path resolves the installed CLI through
+ * node_modules/.bin/scramjet-transform-hub (workspace or verified prerelease
+ * install) and executes the selected bin directly — it is never passed to
+ * `node`.  SCRAMJET_SPAWN_TS keeps the explicit source-launcher dev toggle.
+ */
+function resolveHostExecutableCommand(): string[] {
+    if (process.env.SCRAMJET_SPAWN_TS) {
+        return ["/usr/bin/env", "npx", "tsx", "../packages/sth/src/bin/hub.ts"];
+    }
+
+    const resolved = resolveSthBin();
+
+    if (process.env.SCRAMJET_TEST_LOG) {
+        console.error(`[host-utils] ${describeSthBinResolution(resolved)}`);
+    }
+
+    return [resolved.binPath];
+}
+
+const hostExecutableCommand = resolveHostExecutableCommand();
 
 type NoDefault = ("port"|"instances-server-port"|"cpm-url"|"runtime-adapter"|"instance-lifetime-extension-delay")[];
+type CleanupSignal = "SIGHUP" | "SIGINT" | "SIGTERM";
+const signals: CleanupSignal[] = ["SIGHUP", "SIGINT", "SIGTERM"];
+const signalExitCode: Record<CleanupSignal, number> = {
+    SIGHUP: 129,
+    SIGINT: 130,
+    SIGTERM: 143
+};
+const configuredMaxOutputBytes = Number(process.env.SCRAMJET_TEST_OUTPUT_MAX_BYTES);
+const MAX_OUTPUT_BYTES = Number.isFinite(configuredMaxOutputBytes) && configuredMaxOutputBytes > 0
+    ? configuredMaxOutputBytes
+    : 1024 * 1024;
+const ownership = getOwnership(process.env);
 
 export class HostUtils {
+    private static cleanupHandlersInstalled = false;
+    private static hosts = new Set<ChildProcess>();
+
     hostProcessStopped = false;
     host?: ChildProcess;
+    expectedExitCode?: number;
+    output = "";
+    private outputWaiters = new Set<(data: string) => void>();
+
+    /**
+     * When true, the Hub is being deliberately stopped (via stopHost or
+     * scenario-lifecycle cleanup) so the startup-exit assertion must not fire.
+     * Set via markStopExpected().
+     */
+    expectedStop = false;
+    stdoutTail = "";
+    stderrTail = "";
+    exitCode: number | null | undefined;
+    exitSignal: NodeJS.Signals | null | undefined;
+    exitStartedAt?: number;
+    exitFinishedAt?: number;
 
     hostUrl: string;
 
     constructor() {
-        this.hostUrl = process.env.SCRAMJET_HOST_URL || "";
+        this.hostUrl = process.env.SCRAMJET_HOST_URL || process.env.SCRAMJET_HOST_BASE_URL || "";
+    }
+
+    hasLocallyOwnedHubChild() {
+        return !this.hostUrl && !["1", "true"].includes((process.env.NO_HOST || "").toLowerCase()) && Boolean(this.host) && !this.hostProcessStopped;
+    }
+
+    /**
+     * Mark the Hub stop as expected, so the startup-exit assertion in the
+     * 'exit' handler does not fire.  Call before any deliberate stop
+     * (stopHost or scenario-lifecycle cleanup).
+     */
+    markStopExpected() {
+        this.expectedStop = true;
     }
 
     async check() {
-        assert.equal(
-            (await new HostClient(this.hostUrl).getLoadCheck()).currentLoad,
-            200,
-            "Remote host doesn't respond"
-        );
+        const client = new HostClient(this.hostUrl);
+        try {
+            assert.equal((await client.getLoadCheck()).currentLoad, 200, "Remote host doesn't respond");
+        } finally {
+            client.dispose();
+        }
+    }
+
+    waitForOutput(markers: string[], timeoutMs = 60000): Promise<void> {
+        const waiter = this.createOutputWaiter(markers);
+        const timeout = setTimeout(() => waiter.cancel(new Error(`Timed out waiting for Hub output: ${markers.join(", ")}`)), timeoutMs);
+        return waiter.promise.finally(() => clearTimeout(timeout));
+    }
+
+    waitForStructuredOutput(event: string, url: string, id: string, timeoutMs = 60000): Promise<void> {
+        const waiter = this.createStructuredOutputWaiter(event, url, id);
+        const timeout = setTimeout(() => waiter.cancel(new Error(`Timed out waiting for Hub marker event=${event} url=${url}`)), timeoutMs);
+        return waiter.promise.finally(() => clearTimeout(timeout));
+    }
+
+    createStructuredOutputWaiter(event: string, url: string, id: string): { promise: Promise<void>; cancel: (error?: Error) => void } {
+        return this.createOutputWaiter([], observed => observed.split("\n").some(line => {
+            const prefix = "SCRAMJET_FLOOD_INGRESS_ACK ";
+            if (!line.startsWith(prefix)) return false;
+            try {
+                const marker = JSON.parse(line.slice(prefix.length));
+                return marker.event === event && marker.url === url && marker.id === id;
+            } catch {
+                return false;
+            }
+        }));
+    }
+
+    createOutputWaiter(markers: string[], matcher?: (observed: string) => boolean): { promise: Promise<void>; cancel: (error?: Error) => void } {
+        const required = Array.isArray(markers) ? markers : [markers];
+        let resolvePromise!: () => void;
+        let rejectPromise!: (error: Error) => void;
+        let active = true;
+        let removeWaiter = () => {};
+        const promise = new Promise<void>((resolve, reject) => {
+            resolvePromise = resolve;
+            rejectPromise = reject;
+            let observed = "";
+            const check = (data = "") => {
+                if (!active) return;
+                observed = (observed + data).slice(-MAX_OUTPUT_BYTES);
+                if (matcher ? matcher(observed) : required.every(marker => observed.includes(marker))) {
+                    cleanup();
+                    resolve();
+                }
+            };
+            const cleanup = () => {
+                this.outputWaiters.delete(check);
+            };
+            removeWaiter = cleanup;
+            this.outputWaiters.add(check);
+        });
+        const cancel = (error?: Error) => {
+            if (!active) return;
+            active = false;
+            removeWaiter();
+            if (error) rejectPromise(error);
+            else resolvePromise();
+        };
+        return { promise, cancel };
+    }
+
+    captureOutput(data: string) {
+        this.output = (this.output + data).slice(-MAX_OUTPUT_BYTES);
+        for (const waiter of this.outputWaiters) waiter(data);
     }
 
     async getHostStatus() {
-        return (await new HostClient(this.hostUrl).getLoadCheck()).currentLoad;
+        const client = new HostClient(this.hostUrl);
+        try {
+            return (await client.getLoadCheck()).currentLoad;
+        } finally {
+            client.dispose();
+        }
     }
 
     async stopHost() {
@@ -39,14 +175,141 @@ export class HostUtils {
             return;
         }
 
-        if (!this.host?.kill(SIGTERM)) {
+        if (!this.host) {
             throw new Error("Couldn't stop host");
         }
+
+        if (this.hostProcessStopped) {
+            return;
+        }
+
+        this.markStopExpected();
+
+        const host = this.host;
+
+        await new Promise<void>((resolve, reject) => {
+            const timeout = setTimeout(() => {
+                reject(new Error("Timed out waiting for host to stop"));
+            }, 11000);
+
+            host.once("exit", () => {
+                clearTimeout(timeout);
+                resolve();
+            });
+
+            // Use TERM-to-KILL escalation with default 10s grace period.
+            if (!HostUtils.killProcessGroup(host, SIGTERM, 10000)) {
+                clearTimeout(timeout);
+                reject(new Error("Couldn't stop host"));
+            }
+        });
+        await HostUtils.disposeChildIO(host);
+        this.output = "";
+    }
+
+    /**
+     * Send a signal to a child's process group.
+     *
+     * Provides TERM‑to‑KILL escalation: when `signal` is SIGTERM and the
+     * process is still alive after `escalateMs`, a SIGKILL is sent to the
+     * same process group.
+     *
+     * @param child        ChildProcess to signal.
+     * @param signal       Signal name or number (default SIGTERM).
+     * @param escalateMs   Grace period before SIGKILL (default 0 = no escalation).
+     * @returns            True if the signal was sent (or process already gone).
+     */
+    static killProcessGroup(
+        child: ChildProcess,
+        signal: NodeJS.Signals | number = SIGTERM,
+        escalateMs = 0
+    ): boolean {
+        if (!child.pid) {
+            return false;
+        }
+
+        const doKill = (sig: NodeJS.Signals | number): boolean => {
+            try {
+                process.kill(-child.pid!, sig);
+                return true;
+            } catch (error) {
+                const code = (error as NodeJS.ErrnoException).code;
+
+                if (code === "ESRCH") {
+                    return true;
+                }
+
+                return child.kill(sig);
+            }
+        };
+
+        const sent = doKill(signal);
+
+        if (signal === SIGTERM && escalateMs > 0 && sent) {
+            // Schedule escalation to SIGKILL after the grace period.
+            const timer = setTimeout(() => {
+                try {
+                    process.kill(-child.pid!, SIGKILL);
+                } catch {
+                    // process already gone — fine
+                }
+            }, escalateMs);
+
+            // Cancel escalation if the process exits on its own.
+            child.once("exit", () => clearTimeout(timer));
+        }
+
+        return sent;
+    }
+
+    private static cleanup(signal: NodeJS.Signals | number = SIGTERM) {
+        const escalate = signal === SIGTERM ? 10000 : 0;
+
+        for (const host of HostUtils.hosts) {
+            HostUtils.killProcessGroup(host, signal, escalate);
+        }
+    }
+
+    private static async disposeChildIO(child: ChildProcess): Promise<void> {
+        const streams = [child.stdout, child.stderr].filter(Boolean) as NodeJS.ReadableStream[];
+        for (const stream of streams) stream.removeAllListeners();
+        child.removeAllListeners("error");
+        for (const stream of streams) {
+            const closed = (stream as any).destroyed
+                ? Promise.resolve()
+                : once(stream as any, "close").then(() => undefined);
+            (stream as any).destroy?.();
+            await closed;
+        }
+    }
+
+    private static installCleanupHandlers() {
+        if (HostUtils.cleanupHandlersInstalled) {
+            return;
+        }
+
+        HostUtils.cleanupHandlersInstalled = true;
+        process.once("exit", () => HostUtils.cleanup(SIGTERM));
+
+        for (const signal of signals) {
+            process.once(signal, () => {
+                HostUtils.cleanup(signal);
+                process.exit(signalExitCode[signal]);
+            });
+        }
+    }
+
+    private static trackHost(host: ChildProcess) {
+        HostUtils.installCleanupHandlers();
+        HostUtils.hosts.add(host);
+        host.once("exit", () => {
+            HostUtils.hosts.delete(host);
+            void HostUtils.disposeChildIO(host);
+        });
     }
 
     async spawnHost(ommit: NoDefault, ...extraArgs: any[]): Promise<string> {
         if (this.hostUrl) {
-            // eslint-disable-next-line no-console
             console.error("Host is supposedly running at", this.hostUrl);
             const hostClient = new HostClient(this.hostUrl);
 
@@ -62,9 +325,26 @@ export class HostUtils {
 
             this.setArgs(command, extraArgs, ommit);
 
-            const hub = this.host = spawn("/usr/bin/env", command, { env: { ...process.env, SCP_ENV_VALUE: "GH_CI" } });
+            const hub = this.host = spawn("/usr/bin/env", command, {
+                detached: true,
+                env: {
+                    ...process.env,
+                    SCP_ENV_VALUE: "GH_CI",
+                    SCRAMJET_BDD_RUN_ID: ownership.runId,
+                    SCRAMJET_BDD_CHUNK_ID: ownership.chunkId,
+                    SCRAMJET_BDD_OWNER: ownership.owner,
+                }
+            });
+            HostUtils.trackHost(hub);
+            memoryRegistry.trackChildProcess(hub, `hub:${ownership.owner}`);
 
             this.hostProcessStopped = false;
+            this.exitCode = undefined;
+            this.exitSignal = undefined;
+            this.exitStartedAt = Date.now();
+            this.exitFinishedAt = undefined;
+            this.stdoutTail = "";
+            this.stderrTail = "";
 
             if (process.env.SCRAMJET_TEST_LOG) {
                 hub.stdout?.pipe(process.stdout);
@@ -72,6 +352,15 @@ export class HostUtils {
             }
 
             const decoder = new StringDecoder();
+            const outputListener = (data: Buffer) => {
+                this.captureOutput(data.toString());
+            };
+            const stdoutListener = (data: Buffer) => {
+                this.stdoutTail = (this.stdoutTail + data.toString()).slice(-MAX_OUTPUT_BYTES);
+            };
+            const stderrListener = (data: Buffer) => {
+                this.stderrTail = (this.stderrTail + data.toString()).slice(-MAX_OUTPUT_BYTES);
+            };
 
             let decodedData = "";
             const listener = (data: Buffer) => {
@@ -79,29 +368,68 @@ export class HostUtils {
 
                 decodedData += last;
 
-                if (last.match(/Running/)) {
+                if (decodedData.includes("Host running!")) {
                     hub.stdout?.off("data", listener);
+
+                    // Record readiness-aware RSS baseline for chunk summary (Phase 10).
+                    if (hub.pid) {
+                        memoryRegistry.recordProcessReady(hub.pid);
+                    }
+
                     resolve(decodedData);
                 }
             };
 
+            hub.stdout?.on("data", outputListener);
+            hub.stderr?.on("data", outputListener);
+            hub.stdout?.on("data", stdoutListener);
+            hub.stderr?.on("data", stderrListener);
             hub.stdout?.on("data", listener);
 
-            this.host.on("exit", (code, signal) => {
-                // eslint-disable-next-line no-console
+            this.host.on("exit", (code: number | null, signal: NodeJS.Signals | null) => {
                 console.log("host process exited with code: ", code, " and signal: ", signal);
+                if (code !== 0 || signal) {
+                    console.error("Host startup/lifecycle diagnostics", {
+                        command,
+                        cwd: process.cwd(),
+                        config: process.env.SCRAMJET_CONFIG || process.env.SCRAMJET_CONFIG_PATH || process.env.SCRAMJET_CONFIG_FILE,
+                        bddRunId: ownership.runId,
+                        bddChunkId: ownership.chunkId,
+                        startedAt: this.exitStartedAt,
+                        finishedAt: Date.now(),
+                        stdout: this.stdoutTail.slice(-16384),
+                        stderr: this.stderrTail.slice(-16384)
+                    });
+                }
                 this.hostProcessStopped = true;
+                this.exitCode = code;
+                this.exitSignal = signal;
+                this.exitFinishedAt = Date.now();
 
-                if (code === 1) {
-                    assert.fail();
+                // Skip startup-failure assertion when the Hub is being
+                // deliberately stopped (stopHost or scenario-lifecycle
+                // cleanup).  The expectedStop flag is set by markStopExpected()
+                // before any intentional termination.
+                if (code === 1 && this.expectedExitCode !== 1 && !this.expectedStop) {
+                    assert.fail(
+                        `Host exited with code 1 after ${this.exitFinishedAt - (this.exitStartedAt || this.exitFinishedAt)}ms; ` +
+                        `stdout=${JSON.stringify(this.stdoutTail.slice(-4096))}; stderr=${JSON.stringify(this.stderrTail.slice(-4096))}`
+                    );
+                }
+
+                // Resolve with partial output when the host exits with an expected
+                // non-zero code before "Host running!" — required for scenarios that
+                // reproduce startup failures (e.g. runner port collision).
+                if (this.expectedExitCode !== undefined && code !== null &&
+                    code !== 0 && code === this.expectedExitCode) {
+                    resolve(decodedData);
                 }
             });
         });
     }
 
-    // eslint-disable-next-line complexity
-    private setArgs(command: string[], extraArgs: string[], noDefault: NoDefault = []) {
-        if (!noDefault.includes("port") && !extraArgs.includes("-P") && !command.includes("--port") && process.env.LOCAL_HOST_PORT)
+    setArgs(command: string[], extraArgs: string[], noDefault: NoDefault = []) {
+        if (!noDefault.includes("port") && !extraArgs.includes("-P") && !extraArgs.includes("--port") && !command.includes("--port") && process.env.LOCAL_HOST_PORT)
             command.push("-P", process.env.LOCAL_HOST_PORT);
         if (!noDefault.includes("instances-server-port") && !extraArgs.includes("--instances-server-port") && process.env.LOCAL_HOST_INSTANCES_SERVER_PORT)
             command.push("--instances-server-port", process.env.LOCAL_HOST_INSTANCES_SERVER_PORT);
@@ -109,11 +437,16 @@ export class HostUtils {
             command.push("-C", process.env.CPM_URL);
         if (!noDefault.includes("runtime-adapter") && !extraArgs.includes("--runtime-adapter") && process.env.RUNTIME_ADAPTER)
             command.push(`--runtime-adapter=${process.env.RUNTIME_ADAPTER}`);
-        if (!noDefault.includes("instance-lifetime-extension-delay") && !extraArgs.includes("--instance-lifetime-extension-delay") && process.env.RUNTIME_ADAPTER)
-            command.push("--instance-lifetime-extension-delay=100");
+        // Only an explicitly owned BDD run may receive the shortened lifecycle
+        // window. A config path is also used by non-BDD callers and must not
+        // change production stop behavior.
+        const bddRun = process.env.SCRAMJET_BDD_RUN_ID;
+        if (!noDefault.includes("instance-lifetime-extension-delay") && !extraArgs.includes("--instance-lifetime-extension-delay") && (process.env.RUNTIME_ADAPTER || bddRun))
+            command.push(`--instance-lifetime-extension-delay=${bddRun ? 1000 : 100}`);
         if (extraArgs.length) command.push(...extraArgs);
 
         if (process.env.RUNNER_IMGS_TAG) {
+            // Keep the Python runner image flag aligned with the image built from packages/runner-python/Dockerfile.
             command.push(
                 `--runner-image=scramjetorg/runner:${process.env.RUNNER_IMGS_TAG}`,
                 `--prerunner-image=scramjetorg/pre-runner:${process.env.RUNNER_IMGS_TAG}`,
@@ -122,7 +455,6 @@ export class HostUtils {
         }
 
         if (process.env.SCRAMJET_TEST_LOG) {
-            // eslint-disable-next-line no-console
             console.log("Spawning with command:", ...command);
         }
     }

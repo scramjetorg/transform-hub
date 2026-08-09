@@ -5,10 +5,11 @@ import { defer } from "./defer";
  *
  * @param {Promise} promise Promise to wait for.
  * @param {number} timeout Timeout in milliseconds.
+ * @param {any} rejectValue Value to reject with after timeout.
  * @returns {Promise} Promise that reject after timeout or.
  */
-export const promiseTimeout = <T extends unknown>(promise: Promise<T>, timeout: number): Promise<T> => Promise.race([
+export const promiseTimeout = <T extends unknown>(promise: Promise<T>, timeout: number, rejectValue: any = undefined): Promise<T> => Promise.race([
     promise,
     defer(timeout)
-        .then(() => Promise.reject())
+        .then(() => Promise.reject(rejectValue))
 ]);

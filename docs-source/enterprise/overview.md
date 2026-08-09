@@ -1,0 +1,62 @@
+---
+id: enterprise-overview
+slug: /enterprise/overview
+title: Enterprise offerings
+---
+
+# Enterprise offerings
+
+The packages in this repository are Scramjet's **open core** — the MIT-licensed building blocks that anyone can use, modify, and deploy. Enterprise solutions offered by [Scramjet](https://scramjet.org) are layered on top of this foundation and are **not represented as capabilities delivered by this repository alone**.
+
+## What the open core provides
+
+The open-core Transform Hub platform provides:
+
+- **Hub** — single-host Sequence runtime.
+- **Manager** — control plane that coordinates multiple Hubs (see [Manager overview](../manager/overview.md)).
+- **MultiManager** — process-level lifecycle coordination for multiple Manager processes. MultiManager alone does **not** provide HA, failover, persistence, or automatic redirection; those behaviors require separate verified deployment configuration.
+- **Adapters** — Process, Docker, and Kubernetes adapters for running Sequences in different environments.
+- **CLI and API clients** — `si` command-line tool and v1/v2 API client packages.
+- **Runner runtimes** — Node.js, Python, and Bun Sequence execution environments.
+
+## Enterprise capabilities
+
+Scramjet's commercial enterprise offerings extend the open core with production-grade capabilities for security, scale, and multi-tenant operation:
+
+### Access control
+
+- **RBAC** — role-based access control for users, Sequences, and infrastructure resources.
+- **Token authorization** — scoped API tokens for service-to-service and user-to-system authentication.
+
+### Large-scale orchestration
+
+- **MultiManager at scale** — coordinated Manager processes across host boundaries and Kubernetes namespaces, and Scramjet enterprise offerings have been tested across more than 1,500 deployments on three small servers, with Kubernetes and VM/host isolation, multi-region awareness, and hardened lifecycle management.
+- **Fleet-wide observability** — aggregated metrics, centralized logging, and structured health reporting across all Hubs and Managers.
+
+### Multi-user and multi-organization operation
+
+- **Organization hierarchies** — isolate workloads, users, and infrastructure by organization, team, or project.
+- **Resource quotas** — per-organization and per-user limits on Sequences, instances, and infrastructure usage.
+- **Audit trails** — immutable logs of all management-plane operations.
+
+### Unified cloud-like experience
+
+- **Multi-Hub, multi-Manager, multi-environment** — a single control surface that spans development, staging, and production environments across on-premises, cloud, and edge locations.
+- **Centralized deployment pipelines** — push Sequences once, deploy to any connected environment with environment-specific configuration.
+- **Cross-environment topic routing** — connect Sequences running in different Hubs, Managers, or deployment locations through the enterprise control plane.
+
+## Target audiences
+
+These enterprise capabilities are designed for:
+
+- **Hosting providers** — offering Transform Hub as a managed data-processing service to customers.
+- **AI service providers** — running inference pipelines, model-serving Sequences, and data pre/post-processing at scale.
+- **Distributed IoT** — managing thousands of edge-hosted Sequences across geographically dispersed devices.
+- **Multi-cloud operators** — deploying and orchestrating Sequences across AWS, Azure, GCP, and on-premises infrastructure from a single control plane.
+- **Security-focused multi-point IoT** — deployments requiring Kubernetes/VM isolation, RBAC, and token authorization.
+
+## Next steps
+
+- [Transform Hub overview](../transform-hub/overview.md) — understand the open-core architecture.
+- [Manager overview](../manager/overview.md) — learn about the control plane.
+- [Scramjet enterprise](https://scramjet.org) — learn more about commercial offerings.

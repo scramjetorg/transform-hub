@@ -7,5 +7,5 @@ export enum CommunicationChannel {
     IN,
     OUT,
     LOG,
-    PACKAGE
+    REQUESTS
 }

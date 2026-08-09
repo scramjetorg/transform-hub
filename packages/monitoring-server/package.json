@@ -1,44 +1,56 @@
 {
   "name": "@scramjet/monitoring-server",
-  "version": "1.0.1",
+  "version": "2.0.0",
   "description": "Scramjet Monitoring Server",
   "main": "src/index.ts",
   "scripts": {
     "build": "../../scripts/build-all.js --config-name=tsconfig.build.json --copy-dist",
-    "build:docs": "typedoc",
     "clean": "rm -rf ./dist .bic_cache",
     "watch": "tsc -b --watch",
     "test": "npm run test:ava",
-    "test:ava": "# nyc ava"
+    "test:ava": "# nyc node ../../scripts/run-ava.js"
   },
   "dependencies": {
-    "@scramjet/utility": "^1.0.1"
+    "@scramjet/api-types": "^2.0.0",
+    "@scramjet/utility": "^2.0.0"
   },
   "devDependencies": {
-    "@scramjet/types": "^1.0.1",
-    "@types/node": "15.12.5",
-    "ava": "^3.15.0",
-    "nyc": "^15.1.0",
+    "@ava/typescript": "^7.0.0",
+    "@scramjet/types": "^2.0.0",
+    "@types/node": "^22.15.0",
+    "ava": "^8.0.0",
     "ts-node": "^10.9.1",
-    "typedoc": "0.23.17",
-    "typedoc-plugin-markdown": "3.13.6",
     "typescript": "~4.7.4"
   },
   "ava": {
-    "extensions": [
-      "ts"
-    ],
     "files": [
       "**/*.spec.ts"
     ],
     "require": [
       "ts-node/register"
-    ]
+    ],
+    "typescript": {
+      "compile": false,
+      "rewritePaths": {
+        "./": "../.ava-monitoring-server/"
+      }
+    }
   },
   "author": "Scramjet <open-source@scramjet.org>",
-  "license": "AGPL-3.0",
+  "license": "MIT",
+  "files": [
+    "**/*.js",
+    "**/*.d.ts",
+    "**/*.json",
+    "!src/**",
+    "!test/**",
+    "!tests/**",
+    "!**/*.map",
+    "!**/*.tsbuildinfo"
+  ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/scramjetorg/monitoring-server.git"
+    "url": "https://github.com/scramjetorg/transform-hub.git",
+    "directory": "packages/monitoring-server"
   }
 }

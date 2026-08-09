@@ -1,7 +1,6 @@
-/* eslint-disable no-console */
 import { ClientProvider, ClientUtils, ClientUtilsCustomAgent } from "@scramjet/client-utils";
-import { ManagerClient } from "@scramjet/api-client";
-import { MWRestAPI, MMRestAPI } from "@scramjet/types";
+import { createHostClient, ManagerClient } from "@scramjet/api-client";
+import { MWRestAPI, MMRestAPI } from "@scramjet/api-types";
 
 /**
  * Middleware client.
@@ -27,7 +26,8 @@ export class MiddlewareClient implements ClientProvider {
     getManagerClient(id: string, mutliManagerApiBase = "/api/v1"): ManagerClient {
         return new ManagerClient(
             `${this.apiBase}/space/${id}${mutliManagerApiBase}`,
-            new ClientUtilsCustomAgent(`${this.apiBase}/space/${id}${mutliManagerApiBase}`, this.client.agent)
+            new ClientUtilsCustomAgent(`${this.apiBase}/space/${id}${mutliManagerApiBase}`, this.client.agent),
+            createHostClient
         );
     }
 
