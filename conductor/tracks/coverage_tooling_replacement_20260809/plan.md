@@ -64,7 +64,7 @@
 
     Validation: `npm ci` completed successfully with existing engine, deprecation, and Python resolver warnings. `node scripts/run-ava.js scripts/test/ava-options.spec.js` passed 98 tests; `node scripts/run-ava.js scripts/test/ava-typescript-staging.spec.js` passed 9 tests, including a staged logger c8 report that asserted remapped TypeScript paths, exclusions, output location, and cleanup. Under the 524288-byte guard, `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" SCRAMJET_AVA_MEMORY_GUARD=1 node scripts/run-ava.js scripts/test/ava-options.spec.js --match="*coverage*" --match="*Coverage*" --match="*C8*"` passed 9 coverage-mode helper tests. `npm exec -- biome lint --error-on-warnings scripts/run-ava.js scripts/lib/ava-options.js` and `git diff --check` passed.
 
-- [ ] Task: Conductor - Phase Completion 'Add Opt-In c8 Coverage to the AVA Runner' (Protocol in workflow.md)
+- [x] Task: Conductor - Phase Completion 'Add Opt-In c8 Coverage to the AVA Runner' (Protocol in workflow.md)
 
 ## Phase 4: Establish and Stabilize Fresh Coverage Metrics
 
