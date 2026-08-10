@@ -8,7 +8,7 @@
     "clean": "rm -rf ./dist .bic_cache",
     "watch": "tsc -b --watch",
     "test": "npm run test:ava",
-    "test:ava": "# nyc node ../../scripts/run-ava.js"
+    "test:ava": "node -e \"\""
   },
   "dependencies": {
     "@scramjet/api-types": "^2.0.0",

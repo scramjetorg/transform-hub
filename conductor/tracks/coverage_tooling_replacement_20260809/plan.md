@@ -24,21 +24,25 @@
 
 ## Phase 2: Clear Remaining Active Coverage Wiring
 
-- [ ] Task: Inventory the remaining coverage surface
-    - [ ] Search package manifests, root scripts, runner code, CI, ignore files, documentation, and configurations for coverage references.
-    - [ ] Classify each result as active wiring, generated/build artifact handling, archive/history, or unrelated text.
-    - [ ] Record the intended new AVA source scope and generated/build artifact exclusions before introducing c8.
+- [x] Task: Inventory the remaining coverage surface
+    - [x] Search package manifests, root scripts, runner code, CI, ignore files, documentation, and configurations for coverage references.
+    - [x] Classify each result as active wiring, generated/build artifact handling, archive/history, or unrelated text.
+    - [x] Record the intended new AVA source scope and generated/build artifact exclusions before introducing c8.
 
-- [ ] Task: Remove stale active coverage wiring
-    - [ ] Remove inactive nyc configuration files, commented wrappers, stale report references, and stale ignore entries only where they are active repository-owned coverage wiring.
-    - [ ] Preserve generic `coverage/` artifact handling when it remains appropriate for c8 output.
-    - [ ] Update `conductor/tech-stack.md` to describe the absence of nyc and the planned c8 coverage model.
+    Inventory: remove 15 orphaned package `.nycrc.json` files, three commented nyc wrappers, and the stale Tech Stack nyc line. Retain generic `coverage`/`*.lcov` ignores, Docker/Biome coverage exclusions, and the AVA staging `coverage` filter; retain archives and unrelated fixture/vendor references. The initial c8 scope will be remapped `packages/*/src/**/*.ts`, excluding staged `.ava-*`, build output, dependencies, coverage reports, generated BDD assets, and `*.spec.ts`.
 
-- [ ] Task: Verify the clean baseline
-    - [ ] Re-run the active-reference inventory and confirm no active nyc/Istanbul flow or direct dependency remains.
-    - [ ] Confirm standard AVA runner commands do not collect coverage and retain their existing behavior.
+- [x] Task: Remove stale active coverage wiring
+    - [x] Remove inactive nyc configuration files, commented wrappers, stale report references, and stale ignore entries only where they are active repository-owned coverage wiring.
+    - [x] Preserve generic `coverage/` artifact handling when it remains appropriate for c8 output.
+    - [x] Update `conductor/tech-stack.md` to describe the absence of nyc and the planned c8 coverage model.
 
-- [ ] Task: Conductor - Phase Completion 'Clear Remaining Active Coverage Wiring' (Protocol in workflow.md)
+- [x] Task: Verify the clean baseline
+    - [x] Re-run the active-reference inventory and confirm no active nyc/Istanbul flow or direct dependency remains.
+    - [x] Confirm standard AVA runner commands do not collect coverage and retain their existing behavior.
+
+    Validation: semantic package-manifest checks found no active nyc/Istanbul script or direct dependency; all package `.nycrc.json` files are gone; generic coverage ignores remain; `npm run test --workspace @scramjet/logger` passed 3 tests with 2 existing skips through normal `scripts/run-ava.js` mode without coverage.
+
+- [x] Task: Conductor - Phase Completion 'Clear Remaining Active Coverage Wiring' (Protocol in workflow.md)
 
 ## Phase 3: Add Opt-In c8 Coverage to the AVA Runner
 
