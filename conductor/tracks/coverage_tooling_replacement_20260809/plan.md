@@ -88,11 +88,13 @@
 
 ## Phase 5: Assess Coverage and Gate Remediation
 
-- [ ] Task: Produce an evidence-only coverage assessment
-    - [ ] Record overall line, branch, and function metrics.
-    - [ ] Record package and file metrics, including zero-hit files.
-    - [ ] Identify scope anomalies such as generated, staged, unmapped, or unexpectedly included files.
-    - [ ] Verify generated and build artifacts are excluded from the assessed source scope.
+- [x] Task: Produce an evidence-only coverage assessment
+    - [x] Record overall line, branch, and function metrics.
+    - [x] Record package and file metrics, including zero-hit files.
+    - [x] Identify scope anomalies such as generated, staged, unmapped, or unexpectedly included files.
+    - [x] Verify generated and build artifacts are excluded from the assessed source scope.
+
+    Assessment: the package-wide run produced 26 package reports covering 383 remapped `src/**/*.ts` files. Aggregate coverage is 4574/45248 lines (10.11%), 244/796 functions (30.65%), and 732/1335 branches (54.83%). 298 files have zero line hits; their exact package/file detail is recorded in the retained package `coverage/lcov.info` reports. No report includes a staged `.ava-*`, generated/build, dependency, coverage-output, or spec source path, and no staged output directories remain. The highest observed package line coverage is logger (73.70%), followed by cli (56.29%), model (48.42%), api-server (48.40%), sth (25.84%), and manager (8.20%); 20 reported packages have 0% line coverage. These are new c8 metrics only, not a nyc comparison.
 
 - [ ] Task: Present coverage findings for a user decision
     - [ ] Summarize potential under-coverage, over-coverage, redundant tests, and remaining gaps without making source or test changes.
