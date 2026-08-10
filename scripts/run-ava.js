@@ -92,10 +92,14 @@ if (process.argv.slice(2).includes("--help")) {
 	printUsage();
 }
 
-// Build the spawn arguments using the centralised helper. The opt‑in
-// `--coverage` flag is a runner option: it is stripped here so that it is
-// never forwarded to the ava CLI, and default invocations are unchanged.
-const cliArgs = process.argv.slice(2);
+// The workspace runner sets SCRAMJET_RUN_SCRIPT_COVERAGE=1 for its opt-in
+// coverage mode, allowing the flag to cross `test` -> `npm run test:ava`
+// package scripts without package-specific wrappers. The flag is stripped
+// here so that it is never forwarded to the ava CLI.
+const cliArgs = [
+	...(process.env.SCRAMJET_RUN_SCRIPT_COVERAGE === "1" ? ["--coverage"] : []),
+	...process.argv.slice(2)
+];
 const { args: avaCliArgs, coverage } = stripCoverageFlag(cliArgs);
 const args = buildAvaArgs(avaCliArgs);
 

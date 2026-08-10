@@ -41,12 +41,20 @@ for (const [packageName, testFile] of [
 	});
 }
 
-test("collects c8 coverage for a staged TypeScript package run", (t) => {
+test("collects c8 coverage forwarded through the workspace runner interface", (t) => {
 	const packageName = "logger";
 	const coverageDir = resolve(packagesRoot, packageName, "coverage");
 	t.teardown(() => rmSync(coverageDir, { recursive: true, force: true }));
 
-	const result = runStagedTest(packageName, "test/methods.spec.ts", "--coverage");
+	const result = spawnSync(process.execPath, [runner, "test/methods.spec.ts", "--serial"], {
+		cwd: resolve(packagesRoot, packageName),
+		encoding: "utf8",
+		env: {
+			...process.env,
+			SCRAMJET_AVA_WORKERS: "1",
+			SCRAMJET_RUN_SCRIPT_COVERAGE: "1"
+		}
+	});
 	const output = `${result.stdout}${result.stderr}`;
 
 	t.is(result.status, 0, output);

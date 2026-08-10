@@ -68,19 +68,21 @@
 
 ## Phase 4: Establish and Stabilize Fresh Coverage Metrics
 
-- [ ] Task: Run the selected AVA coverage surface
-    - [ ] Run focused coverage-mode tests first, then the defined package AVA coverage command.
-    - [ ] Capture report artifacts and raw failures without comparing them to historical nyc output.
-    - [ ] Confirm reports use original source paths and omit generated, staged, build, dependency, and coverage-output artifacts.
+- [x] Task: Run the selected AVA coverage surface
+    - [x] Run focused coverage-mode tests first, then the defined package AVA coverage command.
+    - [x] Capture report artifacts and raw failures without comparing them to historical nyc output.
+    - [x] Confirm reports use original source paths and omit generated, staged, build, dependency, and coverage-output artifacts.
 
-- [ ] Task: Fix coverage-mode mechanics
-    - [ ] Diagnose and fix only failures introduced by c8 execution: command wiring, process inheritance, source-map remapping, report generation, or cleanup ordering.
-    - [ ] Re-run the narrowest affected coverage command after each fix.
-    - [ ] Do not alter tests, production source, exclusions, limits, timeouts, skips, allowances, or assertions to improve coverage numbers.
+- [x] Task: Fix coverage-mode mechanics
+    - [x] Diagnose and fix only failures introduced by c8 execution: command wiring, process inheritance, source-map remapping, report generation, or cleanup ordering.
+    - [x] Re-run the narrowest affected coverage command after each fix.
+    - [x] Do not alter tests, production source, exclusions, limits, timeouts, skips, allowances, or assertions to improve coverage numbers.
 
-- [ ] Task: Document the new metrics command
-    - [ ] Document the opt-in AVA coverage command, report outputs, source scope, and exclusions.
-    - [ ] Document that metrics are newly established and have no historical parity or enforcement threshold.
+- [x] Task: Document the new metrics command
+    - [x] Document the opt-in AVA coverage command, report outputs, source scope, and exclusions.
+    - [x] Document that metrics are newly established and have no historical parity or enforcement threshold.
+
+    Validation: The first `npm run test:packages -- --coverage` run passed tests but generated no reports because `scripts/run-script.js` consumed the post-script option and nested package `test` scripts did not forward it. The generic workspace-runner bridge fixed this c8 execution-only mechanics issue without package-specific wrappers. `node scripts/run-ava.js scripts/test/run-script.spec.js scripts/test/ava-typescript-staging.spec.js` passed 15 tests. The rerun of `npm run test:packages -- --coverage` passed in 3m25s and retained `lcov.info` reports for 26 tested packages. An artifact audit found each report had remapped `SF:src/` records, no non-source, staged, build, dependency, coverage, or spec entries, and no residual `.ava-*` directories. No historical nyc output, parity check, threshold, or CI gate was used.
 
 - [ ] Task: Conductor - Phase Completion 'Establish and Stabilize Fresh Coverage Metrics' (Protocol in workflow.md)
 
