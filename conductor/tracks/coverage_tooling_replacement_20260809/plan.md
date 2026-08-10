@@ -84,7 +84,7 @@
 
     Validation: The first `npm run test:packages -- --coverage` run passed tests but generated no reports because `scripts/run-script.js` consumed the post-script option and nested package `test` scripts did not forward it. The generic workspace-runner bridge fixed this c8 execution-only mechanics issue without package-specific wrappers. `node scripts/run-ava.js scripts/test/run-script.spec.js scripts/test/ava-typescript-staging.spec.js` passed 15 tests. The rerun of `npm run test:packages -- --coverage` passed in 3m25s and retained `lcov.info` reports for 26 tested packages. An artifact audit found each report had remapped `SF:src/` records, no non-source, staged, build, dependency, coverage, or spec entries, and no residual `.ava-*` directories. No historical nyc output, parity check, threshold, or CI gate was used.
 
-- [ ] Task: Conductor - Phase Completion 'Establish and Stabilize Fresh Coverage Metrics' (Protocol in workflow.md)
+- [x] Task: Conductor - Phase Completion 'Establish and Stabilize Fresh Coverage Metrics' (Protocol in workflow.md)
 
 ## Phase 5: Assess Coverage and Gate Remediation
 
