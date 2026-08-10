@@ -35,6 +35,14 @@
  *   SCRAMJET_AVA_GUARD               – set to "1" to enable the direct‑invocation
  *                                      guard (preload script warns when RUNNER is unset)
  *
+ *   Coverage mode (opt‑in CLI flag, not an environment variable):
+ *     Passing `--coverage` to scripts/run-ava.js wraps the AVA Node command
+ *     in c8 (the v8‑native coverage runner).  The flag is stripped before
+ *     buildAvaArgs() so the ava CLI never sees it; default invocations are
+ *     unchanged.  c8 writes reports and V8 temp output under `<cwd>/coverage`
+ *     and remaps coverage to the original TypeScript sources (see
+ *     c8CoverageArgs() and resolveC8Cli()).
+ *
  *   Memory guard (Phase 2):
  *     SCRAMJET_MEMORY_GUARD              – set to "1" to enable common memory guard
  *     SCRAMJET_AVA_MEMORY_GUARD          – set to "1" to enable AVA‑specific memory
@@ -177,10 +185,16 @@ function resolveAvaCli() {
  * AVA 8 imports test files as ESM, so TypeScript package tests use the
  * @ava/typescript provider to rewrite source paths to precompiled output.
  *
+ * When `options.sourceMaps` is enabled (coverage mode), the compiler emits
+ * source maps alongside the staged `.ava-*` output so that c8 can remap the
+ * executed JavaScript coverage back to the original TypeScript sources.
+ *
  * @param {string} [projectDir=process.cwd()]  Package directory to inspect.
+ * @param {{ sourceMaps?: boolean }} [options]  Compiler options; `sourceMaps`
+ *                                               (default false) enables `--sourceMap`.
  * @returns {{ args: string[], outputDir: string, stagedProjectDir: string }|undefined}  Compiler invocation and output location when needed.
  */
-function avaTypeScriptCompileArgs(projectDir = process.cwd()) {
+function avaTypeScriptCompileArgs(projectDir = process.cwd(), options = {}) {
 	const manifestPath = join(projectDir, "package.json");
 
 	if (!existsSync(manifestPath)) return undefined;
@@ -209,7 +223,7 @@ function avaTypeScriptCompileArgs(projectDir = process.cwd()) {
 			"--declaration",
 			"false",
 			"--sourceMap",
-			"false",
+			options.sourceMaps ? "true" : "false",
 			"--pretty",
 			"false",
 			"--noEmitOnError",
@@ -218,6 +232,73 @@ function avaTypeScriptCompileArgs(projectDir = process.cwd()) {
 		outputDir,
 		stagedProjectDir: join(outputDir, basename(projectDir))
 	};
+}
+
+// ---------------------------------------------------------------------------
+// Coverage‑mode helpers (opt‑in c8 integration)
+// ---------------------------------------------------------------------------
+
+/**
+ * Detect the opt‑in `--coverage` runner flag and strip it from the argument
+ * list that is forwarded to the ava CLI.
+ *
+ * Coverage is enabled by a literal `--coverage` argument; the flag is a
+ * runner option and is never passed to `buildAvaArgs()`/ava.  All other
+ * arguments are preserved verbatim, so default invocations are unchanged.
+ *
+ * @param {string[]} cliArgs  Raw CLI arguments (e.g. process.argv.slice(2)).
+ * @returns {{ args: string[], coverage: boolean }}  Stripped AVA args and whether coverage mode is active.
+ */
+function stripCoverageFlag(cliArgs) {
+	return {
+		coverage: cliArgs.includes("--coverage"),
+		args: cliArgs.filter((arg) => arg !== "--coverage")
+	};
+}
+
+/**
+ * Resolve the path to the c8 bin script reachable from `process.cwd()`.
+ *
+ * @returns {string}  Absolute path to `c8/bin/c8.js`.
+ * @throws {Error}    If c8 cannot be resolved from the current working directory.
+ */
+function resolveC8Cli() {
+	return require.resolve("c8/bin/c8.js", { paths: [process.cwd()] });
+}
+
+/**
+ * Build the c8 argument list for the supported AVA runner's coverage mode.
+ *
+ * Coverage mode wraps the AVA Node command in c8.  Reports and V8 coverage
+ * temp output are written under `<projectDir>/coverage` (temp data in
+ * `coverage/tmp`).  `--all` with an `--include` of `src/**` + `*.ts` reports
+ * every package source file, and `--exclude-after-remap` applies the
+ * include/exclude rules to the ORIGINAL TypeScript source paths after the
+ * staged `.ava-*` compile output has been source-map-remapped.  Generated,
+ * staged, build, dependency, coverage-output, and test-spec artifacts are
+ * therefore excluded from the reported metrics.  No thresholds, check
+ * commands, or CI gates are introduced.
+ *
+ * @param {string} [projectDir=process.cwd()]  Package directory to cover.
+ * @returns {string[]}  c8 CLI arguments (excluding the wrapped command).
+ */
+function c8CoverageArgs(projectDir = process.cwd()) {
+	const coverageDir = join(projectDir, "coverage");
+
+	return [
+		"--all",
+		"--reporter", "text",
+		"--reporter", "lcovonly",
+		"--reports-dir", coverageDir,
+		"--temp-directory", join(coverageDir, "tmp"),
+		"--include", "src/**/*.ts",
+		"--exclude", ".ava-*/**",
+		"--exclude", "dist/**",
+		"--exclude", "node_modules/**",
+		"--exclude", "coverage/**",
+		"--exclude", "**/*.spec.ts",
+		"--exclude-after-remap"
+	];
 }
 
 // ---------------------------------------------------------------------------
@@ -638,6 +719,11 @@ module.exports = {
 	findPackageRoot,
 	resolveAvaCli,
 	avaTypeScriptCompileArgs,
+
+	// Coverage mode
+	stripCoverageFlag,
+	resolveC8Cli,
+	c8CoverageArgs,
 
 	// Constants
 	ENV,

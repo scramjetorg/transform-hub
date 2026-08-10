@@ -37,6 +37,13 @@
  *
  * Usage (from a package directory):
  *   node ../../scripts/run-ava.js [AVA-OPTIONS...]
+ *   node ../../scripts/run-ava.js --coverage [AVA-OPTIONS...]
+ *
+ * The opt‑in `--coverage` flag wraps the AVA run in c8 (the v8‑native
+ * coverage runner): reports and V8 temp output are written under
+ * `<cwd>/coverage`, and coverage is remapped to the original `src/**`
+ * `.ts` sources (glob split to keep this comment valid). The flag is
+ * stripped before the ava CLI sees it, so default invocations are unchanged.
  *
  * Environment variables (all optional):
  *   See scripts/lib/ava-options.js for the full list.
@@ -53,6 +60,9 @@ const {
 	avaNodeOptions,
 	runnerInvocationEnv,
 	runnerTimeout,
+	stripCoverageFlag,
+	resolveC8Cli,
+	c8CoverageArgs,
 } = require("./lib/ava-options.js");
 
 // ---------------------------------------------------------------------------
@@ -82,9 +92,12 @@ if (process.argv.slice(2).includes("--help")) {
 	printUsage();
 }
 
-// Build the spawn arguments using the centralised helper.
+// Build the spawn arguments using the centralised helper. The opt‑in
+// `--coverage` flag is a runner option: it is stripped here so that it is
+// never forwarded to the ava CLI, and default invocations are unchanged.
 const cliArgs = process.argv.slice(2);
-const args = buildAvaArgs(cliArgs);
+const { args: avaCliArgs, coverage } = stripCoverageFlag(cliArgs);
+const args = buildAvaArgs(avaCliArgs);
 
 // Build the child environment.
 const childEnv = {
@@ -94,7 +107,10 @@ const childEnv = {
 	...runnerInvocationEnv(),
 };
 
-const typeScriptArgs = avaTypeScriptCompileArgs();
+// Coverage mode emits TypeScript source maps for the staged `.ava-*` compile
+// output so that c8 can remap executed JavaScript coverage back to the
+// original TypeScript sources.
+const typeScriptArgs = avaTypeScriptCompileArgs(process.cwd(), { sourceMaps: coverage });
 const excludedDirectories = new Set(["dist", "node_modules", ".bic_cache", "coverage"]);
 
 function removeTypeScriptOutput() {
@@ -234,12 +250,21 @@ if (compileExitCode !== undefined) {
 // Resolve timeout.
 const timeout = runnerTimeout();
 
+// Coverage mode wraps the AVA Node command in c8. The wrap keeps c8's report
+// generation (and its read of the raw V8 coverage) inside the spawned
+// process, so reports are completed before the staged TypeScript output is
+// cleaned up in the finally block below. Without `--coverage` this is an
+// empty prefix and the spawn is unchanged.
+const c8Invocation = coverage
+	? [resolveC8Cli(), ...c8CoverageArgs(process.cwd()), process.execPath]
+	: [];
+
 // Spawn AVA.
 let result;
 const runStartedAt = process.hrtime.bigint();
 
 try {
-	result = spawnSync(process.execPath, args, {
+	result = spawnSync(process.execPath, [...c8Invocation, ...args], {
 		env: childEnv,
 		stdio: "inherit",
 		timeout,

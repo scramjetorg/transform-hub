@@ -46,21 +46,23 @@
 
 ## Phase 3: Add Opt-In c8 Coverage to the AVA Runner
 
-- [ ] Task: Define the minimal coverage-mode contract
-    - [ ] Add c8 as the only new direct coverage dependency and refresh `package-lock.json` with npm.
-    - [ ] Define an opt-in `scripts/run-ava.js` flag that enables coverage while leaving its default invocation unchanged.
-    - [ ] Keep the initial coverage surface limited to the supported AVA runner; do not add Docker BDD instrumentation, thresholds, parity checks, or CI gates.
+- [x] Task: Define the minimal coverage-mode contract
+    - [x] Add c8 as the only new direct coverage dependency and refresh `package-lock.json` with npm.
+    - [x] Define an opt-in `scripts/run-ava.js` flag that enables coverage while leaving its default invocation unchanged.
+    - [x] Keep the initial coverage surface limited to the supported AVA runner; do not add Docker BDD instrumentation, thresholds, parity checks, or CI gates.
 
-- [ ] Task: Implement c8 runner integration
-    - [ ] Route coverage mode through c8 without introducing package-specific wrapper flows.
-    - [ ] Configure reproducible report output and V8 source remapping to original TypeScript paths.
-    - [ ] Exclude generated, staged `.ava-*`, build, dependency, and coverage-output paths from source metrics.
-    - [ ] Preserve the runner's normal staging cleanup and test-worker behavior.
+- [x] Task: Implement c8 runner integration
+    - [x] Route coverage mode through c8 without introducing package-specific wrapper flows.
+    - [x] Configure reproducible report output and V8 source remapping to original TypeScript paths.
+    - [x] Exclude generated, staged `.ava-*`, build, dependency, and coverage-output paths from source metrics.
+    - [x] Preserve the runner's normal staging cleanup and test-worker behavior.
 
-- [ ] Task: Add focused coverage-mode regression tests
-    - [ ] Add or update runner tests for flag parsing, default-mode preservation, c8 invocation, report location, and exclusions.
-    - [ ] Cover source-map attribution and coverage propagation to the configured AVA worker mode where practical.
-    - [ ] Run focused runner tests through the supported AVA command under the repository memory guard.
+- [x] Task: Add focused coverage-mode regression tests
+    - [x] Add or update runner tests for flag parsing, default-mode preservation, c8 invocation, report location, and exclusions.
+    - [x] Cover source-map attribution and coverage propagation to the configured AVA worker mode where practical.
+    - [x] Run focused runner tests through the supported AVA command under the repository memory guard.
+
+    Validation: `npm ci` completed successfully with existing engine, deprecation, and Python resolver warnings. `node scripts/run-ava.js scripts/test/ava-options.spec.js` passed 98 tests; `node scripts/run-ava.js scripts/test/ava-typescript-staging.spec.js` passed 9 tests, including a staged logger c8 report that asserted remapped TypeScript paths, exclusions, output location, and cleanup. Under the 524288-byte guard, `ulimit -v 1835008 && NODE_OPTIONS="--max-old-space-size=1024" SCRAMJET_AVA_MEMORY_GUARD=1 node scripts/run-ava.js scripts/test/ava-options.spec.js --match="*coverage*" --match="*Coverage*" --match="*C8*"` passed 9 coverage-mode helper tests. `npm exec -- biome lint --error-on-warnings scripts/run-ava.js scripts/lib/ava-options.js` and `git diff --check` passed.
 
 - [ ] Task: Conductor - Phase Completion 'Add Opt-In c8 Coverage to the AVA Runner' (Protocol in workflow.md)
 
