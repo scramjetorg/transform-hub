@@ -2,23 +2,25 @@
 
 ## Phase 1: Remove Repository-Owned nyc Tooling
 
-- [ ] Task: Establish the implementation branch and review surface
-    - [ ] Capture the current branch as the PR base during `/conductor:implement`.
-    - [ ] Create `conductor/coverage_tooling_replacement_20260809` from that base.
-    - [ ] Open or update a draft PR with the approved specification when review visibility is required.
+- [x] Task: Establish the implementation branch and review surface
+    - [x] Capture the current branch as the PR base during `/conductor:implement`.
+    - [x] Create `conductor/coverage_tooling_replacement_20260809` from that base.
+    - [x] Open draft upstream PR #1082 with the approved specification.
 
-- [ ] Task: Remove active nyc/Istanbul ownership
-    - [ ] Remove direct `nyc` and `@istanbuljs/nyc-config-typescript` declarations from root and package manifests.
-    - [ ] Remove active nyc wrappers from package scripts while preserving their supported `scripts/run-ava.js` execution path.
-    - [ ] Remove the root nyc configuration and nyc-specific ignored artifacts.
-    - [ ] Do not remove c8 transitive dependencies, historical records, or unrelated text references.
+- [x] Task: Remove active nyc/Istanbul ownership
+    - [x] Remove direct `nyc` and `@istanbuljs/nyc-config-typescript` declarations from root and package manifests.
+    - [x] Remove active nyc wrappers from package scripts while preserving their supported `scripts/run-ava.js` execution path.
+    - [x] Remove the root nyc configuration and nyc-specific ignored artifacts.
+    - [x] Preserve c8 transitive dependencies, historical records, and unrelated text references.
 
-- [ ] Task: Refresh and validate the dependency lock
-    - [ ] Regenerate `package-lock.json` with npm using only the dependency changes in this phase.
-    - [ ] Run `npm ci` and static searches proving direct nyc/Istanbul ownership is gone.
-    - [ ] Run one affected package test through its direct supported AVA runner to prove the removal did not leave a broken package script.
+- [x] Task: Refresh and validate the dependency lock
+    - [x] Regenerate `package-lock.json` with npm using only the dependency changes in this phase.
+    - [x] Run `npm ci` and static searches proving direct nyc/Istanbul ownership is gone.
+    - [x] Run one affected package test through its direct supported AVA runner to prove the removal did not leave a broken package script.
 
-- [ ] Task: Conductor - Phase Completion 'Remove Repository-Owned nyc Tooling' (Protocol in workflow.md)
+    Validation: `npx --yes npm@11.19.0 install --package-lock-only --ignore-scripts` refreshed the lockfile; `npm ci` completed successfully (with existing Node-engine, deprecation, and Python resolver warnings); semantic manifest/lock checks found no direct nyc/Istanbul ownership; `npm run test --workspace @scramjet/logger` passed 3 tests with 2 existing skips through `scripts/run-ava.js`.
+
+- [x] Task: Conductor - Phase Completion 'Remove Repository-Owned nyc Tooling' (Protocol in workflow.md)
 
 ## Phase 2: Clear Remaining Active Coverage Wiring
 

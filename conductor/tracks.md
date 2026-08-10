@@ -29,5 +29,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [ ] **Track: coverage tooling replacement, leave phase 5 gated on user decision. No over engineering, simplest solution please**
+- [~] **Track: coverage tooling replacement, leave phase 5 gated on user decision. No over engineering, simplest solution please**
 *Link: [./tracks/coverage_tooling_replacement_20260809/](./tracks/coverage_tooling_replacement_20260809/)*
