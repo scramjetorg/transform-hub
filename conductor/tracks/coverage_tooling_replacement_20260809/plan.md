@@ -102,4 +102,4 @@
 
     Decision: the user accepted the newly established c8 assessment on 2026-08-11. No coverage remediation, source/test change, exclusion change, threshold, or follow-up track was requested.
 
-- [ ] Task: Conductor - Phase Completion 'Assess Coverage and Gate Remediation' (Protocol in workflow.md)
+- [x] Task: Conductor - Phase Completion 'Assess Coverage and Gate Remediation' (Protocol in workflow.md)
