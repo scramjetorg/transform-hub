@@ -73,14 +73,19 @@ test("lockfile reproducibility gate runs after checkout and before the workspace
 		/npx\s+--yes\s+npm@11\.19\.0\s+install\s+--package-lock-only\s+--ignore-scripts/,
 		"build:lockfile must rebuild the lock with the pinned npm via npx"
 	);
+	t.is(
+		rootPkg.scripts["check:lockfile"],
+		"npm run build:lockfile && git diff --exit-code -- package-lock.json",
+		"check:lockfile must compose the pinned rebuild with the diff gate"
+	);
 
 	const checkout = "uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1";
 	const setup = "uses: ./.github/actions/setup-workspace";
-	const lockfileGate = source.indexOf("npm run build:lockfile");
+	const lockfileGate = source.indexOf("npm run check:lockfile");
 
 	t.true(lockfileGate > source.indexOf(checkout), "lockfile gate must run after checkout");
 	t.true(lockfileGate < source.indexOf(setup), "lockfile gate must run before setup-workspace");
-	t.true(source.includes("git diff --exit-code -- package-lock.json"), "lockfile gate must fail on any lockfile diff");
+	t.false(source.includes("git diff --exit-code -- package-lock.json"), "the workflow must call the shared check:lockfile command instead of duplicating the diff");
 });
 
 test("single package-validation job owns gates, Bun, serial AVA tests, and the package build", (t) => {

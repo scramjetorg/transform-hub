@@ -17,6 +17,7 @@
     "build:docker:stage-runner": "rm -rf ./dist/docker-runner && scripts/build-all.js --no-install --link-packages -d packages/runner -o ./dist/docker-runner/ --ts-config tsconfig.build.json && cp -r packages/runner-python ./dist/docker-runner/runner-python",
     "build:docker:runners": "scripts/run-script.js -w runners build:docker",
     "build:lockfile": "npx --yes npm@11.19.0 install --package-lock-only --ignore-scripts",
+    "check:lockfile": "npm run build:lockfile && git diff --exit-code -- package-lock.json",
     "docs:clean": "node ./scripts/docs.js clean",
     "docs:generate": "node ./scripts/docs.js generate",
     "docs:generate:content": "node ./scripts/docs.js generate:content",

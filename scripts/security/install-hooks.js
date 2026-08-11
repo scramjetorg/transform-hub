@@ -6,14 +6,16 @@ const { resolve } = require("node:path");
 
 const ROOT = resolve(__dirname, "..", "..");
 const HOOKS = resolve(ROOT, ".githooks");
+const REQUIRED_HOOKS = ["pre-commit", "pre-push"];
 
 function git(args) {
     return spawnSync("git", args, { cwd: ROOT, encoding: "utf8" });
 }
 
 function main() {
-    if (!existsSync(resolve(HOOKS, "pre-push"))) {
-        console.error("[security] Checked-in .githooks/pre-push is missing.");
+    const missing = REQUIRED_HOOKS.filter((hook) => !existsSync(resolve(HOOKS, hook)));
+    if (missing.length > 0) {
+        console.error(`[security] Checked-in .githooks hooks are missing: ${missing.join(", ")}.`);
         process.exitCode = 1;
         return;
     }
@@ -37,4 +39,4 @@ function main() {
 
 if (require.main === module) main();
 
-module.exports = { git };
+module.exports = { git, REQUIRED_HOOKS };
