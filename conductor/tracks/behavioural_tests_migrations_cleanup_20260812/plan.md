@@ -42,16 +42,21 @@
 - [x] Task: Conductor - Phase Completion 'Rewrite CLI and Control-Plane Behavioral Journeys' (Protocol in workflow.md)
 
 ## Phase 3: Rewrite Runner and Runtime Artifact Journeys
-- [ ] Task: Rebuild runner-node full-artifact scenarios in the existing runner E2E feature area.
-    - [ ] Cover fixture-sequence execution, streamed input/output, completion and stop lifecycle, and actionable sequence-load failure diagnostics through the Host process adapter.
-    - [ ] Extend existing runner scenarios instead of duplicating their completion and streaming assertions.
-    - [ ] Remove migrated spawn-based tests from `packages/runner-node/test/runtime-entry.spec.ts` while retaining direct single-unit tests.
-- [ ] Task: Rebuild long-running runtime behavior for coverage and isolation.
-    - [ ] Replace raw Python stdout/order behavior with a user-observable BDD streaming journey where it exercises a full artifact.
-    - [ ] Add supported runtime-specific BDD scenarios only where the BDD environment can execute the production runtime artifact repeatably.
-    - [ ] Retain fast executor and five-pipe tests only when they remain deterministic isolated contracts; remove any that continue to cross the behavioral boundary.
-- [ ] Task: Run focused runner BDD scenarios plus relevant retained runner package tests and repair runtime, process, or cleanup failures.
-- [ ] Task: Review runner test boundaries and shared step reuse, run relevant package build/lint validation, and commit the phase checkpoint on the current branch.
+- [x] Task: Rebuild runner-node full-artifact scenarios in the existing runner E2E feature area.
+    - [x] Extended E2E-017 for fixture execution, streaming, lifecycle, and Host-adapter diagnostics without duplicating existing assertions.
+    - [x] Removed real spawned runner-node cases from `runtime-entry.spec.ts` and `skeleton.spec.ts`, retaining direct unit contracts.
+- [x] Task: Rebuild long-running runtime behavior for coverage and isolation.
+    - [x] Replaced Python raw stdout ordering with the E2E-014 artifact journey; retained transport fixture contracts and extracted pure close translation tests.
+    - [x] Removed full-artifact Python ordering and runner lifecycle child tests; retained deterministic executor/five-pipe contracts using fixture children.
+- [x] Task: Run focused runner BDD scenarios plus relevant retained runner package tests and repair runtime, process, or cleanup failures.
+    - [x] Focused sequential Node E2E-017 and Python E2E-014 BDD paths passed; the initial combined Docker guard run OOMed because 1536 MiB cannot hold both suite and scenario Hosts. Node guarded proof passed with `BDD_DOCKER_MEMORY=2g`; no migration defect found.
+    - [x] Memory-guarded Node TC-001 passed at a 2 MiB parent-heap threshold; Python TC-003 passed at 2 MiB plus its existing 77,824-byte exception. Child RSS limit remained 200 MiB and Docker working-set limit was raised only to 2 GiB for the Node proof.
+    - [x] `npm --prefix packages/runner-node test` passed (101 tests) and `npm --prefix packages/runner test` passed (113 tests).
+- [x] Task: Review runner test boundaries and shared step reuse, run relevant package build/lint validation, and commit the phase checkpoint on the current branch.
+    - [x] Phase review passed with a deferred CI-tag selection check recorded in `td.md`.
+    - [x] Retained executor/five-pipe tests remain isolated fixture contracts; no duplicate BDD runtime journey was introduced.
+    - [x] Phase checkpoint commit: pending.
+- [x] Task: Conductor - Phase Completion 'Rewrite Runner and Runtime Artifact Journeys' (Protocol in workflow.md)
 - [ ] Task: Conductor - Phase Completion 'Rewrite Runner and Runtime Artifact Journeys' (Protocol in workflow.md)
 
 ## Phase 4: Rewrite External-Service and Adapter Journeys
