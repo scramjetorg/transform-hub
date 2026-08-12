@@ -55,7 +55,7 @@
 - [x] Task: Review runner test boundaries and shared step reuse, run relevant package build/lint validation, and commit the phase checkpoint on the current branch.
     - [x] Phase review passed with a deferred CI-tag selection check recorded in `td.md`.
     - [x] Retained executor/five-pipe tests remain isolated fixture contracts; no duplicate BDD runtime journey was introduced.
-    - [x] Phase checkpoint commit: pending.
+    - [x] Phase checkpoint commit: `70076fecf`.
 - [x] Task: Conductor - Phase Completion 'Rewrite Runner and Runtime Artifact Journeys' (Protocol in workflow.md)
 - [ ] Task: Conductor - Phase Completion 'Rewrite Runner and Runtime Artifact Journeys' (Protocol in workflow.md)
 
