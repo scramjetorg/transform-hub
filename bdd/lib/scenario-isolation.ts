@@ -2,9 +2,8 @@ import { execFileSync } from "child_process";
 import { randomBytes } from "crypto";
 import { strict as assert } from "assert";
 import { mkdirSync, mkdtempSync, rmSync, statSync, writeFileSync } from "fs";
-import { request } from "http";
-import { request as httpsRequest } from "https";
 import { join, relative } from "path";
+import Dockerode from "dockerode";
 
 const { getOwnership, ensureOwnershipPaths, ownershipEnv, allocateOwnedPort } = require("./ownership.js") as {
     getOwnership: (environment: NodeJS.ProcessEnv) => any;
@@ -104,32 +103,15 @@ function dockerResult(args: string[]): string | undefined {
     }
 }
 
-function assertDockerAvailable(): void {
-    const output = dockerResult(["version", "--format", "{{.Server.Version}}"])?.trim();
-    if (!output) {
-        throw new Error("Docker daemon prerequisite unavailable: run the supported Docker BDD runner with access to a running Docker daemon.");
-    }
-}
-
-function probeMinio(endpoint: string): Promise<void> {
-    let url: URL;
+async function assertDockerAvailable(): Promise<void> {
     try {
-        url = new URL(endpoint);
-    } catch {
-        return Promise.reject(new Error("MinIO prerequisite unavailable: BDD_MINIO_ENDPOINT must be a valid HTTP(S) URL."));
+        await new Dockerode().info();
+    } catch (error) {
+        const detail = error instanceof Error ? ` (${error.message})` : "";
+        throw new Error(
+            "Docker daemon prerequisite unavailable: run the supported Docker BDD runner with /var/run/docker.sock mounted and a user permitted to access it." + detail
+        );
     }
-    const send = url.protocol === "https:" ? httpsRequest : request;
-    return new Promise((resolve, reject) => {
-        const health = new URL("/minio/health/ready", url);
-        const client = send(health, response => {
-            response.resume();
-            if (response.statusCode === 200) resolve();
-            else reject(new Error("MinIO prerequisite unavailable: the configured endpoint did not report ready."));
-        });
-        client.once("error", () => reject(new Error("MinIO prerequisite unavailable: the configured endpoint could not be reached.")));
-        client.setTimeout(3000, () => client.destroy(new Error("MinIO readiness probe timed out.")));
-        client.end();
-    });
 }
 
 export async function assertMtlsAccepted<T>(requestFn: () => Promise<T>): Promise<T> {
@@ -307,16 +289,15 @@ export function createScenarioIsolation(lifecycle: ScenarioLifecycle, environmen
     return isolation;
 }
 
-export async function assertMinioPrerequisite(): Promise<void> {
-    assertDockerAvailable();
-    if (!process.env.BDD_MINIO_ENDPOINT) {
-        throw new Error("MinIO prerequisite unavailable: set BDD_MINIO_ENDPOINT to the isolated service endpoint before selecting @requires-minio scenarios.");
-    }
-    await probeMinio(process.env.BDD_MINIO_ENDPOINT);
+export async function assertMinioPrerequisite(assertDocker: () => void | Promise<void> = assertDockerAvailable): Promise<void> {
+    // @minio-s3 scenarios create, wait for, and remove their own MinIO
+    // container. Requiring an externally provisioned BDD_MINIO_ENDPOINT made
+    // these scenarios impossible to run in the supported Docker BDD runner.
+    await assertDocker();
 }
 
-export function assertDockerPrerequisite(): void {
-    assertDockerAvailable();
+export async function assertDockerPrerequisite(): Promise<void> {
+    await assertDockerAvailable();
 }
 
 export function privateCredentialMode(path: string): number {

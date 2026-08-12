@@ -9,6 +9,7 @@ require("ts-node").register({ project: path.resolve(__dirname, "../../bdd/tsconf
 const {
     assertMtlsAccepted,
     assertMtlsRejected,
+    assertMinioPrerequisite,
     createScenarioIsolation,
     privateCredentialMode,
 } = require("../../bdd/lib/scenario-isolation");
@@ -176,6 +177,21 @@ test("mTLS assertion helpers distinguish admission from rejection", async t => {
     await t.notThrowsAsync(assertMtlsRejected(async () => { throw new Error("rejected"); }));
     await t.throwsAsync(assertMtlsAccepted(async () => { throw new Error("rejected"); }), { message: /Expected mTLS client admission/ });
     await t.throwsAsync(assertMtlsRejected(async () => undefined), { message: /Expected mTLS client rejection/ });
+});
+
+test("MinIO prerequisite permits a scenario-owned service without BDD_MINIO_ENDPOINT", async t => {
+    const previousEndpoint = process.env.BDD_MINIO_ENDPOINT;
+    delete process.env.BDD_MINIO_ENDPOINT;
+    let dockerChecked = 0;
+
+    try {
+        await t.notThrowsAsync(assertMinioPrerequisite(async () => { dockerChecked++; }));
+    } finally {
+        if (previousEndpoint === undefined) delete process.env.BDD_MINIO_ENDPOINT;
+        else process.env.BDD_MINIO_ENDPOINT = previousEndpoint;
+    }
+
+    t.is(dockerChecked, 1, "a scenario-owned MinIO needs Docker, not a pre-existing endpoint");
 });
 
 test("scenario isolation prerequisite hooks match public and requires tags", t => {

@@ -9,8 +9,8 @@ Before(function(this: CustomWorld) {
 const dockerPrerequisiteTags = "@requires-docker-daemon or @docker-daemon";
 const minioPrerequisiteTags = "@requires-minio or @minio-s3";
 
-Before({ tags: dockerPrerequisiteTags }, function(this: CustomWorld) {
-    assertDockerPrerequisite();
+Before({ tags: dockerPrerequisiteTags }, async function(this: CustomWorld) {
+    await assertDockerPrerequisite();
     this.scenarioIsolation?.requireDockerDiagnostics();
 });
 
