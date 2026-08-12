@@ -38,8 +38,8 @@
     - [x] `npm --prefix bdd run build:bdd`, focused CLI/ingress BDD (14 scenarios, 234 steps), `npm --prefix packages/host test`, `npm --prefix packages/manager test`, focused CLI/Host/Manager/STH builds, and `npm run lint` passed.
     - [x] `npm run build:packages` was attempted but deferred as an unrelated environment failure: `@scramjet/runner-python` HTTPS artifact download disconnected before changed-package compilation. Focused changed-package builds passed.
     - [x] Phase review passed after moving Manager listener lifecycle coverage and eliminating shared `dist/` mutation from the CLI completion scenario.
-    - [x] Phase checkpoint commit: pending.
-- [ ] Task: Conductor - Phase Completion 'Rewrite CLI and Control-Plane Behavioral Journeys' (Protocol in workflow.md)
+    - [x] Phase checkpoint commit: `50f9336fe`.
+- [x] Task: Conductor - Phase Completion 'Rewrite CLI and Control-Plane Behavioral Journeys' (Protocol in workflow.md)
 
 ## Phase 3: Rewrite Runner and Runtime Artifact Journeys
 - [ ] Task: Rebuild runner-node full-artifact scenarios in the existing runner E2E feature area.
