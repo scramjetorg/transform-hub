@@ -446,6 +446,16 @@ export function beginCleanupTiming(world: any): void {
 After(async function (this: any, scenario: any) {
     const cleanupErrors: Error[] = [];
     try {
+        // Scenario isolation was established before the memory baseline. Its
+        // cleanup runs here, after all step-definition hooks and before the
+        // final measurement, so owned HOME/config/artifact/PKI paths and port
+        // reservations cannot retain scenario state across measurements.
+        await this.scenarioIsolation?.cleanup();
+        this.scenarioIsolation = undefined;
+    } catch (err: any) {
+        cleanupErrors.push(err);
+    }
+    try {
         // Scenario-owned resources are always cleaned up, including skipped
         // guards and scenarios without a memory baseline.
         await cleanupScenarioWorldResources(this, this.scenarioLifecycle);

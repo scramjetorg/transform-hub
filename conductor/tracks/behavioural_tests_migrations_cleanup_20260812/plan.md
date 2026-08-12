@@ -1,17 +1,23 @@
 # Implementation Plan: Behavioral Tests Migration and Cleanup
 
 ## Phase 1: Establish the Migration Boundary and BDD Infrastructure
-- [ ] Task: Re-audit the AVA inventory against the approved behavioral boundary and record the exact AVA cases, helpers, and Cucumber destination for each migration group.
-    - [ ] Read package and BDD codemaps plus existing feature/step patterns before modifying test infrastructure.
-    - [ ] Separate deterministic mocked single-unit tests that remain in AVA from real-artifact, process, network, TLS/mTLS, service, and composed-system cases.
-    - [ ] Identify existing Cucumber journeys to extend and prevent duplicate coverage.
-- [ ] Task: Implement reusable Cucumber support for rewritten behavioral scenarios.
-    - [ ] Provide per-scenario isolated home, profile, configuration, temporary-artifact, port, child-process, and certificate lifecycle helpers.
-    - [ ] Provide reusable mTLS control-ingress setup and assertions without leaking PKI material to logs.
-    - [ ] Provide tagged Docker-daemon and MinIO/S3 prerequisites with explicit availability diagnostics and cleanup.
-    - [ ] Add focused support-level tests where support code has deterministic unit behavior.
-- [ ] Task: Run focused BDD-support validation and record the baseline inventory, selected BDD tags, and unavailable infrastructure prerequisites.
-- [ ] Task: Review shared BDD support for duplication, complete relevant lint/build checks, and commit the phase checkpoint on the current branch.
+- [x] Task: Re-audit the AVA inventory against the approved behavioral boundary and record the exact AVA cases, helpers, and Cucumber destination for each migration group. See [inventory.md](./inventory.md).
+    - [x] Read package and BDD codemaps plus existing feature/step patterns before modifying test infrastructure.
+    - [x] Separate deterministic mocked single-unit tests that remain in AVA from real-artifact, process, network, TLS/mTLS, service, and composed-system cases.
+    - [x] Identify existing Cucumber journeys to extend and prevent duplicate coverage.
+- [x] Task: Implement reusable Cucumber support for rewritten behavioral scenarios.
+    - [x] Provide per-scenario isolated home, profile, configuration, temporary-artifact, port, child-process, and certificate lifecycle helpers.
+    - [x] Provide reusable mTLS control-ingress setup and assertions without leaking PKI material to logs.
+    - [x] Provide tagged Docker-daemon and MinIO/S3 prerequisites with explicit availability diagnostics and cleanup.
+    - [x] Add focused support-level tests where support code has deterministic unit behavior.
+- [x] Task: Run focused BDD-support validation and record the baseline inventory, selected BDD tags, and unavailable infrastructure prerequisites.
+    - [x] `npm --prefix bdd run build:bdd` passed.
+    - [x] Focused AVA support tests passed (78 tests), and `node scripts/run-bdd.js -- --tags "@ci-verser2 and not @ignore" --format pretty` passed (2 scenarios, 36 steps) with no leaked processes.
+    - [x] Docker is available on the host but unavailable to the BDD runner container; future `@docker-daemon` behavior requires a mounted daemon socket. `@requires-minio` requires `BDD_MINIO_ENDPOINT`.
+- [x] Task: Review shared BDD support for duplication, complete relevant lint/build checks, and commit the phase checkpoint on the current branch.
+    - [x] Shared ownership and lifecycle helpers were reused; no duplicate BDD support abstraction was introduced.
+    - [x] Phase review passed after prerequisite tag remediation. BDD source is excluded by the repository Biome configuration, so scoped Biome lint is not applicable.
+    - [x] Phase checkpoint commit: pending.
 - [ ] Task: Conductor - Phase Completion 'Establish the Migration Boundary and BDD Infrastructure' (Protocol in workflow.md)
 
 ## Phase 2: Rewrite CLI and Control-Plane Behavioral Journeys

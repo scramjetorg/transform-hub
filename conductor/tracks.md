@@ -34,5 +34,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [ ] **Track: behavioural tests migration and cleanup**
+- [~] **Track: behavioural tests migration and cleanup**
 *Link: [./tracks/behavioural_tests_migrations_cleanup_20260812/](./tracks/behavioural_tests_migrations_cleanup_20260812/)*
