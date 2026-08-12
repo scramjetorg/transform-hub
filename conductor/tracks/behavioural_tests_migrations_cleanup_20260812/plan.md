@@ -73,7 +73,7 @@
 - [x] Task: Deduplicate shared infrastructure helpers, run relevant package build/lint validation, and commit the phase checkpoint on the current branch.
     - [x] Reused ScenarioIsolation, Dockerode prerequisite, lifecycle ownership, and exact memory-guard exception infrastructure; no duplicate container harness was added.
     - [x] Focused BDD support tests passed (46), BDD build and full Biome lint passed. Broad `build:packages` again failed only on the unrelated `runner-python` external artifact download; focused changed-surface validation passed.
-    - [x] Phase review passed. Phase checkpoint commit: pending.
+    - [x] Phase review passed. Phase checkpoint commit: `cec4e5820`.
 - [x] Task: Conductor - Phase Completion 'Rewrite External-Service and Adapter Journeys' (Protocol in workflow.md)
 
 ## Phase 5: Complete AVA Cleanup and Track Validation
