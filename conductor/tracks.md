@@ -31,3 +31,8 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 - [x] **Track: coverage tooling replacement, leave phase 5 gated on user decision. No over engineering, simplest solution please**
 *Link: [./tracks/coverage_tooling_replacement_20260809/](./tracks/coverage_tooling_replacement_20260809/)*
+
+---
+
+- [ ] **Track: behavioural tests migrations and cleanup - this track should continue in the same current branch, it should migrate all cli endpoints and integration like tests that run against actual scenarios, require code execution against full artifacts. Those tests should be reproduced in the cucumber stack and be removed from ava.**
+*Link: [./tracks/behavioural_tests_migrations_cleanup_20260812/](./tracks/behavioural_tests_migrations_cleanup_20260812/)*
