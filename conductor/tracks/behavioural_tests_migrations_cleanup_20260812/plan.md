@@ -17,8 +17,8 @@
 - [x] Task: Review shared BDD support for duplication, complete relevant lint/build checks, and commit the phase checkpoint on the current branch.
     - [x] Shared ownership and lifecycle helpers were reused; no duplicate BDD support abstraction was introduced.
     - [x] Phase review passed after prerequisite tag remediation. BDD source is excluded by the repository Biome configuration, so scoped Biome lint is not applicable.
-    - [x] Phase checkpoint commit: pending.
-- [ ] Task: Conductor - Phase Completion 'Establish the Migration Boundary and BDD Infrastructure' (Protocol in workflow.md)
+    - [x] Phase checkpoint commit: `5618903b8`.
+- [x] Task: Conductor - Phase Completion 'Establish the Migration Boundary and BDD Infrastructure' (Protocol in workflow.md)
 
 ## Phase 2: Rewrite CLI and Control-Plane Behavioral Journeys
 - [ ] Task: Rewrite real CLI ingress behavior as isolated Cucumber scenarios.
