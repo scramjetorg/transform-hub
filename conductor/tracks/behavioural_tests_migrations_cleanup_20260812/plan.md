@@ -21,16 +21,24 @@
 - [x] Task: Conductor - Phase Completion 'Establish the Migration Boundary and BDD Infrastructure' (Protocol in workflow.md)
 
 ## Phase 2: Rewrite CLI and Control-Plane Behavioral Journeys
-- [ ] Task: Rewrite real CLI ingress behavior as isolated Cucumber scenarios.
-    - [ ] Extend the existing CLI and Verser2 feature areas with mTLS and non-mTLS ingress journeys using the real CLI artifact.
-    - [ ] Cover endpoint/API dispatch, profile selection, isolated session/profile configuration, representative success and error exit codes, SIGINT, timeout, and cancellation behavior.
-    - [ ] Remove the migrated behavioral cases and no-longer-needed harness code from `packages/cli/test/real-mtls-ingress-process.spec.ts`, `real-nonmtls-ingress-process.spec.ts`, and `profile-selection-process.spec.ts`.
-- [ ] Task: Rewrite Host and Manager control-plane behavior as Cucumber scenarios.
-    - [ ] Cover client-certificate admission and rejection, fingerprint/trust behavior, external-broker routing, and Manager/Host control-ingress lifecycle through real artifacts.
-    - [ ] Rebuild CSR enrollment as CLI-oriented Cucumber behavior while retaining deterministic certificate-helper unit tests where appropriate.
-    - [ ] Remove migrated behavioral cases and obsolete AVA harness code from Host and Manager ingress, external-client, and CSR CLI suites.
-- [ ] Task: Run focused CLI, Hub, Manager, and Verser2 Cucumber tags under the supported runner; repair leaks, isolation defects, or behavior regressions.
-- [ ] Task: Perform review and deduplication of Cucumber steps, run relevant package build/lint validation, and commit the phase checkpoint on the current branch.
+- [x] Task: Rewrite real CLI ingress behavior as isolated Cucumber scenarios.
+    - [x] Added `bdd/features/e2e/E2E-018-cli-ingress.feature` using built CLI artifacts with mTLS and non-mTLS ingress journeys.
+    - [x] Covered endpoint/API dispatch, isolated profile state, representative success/error exits, raw bodies/stream/error mapping, SIGINT cancellation, and legacy HTTP fallback.
+    - [x] Removed `packages/cli/test/real-mtls-ingress-process.spec.ts`, `real-nonmtls-ingress-process.spec.ts`, `profile-selection-process.spec.ts`, and the obsolete `cliProcess.ts` harness.
+- [x] Task: Rewrite Host and Manager control-plane behavior as Cucumber scenarios.
+    - [x] Added `bdd/features/e2e/E2E-019-control-plane-migration.feature` covering client-certificate admission/rejection, fingerprint trust, external Hub routing, and real ingress lifecycle.
+    - [x] Rebuilt CSR enrollment through the published Hub and Manager command artifacts while retaining certificate-helper unit tests.
+    - [x] Removed migrated behavioral AVA coverage, including the external-client and CSR CLI suites, while retaining deterministic option/config tests.
+- [x] Task: Run focused CLI, Hub, Manager, and Verser2 Cucumber tags under the supported runner; repair leaks, isolation defects, or behavior regressions.
+    - [x] Focused BDD passed: 12 scenarios, 206 steps, no leaked repository processes.
+    - [x] Memory-guarded BDD passed with `NO_HOST=true SCRAMJET_BDD_MEMORY_GUARD=1 SCRAMJET_BDD_MEMORY_THRESHOLD_BYTES=2097152 node scripts/run-bdd.js -- --tags "(@cli-ingress or @manager-ingress or @csr-enrollment) and not @ignore" --format progress`; parent heap threshold 2 MiB, child RSS threshold 200 MiB, Docker working-set threshold 1 GiB.
+    - [x] `npm --prefix packages/host test` passed (327 tests, 9 skipped) and `npm --prefix packages/manager test` passed (211 tests).
+- [x] Task: Perform review and deduplication of Cucumber steps, run relevant package build/lint validation, and commit the phase checkpoint on the current branch.
+    - [x] Existing CLI and control-plane step helpers were extended; no duplicate scenario lifecycle, TLS, or process cleanup implementation was added.
+    - [x] `npm --prefix bdd run build:bdd`, focused CLI/ingress BDD (14 scenarios, 234 steps), `npm --prefix packages/host test`, `npm --prefix packages/manager test`, focused CLI/Host/Manager/STH builds, and `npm run lint` passed.
+    - [x] `npm run build:packages` was attempted but deferred as an unrelated environment failure: `@scramjet/runner-python` HTTPS artifact download disconnected before changed-package compilation. Focused changed-package builds passed.
+    - [x] Phase review passed after moving Manager listener lifecycle coverage and eliminating shared `dist/` mutation from the CLI completion scenario.
+    - [x] Phase checkpoint commit: pending.
 - [ ] Task: Conductor - Phase Completion 'Rewrite CLI and Control-Plane Behavioral Journeys' (Protocol in workflow.md)
 
 ## Phase 3: Rewrite Runner and Runtime Artifact Journeys
