@@ -1,4 +1,4 @@
-# Track behavioural_tests_migrations_cleanup_20260812 Context
+# Behavioral Tests Migration and Cleanup
 
 - [Specification](./spec.md)
 - [Implementation Plan](./plan.md)
