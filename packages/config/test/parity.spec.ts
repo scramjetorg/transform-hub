@@ -79,6 +79,7 @@ test("defaultConfig does NOT populate docker.runner.image from imageConfig", t =
 
 test("defaultConfig has base STH fields", t => {
     t.is(defaultConfig.logLevel, "TRACE");
+    t.false(defaultConfig.logColors);
     t.is(defaultConfig.runtimeAdapter, "detect");
     t.true(defaultConfig.verser2.enabled);
     t.is(defaultConfig.verser2.hostUrl, "https://127.0.0.1:2443");
@@ -170,7 +171,7 @@ test("ConfigService.update deep-merges configuration", t => {
     t.is(svc.getConfig().logLevel, "DEBUG");
     t.is(svc.getConfig().host.port, 9000);
     // unchanged field preserved
-    t.is(svc.getConfig().logColors, true);
+    t.false(svc.getConfig().logColors);
 });
 
 test("ConfigService.getDockerConfig returns docker section", t => {

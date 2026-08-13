@@ -30,7 +30,7 @@
     "logColors": {
       "type": "boolean",
       "description": "Enable ANSI colors in logs.",
-      "default": true
+      "default": false
     },
     "cpmUrl": {
       "type": "string",

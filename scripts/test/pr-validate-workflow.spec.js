@@ -33,7 +33,7 @@ test("base PR workflow is read-only, cancellable, and uses a fresh restore-only 
 	t.true(source.includes("cache-mode: restore-only"));
 	t.false(source.includes("cache: \"false\""));
 	t.true(source.includes("github.event.pull_request.head.sha"));
-	t.is((source.match(/checkpoint-branch: \$\{\{ github\.event\.pull_request\.base\.ref \|\| github\.event\.merge_group\.base_ref \|\| '' \}\}/g) || []).length, 3);
+	t.is((source.match(/checkpoint-branch: \$\{\{ github\.event\.pull_request\.base\.ref \|\| github\.event\.merge_group\.base_ref \|\| '' \}\}/g) || []).length, 5);
 	t.false(source.includes("SCRAMJET_PR_CHECKPOINT_REFERENCE"));
 	t.true(source.includes("organization-required security workflow"));
 	t.false(source.includes("pull_request_target"));
@@ -102,81 +102,50 @@ test("single package-validation job owns gates, Bun, serial AVA tests, and the p
 	t.true(source.indexOf("oven-sh/setup-bun@") < source.indexOf("npm run test:packages:ci"));
 	t.true(source.includes("npm run test:packages:ci"));
 	t.true(source.indexOf("npm run test:packages:ci") < source.indexOf("run: npm run build:packages"));
-	t.is((source.match(/npm run build:packages/g) || []).length, 3);
+	t.is((source.match(/npm run build:packages/g) || []).length, 5);
 	t.is((source.match(/npm run test:packages:ci/g) || []).length, 1);
 	t.is((source.match(/oven-sh\/setup-bun@/g) || []).length, 1, "Setup Bun must appear only in the package-validation job");
 });
 
-test("core BDD lane runs Node, Python, API, and Verser2 BDD sequentially after one shared build", (t) => {
+test("four BDD jobs partition core and extended commands into non-overlapping parallel lanes", (t) => {
 	const source = workflowSource();
-	t.true(source.includes("bdd-core:"));
-	t.true(source.includes("name: CI / core BDD"));
-	t.true(source.includes("needs: [package-validation]"));
-	const jobStart = source.indexOf("  bdd-core:\n");
-	const jobEnd = source.indexOf("  bdd-extended:\n");
-	const job = source.slice(jobStart, jobEnd);
-	const commands = [
-		"run: npm run build:packages",
-		"npm run test:bdd-ci-node",
-		"npm run test:bdd-ci-python",
-		"npm run test:bdd-ci-api-node",
-		"npm run test:bdd-ci-verser2",
-	];
-	let previous = job.indexOf("uses: ./.github/actions/setup-workspace");
-	for (const command of commands) {
-		const current = job.indexOf(command);
-		t.true(current > previous, `${command} must follow the preceding core BDD step`);
-		previous = current;
-	}
-	t.is((job.match(/uses: actions\/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1/g) || []).length, 1);
-	t.is((job.match(/uses: \.\/\.github\/actions\/setup-workspace/g) || []).length, 1);
-	t.true(job.includes("cache-mode: restore-only"));
-	t.true(job.includes("timeout-minutes: 60"));
-	const nodeStep = job.slice(job.indexOf("Run Docker-backed Node BDD validation"), job.indexOf("Run Docker-backed Python BDD validation"));
-	t.true(nodeStep.includes("BDD_DOCKER_MEMORY: 2g"), "only the Docker-backed Node BDD step must receive its established 2 GiB limit");
-	t.true(nodeStep.includes('BDD_INCLUDE_LONG_RUNNING: "1"'), "the Node BDD step must admit the selected @ci-runner-node slow scenarios");
-	t.false(job.slice(job.indexOf("Run Docker-backed Python BDD validation")).includes("BDD_DOCKER_MEMORY: 2g"), "Python, API, and Verser2 core BDD steps must retain the default Docker limit");
-});
+	const jobs = {
+		"bdd-core-node": ["npm run test:bdd-ci-node"],
+		"bdd-core-services": ["npm run test:bdd-ci-python", "npm run test:bdd-ci-api-node", "npm run test:bdd-ci-verser2"],
+		"bdd-extended-hub-topic": ["npm run test:bdd-ci-hub", "npm run test:bdd-ci-api-topic"],
+		"bdd-extended-runtime": ["BDD_DOCKER_MEMORY=2g BDD_INCLUDE_LONG_RUNNING=1 RUNTIME_ADAPTER=process npm run test:bdd-ci-node", "npm run test:unified-py", "npm run test:unified-js"],
+	};
 
-test("extended BDD lane runs the legacy hub, API-topic, process-adapter, and unified commands sequentially", (t) => {
-	const source = workflowSource();
-	t.true(source.includes("bdd-extended:"));
-	t.true(source.includes("name: CI / extended BDD"));
-	t.true(source.includes("needs: [package-validation]"));
-	const jobStart = source.indexOf("  bdd-extended:\n");
-	const jobEnd = source.indexOf("  prerelease-publication:\n");
-	const job = source.slice(jobStart, jobEnd);
-	const commands = [
-		"run: npm run build:packages",
-		"npm run test:bdd-ci-hub",
-		"npm run test:bdd-ci-api-topic",
-		"RUNTIME_ADAPTER=process npm run test:bdd-ci-node",
-		"npm run test:unified-py",
-		"npm run test:unified-js",
-	];
-	let previous = job.indexOf("uses: ./.github/actions/setup-workspace");
-	for (const command of commands) {
-		const current = job.indexOf(command);
-		t.true(current > previous, `${command} must follow the preceding extended BDD step`);
-		previous = current;
+	for (const [name, commands] of Object.entries(jobs)) {
+		const jobStart = source.indexOf(`  ${name}:\n`);
+		t.true(jobStart >= 0, `${name} must exist`);
+		const nextJob = source.slice(jobStart + 1).search(/\n {2}[a-z][\w-]*:\n/);
+		const job = source.slice(jobStart, nextJob === -1 ? undefined : jobStart + 1 + nextJob);
+		t.true(job.includes("needs: [package-validation]"), `${name} must wait for package validation`);
+		t.true(job.includes("cache-mode: restore-only"), `${name} must use the disposable restore-only workspace`);
+		t.true(job.includes("timeout-minutes: 60"), `${name} must retain the BDD timeout`);
+		t.true(job.includes("run: npm run build:packages"), `${name} must build its isolated BDD inputs`);
+		for (const command of commands) t.true(job.includes(command), `${name} must run ${command}`);
 	}
-	t.true(job.includes("cache-mode: restore-only"));
-	t.true(job.includes("BDD_DOCKER_MEMORY=2g BDD_INCLUDE_LONG_RUNNING=1 RUNTIME_ADAPTER=process npm run test:bdd-ci-node"), "the process-adapter Node BDD invocation must retain its narrow 2 GiB limit and selected slow runner scenarios");
-	t.false(job.includes("BDD_DOCKER_MEMORY=2g npm run test:bdd-ci-hub"), "unrelated extended BDD commands must retain the default Docker limit");
-	const timeout = job.match(/timeout-minutes:\s*(\d+)/);
-	t.true(timeout && Number(timeout[1]) >= 60, "extended BDD must keep a measured-safe timeout of at least 60 minutes");
-	t.is((job.match(/uses: actions\/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1/g) || []).length, 1);
-	t.is((job.match(/uses: \.\/\.github\/actions\/setup-workspace/g) || []).length, 1);
+
+	t.is((source.match(/npm run test:bdd-ci-node/g) || []).length, 2, "Node coverage must remain split between its native and process-adapter variants");
+	t.is((source.match(/npm run test:bdd-ci-python/g) || []).length, 1);
+	t.is((source.match(/npm run test:bdd-ci-api-node/g) || []).length, 2, "one PR BDD command plus the prerelease BDD command must remain");
+	t.is((source.match(/npm run test:bdd-ci-verser2/g) || []).length, 1);
+	t.is((source.match(/npm run test:bdd-ci-hub/g) || []).length, 1);
+	t.is((source.match(/npm run test:bdd-ci-api-topic/g) || []).length, 1);
+	t.is((source.match(/npm run test:unified-py/g) || []).length, 1);
+	t.is((source.match(/npm run test:unified-js/g) || []).length, 1);
 });
 
 test("validation, BDD, and release jobs are isolated with no artifact or node_modules handoff", (t) => {
 	const source = workflowSource();
-	t.is((source.match(/uses: actions\/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1/g) || []).length, 5);
-	t.is((source.match(/uses: \.\/\.github\/actions\/setup-workspace/g) || []).length, 4);
-	t.is((source.match(/cache-mode: restore-only/g) || []).length, 3);
+	t.is((source.match(/uses: actions\/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1/g) || []).length, 7);
+	t.is((source.match(/uses: \.\/\.github\/actions\/setup-workspace/g) || []).length, 6);
+	t.is((source.match(/cache-mode: restore-only/g) || []).length, 5);
 	t.is((source.match(/cache-mode: off/g) || []).length, 1);
-	t.is((source.match(/persist-credentials: false/g) || []).length, 5);
-	t.is((source.match(/needs: \[package-validation\]/g) || []).length, 2);
+	t.is((source.match(/persist-credentials: false/g) || []).length, 7);
+	t.is((source.match(/needs: \[package-validation\]/g) || []).length, 4);
 	t.false(source.includes("upload-artifact"));
 	t.false(source.includes("download-artifact"));
 	t.false(source.includes("actions/cache"));
@@ -189,10 +158,10 @@ test("ordinary PR source jobs restore the npm cache but the credentialed publica
 	const publication = source.slice(publicationStart, publicationEnd);
 	const validationAndBdd = source.slice(0, publicationStart);
 
-	// package-validation, bdd-core, and bdd-extended are uncredentialed source
+	// package-validation and the four BDD jobs are uncredentialed source
 	// jobs: they may restore a previously validated cache but never write one.
-	t.is((source.match(/cache-mode: restore-only/g) || []).length, 3, "exactly the three ordinary PR source jobs must restore the cache");
-	t.is((validationAndBdd.match(/cache-mode: restore-only/g) || []).length, 3, "package validation and both BDD lanes must use restore-only");
+	t.is((source.match(/cache-mode: restore-only/g) || []).length, 5, "exactly the five ordinary PR source jobs must restore the cache");
+	t.is((validationAndBdd.match(/cache-mode: restore-only/g) || []).length, 5, "package validation and all four BDD lanes must use restore-only");
 	t.false(validationAndBdd.includes("cache-mode: off"), "ordinary PR source jobs must not disable the cache restore");
 
 	// prerelease-publication carries packages: write and NODE_AUTH_TOKEN, so it
@@ -224,11 +193,11 @@ test("PR and merge-group workflow keeps fork-safe read-only permissions and stal
 	t.true(source.includes("types: [checks_requested]"));
 	t.true(source.includes("format('pr-{0}'"));
 	t.true(source.includes("format('merge-group-{0}'"));
-	t.is((source.match(/permissions:\n\s+contents: read/g) || []).length, 5);
-	t.is((source.match(/uses: actions\/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1/g) || []).length, 5);
-	t.is((source.match(/persist-credentials: false/g) || []).length, 5);
-	t.is((source.match(/uses: \.\/\.github\/actions\/setup-workspace/g) || []).length, 4);
-	t.is((source.match(/cache-mode: restore-only/g) || []).length, 3);
+	t.is((source.match(/permissions:\n\s+contents: read/g) || []).length, 7);
+	t.is((source.match(/uses: actions\/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1/g) || []).length, 7);
+	t.is((source.match(/persist-credentials: false/g) || []).length, 7);
+	t.is((source.match(/uses: \.\/\.github\/actions\/setup-workspace/g) || []).length, 6);
+	t.is((source.match(/cache-mode: restore-only/g) || []).length, 5);
 	t.is((source.match(/cache-mode: off/g) || []).length, 1);
 	t.false(source.includes("pull_request_target"));
 	t.false(source.includes("id-token: write"));
@@ -242,7 +211,7 @@ test("every PR job checks out an explicit ref before invoking the local setup he
 	const helper = "uses: ./.github/actions/setup-workspace";
 	let offset = 0;
 
-	for (let job = 0; job < 4; job++) {
+	for (let job = 0; job < 6; job++) {
 		const checkoutIndex = source.indexOf(checkout, offset);
 		const helperIndex = source.indexOf(helper, offset);
 		t.true(checkoutIndex >= offset, `job ${job + 1} must check out first`);
@@ -273,7 +242,7 @@ test("PR outputs remain disposable and the repository security scan is connected
 	t.false(source.includes("actions/cache"));
 	t.false(source.includes("docker push"));
 	t.false(source.includes("npm publish"));
-	t.is((source.match(/PR outputs remain disposable/g) || []).length, 4);
+	t.is((source.match(/PR outputs remain disposable/g) || []).length, 6);
 });
 
 test("release runs are scoped to same-repository devel-to-main changes and never cancel a publication partway", (t) => {
@@ -286,7 +255,7 @@ test("release runs are scoped to same-repository devel-to-main changes and never
 	t.true(source.includes("cancel-in-progress: ${{ !(github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main' && github.event.pull_request.head.ref == 'devel' && github.event.pull_request.head.repo.full_name == github.repository) }}"), "only eligible release runs must disable cancellation");
 	t.true(source.includes("prerelease-publication:"));
 	t.true(source.includes("name: Release PR / prerelease publication"));
-	t.true(source.includes("needs: [bdd-core, bdd-extended]"), "publication must natively need both BDD lanes");
+	t.true(source.includes("needs: [bdd-core-node, bdd-core-services, bdd-extended-hub-topic, bdd-extended-runtime]"), "publication must natively need all four BDD lanes");
 	t.true(source.includes("prerelease-bdd:"));
 	t.true(source.includes("name: Release PR / prerelease BDD"));
 	t.true(source.includes("needs: [prerelease-publication]"), "prerelease BDD must natively need publication");
