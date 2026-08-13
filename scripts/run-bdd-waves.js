@@ -31,7 +31,9 @@ const CHUNKS = Object.freeze({
         "features/e2e/E2E-002-stop.feature",
         "features/e2e/E2E-003-kill.feature",
         "features/e2e/E2E-012-cli-config.feature",
-        "features/e2e/E2E-011-cli-topic.feature"
+        "features/e2e/E2E-011-cli-topic.feature",
+        "features/e2e/E2E-018-cli-ingress.feature",
+        "features/api-router/API-ROUTER-001-openapi-generator.feature"
     ]),
     "cli-matrix": Object.freeze(["features/e2e/E2E-010-cli.feature"]),
     "topics-api": Object.freeze(["features/e2e/E2E-013-topic.feature"]),
@@ -51,12 +53,14 @@ const CHUNKS = Object.freeze({
         "features/manager/MANAGER-001-multimanager-api.feature",
         "features/manager/MANAGER-002-aggregation-repro.feature",
         "features/manager/MANAGER-003-full-api-verser2-forwarding.feature",
-        "features/manager/MANAGER-004-topic-forwarding.feature"
+        "features/manager/MANAGER-004-topic-forwarding.feature",
+        "features/e2e/E2E-019-control-plane-admission.feature"
     ]),
     verser2: Object.freeze(["features/verser2/VERSER2-001-isolated-routing.feature"]),
     errors: Object.freeze(["features/e2e/E2E-016-errors.feature"]),
     stream: Object.freeze(["features/e2e/E2E-012-stream-flooding-test.feature"]),
     "cli-prune-diagnostic": Object.freeze(["features/e2e/E2E-010-cli-prune-diagnostic.feature"]),
+    "external-services": Object.freeze(["features/external-services/EXTERNAL-SERVICES-001-minio-docker.feature"]),
     /** Internal harness self-tests — excluded from default run. */
     harness: Object.freeze(["features/_harness/harness-timeout.feature"])
 });
@@ -88,7 +92,8 @@ const DEFAULT_CHUNKS = Object.freeze([
 // an internal self-test, not an eligible default-suite feature.
 const EXCLUDED_FEATURES = Object.freeze({
     "features/_harness/harness-timeout.feature": "internal harness self-test; select --chunk=harness explicitly",
-    "features/e2e/E2E-010-cli-prune-diagnostic.feature": "isolated CLI prune diagnostic; select --chunk=cli-prune-diagnostic explicitly"
+    "features/e2e/E2E-010-cli-prune-diagnostic.feature": "isolated CLI prune diagnostic; select --chunk=cli-prune-diagnostic explicitly",
+    "features/external-services/EXTERNAL-SERVICES-001-minio-docker.feature": "the MinIO journey creates its own service but requires the mounted Docker daemon; select --chunk=external-services with the matching opt-in tag"
 });
 
 // Resource-owning paths remain explicit scheduler exclusions. Exclusive
@@ -115,7 +120,8 @@ const CHUNK_COMPONENTS = Object.freeze({
     errors: Object.freeze({ container: true, processes: [] }),
     stream: Object.freeze({ container: true, processes: [], exclusive: true }),
     harness: Object.freeze({ container: true, processes: [], exclusive: true }),
-    "cli-prune-diagnostic": Object.freeze({ container: true, processes: [] })
+    "cli-prune-diagnostic": Object.freeze({ container: true, processes: [] }),
+    "external-services": Object.freeze({ container: true, processes: [] })
 });
 
 // ---------------------------------------------------------------------------

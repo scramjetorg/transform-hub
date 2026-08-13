@@ -7,11 +7,13 @@ import { getDefaultManagerConfig } from "@scramjet/config";
 import { join } from "path";
 import { createServer, type Server } from "net";
 import { createVerserBroker, type VerserBroker } from "@signicode/verser2-guest-node";
-import { Router } from "@scramjet/api-router";
-import { startHostControlIngress, stopHostControlIngress } from "../../../packages/host/src/lib/control-ingress";
-import { createCsrEnrollmentHttpsServer, CsrEnrollmentAuthority } from "../../../packages/manager/src/lib/csr-enrollment";
-import { Manager } from "../../../packages/manager/src/lib/manager";
-import { startManagerControlIngress, stopManagerControlIngress } from "../../../packages/manager/src/lib/manager-control-ingress";
+import { RouterDefinition } from "../../../dist/api-router/router";
+// These journeys deliberately load the built package artifacts.  They must not
+// exercise TypeScript source modules through Cucumber's ts-node loader.
+import { startHostControlIngress, stopHostControlIngress } from "../../../dist/host/lib/control-ingress";
+import { createCsrEnrollmentHttpsServer, CsrEnrollmentAuthority } from "../../../dist/manager/lib/csr-enrollment";
+import { Manager } from "../../../dist/manager/lib/manager";
+import { startManagerControlIngress, stopManagerControlIngress } from "../../../dist/manager/lib/manager-control-ingress";
 import type { MtlsControlIngress } from "../../lib/scenario-isolation";
 import { CustomWorld } from "../world";
 
@@ -49,10 +51,10 @@ const binaries = {
 };
 
 function state(world: CustomWorld): ControlPlaneState {
-    if (!world.resources.controlPlaneMigration) {
-        world.resources.controlPlaneMigration = { brokers: [], close: [] } as ControlPlaneState;
+    if (!world.resources.controlPlaneAdmission) {
+        world.resources.controlPlaneAdmission = { brokers: [], close: [] } as ControlPlaneState;
     }
-    return world.resources.controlPlaneMigration as ControlPlaneState;
+    return world.resources.controlPlaneAdmission as ControlPlaneState;
 }
 
 function isolation(world: CustomWorld) {
@@ -119,7 +121,7 @@ function runOpenSsl(args: string[]): void {
 }
 
 After(async function(this: CustomWorld) {
-    const current = this.resources.controlPlaneMigration as ControlPlaneState | undefined;
+    const current = this.resources.controlPlaneAdmission as ControlPlaneState | undefined;
     if (!current) return;
     const errors: Error[] = [];
     for (const broker of current.brokers.splice(0).reverse()) {
@@ -128,7 +130,7 @@ After(async function(this: CustomWorld) {
     for (const close of current.close.reverse()) {
         await close().catch(error => errors.push(error instanceof Error ? error : new Error(String(error))));
     }
-    delete this.resources.controlPlaneMigration;
+    delete this.resources.controlPlaneAdmission;
     if (errors.length) throw new Error(`Control-plane cleanup failed: ${errors.map(error => error.message).join("; ")}`);
 });
 
@@ -136,7 +138,7 @@ Given("an isolated real Host control ingress with an allowed client fingerprint"
     const tls = await isolation(this).createMtlsControlIngress();
     const ingress = await startHostControlIngress(
         tls.hostConfig("bdd.host.control.guest", "bdd.host.control.test") as any,
-        Router.create({ basePath: "/api/v2" }).get("/identity", { handler: () => ({ identity: "host-control" }) }),
+        new RouterDefinition({ basePath: "/api/v2" }).get("/identity", { handler: () => ({ identity: "host-control" }) }),
         "bdd-host"
     );
     assert.ok(ingress, "Host control ingress did not start");
@@ -166,7 +168,7 @@ Given("an isolated real Manager control ingress with an allowed client fingerpri
     const tls = await isolation(this).createMtlsControlIngress();
     const ingress = await startManagerControlIngress(
         tls.managerConfig("bdd.manager.control.guest", "bdd.manager.control.test") as any,
-        Router.create({ basePath: "/api/v2" }).get("/identity", { handler: () => ({ identity: "manager-control" }) }),
+        new RouterDefinition({ basePath: "/api/v2" }).get("/identity", { handler: () => ({ identity: "manager-control" }) }),
         undefined,
         [tls.allowedFingerprint]
     );

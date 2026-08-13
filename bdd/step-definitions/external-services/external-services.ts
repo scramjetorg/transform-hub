@@ -61,7 +61,7 @@ function tarEntry(name: string, content: string): Buffer {
 
 function sequenceArchive(): Buffer {
     return Buffer.concat([
-        tarEntry("package.json", JSON.stringify({ name: "phase4-minio-s3-proxy-sequence", version: "1.0.0", main: "index.js", engines: { node: "*" } })),
+        tarEntry("package.json", JSON.stringify({ name: "minio-s3-proxy-sequence", version: "1.0.0", main: "index.js", engines: { node: "*" } })),
         tarEntry("index.js", "module.exports = async () => {};\n"),
         Buffer.alloc(1024)
     ]);
@@ -144,8 +144,8 @@ async function startScenarioMinio(world: CustomWorld): Promise<ScenarioMinio> {
         Cmd: ["server", "/data", ...(port ? ["--address", `:${port}`] : [])],
         Env: [`MINIO_ROOT_USER=${minioAccessKey}`, `MINIO_ROOT_PASSWORD=${minioSecretKey}`],
         Labels: {
-            "org.scramjet.phase4": "minio-s3",
-            "scramjet.bdd.owner": process.env.SCRAMJET_BDD_OWNER || "phase4-adhoc"
+            "org.scramjet.external-services": "minio-s3",
+            "scramjet.bdd.owner": process.env.SCRAMJET_BDD_OWNER || "external-services-adhoc"
         },
         HostConfig: runnerId
             ? { NetworkMode: `container:${runnerId}` }
@@ -161,7 +161,7 @@ async function startScenarioMinio(world: CustomWorld): Promise<ScenarioMinio> {
             if (error?.statusCode !== 404) throw error;
         }
     };
-    world.scenarioIsolation?.ownContainer(container.id, "phase4 MinIO", stop);
+    world.scenarioIsolation?.ownContainer(container.id, "external-services MinIO", stop);
 
     try {
         await container.start();
@@ -185,7 +185,7 @@ async function startScenarioMinio(world: CustomWorld): Promise<ScenarioMinio> {
             secretKey: minioSecretKey,
             transportAgent: agent
         });
-        const bucket = `sth-phase4-${randomUUID().replace(/-/g, "")}`;
+        const bucket = `sth-external-${randomUUID().replace(/-/g, "")}`;
         await client.makeBucket(bucket, "us-east-1");
         return {
             bucket,
@@ -210,13 +210,13 @@ async function startScenarioMinio(world: CustomWorld): Promise<ScenarioMinio> {
 }
 
 Given("a scenario-owned MinIO S3 service is ready", async function(this: CustomWorld) {
-    this.resources.phase4Minio = await startScenarioMinio(this);
+    this.resources.externalMinio = await startScenarioMinio(this);
 });
 
 When("the production S3Client streams a stored object", async function(this: CustomWorld) {
-    const minio = this.resources.phase4Minio as ScenarioMinio;
+    const minio = this.resources.externalMinio as ScenarioMinio;
     const filename = `s3-client-${randomUUID()}.txt`;
-    const payload = Buffer.from("phase4 production S3Client streaming payload");
+    const payload = Buffer.from("external-services production S3Client streaming payload");
     await minio.client.putObject(minio.bucket, filename, payload, payload.length, { "Content-Type": "application/octet-stream" });
     const client = new S3Client({
         host: minio.endpoint,
@@ -225,21 +225,21 @@ When("the production S3Client streams a stored object", async function(this: Cus
         accessKeyId: minio.accessKeyId,
         secretAccessKey: minio.secretAccessKey
     });
-    this.resources.phase4S3Client = client;
-    this.resources.phase4S3Response = await client.getObject({ filename });
-    this.resources.phase4S3Payload = payload;
+    this.resources.s3Client = client;
+    this.resources.s3Response = await client.getObject({ filename });
+    this.resources.s3Payload = payload;
 });
 
 Then("the streamed S3 object has its original payload and content type", async function(this: CustomWorld) {
-    const response = this.resources.phase4S3Response as { status: number; headers: Record<string, string | string[] | undefined>; data: Readable };
+    const response = this.resources.s3Response as { status: number; headers: Record<string, string | string[] | undefined>; data: Readable };
     assert.equal(response.status, 200);
     assert.equal(response.headers["content-type"], "application/octet-stream");
-    assert.deepEqual(await readStream(response.data), this.resources.phase4S3Payload);
+    assert.deepEqual(await readStream(response.data), this.resources.s3Payload);
 });
 
 When("the production S3Proxy uploads, retrieves, lists, and deletes a sequence archive", async function(this: CustomWorld) {
-    const minio = this.resources.phase4Minio as ScenarioMinio;
-    const storageId = `phase4-minio-${randomUUID()}`;
+    const minio = this.resources.externalMinio as ScenarioMinio;
+    const storageId = `minio-${randomUUID()}`;
     const filename = "sequence.tar";
     const archive = sequenceArchive();
     const recorder = new RouteRecorder();
@@ -250,7 +250,7 @@ When("the production S3Proxy uploads, retrieves, lists, and deletes a sequence a
         bucketLimit: 1024 * 1024,
         router: recorder.asApiRoute()
     });
-    this.resources.phase4MinioStorageId = storageId;
+    this.resources.minioStorageId = storageId;
 
     const upload = recorder.require("downstream", "/api/v1/s3/:filename?", "put").handler as Function;
     const request = Object.assign(new PassThrough(), { params: { filename }, socket: { bytesRead: archive.length } });
@@ -258,7 +258,7 @@ When("the production S3Proxy uploads, retrieves, lists, and deletes a sequence a
     request.end(archive);
     const uploadResult = await uploadResultPromise;
     assert.equal(uploadResult.opStatus, "Accepted");
-    assert.equal(uploadResult.name, "phase4-minio-s3-proxy-sequence");
+    assert.equal(uploadResult.name, "minio-s3-proxy-sequence");
 
     const list = recorder.require("get", "/api/v1/s3").handler as Function;
     assert.deepEqual(list({}).map((sequence: { _filename: string }) => sequence._filename), [filename]);
@@ -274,28 +274,28 @@ When("the production S3Proxy uploads, retrieves, lists, and deletes a sequence a
     const updatedIndex = JSON.parse((await readStream(await minio.client.getObject(minio.bucket, `${storageId}/index.json`))).toString("utf8"));
     assert.deepEqual(updatedIndex.sequences, []);
     await assert.rejects(() => minio.client.statObject(minio.bucket, `${storageId}/${filename}`));
-    this.resources.phase4S3ProxyDeleted = true;
+    this.resources.s3ProxyDeleted = true;
 });
 
 Then("the S3 proxy index reflects the deleted stored sequence", function(this: CustomWorld) {
-    assert.ok(this.resources.phase4MinioStorageId, "S3 proxy scenario must use a scenario-owned storage index");
-    assert.equal(this.resources.phase4S3ProxyDeleted, true);
+    assert.ok(this.resources.minioStorageId, "S3 proxy scenario must use a scenario-owned storage index");
+    assert.equal(this.resources.s3ProxyDeleted, true);
 });
 
 When("I create, start, inspect, stop, read logs, and remove a scenario-labeled Docker container", async function(this: CustomWorld) {
     const docker = new Dockerode();
-    this.resources.phase4DockerClient = docker;
+    this.resources.dockerClient = docker;
     await pullImage(docker, dockerSmokeImage);
-    const label = `phase4-docker-daemon-${randomUUID()}`;
+    const label = `docker-daemon-${randomUUID()}`;
     const container = await docker.createContainer({
         Image: dockerSmokeImage,
-        Cmd: ["sh", "-c", "printf phase4-docker-daemon-smoke; sleep 30"],
+        Cmd: ["sh", "-c", "printf docker-daemon-smoke; sleep 30"],
         Labels: {
-            "org.scramjet.phase4.docker-daemon": label,
-            "scramjet.bdd.owner": process.env.SCRAMJET_BDD_OWNER || "phase4-adhoc"
+            "org.scramjet.docker-daemon": label,
+            "scramjet.bdd.owner": process.env.SCRAMJET_BDD_OWNER || "external-services-adhoc"
         }
     });
-    this.scenarioIsolation?.ownContainer(container.id, "phase4 Docker daemon smoke", async () => {
+    this.scenarioIsolation?.ownContainer(container.id, "docker-daemon smoke", async () => {
         try {
             await container.remove({ force: true });
         } catch (error: any) {
@@ -305,31 +305,31 @@ When("I create, start, inspect, stop, read logs, and remove a scenario-labeled D
     await container.start();
     const running = await container.inspect();
     assert.equal(running.State.Running, true);
-    assert.equal(running.Config.Labels?.["org.scramjet.phase4.docker-daemon"], label);
+    assert.equal(running.Config.Labels?.["org.scramjet.docker-daemon"], label);
     await container.stop({ t: 1 });
     assert.equal((await container.inspect()).State.Running, false);
     const logs = await container.logs({ follow: false, stderr: true, stdout: true });
     const logOutput = Buffer.isBuffer(logs) ? logs : await readStream(logs);
-    assert.match(logOutput.toString("utf8"), /phase4-docker-daemon-smoke/);
+    assert.match(logOutput.toString("utf8"), /docker-daemon-smoke/);
     await this.scenarioLifecycle.stop(container.id);
-    this.resources.phase4DockerLifecycleComplete = true;
+    this.resources.dockerLifecycleComplete = true;
 });
 
 Then("the Docker daemon container lifecycle completed cleanly", function(this: CustomWorld) {
-    assert.equal(this.resources.phase4DockerLifecycleComplete, true);
+    assert.equal(this.resources.dockerLifecycleComplete, true);
 });
 
 After({ tags: "@docker-daemon" }, function(this: CustomWorld) {
-    const docker = this.resources.phase4DockerClient as Dockerode | undefined;
+    const docker = this.resources.dockerClient as Dockerode | undefined;
     if (docker) disposeDockerClient(docker);
-    this.resources.phase4DockerClient = undefined;
+    this.resources.dockerClient = undefined;
 });
 
 After({ tags: "@minio-s3" }, async function(this: CustomWorld) {
-    (this.resources.phase4S3Client as S3Client | undefined)?.dispose();
-    const storageId = this.resources.phase4MinioStorageId as string | undefined;
+    (this.resources.s3Client as S3Client | undefined)?.dispose();
+    const storageId = this.resources.minioStorageId as string | undefined;
     if (storageId) await rm(`/tmp/manager/${storageId}`, { recursive: true, force: true });
-    const minio = this.resources.phase4Minio as ScenarioMinio | undefined;
+    const minio = this.resources.externalMinio as ScenarioMinio | undefined;
     if (minio) {
         await minio.stop();
         await this.scenarioLifecycle.stop(minio.containerId);

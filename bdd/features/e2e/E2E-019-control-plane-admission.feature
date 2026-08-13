@@ -1,4 +1,4 @@
-@phase2 @ci-verser2
+@ci-verser2
 Feature: Control-plane admission and enrollment
   These isolated journeys exercise the production Host and Manager control
   ingresses through externally connected mTLS brokers and use published CSR

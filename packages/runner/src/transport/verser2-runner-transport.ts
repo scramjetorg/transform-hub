@@ -48,6 +48,18 @@ const RESPONSE_BODY_ROUTES = new Map<string, CC>([
     [DEFAULT_VERSER2_RUNNER_ROUTE_CONTRACTS.logPath, CC.LOG]
 ]);
 
+/** Build the guest contract without opening local listeners or connecting. */
+export function createRunnerVerser2GuestOptions(config: RunnerTransportConfigVerser2): RunnerVerser2GuestFactoryOptions {
+    return {
+        hostUrl: config.hostUrl,
+        guestId: config.guestId,
+        routedDomains: [config.routeDomain],
+        minWaitingStreams: config.minWaitingStreams,
+        leaseAcquireTimeoutMs: config.leaseAcquireTimeoutMs,
+        tls: config.tls
+    };
+}
+
 export class RunnerVerser2Transport implements RunnerVerser2TransportStreams {
     readonly stdinStream = new PassThrough({ emitClose: false });
     readonly stdoutStream = new PassThrough({ emitClose: false });
@@ -87,14 +99,8 @@ export class RunnerVerser2Transport implements RunnerVerser2TransportStreams {
 
             const createGuest = this.options.createGuest ?? createVerserNodeGuest as RunnerVerser2GuestFactory;
 
-            this.guest = createGuest({
-                hostUrl: this.options.config.hostUrl,
-                guestId: this.options.config.guestId,
-                routedDomains: [this.options.config.routeDomain],
-                minWaitingStreams: this.options.config.minWaitingStreams,
-                leaseAcquireTimeoutMs: this.options.config.leaseAcquireTimeoutMs,
-                tls: this.options.config.tls
-            }).attach(this.server, this.options.config.routeDomain);
+            this.guest = createGuest(createRunnerVerser2GuestOptions(this.options.config))
+                .attach(this.server, this.options.config.routeDomain);
 
             await this.guest.connect();
             this.started = true;

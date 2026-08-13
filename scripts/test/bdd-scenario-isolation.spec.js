@@ -42,7 +42,7 @@ function scenarioEnvironment(root) {
     };
 }
 
-function scenarioIsolationHooksWithStubs() {
+function scenarioIsolationHooksWithStubs({ dockerError, minioError } = {}) {
     const hookRegistrations = [];
     const calls = {
         assertDockerPrerequisite: 0,
@@ -80,9 +80,11 @@ function scenarioIsolationHooksWithStubs() {
             exports: {
                 assertDockerPrerequisite() {
                     calls.assertDockerPrerequisite += 1;
+                    if (dockerError) throw dockerError;
                 },
                 assertMinioPrerequisite() {
                     calls.assertMinioPrerequisite += 1;
+                    if (minioError) throw minioError;
                 },
                 createScenarioIsolation: () => ({ requireDockerDiagnostics: () => { calls.requireDockerDiagnostics += 1; }, requireMinioDiagnostics: () => { calls.requireMinioDiagnostics += 1; } })
             }
@@ -212,4 +214,47 @@ test("scenario isolation prerequisite hooks match public and requires tags", t =
     t.true(dockerHook[0].tags.includes("@docker-daemon"));
     t.true(minioHook[0].tags.includes("@requires-minio"));
     t.true(minioHook[0].tags.includes("@minio-s3"));
+});
+
+test("Docker prerequisite callback checks availability before enabling cleanup diagnostics", async t => {
+    const { hookRegistrations, calls } = scenarioIsolationHooksWithStubs();
+    const dockerHook = hookRegistrations.find(([options]) => options?.tags?.includes("requires-docker-daemon"));
+    const world = { scenarioIsolation: { requireDockerDiagnostics: () => { calls.requireDockerDiagnostics += 1; } } };
+
+    await dockerHook[1].call(world);
+
+    t.is(calls.assertDockerPrerequisite, 1);
+    t.is(calls.requireDockerDiagnostics, 1);
+});
+
+test("MinIO prerequisite callback checks availability before enabling cleanup diagnostics", async t => {
+    const { hookRegistrations, calls } = scenarioIsolationHooksWithStubs();
+    const minioHook = hookRegistrations.find(([options]) => options?.tags?.includes("requires-minio"));
+    const world = { scenarioIsolation: { requireMinioDiagnostics: () => { calls.requireMinioDiagnostics += 1; } } };
+
+    await minioHook[1].call(world);
+
+    t.is(calls.assertMinioPrerequisite, 1);
+    t.is(calls.requireMinioDiagnostics, 1);
+});
+
+test("prerequisite callbacks propagate availability diagnostics without enabling cleanup tracking", async t => {
+    const dockerError = new Error("Docker daemon prerequisite unavailable: mounted socket required");
+    const minioError = new Error("Docker daemon prerequisite unavailable: scenario-owned MinIO requires Docker");
+    const { hookRegistrations, calls } = scenarioIsolationHooksWithStubs({ dockerError, minioError });
+    const dockerHook = hookRegistrations.find(([options]) => options?.tags?.includes("requires-docker-daemon"));
+    const minioHook = hookRegistrations.find(([options]) => options?.tags?.includes("requires-minio"));
+    const world = {
+        scenarioIsolation: {
+            requireDockerDiagnostics: () => { calls.requireDockerDiagnostics += 1; },
+            requireMinioDiagnostics: () => { calls.requireMinioDiagnostics += 1; }
+        }
+    };
+
+    await t.throwsAsync(() => dockerHook[1].call(world), { is: dockerError });
+    await t.throwsAsync(() => minioHook[1].call(world), { is: minioError });
+    t.is(calls.assertDockerPrerequisite, 1);
+    t.is(calls.assertMinioPrerequisite, 1);
+    t.is(calls.requireDockerDiagnostics, 0);
+    t.is(calls.requireMinioDiagnostics, 0);
 });

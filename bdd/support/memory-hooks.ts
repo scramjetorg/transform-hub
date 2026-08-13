@@ -86,16 +86,16 @@ const SCENARIO_EXCEPTIONS: ScenarioException[] = [
     // 4,589,426 bytes above the strict base. This exact-scenario allowance
     // covers that one-time runtime initialisation only.
     {
-        featureUri: "phase4/PHASE4-external-services.feature",
+        featureUri: "external-services/EXTERNAL-SERVICES-001-minio-docker.feature",
         line: 5,
-        scenarioName: "PHASE4 TC-001 S3 client and proxy use a scenario-owned MinIO service",
+        scenarioName: "EXTERNAL-SERVICES TC-001 S3 client and proxy use a scenario-owned MinIO service",
         allowanceBytes: 4_194_304,
-        reason: "Production AWS Smithy and MinIO client initialisation retained 4,589,426 bytes after explicit client disposal and scenario-owned container cleanup; scoped to the exact Phase 4 MinIO migration scenario.",
+        reason: "Production AWS Smithy and MinIO client initialisation retained 4,589,426 bytes after explicit client disposal and scenario-owned container cleanup; scoped to the exact external-services MinIO migration scenario.",
     },
     {
-        featureUri: "phase4/PHASE4-external-services.feature",
+        featureUri: "external-services/EXTERNAL-SERVICES-001-minio-docker.feature",
         line: 13,
-        scenarioName: "PHASE4 TC-002 Docker daemon lifecycle works through the production-capable client",
+        scenarioName: "EXTERNAL-SERVICES TC-002 Docker daemon lifecycle works through the production-capable client",
         allowanceBytes: 69_632,
         reason: "Independent supported-runner measurements after scenario cleanup were 585,464, 585,648, and 585,304 bytes; the final strict-base confirmation reached 587,984 bytes. No leaks were reported. The 65,536-byte allowance would leave only 1,840 bytes above that high-water mark, so this 69,632-byte allowance adds one 4 KiB block of repeat headroom while remaining scoped to this exact daemon scenario.",
     },

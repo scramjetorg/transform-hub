@@ -91,7 +91,7 @@
     "test:bdd-ci-api-topic": "node scripts/run-bdd-docker.js -- --format=pretty -t \"@ci-topic and not @slow and not @stress and not @perf and not @load and not @external-dependency and not @compatibility\"",
     "test:bdd-ci-verser2": "NO_HOST=true node scripts/run-bdd.js -- --format=pretty -t \"@ci-verser2 and not @ignore\"",
     "test:bdd-ci-python": "node scripts/run-bdd-docker.js -- --format=pretty -t \"@ci-instance-python and not @slow and not @stress and not @perf and not @load and not @external-dependency and not @compatibility\"",
-    "test:bdd-ci-node": "node scripts/run-bdd-docker.js -- --format=pretty -t \"@ci-instance-node and not @requires-bun and not @slow and not @stress and not @perf and not @load and not @external-dependency and not @compatibility\"",
+    "test:bdd-ci-node": "node scripts/run-bdd-docker.js -- --format=pretty -t \"(@ci-instance-node and not @slow or @ci-runner-node) and not @requires-bun and not @stress and not @perf and not @load and not @external-dependency and not @compatibility\"",
     "test:bdd-ci-bun": "BDD_NODE_IMAGE=transform-hub-bdd-bun:dev node scripts/run-bdd-docker.js -- --format=pretty -t \"@requires-bun and not @slow and not @stress and not @perf and not @load and not @external-dependency and not @compatibility\"",
     "test:bdd-long": "npm run pack:python-bdd-fixtures && BDD_INCLUDE_LONG_RUNNING=1 node scripts/run-bdd-docker.js -- --fail-fast -t \"@slow or @stress or @perf or @load or @external-dependency or @compatibility or @manager-migration or @requires-docker or @docker-specific\"",
     "test:bdd": "BDD_INCLUDE_LONG_RUNNING=1 node scripts/run-bdd-modes.js --mode=base -- --fail-fast",

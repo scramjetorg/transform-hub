@@ -26,8 +26,9 @@
 
 const test = require("ava").default;
 const path = require("node:path");
-const { existsSync, readFileSync } = require("node:fs");
+const { mkdtempSync, readFileSync, rmSync, writeFileSync } = require("node:fs");
 const { execFileSync } = require("node:child_process");
+const { tmpdir } = require("node:os");
 
 const {
     createVerserHost,
@@ -54,27 +55,35 @@ try {
 }
 
 // ---------------------------------------------------------------------------
-// Fixture setup (mirrors isolated-routing.ts)
+// Per-run TLS setup mirrors BDD scenario isolation. Credentials must never be
+// generated beneath the source tree, and this test removes its temporary PKI.
 // ---------------------------------------------------------------------------
 
-const certDir = path.resolve(__dirname, "../../packages/verser/test/cert");
+let certDir;
+let serverCert;
+let serverKey;
+let ca;
 
-function ensureCerts() {
-    if (
-        existsSync(path.join(certDir, "localhost.crt")) &&
-        existsSync(path.join(certDir, "localhost.key")) &&
-        existsSync(path.join(certDir, "myCA.pem"))
-    ) {
-        return;
-    }
-    execFileSync(path.join(certDir, "gen-localhost-cert.sh"), { cwd: certDir, stdio: "ignore" });
+function createTemporaryCerts() {
+    certDir = mkdtempSync(path.join(tmpdir(), "verser2-cycle-memory-"));
+    const caFile = path.join(certDir, "ca.pem");
+    const caKeyFile = path.join(certDir, "ca-key.pem");
+    const certFile = path.join(certDir, "server-cert.pem");
+    const keyFile = path.join(certDir, "server-key.pem");
+    const csrFile = path.join(certDir, "server.csr");
+    const extFile = path.join(certDir, "server.ext");
+    execFileSync("openssl", ["req", "-x509", "-newkey", "rsa:2048", "-nodes", "-keyout", caKeyFile, "-out", caFile, "-days", "1", "-subj", "/CN=verser2-cycle-memory-ca"], { stdio: "ignore" });
+    execFileSync("openssl", ["genrsa", "-out", keyFile, "2048"], { stdio: "ignore" });
+    execFileSync("openssl", ["req", "-new", "-key", keyFile, "-out", csrFile, "-subj", "/CN=localhost"], { stdio: "ignore" });
+    writeFileSync(extFile, "subjectAltName=DNS:localhost,IP:127.0.0.1\n", { mode: 0o600 });
+    execFileSync("openssl", ["x509", "-req", "-in", csrFile, "-CA", caFile, "-CAkey", caKeyFile, "-CAcreateserial", "-out", certFile, "-days", "1", "-sha256", "-extfile", extFile], { stdio: "ignore" });
+    serverCert = readFileSync(certFile, "utf8");
+    serverKey = readFileSync(keyFile, "utf8");
+    ca = readFileSync(caFile, "utf8");
 }
 
-ensureCerts();
-
-const serverCert = readFileSync(path.join(certDir, "localhost.crt"), "utf8");
-const serverKey = readFileSync(path.join(certDir, "localhost.key"), "utf8");
-const ca = readFileSync(path.join(certDir, "myCA.pem"), "utf8");
+test.before(() => createTemporaryCerts());
+test.after.always(() => rmSync(certDir, { recursive: true, force: true }));
 
 // ---------------------------------------------------------------------------
 // Helpers

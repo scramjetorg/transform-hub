@@ -49,8 +49,8 @@
     - [x] Replaced Python raw stdout ordering with the E2E-014 artifact journey; retained transport fixture contracts and extracted pure close translation tests.
     - [x] Removed full-artifact Python ordering and runner lifecycle child tests; retained deterministic executor/five-pipe contracts using fixture children.
 - [x] Task: Run focused runner BDD scenarios plus relevant retained runner package tests and repair runtime, process, or cleanup failures.
-    - [x] Focused sequential Node E2E-017 and Python E2E-014 BDD paths passed; the initial combined Docker guard run OOMed because 1536 MiB cannot hold both suite and scenario Hosts. Node guarded proof passed with `BDD_DOCKER_MEMORY=2g`; no migration defect found.
-    - [x] Memory-guarded Node TC-001 passed at a 2 MiB parent-heap threshold; Python TC-003 passed at 2 MiB plus its existing 77,824-byte exception. Child RSS limit remained 200 MiB and Docker working-set limit was raised only to 2 GiB for the Node proof.
+    - [x] Focused sequential Node E2E-017 and Python E2E-014 BDD paths passed; the initial combined Docker guard run OOMed because 1536 MiB cannot hold both suite and scenario Hosts. Node guarded proof passed with `BDD_INCLUDE_LONG_RUNNING=1 BDD_DOCKER_MEMORY=2g SCRAMJET_BDD_MEMORY_GUARD=1 SCRAMJET_BDD_MEMORY_THRESHOLD_BYTES=2097152 node scripts/run-bdd.js -- --name="E2E-017 TC-001" --format progress`; no migration defect found.
+    - [x] Memory-guarded Node TC-001 passed at a 2 MiB parent-heap threshold; Python TC-003 passed with `SCRAMJET_BDD_MEMORY_GUARD=1 SCRAMJET_BDD_MEMORY_THRESHOLD_BYTES=2097152 node scripts/run-bdd.js -- --name="E2E-014 TC-003" --format progress` at 2 MiB plus its existing 77,824-byte exception. Child RSS limit remained 200 MiB and Docker working-set limit was raised only to 2 GiB for the Node proof.
     - [x] `npm --prefix packages/runner-node test` passed (101 tests) and `npm --prefix packages/runner test` passed (113 tests).
 - [x] Task: Review runner test boundaries and shared step reuse, run relevant package build/lint validation, and commit the phase checkpoint on the current branch.
     - [x] Phase review passed with a deferred CI-tag selection check recorded in `td.md`.
@@ -77,12 +77,27 @@
 - [x] Task: Conductor - Phase Completion 'Rewrite External-Service and Adapter Journeys' (Protocol in workflow.md)
 
 ## Phase 5: Complete AVA Cleanup and Track Validation
-- [ ] Task: Re-scan package AVA suites to prove retained tests meet the approved single-unit boundary and remove any migrated references, fixtures, or scripts.
-- [ ] Task: Validate the rewritten Cucumber coverage and retained package coverage.
-    - [ ] Run focused Cucumber tags for CLI, ingress, control plane, runner/runtime, MinIO/S3, and Docker-daemon behavior where available.
-    - [ ] Run the relevant BDD smoke paths and package tests, escalating to broader validation only when required by affected boundaries.
-    - [ ] Run the supported memory-guarded BDD commands for migrated scenarios and record heap, child-process RSS, Docker working-set thresholds, exceptions, skips, and reasons.
-    - [ ] Run affected package builds, Biome lint, runtime-invariant checks where applicable, and verify no track-caused leaked processes or containers remain.
-- [ ] Task: Review final changes against the specification, complete deduplication and documentation updates, and record deferred Docker/runtime prerequisites if any.
-- [ ] Task: Run formal track review, remediate in-scope findings, commit the final phase checkpoint on the current branch, and publish validation evidence according to the active workflow.
+- [x] Task: Re-scan package AVA suites to prove retained tests meet the approved single-unit boundary and remove any migrated references, fixtures, or scripts.
+    - [x] Removed remaining subprocess OpenAPI tests, orphan fixed-port API-server helper, and legacy-gated Verser HTTP/TLS suite with its retired certificate scripts.
+    - [x] Retained only deterministic mocked, in-memory, fixture-child, and PKI-helper unit contracts; moved the Verser2 certificate fixture into BDD-owned fixtures.
+    - [x] Registered E2E-018/E2E-019 in default BDD waves, preserved tagged external services as an explicit prerequisite-based exclusion, and selected `@ci-runner-node` in CI.
+- [x] Task: Validate the rewritten Cucumber coverage and retained package coverage.
+    - [x] Focused Cucumber tags passed: CI Node selector (2 scenarios, including `@ci-runner-node`) and `@ci-verser2` (16 scenarios, including CLI ingress and control-plane journeys), both with no leaked repository processes.
+    - [x] BDD manifest/tag AVA tests passed (71), and retained api-router (91), api-server (65), and Manager (209) package suites plus API-router/Manager builds and BDD TypeScript build passed.
+    - [x] Run the supported memory-guarded BDD commands for migrated scenarios and record heap, child-process RSS, Docker working-set thresholds, exceptions, skips, and reasons.
+        - [x] CLI/ingress/control-plane guarded proof passed: 14 scenarios / 234 steps with a 2 MiB parent-heap threshold, 200 MiB child RSS threshold, and 1 GiB Docker working-set threshold; no skips or exceptions, no leaked processes.
+        - [x] Guarded MinIO/S3 and Docker-daemon journeys each passed with the 512 KiB base threshold plus exact documented allowances of 4,194,304 bytes (effective 4,718,592) and 69,632 bytes (effective 593,920), respectively; child RSS remained 200 MiB and Docker working-set remained 1 GiB; no skips or leaked processes.
+    - [x] Run affected package builds, Biome lint, runtime-invariant checks where applicable, and verify no track-caused leaked processes or containers remain.
+        - [x] Full `npm run build:packages` passed, including runner-python artifact preparation and all 35 TypeScript project builds; `npm run lint` passed and `npm run check:runtime-invariants` reported all eight guards passing.
+        - [x] Retained adapter suites passed: Docker 5, process 15, Kubernetes 4; every BDD validation path reported no leaked repository processes and scenario-owned external resources were cleaned up.
+- [x] Task: Review final changes against the specification, complete deduplication and documentation updates, and record deferred Docker/runtime prerequisites if any.
+    - [x] Final readiness remediation moved Verser2 TLS credentials from the source tree to scenario-owned temporary lifecycle storage, added Docker/MinIO prerequisite callback tests, and moved built OpenAPI generator artifact coverage into BDD while retaining pure AVA units.
+    - [x] Reverted the out-of-scope Manager trust-export semantic change; a Manager-local public CA fixture replaces the deleted legacy Verser fixture.
+    - [x] Removed track/phase leakage from BDD fixture directories, feature/tag names, step identifiers, labels, and control-plane admission names; left intentional Conductor and pre-existing tags untouched.
+    - [x] Rewrote E2E-017 TC-001 from scratch as a bounded runner completion journey (runner PID, terminal exit, and Host availability), removing retained stdout/request-body observation and the completion fixture's marker/keepalive output. The standard 1536 MiB Docker cap still OOMs before scenario execution while starting the process-adapter runner; the scoped 2 GiB guarded proof passes with no skip or allowance, so the existing runtime-container prerequisite remains documented rather than tuning the test.
+    - [x] Deferred callback prerequisite diagnostics are now closed in `td.md`; CI runner-node selection is already resolved. No Docker/runtime prerequisite remains deferred.
+- [x] Task: Run formal track review, remediate in-scope findings, commit the final phase checkpoint on the current branch, and publish validation evidence according to the active workflow.
+    - [x] Final formal review passed after adding required `@ci-verser2` PR validation, loading control-plane journeys from built artifacts, and migrating live runner Verser2 transport coverage to BDD while retaining only listener-free option mapping in AVA.
+    - [x] Re-review accepted the bounded E2E-017 completion rewrite: it keeps process-adapter runner PID, terminal-exit, and Host-availability coverage without retained stdout/request-body concatenation; the 1536 MiB pre-scenario Docker OOM is documented alongside a scoped successful 2 GiB guard proof, with no skip or global limit change.
+    - [x] Final validation: full package build; BDD and affected package builds; targeted package/BDD/CI workflow AVA; focused migrated BDD; guarded ingress, external-service, Python, Node, and Verser2 paths; full Biome lint; runtime invariants; all passed except the documented standard-memory Node container prerequisite, and all BDD paths reported no track-caused process/container leaks.
 - [ ] Task: Conductor - Phase Completion 'Complete AVA Cleanup and Track Validation' (Protocol in workflow.md)

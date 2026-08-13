@@ -149,6 +149,14 @@ test("root package.json test:bdd selects the bounded base mode without tags", (t
 	t.true(passthrough.includes("--fail-fast"), "must keep --fail-fast for intended fail-fast behavior");
 });
 
+test("root package.json CI Node selector includes runner-node without admitting unrelated slow scenarios", (t) => {
+	const script = require("../../package.json").scripts["test:bdd-ci-node"];
+
+	t.true(script.includes("@ci-runner-node"), "CI Node must select the E2E-017 runner-node scenarios");
+	t.true(script.includes("@ci-instance-node and not @slow"), "ordinary instance-node CI coverage must remain bounded");
+	t.false(script.includes("or @slow"), "the selector must not promote every slow scenario into CI");
+});
+
 test("root package.json test:bdd-long preserves long tag union without hard-coded @needs-fix exclusion", (t) => {
 	// The test:bdd-long script passes -t with the long-running tag union for
 	// positive selection.  It must NOT hard-code @needs-fix exclusion — that

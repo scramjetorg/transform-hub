@@ -1,4 +1,4 @@
-@phase2 @cli-ingress @ci-verser2
+@cli-ingress @ci-verser2
 Feature: Real CLI ingress profiles
   The published CLI artifact uses only the selected isolated profile to reach
   a Verser2 control ingress. These journeys keep profile, certificate, port,

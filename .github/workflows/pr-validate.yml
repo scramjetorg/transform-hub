@@ -121,6 +121,9 @@ jobs:
       - name: Run Docker-backed API BDD validation
         run: npm run test:bdd-ci-api-node
 
+      - name: Run isolated Verser2 BDD validation
+        run: npm run test:bdd-ci-verser2
+
   bdd-extended:
     # Durable named coverage replacing the removed Node 18 reusable workflows:
     # hub, API-topic, process-adapter, and unified JS/Python paths run

@@ -1,13 +1,11 @@
 # Deferred Items
 
-## Phase 1
+## Closed
 
 - **Finding:** Add callback-level Docker and MinIO prerequisite-diagnostic tests when the first tagged scenarios are introduced.
-  - **Disposition:** deferred
-  - **Rationale:** Registration-level coverage proves both public and internal tags activate one hook. Callback behavior depends on scenario infrastructure and is better verified with the first real tagged journey.
-
-## Phase 3
+  - **Disposition:** resolved in final remediation
+  - **Resolution:** `scripts/test/bdd-scenario-isolation.spec.js` invokes both registered `Before` callbacks, proves each calls its availability prerequisite before enabling cleanup diagnostics, and proves Docker/MinIO availability errors propagate without enabling diagnostics.
 
 - **Finding:** Ensure CI selects the `@ci-runner-node` E2E-017 scenarios before track closure.
-  - **Disposition:** deferred
-  - **Rationale:** The standard Node BDD selector currently uses `@ci-instance-node`; E2E-017 has a distinct runner-node tag.
+  - **Disposition:** resolved in Phase 5
+  - **Resolution:** `test:bdd-ci-node` now explicitly selects `@ci-runner-node` while preserving the `@slow` exclusion for ordinary `@ci-instance-node` coverage.

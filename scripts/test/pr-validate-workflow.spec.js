@@ -107,7 +107,7 @@ test("single package-validation job owns gates, Bun, serial AVA tests, and the p
 	t.is((source.match(/oven-sh\/setup-bun@/g) || []).length, 1, "Setup Bun must appear only in the package-validation job");
 });
 
-test("core BDD lane runs Node, Python, and API BDD sequentially after one shared build", (t) => {
+test("core BDD lane runs Node, Python, API, and Verser2 BDD sequentially after one shared build", (t) => {
 	const source = workflowSource();
 	t.true(source.includes("bdd-core:"));
 	t.true(source.includes("name: CI / core BDD"));
@@ -120,6 +120,7 @@ test("core BDD lane runs Node, Python, and API BDD sequentially after one shared
 		"npm run test:bdd-ci-node",
 		"npm run test:bdd-ci-python",
 		"npm run test:bdd-ci-api-node",
+		"npm run test:bdd-ci-verser2",
 	];
 	let previous = job.indexOf("uses: ./.github/actions/setup-workspace");
 	for (const command of commands) {

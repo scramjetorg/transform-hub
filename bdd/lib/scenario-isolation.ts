@@ -26,6 +26,12 @@ export type MtlsClientCredentials = {
     keyFile: string;
 };
 
+export type Verser2TlsCredentials = {
+    caFile: string;
+    certFile: string;
+    keyFile: string;
+};
+
 export type MtlsControlIngress = {
     identityDir: string;
     port: number;
@@ -58,6 +64,7 @@ export type ScenarioIsolation = {
     ownChild: (child: any, label: string, options?: { group?: boolean; onStop?: () => void }) => any;
     ownContainer: (containerId: string, label: string, stop: () => Promise<void>) => string;
     createMtlsControlIngress: (options?: { bindHost?: string }) => Promise<MtlsControlIngress>;
+    createVerser2TlsCredentials: () => Verser2TlsCredentials;
     requireDockerDiagnostics: () => void;
     requireMinioDiagnostics: () => void;
     cleanup: () => Promise<void>;
@@ -214,6 +221,27 @@ export function createScenarioIsolation(lifecycle: ScenarioLifecycle, environmen
         };
     };
 
+    const createVerser2TlsCredentials = (): Verser2TlsCredentials => {
+        const pkiDir = mkdtempSync(join(certificatesDir, "verser2-"));
+        const caFile = join(pkiDir, "ca.pem");
+        const caKeyFile = join(pkiDir, "ca-key.pem");
+        const certFile = join(pkiDir, "server-cert.pem");
+        const keyFile = join(pkiDir, "server-key.pem");
+        const csrFile = join(pkiDir, "server.csr");
+        const extFile = join(pkiDir, "server.ext");
+
+        runOpenSsl(["req", "-x509", "-newkey", "rsa:2048", "-nodes", "-keyout", caKeyFile, "-out", caFile, "-days", "1", "-subj", "/CN=bdd-verser2-ca"]);
+        runOpenSsl(["genrsa", "-out", keyFile, "2048"]);
+        runOpenSsl(["req", "-new", "-key", keyFile, "-out", csrFile, "-subj", "/CN=localhost"]);
+        writeFileSync(extFile, "subjectAltName=DNS:localhost,IP:127.0.0.1\n", { mode: 0o600 });
+        runOpenSsl(["x509", "-req", "-in", csrFile, "-CA", caFile, "-CAkey", caKeyFile, "-CAcreateserial", "-out", certFile, "-days", "1", "-sha256", "-extfile", extFile]);
+        for (const privateFile of [caKeyFile, keyFile]) {
+            try { require("fs").chmodSync(privateFile, 0o600); } catch { /* mode checks are platform-specific */ }
+        }
+
+        return { caFile, certFile, keyFile };
+    };
+
     const isolation: ScenarioIsolation = {
         root,
         home,
@@ -253,6 +281,7 @@ export function createScenarioIsolation(lifecycle: ScenarioLifecycle, environmen
         ownChild: (child, label, options = {}) => lifecycle.ownChild(child, label, { group: options.group ?? true, onStop: options.onStop }),
         ownContainer: (containerId, label, stop) => lifecycle.ownContainer(containerId, label, stop),
         createMtlsControlIngress,
+        createVerser2TlsCredentials,
         requireDockerDiagnostics: () => { requireDocker = true; },
         requireMinioDiagnostics: () => { requireDocker = true; },
         cleanup: async () => {
