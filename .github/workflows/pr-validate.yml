@@ -113,6 +113,11 @@ jobs:
         run: npm run build:packages
 
       - name: Run Docker-backed Node BDD validation
+        env:
+          # @ci-runner-node scenarios start both suite and process-adapter
+          # runner Hosts; their established Docker requirement is 2 GiB.
+          BDD_DOCKER_MEMORY: 2g
+          BDD_INCLUDE_LONG_RUNNING: "1"
         run: npm run test:bdd-ci-node
 
       - name: Run Docker-backed Python BDD validation
@@ -155,7 +160,7 @@ jobs:
         run: |
           npm run test:bdd-ci-hub
           npm run test:bdd-ci-api-topic
-          RUNTIME_ADAPTER=process npm run test:bdd-ci-node
+          BDD_DOCKER_MEMORY=2g BDD_INCLUDE_LONG_RUNNING=1 RUNTIME_ADAPTER=process npm run test:bdd-ci-node
           npm run test:unified-py
           npm run test:unified-js
 

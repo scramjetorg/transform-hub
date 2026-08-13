@@ -40,9 +40,10 @@ test("every feature path uses forward slashes and is relative to bdd/", t => {
     }
 });
 
-test("verser2 chunk contains the expected single feature", t => {
+test("verser2 chunk contains the isolated routing and runner transport features", t => {
     t.deepEqual(runner.CHUNKS.verser2, [
         "features/verser2/VERSER2-001-isolated-routing.feature",
+        "features/e2e/E2E-020-runner-verser2-transport.feature",
     ]);
 });
 
@@ -653,7 +654,7 @@ test("runWaves timing summary reports correct feature count and status for succe
 
         t.is(summaries.length, 1);
         t.is(summaries[0][0], "verser2");       // chunkName
-        t.is(summaries[0][1], 1);                 // featureCount
+        t.is(summaries[0][1], runner.CHUNKS.verser2.length); // featureCount
         t.is(summaries[0][2], 0);                 // status
         t.true(summaries[0][3] >= 0);             // durationNs
     } finally {

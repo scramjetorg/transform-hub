@@ -132,6 +132,10 @@ test("core BDD lane runs Node, Python, API, and Verser2 BDD sequentially after o
 	t.is((job.match(/uses: \.\/\.github\/actions\/setup-workspace/g) || []).length, 1);
 	t.true(job.includes("cache-mode: restore-only"));
 	t.true(job.includes("timeout-minutes: 60"));
+	const nodeStep = job.slice(job.indexOf("Run Docker-backed Node BDD validation"), job.indexOf("Run Docker-backed Python BDD validation"));
+	t.true(nodeStep.includes("BDD_DOCKER_MEMORY: 2g"), "only the Docker-backed Node BDD step must receive its established 2 GiB limit");
+	t.true(nodeStep.includes('BDD_INCLUDE_LONG_RUNNING: "1"'), "the Node BDD step must admit the selected @ci-runner-node slow scenarios");
+	t.false(job.slice(job.indexOf("Run Docker-backed Python BDD validation")).includes("BDD_DOCKER_MEMORY: 2g"), "Python, API, and Verser2 core BDD steps must retain the default Docker limit");
 });
 
 test("extended BDD lane runs the legacy hub, API-topic, process-adapter, and unified commands sequentially", (t) => {
@@ -157,6 +161,8 @@ test("extended BDD lane runs the legacy hub, API-topic, process-adapter, and uni
 		previous = current;
 	}
 	t.true(job.includes("cache-mode: restore-only"));
+	t.true(job.includes("BDD_DOCKER_MEMORY=2g BDD_INCLUDE_LONG_RUNNING=1 RUNTIME_ADAPTER=process npm run test:bdd-ci-node"), "the process-adapter Node BDD invocation must retain its narrow 2 GiB limit and selected slow runner scenarios");
+	t.false(job.includes("BDD_DOCKER_MEMORY=2g npm run test:bdd-ci-hub"), "unrelated extended BDD commands must retain the default Docker limit");
 	const timeout = job.match(/timeout-minutes:\s*(\d+)/);
 	t.true(timeout && Number(timeout[1]) >= 60, "extended BDD must keep a measured-safe timeout of at least 60 minutes");
 	t.is((job.match(/uses: actions\/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1/g) || []).length, 1);

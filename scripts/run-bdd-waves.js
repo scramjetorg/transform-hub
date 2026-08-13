@@ -56,7 +56,10 @@ const CHUNKS = Object.freeze({
         "features/manager/MANAGER-004-topic-forwarding.feature",
         "features/e2e/E2E-019-control-plane-admission.feature"
     ]),
-    verser2: Object.freeze(["features/verser2/VERSER2-001-isolated-routing.feature"]),
+    verser2: Object.freeze([
+        "features/verser2/VERSER2-001-isolated-routing.feature",
+        "features/e2e/E2E-020-runner-verser2-transport.feature"
+    ]),
     errors: Object.freeze(["features/e2e/E2E-016-errors.feature"]),
     stream: Object.freeze(["features/e2e/E2E-012-stream-flooding-test.feature"]),
     "cli-prune-diagnostic": Object.freeze(["features/e2e/E2E-010-cli-prune-diagnostic.feature"]),
