@@ -2,7 +2,7 @@ name: Pull request validation
 
 on:
   pull_request:
-    branches: [main, devel, "release/**", "feat/manager-oss"]
+    branches: [main, devel, "release/**"]
   merge_group:
     types: [checks_requested]
 
