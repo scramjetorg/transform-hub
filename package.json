@@ -80,7 +80,7 @@
     "postinstall": "scripts/run-script.js -v -w packages install:deps",
     "test": "npm run test:packages",
     "test:packages": "scripts/run-script.js -w packages -j 4 test",
-    "test:packages:ci": "scripts/run-script.js -w packages -j 2 test",
+    "test:packages:ci": "scripts/run-script.js -w packages -j 2 test --coverage && node scripts/coverage-report.js",
     "test:packages:fast": "SCRAMJET_TEST_PROFILE=fast scripts/run-script.js -w packages -j 16 test",
     "test:packages:phase-final": "SCRAMJET_TEST_PROFILE=phase-final scripts/run-script.js -w packages -j 1 test",
     "test:bdd-ci-hub": "NO_HOST=true node scripts/run-bdd-docker.js -- --format=pretty -t \"@ci-hub and not @requires-docker and not @docker-specific and not @slow and not @stress and not @perf and not @load and not @external-dependency and not @compatibility\"",
