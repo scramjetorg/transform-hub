@@ -21,11 +21,15 @@ export const merge = <T extends Record<string, unknown>>(
     target: T, source: DeepPartial<T> = {}, strict: boolean = false
 ) => {
     for (const key of Object.getOwnPropertyNames(source)) {
-        if (unsafeKeys.has(key) || !hasOwn(target, key)) {
+        if (unsafeKeys.has(key)) {
             if (strict) {
                 throw new Error(`Unknown option ${key} in config`);
             }
             continue;
+        }
+
+        if (strict && !hasOwn(target, key)) {
+            throw new Error(`Unknown option ${key} in config`);
         }
 
         const sourceValue = source[key as keyof T];

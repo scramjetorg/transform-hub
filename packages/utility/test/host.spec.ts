@@ -46,6 +46,24 @@ test("merge() ignores unsafe nested property names while merging ordinary option
     t.is(({} as Record<string, unknown>).nestedPrototypePolluted, undefined);
 });
 
+test("merge() preserves safe top-level unknown own source options in non-strict mode", t => {
+    const target = { enabled: true };
+    const source = Object.create({ inherited: false });
+    source.limits = { retries: 3 };
+
+    merge(target, source);
+
+    t.deepEqual(target, { enabled: true, limits: { retries: 3 } });
+});
+
+test("merge() preserves safe nested unknown source options in non-strict mode", t => {
+    const target = { settings: { enabled: true } };
+
+    merge(target, { settings: { limits: { retries: 3 } } } as never);
+
+    t.deepEqual(target, { settings: { enabled: true, limits: { retries: 3 } } });
+});
+
 test("merge() strict mode rejects unknown own source options", t => {
     const target = { enabled: true };
 
@@ -60,6 +78,15 @@ test("merge() strict mode rejects unknown own source options", t => {
     t.is(unsafeError?.message, "Unknown option __proto__ in config");
     t.deepEqual(target, { enabled: true });
     t.is(({} as Record<string, unknown>).strictProtoPolluted, undefined);
+});
+
+test("merge() strict mode rejects unknown nested source options", t => {
+    const target = { settings: { enabled: true } };
+
+    const error = t.throws(() => merge(target, { settings: { limits: { retries: 3 } } } as never, true));
+
+    t.is(error?.message, "Unknown option limits in config");
+    t.deepEqual(target, { settings: { enabled: true } });
 });
 
 test("merge() does not merge inherited source properties", t => {
