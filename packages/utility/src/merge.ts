@@ -2,7 +2,7 @@ import { DeepPartial } from "@scramjet/runtime-types";
 
 const unsafeKeys = new Set(["__proto__", "constructor", "prototype"]);
 
-const hasOwnProperty = (object: object, key: string): boolean =>
+const hasOwn = (object: object, key: string): boolean =>
     Object.prototype.hasOwnProperty.call(object, key);
 
 const isMergeableObject = (value: unknown): value is Record<string, unknown> =>
@@ -21,7 +21,7 @@ export const merge = <T extends Record<string, unknown>>(
     target: T, source: DeepPartial<T> = {}, strict: boolean = false
 ) => {
     for (const key of Object.getOwnPropertyNames(source)) {
-        if (unsafeKeys.has(key) || !hasOwnProperty(target, key)) {
+        if (unsafeKeys.has(key) || !hasOwn(target, key)) {
             if (strict) {
                 throw new Error(`Unknown option ${key} in config`);
             }
