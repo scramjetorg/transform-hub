@@ -36,12 +36,11 @@
  *                                      guard (preload script warns when RUNNER is unset)
  *
  *   Coverage mode (opt‑in CLI flag, not an environment variable):
- *     Passing `--coverage` to scripts/run-ava.js wraps the AVA Node command
- *     in c8 (the v8‑native coverage runner).  The flag is stripped before
- *     buildAvaArgs() so the ava CLI never sees it; default invocations are
- *     unchanged.  c8 writes reports and V8 temp output under `<cwd>/coverage`
- *     and remaps coverage to the original TypeScript sources (see
- *     c8CoverageArgs() and resolveC8Cli()).
+ *     Passing `--coverage` to scripts/run-ava.js collects AVA V8 coverage and
+ *     emits c8 reports. The flag is stripped before buildAvaArgs() so the ava
+ *     CLI never sees it; default invocations are unchanged. c8 writes reports
+ *     and V8 temp output under `<cwd>/coverage` and remaps coverage to the
+ *     original TypeScript sources (see c8CoverageArgs() and resolveC8Cli()).
  *
  *   Memory guard (Phase 2):
  *     SCRAMJET_MEMORY_GUARD              – set to "1" to enable common memory guard
@@ -269,8 +268,8 @@ function resolveC8Cli() {
 /**
  * Build the c8 argument list for the supported AVA runner's coverage mode.
  *
- * Coverage mode wraps the AVA Node command in c8.  Reports and V8 coverage
- * temp output are written under `<projectDir>/coverage` (temp data in
+ * Coverage mode collects AVA V8 coverage and invokes c8 to emit reports.
+ * Reports and V8 coverage temp output are written under `<projectDir>/coverage` (temp data in
  * `coverage/tmp`).  `--all` with an `--include` of `src/**` + `*.ts` reports
  * every package source file, and `--exclude-after-remap` applies the
  * include/exclude rules to the ORIGINAL TypeScript source paths after the

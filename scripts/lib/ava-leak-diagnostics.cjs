@@ -83,6 +83,13 @@ function warnIfLeakedBeforeGrace() {
 	process.stderr.write(`[run-ava.js] WARNING: delaying AVA worker leak diagnostics by ${AVA_LEAK_GRACE_MS} ms.\n`);
 }
 
+function flushV8Coverage() {
+	// NODE_V8_COVERAGE starts collection in AVA's workers, but AVA only calls
+	// takeCoverage() in its coordinator process. Flush before AVA releases a
+	// worker so c8 can collect the worker's TypeScript execution data.
+	if (process.env.NODE_V8_COVERAGE) require("node:v8").takeCoverage();
+}
+
 function observeAvaWorkerChannel(channel) {
 	const onMessage = message => {
 		if (message?.ava?.type === "options" && message.ava.options?.file) {
@@ -98,6 +105,7 @@ function observeAvaWorkerChannel(channel) {
 		// hold the channel open and prevent a clean child-process AVA worker
 		// from exiting.
 		channel.removeListener("message", onMessage);
+		flushV8Coverage();
 
 		// AVA schedules its own final unhandled-rejection check after this
 		// acknowledgement. Let that immediate drain before classifying a

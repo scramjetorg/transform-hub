@@ -39,11 +39,10 @@
  *   node ../../scripts/run-ava.js [AVA-OPTIONS...]
  *   node ../../scripts/run-ava.js --coverage [AVA-OPTIONS...]
  *
- * The opt‑in `--coverage` flag wraps the AVA run in c8 (the v8‑native
- * coverage runner): reports and V8 temp output are written under
- * `<cwd>/coverage`, and coverage is remapped to the original `src/**`
- * `.ts` sources (glob split to keep this comment valid). The flag is
- * stripped before the ava CLI sees it, so default invocations are unchanged.
+ * The opt‑in `--coverage` flag collects AVA's V8 coverage and emits c8
+ * reports under `<cwd>/coverage`, remapped to the original `src/**` `.ts`
+ * sources (glob split to keep this comment valid). The flag is stripped
+ * before the ava CLI sees it, so default invocations are unchanged.
  *
  * Environment variables (all optional):
  *   See scripts/lib/ava-options.js for the full list.
@@ -116,9 +115,33 @@ const childEnv = {
 // original TypeScript sources.
 const typeScriptArgs = avaTypeScriptCompileArgs(process.cwd(), { sourceMaps: coverage });
 const excludedDirectories = new Set(["dist", "node_modules", ".bic_cache", "coverage"]);
+const coverageDir = join(process.cwd(), "coverage");
+const coverageTempDir = join(coverageDir, "tmp");
 
 function removeTypeScriptOutput() {
 	if (typeScriptArgs) rmSync(typeScriptArgs.outputDir, { recursive: true, force: true });
+}
+
+function removeStagedSourceMapCaches() {
+	if (!coverage || !existsSync(coverageTempDir)) return;
+
+	for (const entry of readdirSync(coverageTempDir, { withFileTypes: true })) {
+		if (!entry.isFile()) continue;
+
+		const coveragePath = join(coverageTempDir, entry.name);
+		const coverageData = JSON.parse(readFileSync(coveragePath, "utf8"));
+		const sourceMapCache = coverageData["source-map-cache"];
+
+		if (!sourceMapCache) continue;
+
+		for (const sourcePath of Object.keys(sourceMapCache)) {
+			// ts-node/register records identity source maps for AVA's staged output.
+			// Let c8 load the emitted TypeScript map instead, while that output still
+			// exists, so `--exclude-after-remap` sees the original `src/**/*.ts` path.
+			if (sourcePath.includes("/.ava-")) delete sourceMapCache[sourcePath];
+		}
+		writeFileSync(coveragePath, JSON.stringify(coverageData));
+	}
 }
 
 function stageTypeScriptProject() {
@@ -254,25 +277,31 @@ if (compileExitCode !== undefined) {
 // Resolve timeout.
 const timeout = runnerTimeout();
 
-// Coverage mode wraps the AVA Node command in c8. The wrap keeps c8's report
-// generation (and its read of the raw V8 coverage) inside the spawned
-// process, so reports are completed before the staged TypeScript output is
-// cleaned up in the finally block below. Without `--coverage` this is an
-// empty prefix and the spawn is unchanged.
-const c8Invocation = coverage
-	? [resolveC8Cli(), ...c8CoverageArgs(process.cwd()), process.execPath]
-	: [];
-
 // Spawn AVA.
 let result;
+let coverageResult;
 const runStartedAt = process.hrtime.bigint();
 
 try {
-	result = spawnSync(process.execPath, [...c8Invocation, ...args], {
-		env: childEnv,
-		stdio: "inherit",
-		timeout,
-	});
+	if (coverage) {
+		rmSync(coverageDir, { recursive: true, force: true });
+		result = spawnSync(process.execPath, args, {
+			env: { ...childEnv, NODE_V8_COVERAGE: coverageTempDir },
+			stdio: "inherit",
+			timeout,
+		});
+		removeStagedSourceMapCaches();
+		coverageResult = spawnSync(process.execPath, [resolveC8Cli(), "report", ...c8CoverageArgs(process.cwd())], {
+			env: childEnv,
+			stdio: "inherit",
+		});
+	} else {
+		result = spawnSync(process.execPath, args, {
+			env: childEnv,
+			stdio: "inherit",
+			timeout,
+		});
+	}
 } finally {
 	removeTypeScriptOutput();
 }
@@ -290,4 +319,6 @@ if (result.error) {
 	throw result.error;
 }
 
-process.exit(result.status === null ? 1 : result.status);
+if (coverageResult?.error) throw coverageResult.error;
+
+process.exit(result.status === null || (coverageResult && coverageResult.status !== 0) ? 1 : result.status);

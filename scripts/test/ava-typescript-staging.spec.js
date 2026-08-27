@@ -41,39 +41,42 @@ for (const [packageName, testFile] of [
 	});
 }
 
-test("collects c8 coverage forwarded through the workspace runner interface", (t) => {
-	const packageName = "logger";
-	const coverageDir = resolve(packagesRoot, packageName, "coverage");
-	t.teardown(() => rmSync(coverageDir, { recursive: true, force: true }));
+for (const workerMode of ["--worker-threads", "--no-worker-threads"]) {
+	test(`collects c8 coverage from AVA ${workerMode} workers`, (t) => {
+		const packageName = "utility";
+		const coverageDir = resolve(packagesRoot, packageName, "coverage");
+		t.teardown(() => rmSync(coverageDir, { recursive: true, force: true }));
 
-	const result = spawnSync(process.execPath, [runner, "test/methods.spec.ts", "--serial"], {
-		cwd: resolve(packagesRoot, packageName),
-		encoding: "utf8",
-		env: {
-			...process.env,
-			SCRAMJET_AVA_WORKERS: "1",
-			SCRAMJET_RUN_SCRIPT_COVERAGE: "1"
-		}
+		const result = spawnSync(process.execPath, [runner, "test/exponential-backoff.spec.ts", "--serial", workerMode], {
+			cwd: resolve(packagesRoot, packageName),
+			encoding: "utf8",
+			env: {
+				...process.env,
+				SCRAMJET_AVA_WORKERS: "1",
+				SCRAMJET_RUN_SCRIPT_COVERAGE: "1"
+			}
+		});
+		const output = `${result.stdout}${result.stderr}`;
+
+		t.is(result.status, 0, output);
+		t.regex(output, /All files/, "c8 text report should be emitted");
+
+		const lcovPath = resolve(coverageDir, "lcov.info");
+		t.true(existsSync(lcovPath), "expected lcov.info under <cwd>/coverage");
+		t.true(existsSync(resolve(coverageDir, "tmp")), "expected V8 temp output under <cwd>/coverage/tmp");
+
+		const lcov = readFileSync(lcovPath, "utf8");
+		t.regex(lcov, /^SF:src\//m, "coverage should attribute to original src TypeScript sources");
+		t.regex(lcov, /^DA:\d+,[1-9]\d*$/m, "executed source lines should carry positive hit counts");
+		t.regex(lcov, /^SF:src\/exponential-backoff\.ts[\s\S]*?^DA:\d+,[1-9]\d*$/m, "executed utility source must retain worker hit counts");
+		t.false(/^SF:.*\.ava-/.test(lcov), "staged .ava-* output must be excluded");
+		t.false(lcov.includes("node_modules"), "dependencies must be excluded");
+		t.false(/^SF:.*\/dist\//.test(lcov), "build output must be excluded");
+		t.false(/^SF:.*\.spec\.ts/.test(lcov), "spec files must be excluded");
+
+		t.false(existsSync(resolve(packagesRoot, `.ava-${packageName}`)), "staged output must be cleaned up after reports");
 	});
-	const output = `${result.stdout}${result.stderr}`;
-
-	t.is(result.status, 0, output);
-	t.regex(output, /All files/, "c8 text report should be emitted");
-
-	const lcovPath = resolve(coverageDir, "lcov.info");
-	t.true(existsSync(lcovPath), "expected lcov.info under <cwd>/coverage");
-	t.true(existsSync(resolve(coverageDir, "tmp")), "expected V8 temp output under <cwd>/coverage/tmp");
-
-	const lcov = readFileSync(lcovPath, "utf8");
-	t.regex(lcov, /^SF:src\//m, "coverage should attribute to original src TypeScript sources");
-	t.regex(lcov, /^DA:\d+,[1-9]\d*$/m, "executed source lines should carry positive hit counts");
-	t.false(/^SF:.*\.ava-/.test(lcov), "staged .ava-* output must be excluded");
-	t.false(lcov.includes("node_modules"), "dependencies must be excluded");
-	t.false(/^SF:.*\/dist\//.test(lcov), "build output must be excluded");
-	t.false(/^SF:.*\.spec\.ts/.test(lcov), "spec files must be excluded");
-
-	t.false(existsSync(resolve(packagesRoot, `.ava-${packageName}`)), "staged output must be cleaned up after reports");
-});
+}
 
 test("reports and fails promptly for a completed AVA worker with a leaked server", (t) => {
 	const result = runFixture("ava-leak-diagnostics-server.fixture.js");
