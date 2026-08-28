@@ -46,8 +46,8 @@ test("devel workflow is fast-gates-only without builds, package tests, Bun, or B
 	const source = workflowSource();
 	t.true(source.includes("fast-gates:"));
 	t.true(source.includes("name: Devel / fast gates"));
-	t.true(source.includes("npm run build:lockfile"));
-	t.true(source.includes("git diff --exit-code -- package-lock.json"));
+	t.true(source.includes("npm run check:lockfile"));
+	t.false(source.includes("git diff --exit-code -- package-lock.json"), "devel must call the shared check:lockfile command instead of duplicating the diff");
 	t.true(source.includes("npm run check:security-workflow"));
 	t.true(source.includes("npm run lint"));
 	t.true(source.includes("npm run typecheck"));
@@ -73,4 +73,21 @@ test("devel workflow omits PR/merge-queue-only eligibility checks", (t) => {
 	t.false(source.includes("Mergeability and merge-queue eligibility"));
 	t.false(source.includes("EVENT_NAME"));
 	t.false(source.includes("merge_group"));
+});
+
+test("devel lockfile reproducibility gate runs after checkout and before the workspace install", (t) => {
+	const source = workflowSource();
+	const rootPkg = require("../../package.json");
+	t.is(
+		rootPkg.scripts["check:lockfile"],
+		"npm run build:lockfile && git diff --exit-code -- package-lock.json",
+		"devel and PR workflows must share the check:lockfile command"
+	);
+
+	const checkout = "uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1";
+	const helper = "uses: ./.github/actions/setup-workspace";
+	const lockfileGate = source.indexOf("npm run check:lockfile");
+
+	t.true(lockfileGate > source.indexOf(checkout), "lockfile gate must run after checkout");
+	t.true(lockfileGate < source.indexOf(helper), "lockfile gate must run before setup-workspace");
 });

@@ -7,7 +7,7 @@ on:
         description: Trusted branch to verify
         required: true
         type: choice
-        options: [main, devel, feat/manager-oss]
+        options: [main, devel]
 
 permissions:
   contents: read
@@ -36,7 +36,7 @@ jobs:
         run: |
           branch="$REF_NAME"
           if [ "$EVENT_NAME" = "workflow_dispatch" ]; then branch="$INPUT_BRANCH"; fi
-          case "$branch" in main|devel|feat/manager-oss) ;; *) echo "Untrusted checkpoint branch" >&2; exit 1 ;; esac
+          case "$branch" in main|devel) ;; *) echo "Untrusted checkpoint branch" >&2; exit 1 ;; esac
           printf 'branch=%s\n' "$branch" >> "$GITHUB_OUTPUT"
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1

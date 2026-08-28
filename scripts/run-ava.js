@@ -37,6 +37,12 @@
  *
  * Usage (from a package directory):
  *   node ../../scripts/run-ava.js [AVA-OPTIONS...]
+ *   node ../../scripts/run-ava.js --coverage [AVA-OPTIONS...]
+ *
+ * The opt‑in `--coverage` flag collects AVA's V8 coverage and emits c8
+ * reports under `<cwd>/coverage`, remapped to the original `src/**` `.ts`
+ * sources (glob split to keep this comment valid). The flag is stripped
+ * before the ava CLI sees it, so default invocations are unchanged.
  *
  * Environment variables (all optional):
  *   See scripts/lib/ava-options.js for the full list.
@@ -53,6 +59,9 @@ const {
 	avaNodeOptions,
 	runnerInvocationEnv,
 	runnerTimeout,
+	stripCoverageFlag,
+	resolveC8Cli,
+	c8CoverageArgs,
 } = require("./lib/ava-options.js");
 
 // ---------------------------------------------------------------------------
@@ -82,9 +91,16 @@ if (process.argv.slice(2).includes("--help")) {
 	printUsage();
 }
 
-// Build the spawn arguments using the centralised helper.
-const cliArgs = process.argv.slice(2);
-const args = buildAvaArgs(cliArgs);
+// The workspace runner sets SCRAMJET_RUN_SCRIPT_COVERAGE=1 for its opt-in
+// coverage mode, allowing the flag to cross `test` -> `npm run test:ava`
+// package scripts without package-specific wrappers. The flag is stripped
+// here so that it is never forwarded to the ava CLI.
+const cliArgs = [
+	...(process.env.SCRAMJET_RUN_SCRIPT_COVERAGE === "1" ? ["--coverage"] : []),
+	...process.argv.slice(2)
+];
+const { args: avaCliArgs, coverage } = stripCoverageFlag(cliArgs);
+const args = buildAvaArgs(avaCliArgs);
 
 // Build the child environment.
 const childEnv = {
@@ -94,11 +110,38 @@ const childEnv = {
 	...runnerInvocationEnv(),
 };
 
-const typeScriptArgs = avaTypeScriptCompileArgs();
+// Coverage mode emits TypeScript source maps for the staged `.ava-*` compile
+// output so that c8 can remap executed JavaScript coverage back to the
+// original TypeScript sources.
+const typeScriptArgs = avaTypeScriptCompileArgs(process.cwd(), { sourceMaps: coverage });
 const excludedDirectories = new Set(["dist", "node_modules", ".bic_cache", "coverage"]);
+const coverageDir = join(process.cwd(), "coverage");
+const coverageTempDir = join(coverageDir, "tmp");
 
 function removeTypeScriptOutput() {
 	if (typeScriptArgs) rmSync(typeScriptArgs.outputDir, { recursive: true, force: true });
+}
+
+function removeStagedSourceMapCaches() {
+	if (!coverage || !existsSync(coverageTempDir)) return;
+
+	for (const entry of readdirSync(coverageTempDir, { withFileTypes: true })) {
+		if (!entry.isFile()) continue;
+
+		const coveragePath = join(coverageTempDir, entry.name);
+		const coverageData = JSON.parse(readFileSync(coveragePath, "utf8"));
+		const sourceMapCache = coverageData["source-map-cache"];
+
+		if (!sourceMapCache) continue;
+
+		for (const sourcePath of Object.keys(sourceMapCache)) {
+			// ts-node/register records identity source maps for AVA's staged output.
+			// Let c8 load the emitted TypeScript map instead, while that output still
+			// exists, so `--exclude-after-remap` sees the original `src/**/*.ts` path.
+			if (sourcePath.includes("/.ava-")) delete sourceMapCache[sourcePath];
+		}
+		writeFileSync(coveragePath, JSON.stringify(coverageData));
+	}
 }
 
 function stageTypeScriptProject() {
@@ -236,14 +279,29 @@ const timeout = runnerTimeout();
 
 // Spawn AVA.
 let result;
+let coverageResult;
 const runStartedAt = process.hrtime.bigint();
 
 try {
-	result = spawnSync(process.execPath, args, {
-		env: childEnv,
-		stdio: "inherit",
-		timeout,
-	});
+	if (coverage) {
+		rmSync(coverageDir, { recursive: true, force: true });
+		result = spawnSync(process.execPath, args, {
+			env: { ...childEnv, NODE_V8_COVERAGE: coverageTempDir },
+			stdio: "inherit",
+			timeout,
+		});
+		removeStagedSourceMapCaches();
+		coverageResult = spawnSync(process.execPath, [resolveC8Cli(), "report", ...c8CoverageArgs(process.cwd())], {
+			env: childEnv,
+			stdio: "inherit",
+		});
+	} else {
+		result = spawnSync(process.execPath, args, {
+			env: childEnv,
+			stdio: "inherit",
+			timeout,
+		});
+	}
 } finally {
 	removeTypeScriptOutput();
 }
@@ -261,4 +319,6 @@ if (result.error) {
 	throw result.error;
 }
 
-process.exit(result.status === null ? 1 : result.status);
+if (coverageResult?.error) throw coverageResult.error;
+
+process.exit(result.status === null || (coverageResult && coverageResult.status !== 0) ? 1 : result.status);

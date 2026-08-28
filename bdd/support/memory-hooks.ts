@@ -80,6 +80,26 @@ interface ScenarioException {
 }
 
 const SCENARIO_EXCEPTIONS: ScenarioException[] = [
+    // The S3 SDK/MinIO clients initialise Smithy middleware and HTTP agent
+    // state on first use. After explicitly disposing both clients and stopping
+    // the scenario-owned MinIO container, guarded Docker runs retained up to
+    // 4,589,426 bytes above the strict base. This exact-scenario allowance
+    // covers that one-time runtime initialisation only.
+    {
+        featureUri: "external-services/EXTERNAL-SERVICES-001-minio-docker.feature",
+        line: 5,
+        scenarioName: "EXTERNAL-SERVICES TC-001 S3 client and proxy use a scenario-owned MinIO service",
+        allowanceBytes: 4_194_304,
+        reason: "Production AWS Smithy and MinIO client initialisation retained 4,589,426 bytes after explicit client disposal and scenario-owned container cleanup; scoped to the exact external-services MinIO migration scenario.",
+    },
+    {
+        featureUri: "external-services/EXTERNAL-SERVICES-001-minio-docker.feature",
+        line: 13,
+        scenarioName: "EXTERNAL-SERVICES TC-002 Docker daemon lifecycle works through the production-capable client",
+        allowanceBytes: 69_632,
+        reason: "Independent supported-runner measurements after scenario cleanup were 585,464, 585,648, and 585,304 bytes; the final strict-base confirmation reached 587,984 bytes. No leaks were reported. The 65,536-byte allowance would leave only 1,840 bytes above that high-water mark, so this 69,632-byte allowance adds one 4 KiB block of repeat headroom while remaining scoped to this exact daemon scenario.",
+    },
+
     // -----------------------------------------------------------------------
     // VERSER2-001: Isolated verser2 routing guarantees
     //
@@ -445,6 +465,16 @@ export function beginCleanupTiming(world: any): void {
 // before strict memory measurement/GC begins.
 After(async function (this: any, scenario: any) {
     const cleanupErrors: Error[] = [];
+    try {
+        // Scenario isolation was established before the memory baseline. Its
+        // cleanup runs here, after all step-definition hooks and before the
+        // final measurement, so owned HOME/config/artifact/PKI paths and port
+        // reservations cannot retain scenario state across measurements.
+        await this.scenarioIsolation?.cleanup();
+        this.scenarioIsolation = undefined;
+    } catch (err: any) {
+        cleanupErrors.push(err);
+    }
     try {
         // Scenario-owned resources are always cleaned up, including skipped
         // guards and scenarios without a memory baseline.

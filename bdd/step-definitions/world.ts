@@ -4,6 +4,7 @@ import { MultiManagerClient } from "@scramjet/multi-manager-api-client";
 import { STHRestAPI } from "@scramjet/api-types";
 import { ChildProcess, ChildProcessWithoutNullStreams } from "child_process";
 import { Readable } from "stream";
+import type { ScenarioIsolation } from "../lib/scenario-isolation";
 import * as dns from "dns";
 const { ScenarioLifecycle } = require("../../scripts/lib/bdd-scenario-lifecycle.js");
 const { memoryRegistry } = require("../lib/memory-registry");
@@ -77,6 +78,9 @@ export class CustomWorld implements IWorld {
 
     /** Explicit owner for Hub, Manager, and runner resources created by this scenario. */
     readonly scenarioLifecycle = new ScenarioLifecycle(memoryRegistry);
+
+    /** Per-scenario HOME, config, artifact, port, child-process, and PKI owner. */
+    scenarioIsolation?: ScenarioIsolation;
 
     /** @internal Memory guard baseline (set by support/memory-hooks.ts). */
     __memoryBaseline?: number;

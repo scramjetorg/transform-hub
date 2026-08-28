@@ -2,7 +2,7 @@ name: Pull request validation
 
 on:
   pull_request:
-    branches: [main, devel, "release/**", "feat/manager-oss"]
+    branches: [main, devel, "release/**"]
   merge_group:
     types: [checks_requested]
 
@@ -40,9 +40,7 @@ jobs:
       # Catch malformed package-lock.json before setup-workspace's npm ci.
       # Rebuilds the lock with the project-pinned npm via npx and fails on any diff.
       - name: Validate package-lock.json reproducibility
-        run: |
-          npm run build:lockfile
-          git diff --exit-code -- package-lock.json
+        run: npm run check:lockfile
 
       - uses: ./.github/actions/setup-workspace
         with:
@@ -90,8 +88,10 @@ jobs:
       - name: Build packages
         run: npm run build:packages
 
-  bdd-core:
-    name: CI / core BDD
+  bdd-core-node:
+    # Keep the two-resource @ci-runner-node scenarios isolated: their established
+    # Docker requirement is 2 GiB and they are the longest core BDD path.
+    name: CI / core Node BDD
     needs: [package-validation]
     permissions:
       contents: read
@@ -115,7 +115,37 @@ jobs:
         run: npm run build:packages
 
       - name: Run Docker-backed Node BDD validation
+        env:
+          # @ci-runner-node scenarios start both suite and process-adapter
+          # runner Hosts; their established Docker requirement is 2 GiB.
+          BDD_DOCKER_MEMORY: 2g
+          BDD_INCLUDE_LONG_RUNNING: "1"
         run: npm run test:bdd-ci-node
+
+  bdd-core-services:
+    # Python, API, and Verser2 cover distinct services and can run independently
+    # from the Docker-backed Node lane above.
+    name: CI / core service BDD
+    needs: [package-validation]
+    permissions:
+      contents: read
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha || github.sha }}
+
+      - uses: ./.github/actions/setup-workspace
+        with:
+          # PR outputs remain disposable: restore-only cache, no build artifact
+          # or node_modules handoff crosses jobs.
+          cache-mode: restore-only
+          checkpoint-branch: ${{ github.event.pull_request.base.ref || github.event.merge_group.base_ref || '' }}
+
+      - name: Build disposable BDD inputs
+        run: npm run build:packages
 
       - name: Run Docker-backed Python BDD validation
         run: npm run test:bdd-ci-python
@@ -123,11 +153,12 @@ jobs:
       - name: Run Docker-backed API BDD validation
         run: npm run test:bdd-ci-api-node
 
-  bdd-extended:
-    # Durable named coverage replacing the removed Node 18 reusable workflows:
-    # hub, API-topic, process-adapter, and unified JS/Python paths run
-    # sequentially with the exact existing command/tag variants.
-    name: CI / extended BDD
+      - name: Run isolated Verser2 BDD validation
+        run: npm run test:bdd-ci-verser2
+
+  bdd-extended-hub-topic:
+    # Hub and API-topic are the lightweight legacy-equivalent extended paths.
+    name: CI / extended hub and topic BDD
     needs: [package-validation]
     permissions:
       contents: read
@@ -150,18 +181,46 @@ jobs:
       - name: Build disposable BDD inputs
         run: npm run build:packages
 
-      - name: Run legacy-equivalent focused BDD coverage
+      - name: Run hub BDD validation
         run: |
           npm run test:bdd-ci-hub
           npm run test:bdd-ci-api-topic
-          RUNTIME_ADAPTER=process npm run test:bdd-ci-node
+
+  bdd-extended-runtime:
+    # Process-adapter and unified runtime coverage needs the same 2 GiB runner
+    # allowance as core Node BDD, so it runs in its own parallel execution unit.
+    name: CI / extended runtime BDD
+    needs: [package-validation]
+    permissions:
+      contents: read
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha || github.sha }}
+
+      - uses: ./.github/actions/setup-workspace
+        with:
+          # PR outputs remain disposable: restore-only cache, no build artifact
+          # or node_modules handoff crosses jobs.
+          cache-mode: restore-only
+          checkpoint-branch: ${{ github.event.pull_request.base.ref || github.event.merge_group.base_ref || '' }}
+
+      - name: Build disposable BDD inputs
+        run: npm run build:packages
+
+      - name: Run process-adapter and unified BDD validation
+        run: |
+          BDD_DOCKER_MEMORY=2g BDD_INCLUDE_LONG_RUNNING=1 RUNTIME_ADAPTER=process npm run test:bdd-ci-node
           npm run test:unified-py
           npm run test:unified-js
 
   prerelease-publication:
     name: Release PR / prerelease publication
     if: ${{ github.event.pull_request.base.ref == 'main' && github.event.pull_request.head.ref == 'devel' && github.event.pull_request.head.repo.full_name == github.repository }}
-    needs: [bdd-core, bdd-extended]
+    needs: [bdd-core-node, bdd-core-services, bdd-extended-hub-topic, bdd-extended-runtime]
     outputs:
       prerelease-manifest: ${{ steps.prerelease_manifest.outputs.manifest }}
       prerelease-manifest-sha256: ${{ steps.prerelease_manifest.outputs.checksum }}

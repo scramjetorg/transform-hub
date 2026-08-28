@@ -3,21 +3,15 @@
 /**
  * Tiny Node sequence that completes successfully.
  *
- * Used by the runner-node spawn-isolation regression scenario:
- *   "Node sequence completes successfully under runner-node spawn isolation".
+ * Used by the runner-node artifact journey that observes completion through
+ * the Host process adapter.
  *
- * It writes a marker line so BDD can verify stdout was forwarded, then
- * resolves with a primitive so `runSequence()` finishes naturally.
+ * It resolves with a primitive so `runSequence()` finishes naturally. The
+ * journey observes the runner's bounded process lifecycle, not a retained
+ * stdout response body.
  *
  * @this {import("@scramjet/sequence-types").SequenceAppContext}
  */
 module.exports = async function(_input) {
-    process.stdout.write("NODE_COMPLETES_OK\n");
-    this.logger.info("node-completes sequence ran");
-
-    // Keep the runner observable through the lifecycle contract instead of a
-    // fixed sleep; BDD observes the forwarded marker and runner state.
-    this.keepAlive(250);
-
     return "done";
 };

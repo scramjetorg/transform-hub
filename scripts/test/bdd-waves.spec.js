@@ -16,7 +16,7 @@ const runner = require("../run-bdd-waves.js");
 test("chunk manifest defines all expected chunks", t => {
     const names = Object.keys(runner.CHUNKS).sort();
     t.deepEqual(names, [
-        "appcontext", "cli-basics", "cli-matrix", "cli-prune-diagnostic", "errors", "harness",
+        "appcontext", "cli-basics", "cli-matrix", "cli-prune-diagnostic", "errors", "external-services", "harness",
         "hub-configuration", "hub-idle-resource", "hub-runtime", "manager", "node-spawn-core", "node-streaming-stop", "python", "stream", "topics-api", "verser2",
     ]);
 });
@@ -40,9 +40,10 @@ test("every feature path uses forward slashes and is relative to bdd/", t => {
     }
 });
 
-test("verser2 chunk contains the expected single feature", t => {
+test("verser2 chunk contains the isolated routing and runner transport features", t => {
     t.deepEqual(runner.CHUNKS.verser2, [
         "features/verser2/VERSER2-001-isolated-routing.feature",
+        "features/e2e/E2E-020-runner-verser2-transport.feature",
     ]);
 });
 
@@ -59,6 +60,8 @@ test("CLI feature paths use balanced logical coverage chunks", t => {
         "features/e2e/E2E-003-kill.feature",
         "features/e2e/E2E-012-cli-config.feature",
         "features/e2e/E2E-011-cli-topic.feature",
+        "features/e2e/E2E-018-cli-ingress.feature",
+        "features/api-router/API-ROUTER-001-openapi-generator.feature",
     ]);
     t.deepEqual(runner.CHUNKS["cli-matrix"], ["features/e2e/E2E-010-cli.feature"]);
     t.deepEqual(runner.CHUNKS["cli-prune-diagnostic"], [
@@ -84,6 +87,7 @@ test("Node and Hub feature paths use balanced exclusive chunks", t => {
         "features/e2e/E2E-007-host-client.feature",
     ]);
     t.deepEqual(runner.CHUNKS["hub-idle-resource"], ["features/hub/HUB-005-idle-resource.feature"]);
+    t.true(runner.CHUNKS.manager.includes("features/e2e/E2E-019-control-plane-admission.feature"));
 });
 
 // ---------------------------------------------------------------------------
@@ -118,11 +122,20 @@ test("default manifest covers every eligible feature and records exclusions expl
     t.deepEqual(excludedPaths.sort(), [
         "features/_harness/harness-timeout.feature",
         "features/e2e/E2E-010-cli-prune-diagnostic.feature",
+        "features/external-services/EXTERNAL-SERVICES-001-minio-docker.feature",
     ]);
     for (const excludedPath of excludedPaths) {
         t.truthy(runner.EXCLUDED_FEATURES[excludedPath]);
         t.false(defaultPaths.includes(excludedPath));
     }
+});
+
+test("external service feature is opt-in with an explicit prerequisite rationale", t => {
+    const feature = "features/external-services/EXTERNAL-SERVICES-001-minio-docker.feature";
+
+    t.true(runner.CHUNKS["external-services"].includes(feature));
+    t.false(runner.DEFAULT_CHUNKS.includes("external-services"));
+    t.regex(runner.EXCLUDED_FEATURES[feature], /MinIO journey creates its own service but requires the mounted Docker daemon/);
 });
 
 test("resource-owning chunks remain explicitly exclusive", t => {
@@ -641,7 +654,7 @@ test("runWaves timing summary reports correct feature count and status for succe
 
         t.is(summaries.length, 1);
         t.is(summaries[0][0], "verser2");       // chunkName
-        t.is(summaries[0][1], 1);                 // featureCount
+        t.is(summaries[0][1], runner.CHUNKS.verser2.length); // featureCount
         t.is(summaries[0][2], 0);                 // status
         t.true(summaries[0][3] >= 0);             // durationNs
     } finally {

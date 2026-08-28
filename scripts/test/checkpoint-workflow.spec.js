@@ -14,7 +14,7 @@ test("checkpoint workflow manually publishes only trusted branch checkpoints", (
 	t.true(source.includes("workflow_dispatch:"));
 	t.false(source.includes("push:"));
 	t.true(source.includes("type: choice"));
-	t.true(source.includes("case \"$branch\" in main|devel|feat/manager-oss)"));
+	t.true(source.includes("case \"$branch\" in main|devel)"));
 	t.true(source.includes("cancel-in-progress: false"));
 	t.true(source.includes("git ls-remote origin"));
 	t.true(source.includes("--dry-run"));

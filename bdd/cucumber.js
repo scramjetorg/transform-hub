@@ -16,6 +16,9 @@ if (!includeLongRunning) tagParts.push(validationExclusions);
 const tags = tagParts.join(" and ");
 
 const common = [
+    // Isolation is loaded first so its Before hooks establish scenario-owned
+    // paths and prerequisite checks before the memory baseline is measured.
+    "--require support/scenario-isolation.ts",
     // Load support/memory-hooks.ts BEFORE step-definitions so its After hook
     // runs after step-definition cleanup hooks (Cucumber After hooks run in
     // reverse definition order).

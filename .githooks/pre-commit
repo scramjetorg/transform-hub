@@ -1,0 +1,6 @@
+#!/usr/bin/env sh
+
+set -eu
+
+repo_root="$(git rev-parse --show-toplevel)"
+exec npm --prefix "$repo_root" run check:lockfile

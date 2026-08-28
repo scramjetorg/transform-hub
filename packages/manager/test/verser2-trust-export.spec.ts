@@ -1,56 +1,17 @@
 import test from "ava";
-import { execFile } from "child_process";
 import { X509Certificate } from "crypto";
 import { mkdtemp, readFile, rm, writeFile } from "fs/promises";
 import { tmpdir } from "os";
 import { join } from "path";
-import { promisify } from "util";
-import { ManagerConfiguration } from "@scramjet/types";
+import { ManagerConfiguration } from "@scramjet/api-types";
 import { getManagerVerser2TrustExport } from "../src/lib/verser2-trust-export";
 
-const run = promisify(execFile);
-const existingCertFile = join(__dirname, "../../verser/test/cert/myCA.pem");
+const certificateFixture = join(__dirname, "fixtures/manager-ca.txt");
 
 async function readCertificateMetadata(certFile: string): Promise<{ certFile: string; expiresAt: string }> {
     const certificate = new X509Certificate(await readFile(certFile, "utf8"));
 
     return { certFile, expiresAt: new Date(certificate.validTo).toISOString() };
-}
-
-async function ensureCaFixture(): Promise<{ certFile: string; expiresAt: string; cleanup?: () => Promise<void> }> {
-    try {
-        return await readCertificateMetadata(existingCertFile);
-    } catch (error: any) {
-        if (error?.code !== "ENOENT") throw error;
-    }
-
-    const dir = await mkdtemp(join(tmpdir(), "manager-trust-export-ca-"));
-    const certFile = join(dir, "myCA.pem");
-    const keyFile = join(dir, "myCA.key");
-
-    await run("openssl", ["genrsa", "-out", keyFile, "2048"]);
-    await run("openssl", [
-        "req",
-        "-x509",
-        "-new",
-        "-nodes",
-        "-key",
-        keyFile,
-        "-sha256",
-        "-days",
-        "825",
-        "-out",
-        certFile,
-        "-subj",
-        "/CN=manager.example.test/O=Scramjet Test/C=US"
-    ]);
-
-    const fixture = await readCertificateMetadata(certFile);
-
-    return {
-        ...fixture,
-        cleanup: () => rm(dir, { recursive: true, force: true })
-    };
 }
 
 function config(certFile: string): ManagerConfiguration {
@@ -95,28 +56,43 @@ function config(certFile: string): ManagerConfiguration {
 }
 
 test("getManagerVerser2TrustExport returns only public Manager trust metadata", async t => {
-    const { certFile, expiresAt, cleanup } = await ensureCaFixture();
+    const { expiresAt } = await readCertificateMetadata(certificateFixture);
+    const exported = await getManagerVerser2TrustExport(config(certificateFixture));
+    const serialized = JSON.stringify(exported);
 
-    try {
-        const exported = await getManagerVerser2TrustExport(config(certFile));
-        const serialized = JSON.stringify(exported);
+    t.true(exported.ca.includes("BEGIN CERTIFICATE"));
+    t.regex(exported.fingerprint256, /^([A-F0-9]{2}:){31}[A-F0-9]{2}$/);
+    t.is(exported.expiresAt, expiresAt);
+    t.is(exported.hostUrl, "https://manager.example.test:2443");
+    t.deepEqual(exported.routeDomains, {
+        broker: "manager.broker.scramjet.internal",
+        guest: "manager.guest.scramjet.internal"
+    });
+    t.false(serialized.includes("manager-key"));
+    t.false(serialized.includes("manager-passphrase"));
+    t.false(serialized.includes("registration-token"));
+    t.false(serialized.includes("client-ca"));
+    t.false(serialized.includes("PRIVATE KEY"));
+});
 
-        t.true(exported.ca.includes("BEGIN CERTIFICATE"));
-        t.regex(exported.fingerprint256, /^([A-F0-9]{2}:){31}[A-F0-9]{2}$/);
-        t.is(exported.expiresAt, expiresAt);
-        t.is(exported.hostUrl, "https://manager.example.test:2443");
-        t.deepEqual(exported.routeDomains, {
-            broker: "manager.broker.scramjet.internal",
-            guest: "manager.guest.scramjet.internal"
-        });
-        t.false(serialized.includes("manager-key"));
-        t.false(serialized.includes("manager-passphrase"));
-        t.false(serialized.includes("registration-token"));
-        t.false(serialized.includes("client-ca"));
-        t.false(serialized.includes("PRIVATE KEY"));
-    } finally {
-        await cleanup?.();
-    }
+test("getManagerVerser2TrustExport keeps the Manager's public trust surface when control ingress is enabled", async t => {
+    const configured = config(certificateFixture);
+    configured.verser2.controlIngress = {
+        enabled: true,
+        host: {
+            bindHost: "0.0.0.0",
+            bindPort: 2444,
+            publicUrl: "https://control.manager.example.test:2444",
+            tls: { caFile: certificateFixture, certFile: certificateFixture, keyFile: "/secret/control-key.pem", mtlsRequired: true }
+        },
+        guest: { peerId: "manager.control.guest", routeDomain: "manager.control.example.test" }
+    };
+
+    const exported = await getManagerVerser2TrustExport(configured);
+
+    t.is(exported.hostUrl, "https://manager.example.test:2443");
+    t.is(exported.routeDomains.guest, "manager.guest.scramjet.internal");
+    t.is(exported.routeDomains.broker, "manager.broker.scramjet.internal");
 });
 
 test("getManagerVerser2TrustExport fails closed without public CA material", async t => {

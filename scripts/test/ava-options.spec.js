@@ -34,6 +34,9 @@ const {
 	isMemoryGuardEnabled,
 	memoryHeapThresholdBytes,
 	testProfile,
+	stripCoverageFlag,
+	resolveC8Cli,
+	c8CoverageArgs,
 	ENV,
 	DEFAULTS,
 	TEST_PROFILES,
@@ -140,6 +143,97 @@ test("avaTypeScriptCompileArgs prepares AVA 8 package test output", (t) => {
 		"--declaration", "false", "--sourceMap", "false", "--pretty", "false",
 		"--noEmitOnError", "false"
 	]);
+});
+
+// ---------------------------------------------------------------------------
+// Coverage mode – flag parsing and default preservation
+// ---------------------------------------------------------------------------
+
+test("stripCoverageFlag detects and strips --coverage", (t) => {
+	const { args, coverage } = stripCoverageFlag(["--coverage", "--serial", "test/foo.spec.ts"]);
+	t.true(coverage);
+	t.deepEqual(args, ["--serial", "test/foo.spec.ts"]);
+});
+
+test("stripCoverageFlag returns the default invocation unchanged", (t) => {
+	const cliArgs = ["--serial", "test/foo.spec.ts"];
+	const { args, coverage } = stripCoverageFlag(cliArgs);
+	t.false(coverage);
+	t.deepEqual(args, cliArgs);
+});
+
+test("stripCoverageFlag handles a lone --coverage flag", (t) => {
+	const { args, coverage } = stripCoverageFlag(["--coverage"]);
+	t.true(coverage);
+	t.deepEqual(args, []);
+});
+
+test("--coverage is never forwarded to the ava CLI", (t) => {
+	const { args, coverage } = stripCoverageFlag(["--coverage", "--serial"]);
+	t.true(coverage);
+	const built = buildAvaArgs(args);
+	t.true(built.includes("--serial"));
+	t.false(built.includes("--coverage"), "--coverage must be stripped before buildAvaArgs");
+});
+
+// ---------------------------------------------------------------------------
+// Coverage mode – c8 command/path construction
+// ---------------------------------------------------------------------------
+
+test("resolveC8Cli returns the c8 bin script path", (t) => {
+	const cli = resolveC8Cli();
+	t.truthy(cli);
+	t.true(cli.endsWith("c8/bin/c8.js"));
+});
+
+test("c8CoverageArgs writes reports and temp output under <cwd>/coverage", (t) => {
+	const projectDir = resolve(__dirname, "fixtures", "coverage-pkg");
+	const args = c8CoverageArgs(projectDir);
+	const reportsIdx = args.indexOf("--reports-dir");
+	const tempIdx = args.indexOf("--temp-directory");
+	t.true(reportsIdx >= 0, "expected --reports-dir");
+	t.is(args[reportsIdx + 1], resolve(projectDir, "coverage"));
+	t.true(tempIdx >= 0, "expected --temp-directory");
+	t.is(args[tempIdx + 1], resolve(projectDir, "coverage", "tmp"));
+});
+
+test("c8CoverageArgs enables --all with text and lcovonly reporters", (t) => {
+	const args = c8CoverageArgs("/fixture-pkg");
+	t.true(args.includes("--all"));
+	const reporters = args.reduce((reporters, arg, index) => {
+		if (arg === "--reporter") reporters.push(args[index + 1]);
+		return reporters;
+	}, []);
+	t.deepEqual(reporters, ["text", "lcovonly"]);
+});
+
+test("c8CoverageArgs scopes metrics to src TypeScript with generated artifact exclusions", (t) => {
+	const args = c8CoverageArgs("/fixture-pkg");
+	t.is(args[args.indexOf("--include") + 1], "src/**/*.ts");
+	const excludes = args.reduce((excludes, arg, index) => {
+		if (arg === "--exclude") excludes.push(args[index + 1]);
+		return excludes;
+	}, []);
+	for (const pattern of [".ava-*/**", "dist/**", "node_modules/**", "coverage/**", "**/*.spec.ts"]) {
+		t.true(excludes.includes(pattern), `expected exclude pattern ${pattern}`);
+	}
+	t.true(args.includes("--exclude-after-remap"), "exclusions should apply to remapped source paths");
+});
+
+// ---------------------------------------------------------------------------
+// Coverage mode – source-map aware TypeScript staging
+// ---------------------------------------------------------------------------
+
+test("avaTypeScriptCompileArgs emits source maps in coverage mode", (t) => {
+	const args = avaTypeScriptCompileArgs(resolve(__dirname, "../../packages/utility"), { sourceMaps: true });
+	t.truthy(args);
+	t.is(args.args[args.args.indexOf("--sourceMap") + 1], "true");
+});
+
+test("avaTypeScriptCompileArgs keeps source maps off by default", (t) => {
+	const args = avaTypeScriptCompileArgs(resolve(__dirname, "../../packages/utility"));
+	t.truthy(args);
+	t.is(args.args[args.args.indexOf("--sourceMap") + 1], "false");
 });
 
 // ---------------------------------------------------------------------------

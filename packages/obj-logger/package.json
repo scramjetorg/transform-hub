@@ -7,7 +7,7 @@
     "start": "ts-node ./src/index",
     "build": "../../scripts/build-all.js --config-name=tsconfig.build.json --copy-dist",
     "test": "npm run test:ava",
-    "test:ava": "# nyc node ../../scripts/run-ava.js",
+    "test:ava": "node -e \"\"",
     "clean": "rm -rf ./dist .bic_cache"
   },
   "author": "Scramjet <open-source@scramjet.org>",

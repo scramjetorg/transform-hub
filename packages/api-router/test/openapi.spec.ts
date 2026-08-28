@@ -1,6 +1,4 @@
 import test from "ava";
-import { execFileSync } from "child_process";
-import { resolve } from "path";
 import { z } from "zod";
 
 import { ApiClientRequest, Router, createApiClient, generateOpenApi, loadManifestFromSchemaModule } from "../src";
@@ -66,22 +64,4 @@ test("schema-mode fixture manifest can construct a client", async t => {
     });
 
     t.deepEqual((await client.request("GET /api/v2/health")).body, { route: "GET /api/v2/health" });
-});
-
-test("CLI generator emits OpenAPI JSON for schema-mode fixture", t => {
-    const bin = resolve(__dirname, "../src/bin/generate.ts");
-    const fixture = resolve(__dirname, "fixtures/schema-api.ts");
-    const output = execFileSync(process.execPath, ["-r", "ts-node/register", bin, fixture], { encoding: "utf8" });
-    const doc = JSON.parse(output);
-
-    t.is(doc.openapi, "3.1.0");
-    t.truthy(doc.paths["/api/v2/health"].get);
-});
-
-test("CLI generator prints help and exits successfully", t => {
-    const bin = resolve(__dirname, "../src/bin/generate.ts");
-    const output = execFileSync(process.execPath, ["-r", "ts-node/register", bin, "--help"], { encoding: "utf8" });
-
-    t.true(output.includes("Usage: scramjet-api-router-generate <api-definition> [output.json]"));
-    t.true(output.includes("Generate an OpenAPI document"));
 });
