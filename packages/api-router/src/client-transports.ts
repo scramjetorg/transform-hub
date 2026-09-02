@@ -6,9 +6,11 @@ export type FetchLike = (url: string, init: {
     method: string;
     headers?: Record<string, string>;
     body?: any;
+    duplex?: "half";
 }) => Promise<{
     status: number;
     headers: { forEach(callback: (value: string, key: string) => void): void };
+    body?: unknown;
     json(): Promise<unknown>;
     text(): Promise<string>;
 }>;
@@ -39,7 +41,7 @@ function appendQuery(url: string, query: unknown): string {
 
     const text = params.toString();
 
-    return text ? `${url}?${text}` : url;
+    return text ? `${url}${url.includes("?") ? "&" : "?"}${text}` : url;
 }
 
 function appendRepeatedQuery(url: string, query: unknown): string {
@@ -61,7 +63,7 @@ function appendRepeatedQuery(url: string, query: unknown): string {
 
     const text = params.toString();
 
-    return text ? `${url}?${text}` : url;
+    return text ? `${url}${url.includes("?") ? "&" : "?"}${text}` : url;
 }
 
 function minimumTimeout(...values: Array<number | undefined>): number | undefined {
@@ -87,8 +89,22 @@ export function createHttpClientTransport({ baseUrl, fetch }: { baseUrl: string;
             const response = await fetch(url, {
                 method: request.route.method.toUpperCase(),
                 headers: request.headers,
-                body: request.body === undefined ? undefined : JSON.stringify(request.body)
+                body: request.body === undefined ? undefined : request.raw ? request.body as any : JSON.stringify(request.body),
+                duplex: request.raw && request.body instanceof Readable ? "half" : undefined
             });
+
+            if (request.raw) {
+                const body = response.body;
+
+                return {
+                    status: response.status,
+                    headers: collectHeaders(response.headers),
+                    body: (body && typeof body === "object" && "getReader" in body && typeof Readable.fromWeb === "function"
+                        ? Readable.fromWeb(body as any)
+                        : body) as T
+                };
+            }
+
             const text = await response.text();
 
             return {
