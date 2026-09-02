@@ -1,7 +1,8 @@
 import test from "ava";
+import { Readable } from "stream";
 
 import { ApiClientRequest, ApiClientTransport, HttpMethod, Router, createRouter } from "@scramjet/api-router";
-import { RestAPI2, RestAPI2Routes, createFluentClientFromRouteTreeNode, createHubClient, createInstanceClient, createRestAPI2Client, createRootClient, createSpaceClient } from "../src";
+import { InstanceRpcProcedure, InstanceRpcTypeGuard, RestAPI2, RestAPI2Routes, createFluentClientFromRouteTreeNode, createHttpClientTransport, createHubClient, createInstanceClient, createRestAPI2Client, createRootClient, createSpaceClient, createVerser2ClientTransport } from "../src";
 
 const representativeOperations: Array<{ scope: RestAPI2.ScopeName; operationId: RestAPI2.OperationId; path: string }> = [
     { scope: "root", operationId: "GET /api/v2/spaces", path: "/spaces" },
@@ -47,6 +48,28 @@ test("common client dispatches representative v2 operation ids through one trans
     }
 
     t.deepEqual(seen, representativeOperations.map(operation => operation.operationId));
+});
+
+test("top-level raw API forwards undocumented and v1 paths without manifest lookup", async t => {
+    const seen: ApiClientRequest[] = [];
+    const client = createRestAPI2Client({
+        manifest: { basePath: "/api/v2", routes: [] },
+        transport: {
+            async request<T>(request: ApiClientRequest) {
+                seen.push(request);
+                return { status: 207, headers: { "x-raw": "true" }, body: Readable.from(["raw"]) as unknown as T };
+            }
+        }
+    });
+
+    const response = await client.api.request({ method: "PATCH", path: "/api/v1/rpc/custom", headers: { "x-request-id": "raw-1" }, body: "payload" });
+
+    t.is(response.status, 207);
+    t.is(seen[0].route.fullPath, "/api/v1/rpc/custom");
+    t.is(seen[0].route.method, "patch");
+    t.is(seen[0].route.kind, "duplex");
+    t.deepEqual(seen[0].headers, { "x-request-id": "raw-1" });
+    t.is(seen[0].body, "payload");
 });
 
 test("generic contract shapes are independent v2 outputs", t => {
@@ -201,7 +224,7 @@ test("fluent client forwards body query and headers for representative endpoints
     t.deepEqual(seen[1].query, { force: true });
 });
 
-test("fluent clients omit opaque RPC route exceptions from standard endpoint methods", t => {
+test("fluent clients expose contract-bound and contract-free RPC entry points", t => {
     const instance = createInstanceClient({
         transport: {
             async request<T>() {
@@ -210,7 +233,167 @@ test("fluent clients omit opaque RPC route exceptions from standard endpoint met
         }
     });
 
-    t.false("rpc" in instance);
+    t.true("rpc" in instance);
+    t.is(typeof instance.rpc, "function");
+    t.is(typeof instance.rpc.request, "function");
+    t.false("post" in instance.rpc);
+});
+
+const isAddResult: InstanceRpcTypeGuard<{ total: number }> = (value): value is { total: number } =>
+    !!value && typeof value === "object" && "total" in value && typeof (value as { total?: unknown }).total === "number";
+const isAddInput: InstanceRpcTypeGuard<[number, number]> = (value): value is [number, number] =>
+    Array.isArray(value) && value.length === 2 && value.every((item) => typeof item === "number");
+const addContract = { "math/add": { request: isAddInput, response: isAddResult } };
+const versionContract = { version: { response: (value: unknown): value is { version: string } => !!value && typeof value === "object" && "version" in value } };
+
+test("contract-bound RPC validates JSON guards and returns the inferred HTTP result", async t => {
+    const requests: Array<{ url: string; init: { method: string; headers?: Record<string, string>; body?: any } }> = [];
+    const instance = createInstanceClient({
+        transport: createHttpClientTransport({
+            baseUrl: "http://hub.internal",
+            fetch: async (url, init) => {
+                requests.push({ url, init });
+                return {
+                    status: 200,
+                    headers: { forEach(callback) { callback("application/json", "content-type"); } },
+                    async json() { return { total: 6 }; },
+                    async text() { return JSON.stringify({ total: 6 }); }
+                };
+            }
+        })
+    });
+    const result = await instance.rpc(addContract).call("math/add", [2, 4], { headers: { "x-request-id": "request-1" }, timeoutMs: 500 });
+
+    t.is(result.total, 6);
+    t.is(requests[0].url, "http://hub.internal/rpc/math/add");
+    t.deepEqual(requests[0].init.body, JSON.stringify([2, 4]));
+    t.deepEqual(requests[0].init.headers, { "content-type": "application/json", "x-request-id": "request-1" });
+});
+
+test("contract-bound RPC uses GET when its procedure has no request body", async t => {
+    const requests: Array<{ url: string; init: { method: string; body?: any } }> = [];
+    const instance = createInstanceClient({
+        transport: createHttpClientTransport({
+            baseUrl: "http://hub.internal",
+            fetch: async (url, init) => {
+                requests.push({ url, init });
+                return {
+                    status: 200,
+                    headers: { forEach(callback) { callback("application/json", "content-type"); } },
+                    async json() { return { version: "1.0.0" }; },
+                    async text() { return JSON.stringify({ version: "1.0.0" }); }
+                };
+            }
+        })
+    });
+
+    const result = await instance.rpc(versionContract).call("version");
+
+    t.is(result.version, "1.0.0");
+    t.is(requests[0].url, "http://hub.internal/rpc/version");
+    t.is(requests[0].init.method, "GET");
+    t.is(requests[0].init.body, undefined);
+});
+
+test("contract-free RPC request preserves the native Verser2 duplex stream envelope", async t => {
+    const requests: Array<{ method: string; path: string; body?: unknown }> = [];
+    let cleanups = 0;
+    const stream = Readable.from([JSON.stringify({ total: 3 })]);
+    const transport = createVerser2ClientTransport({
+        transport: {
+            getRoutes: () => [{ domain: "hub.internal", targetId: "hub" }],
+            isRouteReady: () => true,
+            waitForRoute: async () => undefined,
+            async request(request) {
+                requests.push({ method: request.method, path: request.path, body: request.body });
+                return {
+                    status: 200,
+                    headers: { "content-type": "application/json" },
+                    body: stream,
+                    async cleanup() { cleanups += 1; }
+                };
+            }
+        },
+        routeDomain: "hub.internal"
+    });
+    const response = await createInstanceClient({ transport }).rpc.request({
+        method: "PATCH",
+        path: "math/add/nested",
+        body: [2, 4],
+        headers: { "content-type": "application/json" }
+    });
+
+    t.is(response.body, stream);
+    t.is(response.status, 200);
+    t.deepEqual(response.headers, { "content-type": "application/json" });
+    t.is(requests[0].path, "/rpc/math/add/nested");
+    t.is(requests[0].method, "PATCH");
+    t.deepEqual(requests[0].body, [2, 4]);
+    t.is(cleanups, 0);
+    await transport.close();
+    t.true(cleanups >= 1);
+});
+
+test("contract-bound RPC consumes Verser2 JSON streams and validates the response guard", async t => {
+    const transport = createVerser2ClientTransport({
+        transport: {
+            getRoutes: () => [{ domain: "hub.internal", targetId: "hub" }],
+            isRouteReady: () => true,
+            waitForRoute: async () => undefined,
+            async request() {
+                return {
+                    status: 200,
+                    headers: { "content-type": "application/json" },
+                    body: Readable.from([JSON.stringify({ total: 6 })]),
+                    async cleanup() {}
+                };
+            }
+        },
+        routeDomain: "hub.internal"
+    });
+
+    const result = await createInstanceClient({ transport }).rpc(addContract).call("math/add", [2, 4]);
+
+    t.is(result.total, 6);
+    await transport.close();
+});
+
+test("contract-bound RPC rejects request and response guard failures", async t => {
+    let requests = 0;
+    const rpc = createInstanceClient({
+        transport: {
+            async request<T>() {
+                requests += 1;
+                return { status: 200, headers: {}, body: { total: "not-a-number" } as unknown as T };
+            }
+        }
+    }).rpc(addContract);
+
+    await t.throwsAsync(() => rpc.call("math/add", [2, "4"] as unknown as [number, number]), {
+        message: "Instance RPC request failed the supplied type guard for procedure: math/add"
+    });
+    t.is(requests, 0);
+    await t.throwsAsync(() => rpc.call("math/add", [2, 4]), {
+        message: "Instance RPC response failed the supplied type guard for procedure: math/add"
+    });
+    t.is(requests, 1);
+});
+
+test("raw instance RPC request forwards complex paths without contract-path validation", async t => {
+    const seen: ApiClientRequest[] = [];
+    const instance = createInstanceClient({
+        transport: {
+            async request<T>(request: ApiClientRequest) {
+                seen.push(request);
+                return { status: 200, headers: {}, body: undefined as unknown as T };
+            }
+        }
+    });
+
+    await instance.rpc.request({ method: "DELETE", path: "math/../custom%2froute?force=true" });
+
+    t.is(seen[0].route.fullPath, "/rpc/math/../custom%2froute?force=true");
+    t.is(seen[0].route.method, "delete");
 });
 
 test("fluent client reports missing manifest route coverage", async t => {
@@ -377,8 +560,33 @@ test("fluent client compile-time route method and schema assertions", t => {
         client.space("space-1").hub("hub-1").deleteTopic.delete({ params: { topic: "wrong" } });
         // @ts-expect-error topic create body must match route schema
         client.space("space-1").hub("hub-1").createTopic.post({ body: { name: "topic-1" } });
-        // @ts-expect-error opaque RPC routes are not standard fluent methods
+        // @ts-expect-error RPC has no raw HTTP method; callers must provide a procedure contract
         client.space("space-1").hub("hub-1").instance("inst-1").rpc.post();
+        type RpcContract = {
+            "math/add": InstanceRpcProcedure<[number, number], { total: number }>;
+        };
+        const inputGuard: InstanceRpcTypeGuard<[number, number]> = (value): value is [number, number] =>
+            Array.isArray(value) && value.length === 2 && value.every((item) => typeof item === "number");
+        const resultGuard: InstanceRpcTypeGuard<{ total: number }> = (value): value is { total: number } =>
+            !!value && typeof value === "object" && "total" in value;
+        const rpcContract: RpcContract = {
+            "math/add": { request: inputGuard, response: resultGuard }
+        };
+        const rpc = client.space("space-1").hub("hub-1").instance("inst-1").rpc(rpcContract);
+        rpc.call("math/add", [2, 4]).then((result) => {
+            const total: number = result.total;
+            void total;
+        });
+        client.space("space-1").hub("hub-1").instance("inst-1").rpc.request({ method: "PUT", path: "math/add", body: [2, 4] }).then((response) => {
+            const envelope: RestAPI2.ClientResponse<RestAPI2.OperationId, unknown> = response;
+            void envelope;
+            // @ts-expect-error contract-free response bodies remain opaque
+            response.body.total;
+        });
+        // @ts-expect-error procedure names come only from the caller-provided contract
+        rpc.call("math/subtract", [2, 4]);
+        // @ts-expect-error input is selected by the caller-provided procedure contract
+        rpc.call("math/add", ["2", 4]);
     }
 
     t.pass();

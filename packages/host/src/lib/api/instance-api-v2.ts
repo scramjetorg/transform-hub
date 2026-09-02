@@ -3,6 +3,7 @@ import { summarizeHealth } from "@scramjet/load-check";
 import { HostError } from "@scramjet/model";
 import { RestAPI2, RestAPI2RouteSets } from "@scramjet/rest-api2";
 import { IObjectLogger } from "@scramjet/runtime-types";
+import type { APIRoute } from "@scramjet/api-types";
 import EventEmitter from "events";
 import { IncomingHttpHeaders } from "http";
 
@@ -49,6 +50,20 @@ export class InstanceAPIV2 {
             getNextEvent: ({ params }) => this.handleEvent(params.name, true),
             sendEvent: ({ body }) => this.handleSendEvent(body),
             rpc: routeBinding.handler(((req: any, res?: any) => this.handleRpc(req, res)) as any)
+        });
+    }
+
+    /**
+     * RPC exposure is a raw application proxy: unlike the documented POST
+     * duplex route, this middleware deliberately accepts every HTTP method.
+     */
+    attachRpcMiddleware(router: Pick<APIRoute, "use">): void {
+        router.use("/rpc", async (req, res, next) => {
+            try {
+                await this.handleRpc(req, res);
+            } catch (error) {
+                next(error as Error);
+            }
         });
     }
 

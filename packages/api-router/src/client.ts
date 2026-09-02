@@ -6,6 +6,8 @@ export type ApiClientRequest = {
     query?: unknown;
     headers?: Record<string, string>;
     body?: unknown;
+    /** Bypass transport-level JSON encoding/decoding for an opaque request. */
+    raw?: boolean;
     timeoutMs?: number;
     signal?: AbortSignal;
 };
