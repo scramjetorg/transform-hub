@@ -105,3 +105,10 @@ test("RPC route group is an explicit opaque route-tree exception", t => {
     t.true(RestAPI2RouteTree.instance.groups.rpc.opaque);
     t.true(RestAPI2RouteTree.instance.routes().rpc.path.includes("/rpc"));
 });
+
+test("RPC route contract preserves opaque application wire bodies", t => {
+    const rpc = RestAPI2RouteTree.instance.routes().rpc;
+
+    t.true(rpc.schemas?.body?.safeParse({ arbitrary: "caller payload" }).success);
+    t.true(rpc.schemas?.response?.safeParse("raw proxy response").success);
+});
