@@ -184,7 +184,7 @@ jobs:
       - name: Run hub BDD validation
         run: |
           npm run test:bdd-ci-hub
-          npm run test:bdd-ci-api-topic
+          BDD_DOCKER_MEMORY=2g npm run test:bdd-ci-api-topic
 
   bdd-extended-runtime:
     # Process-adapter and unified runtime coverage needs the same 2 GiB runner
