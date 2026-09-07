@@ -20,7 +20,6 @@ import { PassThrough, Readable, Stream, Writable } from "stream";
 import Dockerode from "dockerode";
 import { CustomWorld } from "../world";
 
-import findPackage from "find-package-json";
 import { BufferStream } from "scramjet";
 import { expectedResponses } from "./expectedResponses";
 import { collectStreamUntilEndOrSignal } from "../../lib/stream-capture";
@@ -70,6 +69,35 @@ function resolveOwnedArchive(packagePath: string): string {
     return resolveFixturePackagePath(packagePath);
 }
 
+function resolveRootPackageVersion(startDirectories: string[] = [__dirname, process.cwd()]): string {
+    for (const startDirectory of startDirectories) {
+        let directory = path.resolve(startDirectory);
+
+        while (true) {
+            const manifestPath = path.join(directory, "package.json");
+
+            try {
+                const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+                if (manifest.name === "@scramjet/transform-hub" && typeof manifest.version === "string") {
+                    return manifest.version;
+                }
+            } catch {
+                // Continue walking: source, staged, and built BDD paths can
+                // each contain an intermediate package.json or no manifest.
+            }
+
+            const parentDirectory = path.dirname(directory);
+            if (parentDirectory === directory) break;
+            directory = parentDirectory;
+        }
+    }
+
+    // The E2E step compares this value with the root manifest.  Keeping the
+    // existing fallback makes a missing manifest produce a useful assertion
+    // failure instead of hiding the metadata-resolution problem.
+    return "unknown";
+}
+
 let hostClient: HostClient;
 let actualHealthResponse: any;
 let actualStatusResponse: any;
@@ -81,7 +109,7 @@ let streamContains: { [key: string]: Promise<Readable> } = {};
 let runnerEnded: Promise<void> = Promise.resolve();
 let signalRunnerEnded: () => void = () => undefined;
 
-const version = findPackage(__dirname).next().value?.version || "unknown";
+const version = resolveRootPackageVersion();
 const hostUtils = new HostUtils();
 const dockerode = new Dockerode();
 const ownership = getOwnership(process.env);
