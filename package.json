@@ -138,7 +138,7 @@
     "glob": "^7.2.3",
     "globrex": "^0.1.2",
     "minimist": "^1.2.8",
-    "npm": "11.19.0",
+    "npm": "11.19.1",
     "scramjet-bdd": "file:bdd",
     "semver": "^7.7.1",
     "tar": "^7.5.21",
