@@ -82,7 +82,7 @@ npm run release:align:dry-run -- --release-version=2.1.0
 npm run release:align:apply -- --release-version=2.1.0
 ```
 
-`apply-licenses` is version-independent and is run without `--release-version`: `npm run release:align:apply-licenses`. Relevant repository sources are [`scripts/lib/release-boundary.js`](scripts/lib/release-boundary.js) for the boundary, [`scripts/release-align.js`](scripts/release-align.js) for alignment/licensing, and [`scripts/build-all.js`](scripts/build-all.js) plus [`scripts/publish-order-dist-packages.js`](scripts/publish-order-dist-packages.js) for existing release build/package ordering.
+`check`, `dry-run`, and `apply` treat the excluded BDD workspace as a dependency-only alignment target: all of its dependency sections update included-package ranges while its package identity and excluded/external dependencies remain unchanged. They also validate and update the Python runner build metadata. `apply-licenses` is version-independent and is run without `--release-version`: `npm run release:align:apply-licenses`. Relevant repository sources are [`scripts/lib/release-boundary.js`](scripts/lib/release-boundary.js) for the boundary, [`scripts/release-align.js`](scripts/release-align.js) for alignment/licensing, and [`scripts/build-all.js`](scripts/build-all.js) plus [`scripts/publish-order-dist-packages.js`](scripts/publish-order-dist-packages.js) for existing release build/package ordering.
 
 Only the protected npm publish job may request `id-token: write`; all other jobs must remain read-only. Its token must meet this contract:
 

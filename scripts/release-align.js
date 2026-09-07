@@ -108,6 +108,16 @@ function writeJson(filePath, obj) {
  */
 function writeImageConfig(content) {
 	const p = path.resolve(ROOT_DIR, IMAGE_CONFIG_PATH);
+	writeTextAtomically(p, content);
+}
+
+/**
+ * Write text atomically (to a temp then rename).
+ * @param {string} filePath
+ * @param {string} content
+ */
+function writeTextAtomically(filePath, content) {
+	const p = filePath;
 	const tmp = p + ".tmp";
 	fs.writeFileSync(tmp, content, "utf8");
 	fs.renameSync(tmp, p);
@@ -268,6 +278,35 @@ function discoverFixtureManifests() {
 	return results;
 }
 
+/**
+ * Find release-sensitive non-manifest runtime metadata.  Manifest dependency
+ * alignment, including the dependency-only BDD workspace target, is modeled
+ * directly in the main package change plan.
+ *
+ * @param {string} releaseVersion
+ * @returns {{ runnerPython: object|null, errors: string[] }}
+ */
+function planRuntimeMetadata(releaseVersion) {
+	const config = { runnerPython: null, errors: [] };
+	const pyprojectPath = path.resolve(ROOT_DIR, "packages/runner-python/pyproject.toml");
+	if (fs.existsSync(pyprojectPath)) {
+		const currentContent = fs.readFileSync(pyprojectPath, "utf8");
+		const match = /^version\s*=\s*"([^"]+)"\s*$/m.exec(currentContent);
+		if (!match) {
+			config.errors.push(`RELEASE-SENSITIVE CONFIG: ${path.relative(ROOT_DIR, pyprojectPath)} has no project version`);
+		} else if (match[1] !== releaseVersion) {
+			config.runnerPython = {
+				filePath: pyprojectPath,
+				from: match[1],
+				to: releaseVersion,
+				updatedContent: currentContent.replace(match[0], `version = "${releaseVersion}"`),
+			};
+		}
+	}
+
+	return config;
+}
+
 // ---------------------------------------------------------------------------
 // Change Plan
 // ---------------------------------------------------------------------------
@@ -287,6 +326,7 @@ function computeChangePlan(options = {}) {
 		rootVersion: { current: null, expected: releaseVersion, changed: false },
 		packages: new Map(),
 		imageConfig: { changed: false, changes: [] },
+		runtimeMetadata: null,
 		errors,
 	};
 
@@ -296,7 +336,7 @@ function computeChangePlan(options = {}) {
 	plan.rootVersion.current = rootManifest.version;
 	plan.rootVersion.changed = rootManifest.version !== releaseVersion;
 
-	// --- Workspace packages ---
+	// --- Workspace manifests (including the BDD dependency-only target) ---
 	const workspaces = discoverWorkspacePackages();
 
 	for (const { name, filePath, manifest } of workspaces) {
@@ -308,6 +348,7 @@ function computeChangePlan(options = {}) {
 			depChanges: [],
 			isIncluded: isIncluded(name),
 			isExcluded: isExcluded(name),
+			isDependencyAlignmentTarget: isIncluded(name) || isLicenseOnly(name),
 		};
 
 		if (isIncluded(name)) {
@@ -315,8 +356,12 @@ function computeChangePlan(options = {}) {
 			if (manifest.version !== expected) {
 				pkgInfo.versionChange = { from: manifest.version, to: expected };
 			}
+		}
 
-			// Scan dependency sections for included-to-included references
+		if (pkgInfo.isDependencyAlignmentTarget) {
+			// Scan dependency sections for included-package references.  This
+			// intentionally includes the excluded BDD workspace: its package
+			// identity is preserved, but it runs against release packages.
 			for (const section of dependencySections()) {
 				const deps = manifest[section];
 				if (!deps || typeof deps !== "object") continue;
@@ -349,7 +394,9 @@ function computeChangePlan(options = {}) {
 					}
 				}
 			}
+		}
 
+		if (isIncluded(name)) {
 			// Validate no excluded-package range changes for the boundary:
 			// if an included package references an excluded package, that
 			// reference must NOT be modified. We check that the current range
@@ -488,6 +535,9 @@ function computeChangePlan(options = {}) {
 		errors.push(`Image config not found at ${IMAGE_CONFIG_PATH}`);
 	}
 
+	plan.runtimeMetadata = planRuntimeMetadata(releaseVersion);
+	errors.push(...plan.runtimeMetadata.errors);
+
 	return plan;
 }
 
@@ -580,6 +630,12 @@ function check(options = {}) {
 	for (const [, pkg] of plan.packages) {
 		if (pkg.isExcluded) {
 			lines.push(`EXCLUDED: ${pkg.name}@${pkg.manifest.version} (preserved)`);
+			for (const dc of pkg.depChanges) {
+				lines.push(
+					`BDD DEP DRIFT: ${dc.section}.${dc.depName}: ${dc.from} → ${dc.to}`
+				);
+				hasDrift = true;
+			}
 			continue;
 		}
 		if (!pkg.isIncluded) {
@@ -627,6 +683,13 @@ function check(options = {}) {
 		}
 	} else {
 		lines.push(`IMAGE CONFIG: tags already at ${releaseVersion}`);
+	}
+
+	// Non-manifest runtime metadata.
+	if (plan.runtimeMetadata.runnerPython) {
+		const change = plan.runtimeMetadata.runnerPython;
+		lines.push(`RUNTIME CONFIG DRIFT: packages/runner-python/pyproject.toml version: ${change.from} → ${change.to}`);
+		hasDrift = true;
 	}
 
 	// Errors (boundary violations etc.)
@@ -715,6 +778,24 @@ function dryRun(options = {}) {
 	}
 	lines.push("");
 
+	// Dependency-only excluded workspace manifests.
+	for (const [, pkg] of plan.packages) {
+		if (!pkg.isDependencyAlignmentTarget || !pkg.isExcluded || pkg.depChanges.length === 0) continue;
+		lines.push(`${pkg.name} (dependency-only):`);
+		for (const change of pkg.depChanges) {
+			lines.push(`  ${change.section}.${change.depName}: ${change.from} → ${change.to}`);
+		}
+		lines.push("");
+	}
+
+	// Non-manifest runtime metadata.
+	if (plan.runtimeMetadata.runnerPython) {
+		lines.push("Release-sensitive runtime metadata:");
+		const runnerPython = plan.runtimeMetadata.runnerPython;
+		lines.push(`  packages/runner-python/pyproject.toml version: ${runnerPython.from} → ${runnerPython.to}`);
+		lines.push("");
+	}
+
 	// Excluded invariants summary
 	const excludedNames = [];
 	for (const [, pkg] of plan.packages) {
@@ -779,7 +860,7 @@ function applyChanges(options = {}) {
 
 	// 2. Workspace packages
 	for (const [, pkg] of plan.packages) {
-		if (!pkg.isIncluded) continue;
+		if (!pkg.isDependencyAlignmentTarget) continue;
 
 		let pkgChanged = false;
 		const manifest = readJson(pkg.filePath);
@@ -800,9 +881,7 @@ function applyChanges(options = {}) {
 
 		if (pkgChanged) {
 			writeJson(pkg.filePath, manifest);
-			report.push(
-				`${pkg.name}: ${pkg.versionChange ? pkg.versionChange.from + " → " + releaseVersion : "version unchanged"}`
-			);
+			report.push(`${pkg.name}: ${pkg.versionChange ? pkg.versionChange.from + " → " + releaseVersion : "version unchanged"}`);
 			for (const dc of pkg.depChanges) {
 				report.push(`  ${dc.section}.${dc.depName}: ${dc.from} → ${dc.to}`);
 			}
@@ -838,7 +917,15 @@ function applyChanges(options = {}) {
 		}
 	}
 
-	// 4. Image config
+	// 4. Python runtime build metadata.
+	if (plan.runtimeMetadata.runnerPython) {
+		const change = plan.runtimeMetadata.runnerPython;
+		writeTextAtomically(change.filePath, change.updatedContent);
+		report.push(`packages/runner-python/pyproject.toml version: ${change.from} → ${change.to}`);
+		modified++;
+	}
+
+	// 5. Image config
 	if (plan.imageConfig.changed) {
 		writeImageConfig(plan.imageConfig.updatedContent);
 		for (const c of plan.imageConfig.changes) {
@@ -849,7 +936,7 @@ function applyChanges(options = {}) {
 		report.push(`Image config: already at ${releaseVersion} (no change)`);
 	}
 
-	// 5. Excluded summary
+	// 6. Excluded package versions summary
 	const excludedNames = [];
 	for (const [, pkg] of plan.packages) {
 		if (pkg.isExcluded) {
@@ -857,7 +944,7 @@ function applyChanges(options = {}) {
 		}
 	}
 	if (excludedNames.length > 0) {
-		report.push(`Excluded packages preserved: ${excludedNames.join(", ")}`);
+		report.push(`Excluded package versions preserved: ${excludedNames.join(", ")}`);
 	}
 
 	const ok = errors.length === 0;
