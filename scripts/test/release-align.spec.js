@@ -18,6 +18,8 @@ const { spawnSync } = require("node:child_process");
 
 const alignScript = path.resolve(__dirname, "..", "release-align.js");
 const boundary = require("../lib/release-boundary");
+const releaseAlign = require("../release-align");
+const FIXTURE_RELEASE_VERSION = "2.0.0";
 
 // ---------------------------------------------------------------------------
 // Fixture helpers
@@ -152,8 +154,9 @@ export const imageConfig = {
  * Run release-align with a given mode against a fixture root.
  * Returns { status, stdout, stderr }.
  */
-function runAlign(root, mode, env = {}) {
-	const result = spawnSync(process.execPath, [alignScript, mode], {
+function runAlign(root, mode, args, env = {}) {
+	const defaultArgs = mode === "apply-licenses" ? [] : [`--release-version=${FIXTURE_RELEASE_VERSION}`];
+	const result = spawnSync(process.execPath, [alignScript, mode, ...(args === undefined ? defaultArgs : args)], {
 		cwd: root,
 		env: { ...process.env, SCRAMJET_RELEASE_ROOT: root, ...env },
 		encoding: "utf8"
@@ -194,6 +197,88 @@ function setupLicenses(fix) {
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
+
+test("release-version is required for alignment commands and validates explicit stable SemVer", (t) => {
+	t.throws(() => releaseAlign.resolveReleaseVersion(), {
+		message: /required/
+	});
+	t.is(releaseAlign.resolveReleaseVersion("2.1.0"), "2.1.0");
+	t.deepEqual(releaseAlign.parseCliArguments(["check", "--release-version=2.1.0"]), {
+		mode: "check",
+		releaseVersion: "2.1.0"
+	});
+	t.throws(() => releaseAlign.resolveReleaseVersion("2.1"), {
+		message: /stable SemVer/
+	});
+	t.throws(() => releaseAlign.parseCliArguments(["check", "--release-version=2.1.0", "--release-version=2.1.1"]), {
+		message: /only once/
+	});
+	t.throws(() => releaseAlign.parseCliArguments(["dry-run"]), {
+		message: /requires --release-version/
+	});
+	t.deepEqual(releaseAlign.parseCliArguments(["apply-licenses"]), {
+		mode: "apply-licenses",
+		releaseVersion: undefined
+	});
+	t.throws(() => releaseAlign.parseCliArguments(["apply-licenses", "--release-version=2.1.0"]), {
+		message: /version-independent/
+	});
+});
+
+test("release-version override checks and dry-runs without writing", (t) => {
+	const fix = createFixture(t, {
+		version: "2.0.0",
+		managerVersion: "2.0.0",
+		included: ["@scramjet/sth", "@scramjet/host"],
+		depOverrides: {
+			"@scramjet/sth.deps": { "@scramjet/host": "^2.0.0" },
+		}
+	});
+	setupLicenses(fix);
+
+	const rootBefore = readFileSync(fix.rootPkg, "utf8");
+	const sthBefore = readFileSync(fix.packages.get("@scramjet/sth").manifestPath, "utf8");
+	const checkResult = runAlign(fix.root, "check", ["--release-version=2.1.0"]);
+	const dryRunResult = runAlign(fix.root, "dry-run", ["--release-version=2.1.0"]);
+	const invalidResult = runAlign(fix.root, "check", ["--release-version=2.1"]);
+	const missingResult = runAlign(fix.root, "check", []);
+
+	t.is(checkResult.status, 1, "check should report 2.1.0 alignment drift");
+	t.true(checkResult.stdout.includes("expected 2.1.0"));
+	t.is(dryRunResult.status, 0, "dry-run should succeed");
+	t.true(dryRunResult.stdout.includes("Target version: 2.1.0"));
+	t.is(invalidResult.status, 2, "invalid release versions should fail usage validation");
+	t.true(invalidResult.stderr.includes("stable SemVer"));
+	t.is(missingResult.status, 2, "check should require an explicit release version");
+	t.true(missingResult.stderr.includes("requires --release-version"));
+	t.is(readFileSync(fix.rootPkg, "utf8"), rootBefore, "check and dry-run leave root unchanged");
+	t.is(readFileSync(fix.packages.get("@scramjet/sth").manifestPath, "utf8"), sthBefore, "check and dry-run leave packages unchanged");
+});
+
+test("release-version override applies versions, internal ranges, and image tags", (t) => {
+	const fix = createFixture(t, {
+		version: "2.0.0",
+		managerVersion: "2.0.0",
+		included: ["@scramjet/sth", "@scramjet/host"],
+		depOverrides: {
+			"@scramjet/sth.deps": { "@scramjet/host": "^2.0.0" },
+		}
+	});
+
+	const result = runAlign(fix.root, "apply", ["--release-version=2.1.0"]);
+	const root = readManifest(fix.rootPkg);
+	const sth = readManifest(fix.packages.get("@scramjet/sth").manifestPath);
+	const host = readManifest(fix.packages.get("@scramjet/host").manifestPath);
+	const verser = readManifest(fix.packages.get("@scramjet/verser").manifestPath);
+
+	t.is(result.status, 0, "apply should succeed");
+	t.is(root.version, "2.1.0");
+	t.is(sth.version, "2.1.0");
+	t.is(host.version, "2.1.0");
+	t.is(sth.dependencies["@scramjet/host"], "^2.1.0");
+	t.true(readFileSync(fix.imageConfigPath, "utf8").includes(":2.1.0"));
+	t.is(verser.version, "1.1.0", "the fixed excluded boundary remains preserved");
+});
 
 test("check passes on already-aligned workspace", (t) => {
 	const fix = createFixture(t, {

@@ -3,7 +3,7 @@
 /**
  * @file scripts/release-align.js
  *
- * Release-alignment workflow for the 2.0.0 Transform Hub release.
+ * Release-alignment workflow for Transform Hub package releases.
  *
  * Modes:
  *   check    – validate alignment without any writes; exit 0 if aligned,
@@ -15,7 +15,8 @@
  *              ranges, and static image references.
  *
  * Usage:
- *   node scripts/release-align.js <mode>
+ *   node scripts/release-align.js check|dry-run|apply --release-version=X.Y.Z
+ *   node scripts/release-align.js apply-licenses
  *
  * The tool uses the shared boundary module (scripts/lib/release-boundary.js)
  * for inclusion rules, exclusion invariants, and target version.
@@ -26,7 +27,6 @@
 const fs = require("fs");
 const path = require("path");
 const {
-	RELEASE_VERSION,
 	IMAGE_CONFIG_PATH,
 	MIT_LICENSE_TEXT,
 	EXPECTED_LICENSE,
@@ -55,6 +55,23 @@ const {
 const ROOT_DIR = process.env.SCRAMJET_RELEASE_ROOT
 	? path.resolve(process.env.SCRAMJET_RELEASE_ROOT)
 	: path.resolve(__dirname, "..");
+
+const STABLE_SEMVER = /^(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)$/;
+
+/**
+ * Validate an explicitly requested stable release version.
+ * @param {string|undefined} value
+ * @returns {string}
+ */
+function resolveReleaseVersion(value) {
+	if (value === undefined) {
+		throw new Error("A --release-version=X.Y.Z option is required.");
+	}
+	if (!STABLE_SEMVER.test(value)) {
+		throw new Error(`Release version must be a stable SemVer version, received ${JSON.stringify(value)}.`);
+	}
+	return value;
+}
 
 /**
  * Read and parse a JSON file.
@@ -263,10 +280,11 @@ function discoverFixtureManifests() {
  *   - imageConfig: { currentPath, changed, changes[] }
  *   - errors: string[] (drift / validation failures)
  */
-function computeChangePlan() {
+function computeChangePlan(options = {}) {
+	const releaseVersion = resolveReleaseVersion(options.releaseVersion);
 	const errors = [];
 	const plan = {
-		rootVersion: { current: null, expected: RELEASE_VERSION, changed: false },
+		rootVersion: { current: null, expected: releaseVersion, changed: false },
 		packages: new Map(),
 		imageConfig: { changed: false, changes: [] },
 		errors,
@@ -276,7 +294,7 @@ function computeChangePlan() {
 	const rootPath = path.resolve(ROOT_DIR, "package.json");
 	const rootManifest = readJson(rootPath);
 	plan.rootVersion.current = rootManifest.version;
-	plan.rootVersion.changed = rootManifest.version !== RELEASE_VERSION;
+	plan.rootVersion.changed = rootManifest.version !== releaseVersion;
 
 	// --- Workspace packages ---
 	const workspaces = discoverWorkspacePackages();
@@ -293,7 +311,7 @@ function computeChangePlan() {
 		};
 
 		if (isIncluded(name)) {
-			const expected = expectedVersion(name);
+			const expected = expectedVersion(name, releaseVersion);
 			if (manifest.version !== expected) {
 				pkgInfo.versionChange = { from: manifest.version, to: expected };
 			}
@@ -317,7 +335,7 @@ function computeChangePlan() {
 						continue;
 					}
 
-					const depExpected = expectedVersion(depName);
+					const depExpected = expectedVersion(depName, releaseVersion);
 					const prefix = getRangePrefix(depRange);
 					const expectedRange = prefix + depExpected;
 
@@ -335,19 +353,19 @@ function computeChangePlan() {
 			// Validate no excluded-package range changes for the boundary:
 			// if an included package references an excluded package, that
 			// reference must NOT be modified. We check that the current range
-			// hasn't drifted to a 2.0.0 value already (it shouldn't).
+			// hasn't drifted to the selected release version already (it shouldn't).
 			for (const section of dependencySections()) {
 				const deps = manifest[section];
 				if (!deps || typeof deps !== "object") continue;
 				for (const [depName, depRange] of Object.entries(deps)) {
 					if (isExcluded(depName) && !isLicenseOnly(depName)) {
-						// Check the excluded dep hasn't been mutated to a 2.0.0 range
+						// Check the excluded dep hasn't been mutated to the selected release range.
 						const verPart = depRange.replace(/^[\^~]/, "");
-						if (verPart === RELEASE_VERSION) {
+						if (verPart === releaseVersion) {
 							errors.push(
 								`EXCLUDED BOUNDARY VIOLATION: "${name}" has excluded dep ` +
 								`"${depName}" at "${depRange}" which matches target version ` +
-								`${RELEASE_VERSION} — excluded packages must not be aligned`
+								`${releaseVersion} — excluded packages must not be aligned`
 							);
 						}
 					}
@@ -356,7 +374,7 @@ function computeChangePlan() {
 		} else if (isExcluded(name)) {
 			// Strictly excluded packages are invariants. License-only packages
 			// remain excluded even when independently versioned at the target.
-			if (!isLicenseOnly(name) && manifest.version === RELEASE_VERSION) {
+			if (!isLicenseOnly(name) && manifest.version === releaseVersion) {
 				errors.push(
 					`EXCLUDED BOUNDARY VIOLATION: excluded package "${name}" ` +
 					`has version "${manifest.version}" matching target — ` +
@@ -404,7 +422,7 @@ function computeChangePlan() {
 					continue;
 				}
 
-				const depExpected = expectedVersion(depName);
+				const depExpected = expectedVersion(depName, releaseVersion);
 				const prefix = getRangePrefix(depRange);
 				const expectedRange = prefix + depExpected;
 
@@ -415,18 +433,18 @@ function computeChangePlan() {
 		}
 
 		// Validate no excluded-package range changes for boundary:
-		// a fixture referencing an excluded package at 2.0.0 is a boundary violation.
+		// a fixture referencing an excluded package at the selected release version is a boundary violation.
 		for (const section of dependencySections()) {
 			const deps = manifest[section];
 			if (!deps || typeof deps !== "object") continue;
 			for (const [depName, depRange] of Object.entries(deps)) {
 				if (isExcluded(depName) && !isLicenseOnly(depName)) {
 					const verPart = depRange.replace(/^[\^~]/, "");
-					if (verPart === RELEASE_VERSION) {
+					if (verPart === releaseVersion) {
 						errors.push(
 							`EXCLUDED BOUNDARY VIOLATION: fixture "${name}" has excluded dep ` +
 							`"${depName}" at "${depRange}" which matches target version ` +
-							`${RELEASE_VERSION} — excluded packages must not be aligned`
+							`${releaseVersion} — excluded packages must not be aligned`
 						);
 					}
 				}
@@ -455,13 +473,13 @@ function computeChangePlan() {
 	const imageConfigPath = path.resolve(ROOT_DIR, IMAGE_CONFIG_PATH);
 	if (fs.existsSync(imageConfigPath)) {
 		const imgContent = fs.readFileSync(imageConfigPath, "utf8");
-		const { content: updatedContent, changed } = updateImageTags(imgContent, RELEASE_VERSION);
+		const { content: updatedContent, changed } = updateImageTags(imgContent, releaseVersion);
 		plan.imageConfig.changed = changed;
 		if (changed) {
 			// Collect individual changes
 			const re = /(scramjetorg\/[-\w]+):([\d.]+)"/g;
 			for (let m = re.exec(imgContent); m !== null; m = re.exec(imgContent)) {
-				plan.imageConfig.changes.push({ image: m[1], from: m[2], to: RELEASE_VERSION });
+				plan.imageConfig.changes.push({ image: m[1], from: m[2], to: releaseVersion });
 			}
 		}
 		plan.imageConfig.currentContent = imgContent;
@@ -471,6 +489,20 @@ function computeChangePlan() {
 	}
 
 	return plan;
+}
+
+function discoverLicensePackages() {
+	const packages = new Map();
+	for (const { name, filePath, manifest } of discoverWorkspacePackages()) {
+		packages.set(name, {
+			filePath,
+			manifest,
+			name,
+			isIncluded: isIncluded(name),
+			isExcluded: isExcluded(name),
+		});
+	}
+	return packages;
 }
 
 /**
@@ -528,8 +560,9 @@ function checkLicenseState(packages) {
  * Run check mode — validate all alignment AND license state without writing.
  * Returns { ok: boolean, errors: string[], reportLines: string[] }
  */
-function check() {
-	const plan = computeChangePlan();
+function check(options = {}) {
+	const plan = computeChangePlan(options);
+	const releaseVersion = plan.rootVersion.expected;
 	const lines = [];
 	let hasDrift = false;
 
@@ -593,7 +626,7 @@ function check() {
 			hasDrift = true;
 		}
 	} else {
-		lines.push(`IMAGE CONFIG: tags already at ${RELEASE_VERSION}`);
+		lines.push(`IMAGE CONFIG: tags already at ${releaseVersion}`);
 	}
 
 	// Errors (boundary violations etc.)
@@ -619,12 +652,12 @@ function check() {
 /**
  * Compute and print the change plan without making any modifications.
  */
-function dryRun() {
-	const plan = computeChangePlan();
+function dryRun(options = {}) {
+	const plan = computeChangePlan(options);
 	const lines = [];
 
 	lines.push(`=== Release Alignment Plan (dry-run) ===`);
-	lines.push(`Target version: ${RELEASE_VERSION}`);
+	lines.push(`Target version: ${plan.rootVersion.expected}`);
 	lines.push("");
 
 	// Root
@@ -716,8 +749,9 @@ function dryRun() {
  * Execute the change plan — write all aligned files.
  * Returns { ok, reportLines, errors }.
  */
-function applyChanges() {
-	const plan = computeChangePlan();
+function applyChanges(options = {}) {
+	const plan = computeChangePlan(options);
+	const releaseVersion = plan.rootVersion.expected;
 	const report = [];
 	const errors = [...plan.errors];
 	let modified = 0;
@@ -735,12 +769,12 @@ function applyChanges() {
 	if (plan.rootVersion.changed) {
 		const rootPath = path.resolve(ROOT_DIR, "package.json");
 		const rootManifest = readJson(rootPath);
-		rootManifest.version = RELEASE_VERSION;
+		rootManifest.version = releaseVersion;
 		writeJson(rootPath, rootManifest);
-		report.push(`Root package.json: ${plan.rootVersion.current} → ${RELEASE_VERSION}`);
+		report.push(`Root package.json: ${plan.rootVersion.current} → ${releaseVersion}`);
 		modified++;
 	} else {
-		report.push(`Root package.json: already at ${RELEASE_VERSION} (no change)`);
+		report.push(`Root package.json: already at ${releaseVersion} (no change)`);
 	}
 
 	// 2. Workspace packages
@@ -752,7 +786,7 @@ function applyChanges() {
 
 		// Version
 		if (pkg.versionChange) {
-			manifest.version = RELEASE_VERSION;
+			manifest.version = releaseVersion;
 			pkgChanged = true;
 		}
 
@@ -767,7 +801,7 @@ function applyChanges() {
 		if (pkgChanged) {
 			writeJson(pkg.filePath, manifest);
 			report.push(
-				`${pkg.name}: ${pkg.versionChange ? pkg.versionChange.from + " → " + RELEASE_VERSION : "version unchanged"}`
+				`${pkg.name}: ${pkg.versionChange ? pkg.versionChange.from + " → " + releaseVersion : "version unchanged"}`
 			);
 			for (const dc of pkg.depChanges) {
 				report.push(`  ${dc.section}.${dc.depName}: ${dc.from} → ${dc.to}`);
@@ -808,11 +842,11 @@ function applyChanges() {
 	if (plan.imageConfig.changed) {
 		writeImageConfig(plan.imageConfig.updatedContent);
 		for (const c of plan.imageConfig.changes) {
-			report.push(`Image ${c.image}: ${c.from} → ${RELEASE_VERSION}`);
+			report.push(`Image ${c.image}: ${c.from} → ${releaseVersion}`);
 		}
 		modified++;
 	} else {
-		report.push(`Image config: already at ${RELEASE_VERSION} (no change)`);
+		report.push(`Image config: already at ${releaseVersion} (no change)`);
 	}
 
 	// 5. Excluded summary
@@ -841,7 +875,7 @@ function applyChanges() {
  * Returns { ok, reportLines, errors }.
  */
 function applyLicenses() {
-	const plan = computeChangePlan();
+	const packages = discoverLicensePackages();
 	const report = [];
 	const errors = [];
 	let modified = 0;
@@ -870,7 +904,7 @@ function applyLicenses() {
 
 	// 3. Per-package LICENSE and license field (includes licensing-only
 	//    excluded packages like runner-python and scramjet-bdd).
-	for (const [, pkg] of plan.packages) {
+	for (const [, pkg] of packages) {
 		if (!isLicenseTarget(pkg.name)) continue;
 
 		const pkgDir = path.dirname(pkg.filePath);
@@ -899,7 +933,7 @@ function applyLicenses() {
 	// 4. Confirm no strictly excluded package was mutated (its license field
 	//    must be byte-for-byte unchanged).  License-only packages (runner-python,
 	//    scramjet-bdd) are intentionally being updated.
-	for (const [, pkg] of plan.packages) {
+	for (const [, pkg] of packages) {
 		if (!pkg.isExcluded || isLicenseTarget(pkg.name)) continue;
 		const onDisk = readJson(pkg.filePath);
 		if (onDisk.license !== pkg.manifest.license) {
@@ -920,7 +954,11 @@ function applyLicenses() {
 // ---------------------------------------------------------------------------
 
 function usage() {
-	console.error(`Usage: node scripts/release-align.js <mode>
+	console.error(`Usage:
+  node scripts/release-align.js check --release-version=X.Y.Z
+  node scripts/release-align.js dry-run --release-version=X.Y.Z
+  node scripts/release-align.js apply --release-version=X.Y.Z
+  node scripts/release-align.js apply-licenses
 
 Modes:
   check            — validate full alignment; exit 0 if aligned, 1 if drift
@@ -929,8 +967,37 @@ Modes:
   apply-licenses   — write MIT LICENSE files and update license fields only
 
 Options:
-  -h, --help  show this message`);
+	  --release-version=X.Y.Z  required for check, dry-run, and apply; must be stable SemVer
+	  -h, --help  show this message`);
 	process.exit(2);
+}
+
+function parseCliArguments(args) {
+	const [mode, ...options] = args;
+	let releaseVersion;
+	const versionedMode = ["check", "dry-run", "apply"].includes(mode);
+
+	if (!mode || !["check", "dry-run", "apply", "apply-licenses"].includes(mode)) {
+		throw new Error(`Error: invalid mode "${mode}"`);
+	}
+
+	for (const option of options) {
+		if (!option.startsWith("--release-version=")) {
+			throw new Error(`Error: invalid option "${option}"`);
+		}
+		if (releaseVersion !== undefined) {
+			throw new Error("Error: --release-version may be specified only once.");
+		}
+		releaseVersion = resolveReleaseVersion(option.slice("--release-version=".length));
+	}
+	if (versionedMode && releaseVersion === undefined) {
+		throw new Error(`Error: ${mode} requires --release-version=X.Y.Z.`);
+	}
+	if (!versionedMode && releaseVersion !== undefined) {
+		throw new Error("Error: apply-licenses is version-independent and does not accept --release-version.");
+	}
+
+	return { mode, releaseVersion };
 }
 
 function main() {
@@ -940,15 +1007,17 @@ function main() {
 		usage();
 	}
 
-	const mode = args[0];
-
-	if (!mode || !["check", "dry-run", "apply", "apply-licenses"].includes(mode)) {
-		console.error(`Error: invalid mode "${mode}"`);
+	let parsed;
+	try {
+		parsed = parseCliArguments(args);
+	} catch (error) {
+		console.error(error.message);
 		usage();
 	}
+	const { mode, releaseVersion } = parsed;
 
 	if (mode === "check") {
-		const result = check();
+		const result = check({ releaseVersion });
 		for (const line of result.reportLines) {
 			console.log(line);
 		}
@@ -956,9 +1025,9 @@ function main() {
 			process.exit(1);
 		}
 	} else if (mode === "dry-run") {
-		dryRun();
+		dryRun({ releaseVersion });
 	} else if (mode === "apply") {
-		const result = applyChanges();
+		const result = applyChanges({ releaseVersion });
 		for (const line of result.reportLines) {
 			console.log(line);
 		}
@@ -994,4 +1063,4 @@ if (require.main === module) {
 	main();
 }
 
-module.exports = { check, dryRun, applyChanges, applyLicenses, computeChangePlan };
+module.exports = { check, dryRun, applyChanges, applyLicenses, computeChangePlan, discoverLicensePackages, parseCliArguments, resolveReleaseVersion };

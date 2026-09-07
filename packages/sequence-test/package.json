@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/sequence-test",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Test harness for Scramjet Transform Sequences using the runner protocol without starting a full Transform Hub. Supported for scoped local sequence fixture/harness validation.",
   "main": "./src/index.ts",
   "scripts": {
@@ -11,13 +11,13 @@
   "author": "Scramjet <opensource@scramjet.org>",
   "license": "MIT",
   "dependencies": {
-    "@scramjet/runner": "^2.0.0",
-    "@scramjet/symbols": "^2.0.0",
-    "@scramjet/runtime-types": "^2.0.0"
+    "@scramjet/runner": "^2.1.0",
+    "@scramjet/symbols": "^2.1.0",
+    "@scramjet/runtime-types": "^2.1.0"
   },
   "devDependencies": {
     "@ava/typescript": "^7.0.0",
-    "@scramjet/sequence-types": "^2.0.0",
+    "@scramjet/sequence-types": "^2.1.0",
     "@types/node": "^22.15.0",
     "ava": "^8.0.0",
     "ts-node": "^10.9.1",

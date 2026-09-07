@@ -50,7 +50,7 @@ test("fast gates run in the required order after fresh setup", (t) => {
 		"npm run check:security-workflow",
 		"npm run lint",
 		"npm run typecheck",
-		"npm run release:align:check",
+		"npm run release:align:check -- --release-version=\"$(node -p \"require('./package.json').version\")\"",
 		"npm run check:runtime-invariants",
 		"npm run check:licenses",
 	];

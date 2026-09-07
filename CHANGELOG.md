@@ -2,6 +2,21 @@
 
 This is the changelog for Scramjet Transform Hub. It holds only notable commits, others are grouped without commit info.
 
+## [2.1.0] - 2026-09-07
+
+### Features
+- Added raw and contract-bound typed clients for v2 instance RPC endpoints, including streaming request and response support.
+- Added Host forwarding for arbitrary v2 RPC methods and application payloads.
+
+### Changed
+- Disabled ANSI log colors by default; `--colors`/`--no-colors` now explicitly controls output without overriding configured values when omitted.
+- Improved CI coverage reporting, restricted trusted workflow branches, and parallelized BDD validation.
+
+### Fixed
+- Hardened deep configuration merging against prototype-pollution keys while preserving safe extension merging.
+
+> Compatibility caveat: `@scramjet/rest-api2` now treats exported `RestAPI2.RpcRequest` and `RpcResponse` as opaque (`unknown`), so consumers accessing their former envelope fields must update.
+
 ## [Pre-2.0.0]
 
 This is a historical release record of completed work and is not an npm publication or release.

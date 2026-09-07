@@ -74,7 +74,15 @@ Create or update a non-bypassable `main` ruleset that requires pull requests, cu
 
 The production job must use GitHub-hosted Node **22** and npm **11** (11.19.0), run `npm ci` from the committed `package-lock.json`, and never use Yarn or an unlocked global install. Record exact `node --version` and `npm --version` in release evidence. Existing local setup policy is [`.github/actions/setup-workspace/action.yml`](.github/actions/setup-workspace/action.yml).
 
-Run `node scripts/release-align.js check` before publishing. Relevant repository sources are [`scripts/lib/release-boundary.js`](scripts/lib/release-boundary.js) for the boundary, [`scripts/release-align.js`](scripts/release-align.js) for alignment/licensing, and [`scripts/build-all.js`](scripts/build-all.js) plus [`scripts/publish-order-dist-packages.js`](scripts/publish-order-dist-packages.js) for existing release build/package ordering.
+Run release alignment before publishing. The package boundary and release-wave topology remain fixed. `check`, `dry-run`, and `apply` require an explicit stable SemVer version; for the 2.1.0 release, run:
+
+```bash
+npm run release:align:check -- --release-version=2.1.0
+npm run release:align:dry-run -- --release-version=2.1.0
+npm run release:align:apply -- --release-version=2.1.0
+```
+
+`apply-licenses` is version-independent and is run without `--release-version`: `npm run release:align:apply-licenses`. Relevant repository sources are [`scripts/lib/release-boundary.js`](scripts/lib/release-boundary.js) for the boundary, [`scripts/release-align.js`](scripts/release-align.js) for alignment/licensing, and [`scripts/build-all.js`](scripts/build-all.js) plus [`scripts/publish-order-dist-packages.js`](scripts/publish-order-dist-packages.js) for existing release build/package ordering.
 
 Only the protected npm publish job may request `id-token: write`; all other jobs must remain read-only. Its token must meet this contract:
 
@@ -92,7 +100,7 @@ With an environment, GitHub uses the environment form of `sub`, not the ref form
 ## Failure and recovery
 
 1. Stop on a failed check, approval denial, OIDC/npm rejection, checksum mismatch, or package-order failure. Do not bypass controls or use a long-lived token.
-2. Preserve the workflow URL, commit SHA, package list, exact Node/npm versions, package/version state, and error. Re-run `node scripts/release-align.js check` before retrying.
+2. Preserve the workflow URL, commit SHA, package list, exact Node/npm versions, package/version state, and error. Re-run alignment with the same explicit `--release-version` before retrying.
 3. npm versions are immutable. Query every attempted `@scramjet/*@version` and reuse only a package whose published identity and final package checksum match the recorded manifest. Never unpublish/re-publish to force a retry.
 4. For a partial release, retain the protected commit and repair only the operator/configuration fault after verifying all published packages. If the package boundary, lockfile, contents, or source SHA differ, create a new reviewed release version.
 5. For OIDC, environment, ruleset, or npm registration issues, disable the production job/environment, correct the remote setting under change control, then retry. Treat unexpected publication or credential exposure as a security incident and follow [SECURITY.md](SECURITY.md).
