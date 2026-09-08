@@ -10,7 +10,9 @@ const { createManifest } = require("../release-prerelease.js");
 const {
 	activateVerifiedPackages,
 	assertPublisherManifest,
+	cleanupDistOverlay,
 	consumptionRecord,
+	materializeDistOverlay,
 	validateSthCli,
 	verifyImages,
 	verifyInstallLock,
@@ -300,6 +302,20 @@ test("activation repoints node_modules/.bin/scramjet-transform-hub into the veri
 	const binReal = realpathSync(binLink);
 	t.true(binReal.startsWith(packageReal + sep));
 	t.is(execFileSync(binLink, [], { encoding: "utf8" }), "FAKE STH CLI HELP\nUsage: sth [options...]\n");
+});
+
+test("dist overlay maps only verified prerelease packages and cleans up", (t) => {
+  const { installDir, record, workspaceRoot } = activatedFixture(t, { installInWorkspace: true });
+  const overlay = materializeDistOverlay({ installDir, record, workspaceRoot });
+  t.true(existsSync(join(workspaceRoot, "dist", "host", "package.json")));
+  t.is(realpathSync(join(workspaceRoot, "dist", "host")), realpathSync(join(installDir, "node_modules", "@scramjetorg", "host")));
+  t.true(overlay.packages.includes("host"));
+  t.true(cleanupDistOverlay({ workspaceRoot }));
+  t.false(existsSync(join(workspaceRoot, "dist")));
+
+  const unsafeRecord = { ...record, packages: record.packages.map(entry => ({ ...entry })) };
+  unsafeRecord.packages[0].sourceName = "@scramjet/../escape";
+  t.throws(() => materializeDistOverlay({ installDir, record: unsafeRecord, workspaceRoot }), { message: /invalid verified package mapping/i });
 });
 
 test("release activation selects the verified CLI with an isolated profile home and exact Host prerelease identity", async (t) => {
