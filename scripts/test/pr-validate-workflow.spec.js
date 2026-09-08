@@ -334,6 +334,8 @@ test("release PR BDD consumes only verified publisher output and exact prereleas
 	t.true(source.includes("release-prerelease-bdd.js prepare"));
 	t.true(source.includes("release-prerelease-bdd.js verify-lock"));
 	t.true(source.includes("release-prerelease-bdd.js activate"));
+	t.true(source.includes("release-prerelease-bdd.js overlay --install-dir .release-prerelease-bdd"));
+	t.true(source.includes("release-prerelease-bdd.js cleanup-overlay --workspace-root ."));
 	t.true(source.includes("release-prerelease-bdd.js validate-cli --workspace-root ."));
 	t.true(source.includes("cp \"$RUNNER_TEMP/release-prerelease-bdd.json\" .release-prerelease-bdd/verified-record.json"));
 	t.true(source.includes("SCRAMJET_RELEASE_PRERELEASE_BDD_RECORD=.release-prerelease-bdd/verified-record.json"));
