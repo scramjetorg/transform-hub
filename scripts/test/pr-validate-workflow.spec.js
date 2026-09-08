@@ -50,7 +50,7 @@ test("fast gates run in the required order after fresh setup", (t) => {
 		"npm run check:security-workflow",
 		"npm run lint",
 		"npm run typecheck",
-		"npm run release:align:check",
+		"npm run release:align:check -- --release-version=\"$(node -p \"require('./package.json').version\")\"",
 		"npm run check:runtime-invariants",
 		"npm run check:licenses",
 	];
@@ -112,7 +112,7 @@ test("four BDD jobs partition core and extended commands into non-overlapping pa
 	const jobs = {
 		"bdd-core-node": ["npm run test:bdd-ci-node"],
 		"bdd-core-services": ["npm run test:bdd-ci-python", "npm run test:bdd-ci-api-node", "npm run test:bdd-ci-verser2"],
-		"bdd-extended-hub-topic": ["npm run test:bdd-ci-hub", "npm run test:bdd-ci-api-topic"],
+		"bdd-extended-hub-topic": ["npm run test:bdd-ci-hub", "BDD_DOCKER_MEMORY=2g npm run test:bdd-ci-api-topic"],
 		"bdd-extended-runtime": ["BDD_DOCKER_MEMORY=2g BDD_INCLUDE_LONG_RUNNING=1 RUNTIME_ADAPTER=process npm run test:bdd-ci-node", "npm run test:unified-py", "npm run test:unified-js"],
 	};
 

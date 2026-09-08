@@ -73,6 +73,7 @@ export class CustomWorld implements IWorld {
         instances?: STHRestAPI.GetInstancesResponse;
         templateDirectory?: string;
         commandInProgress?: ChildProcessWithoutNullStreams;
+        topicGetterProcess?: ChildProcessWithoutNullStreams;
         collectedTopicData?: string;
     } = {};
 

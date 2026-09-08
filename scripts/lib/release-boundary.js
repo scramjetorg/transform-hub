@@ -82,9 +82,6 @@ function discoverManifests(globs, options = {}) {
 	return [...new Set(results)].sort();
 }
 
-/** Target release version string. */
-const RELEASE_VERSION = "2.0.0";
-
 /**
  * Set of package names included in the 2.0.0 release alignment.
  * These are all first-party @scramjet/* workspaces that support
@@ -364,13 +361,14 @@ function getRangePrefix(range) {
 
 /**
  * Determine the expected version for an included package.
- * Most packages align to RELEASE_VERSION, but Manager/MultiManager
- * also align despite being at 0.35.1.
+ * Most packages align to the explicitly supplied release version, including
+ * Manager/MultiManager despite their historic 0.35.1 version.
  * @param {string} _name Package name (unused, reserved for future special cases)
+ * @param {string} releaseVersion Explicit stable release version
  * @returns {string}
  */
-function expectedVersion(_name) {
-	return RELEASE_VERSION;
+function expectedVersion(_name, releaseVersion) {
+	return releaseVersion;
 }
 
 /**
@@ -417,7 +415,6 @@ function expectedWorkspaceRelease() {
 }
 
 module.exports = {
-	RELEASE_VERSION,
 	INCLUDED_PACKAGES,
 	EXCLUDED_PACKAGES,
 	RELEASE_WAVES,

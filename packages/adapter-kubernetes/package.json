@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/adapter-kubernetes",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "This package is part of Scramjet Transform Hub. This module holds the docker adapters utilized by Scramjet Transform Hub",
   "main": "./src/index.ts",
   "scripts": {
@@ -15,21 +15,21 @@
   "license": "MIT",
   "dependencies": {
     "@kubernetes/client-node": "^1.1.2",
-    "@scramjet/adapters-common": "2.0.0",
-    "@scramjet/api-types": "^2.0.0",
-    "@scramjet/model": "^2.0.0",
-    "@scramjet/module-loader": "^2.0.0",
-    "@scramjet/obj-logger": "^2.0.0",
-    "@scramjet/symbols": "^2.0.0",
-    "@scramjet/utility": "^2.0.0",
+    "@scramjet/adapters-common": "2.1.0",
+    "@scramjet/api-types": "^2.1.0",
+    "@scramjet/model": "^2.1.0",
+    "@scramjet/module-loader": "^2.1.0",
+    "@scramjet/obj-logger": "^2.1.0",
+    "@scramjet/symbols": "^2.1.0",
+    "@scramjet/utility": "^2.1.0",
     "js-yaml": "^4.3.0",
     "tar": "^7.5.21",
     "ts.data.json": "^2.2.0"
   },
   "devDependencies": {
     "@ava/typescript": "^7.0.0",
-    "@scramjet/runtime-types": "^2.0.0",
-    "@scramjet/types": "^2.0.0",
+    "@scramjet/runtime-types": "^2.1.0",
+    "@scramjet/types": "^2.1.0",
     "@types/node": "^22.15.0",
     "ava": "^8.0.0",
     "ts-node": "^10.9.2",

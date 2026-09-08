@@ -51,7 +51,7 @@ test("devel workflow is fast-gates-only without builds, package tests, Bun, or B
 	t.true(source.includes("npm run check:security-workflow"));
 	t.true(source.includes("npm run lint"));
 	t.true(source.includes("npm run typecheck"));
-	t.true(source.includes("npm run release:align:check"));
+	t.true(source.includes("npm run release:align:check -- --release-version=\"$(node -p \"require('./package.json').version\")\""));
 	t.true(source.includes("npm run check:runtime-invariants"));
 	t.true(source.includes("npm run check:licenses"));
 	t.false(source.includes("npm run build:packages"));

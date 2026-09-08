@@ -69,7 +69,7 @@ jobs:
         run: npm run typecheck
 
       - name: Dependency and release alignment
-        run: npm run release:align:check
+        run: npm run release:align:check -- --release-version="$(node -p "require('./package.json').version")"
 
       - name: Runtime invariants
         run: npm run check:runtime-invariants
@@ -184,7 +184,7 @@ jobs:
       - name: Run hub BDD validation
         run: |
           npm run test:bdd-ci-hub
-          npm run test:bdd-ci-api-topic
+          BDD_DOCKER_MEMORY=2g npm run test:bdd-ci-api-topic
 
   bdd-extended-runtime:
     # Process-adapter and unified runtime coverage needs the same 2 GiB runner

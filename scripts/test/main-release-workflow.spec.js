@@ -47,7 +47,8 @@ test("main release is protected, pinned, non-cancellable, and grants OIDC only t
 
 test("main release retains its immutable manifest before ordered waves and gates checkpoint promotion on complete evidence", (t) => {
 	const source = readFileSync(workflowPath, "utf8");
-	t.true(source.includes("node scripts/release-align.js check"));
+	t.is((source.match(/npm run release:align:check -- --release-version=/g) || []).length, 2);
+	t.true(source.includes("$(node -p \"require('./package.json').version\")"));
 	t.true(source.includes("node node_modules/npm/bin/npm-cli.js run build:packages"));
 	t.true(source.includes("FLAT_PACKAGES=true MAKE_PUBLIC=true NO_INSTALL=true node scripts/build-all.js -w release"));
 	t.true(source.includes("release-main.js prepare"));

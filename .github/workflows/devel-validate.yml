@@ -50,7 +50,7 @@ jobs:
         run: npm run typecheck
 
       - name: Dependency and release alignment
-        run: npm run release:align:check
+        run: npm run release:align:check -- --release-version="$(node -p "require('./package.json').version")"
 
       - name: Runtime invariants
         run: npm run check:runtime-invariants

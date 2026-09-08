@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/config",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "This package is part of Scramjet Transform Hub. The package provides Zod-backed configuration loading, validation, masking, and CLI option metadata.",
   "main": "./src/index.ts",
   "scripts": {
@@ -13,16 +13,16 @@
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "MIT",
   "dependencies": {
-    "@scramjet/api-types": "^2.0.0",
-    "@scramjet/runtime-types": "^2.0.0",
-    "@scramjet/utility": "^2.0.0",
+    "@scramjet/api-types": "^2.1.0",
+    "@scramjet/runtime-types": "^2.1.0",
+    "@scramjet/utility": "^2.1.0",
     "cac": "^6.7.14",
     "jsonc-parser": "^3.3.1",
     "yaml": "^2.9.0",
     "zod": "^3.25.67"
   },
   "peerDependencies": {
-    "@scramjet/adapters": "^2.0.0"
+    "@scramjet/adapters": "^2.1.0"
   },
   "peerDependenciesMeta": {
     "@scramjet/adapters": {
@@ -31,7 +31,7 @@
   },
   "devDependencies": {
     "@ava/typescript": "^7.0.0",
-    "@scramjet/adapters": "^2.0.0",
+    "@scramjet/adapters": "^2.1.0",
     "@types/node": "^22.15.0",
     "ava": "^8.0.0",
     "ts-node": "^10.9.1",

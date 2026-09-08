@@ -68,7 +68,7 @@ Scramjet Transform Hub is a TypeScript/Node.js monorepo with multiple packages f
 ## Build and Tooling
 
 - **Build orchestration**: custom scripts under `scripts/`, including package builds and workspace script runners.
-- **Release alignment**: `npm run release:align:check`, `npm run release:align:dry-run`, and `npm run release:align:apply` are the supported 2.0.0 package/dependency/image alignment commands. They share an explicit inclusion boundary, preserve excluded packages, and gate release publication.
+- **Release package-bump workflow**: `npm run release:align:check -- --release-version=X.Y.Z`, `npm run release:align:dry-run -- --release-version=X.Y.Z`, and `npm run release:align:apply -- --release-version=X.Y.Z` are the supported package/dependency/image alignment commands. They compute one package/dependency plan, preserve excluded identities, align BDD and fixture dependencies, and gate release publication; legacy `bump:*` scripts are not the release workflow.
 - **Development entrypoint**: `npm run start:dev` for source-based hub startup.
 - **Built entrypoint**: `npm run start` after package build output exists in `dist/`.
 - **Linting/Formatting**: Biome is the active lint/format command surface during the migration from ESLint/Prettier. Use `npm run lint`, `npm run lint:quick`, `npm run lint:fix`, and `npm run format`; scripts set `RAYON_NUM_THREADS=12`, `lint` runs Biome linting, and formatting is explicit to avoid broad format churn. Do not run legacy ESLint commands unless a track explicitly re-enables them.
