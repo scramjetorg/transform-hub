@@ -1,7 +1,13 @@
 {
   "compilerOptions": {
     "outDir": "./dist",
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "@scramjet/api-router": ["../dist/api-router"],
+      "@scramjetorg/api-router": ["../dist/api-router"],
+      "@scramjetorg/api-router/*": ["../dist/api-router/*"]
+    }
   },
   "extends": "../tsconfig.base.json",
   "include": [
