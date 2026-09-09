@@ -109,6 +109,18 @@ export function resolveWorkspaceCliCommand(): string[] {
     return ["node", "../dist/cli/bin"];
 }
 
+/** Resolve BDD command artifacts: built workspace files normally, verified bins in prerelease mode. */
+export function resolveBddBin(source: string, binName: string, options: ResolverOptions = {}): string {
+    const root = resolve(options.workspaceRoot || __dirname, options.workspaceRoot ? "." : "../..");
+    if (verified({ ...options, workspaceRoot: root })) return resolvePublishedBin(source, binName, { ...options, workspaceRoot: root });
+
+    const packageDirectory = source === "@scramjet/sth" ? "sth" : source === "@scramjet/manager" ? "manager" : undefined;
+    if (!packageDirectory) throw new Error(`No normal BDD binary mapping exists for ${source}`);
+    const bin = join(root, "dist", packageDirectory, "bin", binName === "sth-csr-enrollment" || binName === "manager-csr-enrollment" ? "csr-enrollment.js" : binName);
+    if (!existsSync(bin) || !statSync(bin).isFile()) throw new Error(`Built BDD binary is unavailable: ${bin}`);
+    return bin;
+}
+
 export function createPublishedArtifactResolver(options: ResolverOptions = {}) {
     return {
         resolveModule: (specifier: string) => resolvePublishedModule(specifier, options),

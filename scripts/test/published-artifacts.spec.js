@@ -5,7 +5,7 @@ const { mkdirSync, mkdtempSync, realpathSync, rmSync, symlinkSync, writeFileSync
 const { tmpdir } = require("node:os");
 const { join } = require("node:path");
 require("ts-node").register({ project: join(__dirname, "../../bdd/tsconfig.json") });
-const { resolvePublishedBin, resolvePublishedModule, resolveWorkspaceCliCommand } = require("../../bdd/lib/published-artifacts.ts");
+const { resolveBddBin, resolvePublishedBin, resolvePublishedModule, resolveWorkspaceCliCommand } = require("../../bdd/lib/published-artifacts.ts");
 
 function fixture(t) {
     const root = mkdtempSync(join(tmpdir(), "published-artifacts-"));
@@ -73,4 +73,15 @@ test("normal mode preserves workspace module and bin resolution", (t) => {
 
 test("normal BDD CLI command remains the built CLI launcher", (t) => {
     t.deepEqual(resolveWorkspaceCliCommand(), ["node", "../dist/cli/bin"]);
+});
+
+test("normal BDD CSR commands resolve the built package binaries", (t) => {
+    const root = mkdtempSync(join(tmpdir(), "published-artifacts-csr-"));
+    t.teardown(() => rmSync(root, { recursive: true, force: true }));
+    mkdirSync(join(root, "dist/sth/bin"), { recursive: true });
+    mkdirSync(join(root, "dist/manager/bin"), { recursive: true });
+    writeFileSync(join(root, "dist/sth/bin/csr-enrollment.js"), "#!/usr/bin/env node\n");
+    writeFileSync(join(root, "dist/manager/bin/csr-enrollment.js"), "#!/usr/bin/env node\n");
+    t.is(resolveBddBin("@scramjet/sth", "sth-csr-enrollment", { workspaceRoot: root, environment: {} }), join(root, "dist/sth/bin/csr-enrollment.js"));
+    t.is(resolveBddBin("@scramjet/manager", "manager-csr-enrollment", { workspaceRoot: root, environment: {} }), join(root, "dist/manager/bin/csr-enrollment.js"));
 });

@@ -8,7 +8,7 @@ import { join } from "path";
 import { createServer, type Server } from "net";
 import { createVerserBroker, type VerserBroker } from "@signicode/verser2-guest-node";
 import { publishedModule } from "../../lib/published-modules";
-import { resolvePublishedBin } from "../../lib/published-artifacts";
+import { resolveBddBin } from "../../lib/published-artifacts";
 import type { MtlsControlIngress } from "../../lib/scenario-isolation";
 import { CustomWorld } from "../world";
 
@@ -49,8 +49,8 @@ type ControlPlaneState = {
 
 const root = join(process.cwd(), "..");
 const binaries = {
-    hubEnrollment: resolvePublishedBin("@scramjet/sth", "sth-csr-enrollment"),
-    managerEnrollment: resolvePublishedBin("@scramjet/manager", "manager-csr-enrollment")
+    hubEnrollment: resolveBddBin("@scramjet/sth", "sth-csr-enrollment"),
+    managerEnrollment: resolveBddBin("@scramjet/manager", "manager-csr-enrollment")
 };
 
 function state(world: CustomWorld): ControlPlaneState {
