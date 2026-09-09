@@ -84,3 +84,11 @@ test("process adapter preserves an explicitly configured legacy 2444 runner Host
     t.not(parsed.hubTargetDomain, "manager.guest.scramjet.internal");
     t.is(parsed.tls.ca, "-----BEGIN CERTIFICATE-----\nsth-local\n-----END CERTIFICATE-----\n-----BEGIN CERTIFICATE-----\nmanager\n-----END CERTIFICATE-----");
 });
+
+test("process adapter launches the explicit runner bin", t => {
+    delete require.cache[require.resolve("../src/process-instance-adapter")];
+    const { ProcessInstanceAdapter } = require("../src/process-instance-adapter");
+    const adapter = new ProcessInstanceAdapter({ ...defaultConfig, runnerEnvs: {} });
+    const command = adapter.getRunnerCmd({ engines: { node: "*" } } as any);
+    t.regex(command[command.length - 1], /[\\/]start-runner\.(?:ts|js)$/);
+});

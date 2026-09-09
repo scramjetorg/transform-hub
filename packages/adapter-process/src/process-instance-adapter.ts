@@ -15,12 +15,20 @@ import { STHConfiguration } from "@scramjet/api-types";
 import { development, streamToString } from "@scramjet/utility";
 import { ChildProcess, spawn } from "child_process";
 
-import { constants } from "fs";
+import { constants, readFileSync } from "fs";
 import { access, readFile, rm } from "fs/promises";
 import path from "path";
 import { getRunnerEnvVariables, getRunnerTransportEnv } from "@scramjet/adapters-common";
 
 const CRASH_LOG_TAIL_BYTES = 4096;
+
+function resolveRunnerBin(): string {
+    const packageJsonPath = require.resolve("@scramjet/runner/package.json");
+    const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8"));
+    const configured = typeof packageJson.bin === "string" ? packageJson.bin : packageJson.bin?.["scramjet-runner"];
+    if (typeof configured !== "string") throw new Error("@scramjet/runner does not expose its scramjet-runner bin");
+    return path.resolve(path.dirname(packageJsonPath), configured);
+}
 
 function tailLog(value: string): string {
     return value.slice(-CRASH_LOG_TAIL_BYTES);
@@ -116,7 +124,7 @@ class ProcessInstanceAdapter implements ILifeCycleAdapterMain, ILifeCycleAdapter
 
         if (this.sthConfig.debug) debugFlags = ["--inspect-brk=9229"];
 
-        return [isTSNode ? "tsx" : process.execPath, ...debugFlags, path.resolve(__dirname, require.resolve("@scramjet/runner"))];
+        return [isTSNode ? "tsx" : process.execPath, ...debugFlags, resolveRunnerBin()];
     }
 
     setRunner(system: Record<string, string>): void {

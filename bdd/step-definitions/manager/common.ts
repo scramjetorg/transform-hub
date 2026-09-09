@@ -1,10 +1,11 @@
-import path = require("path");
 import { spawn, ChildProcess } from "child_process";
 import { strict as assert } from "assert";
 import { ClientUtils } from "@scramjet/client-utils";
 import { prettyPrint } from "@scramjet/obj-logger";
 import { StringStream } from "scramjet";
 import { Readable } from "stream";
+import { resolvePublishedBin } from "../../lib/published-artifacts";
+import { publishedSourceEntry } from "../../lib/published-modules";
 
 const { stopProcess: stopProcessWithCleanup } = require("../../../scripts/lib/bdd-cleanup.js");
 const { getOwnership } = require("../../lib/ownership.js");
@@ -42,12 +43,13 @@ function disposeClient(client: any): void {
 }
 
 function getExecutableCmd(packageName: string): string[] {
-    const sourcePath = `../packages/${ packageName }/src/bin/start.ts`;
-    const builtPath = `../dist/${ packageName }/bin/start.js`;
-
-    return process.env.SCRAMJET_SPAWN_TS
-        ? ["npx", "ts-node", path.resolve(process.cwd(), sourcePath)]
-        : ["node", path.resolve(process.cwd(), builtPath)];
+    const sourceName = `@scramjet/${packageName}`;
+    const binName = packageName === "multi-manager" ? "multi-manager" : packageName;
+    if (process.env.SCRAMJET_SPAWN_TS) {
+        if (process.env.SCRAMJET_RELEASE_PRERELEASE_BDD_RECORD) resolvePublishedBin(sourceName, binName);
+        return ["npx", "ts-node", publishedSourceEntry(sourceName, "bin", "start.ts")];
+    }
+    return [resolvePublishedBin(sourceName, binName)];
 }
 
 function spawnProcess(

@@ -27,7 +27,9 @@ test("BDD CLI defaults to the built artifact and preserves explicit source mode"
         t.deepEqual(getSiCommand({ useBddConfig: false }), ["node", "../dist/cli/bin"]);
 
         process.env.SCRAMJET_SPAWN_TS = "1";
-        t.deepEqual(getSiCommand({ useBddConfig: false }), ["npx", "tsx", "../packages/cli/src/bin/index.ts"]);
+        const sourceCommand = getSiCommand({ useBddConfig: false });
+        t.deepEqual(sourceCommand.slice(0, 2), ["npx", "tsx"]);
+        t.regex(sourceCommand[2], /packages\/cli\/src\/bin\/index\.ts$/);
     } finally {
         if (previousJs === undefined) delete process.env.SCRAMJET_SPAWN_JS;
         else process.env.SCRAMJET_SPAWN_JS = previousJs;

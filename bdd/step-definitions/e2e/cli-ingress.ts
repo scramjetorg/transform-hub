@@ -7,12 +7,14 @@ import { join } from "path";
 import { createVerserHost } from "@signicode/verser2-host";
 import { createV2HttpDispatcher } from "@scramjet/api-server";
 import { Router } from "@scramjet/api-router";
-import { createVerser2HostOptions } from "../../../packages/multi-manager/src/lib/verser2-host-config";
-import { startManagerControlIngress, stopManagerControlIngress } from "../../../packages/manager/src/lib/manager-control-ingress";
-import { startHostControlIngress, stopHostControlIngress } from "../../../packages/host/src/lib/control-ingress";
+import { publishedModule } from "../../lib/published-modules";
 import { getSiCommand } from "../../lib/utils";
 import type { MtlsControlIngress } from "../../lib/scenario-isolation";
 import { CustomWorld } from "../world";
+
+const { createVerser2HostOptions } = publishedModule<{ createVerser2HostOptions: any }>("@scramjet/multi-manager");
+const { startManagerControlIngress, stopManagerControlIngress } = publishedModule<{ startManagerControlIngress: any; stopManagerControlIngress: any }>("@scramjet/manager");
+const { startHostControlIngress, stopHostControlIngress } = publishedModule<{ startHostControlIngress: any; stopHostControlIngress: any }>("@scramjet/host");
 
 type CliResult = { code: number | null; output: string };
 type IngressName = "platform" | "space" | "hub" | "nonmtls";

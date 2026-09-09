@@ -10,3 +10,5 @@ export * from "./lib/verser2-transport";
 export * from "./lib/route-classifier";
 export * from "./lib/csr-enrollment";
 export * from "./lib/csr-enrollment-cli";
+export * from "./lib/manager-control-ingress";
+export * from "./lib/storage-routers/s3-proxy";

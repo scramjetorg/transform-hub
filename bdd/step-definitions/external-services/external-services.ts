@@ -7,10 +7,13 @@ import net from "net";
 import { Client as MinioClient } from "minio";
 import Dockerode from "dockerode";
 import { PassThrough, Readable } from "stream";
-import { RouteRecorder } from "@scramjet/api-server/test/lib/route-recorder";
-import { S3Client } from "../../../packages/host/src/lib/s3-client";
-import { S3Proxy } from "../../../packages/manager/src/lib/storage-routers/s3-proxy";
+import { RouteRecorder } from "../../lib/route-recorder";
+import { publishedModule } from "../../lib/published-modules";
 import { CustomWorld } from "../world";
+
+const { S3Client } = publishedModule<{ S3Client: any }>("@scramjet/host");
+const { S3Proxy } = publishedModule<{ S3Proxy: any }>("@scramjet/manager");
+type S3Client = any;
 
 const minioImage = "minio/minio:RELEASE.2025-04-22T22-12-26Z";
 const dockerSmokeImage = "node:22-alpine";

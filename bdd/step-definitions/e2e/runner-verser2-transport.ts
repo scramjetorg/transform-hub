@@ -7,8 +7,11 @@ import { readFileSync } from "fs";
 import { CommunicationChannel as CC } from "@scramjet/symbols";
 import { createVerserBroker, type VerserBroker } from "@signicode/verser2-guest-node";
 import { createVerserHost, type VerserHost } from "@signicode/verser2-host";
-import { RunnerVerser2Transport } from "../../../dist/runner/transport/verser2-runner-transport";
+import { publishedModule } from "../../lib/published-modules";
 import type { CustomWorld } from "../world";
+
+type RunnerVerser2Transport = any;
+let runnerVerser2TransportClass: any;
 
 const INSTANCE_ID = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
 const GUEST_ID = `runner.${INSTANCE_ID}.guest`;
@@ -71,9 +74,9 @@ After(async function(this: CustomWorld) {
     const errors: Error[] = [];
     for (const socket of current.sockets.splice(0)) socket.destroy();
     if (current.rpcServer?.listening) await new Promise<void>(resolve => current.rpcServer!.close(() => resolve()));
-    await current.broker?.close("BDD runner transport cleanup").catch(error => errors.push(error as Error));
-    await current.transport?.disconnect(true, "BDD runner transport cleanup").catch(error => errors.push(error as Error));
-    await current.host?.close("BDD runner transport cleanup").catch(error => errors.push(error as Error));
+    await current.broker?.close("BDD runner transport cleanup").catch((error: unknown) => errors.push(error as Error));
+    await current.transport?.disconnect(true, "BDD runner transport cleanup").catch((error: unknown) => errors.push(error as Error));
+    await current.host?.close("BDD runner transport cleanup").catch((error: unknown) => errors.push(error as Error));
     delete this.resources.runnerVerser2Transport;
     if (errors.length) throw new Error(`Runner Verser2 transport cleanup failed: ${errors.map(error => error.message).join("; ")}`);
 });
@@ -83,6 +86,7 @@ Given("an isolated built runner Verser2 transport", async function(this: CustomW
     assert.ok(isolation, "ScenarioIsolation must be installed before runner transport setup");
     const tls = isolation.createVerser2TlsCredentials();
     const current = state(this);
+    runnerVerser2TransportClass ||= publishedModule<{ RunnerVerser2Transport: any }>("@scramjet/runner").RunnerVerser2Transport;
     current.host = createVerserHost({
         hostId: "bdd-runner-transport-host",
         host: "127.0.0.1",
@@ -90,7 +94,7 @@ Given("an isolated built runner Verser2 transport", async function(this: CustomW
         tls: { certFile: tls.certFile, keyFile: tls.keyFile }
     });
     await current.host.start();
-    current.transport = new RunnerVerser2Transport({
+    current.transport = new runnerVerser2TransportClass({
         instanceId: INSTANCE_ID,
         config: {
             kind: "verser2",

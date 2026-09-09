@@ -28,8 +28,9 @@ import { HostClient } from "@scramjet/api-client";
 import { MultiManagerClient } from "@scramjet/multi-manager-api-client";
 import { disposeClient } from "./common";
 import { isSuccessfulReadinessResponse, isTransientReadinessStatus } from "../../lib/readiness-contract";
+import { resolvePublishedBin } from "../../lib/published-artifacts";
+import { publishedSourceEntry } from "../../lib/published-modules";
 const { getOwnership, ensureOwnershipPaths } = require("../../lib/ownership.js");
-const { describeSthBinResolution, resolveSthBin } = require("../../../scripts/lib/sth-bin.js");
 
 const freeport = promisify(require("freeport"));
 const ownership = getOwnership(process.env);
@@ -122,13 +123,11 @@ After({ tags: "@aggregation-repro-cleanup" }, async function (this: CustomWorld)
  * Get the executable command for a package (source or built).
  */
 function getExecutableCmd(packageName: string): string[] {
-    const cwd = getRepoRoot();
-
     if (process.env.SCRAMJET_SPAWN_TS) {
-        return ["npx", "ts-node", resolve(cwd, `packages/${packageName}/src/bin/start.ts`)];
+        if (process.env.SCRAMJET_RELEASE_PRERELEASE_BDD_RECORD) resolvePublishedBin(`@scramjet/${packageName}`, packageName);
+        return ["npx", "ts-node", publishedSourceEntry(`@scramjet/${packageName}`, "bin", "start.ts")];
     }
-
-    return ["node", resolve(cwd, `dist/${packageName}/bin/start.js`)];
+    return [resolvePublishedBin(`@scramjet/${packageName}`, packageName)];
 }
 
 function getRepoRoot(): string {
@@ -679,19 +678,8 @@ Given("an STH hub {string} is connected to the aggregation Manager", {
     }, null, 2));
 
     const cmd = process.env.SCRAMJET_SPAWN_TS
-        ? ["npx", "ts-node", resolve(cwd, "packages/sth/src/bin/hub.ts")]
-        : (() => {
-            // Resolve the installed STH CLI through node_modules/.bin
-            // (workspace or verified prerelease install) and execute the
-            // selected bin directly — never via `node` on a dist path.
-            const resolved = resolveSthBin({ cwd });
-
-            if (process.env.SCRAMJET_TEST_LOG) {
-                console.error(`[aggregation-repro] ${describeSthBinResolution(resolved)}`);
-            }
-
-            return [resolved.binPath];
-        })();
+        ? ["npx", "ts-node", publishedSourceEntry("@scramjet/sth", "bin", "hub.ts")]
+        : [resolvePublishedBin("@scramjet/sth", "scramjet-transform-hub")];
 
     const hubOpts = [
         `--id=${hubName}`,

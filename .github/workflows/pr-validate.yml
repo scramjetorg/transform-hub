@@ -369,7 +369,7 @@ jobs:
           fi
           BDD_IMAGES="$(node -e 'const [repository, digest] = process.argv.slice(1); console.log(JSON.stringify([{ role: "bdd-node", reference: `${repository}@${digest}` }]));' "$BDD_IMAGE_REPOSITORY" "$bdd_image_digest")"
           export NPM_CONFIG_USERCONFIG="$RUNNER_TEMP/release-prerelease-read.npmrc"
-          trap 'node scripts/release-prerelease-bdd.js cleanup-overlay --workspace-root . || true; rm -f "$NPM_CONFIG_USERCONFIG"; docker logout ghcr.io' EXIT
+          trap 'rm -f "$NPM_CONFIG_USERCONFIG"; docker logout ghcr.io' EXIT
           umask 077
           {
             printf '%s\n' '@scramjetorg:registry=https://npm.pkg.github.com'
@@ -383,5 +383,4 @@ jobs:
           node scripts/release-prerelease-bdd.js activate --install-dir .release-prerelease-bdd --record "$RUNNER_TEMP/release-prerelease-bdd.json" --workspace-root .
           node scripts/release-prerelease-bdd.js validate-cli --workspace-root .
           cp "$RUNNER_TEMP/release-prerelease-bdd.json" .release-prerelease-bdd/verified-record.json
-          node scripts/release-prerelease-bdd.js overlay --install-dir .release-prerelease-bdd --record .release-prerelease-bdd/verified-record.json --workspace-root .
           SCRAMJET_RELEASE_PRERELEASE_BDD_RECORD=.release-prerelease-bdd/verified-record.json SCRAMJET_RELEASE_PRERELEASE_BDD_INSTALL_DIR=.release-prerelease-bdd BDD_NODE_IMAGE="$(node -p "require(process.env.RUNNER_TEMP + '/release-prerelease-bdd.json').images.find((image) => image.role === 'bdd-node').reference")" npm run test:bdd-ci-api-node

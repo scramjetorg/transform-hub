@@ -7,15 +7,18 @@ import { getDefaultManagerConfig } from "@scramjet/config";
 import { join } from "path";
 import { createServer, type Server } from "net";
 import { createVerserBroker, type VerserBroker } from "@signicode/verser2-guest-node";
-import { RouterDefinition } from "../../../dist/api-router/router";
-// These journeys deliberately load the built package artifacts.  They must not
-// exercise TypeScript source modules through Cucumber's ts-node loader.
-import { startHostControlIngress, stopHostControlIngress } from "../../../dist/host/lib/control-ingress";
-import { createCsrEnrollmentHttpsServer, CsrEnrollmentAuthority } from "../../../dist/manager/lib/csr-enrollment";
-import { Manager } from "../../../dist/manager/lib/manager";
-import { startManagerControlIngress, stopManagerControlIngress } from "../../../dist/manager/lib/manager-control-ingress";
+import { publishedModule } from "../../lib/published-modules";
+import { resolvePublishedBin } from "../../lib/published-artifacts";
 import type { MtlsControlIngress } from "../../lib/scenario-isolation";
 import { CustomWorld } from "../world";
+
+const { RouterDefinition } = publishedModule<{ RouterDefinition: any }>("@scramjet/api-router");
+const { startHostControlIngress, stopHostControlIngress } = publishedModule<{ startHostControlIngress: any; stopHostControlIngress: any }>("@scramjet/host");
+const { createCsrEnrollmentHttpsServer, CsrEnrollmentAuthority, Manager, startManagerControlIngress, stopManagerControlIngress } = publishedModule<{
+    createCsrEnrollmentHttpsServer: any; CsrEnrollmentAuthority: any; Manager: any;
+    startManagerControlIngress: any; stopManagerControlIngress: any;
+}>("@scramjet/manager");
+const ManagerClass: any = Manager;
 
 type CommandResult = { code: number | null; output: string };
 type ControlPlaneState = {
@@ -46,8 +49,8 @@ type ControlPlaneState = {
 
 const root = join(process.cwd(), "..");
 const binaries = {
-    hubEnrollment: join(root, "dist/sth/bin/csr-enrollment.js"),
-    managerEnrollment: join(root, "dist/manager/bin/csr-enrollment.js")
+    hubEnrollment: resolvePublishedBin("@scramjet/sth", "sth-csr-enrollment"),
+    managerEnrollment: resolvePublishedBin("@scramjet/manager", "manager-csr-enrollment")
 };
 
 function state(world: CustomWorld): ControlPlaneState {
@@ -197,7 +200,7 @@ Then("an external rejected mTLS broker cannot connect to the Manager control ing
 
 Given("an isolated production Manager control ingress with a routed Hub guest", async function(this: CustomWorld) {
     const tls = await isolation(this).createMtlsControlIngress();
-    const manager = new Manager({
+    const manager = new ManagerClass({
         id: "bdd-control-manager",
         logLevel: "error",
         verser2: {
@@ -237,7 +240,8 @@ Then("the routed Hub version response is served through the Manager ingress", fu
 Given("an isolated production Manager whose control ingress local broker attachment fails", async function(this: CustomWorld) {
     const tls = await isolation(this).createMtlsControlIngress();
     let controlIngressPort = 0;
-    class FailingBrokerManager extends Manager {
+    class FailingBrokerManager extends ManagerClass {
+        constructor(...args: any[]) { super(...args); }
         protected async attachControlIngressBroker(host: any): Promise<any> {
             controlIngressPort = host.address.port;
             throw new Error("broker attach failed");
@@ -274,7 +278,7 @@ Given("an isolated production Manager control ingress and Hub runner listener", 
     const hubRunnerPort = await isolation(this).reservePort();
     const hubRunnerListener = createServer();
     await listen(hubRunnerListener, hubRunnerPort);
-    const manager = new Manager({
+    const manager = new ManagerClass({
         ...config,
         id: "bdd-control-ingress-concurrent",
         logLevel: "error",
@@ -337,7 +341,7 @@ Given("isolated CSR enrollment artifacts backed by a production Manager enrollme
     const server = createCsrEnrollmentHttpsServer(authority, { key: readFileSync(serverKeyFile), cert: readFileSync(serverCertFile) });
     const port = await isolated.reservePort();
     await new Promise<void>((resolve, reject) => server.once("error", reject).listen(port, "127.0.0.1", resolve));
-    state(this).close.push(async () => await new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve())));
+    state(this).close.push(async () => await new Promise<void>((resolve, reject) => server.close((error: Error | undefined) => error ? reject(error) : resolve())));
     state(this).enrollment = {
         identityDir: join(artifacts, "hub-identity"),
         requestFile: join(artifacts, "request.json"),

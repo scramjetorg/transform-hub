@@ -2,7 +2,10 @@
   "name": "@scramjet/runner",
   "version": "2.1.0",
   "description": "This package is part of Scramjet Transform Hub. The package executes the remote runners and provides communication with them through abstraction layer provided by adapters.",
-  "main": "./src/bin/start-runner.ts",
+  "main": "./src/index.ts",
+  "bin": {
+    "scramjet-runner": "./src/bin/start-runner.ts"
+  },
   "scripts": {
     "build": "../../scripts/build-all.js --config-name=tsconfig.build.json --copy-dist",
     "prebuild:docker": "if [ \"${SCRAMJET_DOCKER_RUNNER_STAGED:-}\" != \"1\" ]; then cd ../.. && scripts/build-all.js --no-install --link-packages -d packages/runner -o ./dist/docker-runner/ --ts-config tsconfig.build.json && cp -r packages/runner-python dist/docker-runner/runner-python; fi",
