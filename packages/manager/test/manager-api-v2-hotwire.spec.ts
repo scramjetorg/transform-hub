@@ -58,8 +58,10 @@ function createManagerStub(recorder: RouteRecorder) {
 
 function createRealLifecycleCsi(control: (code: RunnerMessageCode, payload: unknown) => void) {
     let resolveTerminal!: (result: { message: string; exitcode: number; status: InstanceStatus }) => void;
-    const terminal = new Promise<{ message: string; exitcode: number; status: InstanceStatus }>(resolve => {
+    let rejectTerminal!: (error: unknown) => void;
+    const terminal = new Promise<{ message: string; exitcode: number; status: InstanceStatus }>((resolve, reject) => {
         resolveTerminal = resolve;
+        rejectTerminal = reject;
     });
     const csi = new CSIController(
         {
@@ -77,7 +79,7 @@ function createRealLifecycleCsi(control: (code: RunnerMessageCode, payload: unkn
     csi.status = InstanceStatus.RUNNING;
     csi.instancePromise = terminal;
     (csi as any)._instanceAdapter = { remove: async () => undefined };
-    return { csi, resolveTerminal };
+    return { csi, resolveTerminal, rejectTerminal };
 }
 
 test("Manager topic writer accepts NDJSON and rejects unsupported media types", async t => {
@@ -131,9 +133,18 @@ test("real Manager-routed CSI control preserves direct Hub semantics", async t =
         const recorder = new RouteRecorder();
         const controls: Array<{ code: RunnerMessageCode; payload: unknown }> = [];
         let completeTerminal: (() => void) | undefined;
-        const { csi, resolveTerminal } = createRealLifecycleCsi((code, _payload) => {
+        const { csi, resolveTerminal, rejectTerminal } = createRealLifecycleCsi((code, _payload) => {
             controls.push({ code, payload: _payload });
-            if (scenario.error) throw scenario.error;
+            if (scenario.error) {
+                // Settle the fixture terminal deterministically on a
+                // classified control error so the controller's bounded
+                // lifecycle race does not wait for the production 5-second
+                // runner-exit deadline. A rejected terminal completes the
+                // terminal coordination while preserving the control error
+                // for immediate API classification.
+                rejectTerminal(scenario.error);
+                throw scenario.error;
+            }
             if (code === RunnerMessageCode.KILL) completeTerminal?.();
         });
         completeTerminal = () => resolveTerminal({ message: "stopped", exitcode: 0, status: InstanceStatus.COMPLETED });

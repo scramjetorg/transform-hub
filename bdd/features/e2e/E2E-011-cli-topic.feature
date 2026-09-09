@@ -5,8 +5,9 @@ This feature checks topic functionalities over CLI
     @ci-topic @cli
     Scenario: E2E-011 TC-001 API to API
         Given I set config for local Hub
+        When I execute CLI with "topic get cities" without waiting for the end
+        Then I wait for CLI topic getter "cities" to be registered
         When I execute CLI with "topic send cities data/cities.json" without waiting for the end
-        Then I execute CLI with "topic get cities" without waiting for the end
         Then I confirm data named "nyc-city-nl" will be received
 
     @ci-topic @cli

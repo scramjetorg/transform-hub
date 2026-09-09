@@ -26,3 +26,13 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 - [x] **Track: scripts and dependencies cleanup + update**
 *Link: [./tracks/scripts_dependencies_cleanup_update_20260803/](./tracks/scripts_dependencies_cleanup_update_20260803/)*
+
+---
+
+- [x] **Track: coverage tooling replacement, leave phase 5 gated on user decision. No over engineering, simplest solution please**
+*Link: [./tracks/coverage_tooling_replacement_20260809/](./tracks/coverage_tooling_replacement_20260809/)*
+
+---
+
+- [x] **Track: behavioural tests migration and cleanup**
+*Link: [./tracks/behavioural_tests_migrations_cleanup_20260812/](./tracks/behavioural_tests_migrations_cleanup_20260812/)*

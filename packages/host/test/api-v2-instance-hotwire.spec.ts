@@ -195,6 +195,24 @@ test("InstanceAPIV2 v2 RPC route forwards through CSI RPC forwarding", async t =
     t.is(calls[0].forwardRpcRequest[0].headers, headerRecord);
 });
 
+test("InstanceAPIV2 raw RPC middleware forwards every HTTP method unchanged", async t => {
+    const recorder = new RouteRecorder();
+    const calls: any[] = [];
+    const api = new InstanceAPIV2(createCsiStub(calls), logger);
+    const req = { url: "/rpc/custom/action?force=true", method: "PATCH", headers: { "x-request-id": "raw-1" } };
+    const res = createResponseStub();
+
+    api.attachRpcMiddleware(recorder.asApiRoute());
+    await (recorder.require("use", "/rpc").handler as Function)(req, res, () => t.fail());
+
+    t.is(calls.length, 1);
+    t.is(calls[0].forwardRpcRequest[0], req);
+    t.is(calls[0].forwardRpcRequest[1], res);
+    t.is(calls[0].forwardRpcRequest[2], "/custom/action?force=true");
+    t.is(calls[0].forwardRpcRequest[0].method, "PATCH");
+    t.deepEqual(calls[0].forwardRpcRequest[0].headers, { "x-request-id": "raw-1" });
+});
+
 test("InstanceAPIV2 local handlers adapt CSI behavior", async t => {
     const recorder = new RouteRecorder();
     const calls: any[] = [];
@@ -381,8 +399,10 @@ test("direct Hub v2 health is served by the real CSI controller and preserves ca
 
 function createRealLifecycleCsi(control: (code: RunnerMessageCode, payload: unknown) => void) {
     let resolveTerminal!: (result: { message: string; exitcode: number; status: InstanceStatus }) => void;
-    const terminal = new Promise<{ message: string; exitcode: number; status: InstanceStatus }>(resolve => {
+    let rejectTerminal!: (error: unknown) => void;
+    const terminal = new Promise<{ message: string; exitcode: number; status: InstanceStatus }>((resolve, reject) => {
         resolveTerminal = resolve;
+        rejectTerminal = reject;
     });
     const communication = {
         sendControlMessage: async (code: RunnerMessageCode, payload: unknown) => control(code, payload),
@@ -409,7 +429,7 @@ function createRealLifecycleCsi(control: (code: RunnerMessageCode, payload: unkn
     csi.status = InstanceStatus.RUNNING;
     csi.instancePromise = terminal;
     (csi as any)._instanceAdapter = { remove: async () => undefined };
-    return { csi, resolveTerminal };
+    return { csi, resolveTerminal, rejectTerminal };
 }
 
 test("real direct Hub CSI control preserves stop/kill request and response semantics", async t => {
@@ -422,9 +442,18 @@ test("real direct Hub CSI control preserves stop/kill request and response seman
     for (const scenario of scenarios) {
         const controls: Array<{ code: RunnerMessageCode; payload: unknown }> = [];
         let completeTerminal: (() => void) | undefined;
-        const { csi, resolveTerminal } = createRealLifecycleCsi((code, payload) => {
+        const { csi, resolveTerminal, rejectTerminal } = createRealLifecycleCsi((code, payload) => {
             controls.push({ code, payload });
-            if (scenario.error) throw scenario.error;
+            if (scenario.error) {
+                // Settle the fixture terminal deterministically on a
+                // classified control error so the controller's bounded
+                // lifecycle race does not wait for the production 5-second
+                // runner-exit deadline. A rejected terminal completes the
+                // terminal coordination while preserving the control error
+                // for immediate API classification.
+                rejectTerminal(scenario.error);
+                throw scenario.error;
+            }
             if (code === RunnerMessageCode.KILL) completeTerminal?.();
         });
         completeTerminal = () => resolveTerminal({ message: "stopped", exitcode: 0, status: InstanceStatus.COMPLETED });

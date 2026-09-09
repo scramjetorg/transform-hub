@@ -14,7 +14,13 @@ const { relative, resolve, join } = require("path");
 const { readFile } = require("fs/promises");
 const { exec } = require("child_process");
 
-const opts = minimist(process.argv.slice(2), {
+const coverageEnv = "SCRAMJET_RUN_SCRIPT_COVERAGE";
+const rawArgs = process.argv.slice(2);
+const separatorIndex = rawArgs.indexOf("--");
+const runnerArgs = separatorIndex === -1 ? rawArgs : rawArgs.slice(0, separatorIndex);
+const separatorArgs = separatorIndex === -1 ? [] : rawArgs.slice(separatorIndex + 1);
+
+const opts = minimist(runnerArgs, {
     alias: {
         list: "l",
         lax: "L",
@@ -39,8 +45,14 @@ const opts = minimist(process.argv.slice(2), {
         "flat-packages": env.FLAT_PACKAGES,
         "make-public": env.MAKE_PUBLIC
     },
-    boolean: ["list", "lax", "verbose", "help", "exec", "fail-fast"]
+    boolean: ["list", "lax", "verbose", "help", "exec", "fail-fast"],
+    stopEarly: true
 });
+
+const scriptName = opts._[0];
+const scriptArgs = [...opts._.slice(1), ...separatorArgs];
+const coverage = scriptArgs.includes("--coverage");
+const args = scriptArgs.filter((arg) => arg !== "--coverage");
 
 const failFast = opts["fail-fast"] || env.SCRAMJET_RUN_SCRIPT_FAIL_FAST === "1";
 
@@ -49,7 +61,9 @@ if (opts.help || (!opts._.length && !opts.list)) {
     const spaces = " ".repeat(pName.length);
 
     console.error("Runs scripts in workspaces");
-    console.error(`Usage: ${pName} [options] <script> [...args]`);
+    console.error(`Usage: ${pName} [options] <script> [script-args...]`);
+    console.error(`       ${spaces} script arguments are forwarded verbatim after <script>; use -- to separate them explicitly`);
+    console.error(`       ${spaces} --coverage enables c8 for supported AVA package tests without passing it to other package scripts`);
     console.error(`       ${spaces} -v,--verbose - verbose output`);
     console.error(`       ${spaces} -L,--lax - succeeds after running all scripts, even if any fail`);
 	console.error(`       ${spaces} --fail-fast - stop scheduling scripts after the first failure (env: SCRAMJET_RUN_SCRIPT_FAIL_FAST=1)`);
@@ -152,12 +166,11 @@ function execCommand(path, command, verbose) {
             }
             if (opts.verbose) runconfig.stdio = "inherit";
 
-            const scriptName = opts._[0];
-            const args = opts._.slice(1);
+            const scriptEnv = coverage ? { [coverageEnv]: "1" } : undefined;
 
             return [
                 [Date.now(), await runScript({ ...runconfig, event: `pre${scriptName}` })],
-                [Date.now(), await runScript({ ...runconfig, args, event: scriptName })],
+                [Date.now(), await runScript({ ...runconfig, args, env: scriptEnv, event: scriptName })],
                 [Date.now(), await runScript({ ...runconfig, event: `post${scriptName}` })]
             ];
         })

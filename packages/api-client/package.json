@@ -1,21 +1,21 @@
 {
   "name": "@scramjet/api-client",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "This package is part of Scramjet Transform Hub. The package provides the API Client for use with Scramjet Transform Hub.",
   "main": "./src/index.ts",
   "scripts": {
     "start": "ts-node ./src/index",
     "build": "../../scripts/build-all.js --config-name=tsconfig.build.json --copy-dist",
     "clean": "rm -rf ./dist .bic_cache",
-    "test": "nyc node ../../scripts/run-ava.js"
+    "test": "node ../../scripts/run-ava.js"
   },
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "MIT",
   "dependencies": {
-    "@scramjet/api-types": "^2.0.0",
-    "@scramjet/client-utils": "^2.0.0",
-    "@scramjet/runtime-types": "^2.0.0",
-    "@scramjet/symbols": "^2.0.0",
+    "@scramjet/api-types": "^2.1.0",
+    "@scramjet/client-utils": "^2.1.0",
+    "@scramjet/runtime-types": "^2.1.0",
+    "@scramjet/symbols": "^2.1.0",
     "scramjet": "^4.37.0"
   },
   "devDependencies": {

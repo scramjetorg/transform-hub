@@ -45,6 +45,30 @@ function runWorkspace(root, log, args = [], env = {}) {
 	});
 }
 
+function createForwardingWorkspace(t) {
+	const root = mkdtempSync(join(tmpdir(), "transform-hub-run-script-forwarding-"));
+	const log = join(root, "forwarded-args.json");
+	const packageDir = join(root, "packages", "nested");
+
+	writeFileSync(join(root, "package.json"), JSON.stringify({
+		name: "run-script-forwarding-fixture-root",
+		private: true,
+		workspaces: ["packages/*"]
+	}));
+	mkdirSync(packageDir, { recursive: true });
+	writeFileSync(join(packageDir, "package.json"), JSON.stringify({
+		name: "@fixture/nested",
+		version: "1.0.0",
+		scripts: {
+			test: "npm run test:ava",
+			"test:ava": "node -e \"require('fs').writeFileSync(process.env.RUN_SCRIPT_FIXTURE_LOG, process.env.SCRAMJET_RUN_SCRIPT_COVERAGE || '')\""
+		}
+	}));
+
+	t.teardown(() => rmSync(root, { force: true, recursive: true }));
+	return { log, root };
+}
+
 test("run-script aggregates package failures by default and exits nonzero after all scripts", (t) => {
 	const { log, root } = createWorkspace(t);
 	const result = runWorkspace(root, log);
@@ -67,4 +91,55 @@ test("run-script accepts SCRAMJET_RUN_SCRIPT_FAIL_FAST=1", (t) => {
 
 	t.true(result.status !== 0);
 	t.is(readFileSync(log, "utf8"), "first\n");
+});
+
+test("run-script forwards coverage through nested package scripts", (t) => {
+	const { log, root } = createForwardingWorkspace(t);
+	const result = spawnSync(process.execPath, [runner, "--root", root, "-j", "1", "test", "--coverage"], {
+		env: { ...process.env, RUN_SCRIPT_FIXTURE_LOG: log },
+		encoding: "utf8"
+	});
+
+	t.is(result.status, 0, result.stderr || result.stdout);
+	t.is(readFileSync(log, "utf8"), "1");
+});
+
+test("run-script preserves explicit separator arguments through nested package scripts", (t) => {
+	const { log, root } = createForwardingWorkspace(t);
+	const result = spawnSync(process.execPath, [runner, "--root", root, "-j", "1", "test", "--", "--coverage"], {
+		env: { ...process.env, RUN_SCRIPT_FIXTURE_LOG: log },
+		encoding: "utf8"
+	});
+
+	t.is(result.status, 0, result.stderr || result.stdout);
+	t.is(readFileSync(log, "utf8"), "1");
+});
+
+test("run-script reserves coverage while leaving arbitrary script arguments untouched", (t) => {
+	const root = mkdtempSync(join(tmpdir(), "transform-hub-run-script-coverage-"));
+	const log = join(root, "coverage-bridge.json");
+	const packageDir = join(root, "packages", "direct");
+
+	writeFileSync(join(root, "package.json"), JSON.stringify({
+		name: "run-script-coverage-fixture-root",
+		private: true,
+		workspaces: ["packages/*"]
+	}));
+	mkdirSync(packageDir, { recursive: true });
+	writeFileSync(join(packageDir, "package.json"), JSON.stringify({
+		name: "@fixture/direct",
+		version: "1.0.0",
+		scripts: {
+			test: "node -e \"require('fs').writeFileSync(process.env.RUN_SCRIPT_FIXTURE_LOG, JSON.stringify({ args: process.argv.slice(1), coverage: process.env.SCRAMJET_RUN_SCRIPT_COVERAGE || '' }))\" --"
+		}
+	}));
+	t.teardown(() => rmSync(root, { force: true, recursive: true }));
+
+	const result = spawnSync(process.execPath, [runner, "--root", root, "-j", "1", "test", "--coverage", "--arbitrary-script-option"], {
+		env: { ...process.env, RUN_SCRIPT_FIXTURE_LOG: log },
+		encoding: "utf8"
+	});
+
+	t.is(result.status, 0, result.stderr || result.stdout);
+	t.deepEqual(JSON.parse(readFileSync(log, "utf8")), { args: ["--arbitrary-script-option"], coverage: "1" });
 });

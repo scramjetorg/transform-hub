@@ -89,7 +89,12 @@ After(async function(this: CustomWorld) {
     if (command && command.exitCode === null) {
         await stopProcess(command, { graceMs: 1000 }).catch(() => undefined);
     }
+    const topicGetter = this.cliResources.topicGetterProcess;
+    if (topicGetter && topicGetter !== command && topicGetter.exitCode === null) {
+        await stopProcess(topicGetter, { graceMs: 1000 }).catch(() => undefined);
+    }
     this.cliResources.commandInProgress = undefined;
+    this.cliResources.topicGetterProcess = undefined;
     this.cliResources.collectedTopicData = undefined;
     this.cliResources.stdio = undefined;
     this.cliResources.stdio1 = undefined;
@@ -327,6 +332,33 @@ When("I wait for the instance to be running before sending input", { timeout: BD
     }
 });
 
+Then("I wait for CLI topic getter {string} to be registered", { timeout: BDD_MAX_STEP_TIMEOUT_MS }, async function (
+    this: CustomWorld,
+    topicName: string
+) {
+    const command = this.cliResources.commandInProgress;
+    assert.ok(command, "The CLI topic getter was not started");
+    this.cliResources.topicGetterProcess = command;
+
+    const hostClient = new HostClient(process.env.LOCAL_HOST_BASE_URL!);
+    try {
+        await waitForCondition(
+            async () => {
+                assert.equal(command.exitCode, null, "The CLI topic getter exited before registration");
+                return hostClient.getTopics();
+            },
+            (topics: any[]) => topics.some((topic: any) => topic.topicName === topicName),
+            {
+                timeoutMs: BDD_MAX_STEP_TIMEOUT_MS,
+                intervalMs: CLI_POLL_INTERVAL_MS,
+                description: `CLI topic getter ${topicName} to be registered`
+            }
+        );
+    } finally {
+        hostClient.dispose();
+    }
+});
+
 Then("I send input data {string} with options {string}", async function (
     data: string,
     options: string
@@ -378,12 +410,15 @@ Then("I confirm data named {string} will be received", async function (
     data
 ) {
     const expected = expectedResponses[data];
-    const { stdout } = this.cliResources!.commandInProgress!;
+    const topicGetter = this.cliResources!.topicGetterProcess || this.cliResources!.commandInProgress;
+    assert.ok(topicGetter, "The CLI topic getter was not started");
+    const { stdout } = topicGetter;
     const response = await waitUntilStreamContains(stdout, expected);
 
     assert.equal(response, true);
 
-    this.cliResources!.commandInProgress!.kill();
+    topicGetter.kill();
+    this.cliResources!.topicGetterProcess = undefined;
 });
 
 Then("I confirm collected topic data named {string} will be received", { timeout: BDD_MAX_STEP_TIMEOUT_MS }, async function (

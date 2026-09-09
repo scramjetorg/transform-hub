@@ -244,8 +244,10 @@ export namespace RestAPI2 {
     export type AuditQueryResponse = ListResponse<AuditRecord>;
     export type Params<TScope> = IdParams<string> & { scope?: TScope };
     export type StdIODescriptorList = { channels: Array<{ fd: 0 | 1 | 2; readable: boolean; writable: boolean }> };
-    export type RpcRequest = { method: string; path: string; headers?: Record<string, string>; body?: unknown };
-    export type RpcResponse = { status: number; headers: Record<string, string>; body?: unknown };
+    /** Opaque application payload forwarded as the instance RPC request body. */
+    export type RpcRequest = unknown;
+    /** Opaque application payload forwarded as the instance RPC response body. */
+    export type RpcResponse = unknown;
     export type RouteOwner = "root" | "space" | "hub";
     export type RouteOwnership = {
         owner: RouteOwner;
@@ -278,11 +280,27 @@ export namespace RestAPI2 {
         cleanup?: () => Promise<void>;
     };
 
+    /** Unrouted request passed directly to the configured client transport. */
+    export type RawRequest = {
+        method: string;
+        path: string;
+        query?: unknown;
+        headers?: Record<string, string>;
+        body?: unknown;
+        timeoutMs?: number;
+        signal?: AbortSignal;
+    };
+
+    export type RawResponse<TBody = unknown> = ClientResponse<OperationId, TBody>;
+
     export type ClientTransport = {
         request<TBody = unknown>(request: ClientRequest): Promise<ClientResponse<OperationId, TBody>>;
     };
 
     export type Client = {
         request<TBody = unknown, TOperation extends OperationId = OperationId>(request: ClientRequest<TOperation>): Promise<ClientResponse<TOperation, TBody>>;
+        api: {
+            request<TBody = unknown>(request: RawRequest): Promise<RawResponse<TBody>>;
+        };
     };
 }

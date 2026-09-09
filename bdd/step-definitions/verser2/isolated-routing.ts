@@ -1,12 +1,11 @@
 import { After, Given, Then, When } from "@cucumber/cucumber";
 import assert from "assert";
-import { existsSync, readFileSync } from "fs";
-import { execFileSync } from "child_process";
-import { join } from "path";
+import { readFileSync } from "fs";
 
 import { createVerserHost, VerserHost, VerserHostUpstreamHandle, VerserLocalGuestHandle } from "@signicode/verser2-host";
 import { createVerserBroker, VerserBroker, VerserBrokerResponse } from "@signicode/verser2-guest-node";
 
+import { ScenarioIsolation, Verser2TlsCredentials } from "../../lib/scenario-isolation";
 import { CustomWorld } from "../world";
 
 type IsolatedVerser2RouteState = {
@@ -23,27 +22,8 @@ type IsolatedVerser2State = {
     routes: Map<string, IsolatedVerser2RouteState>;
     response?: VerserBrokerResponse;
     responseBody?: string;
+    credentials?: Verser2TlsCredentials;
 };
-
-const certDir = join(__dirname, "../../../packages/verser/test/cert");
-
-function ensureLocalhostCertFixture() {
-    if (
-        existsSync(join(certDir, "localhost.crt")) &&
-        existsSync(join(certDir, "localhost.key")) &&
-        existsSync(join(certDir, "myCA.pem"))
-    ) {
-        return;
-    }
-
-    execFileSync(join(certDir, "gen-localhost-cert.sh"), { cwd: certDir, stdio: "ignore" });
-}
-
-ensureLocalhostCertFixture();
-
-const serverCert = readFileSync(join(certDir, "localhost.crt"), "utf8");
-const serverKey = readFileSync(join(certDir, "localhost.key"), "utf8");
-const ca = readFileSync(join(certDir, "myCA.pem"), "utf8");
 
 function state(world: CustomWorld): IsolatedVerser2State {
     if (!world.resources.isolatedVerser2) {
@@ -56,6 +36,19 @@ function state(world: CustomWorld): IsolatedVerser2State {
     }
 
     return world.resources.isolatedVerser2 as IsolatedVerser2State;
+}
+
+function tlsMaterial(world: CustomWorld, current: IsolatedVerser2State): { cert: string; key: string; ca: string } {
+    const isolation: ScenarioIsolation | undefined = world.scenarioIsolation;
+
+    assert(isolation, "ScenarioIsolation must be installed before creating Verser2 TLS credentials");
+    current.credentials ||= isolation.createVerser2TlsCredentials();
+
+    return {
+        cert: readFileSync(current.credentials.certFile, "utf8"),
+        key: readFileSync(current.credentials.keyFile, "utf8"),
+        ca: readFileSync(current.credentials.caFile, "utf8")
+    };
 }
 
 function routeToGuestId(routeDomain: string): string {
@@ -80,18 +73,19 @@ async function streamToString(stream: NodeJS.ReadableStream): Promise<string> {
     return Buffer.concat(chunks).toString("utf8");
 }
 
-async function startIsolatedHost(current: IsolatedVerser2State, hostName: string): Promise<void> {
+async function startIsolatedHost(world: CustomWorld, current: IsolatedVerser2State, hostName: string): Promise<void> {
     if (current.hosts.has(hostName)) {
         throw new Error(`isolated verser2 host ${hostName} is already started`);
     }
 
+    const tls = tlsMaterial(world, current);
     const host = createVerserHost({
         hostId: `bdd-${hostName}`,
         host: "127.0.0.1",
         port: 0,
         tls: {
-            cert: serverCert,
-            key: serverKey
+            cert: tls.cert,
+            key: tls.key
         }
     });
 
@@ -157,7 +151,7 @@ async function isolatedBrokerRequest(world: CustomWorld, hostName: string, reque
     const broker = createVerserBroker({
         hostUrl: `https://localhost:${host.address.port}`,
         brokerId: `bdd-isolated-broker-${hostName}`,
-        tls: { ca }
+        tls: { ca: tlsMaterial(world, current).ca }
     });
 
     current.broker = broker;
@@ -211,6 +205,7 @@ After(async function(this: CustomWorld) {
     current.response = undefined;
     current.responseBody = undefined;
     current.host = undefined;
+    current.credentials = undefined;
 
     delete this.resources.isolatedVerser2;
 
@@ -225,11 +220,11 @@ After(async function(this: CustomWorld) {
 });
 
 Given("an isolated verser2 host", async function(this: CustomWorld) {
-    await startIsolatedHost(state(this), "default");
+    await startIsolatedHost(this, state(this), "default");
 });
 
 Given("an isolated verser2 host {string}", async function(this: CustomWorld, hostName: string) {
-    await startIsolatedHost(state(this), hostName);
+    await startIsolatedHost(this, state(this), hostName);
 });
 
 Given("isolated verser2 host {string} is connected upstream to host {string}", async function(this: CustomWorld, downstreamHostName: string, upstreamHostName: string) {
@@ -240,7 +235,7 @@ Given("isolated verser2 host {string} is connected upstream to host {string}", a
     current.upstreams.push(await downstreamHost.connectUpstream({
         upstreamId: upstreamHostName,
         url: `https://localhost:${upstreamHost.address.port}`,
-        tls: { ca }
+        tls: { ca: tlsMaterial(this, current).ca }
     }));
 });
 

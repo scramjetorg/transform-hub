@@ -1,0 +1,8 @@
+{
+  "track_id": "coverage_tooling_replacement_20260809",
+  "type": "chore",
+  "status": "new",
+  "created_at": "2026-08-09T20:59:53Z",
+  "updated_at": "2026-08-09T20:59:53Z",
+  "description": "coverage tooling replacement, leave phase 5 gated on user decision. No over engineering, simplest solution please"
+}

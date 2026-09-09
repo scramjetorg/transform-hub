@@ -18,6 +18,8 @@ const { spawnSync } = require("node:child_process");
 
 const alignScript = path.resolve(__dirname, "..", "release-align.js");
 const boundary = require("../lib/release-boundary");
+const releaseAlign = require("../release-align");
+const FIXTURE_RELEASE_VERSION = "2.0.0";
 
 // ---------------------------------------------------------------------------
 // Fixture helpers
@@ -152,8 +154,9 @@ export const imageConfig = {
  * Run release-align with a given mode against a fixture root.
  * Returns { status, stdout, stderr }.
  */
-function runAlign(root, mode, env = {}) {
-	const result = spawnSync(process.execPath, [alignScript, mode], {
+function runAlign(root, mode, args, env = {}) {
+	const defaultArgs = mode === "apply-licenses" ? [] : [`--release-version=${FIXTURE_RELEASE_VERSION}`];
+	const result = spawnSync(process.execPath, [alignScript, mode, ...(args === undefined ? defaultArgs : args)], {
 		cwd: root,
 		env: { ...process.env, SCRAMJET_RELEASE_ROOT: root, ...env },
 		encoding: "utf8"
@@ -194,6 +197,177 @@ function setupLicenses(fix) {
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
+
+test("release-version is required for alignment commands and validates explicit stable SemVer", (t) => {
+	t.throws(() => releaseAlign.resolveReleaseVersion(), {
+		message: /required/
+	});
+	t.is(releaseAlign.resolveReleaseVersion("2.1.0"), "2.1.0");
+	t.deepEqual(releaseAlign.parseCliArguments(["check", "--release-version=2.1.0"]), {
+		mode: "check",
+		releaseVersion: "2.1.0"
+	});
+	t.throws(() => releaseAlign.resolveReleaseVersion("2.1"), {
+		message: /stable SemVer/
+	});
+	t.throws(() => releaseAlign.parseCliArguments(["check", "--release-version=2.1.0", "--release-version=2.1.1"]), {
+		message: /only once/
+	});
+	t.throws(() => releaseAlign.parseCliArguments(["dry-run"]), {
+		message: /requires --release-version/
+	});
+	t.deepEqual(releaseAlign.parseCliArguments(["apply-licenses"]), {
+		mode: "apply-licenses",
+		releaseVersion: undefined
+	});
+	t.throws(() => releaseAlign.parseCliArguments(["apply-licenses", "--release-version=2.1.0"]), {
+		message: /version-independent/
+	});
+});
+
+test("release-version override checks and dry-runs without writing", (t) => {
+	const fix = createFixture(t, {
+		version: "2.0.0",
+		managerVersion: "2.0.0",
+		included: ["@scramjet/sth", "@scramjet/host"],
+		depOverrides: {
+			"@scramjet/sth.deps": { "@scramjet/host": "^2.0.0" },
+		}
+	});
+	setupLicenses(fix);
+
+	const rootBefore = readFileSync(fix.rootPkg, "utf8");
+	const sthBefore = readFileSync(fix.packages.get("@scramjet/sth").manifestPath, "utf8");
+	const checkResult = runAlign(fix.root, "check", ["--release-version=2.1.0"]);
+	const dryRunResult = runAlign(fix.root, "dry-run", ["--release-version=2.1.0"]);
+	const invalidResult = runAlign(fix.root, "check", ["--release-version=2.1"]);
+	const missingResult = runAlign(fix.root, "check", []);
+
+	t.is(checkResult.status, 1, "check should report 2.1.0 alignment drift");
+	t.true(checkResult.stdout.includes("expected 2.1.0"));
+	t.is(dryRunResult.status, 0, "dry-run should succeed");
+	t.true(dryRunResult.stdout.includes("Target version: 2.1.0"));
+	t.is(invalidResult.status, 2, "invalid release versions should fail usage validation");
+	t.true(invalidResult.stderr.includes("stable SemVer"));
+	t.is(missingResult.status, 2, "check should require an explicit release version");
+	t.true(missingResult.stderr.includes("requires --release-version"));
+	t.is(readFileSync(fix.rootPkg, "utf8"), rootBefore, "check and dry-run leave root unchanged");
+	t.is(readFileSync(fix.packages.get("@scramjet/sth").manifestPath, "utf8"), sthBefore, "check and dry-run leave packages unchanged");
+});
+
+test("release-version override applies versions, internal ranges, and image tags", (t) => {
+	const fix = createFixture(t, {
+		version: "2.0.0",
+		managerVersion: "2.0.0",
+		included: ["@scramjet/sth", "@scramjet/host"],
+		depOverrides: {
+			"@scramjet/sth.deps": { "@scramjet/host": "^2.0.0" },
+		}
+	});
+
+	const result = runAlign(fix.root, "apply", ["--release-version=2.1.0"]);
+	const root = readManifest(fix.rootPkg);
+	const sth = readManifest(fix.packages.get("@scramjet/sth").manifestPath);
+	const host = readManifest(fix.packages.get("@scramjet/host").manifestPath);
+	const verser = readManifest(fix.packages.get("@scramjet/verser").manifestPath);
+
+	t.is(result.status, 0, "apply should succeed");
+	t.is(root.version, "2.1.0");
+	t.is(sth.version, "2.1.0");
+	t.is(host.version, "2.1.0");
+	t.is(sth.dependencies["@scramjet/host"], "^2.1.0");
+	t.true(readFileSync(fix.imageConfigPath, "utf8").includes(":2.1.0"));
+	t.is(verser.version, "1.1.0", "the fixed excluded boundary remains preserved");
+});
+
+test("release alignment updates BDD runtime dependencies and Python build metadata without changing excluded BDD identity", (t) => {
+	const targetVersion = "3.4.5";
+	const fix = createFixture(t, {
+		version: targetVersion,
+		managerVersion: targetVersion,
+		included: ["@scramjet/sth", "@scramjet/host"],
+		depOverrides: {
+			"@scramjet/sth.deps": { "@scramjet/host": `^${targetVersion}` },
+		}
+	});
+	setupLicenses(fix);
+
+	const bddDir = path.join(fix.root, "bdd");
+	mkdirSync(bddDir, { recursive: true });
+	const bddManifestPath = path.join(bddDir, "package.json");
+	writeFileSync(bddManifestPath, JSON.stringify({
+		name: "scramjet-bdd",
+		version: "2.0.0",
+		license: "MIT",
+		dependencies: {
+			"@scramjet/host": "^2.0.0",
+			"@scramjet/verser": "^1.1.0",
+			"external-package": "^9.9.9"
+		},
+		devDependencies: { "@scramjet/api-types": "2.0.0" },
+		peerDependencies: { "@scramjet/sequence-types": "~2.0.0" },
+		optionalDependencies: { "@scramjet/config": "^2.0.0" }
+	}, null, 2) + "\n");
+	writeFileSync(path.join(bddDir, "LICENSE"), boundary.MIT_LICENSE_TEXT);
+
+	const fixtureDir = path.join(fix.root, "bdd", "data", "sequences", "release-fixture");
+	mkdirSync(fixtureDir, { recursive: true });
+	const fixtureManifestPath = path.join(fixtureDir, "package.json");
+	writeFileSync(fixtureManifestPath, JSON.stringify({
+		name: "@scramjet/release-fixture",
+		version: "0.1.0",
+		dependencies: { "@scramjet/host": "^2.0.0" },
+		devDependencies: { "@scramjet/api-types": "2.0.0" },
+		peerDependencies: { "@scramjet/sequence-types": "~2.0.0" },
+		optionalDependencies: { "@scramjet/config": "^2.0.0" },
+	}, null, 2) + "\n");
+
+	const runnerPythonDir = path.join(fix.root, "packages", "runner-python");
+	mkdirSync(runnerPythonDir, { recursive: true });
+	const pyprojectPath = path.join(runnerPythonDir, "pyproject.toml");
+	writeFileSync(pyprojectPath, "[project]\nname = \"scramjet-runner-python\"\nversion = \"2.0.0\"\n");
+
+	const checkResult = runAlign(fix.root, "check", [`--release-version=${targetVersion}`]);
+	t.is(checkResult.status, 1, "check must detect runtime/test configuration drift");
+	t.true(checkResult.stdout.includes("BDD DEP DRIFT: dependencies.@scramjet/host: ^2.0.0 → ^3.4.5"));
+	t.true(checkResult.stdout.includes("BDD DEP DRIFT: devDependencies.@scramjet/api-types: 2.0.0 → 3.4.5"));
+	t.true(checkResult.stdout.includes("BDD DEP DRIFT: peerDependencies.@scramjet/sequence-types: ~2.0.0 → ~3.4.5"));
+	t.true(checkResult.stdout.includes("BDD DEP DRIFT: optionalDependencies.@scramjet/config: ^2.0.0 → ^3.4.5"));
+	t.true(checkResult.stdout.includes("FIXTURE DEP DRIFT: @scramjet/release-fixture → @scramjet/host (dependencies): ^2.0.0 → ^3.4.5"));
+	t.true(checkResult.stdout.includes("RUNTIME CONFIG DRIFT: packages/runner-python/pyproject.toml version: 2.0.0 → 3.4.5"));
+
+	const dryRunResult = runAlign(fix.root, "dry-run", [`--release-version=${targetVersion}`]);
+	t.is(dryRunResult.status, 0, "dry-run should report but not modify runtime/test configuration");
+	t.true(dryRunResult.stdout.includes("scramjet-bdd (dependency-only):"));
+	t.true(dryRunResult.stdout.includes("devDependencies.@scramjet/api-types: 2.0.0 → 3.4.5"));
+	t.true(dryRunResult.stdout.includes("FIXTURE @scramjet/release-fixture: (deps updated)"));
+	t.is(readManifest(bddManifestPath).version, "2.0.0", "the excluded BDD package version remains unchanged during dry-run");
+	t.is(readManifest(bddManifestPath).dependencies["@scramjet/host"], "^2.0.0", "dry-run must not update BDD dependencies");
+	t.is(readManifest(fixtureManifestPath).version, "0.1.0", "dry-run must not change fixture identity");
+	t.is(readManifest(fixtureManifestPath).dependencies["@scramjet/host"], "^2.0.0", "dry-run must not update fixture dependencies");
+	t.true(readFileSync(pyprojectPath, "utf8").includes('version = "2.0.0"'));
+
+	const applyResult = runAlign(fix.root, "apply", [`--release-version=${targetVersion}`]);
+	t.is(applyResult.status, 0, "apply should update release-sensitive configuration");
+	const bddManifest = readManifest(bddManifestPath);
+	t.is(bddManifest.version, "2.0.0", "the excluded BDD package version must be preserved");
+	t.is(bddManifest.dependencies["@scramjet/host"], "^3.4.5");
+	t.is(bddManifest.devDependencies["@scramjet/api-types"], "3.4.5");
+	t.is(bddManifest.peerDependencies["@scramjet/sequence-types"], "~3.4.5");
+	t.is(bddManifest.optionalDependencies["@scramjet/config"], "^3.4.5");
+	t.is(bddManifest.dependencies["@scramjet/verser"], "^1.1.0", "excluded dependencies must be preserved");
+	t.is(bddManifest.dependencies["external-package"], "^9.9.9", "external dependencies must be preserved");
+	const fixtureManifest = readManifest(fixtureManifestPath);
+	t.is(fixtureManifest.version, "0.1.0", "fixture identity must be preserved");
+	t.is(fixtureManifest.dependencies["@scramjet/host"], "^3.4.5");
+	t.is(fixtureManifest.devDependencies["@scramjet/api-types"], "3.4.5");
+	t.is(fixtureManifest.peerDependencies["@scramjet/sequence-types"], "~3.4.5");
+	t.is(fixtureManifest.optionalDependencies["@scramjet/config"], "^3.4.5");
+	t.true(readFileSync(pyprojectPath, "utf8").includes('version = "3.4.5"'));
+
+	const alignedResult = runAlign(fix.root, "check", [`--release-version=${targetVersion}`]);
+	t.is(alignedResult.status, 0, "aligned runtime/test configuration should pass for the selected version");
+});
 
 test("check passes on already-aligned workspace", (t) => {
 	const fix = createFixture(t, {

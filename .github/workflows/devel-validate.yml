@@ -32,9 +32,7 @@ jobs:
       # Catch malformed package-lock.json before setup-workspace's npm ci.
       # Rebuilds the lock with the project-pinned npm via npx and fails on any diff.
       - name: Validate package-lock.json reproducibility
-        run: |
-          npm run build:lockfile
-          git diff --exit-code -- package-lock.json
+        run: npm run check:lockfile
 
       - uses: ./.github/actions/setup-workspace
         with:
@@ -52,7 +50,7 @@ jobs:
         run: npm run typecheck
 
       - name: Dependency and release alignment
-        run: npm run release:align:check
+        run: npm run release:align:check -- --release-version="$(node -p "require('./package.json').version")"
 
       - name: Runtime invariants
         run: npm run check:runtime-invariants

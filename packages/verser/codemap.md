@@ -23,5 +23,5 @@ Legacy reverse-server connectivity package for Scramjet Transform Hub. It expose
 
 - Depends on `@scramjet/bpmux`, `@scramjet/utility`, `@scramjet/obj-logger`, and `@scramjet/types`.
 - Historically consumed by Manager, MultiManager, host CPM connector, and runner/HostClient paths; the active track is replacing these with `@signicode/verser2-*` Host/Broker/Guest APIs.
-- Package test coverage lives in `test/http-connection.spec.ts` with local certificate fixtures under `test/cert/`.
+- Package test coverage is limited to deterministic public-export contracts in `test/exports.spec.ts`; legacy real HTTP/TLS forwarding coverage was removed with the behavioral-test migration.
 - Public exports are centralized in `src/index.ts`, re-exporting `Verser`, `VerserClient`, `VerserConnection`, and package types.

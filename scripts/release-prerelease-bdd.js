@@ -11,6 +11,7 @@ const STH_SOURCE_NAME = "@scramjet/sth";
 const STH_BIN_NAME = "scramjet-transform-hub";
 const CLI_SOURCE_NAME = "@scramjet/cli";
 const CLI_BIN_NAME = "si";
+const DIST_OVERLAY_FORMAT = "transform-hub-release-prerelease-bdd-dist-overlay-v1";
 
 const DIGEST = /^sha256:[a-f0-9]{64}$/i;
 const IMAGE_REFERENCE = /^ghcr\.io\/scramjetorg\/[a-z0-9._/-]+@sha256:([a-f0-9]{64})$/i;
@@ -235,6 +236,59 @@ function activateVerifiedPackages({ installDir, record, workspaceRoot }) {
     }
     activateSthBin({ installDir, record, workspaceRoot });
     activateCliBin({ installDir, record, workspaceRoot });
+}
+
+function materializeDistOverlay({ installDir, record, workspaceRoot }) {
+    const root = resolve(workspaceRoot);
+    const installModules = realpathSync(resolve(installDir, "node_modules"));
+    const distRoot = resolve(root, "dist");
+    if (existsSync(distRoot)) throw new Error("Refusing to replace an existing root dist while creating the prerelease BDD overlay.");
+    if (record?.format !== "transform-hub-release-prerelease-bdd-v2" || !Array.isArray(record.packages)) throw new Error("Release-prerelease BDD dist overlay requires a verified consumption record.");
+
+    const entries = new Map();
+    for (const entry of record.packages) {
+        if (!entry || typeof entry.sourceName !== "string" || !entry.sourceName.startsWith("@scramjet/") || entry.name !== prereleasePackageName(entry.sourceName) || entry.registryName !== entry.name || typeof entry.version !== "string" || !entry.version.includes("-pr.") || entries.has(entry.sourceName)) {
+            throw new Error("Release-prerelease BDD context has an invalid verified package mapping.");
+        }
+        entries.set(entry.sourceName, entry);
+    }
+
+    const mappings = [];
+    for (const entry of entries.values()) {
+        const packageDirectory = entry.sourceName.slice("@scramjet/".length);
+        if (!/^[A-Za-z0-9._-]+$/.test(packageDirectory) || entry.name !== `@scramjetorg/${packageDirectory}`) throw new Error(`Refusing an unsafe prerelease dist overlay package path for ${entry.sourceName}.`);
+        const source = realpathSync(resolve(installModules, entry.name));
+        if (!isInside(installModules, source)) throw new Error(`Refusing a prerelease dist overlay source outside the verified install: ${entry.name}.`);
+        assertInstalledPackage(source, entry);
+        mappings.push({ packageDirectory, source });
+    }
+
+    try {
+        mkdirSync(distRoot, { recursive: true });
+        for (const { packageDirectory, source } of mappings) {
+            const destination = resolve(distRoot, packageDirectory);
+            if (!isInside(distRoot, destination)) throw new Error(`Refusing a prerelease dist overlay destination outside root dist: ${packageDirectory}.`);
+            symlinkSync(relative(dirname(destination), source), destination, "dir");
+            const resolvedDestination = realpathSync(destination);
+            if (resolvedDestination !== source || !isInside(installModules, resolvedDestination)) throw new Error(`Prerelease dist overlay does not resolve into the verified install: ${packageDirectory}.`);
+        }
+        writeJson(join(distRoot, ".release-prerelease-bdd-overlay.json"), { format: DIST_OVERLAY_FORMAT, workspaceRoot: root, installModules, packages: mappings.map(mapping => mapping.packageDirectory) });
+        return { distRoot, packages: mappings.map(mapping => mapping.packageDirectory) };
+    } catch (error) {
+        rmSync(distRoot, { force: true, recursive: true });
+        throw error;
+    }
+}
+
+function cleanupDistOverlay({ workspaceRoot }) {
+    const root = resolve(workspaceRoot);
+    const distRoot = resolve(root, "dist");
+    const markerPath = join(distRoot, ".release-prerelease-bdd-overlay.json");
+    if (!existsSync(markerPath)) return false;
+    const marker = parseJson(readFileSync(markerPath, "utf8"), "BDD dist overlay marker");
+    if (marker.format !== DIST_OVERLAY_FORMAT || marker.workspaceRoot !== root) throw new Error("Refusing to remove an unrecognized root dist overlay.");
+    rmSync(distRoot, { force: true, recursive: true });
+    return true;
 }
 
 /**
@@ -473,12 +527,21 @@ function main() {
             });
             return;
         }
+        if (command === "overlay") {
+            const result = materializeDistOverlay({ installDir: readOption(args, "--install-dir"), record: parseJson(readFileSync(readOption(args, "--record"), "utf8"), "Verified consumption record"), workspaceRoot: readOption(args, "--workspace-root") });
+            console.log(JSON.stringify(result));
+            return;
+        }
+        if (command === "cleanup-overlay") {
+            cleanupDistOverlay({ workspaceRoot: readOption(args, "--workspace-root") });
+            return;
+        }
         if (command === "validate-cli") {
             validateSthCli({ workspaceRoot: readOption(args, "--workspace-root") });
             console.log(JSON.stringify({ mode: "validated" }));
             return;
         }
-        throw new Error("Usage: release-prerelease-bdd.js verify|prepare|verify-lock|activate|validate-cli ...");
+        throw new Error("Usage: release-prerelease-bdd.js verify|prepare|verify-lock|activate|overlay|cleanup-overlay|validate-cli ...");
     } catch (error) {
         console.error(`[release-prerelease-bdd] ${error.message}`);
         process.exitCode = 1;
@@ -498,8 +561,10 @@ module.exports = {
     verifyInstallLock,
     writeInstallManifest,
     activateVerifiedPackages,
+    cleanupDistOverlay,
     activateCliBin,
     activateSthBin,
+    materializeDistOverlay,
     releasePrereleaseBddContext,
     validateSthCli
 };

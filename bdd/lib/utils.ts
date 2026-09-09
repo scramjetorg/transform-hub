@@ -4,6 +4,8 @@ import { promisify } from "util";
 import { exec, spawn } from "child_process";
 import { PassThrough, Readable } from "stream";
 import { getLogger } from "@scramjet/logger";
+import { resolveWorkspaceCliCommand } from "./published-artifacts";
+import { publishedSourceEntry } from "./published-modules";
 const { getBddConfigPath } = require("./bdd-config.js");
 const { selectedSiCommand } = require("./release-prerelease-context.js");
 
@@ -43,14 +45,14 @@ export function getSiCommand(options: { useBddConfig?: boolean } = {}) {
     // Use the built CLI by default so each BDD subprocess avoids the
     // TypeScript launcher and its per-process transpilation cost. Keep the
     // explicit source-mode switch for development and source-level coverage.
-    let si = verifiedCommand || ["node", "../dist/cli/bin"];
+    let si = verifiedCommand || resolveWorkspaceCliCommand();
 
     if (process.env.SCRAMJET_SPAWN_JS) {
-        si = ["node", "../dist/cli/bin"];
+        si = ["node", publishedSourceEntry("@scramjet/cli", "bin", "index.ts")];
     }
 
     if (process.env.SCRAMJET_SPAWN_TS) {
-        si = ["npx", "tsx", "../packages/cli/src/bin/index.ts"];
+        si = ["npx", "tsx", publishedSourceEntry("@scramjet/cli", "bin", "index.ts")];
     }
 
     if (options.useBddConfig === false) {

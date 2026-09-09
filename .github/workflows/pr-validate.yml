@@ -2,7 +2,7 @@ name: Pull request validation
 
 on:
   pull_request:
-    branches: [main, devel, "release/**", "feat/manager-oss"]
+    branches: [main, devel, "release/**"]
   merge_group:
     types: [checks_requested]
 
@@ -13,9 +13,10 @@ concurrency:
   # Ordinary PR and merge-queue runs cancel their stale predecessors for fast
   # iteration. An eligible same-repository devel->main release run publishes
   # prereleases and must never be cancelled partway through its package set, so
-  # it uses a distinct concurrency group with cancellation disabled; a newer
-  # release-PR run waits for the active publication to finish instead.
-  group: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main' && github.event.pull_request.head.ref == 'devel' && github.event.pull_request.head.repo.full_name == github.repository && format('release-pr-{0}', github.event.pull_request.number) || (github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number)) || format('merge-group-{0}', github.event.merge_group.head_sha) }}
+  # it uses a distinct concurrency group with cancellation disabled. Release-PR
+  # runs are SHA-specific so a new release candidate can validate
+  # while an older publisher drains its non-cancellable publication job.
+  group: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main' && github.event.pull_request.head.ref == 'devel' && github.event.pull_request.head.repo.full_name == github.repository && format('release-pr-{0}-{1}', github.event.pull_request.number, github.event.pull_request.head.sha) || (github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number)) || format('merge-group-{0}', github.event.merge_group.head_sha) }}
   cancel-in-progress: ${{ !(github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main' && github.event.pull_request.head.ref == 'devel' && github.event.pull_request.head.repo.full_name == github.repository) }}
 
 jobs:
@@ -29,6 +30,9 @@ jobs:
       contents: read
     runs-on: ubuntu-24.04
     timeout-minutes: 45
+    concurrency:
+      group: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main' && github.event.pull_request.head.ref == 'devel' && github.event.pull_request.head.repo.full_name == github.repository && format('release-pr-{0}-package-validation', github.event.pull_request.number) || (github.event_name == 'pull_request' && format('pr-{0}-package-validation', github.event.pull_request.number)) || format('merge-group-{0}-package-validation', github.event.merge_group.head_sha) }}
+      cancel-in-progress: true
     steps:
       # The protected organization-required security workflow remains mandatory.
       # This workflow never grants fork code credentials or promotion capability.
@@ -40,9 +44,7 @@ jobs:
       # Catch malformed package-lock.json before setup-workspace's npm ci.
       # Rebuilds the lock with the project-pinned npm via npx and fails on any diff.
       - name: Validate package-lock.json reproducibility
-        run: |
-          npm run build:lockfile
-          git diff --exit-code -- package-lock.json
+        run: npm run check:lockfile
 
       - uses: ./.github/actions/setup-workspace
         with:
@@ -71,7 +73,7 @@ jobs:
         run: npm run typecheck
 
       - name: Dependency and release alignment
-        run: npm run release:align:check
+        run: npm run release:align:check -- --release-version="$(node -p "require('./package.json').version")"
 
       - name: Runtime invariants
         run: npm run check:runtime-invariants
@@ -90,13 +92,18 @@ jobs:
       - name: Build packages
         run: npm run build:packages
 
-  bdd-core:
-    name: CI / core BDD
+  bdd-core-node:
+    # Keep the two-resource @ci-runner-node scenarios isolated: their established
+    # Docker requirement is 2 GiB and they are the longest core BDD path.
+    name: CI / core Node BDD
     needs: [package-validation]
     permissions:
       contents: read
     runs-on: ubuntu-24.04
     timeout-minutes: 60
+    concurrency:
+      group: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main' && github.event.pull_request.head.ref == 'devel' && github.event.pull_request.head.repo.full_name == github.repository && format('release-pr-{0}-bdd-core-node', github.event.pull_request.number) || (github.event_name == 'pull_request' && format('pr-{0}-bdd-core-node', github.event.pull_request.number)) || format('merge-group-{0}-bdd-core-node', github.event.merge_group.head_sha) }}
+      cancel-in-progress: true
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -115,7 +122,40 @@ jobs:
         run: npm run build:packages
 
       - name: Run Docker-backed Node BDD validation
+        env:
+          # @ci-runner-node scenarios start both suite and process-adapter
+          # runner Hosts; their established Docker requirement is 2 GiB.
+          BDD_DOCKER_MEMORY: 2g
+          BDD_INCLUDE_LONG_RUNNING: "1"
         run: npm run test:bdd-ci-node
+
+  bdd-core-services:
+    # Python, API, and Verser2 cover distinct services and can run independently
+    # from the Docker-backed Node lane above.
+    name: CI / core service BDD
+    needs: [package-validation]
+    permissions:
+      contents: read
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    concurrency:
+      group: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main' && github.event.pull_request.head.ref == 'devel' && github.event.pull_request.head.repo.full_name == github.repository && format('release-pr-{0}-bdd-core-services', github.event.pull_request.number) || (github.event_name == 'pull_request' && format('pr-{0}-bdd-core-services', github.event.pull_request.number)) || format('merge-group-{0}-bdd-core-services', github.event.merge_group.head_sha) }}
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha || github.sha }}
+
+      - uses: ./.github/actions/setup-workspace
+        with:
+          # PR outputs remain disposable: restore-only cache, no build artifact
+          # or node_modules handoff crosses jobs.
+          cache-mode: restore-only
+          checkpoint-branch: ${{ github.event.pull_request.base.ref || github.event.merge_group.base_ref || '' }}
+
+      - name: Build disposable BDD inputs
+        run: npm run build:packages
 
       - name: Run Docker-backed Python BDD validation
         run: npm run test:bdd-ci-python
@@ -123,16 +163,20 @@ jobs:
       - name: Run Docker-backed API BDD validation
         run: npm run test:bdd-ci-api-node
 
-  bdd-extended:
-    # Durable named coverage replacing the removed Node 18 reusable workflows:
-    # hub, API-topic, process-adapter, and unified JS/Python paths run
-    # sequentially with the exact existing command/tag variants.
-    name: CI / extended BDD
+      - name: Run isolated Verser2 BDD validation
+        run: npm run test:bdd-ci-verser2
+
+  bdd-extended-hub-topic:
+    # Hub and API-topic are the lightweight legacy-equivalent extended paths.
+    name: CI / extended hub and topic BDD
     needs: [package-validation]
     permissions:
       contents: read
     runs-on: ubuntu-24.04
     timeout-minutes: 60
+    concurrency:
+      group: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main' && github.event.pull_request.head.ref == 'devel' && github.event.pull_request.head.repo.full_name == github.repository && format('release-pr-{0}-bdd-extended-hub-topic', github.event.pull_request.number) || (github.event_name == 'pull_request' && format('pr-{0}-bdd-extended-hub-topic', github.event.pull_request.number)) || format('merge-group-{0}-bdd-extended-hub-topic', github.event.merge_group.head_sha) }}
+      cancel-in-progress: true
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -150,24 +194,95 @@ jobs:
       - name: Build disposable BDD inputs
         run: npm run build:packages
 
-      - name: Run legacy-equivalent focused BDD coverage
+      - name: Run hub BDD validation
         run: |
           npm run test:bdd-ci-hub
-          npm run test:bdd-ci-api-topic
-          RUNTIME_ADAPTER=process npm run test:bdd-ci-node
+          BDD_DOCKER_MEMORY=2g npm run test:bdd-ci-api-topic
+
+  bdd-extended-runtime:
+    # Process-adapter and unified runtime coverage needs the same 2 GiB runner
+    # allowance as core Node BDD, so it runs in its own parallel execution unit.
+    name: CI / extended runtime BDD
+    needs: [package-validation]
+    permissions:
+      contents: read
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    concurrency:
+      group: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main' && github.event.pull_request.head.ref == 'devel' && github.event.pull_request.head.repo.full_name == github.repository && format('release-pr-{0}-bdd-extended-runtime', github.event.pull_request.number) || (github.event_name == 'pull_request' && format('pr-{0}-bdd-extended-runtime', github.event.pull_request.number)) || format('merge-group-{0}-bdd-extended-runtime', github.event.merge_group.head_sha) }}
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha || github.sha }}
+
+      - uses: ./.github/actions/setup-workspace
+        with:
+          # PR outputs remain disposable: restore-only cache, no build artifact
+          # or node_modules handoff crosses jobs.
+          cache-mode: restore-only
+          checkpoint-branch: ${{ github.event.pull_request.base.ref || github.event.merge_group.base_ref || '' }}
+
+      - name: Build disposable BDD inputs
+        run: npm run build:packages
+
+      - name: Run process-adapter and unified BDD validation
+        run: |
+          BDD_DOCKER_MEMORY=2g BDD_INCLUDE_LONG_RUNNING=1 RUNTIME_ADAPTER=process npm run test:bdd-ci-node
           npm run test:unified-py
           npm run test:unified-js
 
+  release-candidate-admission:
+    name: Release PR / current SHA admission
+    if: ${{ github.event.pull_request.base.ref == 'main' && github.event.pull_request.head.ref == 'devel' && github.event.pull_request.head.repo.full_name == github.repository }}
+    needs: [bdd-core-node, bdd-core-services, bdd-extended-hub-topic, bdd-extended-runtime]
+    permissions:
+      contents: read
+      pull-requests: read
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    outputs:
+      admitted: ${{ steps.admission.outputs.admitted }}
+    steps:
+      - id: admission
+        name: Release PR / verify current head and devel ref
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          TRIGGER_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          echo "admitted=false" >> "$GITHUB_OUTPUT"
+          pr_json="$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER")"
+          if ! jq -e --arg repository "$GITHUB_REPOSITORY" --arg trigger_sha "$TRIGGER_SHA" '
+            .state == "open" and
+            .base.ref == "main" and
+            .head.ref == "devel" and
+            .head.repo.full_name == $repository and
+            .head.sha == $trigger_sha
+          ' <<< "$pr_json" >/dev/null; then
+            echo "Release PR is no longer the current open devel->main candidate; publication is skipped."
+            exit 0
+          fi
+          devel_sha="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/devel" --jq '.object.sha')"
+          if [[ "$devel_sha" != "$TRIGGER_SHA" ]]; then
+            echo "devel moved from $TRIGGER_SHA to $devel_sha; publication is skipped."
+            exit 0
+          fi
+          echo "admitted=true" >> "$GITHUB_OUTPUT"
+
   prerelease-publication:
     name: Release PR / prerelease publication
-    if: ${{ github.event.pull_request.base.ref == 'main' && github.event.pull_request.head.ref == 'devel' && github.event.pull_request.head.repo.full_name == github.repository }}
-    needs: [bdd-core, bdd-extended]
+    if: ${{ github.event.pull_request.base.ref == 'main' && github.event.pull_request.head.ref == 'devel' && github.event.pull_request.head.repo.full_name == github.repository && needs.release-candidate-admission.outputs.admitted == 'true' }}
+    needs: [bdd-core-node, bdd-core-services, bdd-extended-hub-topic, bdd-extended-runtime, release-candidate-admission]
     outputs:
       prerelease-manifest: ${{ steps.prerelease_manifest.outputs.manifest }}
       prerelease-manifest-sha256: ${{ steps.prerelease_manifest.outputs.checksum }}
       prereleases-published: ${{ steps.prerelease_publish.outputs.published }}
     permissions:
       contents: read
+      pull-requests: read
       packages: write
     concurrency:
       # Serialize live GitHub Packages publication across release PRs: an
@@ -217,10 +332,40 @@ jobs:
         env:
           # Automatic GITHUB_TOKEN-derived npm auth for GitHub Packages, scoped to
           # this job's packages: write permission (no PAT/npm token secret).
+          GH_TOKEN: ${{ github.token }}
           NODE_AUTH_TOKEN: ${{ github.token }}
           PRERELEASE_PUBLISH_ENABLED: ${{ vars.SCRAMJET_RELEASE_PRERELEASE_PUBLISH }}
           SCRAMJET_GH_PACKAGES_PRERELEASE_PUBLISHER: ${{ vars.SCRAMJET_GH_PACKAGES_PRERELEASE_PUBLISHER }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          TRIGGER_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
+          set -euo pipefail
+          echo "published=false" >> "$GITHUB_OUTPUT"
+          # The admission job can become stale while this job builds packages;
+          # check the candidate again in the same shell immediately before publish.
+          pr_json="$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER")"
+          if jq -e --arg repository "$GITHUB_REPOSITORY" --arg trigger_sha "$TRIGGER_SHA" '
+            .state == "open" and
+            .base.ref == "main" and
+            .head.ref == "devel" and
+            .head.repo.full_name == $repository and
+            .head.sha == $trigger_sha
+          ' <<< "$pr_json" >/dev/null; then
+            :
+          else
+            jq_status=$?
+            if (( jq_status != 1 )); then
+              echo "Unable to validate the current release PR response." >&2
+              exit "$jq_status"
+            fi
+            echo "Release PR is stale; prereleases will not be published."
+            exit 0
+          fi
+          devel_sha="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/devel" --jq '.object.sha')"
+          if [[ "$devel_sha" != "$TRIGGER_SHA" ]]; then
+            echo "devel moved from $TRIGGER_SHA to $devel_sha; prereleases will not be published."
+            exit 0
+          fi
           test "$PRERELEASE_PUBLISH_ENABLED" = "true"
           test "$SCRAMJET_GH_PACKAGES_PRERELEASE_PUBLISHER" = "github-packages"
           test -n "$NODE_AUTH_TOKEN"
@@ -237,16 +382,20 @@ jobs:
 
   prerelease-bdd:
     name: Release PR / prerelease BDD
-    if: ${{ github.event.pull_request.base.ref == 'main' && github.event.pull_request.head.ref == 'devel' && github.event.pull_request.head.repo.full_name == github.repository }}
-    needs: [prerelease-publication]
+    if: ${{ github.event.pull_request.base.ref == 'main' && github.event.pull_request.head.ref == 'devel' && github.event.pull_request.head.repo.full_name == github.repository && needs.release-candidate-admission.outputs.admitted == 'true' }}
+    needs: [prerelease-publication, release-candidate-admission]
     # BDD stays outside the github-packages-prerelease environment: it only
     # consumes verified prereleases with read-only automatic-token auth.
     permissions:
       attestations: read
       contents: read
+      pull-requests: read
       packages: read
     runs-on: ubuntu-24.04
     timeout-minutes: 45
+    concurrency:
+      group: release-pr-${{ github.event.pull_request.number }}-prerelease-bdd
+      cancel-in-progress: true
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -277,15 +426,53 @@ jobs:
           PUBLISHER_MANIFEST: ${{ needs.prerelease-publication.outputs.prerelease-manifest }}
           BDD_REGISTRY_ENABLED: ${{ vars.SCRAMJET_RELEASE_PRERELEASE_BDD == 'true' }}
         run: |
-          test -n "$PUBLISHER_MANIFEST"
+          echo "live=false" >> "$GITHUB_OUTPUT"
+          if [[ "$PUBLISHED" != "true" || -z "$PUBLISHER_MANIFEST" ]]; then
+            echo "No prereleases were published for this candidate; prerelease BDD is skipped."
+            exit 0
+          fi
           printf '%s' "$PUBLISHER_MANIFEST" | base64 --decode > "$RUNNER_TEMP/release-prerelease-manifest.json"
           node scripts/release-prerelease-bdd.js verify --manifest "$RUNNER_TEMP/release-prerelease-manifest.json" --expected-checksum "$EXPECTED_CHECKSUM"
-          test "$PUBLISHED" = "true"
           test "$BDD_REGISTRY_ENABLED" = "true"
           echo "live=true" >> "$GITHUB_OUTPUT"
 
-      - name: Release PR / install verified prereleases and run API BDD
+      - id: bdd_admission
+        name: Release PR / verify current SHA before BDD
         if: ${{ steps.trusted_manifest.outputs.live == 'true' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          TRIGGER_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          echo "current=false" >> "$GITHUB_OUTPUT"
+          pr_json="$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER")"
+          if jq -e --arg repository "$GITHUB_REPOSITORY" --arg trigger_sha "$TRIGGER_SHA" '
+            .state == "open" and
+            .base.ref == "main" and
+            .head.ref == "devel" and
+            .head.repo.full_name == $repository and
+            .head.sha == $trigger_sha
+          ' <<< "$pr_json" >/dev/null; then
+            :
+          else
+            jq_status=$?
+            if (( jq_status != 1 )); then
+              echo "Unable to validate the current release PR response." >&2
+              exit "$jq_status"
+            fi
+            echo "Release PR is stale; prerelease BDD is skipped."
+            exit 0
+          fi
+          devel_sha="$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/devel" --jq '.object.sha')"
+          if [[ "$devel_sha" != "$TRIGGER_SHA" ]]; then
+            echo "devel moved from $TRIGGER_SHA to $devel_sha; prerelease BDD is skipped."
+            exit 0
+          fi
+          echo "current=true" >> "$GITHUB_OUTPUT"
+
+      - name: Release PR / install verified prereleases and run API BDD
+        if: ${{ steps.trusted_manifest.outputs.live == 'true' && steps.bdd_admission.outputs.current == 'true' }}
         env:
           BDD_IMAGE_REPOSITORY: ghcr.io/scramjetorg/transform-hub/bdd-node
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}

@@ -22,7 +22,7 @@ import { getValidStorageAdapters, Host } from "@scramjet/host";
 import { FileBuilder, processCommanderRunnerEnvs } from "@scramjet/utility";
 import { constants } from "os";
 import { augmentOptions, registerRuntimeAdapterOption } from "@scramjet/adapters";
-import { runnerLogConfig, runnerLogForwardingOption } from "../log-options";
+import { logColorsConfig, logColorsOption, runnerLogConfig, runnerLogForwardingOption } from "../log-options";
 
 const stringToIntSanitizer = (str: string) => {
     const parsedValue = parseInt(str, 10);
@@ -40,7 +40,7 @@ const commonOptions: ConfigOptionDescriptor[] = [
     { name: "config", flag: "config", short: "c", type: "string", description: "Specifies path to config" },
     { name: "logLevel", flag: "log-level", short: "L", type: "string", description: "Specify log level" },
     runnerLogForwardingOption,
-    { name: "colors", flag: "colors", type: "boolean", description: "Enable colors in output", defaultValue: true },
+    logColorsOption,
     { name: "port", flag: "port", short: "P", type: "number", description: "API port" },
     { name: "hostname", flag: "hostname", short: "H", type: "string", description: "API IP" },
     { name: "identifyExisting", flag: "identify-existing", short: "E", type: "boolean", description: "Index existing volumes as sequences" },
@@ -227,7 +227,7 @@ const options = parseCliOptions({ argv: process.argv, options: finalRegistry.get
         exitWithLastInstance: options.exitWithLastInstance,
         safeOperationLimit: options.safeOperationLimit,
         logLevel: options.logLevel,
-        logColors: options.colors,
+        ...(logColorsConfig(options.colors) || {}),
         ...(runnerLogConfig(options.logForwardRunner) || {}),
         kubernetes: {
             quotaName: options.k8sQuotaName,

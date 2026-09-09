@@ -365,18 +365,11 @@ export const SendEventResponse = z.object({
     delivered: z.boolean()
 });
 
-export const RpcRequest = z.object({
-    method: z.string(),
-    path: z.string(),
-    headers: z.record(z.string(), z.string()).optional(),
-    body: z.unknown().optional()
-});
+/** Instance RPC forwards the application request body without a synthetic envelope. */
+export const RpcRequest = z.unknown();
 
-export const RpcResponse = z.object({
-    status: z.number().int(),
-    headers: z.record(z.string(), z.string()),
-    body: z.unknown().optional()
-});
+/** Instance RPC forwards the application response body without a synthetic envelope. */
+export const RpcResponse = z.unknown();
 
 export const Root = z.object({
     id: z.string(),

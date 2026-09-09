@@ -5,7 +5,7 @@ on:
   merge_group:
     types: [checks_requested]
   push:
-    branches: [main, devel, feat/manager-oss]
+    branches: [main, devel]
   schedule:
     - cron: "0 10 * * 1"
 

@@ -1,0 +1,8 @@
+{
+  "track_id": "behavioural_tests_migrations_cleanup_20260812",
+  "type": "chore",
+  "status": "new",
+  "created_at": "2026-08-12T13:16:00Z",
+  "updated_at": "2026-08-12T13:16:00Z",
+  "description": "behavioural tests migrations and cleanup - this track should continue in the same current branch, it should migrate all cli endpoints and integration like tests that run against actual scenarios, require code execution against full artifacts. Those tests should be reproduced in the cucumber stack and be removed from ava."
+}

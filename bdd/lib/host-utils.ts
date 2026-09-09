@@ -5,6 +5,8 @@ import { once } from "events";
 import { SIGKILL, SIGTERM } from "constants";
 import { StringDecoder } from "string_decoder";
 import { memoryRegistry } from "../lib/memory-registry";
+import { resolvePublishedBin } from "./published-artifacts";
+import { publishedSourceEntry } from "./published-modules";
 const { getOwnership } = require("./ownership.js");
 const { describeSthBinResolution, resolveSthBin } = require("../../scripts/lib/sth-bin.js");
 
@@ -17,9 +19,12 @@ const { describeSthBinResolution, resolveSthBin } = require("../../scripts/lib/s
  * `node`.  SCRAMJET_SPAWN_TS keeps the explicit source-launcher dev toggle.
  */
 function resolveHostExecutableCommand(): string[] {
-    if (process.env.SCRAMJET_SPAWN_TS) {
-        return ["/usr/bin/env", "npx", "tsx", "../packages/sth/src/bin/hub.ts"];
+    if (process.env.SCRAMJET_SPAWN_TS && process.env.SCRAMJET_RELEASE_PRERELEASE_BDD_RECORD) {
+        // Resolve first so a verified prerelease run rejects the source override
+        // before a child process can be spawned.
+        resolvePublishedBin("@scramjet/sth", "scramjet-transform-hub");
     }
+    if (process.env.SCRAMJET_SPAWN_TS) return ["/usr/bin/env", "npx", "tsx", publishedSourceEntry("@scramjet/sth", "bin", "hub.ts")];
 
     const resolved = resolveSthBin();
 

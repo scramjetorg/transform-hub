@@ -880,6 +880,7 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
         const v2Router = this.v2Router;
 
         this.api.attach(router, this.communicationHandler!);
+        this.apiV2.attachRpcMiddleware(v2Router);
         registerHttpRoutes(v2Router, this.apiV2.createRouter());
     }
 

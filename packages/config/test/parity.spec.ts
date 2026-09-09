@@ -43,10 +43,10 @@ test("development returns false when both PRODUCTION and DEVELOPMENT are set", t
 // ---------------------------------------------------------------------------
 
 test("imageConfig has expected image tags", t => {
-    t.is(imageConfig.prerunner, "scramjetorg/pre-runner:2.0.0");
-    t.is(imageConfig.runner.node, "scramjetorg/runner:2.0.0");
-    t.is(imageConfig.runner.python3, "scramjetorg/runner-py:2.0.0");
-    t.is(imageConfig.runner.bun, "scramjetorg/runner-bun:2.0.0");
+    t.is(imageConfig.prerunner, "scramjetorg/pre-runner:2.1.0");
+    t.is(imageConfig.runner.node, "scramjetorg/runner:2.1.0");
+    t.is(imageConfig.runner.python3, "scramjetorg/runner-py:2.1.0");
+    t.is(imageConfig.runner.bun, "scramjetorg/runner-bun:2.1.0");
 });
 
 // ---------------------------------------------------------------------------
@@ -79,6 +79,7 @@ test("defaultConfig does NOT populate docker.runner.image from imageConfig", t =
 
 test("defaultConfig has base STH fields", t => {
     t.is(defaultConfig.logLevel, "TRACE");
+    t.false(defaultConfig.logColors);
     t.is(defaultConfig.runtimeAdapter, "detect");
     t.true(defaultConfig.verser2.enabled);
     t.is(defaultConfig.verser2.hostUrl, "https://127.0.0.1:2443");
@@ -170,7 +171,7 @@ test("ConfigService.update deep-merges configuration", t => {
     t.is(svc.getConfig().logLevel, "DEBUG");
     t.is(svc.getConfig().host.port, 9000);
     // unchanged field preserved
-    t.is(svc.getConfig().logColors, true);
+    t.false(svc.getConfig().logColors);
 });
 
 test("ConfigService.getDockerConfig returns docker section", t => {

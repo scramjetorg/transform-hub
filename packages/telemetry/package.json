@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/telemetry",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "This package is part of Scramjet Transform Hub. The package provides modules for gathering analytics data.",
   "author": "Scramjet <open-source@scramjet.org>",
   "homepage": "https://github.com/scramjetorg/transform-hub#readme",
@@ -45,15 +45,15 @@
     "url": "https://github.com/scramjetorg/transform-hub/issues"
   },
   "dependencies": {
-    "@scramjet/api-types": "^2.0.0",
-    "@scramjet/obj-logger": "^2.0.0",
-    "@scramjet/utility": "^2.0.0",
+    "@scramjet/api-types": "^2.1.0",
+    "@scramjet/obj-logger": "^2.1.0",
+    "@scramjet/utility": "^2.1.0",
     "winston": "^3.8.2",
     "winston-loki": "^6.1.5"
   },
   "devDependencies": {
     "@ava/typescript": "^7.0.0",
-    "@scramjet/types": "^2.0.0",
+    "@scramjet/types": "^2.1.0",
     "ava": "^8.0.0"
   }
 }
