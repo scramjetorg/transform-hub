@@ -5,7 +5,7 @@ const { mkdirSync, mkdtempSync, realpathSync, rmSync, symlinkSync, writeFileSync
 const { tmpdir } = require("node:os");
 const { join } = require("node:path");
 require("ts-node").register({ project: join(__dirname, "../../bdd/tsconfig.json") });
-const { resolveBddBin, resolvePublishedBin, resolvePublishedModule, resolveWorkspaceCliCommand } = require("../../bdd/lib/published-artifacts.ts");
+const { resolveBddBin, resolveBddWorkspaceRoot, resolvePublishedBin, resolvePublishedModule, resolveWorkspaceCliCommand } = require("../../bdd/lib/published-artifacts.ts");
 
 function fixture(t) {
     const root = mkdtempSync(join(tmpdir(), "published-artifacts-"));
@@ -37,6 +37,14 @@ test("verified module and bin resolve inside the prerelease install", (t) => {
     const options = { workspaceRoot: fixtureData.root, environment: fixtureData.environment };
     t.is(resolvePublishedModule("@scramjet/host", options), realpathSync(join(fixtureData.installDir, "node_modules/@scramjetorg/host/lib/index.js")));
     t.is(resolvePublishedBin("@scramjet/cli", "si", options), realpathSync(join(fixtureData.installDir, "node_modules/@scramjetorg/cli/bin/si.js")));
+});
+
+test("default BDD artifact resolution anchors paths at the mounted workspace root", (t) => {
+    const fixtureData = fixture(t);
+    const bddWorkingDirectory = join(fixtureData.root, "bdd");
+    mkdirSync(bddWorkingDirectory);
+    t.is(resolveBddWorkspaceRoot(bddWorkingDirectory), fixtureData.root);
+    t.is(resolveBddWorkspaceRoot(fixtureData.root), fixtureData.root);
 });
 
 test("verified resolution fails closed for an unknown package", (t) => {

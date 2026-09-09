@@ -1,5 +1,5 @@
 import { existsSync, readFileSync, realpathSync, statSync } from "node:fs";
-import { isAbsolute, join, relative, resolve, sep } from "node:path";
+import { basename, isAbsolute, join, relative, resolve, sep } from "node:path";
 
 const { context } = require("./release-prerelease-context.js") as {
     context: (options?: { environment?: NodeJS.ProcessEnv; workspaceRoot?: string }) => {
@@ -27,6 +27,17 @@ function verified(options: ResolverOptions) {
     return context(options);
 }
 
+function resolveBddWorkspaceRoot(cwd = process.cwd()): string {
+    // Cucumber is launched from /work/bdd (and from repo/bdd locally), while
+    // verified release artifacts are created at the mounted workspace root.
+    const current = resolve(cwd);
+    return basename(current) === "bdd" ? resolve(current, "..") : current;
+}
+
+function bddWorkspaceRoot(options: ResolverOptions): string {
+    return options.workspaceRoot ? resolve(options.workspaceRoot) : resolveBddWorkspaceRoot();
+}
+
 function readRecord(recordPath: string) {
     const record = JSON.parse(readFileSync(recordPath, "utf8"));
     if (record?.format !== "transform-hub-release-prerelease-bdd-v2" || !Array.isArray(record.packages)) {
@@ -43,7 +54,7 @@ function rejectSourceOverride(environment: NodeJS.ProcessEnv) {
 
 /** Resolve a package or package subpath, proving the result is in the verified install. */
 export function resolvePublishedModule(specifier: string, options: ResolverOptions = {}): string {
-    const root = resolve(options.workspaceRoot || process.cwd());
+    const root = bddWorkspaceRoot(options);
     const environment = options.environment || process.env;
     const release = verified({ ...options, workspaceRoot: root });
     if (!release) return require.resolve(specifier, { paths: [root] });
@@ -72,7 +83,7 @@ export function resolvePublishedModule(specifier: string, options: ResolverOptio
 
 /** Resolve a package bin, or the canonical STH bin, with the same fail-closed checks. */
 export function resolvePublishedBin(source: string, binName: string, options: ResolverOptions = {}): string {
-    const root = resolve(options.workspaceRoot || process.cwd());
+    const root = bddWorkspaceRoot(options);
     const environment = options.environment || process.env;
     const release = verified({ ...options, workspaceRoot: root });
     if (!release) {
@@ -127,3 +138,5 @@ export function createPublishedArtifactResolver(options: ResolverOptions = {}) {
         resolveBin: (source: string, binName: string) => resolvePublishedBin(source, binName, options),
     };
 }
+
+export { resolveBddWorkspaceRoot };

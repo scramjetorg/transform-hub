@@ -26,7 +26,7 @@ test("base PR workflow is read-only, cancellable, and uses a fresh restore-only 
 	t.true(source.includes("merge_group:"));
 	t.true(source.includes("format('pr-{0}'"));
 	t.true(source.includes("format('merge-group-{0}'"));
-	t.true(source.includes("format('release-pr-{0}'"));
+	t.true(source.includes("format('release-pr-{0}-{1}'"));
 	t.true(source.includes("contents: read"));
 	t.true(source.includes("runs-on: ubuntu-24.04"));
 	t.true(source.includes("name: CI / package validation"));
@@ -193,7 +193,7 @@ test("PR and merge-group workflow keeps fork-safe read-only permissions and stal
 	t.true(source.includes("types: [checks_requested]"));
 	t.true(source.includes("format('pr-{0}'"));
 	t.true(source.includes("format('merge-group-{0}'"));
-	t.is((source.match(/permissions:\n\s+contents: read/g) || []).length, 7);
+	t.is((source.match(/permissions:\n\s+contents: read/g) || []).length, 8);
 	t.is((source.match(/uses: actions\/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1/g) || []).length, 7);
 	t.is((source.match(/persist-credentials: false/g) || []).length, 7);
 	t.is((source.match(/uses: \.\/\.github\/actions\/setup-workspace/g) || []).length, 6);
@@ -248,18 +248,19 @@ test("PR outputs remain disposable and the repository security scan is connected
 test("release runs are scoped to same-repository devel-to-main changes and never cancel a publication partway", (t) => {
 	const source = workflowSource();
 	t.deepEqual(checkWorkflowSource(source, ".github/workflows/pr-validate.yml"), []);
-	t.is((source.match(/github\.event\.pull_request\.head\.repo\.full_name == github\.repository/g) || []).length, 4);
-	t.is((source.match(/github\.event\.pull_request\.head\.ref == 'devel'/g) || []).length, 4);
-	t.is((source.match(/github\.event\.pull_request\.base\.ref == 'main'/g) || []).length, 4);
-	t.true(source.includes("format('release-pr-{0}'"), "release PR runs must use a distinct concurrency group");
+	t.is((source.match(/github\.event\.pull_request\.head\.repo\.full_name == github\.repository/g) || []).length, 10);
+	t.is((source.match(/github\.event\.pull_request\.head\.ref == 'devel'/g) || []).length, 10);
+	t.is((source.match(/github\.event\.pull_request\.base\.ref == 'main'/g) || []).length, 10);
+	t.true(source.includes("format('release-pr-{0}-{1}'"), "release PR runs must use SHA-specific concurrency groups");
+	t.is((source.match(/cancel-in-progress: true/g) || []).length, 6, "disposable lanes and prerelease BDD must cancel stale work");
 	t.true(source.includes("cancel-in-progress: ${{ !(github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main' && github.event.pull_request.head.ref == 'devel' && github.event.pull_request.head.repo.full_name == github.repository) }}"), "only eligible release runs must disable cancellation");
 	t.true(source.includes("prerelease-publication:"));
 	t.true(source.includes("name: Release PR / prerelease publication"));
-	t.true(source.includes("needs: [bdd-core-node, bdd-core-services, bdd-extended-hub-topic, bdd-extended-runtime]"), "publication must natively need all four BDD lanes");
+	t.true(source.includes("needs: [bdd-core-node, bdd-core-services, bdd-extended-hub-topic, bdd-extended-runtime, release-candidate-admission]"), "publication must need all four BDD lanes and current-SHA admission");
 	t.true(source.includes("prerelease-bdd:"));
 	t.true(source.includes("name: Release PR / prerelease BDD"));
-	t.true(source.includes("needs: [prerelease-publication]"), "prerelease BDD must natively need publication");
-	t.is((source.match(/^ {4}if: \${{ github\.event\.pull_request\.base\.ref == 'main' && github\.event\.pull_request\.head\.ref == 'devel' && github\.event\.pull_request\.head\.repo\.full_name == github\.repository }}$/gm) || []).length, 2, "exactly the two release jobs carry the devel-to-main guard");
+	t.true(source.includes("needs: [prerelease-publication, release-candidate-admission]"), "prerelease BDD must need publication and current-SHA admission");
+	t.is((source.match(/^ {4}if: \${{ github\.event\.pull_request\.base\.ref == 'main' && github\.event\.pull_request\.head\.ref == 'devel' && github\.event\.pull_request\.head\.repo\.full_name == github\.repository }}$/gm) || []).length, 1, "the admission job carries the base release guard");
 	t.false(source.includes("pull_request_target"));
 });
 
@@ -277,6 +278,8 @@ test("release prerelease publication is guarded, serialized, environment-gated, 
 	t.true(source.includes("release-prerelease.js publish"));
 	t.true(source.includes("PRERELEASE_ATTEMPT: r${{ github.run_id }}.a${{ github.run_attempt }}"));
 	t.true(source.includes("--attempt \"$PRERELEASE_ATTEMPT\""));
+	t.true(source.includes('echo "published=false" >> "$GITHUB_OUTPUT"'), "stale publication must produce a successful non-published outcome");
+	t.true(source.includes("Release PR is stale; prereleases will not be published."), "stale publication must no-op safely");
 	t.true(source.includes("group: release-prerelease-publication"), "publication must keep its serialized safety behavior");
 	t.false(source.includes("id-token: write"));
 	t.false(source.includes("registry.npmjs.org"));
@@ -323,8 +326,10 @@ test("release PR BDD consumes only verified publisher output and exact prereleas
 	const bddStart = source.indexOf("  prerelease-bdd:\n");
 	const bdd = source.slice(bddStart);
 	t.true(source.includes("prerelease-bdd:"));
+	t.true(source.includes("name: Release PR / verify current SHA before BDD"), "BDD must recheck the current SHA before install/run");
+	t.true(source.includes("pull-requests: read"), "BDD admission requires pull request read access");
 	t.true(source.includes("name: Release PR / prerelease BDD"));
-	t.true(source.includes("needs: [prerelease-publication]"));
+	t.true(source.includes("needs: [prerelease-publication, release-candidate-admission]"));
 	t.true(source.includes("packages: read"));
 	t.true(source.includes("attestations: read"));
 	t.true(source.includes("prerelease-manifest-sha256"));
@@ -366,11 +371,12 @@ test("release PR BDD consumes only verified publisher output and exact prereleas
 	t.true(bdd.includes("--deny-self-hosted-runners"));
 	t.true(bdd.includes("BDD image attestation verification failed for devel source $HEAD_SHA"));
 	t.false(source.includes("SCRAMJET_RELEASE_PRERELEASE_BDD_IMAGES"), "BDD image JSON must not be an operator-supplied variable");
-	t.true(source.includes('test "$PUBLISHED" = "true"'));
+	t.false(source.includes('test "$PUBLISHED" = "true"'));
+	t.true(source.includes('if [[ "$PUBLISHED" != "true" || -z "$PUBLISHER_MANIFEST" ]]'));
 	t.true(source.includes('test "$BDD_REGISTRY_ENABLED" = "true"'));
 	t.true(bdd.includes("NODE_AUTH_TOKEN: ${{ github.token }}"), "BDD read auth must use the automatic GITHUB_TOKEN");
 	t.false(/^ {4}environment:/m.test(bdd), "prerelease BDD must not be bound to the approval environment");
-	t.false(source.includes("live=false"));
+	t.true(source.includes("live=false"));
 	t.false(source.includes("download-artifact"));
 	t.false(source.includes("upload-artifact"));
 	t.false(/^ {6}id-token: write$/m.test(bdd), "the read-only BDD job must not mint an OIDC token");
