@@ -1,0 +1,1 @@
+{"$schema":"https://json-schema.org/draft/2020-12/schema","$id":"https://scramjet.org/transform-hub/publication-journal/v1","type":"object","additionalProperties":false,"required":["schema","releaseSetDigest","events"],"properties":{"schema":{"const":"publication-journal.v1"},"releaseSetDigest":{"type":"string","pattern":"^sha256:[a-f0-9]{64}$"},"events":{"type":"array"}}}

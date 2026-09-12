@@ -1,0 +1,24 @@
+{
+  "schema": "release-trust-policy.v1",
+  "candidateAuthority": "github-draft-release-id-and-signed-digest",
+  "remote": {
+    "status": "unconfirmed",
+    "repository": "scramjetorg/transform-hub",
+    "branches": {
+      "devel": { "strictChecks": true, "requiredChecks": 0, "rulesets": 0 },
+      "main": { "strictChecks": true, "requiredChecks": 0, "rulesets": 0 }
+    },
+    "environmentAdminBypass": true,
+    "customAdmissionCheckRequired": true,
+    "candidateRelease": { "kind": "draft", "identity": "numeric-release-id-and-signed-canonical-release-set-digest" },
+    "assetRetention": { "days": 31, "cleanup": "explicit-required" },
+    "images": "digest-only",
+    "npmTrustedPublisherDirectLatest": "unverified"
+  },
+  "decision": "fail-closed-until-remote-configuration-confirmed",
+  "limitations": [
+    "Branch strictness exists, but zero required checks and zero rulesets do not enforce exact-tree promotion.",
+    "The custom required admission check and candidate release API/access-control configuration remain unapplied.",
+    "Per-package npm trusted-publisher direct-latest behavior remains unverified."
+  ]
+}
