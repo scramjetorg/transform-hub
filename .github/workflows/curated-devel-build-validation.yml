@@ -1,0 +1,52 @@
+name: Curated devel build validation
+
+on:
+  workflow_call:
+    inputs:
+      source-sha: { required: true, type: string }
+      candidate-release-id: { required: true, type: string }
+      release-set-digest: { required: true, type: string }
+      sealed-state-digest: { required: true, type: string }
+      image-digest: { required: true, type: string }
+      repository: { required: true, type: string }
+      candidate-tag: { required: true, type: string }
+    outputs:
+      consumed-input-digest:
+        value: ${{ jobs.validate.outputs.consumed-input-digest }}
+      shard-evidence:
+        value: ${{ jobs.validate.outputs.shard-evidence }}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: curated-candidate-${{ inputs.source-sha }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    outputs:
+      consumed-input-digest: ${{ steps.validate.outputs.consumed-input-digest }}
+      shard-evidence: ${{ steps.validate.outputs.shard-evidence }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          ref: ${{ inputs.source-sha }}
+      - id: validate
+        name: Download and verify the sealed candidate, then run curated BDD
+        env:
+          RELEASE_CANDIDATE_DIR: ${{ runner.temp }}/candidate-bundle
+          RELEASE_CANDIDATE_STATE: ${{ runner.temp }}/candidate-bundle/candidate-state.json
+          RELEASE_GHCR_IMAGE_DIGEST: ${{ inputs.image-digest }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p "$RELEASE_CANDIDATE_DIR"
+          node scripts/release-candidate-runtime.js resolve --repository "${{ inputs.repository }}" --tag "${{ inputs.candidate-tag }}" --source-sha "${{ inputs.source-sha }}" --release-id "${{ inputs.candidate-release-id }}" --release-set-digest "${{ inputs.release-set-digest }}" --sealed-state-digest "${{ inputs.sealed-state-digest }}" --bundle-dir "$RELEASE_CANDIDATE_DIR" --state "$RELEASE_CANDIDATE_STATE" --output "$RUNNER_TEMP/resolve.json"
+          RELEASE_CANDIDATE_IDENTITY="$(cat "$RELEASE_CANDIDATE_DIR/candidate-identity.json")" node scripts/release-bdd-validation.js run --all
+          node scripts/release-candidate-runtime.js persist-bdd --repository "${{ inputs.repository }}" --tag "${{ inputs.candidate-tag }}" --release-id "${{ inputs.candidate-release-id }}" --release-set-digest "${{ inputs.release-set-digest }}" --sealed-state-digest "${{ inputs.sealed-state-digest }}" --bundle-dir "$RELEASE_CANDIDATE_DIR" --output "$RUNNER_TEMP/bdd-persist.json"
+          echo "consumed-input-digest=$(node -p "require(process.env.RELEASE_CANDIDATE_DIR + '/bdd-evidence/' + require('./scripts/release-bdd-matrix.v1.json').revision + '/consumed-input.json').recordDigest")" >> "$GITHUB_OUTPUT"
+          echo 'shard-evidence=complete' >> "$GITHUB_OUTPUT"

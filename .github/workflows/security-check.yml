@@ -15,6 +15,7 @@ permissions:
 jobs:
   security-policy:
     name: Security / repository policy
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.owner.login == 'scramjetorg' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:

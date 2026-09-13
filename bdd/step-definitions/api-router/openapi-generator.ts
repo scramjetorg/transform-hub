@@ -4,7 +4,6 @@ import { spawn, type ChildProcessWithoutNullStreams } from "child_process";
 import { existsSync, readFileSync } from "fs";
 import { join, resolve } from "path";
 import { CustomWorld } from "../world";
-import { resolvePublishedBin } from "../../lib/published-artifacts";
 
 type GeneratorResult = { code: number | null; stdout: string; stderr: string };
 
@@ -18,7 +17,7 @@ type GeneratorState = {
 function state(world: CustomWorld): GeneratorState {
     if (!world.resources.apiRouterGenerator) {
         world.resources.apiRouterGenerator = {
-            binary: resolvePublishedBin("@scramjet/api-router", "scramjet-api-router-generate"),
+            binary: resolve(__dirname, "../../../dist/api-router/bin/generate.js"),
             schema: resolve(__dirname, "../../fixtures/api-router-openapi/schema.cjs")
         } as GeneratorState;
     }

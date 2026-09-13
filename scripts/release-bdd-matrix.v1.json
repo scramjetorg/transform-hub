@@ -1,0 +1,20 @@
+{
+  "schema": "release-bdd-matrix.v1",
+  "revision": "release-bdd-matrix.v1",
+  "chunks": [
+    "verser2",
+    "cli-basics",
+    "cli-matrix",
+    "topics-api",
+    "python",
+    "appcontext",
+    "node-spawn-core",
+    "node-streaming-stop",
+    "hub-configuration",
+    "hub-runtime",
+    "hub-idle-resource",
+    "manager",
+    "errors",
+    "stream"
+  ]
+}

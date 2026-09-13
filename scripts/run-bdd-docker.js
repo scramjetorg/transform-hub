@@ -26,11 +26,12 @@ const crypto = require("crypto");
 const fs = require("fs");
 const path = require("path");
 
-const { memoryLimit, cpuLimit, timeoutMs, graceMs, isBddMemoryGuardEnabled, bddNodeOptions } = require("./lib/bdd-options.js");
+const { memoryLimit, cpuLimit, timeoutMs, graceMs, isBddMemoryGuardEnabled, bddDockerNodeOptions } = require("./lib/bdd-options.js");
 const { checkBddMemorySkip } = require("./lib/bdd-memory-guard.js");
 const { parseChunkMemoryPolicy, parseExpectedComponents, validateEnforcePrerequisites } = require("./lib/bdd-chunk-memory-policy.js");
 const { parseMemoryLimit, evaluateChunkMemoryMetrics, formatChunkMemoryDiagnostics } = require("./lib/bdd-chunk-memory-policy.js");
-const { requestDockerStats } = require("./lib/docker-memory.js");
+const { requestDockerStatsDetails } = require("./lib/docker-memory.js");
+const { createTelemetryCollector, persistTelemetry, telemetrySampleIntervalMs } = require("./lib/bdd-docker-telemetry.js");
 
 const { reportLeakedProcesses, cleanupTempDirs } = require("./lib/bdd-cleanup.js");
 const { dockerOutcomeDiagnostics } = require("./lib/bdd-outcome-diagnostics.js");
@@ -41,6 +42,9 @@ const DEFAULT_BDD_NODE_IMAGE = "transform-hub-bdd-bun:dev";
 // Node 22's compile cache otherwise follows TMPDIR, which is the mounted BDD artifact root.
 const BDD_NODE_COMPILE_CACHE_DIR = "/tmp/node-compile-cache";
 const BDD_NODE_IMAGE = process.env.BDD_NODE_IMAGE || DEFAULT_BDD_NODE_IMAGE;
+const RELEASE_CANDIDATE_ROOT = process.env.SCRAMJET_BDD_CANDIDATE_ROOT;
+const RELEASE_IMAGE_DIGEST = process.env.SCRAMJET_BDD_IMAGE_DIGEST;
+const RELEASE_TARBALL_MODE = process.env.SCRAMJET_RELEASE_TARBALL_BDD_ROOT === "1";
 const BDD_DOCKER_MEMORY = memoryLimit();
 const BDD_DOCKER_CPUS = cpuLimit();
 const BDD_TIMEOUT_MS = timeoutMs();
@@ -66,6 +70,12 @@ const failPrereq = (message) => {
     process.stderr.write(`[run-bdd-docker] ${message}\n`);
     process.exit(MISSING_DEPENDENCY_EXIT_CODE);
 };
+
+if (process.env.SCRAMJET_RELEASE_BDD_VALIDATION === "1" && !RELEASE_TARBALL_MODE) {
+    if (!RELEASE_CANDIDATE_ROOT || !path.isAbsolute(RELEASE_CANDIDATE_ROOT) || !fs.existsSync(RELEASE_CANDIDATE_ROOT)) failPrereq("release BDD validation requires an existing candidate execution root.");
+    if (!RELEASE_IMAGE_DIGEST || !/^sha256:[a-f0-9]{64}$/i.test(RELEASE_IMAGE_DIGEST) || !BDD_NODE_IMAGE.endsWith(`@${RELEASE_IMAGE_DIGEST}`)) failPrereq("release BDD validation requires the exact digest-pinned BDD image.");
+}
+if (RELEASE_TARBALL_MODE && (!RELEASE_CANDIDATE_ROOT || !RELEASE_IMAGE_DIGEST || !BDD_NODE_IMAGE.endsWith(`@${RELEASE_IMAGE_DIGEST}`))) failPrereq("tarball BDD mode requires a prepared execution root and exact digest-pinned image.");
 
 const dockerVersionProbe = spawnSync("docker", ["--version"], { stdio: ["ignore", "ignore", "ignore"] });
 
@@ -161,7 +171,7 @@ dockerRunArgs.push(
     "--group-add",
     dockerGid,
     "-v",
-    `${repoRoot}:/work`,
+    `${RELEASE_TARBALL_MODE ? RELEASE_CANDIDATE_ROOT : repoRoot}:${RELEASE_TARBALL_MODE ? "/release-root" : "/work"}`,
     "-v",
     "/var/run/docker.sock:/var/run/docker.sock",
     "-v",
@@ -177,6 +187,11 @@ dockerRunArgs.push(
     "-e",
     "COREPACK_ENABLE_DOWNLOAD_PROMPT=0"
 );
+
+if (process.env.SCRAMJET_RELEASE_BDD_VALIDATION === "1" && !RELEASE_TARBALL_MODE) {
+    dockerRunArgs.push("-v", `${RELEASE_CANDIDATE_ROOT}:/release-candidate:ro`, "-e", "SCRAMJET_BDD_CANDIDATE_ROOT=/release-candidate", "-e", `SCRAMJET_BDD_IMAGE_DIGEST=${RELEASE_IMAGE_DIGEST}`);
+}
+if (RELEASE_TARBALL_MODE) dockerRunArgs.push("-e", "SCRAMJET_RELEASE_TARBALL_BDD_ROOT=1", "-e", "SCRAMJET_TARBALL_BDD_ROOT=/release-root", "-e", "SCRAMJET_SPAWN_TS=", "-e", "SCRAMJET_SPAWN_JS=", "-e", "NODE_PATH=");
 
 dockerRunArgs.push(
     ...Object.entries(ownershipEnv(ownership))
@@ -198,14 +213,17 @@ dockerRunArgs.push("-e", "BDD_CHUNK_MEMORY_READY_FILE=/work-tmp/chunk-ready.json
 dockerRunArgs.push("-e", "BDD_CHUNK_TIMING_REPORT_FILE=/work-tmp/chunk-timing.json");
 dockerRunArgs.push("-e", "BDD_CHUNK_TIMING_EVENTS_FILE=/work-tmp/chunk-timing.events.jsonl");
 dockerRunArgs.push("-e", "SCRAMJET_BDD_CHUNK_TIMING=1");
-
-// Inject NODE_OPTIONS with --expose-gc when BDD memory guard is enabled.
-// bddNodeOptions() picks up BDD_NODE_OPTIONS from the parent env (already
-// forwarded by collectEnvForwardArgs()) and adds --expose-gc when the guard
-// is active.
-if (isBddMemoryGuardEnabled()) {
-    dockerRunArgs.push("-e", `NODE_OPTIONS=${bddNodeOptions()}`);
+if (process.env.BDD_DOCKER_TELEMETRY_SAMPLE_INTERVAL_MS) {
+    dockerRunArgs.push("-e", `BDD_DOCKER_TELEMETRY_SAMPLE_INTERVAL_MS=${process.env.BDD_DOCKER_TELEMETRY_SAMPLE_INTERVAL_MS}`);
 }
+
+// Bound the Cucumber/ts-node parent independently from its Hub/CLI/runner
+// children. bddDockerNodeOptions() preserves BDD_NODE_OPTIONS and adds
+// --expose-gc when the memory guard is active.
+dockerRunArgs.push("-e", `NODE_OPTIONS=${bddDockerNodeOptions()}`);
+// Cucumber still loads TypeScript step definitions through ts-node, but type
+// checking remains a separate npm --prefix bdd run build:bdd gate.
+dockerRunArgs.push("-e", "TS_NODE_TRANSPILE_ONLY=1");
 
 const escapedPassthrough = passthroughArgs.map(shellEscape).join(" ");
 const fixturePacking = [
@@ -215,12 +233,13 @@ const fixturePacking = [
     "OUT_DIR=/work-tmp/python-bdd-packages node scripts/pack-python-bdd-fixtures.js"
 ].join(" && ");
 const runtimePreflight = ["node --version", "npm --version", "bun --version"].join(" && ");
+const phaseMarker = (phase) => `printf '{"phase":"${phase}","at":"%s"}\\n' "$(date -u +%Y-%m-%dT%H:%M:%S.%3NZ)" >> /work-tmp/phase-timing.jsonl`;
 const packageDirs =
     "PACKAGES_DIR=/work-tmp/appcontext-packages/:/work-tmp/python-bdd-packages/:/work-tmp/bdd-packages/ SCRAMJET_BDD_SIMPLE_STDIO_ARCHIVE=/work-tmp/simple-stdio.tar.gz";
-const innerCommand =
-    escapedPassthrough.length > 0
-        ? `${runtimePreflight} && ${fixturePacking} && ${packageDirs} PATH=/work/node_modules/.bin:$PATH npm --prefix ./bdd run test:bdd -- ${escapedPassthrough}`
-        : `${runtimePreflight} && ${fixturePacking} && ${packageDirs} PATH=/work/node_modules/.bin:$PATH npm --prefix ./bdd run test:bdd`;
+const bddCommand = escapedPassthrough.length > 0 ? `run test:bdd -- ${escapedPassthrough}` : "run test:bdd";
+const innerCommand = RELEASE_TARBALL_MODE
+    ? `${phaseMarker("preflight")} && ${runtimePreflight} && ${phaseMarker("fixture-packing")} && ${phaseMarker("cucumber-launch")} && PATH=/release-root/node_modules/.bin:$PATH npm --prefix /release-root/bdd ${bddCommand}`
+    : `${phaseMarker("preflight")} && ${runtimePreflight} && ${phaseMarker("fixture-packing")} && ${fixturePacking} && ${phaseMarker("cucumber-launch")} && ${packageDirs} PATH=/work/node_modules/.bin:$PATH npm --prefix /work/bdd ${bddCommand}`;
 
 dockerRunArgs.push(BDD_NODE_IMAGE, "sh", "-c", innerCommand);
 
@@ -277,12 +296,15 @@ let workingSetSampleCount = 0;
 
 /** @type {NodeJS.Timeout|null} Interval handle for periodic peak sampling. */
 let workingSetTimer = null;
+const telemetry = createTelemetryCollector();
+let workingSetInFlightPromise = null;
+let memoryEvents = null;
+const telemetryFile = path.join(tmpDir, "docker-telemetry.json");
+const phaseTimingFile = path.join(tmpDir, "phase-timing.jsonl");
 
 /** Periodic sampling interval in ms. */
-const WORKING_SET_SAMPLE_INTERVAL_MS = 30000;
 const READINESS_POLL_INTERVAL_MS = 50;
-const READINESS_SAMPLE_INTERVAL_MS = 250;
-void READINESS_SAMPLE_INTERVAL_MS;
+const WORKING_SET_SAMPLE_INTERVAL_MS = telemetrySampleIntervalMs();
 
 const consumeChunkReadySignal = () => {
     if (workingSetReady) return true;
@@ -506,7 +528,7 @@ const emitForensicDiagnostics = () => {
  * @returns {number|null}
  */
 // Keep a stuck Engine request from preventing the next readiness poll/sample.
-const sampleContainerWorkingSet = (cid) => requestDockerStats(cid, "/var/run/docker.sock", 2000);
+const sampleContainerWorkingSet = (cid) => requestDockerStatsDetails(cid, "/var/run/docker.sock", 2000);
 
 /**
  * Take one working-set sample and, if successful, update peak tracking.
@@ -515,35 +537,41 @@ const sampleContainerWorkingSet = (cid) => requestDockerStats(cid, "/var/run/doc
  * @returns {number|null}  Sampled bytes or null.
  */
 const recordWorkingSetSample = async (cid) => {
-    if (readinessSampleInFlight) return null;
+    if (readinessSampleInFlight) return workingSetInFlightPromise;
     readinessSampleInFlight = true;
-    let bytes;
-    try {
-        consumeChunkReadySignal();
-        bytes = await sampleContainerWorkingSet(cid);
-    } finally {
-        readinessSampleInFlight = false;
-    }
+    workingSetInFlightPromise = (async () => {
+        let sample;
+        try {
+            consumeChunkReadySignal();
+            sample = await sampleContainerWorkingSet(cid);
+        } finally {
+            readinessSampleInFlight = false;
+            workingSetInFlightPromise = null;
+        }
 
-    if (bytes === null) {
-        return null;
-    }
+        if (!sample) {
+            telemetry.recordFailure({ reason: "Docker stats request failed", phase: workingSetReady ? "runtime" : "startup" });
+            return null;
+        }
 
-    if (!workingSetReady || workingSetBaseline === null) {
+        const bytes = sample.workingSetBytes;
+        telemetry.record(sample);
+        workingSetSampleCount++;
+        workingSetFinal = bytes;
+        if (workingSetPeak === null || bytes > workingSetPeak) workingSetPeak = bytes;
+
+        if (workingSetBaseline === null) workingSetBaseline = bytes;
+        if (!workingSetReady || workingSetBaseline === null) {
+            return bytes;
+        }
+
+        if (workingSetBaseline === null) {
+            workingSetBaseline = bytes;
+            process.stderr.write(`[run-bdd-docker] readiness working-set baseline: ${workingSetBaseline} bytes\n`);
+        }
         return bytes;
-    }
-
-    if (workingSetBaseline === null) {
-        workingSetBaseline = bytes;
-        process.stderr.write(`[run-bdd-docker] readiness working-set baseline: ${workingSetBaseline} bytes\n`);
-    }
-    workingSetSampleCount++;
-
-    if (workingSetPeak === null || bytes > workingSetPeak) {
-        workingSetPeak = bytes;
-    }
-
-    return bytes;
+    })();
+    return workingSetInFlightPromise;
 };
 
 // ---------------------------------------------------------------------------
@@ -565,6 +593,12 @@ const recordWorkingSetSample = async (cid) => {
  * @param {number} exitCode  Exit code from `docker wait`.
  */
 const printContainerSummary = async (cid, exitCode, { forceSummary = false } = {}) => {
+    if (workingSetTimer) {
+        clearInterval(workingSetTimer);
+        workingSetTimer = null;
+    }
+    // Wait for a final host-side stats attempt before inspecting/cleaning up.
+    await recordWorkingSetSample(cid);
     // Obtain OOMKilled + timestamps from Docker inspect.
     const inspectResult = spawnSync("docker", ["inspect", "--format={{json .State}}", cid], {
         encoding: "utf8",
@@ -574,6 +608,15 @@ const printContainerSummary = async (cid, exitCode, { forceSummary = false } = {
 
     const outcome = dockerOutcomeDiagnostics(inspectResult, timedOut);
     const { oomKilled, startedAt, finishedAt } = outcome;
+    // A stopped or --rm container cannot reliably be docker-exec'd. State.OOMKilled
+    // is the authoritative Docker outcome; host-side sampling failures are retained.
+    memoryEvents = null;
+    let phaseTiming = [];
+    try {
+        phaseTiming = fs.readFileSync(phaseTimingFile, "utf8").split(/\r?\n/).filter(Boolean).map((line) => JSON.parse(line));
+    } catch {
+        phaseTiming = [];
+    }
 
     // Leave machine-readable state for the owning scheduler. The scheduler
     // performs the exact-owner cleanup after it has consumed this diagnostic.
@@ -590,7 +633,13 @@ const printContainerSummary = async (cid, exitCode, { forceSummary = false } = {
                 outcomeTelemetry: outcome.outcomeTelemetry,
                 telemetryFailure: outcome.telemetryFailure,
                 startedAt,
-                finishedAt
+                finishedAt,
+                telemetryFile,
+                telemetry: telemetry.snapshot(),
+                memoryEvents,
+                samplingFailures: telemetry.snapshot().failures,
+                phaseTimingFile,
+                phaseTiming
             })
         );
     } catch {
@@ -631,6 +680,25 @@ const printContainerSummary = async (cid, exitCode, { forceSummary = false } = {
                 `${top(timing.top?.scenarios?.[0], "scenario")} ${top(timing.top?.slowestStep || timing.top?.steps?.[0], "slowest-step")} ${top(timing.top?.slowestCleanup || timing.top?.cleanup?.[0], "cleanup")}\n`
         );
     }
+
+    const telemetrySnapshot = telemetry.snapshot();
+    persistTelemetry(telemetryFile, {
+        schema: "bdd-docker-telemetry.v1",
+        container: cid,
+        exitCode,
+        oomKilled,
+        startedAt,
+        finishedAt,
+        rawUsagePeakBytes: telemetrySnapshot.samples.reduce((value, sample) => Math.max(value || 0, sample.usageBytes || 0), null),
+        inactiveFilePeakBytes: telemetrySnapshot.samples.reduce((value, sample) => Math.max(value || 0, sample.inactiveFileBytes || 0), null),
+        workingSetPeakBytes: telemetrySnapshot.peakWorkingSetBytes,
+        sampleCount: telemetrySnapshot.sampleCount,
+        samples: telemetrySnapshot.samples,
+        samplingFailures: telemetrySnapshot.failures,
+        memoryEvents,
+        timingCorrelation: { available: Boolean(timingMetrics), sampleCount: timingMetrics?.events?.length || timingMetrics?.samples?.length || 0, phaseTiming }
+    });
+    process.stderr.write(`[run-bdd-docker] bounded telemetry ${JSON.stringify({ rawUsagePeakBytes: telemetrySnapshot.samples.reduce((value, sample) => Math.max(value || 0, sample.usageBytes || 0), null), inactiveFilePeakBytes: telemetrySnapshot.samples.reduce((value, sample) => Math.max(value || 0, sample.inactiveFileBytes || 0), null), workingSetPeakBytes: telemetrySnapshot.peakWorkingSetBytes, sampleCount: telemetrySnapshot.sampleCount, samplingFailureCount: telemetrySnapshot.failureCount, memoryEvents })}\n`);
 
     // Timing-only runs must not emit memory diagnostics or summaries during a
     // normal run. Timeout postmortems explicitly force the state summary so

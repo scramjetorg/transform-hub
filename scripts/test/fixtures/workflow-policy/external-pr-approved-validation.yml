@@ -1,0 +1,13 @@
+name: External PR approved validation
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  external-pr-code-owner-approval:
+    runs-on: ubuntu-24.04
+    steps:
+      - run: echo approval

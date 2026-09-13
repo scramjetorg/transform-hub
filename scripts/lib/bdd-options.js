@@ -18,7 +18,8 @@
  *   BDD_DOCKER_CPUS                    – container CPU limit (default "2")
  *   BDD_TIMEOUT_MS                     – runner‑level timeout in ms (default 600000)
  *   BDD_GRACE_MS                       – TERM‑to‑KILL grace period in ms (default 10000)
- *   SCRAMJET_AVA_MAX_OLD_SPACE_SIZE    – override --max-old-space-size (default 1536)
+ *   SCRAMJET_AVA_MAX_OLD_SPACE_SIZE    – override --max-old-space-size (default 1536
+ *                                        direct / 768 Docker parent)
  *   SCRAMJET_AVA_FETCH                 – set to "0"|"false"|"no"|"off" to add
  *                                        --no-experimental-fetch
  *
@@ -91,6 +92,8 @@ const DEFAULTS = Object.freeze({
     GRACE_MS: 10000,
     /** Default --max-old-space-size for the direct BDD Node process. */
     MAX_OLD_SPACE_SIZE: 1536,
+    /** Default --max-old-space-size for the Docker Cucumber parent process. */
+    DOCKER_PARENT_MAX_OLD_SPACE_SIZE: 768,
     /**
      * Default heap threshold in bytes for BDD memory guard mode.
      * 524288 bytes = 512 KiB.  Override via SCRAMJET_MEMORY_HEAP_THRESHOLD_BYTES
@@ -189,6 +192,22 @@ function bddMaxOldSpaceSize() {
 }
 
 /**
+ * Max old space size for the Docker Cucumber/ts-node parent process.
+ * Reuses the established BDD heap override; the smaller default leaves cgroup
+ * headroom for Hub, CLI, and runner children.
+ *
+ * @returns {number}
+ */
+function bddDockerParentMaxOldSpaceSize() {
+    const env = process.env[ENV.MAX_OLD_SPACE];
+
+    if (env && !Number.isNaN(Number(env))) {
+        return Number(env);
+    }
+    return DEFAULTS.DOCKER_PARENT_MAX_OLD_SPACE_SIZE;
+}
+
+/**
  * Build the NODE_OPTIONS string for the direct BDD cucumber-js child process.
  *
  * - Starts from BDD_NODE_OPTIONS env var (when set) or from a clean slate.
@@ -221,6 +240,28 @@ function bddNodeOptions() {
     }
 
     // 3. Memory guard – add --expose-gc when BDD memory guard is enabled.
+    if (isBddMemoryGuardEnabled()) {
+        opts = appendNodeOption(opts, "--expose-gc");
+    }
+
+    return opts;
+}
+
+/**
+ * Build NODE_OPTIONS for the supported Docker BDD Cucumber parent process.
+ * Retains BDD_NODE_OPTIONS and memory-guard composition while using the
+ * Docker-specific bounded parent heap default.
+ *
+ * @returns {string}
+ */
+function bddDockerNodeOptions() {
+    const base = process.env[ENV.BDD_NODE_OPTIONS] ?? "";
+    let opts = replaceNodeOption(base, `--max-old-space-size=${bddDockerParentMaxOldSpaceSize()}`);
+
+    if (!isDisabled(process.env[ENV.FETCH]) && process.env[ENV.FETCH] !== "1") {
+        opts = appendNodeOption(opts, "--no-experimental-fetch");
+    }
+
     if (isBddMemoryGuardEnabled()) {
         opts = appendNodeOption(opts, "--expose-gc");
     }
@@ -471,7 +512,9 @@ module.exports = {
     timeoutMs,
     graceMs,
     bddMaxOldSpaceSize,
+    bddDockerParentMaxOldSpaceSize,
     bddNodeOptions,
+    bddDockerNodeOptions,
     bddNodeArgs,
     isBddMemoryGuardEnabled,
     bddMemoryHeapThresholdBytes,

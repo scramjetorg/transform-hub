@@ -1,0 +1,64 @@
+name: Release promotion admission
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-admission-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  preflight:
+    if: ${{ github.event.pull_request.head.repo.owner.login == 'scramjetorg' }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.base.sha }}
+      - name: Protected-base and exact candidate preflight
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          test "${{ github.event.action }}" != "closed"
+          test "${{ github.event.pull_request.state }}" = "open"
+          test "${{ github.event.pull_request.base.ref }}" = "main"
+          test "${{ github.event.pull_request.head.ref }}" = "devel"
+          test "${{ github.event.pull_request.head.repo.full_name }}" = "$GITHUB_REPOSITORY"
+          test "$GITHUB_BASE_REF" = "main"
+          test "$GITHUB_HEAD_REF" = "devel"
+          git diff --quiet "$GITHUB_SHA" || true
+  evidence:
+    needs: [preflight]
+    if: ${{ needs.preflight.result == 'success' && github.event.pull_request.base.ref == 'main' && github.event.pull_request.head.ref == 'devel' && github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.base.sha }}
+      - name: Verify candidate assets, version and tag availability without rebuilding
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CANDIDATE_SOURCE_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/candidate"
+          node scripts/release-candidate-runtime.js admit --repository "$GITHUB_REPOSITORY" --tag "candidate-${{ github.event.pull_request.head.sha }}" --source-sha "${{ github.event.pull_request.head.sha }}" --bundle-dir "$RUNNER_TEMP/candidate" --output "$RUNNER_TEMP/release-admission-evidence.json"
+          echo "Admission is evidence-only: no build, pack, full BDD, image, publish, or promote command is permitted."
+      - uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08
+        with:
+          name: release-admission-${{ github.event.pull_request.number }}
+          path: ${{ runner.temp }}/release-admission-evidence.json
+          if-no-files-found: error
+          retention-days: 90

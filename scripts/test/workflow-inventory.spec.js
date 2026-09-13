@@ -9,12 +9,17 @@ const workflowsDir = resolve(__dirname, "..", "..", ".github", "workflows");
 test("active workflow inventory contains only maintained Node 22/npm paths and retained security policy", (t) => {
 	const workflows = readdirSync(workflowsDir).filter((name) => name.endsWith(".yml")).sort();
 	t.deepEqual(workflows, [
+		"build-release-candidate.yml",
 		"checkpoint-bootstrap.yml",
+		"curated-devel-build-validation.yml",
 		"devel-bdd-image.yml",
 		"devel-validate.yml",
+		"external-pr-approved-validation.yml",
 		"main-release.yml",
+		"pr-fast-validation.yml",
 		"pr-validate.yml",
 		"release-pr-automation.yml",
+		"release-promotion-admission.yml",
 		"security-check.yml",
 	]);
 	t.true(workflows.includes("security-check.yml"));
@@ -30,8 +35,8 @@ test("unified PR workflow owns normal validation and the release-PR chain in one
 	const source = readFileSync(resolve(workflowsDir, "pr-validate.yml"), "utf8");
 	t.true(source.includes("release/**"));
 	t.true(source.includes("CI / package validation"));
-	t.true(source.includes("CI / core BDD"));
-	t.true(source.includes("CI / extended BDD"));
+	t.true(source.includes("CI / core Node BDD"));
+	t.true(source.includes("CI / extended hub and topic BDD"));
 	t.true(source.includes("test:bdd-ci-hub"));
 	t.true(source.includes("test:bdd-ci-api-topic"));
 	t.true(source.includes("RUNTIME_ADAPTER=process"));

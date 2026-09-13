@@ -230,6 +230,11 @@ release confidence is declared. Neither mode enables parallel scheduling.
 
 `npm run test:bdd` starts a `node:22` container with `--memory=1536m`, `--memory-swap=1536m`, and `--cpus=2`. The container is removed automatically on exit.
 
+The Docker runner bounds the parent Cucumber/ts-node V8 heap to 768 MiB and sets
+`TS_NODE_TRANSPILE_ONLY=1` so type-checking does not compete with Hub, CLI, and
+runner children for the container budget. TypeScript correctness remains a
+separate gate: `npm --prefix bdd run build:bdd`.
+
 **Environment variables**
 
 You can tune the wrapper with these variables:
@@ -241,6 +246,9 @@ You can tune the wrapper with these variables:
 | `BDD_DOCKER_CPUS` | `2` | CPU limit (`--cpus`) |
 | `BDD_TIMEOUT_MS` | `600000` | Wrapper wall-clock timeout in ms (10 min) |
 | `BDD_GRACE_MS` | `10000` | Grace period before SIGKILL after SIGTERM (10 s) |
+| `BDD_DOCKER_TELEMETRY_SAMPLE_INTERVAL_MS` | `1000` (report) / `250` (short) | Host-side Docker stats sampling interval; capped at 1 s for report mode |
+| `SCRAMJET_AVA_MAX_OLD_SPACE_SIZE` | `768` (Docker parent) | Narrow override for the Docker parent V8 heap; direct mode retains its 1536 MiB default |
+| `BDD_NODE_OPTIONS` | unset | Additional parent Node options; the runner composes these with the bounded heap and memory-guard flags |
 
 **Environment passthrough**
 

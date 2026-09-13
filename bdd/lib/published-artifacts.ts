@@ -12,6 +12,7 @@ const { resolveSthBin } = require("../../scripts/lib/sth-bin.js") as {
 };
 
 type ResolverOptions = { environment?: NodeJS.ProcessEnv; workspaceRoot?: string };
+const TARBALL_ROOT_ENV = "SCRAMJET_TARBALL_BDD_ROOT";
 
 function inside(parent: string, child: string): boolean {
     const path = relative(resolve(parent), resolve(child));
@@ -52,10 +53,37 @@ function rejectSourceOverride(environment: NodeJS.ProcessEnv) {
     }
 }
 
+function tarballRoot(options: ResolverOptions): string | null {
+    const value = (options.environment || process.env)[TARBALL_ROOT_ENV];
+    return value ? resolve(value) : null;
+}
+
+function resolveTarballModule(specifier: string, root: string): string {
+    const source = packageName(specifier);
+    const packageJson = require.resolve(`${source}/package.json`, { paths: [root] });
+    const packageDir = resolve(packageJson, "..");
+    const resolved = realpathSync(require.resolve(specifier, { paths: [root] }));
+    if (!inside(root, resolved) || !inside(packageDir, resolved)) throw new Error(`Tarball BDD module escapes the isolated execution root: ${specifier}`);
+    return resolved;
+}
+
+function resolveTarballBin(source: string, binName: string, root: string): string {
+    const packageJson = require.resolve(`${source}/package.json`, { paths: [root] });
+    const packageDir = resolve(packageJson, "..");
+    const configured = JSON.parse(readFileSync(packageJson, "utf8")).bin;
+    const relativeBin = typeof configured === "string" ? configured : configured?.[binName];
+    if (typeof relativeBin !== "string") throw new Error(`Tarball BDD package does not expose bin ${source}/${binName}`);
+    const bin = realpathSync(resolve(packageDir, relativeBin));
+    if (!inside(root, bin) || !inside(packageDir, bin) || !statSync(bin).isFile()) throw new Error(`Tarball BDD bin escapes the isolated execution root: ${source}/${binName}`);
+    return bin;
+}
+
 /** Resolve a package or package subpath, proving the result is in the verified install. */
 export function resolvePublishedModule(specifier: string, options: ResolverOptions = {}): string {
     const root = bddWorkspaceRoot(options);
     const environment = options.environment || process.env;
+    const isolated = tarballRoot(options);
+    if (isolated) { rejectSourceOverride(environment); return resolveTarballModule(specifier, isolated); }
     const release = verified({ ...options, workspaceRoot: root });
     if (!release) return require.resolve(specifier, { paths: [root] });
 
@@ -85,6 +113,8 @@ export function resolvePublishedModule(specifier: string, options: ResolverOptio
 export function resolvePublishedBin(source: string, binName: string, options: ResolverOptions = {}): string {
     const root = bddWorkspaceRoot(options);
     const environment = options.environment || process.env;
+    const isolated = tarballRoot(options);
+    if (isolated) { rejectSourceOverride(environment); return resolveTarballBin(source, binName, isolated); }
     const release = verified({ ...options, workspaceRoot: root });
     if (!release) {
         if (binName === "scramjet-transform-hub" && source === "@scramjet/sth") return resolveSthBin({ cwd: root }).binPath;
@@ -117,11 +147,15 @@ export function resolvePublishedBin(source: string, binName: string, options: Re
 
 /** Preserve the normal BDD CLI launcher while keeping its artifact path here. */
 export function resolveWorkspaceCliCommand(): string[] {
+    const isolated = tarballRoot({});
+    if (isolated) return [resolveTarballBin("@scramjet/cli", "si", isolated)];
     return ["node", "../dist/cli/bin"];
 }
 
 /** Resolve BDD command artifacts: built workspace files normally, verified bins in prerelease mode. */
 export function resolveBddBin(source: string, binName: string, options: ResolverOptions = {}): string {
+    const isolated = tarballRoot(options);
+    if (isolated) return resolveTarballBin(source, binName, isolated);
     const root = resolve(options.workspaceRoot || __dirname, options.workspaceRoot ? "." : "../..");
     if (verified({ ...options, workspaceRoot: root })) return resolvePublishedBin(source, binName, { ...options, workspaceRoot: root });
 

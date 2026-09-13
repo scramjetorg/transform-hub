@@ -1,0 +1,40 @@
+name: PR fast validation
+
+on:
+  pull_request:
+    branches: [devel]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-fast-validation-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  fast-validation:
+    if: ${{ github.event.pull_request.head.repo.owner.login == 'scramjetorg' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Install dependencies
+        run: npm ci
+      - name: Lockfile gate
+        run: npm run check:lockfile
+      - name: Static repository policy
+        run: npm run check:security-workflow
+      - name: Lint changed files
+        run: RAYON_NUM_THREADS=12 ./node_modules/.bin/biome lint --changed --since="${{ github.event.pull_request.base.sha }}" --error-on-warnings --no-errors-on-unmatched
+      - name: Offline Phase 4 contract and adapter tests
+        run: node scripts/run-ava.js scripts/test/phase-4-workflow.spec.js scripts/test/workflow-inventory.spec.js scripts/test/release-contract.spec.js scripts/test/release-phase4.spec.js scripts/test/github-release-candidate.spec.js scripts/test/release-candidate-assets.spec.js scripts/test/release-bdd-validation.spec.js scripts/test/release-bundle.spec.js
+      - name: Affected unit and workflow policy tests
+        run: node scripts/run-ava.js scripts/test/release-pr-smoke.spec.js scripts/test/workflow-policy.spec.js
+      - name: Configured risk-area TypeScript smoke
+        run: node scripts/release-pr-smoke.js "${{ github.event.pull_request.base.sha }}"
