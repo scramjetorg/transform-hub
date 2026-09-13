@@ -1,0 +1,36 @@
+name: PR fast validation
+
+on:
+  pull_request:
+    branches: [devel]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-fast-validation-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  fast-validation:
+    if: ${{ github.event.pull_request.head.repo.full_name != '' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Lockfile gate
+        run: npm run check:lockfile
+      - name: Static repository policy
+        run: npm run check:security-workflow
+      - name: Lint changed files
+        run: npm run lint:quick
+      - name: Affected unit and workflow policy tests
+        run: node scripts/run-ava.js scripts/test/release-pr-smoke.spec.js scripts/test/workflow-policy.spec.js
+      - name: Configured risk-area TypeScript smoke
+        run: node scripts/release-pr-smoke.js "${{ github.event.pull_request.base.sha }}"

@@ -17,7 +17,7 @@ test("PR smoke computes reverse dependency closure and broad fallback", (t) => {
     t.deepEqual(affectedWorkspaces({ changedFiles: [{ status: "M", path: "packages/unknown/file.ts" }], manifests }), ["@scramjet/a", "@scramjet/b", "@scramjet/c"]);
 });
 
-test("PR smoke risk mapping is ordered and commands are pinned tsx without release actions", (t) => {
+test("PR smoke risk mapping is ordered and commands use local tsx without release actions", (t) => {
     const selection = selectPrSmoke({ changedFiles: [
         { status: "M", path: "scripts/release-bdd-validation.js" },
         { status: "M", path: "packages/runner/src/index.ts" },
@@ -25,5 +25,5 @@ test("PR smoke risk mapping is ordered and commands are pinned tsx without relea
     ], manifests });
     t.deepEqual(selection.risks, ["config", "runner", "bdd"]);
     assertSmokeCommands(selection.commands);
-    t.true(selection.commands.every((command) => command.slice(0, 3).join(" ") === "npx --no-install tsx@4.19.3"));
+    t.true(selection.commands.every((command) => command[0] === process.execPath && command[1] === "node_modules/tsx/dist/cli.mjs"));
 });

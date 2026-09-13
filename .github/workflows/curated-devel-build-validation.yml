@@ -1,0 +1,78 @@
+name: Curated devel build validation
+
+on:
+  workflow_call:
+    inputs:
+      source-sha:
+        required: true
+        type: string
+      candidate-release-id:
+        required: true
+        type: string
+      candidate-state-key:
+        required: true
+        type: string
+      release-set-digest:
+        required: true
+        type: string
+      image-digest:
+        required: true
+        type: string
+      bundle-artifact:
+        required: true
+        type: string
+      state-artifact:
+        required: true
+        type: string
+    outputs:
+      consumed-input-digest:
+        value: ${{ jobs.validate.outputs.consumed-input-digest }}
+      shard-evidence:
+        value: ${{ jobs.validate.outputs.shard-evidence }}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: curated-candidate-${{ inputs.source-sha }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    outputs:
+      consumed-input-digest: ${{ steps.validate.outputs.consumed-input-digest }}
+      shard-evidence: ${{ steps.validate.outputs.shard-evidence }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          ref: ${{ inputs.source-sha }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: ${{ inputs.bundle-artifact }}
+          path: ${{ runner.temp }}/candidate-bundle
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: ${{ inputs.state-artifact }}
+          path: ${{ runner.temp }}/candidate-bundle
+      - id: validate
+        name: Verify staged tarballs and run isolated curated BDD
+        env:
+          RELEASE_CANDIDATE_DIR: ${{ runner.temp }}/candidate-bundle
+          RELEASE_CANDIDATE_STATE: ${{ runner.temp }}/candidate-bundle/candidate-state.json
+          RELEASE_GHCR_IMAGE_DIGEST: ${{ inputs.image-digest }}
+        run: |
+          test "${{ inputs.candidate-state-key }}" != ""
+          test "${{ inputs.release-set-digest }}" = "$(node -e 'const c=require("./scripts/release-contract"); console.log(c.digestDocument(require(process.env.RELEASE_CANDIDATE_DIR + "/release-set.json")))')"
+          RELEASE_CANDIDATE_IDENTITY="$(cat "$RELEASE_CANDIDATE_DIR/candidate-identity.json")" node scripts/release-bdd-validation.js run --all
+          echo "consumed-input-digest=$(node -p "require(process.env.RELEASE_CANDIDATE_DIR + '/bdd-evidence/' + require('./scripts/release-bdd-matrix.v1.json').revision + '/consumed-input.json').recordDigest")" >> "$GITHUB_OUTPUT"
+          echo 'shard-evidence=complete' >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08
+        with:
+          name: candidate-validation-state-${{ inputs.source-sha }}
+          path: ${{ runner.temp }}/candidate-bundle/candidate-state.json
+          if-no-files-found: error
+          retention-days: 90

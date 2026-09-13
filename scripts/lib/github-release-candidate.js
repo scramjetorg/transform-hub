@@ -9,7 +9,7 @@ const { createHandoff } = require("../release-bundle");
 const { downloadAndVerifyCandidate, stageCandidateAssets } = require("./release-candidate-assets");
 const { recordCandidateRelease } = require("./release-bundle-state");
 
-const ALLOWED_ASSET = /^(release-set\.json|build-provenance\.json|package-lock\.json|artifacts\/[^/]+\.tgz)$/;
+const ALLOWED_ASSET = /^(release-set\.json|build-provenance\.json|package-lock\.json|candidate-state\.json|artifacts\/[^/]+\.tgz)$/;
 
 function json(output) {
     try { return JSON.parse(String(output)); } catch { throw new Error("gh returned invalid JSON."); }
@@ -34,6 +34,7 @@ function createGithubReleaseAssetAdapter({ repository, tag, targetSha, runner = 
         return release;
     }
     return {
+        view() { return view(); },
         stage(candidateId, assets) {
             if (!candidateId || assets.some((asset) => !ALLOWED_ASSET.test(asset.name))) throw new Error("Candidate asset is not allowlisted.");
             const release = ensureRelease();
@@ -69,6 +70,7 @@ function stageGithubDraftCandidate({ repository, tag, targetSha, candidateId = t
         downloadAndVerifyCandidate({ adapter, candidateId, destination: verificationRoot, releaseSet, candidateReference });
     } finally { rmSync(verificationRoot, { recursive: true, force: true }); }
     const release = recordCandidateRelease(stateFile, identity, { id: staged.releaseId, tag, releaseSetDigest: assertDigest(candidateReference.releaseSetDigest, "candidate release-set digest") });
+    adapter.stage(candidateId, [{ name: "candidate-state.json", bytes: readFileSync(stateFile) }]);
     return { ...staged, state: release };
 }
 

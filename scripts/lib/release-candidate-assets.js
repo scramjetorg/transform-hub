@@ -22,13 +22,14 @@ function createMemoryCandidateAssetAdapter() {
     };
 }
 
-function stageCandidateAssets({ adapter, candidateId, root, releaseSet, provenance, lockfile }) {
+function stageCandidateAssets({ adapter, candidateId, root, releaseSet, provenance, lockfile, state = null }) {
     validateReleaseSet(releaseSet);
     const files = [
         { name: "release-set.json", bytes: Buffer.from(JSON.stringify(releaseSet, null, 2) + "\n") },
         { name: "build-provenance.json", bytes: Buffer.from(JSON.stringify(provenance, null, 2) + "\n") },
         { name: "package-lock.json", bytes: Buffer.isBuffer(lockfile) ? lockfile : Buffer.from(lockfile) },
     ];
+    if (state) files.push({ name: "candidate-state.json", bytes: Buffer.from(JSON.stringify(state, null, 2) + "\n") });
     for (const artifact of releaseSet.artifacts.tarballs) {
         const file = join(root, artifact.path);
         validateArtifactContent(root, artifact);

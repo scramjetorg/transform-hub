@@ -94,5 +94,5 @@ test("Docker release mode mounts only the prepared root and clears source fallba
     t.true(source.includes("RELEASE_TARBALL_MODE ? RELEASE_CANDIDATE_ROOT : repoRoot"));
     t.true(source.includes("RELEASE_TARBALL_MODE ? \"/release-root\" : \"/work\""));
     t.true(source.includes("SCRAMJET_SPAWN_TS="));
-    t.true(source.includes("PATH=${executionRoot}/node_modules/.bin"));
+    t.true(source.includes("PATH=/release-root/node_modules/.bin:$PATH"));
 });

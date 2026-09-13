@@ -6,12 +6,14 @@ const { readFileSync } = require("node:fs");
 const { join, resolve } = require("node:path");
 
 const ROOT = resolve(__dirname, "..");
-const TSX = ["npx", "--no-install", "tsx@4.19.3"];
+const TSX = [process.execPath, "node_modules/tsx/dist/cli.mjs"];
 const SMOKE_COMMANDS = Object.freeze({
     config: [...TSX, "packages/sth/src/bin/hub.ts", "--help"],
     cli: [...TSX, "packages/cli/src/bin/index.ts", "--help"],
     runner: [...TSX, "packages/runner/src/bin/start-runner.ts", "--help"],
-    bdd: [...TSX, "scripts/run-bdd-waves.js", "--chunk=cli-basics", "--no-fail-fast"],
+    // The BDD risk area gets a source-level TypeScript smoke only.  Full BDD is
+    // deliberately owned by the candidate workflow and is never a PR gate.
+    bdd: [...TSX, "scripts/release-risk-smoke.ts", "bdd"],
 });
 const RISK_ORDER = ["config", "cli", "runner", "bdd"];
 const BROAD_ROOTS = ["package.json", "package-lock.json", "tsconfig.json", "config/", "scripts/", "bdd/"];
@@ -86,7 +88,7 @@ function selectPrSmoke({ changedFiles, root = ROOT, manifests } = {}) {
 
 function assertSmokeCommands(commands) {
     for (const command of commands) {
-        if (command.slice(0, 3).join(" ") !== "npx --no-install tsx@4.19.3" || command.some((part) => ["build", "pack", "install", "publish"].includes(part) || part === "npm")) throw new Error("PR smoke command violates the no-build/no-release policy.");
+        if (command[0] !== process.execPath || command[1] !== "node_modules/tsx/dist/cli.mjs" || command.some((part) => ["build", "pack", "install", "publish"].includes(part) || part === "npm")) throw new Error("PR smoke command violates the local-tsx/no-build/no-release policy.");
     }
 }
 
