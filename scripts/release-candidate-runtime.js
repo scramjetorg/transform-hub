@@ -21,7 +21,8 @@ function preflight({ repository, branch, sourceSha, output, env = process.env, r
     const expectedSha = assertSha(sourceSha, "candidate source SHA");
     if (env.RELEASE_REMOTE_POLICY_CONFIRMED !== "true") throw new Error("Remote release policy is unconfirmed; refusing to build or stage a candidate.");
     if (remoteSha(repository, branch, runner) !== expectedSha) throw new Error("Protected remote devel moved during candidate preflight.");
-    const sourceTree = `sha256:${runner("git", ["rev-parse", `${expectedSha}^{tree}`], { encoding: "utf8" }).trim()}`;
+    const treeObjectId = assertSha(runner("git", ["rev-parse", `${expectedSha}^{tree}`], { encoding: "utf8" }).trim(), "Git tree object ID");
+    const sourceTree = sha256(treeObjectId);
     const lockfileDigest = sha256(readFileSync("package-lock.json"));
     const configRevision = env.RELEASE_CONFIG_REVISION || "release-config-v1";
     const configDigest = sha256(Buffer.from(configRevision));

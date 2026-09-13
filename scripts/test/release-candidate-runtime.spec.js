@@ -38,6 +38,28 @@ test("preflight rejects a moved protected remote before tree or lockfile work", 
     t.deepEqual(calls[0], ["ls-remote", "https://github.com/scramjetorg/transform-hub.git", "refs/heads/devel"]);
 });
 
+test("preflight hashes the SHA-1 Git tree object ID into a valid SHA-256 identity digest", (t) => {
+    const root = mkdtempSync(join(tmpdir(), "candidate-preflight-tree-"));
+    t.teardown(() => rmSync(root, { recursive: true, force: true }));
+    const calls = [];
+    const identity = runtime.preflight({ repository: "scramjetorg/transform-hub", branch: "devel", sourceSha: SHA, output: join(root, "identity.json"), env: { RELEASE_REMOTE_POLICY_CONFIRMED: "true" }, runner: (_command, args) => {
+        calls.push(args);
+        if (args[0] === "ls-remote") return `${SHA} refs/heads/devel\n`;
+        return `${"b".repeat(40)}\n`;
+    } });
+    t.regex(identity.sourceTree, /^sha256:[a-f0-9]{64}$/);
+    t.is(calls.length, 2);
+    t.deepEqual(calls[1], ["rev-parse", `${SHA}^{tree}`]);
+});
+
+test("preflight rejects malformed Git tree object output before creating candidate identity", (t) => {
+    const root = mkdtempSync(join(tmpdir(), "candidate-preflight-malformed-tree-"));
+    t.teardown(() => rmSync(root, { recursive: true, force: true }));
+    const output = join(root, "identity.json");
+    t.throws(() => runtime.preflight({ repository: "scramjetorg/transform-hub", branch: "devel", sourceSha: SHA, output, env: { RELEASE_REMOTE_POLICY_CONFIRMED: "true" }, runner: (_command, args) => args[0] === "ls-remote" ? `${SHA} refs/heads/devel\n` : "not-a-git-tree\n" }), { message: /Git tree object ID must be a 40-character Git SHA/ });
+    t.false(existsSync(output));
+});
+
 test("candidate workflow keeps preflight before build and install-free", (t) => {
     const workflow = require("node:fs").readFileSync(resolve(__dirname, "..", "..", ".github", "workflows", "build-release-candidate.yml"), "utf8");
     t.true(workflow.indexOf("  preflight:") < workflow.indexOf("  build:"));
