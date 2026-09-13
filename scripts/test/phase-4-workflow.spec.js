@@ -69,3 +69,15 @@ test("candidate preflight fails closed and reusable validation is evidence-only"
     t.true(reusable.includes("persist-bdd"));
     t.false(/publish|admit|promote/i.test(reusable));
 });
+
+test("candidate preflight stays install-free while build installs before runtime planning", (t) => {
+    const candidate = source("build-release-candidate.yml");
+    const preflight = candidate.slice(candidate.indexOf("  preflight:"), candidate.indexOf("  build:"));
+    const build = candidate.slice(candidate.indexOf("  build:"), candidate.indexOf("  stage:"));
+    const install = build.indexOf("run: npm ci");
+    t.false(preflight.includes("npm ci"));
+    t.true(install >= 0);
+    t.true(install < build.indexOf("node scripts/release-candidate-runtime.js locate"));
+    t.true(install < build.indexOf("node scripts/release-candidate-workflow.js plan"));
+    t.true(install < build.indexOf("node scripts/release-candidate-runtime.js build"));
+});
