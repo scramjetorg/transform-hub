@@ -1,11 +1,10 @@
 #!/usr/bin/env node
-"use strict";
 
 const { execFileSync } = require("node:child_process");
 const { createHash } = require("node:crypto");
 const { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, rmSync, statSync, writeFileSync } = require("node:fs");
 const { dirname, join, relative, resolve } = require("node:path");
-const { assertDigest, canonicalize, digestDocument, validateArtifactContent, validateReleaseSet } = require("./release-contract");
+const { digestDocument, validateArtifactContent, validateReleaseSet } = require("./release-contract");
 
 const RECORD_SCHEMA = "release-tarball-bdd-record.v1";
 const NPM_CLI = resolve(__dirname, "..", "node_modules/npm/bin/npm-cli.js");

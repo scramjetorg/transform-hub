@@ -1,5 +1,3 @@
-"use strict";
-
 const { execFileSync } = require("node:child_process");
 const { createHash } = require("node:crypto");
 const { readFileSync } = require("node:fs");

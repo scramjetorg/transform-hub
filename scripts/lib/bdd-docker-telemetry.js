@@ -1,5 +1,3 @@
-"use strict";
-
 const { renameSync, writeFileSync } = require("node:fs");
 
 const MAX_SAMPLES = 256;

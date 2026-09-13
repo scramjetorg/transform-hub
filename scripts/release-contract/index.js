@@ -1,5 +1,3 @@
-"use strict";
-
 const { createHash } = require("node:crypto");
 const { lstatSync, readFileSync } = require("node:fs");
 const path = require("node:path");

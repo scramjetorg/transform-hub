@@ -1,5 +1,3 @@
-"use strict";
-
 const { createHash } = require("node:crypto");
 const { existsSync, readFileSync, renameSync, writeFileSync } = require("node:fs");
 const { canonicalize, assertDigest, assertSha } = require("../release-contract");

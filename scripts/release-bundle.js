@@ -1,6 +1,4 @@
 #!/usr/bin/env node
-"use strict";
-
 const { execFileSync } = require("node:child_process");
 const { createHash } = require("node:crypto");
 const { copyFileSync, mkdirSync, readFileSync, rmSync, writeFileSync } = require("node:fs");
