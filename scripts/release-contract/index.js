@@ -12,6 +12,7 @@ const SCHEMAS = {
     releaseSet: require("./schemas/release-set.v1.schema.json"),
     buildProvenance: require("./schemas/build-provenance.v1.schema.json"),
     bddConsumedInput: require("./schemas/bdd-consumed-input.v1.schema.json"),
+    bddShardEvidence: require("./schemas/bdd-shard-evidence.v1.schema.json"),
     admissionAttestation: require("./schemas/admission-attestation.v1.schema.json"),
     publicationJournal: require("./schemas/publication-journal.v1.schema.json"),
     registryVerification: require("./schemas/registry-verification.v1.schema.json"),

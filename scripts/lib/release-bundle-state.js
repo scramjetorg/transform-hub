@@ -5,7 +5,6 @@ const { existsSync, readFileSync, renameSync, writeFileSync } = require("node:fs
 const { canonicalize, assertDigest, assertSha } = require("../release-contract");
 
 const STATE_SCHEMA = "release-candidate-state.v1";
-const RELEASE_STATES = new Set(["pending", "staged"]);
 const ATTESTATION_STATES = new Set(["pending", "available", "verified", "rejected"]);
 const ADMISSION_STATES = new Set(["pending", "admitted", "rejected"]);
 
@@ -106,6 +105,36 @@ function recordBddMatrix(file, identity, bdd) {
     return updateSealedState(file, identity, { bdd: { matrixRevision: bdd.matrixRevision || null, shards: bdd.shards } });
 }
 
+function claimBddShard(file, identity, matrixRevision, shardName, { owner = `${process.pid}`, now = Date.now(), leaseMs = 15 * 60 * 1000 } = {}) {
+    if (typeof matrixRevision !== "string" || !matrixRevision || typeof shardName !== "string" || !shardName) throw new Error("BDD matrix revision and shard name are required.");
+    const expected = candidateIdentity(identity);
+    const state = readState(file);
+    if (!state || state.key !== expected.key || state.status !== "sealed") throw new Error("Candidate state must be a matching sealed state.");
+    if (state.bdd?.matrixRevision && state.bdd.matrixRevision !== matrixRevision) throw new Error("BDD matrix revision does not match candidate state.");
+    const shards = Array.isArray(state.bdd?.shards) ? state.bdd.shards : [];
+    const existing = shards.find((shard) => shard.name === shardName);
+    if (existing?.status === "success") return { status: "reused", shard: existing, state };
+    if (existing?.status === "failed") return { status: "failed", shard: existing, state };
+    if (existing?.status === "claimed" && (!Number.isFinite(existing.leaseExpiresAt) || existing.leaseExpiresAt > now)) throw new Error(`BDD shard ${shardName} is actively leased.`);
+    if (typeof owner !== "string" || !owner || !Number.isFinite(leaseMs) || leaseMs <= 0) throw new Error("BDD shard lease owner and duration are required.");
+    const nextShard = { name: shardName, status: "claimed", owner, leaseExpiresAt: now + leaseMs, attempts: (existing?.attempts || 0) + 1 };
+    const next = atomicStateUpdate(file, state, { bdd: { matrixRevision, shards: [...shards.filter((shard) => shard.name !== shardName), nextShard] } });
+    return { status: "claimed", shard: nextShard, state: next };
+}
+
+function recordBddShardResult(file, identity, matrixRevision, shardName, result) {
+    if (!result || !["success", "failed"].includes(result.status)) throw new Error("BDD shard result must be success or failed.");
+    const expected = candidateIdentity(identity);
+    const state = readState(file);
+    if (!state || state.key !== expected.key || state.status !== "sealed" || state.bdd?.matrixRevision !== matrixRevision) throw new Error("Candidate state does not match the BDD shard result.");
+    const shards = Array.isArray(state.bdd?.shards) ? state.bdd.shards : [];
+    const existing = shards.find((shard) => shard.name === shardName);
+    if (!existing || existing.status !== "claimed") throw new Error("BDD shard is not claimed.");
+    if (result.owner && result.owner !== existing.owner) throw new Error("BDD shard result owner does not hold the lease.");
+    const nextShard = { ...existing, status: result.status, evidence: result.evidence || null };
+    return atomicStateUpdate(file, state, { bdd: { matrixRevision, shards: shards.map((shard) => shard.name === shardName ? nextShard : shard), ...(result.status === "failed" ? { failed: true } : {}) }, ...(result.status === "failed" ? { admission: { status: "rejected" } } : {}) });
+}
+
 function recordAdmission(file, identity, status) {
     if (!ADMISSION_STATES.has(status) || status === "pending") throw new Error("Admission status must be terminal.");
     const state = readState(file);
@@ -123,4 +152,4 @@ function sealCandidate(file, identity, sealed) {
     return next;
 }
 
-module.exports = { STATE_SCHEMA, candidateIdentity, claimCandidate, sealCandidate, readState, digest, recordCandidateRelease, recordProducerAttestation, recordBddMatrix, recordAdmission };
+module.exports = { STATE_SCHEMA, candidateIdentity, claimCandidate, sealCandidate, readState, digest, recordCandidateRelease, recordProducerAttestation, recordBddMatrix, claimBddShard, recordBddShardResult, recordAdmission };

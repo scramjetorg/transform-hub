@@ -18,7 +18,9 @@ const {
 	timeoutMs,
 	graceMs,
 	bddMaxOldSpaceSize,
+	bddDockerParentMaxOldSpaceSize,
 	bddNodeOptions,
+	bddDockerNodeOptions,
 	bddNodeArgs,
 	isBddMemoryGuardEnabled,
 	bddMemoryHeapThresholdBytes,
@@ -192,6 +194,50 @@ test("bddMaxOldSpaceSize ignores non-numeric env", (t) => {
 	} finally {
 		if (saved !== undefined) process.env[ENV.MAX_OLD_SPACE] = saved;
 		else delete process.env[ENV.MAX_OLD_SPACE];
+	}
+});
+
+test("Docker parent heap defaults to 768 MiB", (t) => {
+	const saved = process.env[ENV.MAX_OLD_SPACE];
+	delete process.env[ENV.MAX_OLD_SPACE];
+	try {
+		t.is(bddDockerParentMaxOldSpaceSize(), 768);
+		t.true(bddDockerNodeOptions().includes("--max-old-space-size=768"));
+	} finally {
+		if (saved !== undefined) process.env[ENV.MAX_OLD_SPACE] = saved;
+		else delete process.env[ENV.MAX_OLD_SPACE];
+	}
+});
+
+test("Docker parent heap reuses the existing BDD heap override", (t) => {
+	const saved = process.env[ENV.MAX_OLD_SPACE];
+	process.env[ENV.MAX_OLD_SPACE] = "640";
+	try {
+		t.is(bddDockerParentMaxOldSpaceSize(), 640);
+		t.true(bddDockerNodeOptions().includes("--max-old-space-size=640"));
+	} finally {
+		if (saved !== undefined) process.env[ENV.MAX_OLD_SPACE] = saved;
+		else delete process.env[ENV.MAX_OLD_SPACE];
+	}
+});
+
+test("Docker NODE_OPTIONS composes BDD_NODE_OPTIONS and memory guard", (t) => {
+	const savedBase = process.env[ENV.BDD_NODE_OPTIONS];
+	const savedGuard = process.env[ENV.BDD_MEMORY_GUARD];
+	process.env[ENV.BDD_NODE_OPTIONS] = "--inspect --trace-warnings --max-old-space-size=1024";
+	process.env[ENV.BDD_MEMORY_GUARD] = "1";
+	try {
+		const opts = bddDockerNodeOptions();
+		t.true(opts.includes("--inspect"));
+		t.true(opts.includes("--trace-warnings"));
+		t.true(opts.includes("--max-old-space-size=768"));
+		t.false(opts.includes("--max-old-space-size=1024"));
+		t.true(opts.includes("--expose-gc"));
+	} finally {
+		if (savedBase !== undefined) process.env[ENV.BDD_NODE_OPTIONS] = savedBase;
+		else delete process.env[ENV.BDD_NODE_OPTIONS];
+		if (savedGuard !== undefined) process.env[ENV.BDD_MEMORY_GUARD] = savedGuard;
+		else delete process.env[ENV.BDD_MEMORY_GUARD];
 	}
 });
 

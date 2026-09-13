@@ -39,6 +39,20 @@ test("verified module and bin resolve inside the prerelease install", (t) => {
     t.is(resolvePublishedBin("@scramjet/cli", "si", options), realpathSync(join(fixtureData.installDir, "node_modules/@scramjetorg/cli/bin/si.js")));
 });
 
+test("tarball execution root resolves modules and bins without source fallback", (t) => {
+    const root = mkdtempSync(join(tmpdir(), "published-tarball-artifacts-"));
+    t.teardown(() => rmSync(root, { recursive: true, force: true }));
+    const packageDir = join(root, "node_modules", "@scramjet", "a");
+    mkdirSync(packageDir, { recursive: true });
+    writeFileSync(join(packageDir, "package.json"), JSON.stringify({ name: "@scramjet/a", version: "1.0.0", main: "index.js", bin: { tool: "tool.js" } }));
+    writeFileSync(join(packageDir, "index.js"), "module.exports = 'tarball';\n");
+    writeFileSync(join(packageDir, "tool.js"), "#!/usr/bin/env node\n");
+    const options = { workspaceRoot: root, environment: { SCRAMJET_TARBALL_BDD_ROOT: root } };
+    t.is(resolvePublishedModule("@scramjet/a", options), realpathSync(join(packageDir, "index.js")));
+    t.is(resolvePublishedBin("@scramjet/a", "tool", options), realpathSync(join(packageDir, "tool.js")));
+    t.throws(() => resolvePublishedModule("@scramjet/a", { ...options, environment: { ...options.environment, SCRAMJET_SPAWN_TS: "1" } }), { message: /source override/ });
+});
+
 test("default BDD artifact resolution anchors paths at the mounted workspace root", (t) => {
     const fixtureData = fixture(t);
     const bddWorkingDirectory = join(fixtureData.root, "bdd");
