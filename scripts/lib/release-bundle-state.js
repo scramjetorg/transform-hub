@@ -1,6 +1,6 @@
 const { createHash } = require("node:crypto");
 const { existsSync, readFileSync, renameSync, writeFileSync } = require("node:fs");
-const { canonicalize, assertDigest, assertSha } = require("../release-contract");
+const { canonicalize, assertDigest, candidateIdentity } = require("./candidate-identity");
 
 const STATE_SCHEMA = "release-candidate-state.v1";
 const ATTESTATION_STATES = new Set(["pending", "available", "verified", "rejected"]);
@@ -8,18 +8,6 @@ const ADMISSION_STATES = new Set(["pending", "admitted", "rejected"]);
 
 function digest(value) {
     return `sha256:${createHash("sha256").update(canonicalize(value), "utf8").digest("hex")}`;
-}
-
-function candidateIdentity(input) {
-    if (!input || typeof input !== "object") throw new Error("Candidate identity is required.");
-    const sourceSha = assertSha(input.sourceSha, "candidate source SHA");
-    const sourceTree = assertDigest(input.sourceTree, "candidate source tree");
-    const lockfileDigest = assertDigest(input.lockfileDigest, "candidate lockfile digest");
-    if (typeof input.configRevision !== "string" || !input.configRevision) throw new Error("Candidate config revision is required.");
-    const configDigest = assertDigest(input.configDigest, "candidate config digest");
-    const buildIdentity = assertDigest(input.buildIdentity, "candidate build identity");
-    const identity = { sourceSha, sourceTree, lockfileDigest, configRevision: input.configRevision, configDigest, buildIdentity };
-    return { ...identity, key: digest(identity) };
 }
 
 function atomicWriteJson(file, value) {

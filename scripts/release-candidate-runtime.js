@@ -4,13 +4,7 @@ const { execFileSync } = require("node:child_process");
 const { createHash } = require("node:crypto");
 const { mkdirSync, readFileSync, writeFileSync } = require("node:fs");
 const { resolve } = require("node:path");
-const { assertSha, digestDocument } = require("./release-contract");
-const { candidateIdentity, recordProducerAttestation } = require("./lib/release-bundle-state");
-const { buildAndPack } = require("./release-bundle");
-const { createGithubReleaseAssetAdapter, stageGithubDraftCandidate } = require("./lib/github-release-candidate");
-const { bytesDigest, downloadAndVerifyCandidate, validateCandidateSeal } = require("./lib/release-candidate-assets");
-const offlineAdmission = require("./release-candidate-workflow").admission;
-const BDD_MATRIX = require("./release-bdd-matrix.v1.json");
+const { assertSha, candidateIdentity } = require("./lib/candidate-identity");
 
 function option(args, name) { const i = args.indexOf(name); if (i < 0 || !args[i + 1]) throw new Error(`${name} is required.`); return args[i + 1]; }
 function json(file) { return JSON.parse(readFileSync(resolve(file), "utf8")); }
@@ -37,12 +31,16 @@ function preflight({ repository, branch, sourceSha, output, env = process.env, r
 }
 
 function build({ root, bundleDir, stateFile, identityFile, releaseSetFile }) {
+    const { buildAndPack } = require("./release-bundle");
+    const { digestDocument } = require("./release-contract");
     const result = buildAndPack({ root, bundleDir, stateFile, identity: json(identityFile), releaseSet: json(releaseSetFile) });
     write(`${bundleDir}/candidate-result.json`, { status: result.status, releaseSetDigest: digestDocument(result.releaseSet), identity: json(identityFile).key });
     return result;
 }
 
 function locate({ repository, tag, sourceSha, output, runner }) {
+    const { createGithubReleaseAssetAdapter } = require("./lib/github-release-candidate");
+    const { validateCandidateSeal } = require("./lib/release-candidate-assets");
     const adapter = createGithubReleaseAssetAdapter({ repository, tag, targetSha: sourceSha, runner });
     const release = adapter.view();
     if (!release) { write(output, { status: "not-found", tag }); return { status: "not-found" }; }
@@ -57,6 +55,8 @@ function locate({ repository, tag, sourceSha, output, runner }) {
 }
 
 function resolveCandidate({ repository, releaseId, tag, sourceSha, releaseSetDigest, sealedStateDigest, bundleDir, stateFile, output, runner }) {
+    const { createGithubReleaseAssetAdapter } = require("./lib/github-release-candidate");
+    const { bytesDigest, downloadAndVerifyCandidate, validateCandidateSeal } = require("./lib/release-candidate-assets");
     const adapter = createGithubReleaseAssetAdapter({ repository, tag, targetSha: sourceSha, runner });
     if (!Number.isSafeInteger(Number(releaseId)) || Number(releaseId) <= 0) throw new Error("Candidate resolve requires a numeric release ID.");
     if (!/^sha256:[a-f0-9]{64}$/i.test(releaseSetDigest || "") || !/^sha256:[a-f0-9]{64}$/i.test(sealedStateDigest || "")) throw new Error("Candidate resolve requires release-set and sealed-state digests.");
@@ -82,6 +82,8 @@ function resolveCandidate({ repository, releaseId, tag, sourceSha, releaseSetDig
 }
 
 function stage(args) {
+    const { digestDocument } = require("./release-contract");
+    const { stageGithubDraftCandidate } = require("./lib/github-release-candidate");
     const identity = json(args.identityFile);
     const releaseSet = json(`${args.bundleDir}/release-set.json`);
     const provenance = json(`${args.bundleDir}/build-provenance.json`);
@@ -92,6 +94,7 @@ function stage(args) {
 }
 
 function buildBddEvidenceAssets({ state, releaseId, releaseSetDigest, sealedStateDigest }) {
+    const BDD_MATRIX = require("./release-bdd-matrix.v1.json");
     const shards = state.bdd?.shards || [];
     const expected = new Set(BDD_MATRIX.chunks);
     const seen = new Set();
@@ -108,6 +111,9 @@ function buildBddEvidenceAssets({ state, releaseId, releaseSetDigest, sealedStat
 }
 
 function persistBdd({ repository, tag, releaseId, bundleDir, releaseSetDigest, sealedStateDigest, runner = execFileSync }) {
+    const { createGithubReleaseAssetAdapter } = require("./lib/github-release-candidate");
+    const { digestDocument } = require("./release-contract");
+    const { validateCandidateSeal } = require("./lib/release-candidate-assets");
     const adapter = createGithubReleaseAssetAdapter({ repository, tag, targetSha: JSON.parse(readFileSync(`${bundleDir}/candidate-seal.json`, "utf8")).sourceSha, runner });
     const release = adapter.resolve(releaseId);
     if (!release || Number(release.id) !== Number(releaseId)) throw new Error("BDD evidence target release does not match the numeric candidate ID.");
@@ -125,6 +131,9 @@ function persistBdd({ repository, tag, releaseId, bundleDir, releaseSetDigest, s
 }
 
 function admit({ repository, tag, sourceSha, bundleDir, output, runner }) {
+    const { createGithubReleaseAssetAdapter } = require("./lib/github-release-candidate");
+    const { validateCandidateSeal } = require("./lib/release-candidate-assets");
+    const { admission: offlineAdmission } = require("./release-candidate-workflow");
     const adapter = createGithubReleaseAssetAdapter({ repository, tag, targetSha: sourceSha, runner });
     const release = adapter.view();
     if (!release || !(release.databaseId || release.id)) throw new Error("Matching draft candidate release is required for admission.");
@@ -148,8 +157,10 @@ function main() {
     if (command === "stage") return stage({ repository: option(args, "--repository"), tag: option(args, "--tag"), sourceSha: option(args, "--source-sha"), releaseId: Number(option(args, "--release-id")), bundleDir: option(args, "--bundle-dir"), stateFile: option(args, "--state"), identityFile: option(args, "--identity"), output: option(args, "--output") });
     if (command === "persist-bdd") return write(option(args, "--output"), persistBdd({ repository: option(args, "--repository"), tag: option(args, "--tag"), releaseId: Number(option(args, "--release-id")), bundleDir: option(args, "--bundle-dir"), releaseSetDigest: option(args, "--release-set-digest"), sealedStateDigest: option(args, "--sealed-state-digest") }));
     if (command === "attest") {
+        const { digestDocument } = require("./release-contract");
         const evidenceFile = option(args, "--evidence");
         if (args.includes("--repository")) {
+            const { createGithubReleaseAssetAdapter } = require("./lib/github-release-candidate");
             const evidence = json(evidenceFile);
             const adapter = createGithubReleaseAssetAdapter({ repository: option(args, "--repository"), tag: option(args, "--tag"), targetSha: evidence.sourceSha });
             const release = adapter.view();
@@ -160,6 +171,7 @@ function main() {
             if (evidence.candidateReleaseId !== candidateId || evidence.releaseSetDigest !== seal.releaseSetDigest || evidence.sealedStateDigest !== seal.sealedStateDigest) throw new Error("Candidate-success evidence is not bound to the durable candidate seal.");
             adapter.stage(tag, [{ name: "candidate-success.json", bytes: readFileSync(evidenceFile) }]);
         } else {
+            const { recordProducerAttestation } = require("./lib/release-bundle-state");
             const identity = json(option(args, "--identity"));
             recordProducerAttestation(option(args, "--state"), identity, { reference: resolve(evidenceFile), status: "available" });
         }
