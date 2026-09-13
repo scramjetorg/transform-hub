@@ -14,6 +14,7 @@ concurrency:
 
 jobs:
   preflight:
+    if: ${{ github.event.pull_request.head.repo.owner.login == 'scramjetorg' }}
     runs-on: ubuntu-24.04
     permissions:
       contents: read

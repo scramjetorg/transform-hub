@@ -14,6 +14,7 @@ test("active workflow inventory contains only maintained Node 22/npm paths and r
 		"curated-devel-build-validation.yml",
 		"devel-bdd-image.yml",
 		"devel-validate.yml",
+		"external-pr-approved-validation.yml",
 		"main-release.yml",
 		"pr-fast-validation.yml",
 		"pr-validate.yml",

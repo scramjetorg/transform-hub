@@ -17,6 +17,11 @@ test("accepts the minimal compliant replacement workflow fixture", (t) => {
 	t.deepEqual(checkFixture("compliant.yml"), []);
 });
 
+test("rejects unguarded pull-request source execution", (t) => {
+	const errors = checkFixture("unguarded-pr-execution.yml");
+	t.truthy(errors.find((error) => error.code === "UNGUARDED_PR_EXECUTION"));
+});
+
 for (const [fixture, code] of [
 	["forbidden-pull-request-target.yml", "PULL_REQUEST_TARGET"],
 	["mutable-action.yml", "MUTABLE_ACTION_REF"],
@@ -47,6 +52,19 @@ for (const [fixture, code] of [
 
 test("accepts guarded-release-pr-publish as a valid release PR publisher with job-level guard", (t) => {
 	t.deepEqual(checkFixture("guarded-release-pr-publish.yml"), []);
+});
+
+test("enforces same-organization guards and the trusted external approval environment", (t) => {
+
+	const workflows = resolve(__dirname, "..", "..", ".github", "workflows");
+	for (const name of ["pr-fast-validation.yml", "pr-validate.yml", "security-check.yml"]) {
+		const source = require("node:fs").readFileSync(resolve(workflows, name), "utf8");
+		t.true(source.includes("head.repo.owner.login == 'scramjetorg'"), `${name} must gate external PR heads`);
+	}
+	t.deepEqual(checker.checkFiles([resolve(workflows, "external-pr-approved-validation.yml")]), []);
+	t.is(require("node:fs").readFileSync(resolve(workflows, "..", "CODEOWNERS"), "utf8").trim(), "# Every repository path requires review from the trusted organization owners team.\n* @scramjetorg/owners");
+	const missing = checkFixture("external-pr-approved-validation.yml");
+	t.truthy(missing.find((error) => error.code === "MISSING_EXTERNAL_PR_APPROVAL_ENVIRONMENT"));
 });
 
 test("CLI documents explicit scope and deferred external validation", (t) => {

@@ -1,0 +1,76 @@
+name: External PR approved validation
+
+on:
+  workflow_dispatch:
+    inputs:
+      pull_request_number:
+        description: Open external pull request number
+        required: true
+        type: string
+      expected_head_sha:
+        description: Full 40-character expected external head SHA
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  external-pr-code-owner-approval:
+    name: External PR code-owner approval
+    environment: external-pr-code-owner-approval
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      head-repository: ${{ steps.verify.outputs.head-repository }}
+      head-sha: ${{ steps.verify.outputs.head-sha }}
+    steps:
+      - id: verify
+        name: Verify unchanged open external PR metadata
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        env:
+          EXPECTED_HEAD_SHA: ${{ inputs.expected_head_sha }}
+          PULL_REQUEST_NUMBER: ${{ inputs.pull_request_number }}
+        with:
+          script: |
+            const expected = process.env.EXPECTED_HEAD_SHA;
+            if (!/^[a-f0-9]{40}$/i.test(expected)) throw new Error("expected_head_sha must be a full SHA");
+            const number = Number(process.env.PULL_REQUEST_NUMBER);
+            if (!Number.isSafeInteger(number) || number <= 0) throw new Error("pull_request_number must be positive");
+            const { data: pull } = await github.rest.pulls.get({ owner: context.repo.owner, repo: context.repo.repo, pull_number: number });
+            if (pull.state !== "open") throw new Error("External PR must be open");
+            if (!pull.head?.repo?.owner?.login || pull.head.repo.owner.login.toLowerCase() === "scramjetorg") throw new Error("PR head must belong to an external owner");
+            if (pull.head.sha !== expected) throw new Error("PR head SHA changed");
+            core.setOutput("head-repository", pull.head.repo.full_name);
+            core.setOutput("head-sha", pull.head.sha);
+
+  validate:
+    needs: [external-pr-code-owner-approval]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: ${{ needs.external-pr-code-owner-approval.outputs.head-repository }}
+          ref: ${{ needs.external-pr-code-owner-approval.outputs.head-sha }}
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: ./.github/actions/setup-workspace
+        with:
+          cache-mode: restore-only
+          checkpoint-branch: devel
+      - name: Lockfile gate
+        run: npm run check:lockfile
+      - name: Static repository policy
+        run: npm run check:security-workflow
+      - name: Lint changed files
+        run: RAYON_NUM_THREADS=12 ./node_modules/.bin/biome lint --changed --since="${{ inputs.expected_head_sha }}" --error-on-warnings --no-errors-on-unmatched
+      - name: Offline Phase 4 contract and adapter tests
+        run: node scripts/run-ava.js scripts/test/phase-4-workflow.spec.js scripts/test/workflow-inventory.spec.js scripts/test/release-contract.spec.js scripts/test/release-phase4.spec.js scripts/test/github-release-candidate.spec.js scripts/test/release-candidate-assets.spec.js scripts/test/release-bdd-validation.spec.js scripts/test/release-bundle.spec.js
+      - name: Configured risk-area TypeScript smoke
+        run: node scripts/release-pr-smoke.js "${{ github.event.repository.default_branch }}"

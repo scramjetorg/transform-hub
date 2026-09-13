@@ -83,8 +83,10 @@ test("admission accepts exactly the canonical durable BDD shard set", (t) => {
 test("phase 4 workflows keep preflight unconditional and evidence dependent", (t) => {
     const admissionWorkflow = require("node:fs").readFileSync(resolve(__dirname, "..", "..", ".github", "workflows", "release-promotion-admission.yml"), "utf8");
     const buildWorkflow = require("node:fs").readFileSync(resolve(__dirname, "..", "..", ".github", "workflows", "build-release-candidate.yml"), "utf8");
-    t.regex(admissionWorkflow, /  preflight:\n    runs-on:/);
+    t.regex(admissionWorkflow, /  preflight:\n    if: \$\{\{ github\.event\.pull_request\.head\.repo\.owner\.login == 'scramjetorg' \}\}\n    runs-on:/);
     t.regex(admissionWorkflow, /  evidence:\n    needs: \[preflight\]/);
+    t.regex(admissionWorkflow, /  preflight:\n    if: \$\{\{ github\.event\.pull_request\.head\.repo\.owner\.login == 'scramjetorg' \}\}/);
+    t.false(admissionWorkflow.includes("preflight:\n    runs-on:"));
     t.true(buildWorkflow.includes("release-candidate-runtime.js resolve"));
     t.true(admissionWorkflow.includes("release-candidate-runtime.js admit"));
     t.false(admissionWorkflow.includes("RELEASE_CANDIDATE_ID"));
