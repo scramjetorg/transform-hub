@@ -39,7 +39,7 @@ test("GitHub draft adapter creates, reuses, uploads, lists, and downloads throug
     const runner = (_command, args) => {
         calls.push(args);
         if (args[1] === "view") {
-            if (!viewed) return (() => { viewed = true; throw new Error("missing"); })();
+            if (!viewed) return (() => { viewed = true; const error = new Error("release not found"); error.status = 404; throw error; })();
             return JSON.stringify({ databaseId: 42, isDraft: true, tagName: "candidate-1", targetCommitish: identity.sourceSha, assets: [{ name: "release-set.json" }] });
         }
         if (args[1] === "download") {
@@ -56,6 +56,11 @@ test("GitHub draft adapter creates, reuses, uploads, lists, and downloads throug
     t.true(calls.some((args) => args[1] === "create" && args.includes("--draft")));
     t.true(calls.some((args) => args[1] === "upload" && args.includes("--clobber")));
     t.throws(() => adapter.stage("candidate-1", [{ name: "package.json", bytes: Buffer.from("no") }]), { message: /allowlisted/ });
+});
+
+test("GitHub adapter propagates non-404 release lookup failures", (t) => {
+    const adapter = createGithubReleaseAssetAdapter({ repository: "scramjetorg/transform-hub", tag: "candidate-1", targetSha: identity.sourceSha, runner: () => { throw new Error("network failure"); } });
+    t.throws(() => adapter.view(), { message: "network failure" });
 });
 
 test("GitHub draft stager verifies uploaded assets and persists release identity", (t) => {
@@ -85,5 +90,7 @@ test("GitHub draft stager verifies uploaded assets and persists release identity
     };
     const result = stageGithubDraftCandidate({ repository: "scramjetorg/transform-hub", tag: "candidate-2", targetSha: identity.sourceSha, root, releaseSet, provenance, lockfile, stateFile, identity: expected, runner });
     t.is(result.releaseId, 7);
+    t.is(result.seal.schema, "release-candidate-seal.v1");
+    t.is(result.seal.candidateReleaseId, 7);
     t.is(JSON.parse(readFileSync(stateFile, "utf8")).candidateRelease.id, 7);
 });

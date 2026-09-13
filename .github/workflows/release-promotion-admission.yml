@@ -26,8 +26,6 @@ jobs:
       - name: Protected-base and exact candidate preflight
         env:
           GH_TOKEN: ${{ github.token }}
-          RELEASE_CANDIDATE_ID: ${{ vars.SCRAMJET_RELEASE_CANDIDATE_ID }}
-          RELEASE_CANDIDATE_STATE_KEY: ${{ vars.SCRAMJET_RELEASE_CANDIDATE_STATE_KEY }}
         run: |
           test "${{ github.event.action }}" != "closed"
           test "${{ github.event.pull_request.state }}" = "open"
@@ -36,8 +34,6 @@ jobs:
           test "${{ github.event.pull_request.head.repo.full_name }}" = "$GITHUB_REPOSITORY"
           test "$GITHUB_BASE_REF" = "main"
           test "$GITHUB_HEAD_REF" = "devel"
-          test "$RELEASE_CANDIDATE_ID" -gt 0
-          test -n "$RELEASE_CANDIDATE_STATE_KEY"
           git diff --quiet "$GITHUB_SHA" || true
   evidence:
     needs: [preflight]
@@ -54,22 +50,10 @@ jobs:
       - name: Verify candidate assets, version and tag availability without rebuilding
         env:
           GH_TOKEN: ${{ github.token }}
-          RELEASE_CANDIDATE_ID: ${{ vars.SCRAMJET_RELEASE_CANDIDATE_ID }}
           CANDIDATE_SOURCE_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
-          test -n "${{ vars.SCRAMJET_RELEASE_SET_DIGEST }}"
-          mkdir -p "$RUNNER_TEMP/candidate" "$RUNNER_TEMP/evidence"
-          test "$RELEASE_CANDIDATE_ID" -gt 0
-          gh api "repos/$GITHUB_REPOSITORY/releases/$RELEASE_CANDIDATE_ID" > "$RUNNER_TEMP/candidate/release.json"
-          node -e 'const r=require(process.env.RUNNER_TEMP + "/candidate/release.json"); if (r.id !== Number(process.env.RELEASE_CANDIDATE_ID) || !r.draft || r.target_commitish !== process.env.CANDIDATE_SOURCE_SHA) process.exit(1);'
-          node -e 'const fs=require("fs"),r=require(process.env.RUNNER_TEMP + "/candidate/release.json"),names=["release-set.json","build-provenance.json","package-lock.json","candidate-state.json"]; for (const n of names) { const a=(r.assets||[]).find(x=>x.name===n); if (!a) process.exit(1); require("child_process").execFileSync("gh",["api","-H","Accept: application/octet-stream",a.url],{stdio:["ignore",fs.openSync(process.env.RUNNER_TEMP+"/candidate/"+n,"w"),"inherit"]}); }'
-          test "$(node -e 'process.stdout.write(require("./scripts/release-contract").digestDocument(require(process.env.RUNNER_TEMP + "/candidate/release-set.json")))')" = "${{ vars.SCRAMJET_RELEASE_SET_DIGEST }}"
-          run_id="$(gh run list --workflow build-release-candidate.yml --commit "${{ github.event.pull_request.head.sha }}" --json databaseId --jq '.[0].databaseId')"
-          test -n "$run_id"
-          gh run download "$run_id" --repo "$GITHUB_REPOSITORY" --name candidate-final-state-${{ github.event.pull_request.head.sha }} --dir "$RUNNER_TEMP/evidence"
-          gh run download "$run_id" --repo "$GITHUB_REPOSITORY" --name candidate-success-${{ github.event.pull_request.head.sha }} --dir "$RUNNER_TEMP/evidence"
-          cp "$RUNNER_TEMP/candidate/candidate-state.json" "$RUNNER_TEMP/evidence/candidate-state.json"
-          node scripts/release-candidate-workflow.js admission --state "$RUNNER_TEMP/evidence/candidate-state.json" --release-set "$RUNNER_TEMP/candidate/release-set.json" --evidence "$RUNNER_TEMP/evidence/candidate-success.json" --source-sha "${{ github.event.pull_request.head.sha }}" --release-id "$RELEASE_CANDIDATE_ID" --output "$RUNNER_TEMP/release-admission-evidence.json"
+          mkdir -p "$RUNNER_TEMP/candidate"
+          node scripts/release-candidate-runtime.js admit --repository "$GITHUB_REPOSITORY" --tag "candidate-${{ github.event.pull_request.head.sha }}" --source-sha "${{ github.event.pull_request.head.sha }}" --bundle-dir "$RUNNER_TEMP/candidate" --output "$RUNNER_TEMP/release-admission-evidence.json"
           echo "Admission is evidence-only: no build, pack, full BDD, image, publish, or promote command is permitted."
       - uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08
         with:

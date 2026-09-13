@@ -3,27 +3,13 @@ name: Curated devel build validation
 on:
   workflow_call:
     inputs:
-      source-sha:
-        required: true
-        type: string
-      candidate-release-id:
-        required: true
-        type: string
-      candidate-state-key:
-        required: true
-        type: string
-      release-set-digest:
-        required: true
-        type: string
-      image-digest:
-        required: true
-        type: string
-      bundle-artifact:
-        required: true
-        type: string
-      state-artifact:
-        required: true
-        type: string
+      source-sha: { required: true, type: string }
+      candidate-release-id: { required: true, type: string }
+      release-set-digest: { required: true, type: string }
+      sealed-state-digest: { required: true, type: string }
+      image-digest: { required: true, type: string }
+      repository: { required: true, type: string }
+      candidate-tag: { required: true, type: string }
     outputs:
       consumed-input-digest:
         value: ${{ jobs.validate.outputs.consumed-input-digest }}
@@ -31,7 +17,7 @@ on:
         value: ${{ jobs.validate.outputs.shard-evidence }}
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: curated-candidate-${{ inputs.source-sha }}
@@ -44,35 +30,23 @@ jobs:
       shard-evidence: ${{ steps.validate.outputs.shard-evidence }}
     runs-on: ubuntu-24.04
     permissions:
-      contents: read
+      contents: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           persist-credentials: false
           ref: ${{ inputs.source-sha }}
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          name: ${{ inputs.bundle-artifact }}
-          path: ${{ runner.temp }}/candidate-bundle
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          name: ${{ inputs.state-artifact }}
-          path: ${{ runner.temp }}/candidate-bundle
       - id: validate
-        name: Verify staged tarballs and run isolated curated BDD
+        name: Download and verify the sealed candidate, then run curated BDD
         env:
           RELEASE_CANDIDATE_DIR: ${{ runner.temp }}/candidate-bundle
           RELEASE_CANDIDATE_STATE: ${{ runner.temp }}/candidate-bundle/candidate-state.json
           RELEASE_GHCR_IMAGE_DIGEST: ${{ inputs.image-digest }}
+          GH_TOKEN: ${{ github.token }}
         run: |
-          test "${{ inputs.candidate-state-key }}" != ""
-          test "${{ inputs.release-set-digest }}" = "$(node -e 'const c=require("./scripts/release-contract"); console.log(c.digestDocument(require(process.env.RELEASE_CANDIDATE_DIR + "/release-set.json")))')"
+          mkdir -p "$RELEASE_CANDIDATE_DIR"
+          node scripts/release-candidate-runtime.js resolve --repository "${{ inputs.repository }}" --tag "${{ inputs.candidate-tag }}" --source-sha "${{ inputs.source-sha }}" --release-id "${{ inputs.candidate-release-id }}" --release-set-digest "${{ inputs.release-set-digest }}" --sealed-state-digest "${{ inputs.sealed-state-digest }}" --bundle-dir "$RELEASE_CANDIDATE_DIR" --state "$RELEASE_CANDIDATE_STATE" --output "$RUNNER_TEMP/resolve.json"
           RELEASE_CANDIDATE_IDENTITY="$(cat "$RELEASE_CANDIDATE_DIR/candidate-identity.json")" node scripts/release-bdd-validation.js run --all
+          node scripts/release-candidate-runtime.js persist-bdd --repository "${{ inputs.repository }}" --tag "${{ inputs.candidate-tag }}" --release-id "${{ inputs.candidate-release-id }}" --release-set-digest "${{ inputs.release-set-digest }}" --sealed-state-digest "${{ inputs.sealed-state-digest }}" --bundle-dir "$RELEASE_CANDIDATE_DIR" --output "$RUNNER_TEMP/bdd-persist.json"
           echo "consumed-input-digest=$(node -p "require(process.env.RELEASE_CANDIDATE_DIR + '/bdd-evidence/' + require('./scripts/release-bdd-matrix.v1.json').revision + '/consumed-input.json').recordDigest")" >> "$GITHUB_OUTPUT"
           echo 'shard-evidence=complete' >> "$GITHUB_OUTPUT"
-      - uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08
-        with:
-          name: candidate-validation-state-${{ inputs.source-sha }}
-          path: ${{ runner.temp }}/candidate-bundle/candidate-state.json
-          if-no-files-found: error
-          retention-days: 90

@@ -1,9 +1,35 @@
-"use strict";
-
 const { createHash } = require("node:crypto");
 const { mkdirSync, writeFileSync } = require("node:fs");
 const { dirname, join } = require("node:path");
 const { canonicalize, digestDocument, validateReleaseSet, validateArtifactContent } = require("../release-contract");
+
+function bytesDigest(bytes) { return `sha256:${createHash("sha256").update(bytes).digest("hex")}`; }
+
+function createCandidateSeal({ releaseId, identity, sourceSha, sourceTree, releaseSet, provenance, stateBytes }) {
+    if (!Number.isSafeInteger(Number(releaseId)) || Number(releaseId) <= 0) throw new Error("Candidate seal requires a numeric release ID.");
+    const releaseSetDigest = digestDocument(releaseSet);
+    if (provenance.releaseSetDigest !== releaseSetDigest) throw new Error("Candidate seal provenance does not match the release set.");
+    return {
+        schema: "release-candidate-seal.v1",
+        candidateReleaseId: Number(releaseId),
+        identity: identity?.key || null,
+        sourceSha,
+        sourceTree,
+        releaseSetDigest,
+        provenanceDigest: digestDocument(provenance),
+        sealedStateDigest: bytesDigest(stateBytes),
+        imageDigests: (releaseSet.artifacts.images || []).map((image) => ({ repository: image.repository, digest: image.digest })),
+        canonical: { schema: "release-candidate-seal.v1", version: 1 },
+    };
+}
+
+function validateCandidateSeal(seal) {
+    if (!seal || seal.schema !== "release-candidate-seal.v1" || !seal.canonical || seal.canonical.version !== 1) throw new Error("Candidate seal schema is invalid.");
+    if (!Number.isSafeInteger(seal.candidateReleaseId) || seal.candidateReleaseId <= 0) throw new Error("Candidate seal release ID is invalid.");
+    for (const [name, value] of [["release-set", seal.releaseSetDigest], ["provenance", seal.provenanceDigest], ["sealed state", seal.sealedStateDigest]]) if (!/^sha256:[a-f0-9]{64}$/i.test(value || "")) throw new Error(`Candidate seal ${name} digest is invalid.`);
+    if (!/^[a-f0-9]{40}$/i.test(seal.sourceSha || "") || !/^sha256:[a-f0-9]{64}$/i.test(seal.sourceTree || "")) throw new Error("Candidate seal source binding is invalid.");
+    return true;
+}
 
 function assetDigest(bytes) {
     const hash = createHash("sha256").update(bytes);
@@ -41,6 +67,15 @@ function stageCandidateAssets({ adapter, candidateId, root, releaseSet, provenan
 function downloadAndVerifyCandidate({ adapter, candidateId, destination, releaseSet: expectedReleaseSet = null, candidateReference }) {
     if (!candidateReference || candidateReference.candidateId !== candidateId) throw new Error("Candidate reference is required and must match the candidate.");
     mkdirSync(destination, { recursive: true });
+    if (candidateReference.sealedStateDigest || candidateReference.candidateSeal) {
+        const sealBytes = adapter.download(candidateId, "candidate-seal.json");
+        let seal;
+        try { seal = JSON.parse(sealBytes.toString("utf8")); } catch { throw new Error("Candidate seal is invalid JSON."); }
+        validateCandidateSeal(seal);
+        if (candidateReference.candidateSeal && canonicalize(seal) !== canonicalize(candidateReference.candidateSeal)) throw new Error("Candidate seal does not match the expected seal.");
+        if (candidateReference.sealedStateDigest && seal.sealedStateDigest !== candidateReference.sealedStateDigest) throw new Error("Candidate sealed-state digest does not match the candidate reference.");
+        writeFileSync(join(destination, "candidate-seal.json"), sealBytes, { flag: "wx" });
+    }
     const manifestBytes = adapter.download(candidateId, "release-set.json");
     let releaseSet;
     try { releaseSet = JSON.parse(manifestBytes.toString("utf8")); } catch { throw new Error("Candidate release-set manifest is invalid JSON."); }
@@ -68,4 +103,4 @@ function downloadAndVerifyCandidate({ adapter, candidateId, destination, release
     return { candidateId, assets: names, releaseSet, provenance };
 }
 
-module.exports = { assetDigest, createMemoryCandidateAssetAdapter, stageCandidateAssets, downloadAndVerifyCandidate };
+module.exports = { assetDigest, bytesDigest, createCandidateSeal, validateCandidateSeal, createMemoryCandidateAssetAdapter, stageCandidateAssets, downloadAndVerifyCandidate };

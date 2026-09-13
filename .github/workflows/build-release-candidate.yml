@@ -30,7 +30,7 @@ jobs:
         env:
           RELEASE_REMOTE_POLICY_CONFIRMED: ${{ vars.SCRAMJET_RELEASE_REMOTE_POLICY_CONFIRMED }}
         run: |
-          node scripts/release-candidate-workflow.js preflight --repository "$GITHUB_REPOSITORY" --branch devel --source-sha "$GITHUB_SHA" --output "$RUNNER_TEMP/candidate-identity.json" --require-policy-confirmation
+          node scripts/release-candidate-runtime.js preflight --repository "$GITHUB_REPOSITORY" --branch devel --source-sha "$GITHUB_SHA" --output "$RUNNER_TEMP/candidate-identity.json" --require-policy-confirmation
           echo "identity=$(base64 -w 0 "$RUNNER_TEMP/candidate-identity.json")" >> "$GITHUB_OUTPUT"
           echo "identity-key=$(node -p "require(process.env.RUNNER_TEMP + '/candidate-identity.json').key")" >> "$GITHUB_OUTPUT"
       - uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08
@@ -72,10 +72,12 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           mkdir -p "$RUNNER_TEMP/candidate-bundle"
-          node scripts/release-candidate-workflow.js resolve --repository "$GITHUB_REPOSITORY" --tag "candidate-$GITHUB_SHA" --source-sha "$GITHUB_SHA" --identity-key "${{ needs.preflight.outputs.identity-key }}" --bundle-dir "$RUNNER_TEMP/candidate-bundle" --state "$RUNNER_TEMP/candidate-state.json" --output "$RUNNER_TEMP/resolve.json"
-          if test "$(node -p "require(process.env.RUNNER_TEMP + '/resolve.json').status")" = "missing"; then
+          node scripts/release-candidate-runtime.js locate --repository "$GITHUB_REPOSITORY" --tag "candidate-$GITHUB_SHA" --source-sha "$GITHUB_SHA" --output "$RUNNER_TEMP/locate.json"
+           if test "$(node -p "require(process.env.RUNNER_TEMP + '/locate.json').status")" = "found"; then
+             node scripts/release-candidate-runtime.js resolve --repository "$GITHUB_REPOSITORY" --tag "candidate-$GITHUB_SHA" --source-sha "$GITHUB_SHA" --release-id "$(node -p "require(process.env.RUNNER_TEMP + '/locate.json').releaseId")" --release-set-digest "$(node -p "require(process.env.RUNNER_TEMP + '/locate.json').releaseSetDigest")" --sealed-state-digest "$(node -p "require(process.env.RUNNER_TEMP + '/locate.json').sealedStateDigest")" --bundle-dir "$RUNNER_TEMP/candidate-bundle" --state "$RUNNER_TEMP/candidate-state.json" --output "$RUNNER_TEMP/resolve.json"
+          else
             node scripts/release-candidate-workflow.js plan --identity "$RUNNER_TEMP/identity/candidate-identity.json" --image-digest "$IMAGE_DIGEST" --output "$RUNNER_TEMP/release-set.json"
-            node scripts/release-candidate-workflow.js build --root "$GITHUB_WORKSPACE" --bundle-dir "$RUNNER_TEMP/candidate-bundle" --state "$RUNNER_TEMP/candidate-state.json" --identity "$RUNNER_TEMP/identity/candidate-identity.json" --release-set "$RUNNER_TEMP/release-set.json"
+            node scripts/release-candidate-runtime.js build --root "$GITHUB_WORKSPACE" --bundle-dir "$RUNNER_TEMP/candidate-bundle" --state "$RUNNER_TEMP/candidate-state.json" --identity "$RUNNER_TEMP/identity/candidate-identity.json" --release-set "$RUNNER_TEMP/release-set.json"
           fi
       - id: bundle
         run: |
@@ -96,6 +98,7 @@ jobs:
       contents: write
     outputs:
       release-id: ${{ steps.stage.outputs.release-id }}
+      sealed-state-digest: ${{ steps.stage.outputs.sealed-state-digest }}
     concurrency:
       group: candidate-staging-${{ github.sha }}
       cancel-in-progress: false
@@ -117,62 +120,38 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          node scripts/release-candidate-workflow.js stage --repository "$GITHUB_REPOSITORY" --tag "candidate-$GITHUB_SHA" --source-sha "$GITHUB_SHA" --release-id 0 --bundle-dir "$RUNNER_TEMP/candidate-bundle" --state "$RUNNER_TEMP/candidate-bundle/candidate-state.json" --identity "$RUNNER_TEMP/identity/candidate-identity.json" --output "$RUNNER_TEMP/stage.json"
+          node scripts/release-candidate-runtime.js stage --repository "$GITHUB_REPOSITORY" --tag "candidate-$GITHUB_SHA" --source-sha "$GITHUB_SHA" --release-id 0 --bundle-dir "$RUNNER_TEMP/candidate-bundle" --state "$RUNNER_TEMP/candidate-bundle/candidate-state.json" --identity "$RUNNER_TEMP/identity/candidate-identity.json" --output "$RUNNER_TEMP/stage.json"
           echo "release-id=$(node -p "require(process.env.RUNNER_TEMP + '/stage.json').releaseId")" >> "$GITHUB_OUTPUT"
-      - uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08
-        with:
-          name: candidate-state-${{ github.sha }}
-          path: ${{ runner.temp }}/candidate-bundle/candidate-state.json
-          if-no-files-found: error
-          retention-days: 90
+           echo "sealed-state-digest=$(node -p "require(process.env.RUNNER_TEMP + '/stage.json').sealedStateDigest")" >> "$GITHUB_OUTPUT"
 
   curated-validation:
     needs: [preflight, build, stage]
     permissions:
-      contents: read
+      contents: write
     uses: ./.github/workflows/curated-devel-build-validation.yml
     with:
       source-sha: ${{ github.sha }}
       candidate-release-id: ${{ needs.stage.outputs.release-id }}
-      candidate-state-key: ${{ needs.build.outputs.state-key }}
       release-set-digest: ${{ needs.build.outputs.release-set-digest }}
       image-digest: ${{ needs.build.outputs.image-digest }}
-      bundle-artifact: candidate-bundle-${{ github.sha }}
-      state-artifact: candidate-state-${{ github.sha }}
+      sealed-state-digest: ${{ needs.stage.outputs.sealed-state-digest }}
+      repository: ${{ github.repository }}
+      candidate-tag: candidate-${{ github.sha }}
 
   candidate-success:
     needs: [preflight, build, stage, curated-validation]
     if: ${{ needs.curated-validation.result == 'success' }}
     runs-on: ubuntu-24.04
     permissions:
-      contents: read
+      contents: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           persist-credentials: false
           ref: ${{ github.sha }}
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          name: candidate-bundle-${{ github.sha }}
-          path: ${{ runner.temp }}/candidate-bundle
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          name: candidate-validation-state-${{ github.sha }}
-          path: ${{ runner.temp }}/candidate-bundle
       - name: Persist candidate-success evidence after complete validation
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          test -n "${{ needs.build.outputs.release-set-digest }}"
-          printf '%s\n' '{"schema":"candidate-success-attestation.v1","candidateSuccess":true,"sourceSha":"${{ github.sha }}","candidateReleaseId":${{ needs.stage.outputs.release-id }},"releaseSetDigest":"${{ needs.build.outputs.release-set-digest }}"}' > "$RUNNER_TEMP/candidate-bundle/candidate-success.json"
-          node scripts/release-candidate-workflow.js attest --state "$RUNNER_TEMP/candidate-bundle/candidate-state.json" --identity "$RUNNER_TEMP/candidate-bundle/candidate-identity.json" --evidence "$RUNNER_TEMP/candidate-bundle/candidate-success.json" --output "$RUNNER_TEMP/candidate-bundle/candidate-success-attestation.json"
-      - uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08
-        with:
-          name: candidate-success-${{ github.sha }}
-          path: ${{ runner.temp }}/candidate-bundle/candidate-success.json
-          if-no-files-found: error
-          retention-days: 90
-      - uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08
-        with:
-          name: candidate-final-state-${{ github.sha }}
-          path: ${{ runner.temp }}/candidate-bundle/candidate-state.json
-          if-no-files-found: error
-          retention-days: 90
+          printf '%s\n' '{"schema":"candidate-success-attestation.v1","candidateSuccess":true,"sourceSha":"${{ github.sha }}","candidateReleaseId":${{ needs.stage.outputs.release-id }},"releaseSetDigest":"${{ needs.build.outputs.release-set-digest }}","sealedStateDigest":"${{ needs.stage.outputs.sealed-state-digest }}"}' > "$RUNNER_TEMP/candidate-success.json"
+          node scripts/release-candidate-runtime.js attest --evidence "$RUNNER_TEMP/candidate-success.json" --output "$RUNNER_TEMP/candidate-success-attestation.json" --repository "$GITHUB_REPOSITORY" --tag "candidate-$GITHUB_SHA"
