@@ -58,12 +58,18 @@ jobs:
         run: |
           npm ci
           node scripts/build-all.js --no-install --link-packages -d packages/runner -o ./dist/docker-runner/ --ts-config tsconfig.build.json
+      - name: Require the trusted runtime dependency checkpoint
+        run: |
+          node scripts/checkpoint/consume.js --branch devel --require-runtime-dependencies
+          rm -rf runtime-dependencies
+          cp -a "$CHECKPOINT_RUNTIME_DEPENDENCIES" runtime-dependencies
+          test -s runtime-dependencies/manifest.v1.json
       - id: images
         name: Build and remotely verify the protected runtime-image closure
         run: |
           set -euo pipefail
           printf '%s' "$GHCR_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
-          build_image() { local role="$1" repo="$2" file="$3" context="$4"; local metadata="$RUNNER_TEMP/$role.json"; docker buildx build --push --platform linux/amd64 --file "$file" --tag "$repo:$GITHUB_SHA" --metadata-file "$metadata" "$context" >/dev/null; local digest; digest="$(jq -r '.["containerimage.digest"]' "$metadata")"; test "$digest" != null; docker buildx imagetools inspect "$repo@$digest" >/dev/null; printf '%s\t%s\t%s\n' "$role" "$repo" "$digest"; }
+          build_image() { local role="$1" repo="$2" file="$3" context="$4"; local metadata="$RUNNER_TEMP/$role.json"; docker buildx build --push --platform linux/amd64 --build-arg CHECKPOINT_RUNTIME_DEPENDENCIES=true --file "$file" --tag "$repo:$GITHUB_SHA" --metadata-file "$metadata" "$context" >/dev/null; local digest; digest="$(jq -r '.["containerimage.digest"]' "$metadata")"; test "$digest" != null; docker buildx imagetools inspect "$repo@$digest" >/dev/null; printf '%s\t%s\t%s\n' "$role" "$repo" "$digest"; }
           { build_image bdd-node ghcr.io/scramjetorg/transform-hub/bdd-node docker/Dockerfile.bdd-bun .; build_image runner-node ghcr.io/scramjetorg/transform-hub/runner packages/runner/Dockerfile .; build_image runner-python ghcr.io/scramjetorg/transform-hub/runner-py packages/runner-python/Dockerfile .; build_image runner-bun ghcr.io/scramjetorg/transform-hub/runner-bun packages/runner-bun/Dockerfile .; build_image pre-runner ghcr.io/scramjetorg/transform-hub/pre-runner packages/pre-runner/Dockerfile packages/pre-runner; } > "$RUNNER_TEMP/images.tsv"
           node - "$RUNNER_TEMP/images.tsv" "$RUNNER_TEMP/runtime-images.json" <<'NODE'
           const fs = require("node:fs"); const out = {}; for (const line of fs.readFileSync(process.argv[2], "utf8").trim().split("\n")) { const [role, repository, digest] = line.split("\t"); out[role] = { repository, digest }; } fs.writeFileSync(process.argv[3], JSON.stringify(out));

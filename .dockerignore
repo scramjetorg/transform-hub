@@ -13,3 +13,9 @@
 conductor
 coverage
 images
+!runtime-dependencies/yarn/cache/
+!runtime-dependencies/yarn/cache/**
+!runtime-dependencies/yarn/cache/**/.github/
+!runtime-dependencies/yarn/cache/**/.github/**
+!runtime-dependencies/yarn/cache/**/docs/
+!runtime-dependencies/yarn/cache/**/docs/**

@@ -37,17 +37,7 @@ RUN apt-get update \
         gosu \
         tini \
         ca-certificates \
-        curl \
-        gnupg \
-    && mkdir -p /etc/apt/keyrings \
-    && curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key \
-        | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg \
-    && echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_${NODE_MAJOR}.x nodistro main" \
-        > /etc/apt/sources.list.d/nodesource.list \
-    && apt-get update \
-    && apt-get install -y --no-install-recommends nodejs \
-    && npm install -g --no-audit --no-fund yarn \
-    && apt-get purge -y --auto-remove gnupg \
+        unzip \
     && rm -rf /var/lib/apt/lists/*
 
 # ---------------------------------------------------------------------------
@@ -59,18 +49,44 @@ WORKDIR /app/
 
 COPY ./dist/docker-runner ./dist
 
+FROM node:22-bookworm-slim AS node-runtime
+
 # ---------------------------------------------------------------------------
 # Final image
 # ---------------------------------------------------------------------------
 FROM target
 
+ARG CHECKPOINT_RUNTIME_DEPENDENCIES=false
+COPY runtime-dependencies/ /opt/transform-hub/runtime-dependencies/
+COPY scripts/checkpoint/verify-runtime-dependencies.js /usr/local/bin/verify-runtime-dependencies.js
+COPY --from=node-runtime /usr/local/bin/node /usr/local/bin/node
+COPY --from=node-runtime /usr/local/bin/npm /usr/local/bin/npm
+COPY --from=node-runtime /usr/local/bin/npx /usr/local/bin/npx
+COPY --from=node-runtime /usr/local/lib/node_modules /usr/local/lib/node_modules
+
 # Outer Node-based runner lives under ${HUB_DIR}/runner so that the
 # workdir-relative `node bin/start-runner` in docker-entrypoint.sh resolves.
 COPY --from=builder /app/dist ${HUB_DIR}
+COPY packages/runner/package.json /tmp/scramjet-runner-install/package.json
+COPY packages/runner/yarn.lock /tmp/scramjet-runner-install/yarn.lock
 
 WORKDIR ${HUB_DIR}/runner
 
-RUN yarn install --ignore-engines --frozen-lockfile --production --silent \
+RUN if [ "${CHECKPOINT_RUNTIME_DEPENDENCIES}" = "true" ]; then \
+        node /usr/local/bin/verify-runtime-dependencies.js "${HUB_DIR}/runtime-dependencies" --runner \
+            --runner-package-json /tmp/scramjet-runner-install/package.json \
+            --runner-lockfile /tmp/scramjet-runner-install/yarn.lock \
+        && \
+        unzip -q ${HUB_DIR}/runtime-dependencies/bun/bun-linux-x64.zip -d /usr/local/lib \
+        && ln -sf /usr/local/lib/bun-linux-x64/bun /usr/local/bin/bun \
+        && tar -xzf ${HUB_DIR}/runtime-dependencies/yarn/yarn.tar.gz -C /usr/local/lib \
+        && ln -sf /usr/local/lib/yarn-v1.22.22/bin/yarn /usr/local/bin/yarn \
+        && ln -sf /usr/local/lib/yarn-v1.22.22/bin/yarn /usr/local/bin/yarnpkg \
+        && yarn --cwd /tmp/scramjet-runner-install install --offline --ignore-engines --frozen-lockfile --production --silent \
+            --cache-folder ${HUB_DIR}/runtime-dependencies/yarn/cache \
+            --modules-folder ${HUB_DIR}/node_modules; \
+    else npm install -g --no-audit --no-fund yarn \
+        && yarn install --ignore-engines --frozen-lockfile --production --silent; fi \
     && yarn cache clean \
     && chmod +x ./bin/start-runner.js
 
@@ -86,21 +102,24 @@ RUN yarn install --ignore-engines --frozen-lockfile --production --silent \
 COPY packages/runner-python/scripts/verser2-config.sh /tmp/verser2-config.sh
 COPY packages/runner-python/requirements.txt ${RUNNER_PY_DIR}/requirements.txt
 RUN set -eux \
-    && . /tmp/verser2-config.sh \
-    && TMP_DIR="$(mktemp -d)" \
-    && python3 -c "\
-import sys; \
-from pathlib import Path; \
-from urllib.request import urlopen; \
-url, dst = sys.argv[1], Path(sys.argv[2]); \
-dst.write_bytes(urlopen(url).read()) \
+    && if [ "${CHECKPOINT_RUNTIME_DEPENDENCIES}" = "true" ]; then test -d ${HUB_DIR}/runtime-dependencies/python/wheelhouse; fi \
+    && if [ "${CHECKPOINT_RUNTIME_DEPENDENCIES}" = "true" ]; then \
+        pip install --no-cache-dir --no-index --require-hashes --find-links ${HUB_DIR}/runtime-dependencies/python/wheelhouse -r ${RUNNER_PY_DIR}/requirements.txt; \
+    else \
+        . /tmp/verser2-config.sh \
+        && TMP_DIR="$(mktemp -d)" \
+        && python3 -c "\
+ import sys; \
+ from pathlib import Path; \
+ from urllib.request import urlopen; \
+ url, dst = sys.argv[1], Path(sys.argv[2]); \
+ dst.write_bytes(urlopen(url).read()) \
 " "${VERSER2_WHEEL_URL}" "${TMP_DIR}/${VERSER2_WHEEL}" \
-    && echo "${VERSER2_WHEEL_SHA256}  ${TMP_DIR}/${VERSER2_WHEEL}" \
-        | sha256sum --check --status \
-    && pip install --no-cache-dir \
-        -r ${RUNNER_PY_DIR}/requirements.txt \
-        "${TMP_DIR}/${VERSER2_WHEEL}" \
-    && rm -rf "${TMP_DIR}" /tmp/verser2-config.sh
+        && echo "${VERSER2_WHEEL_SHA256}  ${TMP_DIR}/${VERSER2_WHEEL}" | sha256sum --check --status \
+        && pip install --no-cache-dir --find-links "${TMP_DIR}" -r ${RUNNER_PY_DIR}/requirements.txt \
+        && rm -rf "${TMP_DIR}"; \
+    fi \
+    && rm -f /tmp/verser2-config.sh
 
 COPY packages/runner-python/runner_python ${RUNNER_PY_DIR}/runner_python
 COPY packages/runner-python/src          ${RUNNER_PY_DIR}/src

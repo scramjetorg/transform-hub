@@ -67,6 +67,47 @@ test("candidate workflow keeps preflight before build and install-free", (t) => 
     t.false(workflow.includes("npm install"));
 });
 
+test("candidate workflow replaces the runtime dependency destination with the verified checkpoint", (t) => {
+    const workflow = readFileSync(resolve(__dirname, "..", "..", ".github", "workflows", "build-release-candidate.yml"), "utf8");
+    const consume = workflow.indexOf("checkpoint/consume.js --branch devel --require-runtime-dependencies");
+    const replace = workflow.indexOf("rm -rf runtime-dependencies", consume);
+    const copy = workflow.indexOf('cp -a "$CHECKPOINT_RUNTIME_DEPENDENCIES" runtime-dependencies', consume);
+    t.true(consume >= 0 && replace > consume && copy > replace);
+    t.true(workflow.includes("test -s runtime-dependencies/manifest.v1.json"));
+});
+
+test("candidate workflow supplies the verified dependency bundle to every runtime image build", (t) => {
+    const workflow = readFileSync(resolve(__dirname, "..", "..", ".github", "workflows", "build-release-candidate.yml"), "utf8");
+    const build = workflow.slice(workflow.indexOf("build_image()"), workflow.indexOf(" > \"$RUNNER_TEMP/images.tsv\""));
+    t.is((build.match(/--build-arg CHECKPOINT_RUNTIME_DEPENDENCIES=true/g) || []).length, 1);
+    for (const role of ["bdd-node", "runner-node", "runner-python", "runner-bun", "pre-runner"]) t.true(build.includes(`build_image ${role} `));
+});
+
+test("candidate runtime Dockerfiles verify staged artifacts and install fully offline", (t) => {
+    const verifier = readFileSync(resolve(__dirname, "..", "checkpoint", "verify-runtime-dependencies.js"), "utf8");
+    const dockerfiles = [
+        ["bdd-bun", resolve(__dirname, "..", "..", "docker", "Dockerfile.bdd-bun")],
+        ["runner", resolve(__dirname, "..", "..", "packages", "runner", "Dockerfile")],
+        ["runner-bun", resolve(__dirname, "..", "..", "packages", "runner-bun", "Dockerfile")],
+        ["runner-python", resolve(__dirname, "..", "..", "packages", "runner-python", "Dockerfile")],
+        ["pre-runner", resolve(__dirname, "..", "..", "packages", "pre-runner", "Dockerfile")],
+    ];
+    for (const [name, file] of dockerfiles) {
+        const dockerfile = readFileSync(file, "utf8");
+        if (name !== "pre-runner") {
+            t.true(dockerfile.includes('CHECKPOINT_RUNTIME_DEPENDENCIES}" = "true"'));
+            t.true(verifier.includes("Runtime dependency file hash mismatch"));
+        }
+        if (name === "bdd-bun" || name === "runner-bun" || name === "runner-python") t.true(dockerfile.includes("bun/bun-linux-x64.zip"));
+        if (name === "runner" || name === "runner-bun" || name === "runner-python") {
+            t.true(dockerfile.includes("yarn/yarn.tar.gz"));
+            t.true(dockerfile.includes("yarn install --offline"));
+        }
+        t.false(dockerfile.includes("deb.nodesource.com"));
+        if (name === "bdd-bun") t.true(dockerfile.includes("curl -fsSL https://bun.sh/install"));
+    }
+});
+
 test("candidate lookup treats gh's missing-release response as a first-build state", (t) => {
     const root = mkdtempSync(join(tmpdir(), "candidate-locate-missing-release-"));
     t.teardown(() => rmSync(root, { recursive: true, force: true }));

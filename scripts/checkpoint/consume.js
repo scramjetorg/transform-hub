@@ -7,6 +7,7 @@ const { join, resolve } = require("node:path");
 const { createPlan } = require("./plan.js");
 const { assertAllowedBranch, checkpointLabels, digestDocument, resolveCheckpoint, statementTag } = require("./provenance.js");
 const { immutableReference } = require("./publish.js");
+const { loadRuntimeProfile, verifyRuntimeManifest } = require("./runtime-dependencies.js");
 
 const REPOSITORY = "ghcr.io/scramjetorg/transform-hub/ci-deps";
 
@@ -33,7 +34,7 @@ function copyFromImage(run, reference, source, destination) {
     }
 }
 
-async function consumeCheckpoint({ branch, root = process.cwd() }, {
+async function consumeCheckpoint({ branch, root = process.cwd(), requireRuntimeDependencies = false }, {
     createPlan: buildPlan = createPlan,
     log = console.log,
     run = defaultRun,
@@ -50,10 +51,12 @@ async function consumeCheckpoint({ branch, root = process.cwd() }, {
     const sourceSha = readSourceSha(workspace);
     const output = mkdtempSync(join(tmpdir(), "transform-hub-checkpoint-consume-"));
     const cache = join(output, "npm-cache");
+    const runtimeDependencies = join(output, "runtime-dependencies");
     let verified = false;
 
     try {
         const plan = await buildPlan({ branch, currentSha: sourceSha, output, sourceSha }, workspace);
+        if (requireRuntimeDependencies && !plan.runtimeDependencyDigest) return fallback("missing-runtime-dependency-profile", log);
         const pointer = `${REPOSITORY}:${plan.promotion.pointerTag}`;
         try {
             run(["pull", pointer]);
@@ -87,6 +90,15 @@ async function consumeCheckpoint({ branch, root = process.cwd() }, {
         if (statementLabels["io.scramjet.provenance.statement-digest"] !== digestDocument(statement)) {
             return fallback("statement-digest-mismatch", log);
         }
+        if (requireRuntimeDependencies) {
+            if (cacheLabels["io.scramjet.provenance.runtime-dependencies"] !== plan.runtimeDependencyDigest) return fallback("runtime-dependency-label-mismatch", log);
+            const artifact = statement.outputs?.artifacts?.find((candidate) => candidate.role === "runtime-dependencies");
+            if (!artifact) return fallback("missing-runtime-dependency-statement-artifact", log);
+            mkdirSync(runtimeDependencies);
+            copyFromImage(run, cacheReference.reference, "/opt/transform-hub/runtime-dependencies/.", runtimeDependencies);
+            const manifest = verifyRuntimeManifest(runtimeDependencies, loadRuntimeProfile(workspace));
+            if (manifest.profileDigest !== plan.runtimeDependencyDigest || digestDocument(manifest) !== artifact.digest) return fallback("runtime-dependency-manifest-mismatch", log);
+        }
         const resolved = resolveCheckpoint({
             branch,
             expectedIdentity: plan.identity,
@@ -101,11 +113,13 @@ async function consumeCheckpoint({ branch, root = process.cwd() }, {
         });
         if (!resolved.checkpoint) return fallback(resolved.reason, log);
 
-        mkdirSync(cache);
-        copyFromImage(run, resolved.checkpoint, "/opt/transform-hub/npm-cache/.", cache);
+        if (!requireRuntimeDependencies) {
+            mkdirSync(cache);
+            copyFromImage(run, resolved.checkpoint, "/opt/transform-hub/npm-cache/.", cache);
+        }
         verified = true;
-        log(`Verified checkpoint ${resolved.checkpoint}; using its npm cache for npm ci.`);
-        return { ...resolved, cache };
+        log(requireRuntimeDependencies ? `Verified checkpoint ${resolved.checkpoint}; staged runtime dependencies.` : `Verified checkpoint ${resolved.checkpoint}; using its npm cache for npm ci.`);
+        return { ...resolved, ...(requireRuntimeDependencies ? { runtimeDependencies, runtimeDependencyDigest: plan.runtimeDependencyDigest } : { cache }) };
     } catch (error) {
         return fallback(`verification-error: ${error.message}`, log);
     } finally {
@@ -117,9 +131,13 @@ async function main() {
     const branchIndex = process.argv.indexOf("--branch");
     const branch = branchIndex === -1 ? undefined : process.argv[branchIndex + 1];
     if (branchIndex === -1 || !branch) throw new Error("Usage: consume.js --branch <trusted-branch>");
-    const result = await consumeCheckpoint({ branch });
-    if (result.cache && process.env.GITHUB_ENV) {
-        require("node:fs").appendFileSync(process.env.GITHUB_ENV, `CHECKPOINT_NPM_CACHE=${result.cache}\n`);
+    const result = await consumeCheckpoint({ branch, requireRuntimeDependencies: process.argv.includes("--require-runtime-dependencies") });
+    if (process.argv.includes("--require-runtime-dependencies") && !result.runtimeDependencies) {
+        throw new Error(`Required runtime dependency checkpoint unavailable: ${result.reason}`);
+    }
+    if (process.env.GITHUB_ENV) {
+        if (result.cache) require("node:fs").appendFileSync(process.env.GITHUB_ENV, `CHECKPOINT_NPM_CACHE=${result.cache}\n`);
+        if (result.runtimeDependencies) require("node:fs").appendFileSync(process.env.GITHUB_ENV, `CHECKPOINT_RUNTIME_DEPENDENCIES=${result.runtimeDependencies}\nCHECKPOINT_RUNTIME_DEPENDENCY_DIGEST=${result.runtimeDependencyDigest}\n`);
     }
 }
 

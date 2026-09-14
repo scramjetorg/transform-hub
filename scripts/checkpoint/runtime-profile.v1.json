@@ -1,0 +1,33 @@
+{
+  "schema": "https://scramjet.org/transform-hub/checkpoint/runtime-profile/v1",
+  "platform": "linux/amd64",
+  "bun": {
+    "version": "1.2.20",
+    "url": "https://github.com/oven-sh/bun/releases/download/bun-v1.2.20/bun-linux-x64.zip",
+    "sha256": "4e9edc4cba0c7c1623a288be01e53bbde11a4d073f2cf339cab026627858b548"
+  },
+  "yarn": {
+    "version": "1.22.22",
+    "url": "https://github.com/yarnpkg/yarn/releases/download/v1.22.22/yarn-v1.22.22.tar.gz",
+    "sha256": "88268464199d1611fcf73ce9c0a6c4d44c7d5363682720d8506f6508addf36a0"
+  },
+  "python": {
+    "requirements": {
+      "path": "packages/runner-python/requirements.txt",
+      "sha256": "sha256:8ae2849dc59a713cd2d08092201bf5f6aac89800f5fea4e413aef04d64555bbe"
+    },
+    "wheelhouse": {
+      "path": "python/wheelhouse",
+      "python": "3.11",
+      "platform": "manylinux_2_17_x86_64",
+      "verser2": {
+        "url": "https://github.com/signicode/verser2/releases/download/v0.4.2/verser2_guest_python-0.4.2-py3-none-any.whl",
+        "sha256": "da5ab6efd2ef572a864b8f6766f043fcbe25af3d10a5f5ba0c3878e82e84eef0"
+      }
+    },
+    "config": {
+      "path": "packages/runner-python/scripts/verser2-config.sh",
+      "sha256": "sha256:d329b5bb267d1ef5a5da5db3dd8f80284e999e8d6139290c4e610758e4334ed4"
+    }
+  }
+}

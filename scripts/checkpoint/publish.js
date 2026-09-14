@@ -5,6 +5,7 @@ const { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } = 
 const { tmpdir } = require("node:os");
 const { join } = require("node:path");
 const { checkpointLabels, createStatement, digestDocument, pointerUpdatePlan, statementTag } = require("./provenance.js");
+const { verifyRuntimeManifest } = require("./runtime-dependencies.js");
 const { promotionDecision } = require("./promotion.js");
 
 const REPOSITORY = "ghcr.io/scramjetorg/transform-hub/ci-deps";
@@ -13,8 +14,8 @@ const DIGEST = /^sha256:[a-f0-9]{64}$/i;
 function parseArgs(args) {
     const options = {};
     for (let index = 0; index < args.length; index++) {
-        if (!["--branch", "--current-sha", "--npm-cache", "--plan", "--source-sha"].includes(args[index]) || !args[index + 1]) {
-            throw new Error("Usage: publish.js --plan <checkpoint-plan.json> --branch <trusted-branch> --source-sha <sha> --current-sha <sha> --npm-cache <path>");
+        if (!["--branch", "--current-sha", "--npm-cache", "--plan", "--runtime-dependencies", "--source-sha"].includes(args[index]) || !args[index + 1]) {
+            throw new Error("Usage: publish.js --plan <checkpoint-plan.json> --branch <trusted-branch> --source-sha <sha> --current-sha <sha> --npm-cache <path> --runtime-dependencies <path>");
         }
         options[args[index].slice(2).replace(/-([a-z])/g, (_, letter) => letter.toUpperCase())] = args[++index];
     }
@@ -37,6 +38,7 @@ function dockerfile(labels) {
     return [
         "FROM node:22-bookworm-slim",
         "COPY npm-cache/ /opt/transform-hub/npm-cache/",
+        "COPY runtime-dependencies/ /opt/transform-hub/runtime-dependencies/",
         "COPY provenance/identity.v1.json /opt/transform-hub/provenance/identity.v1.json",
         ...labelLines,
         "ENTRYPOINT [\"npm\"]"
@@ -96,10 +98,14 @@ function publishCheckpoint(options, { run = defaultRun, remoteSha = readRemoteSh
     const context = mkdtempSync(join(tmpdir(), "transform-hub-checkpoint-"));
 
     try {
+        const runtimeManifest = options.runtimeDependencies ? verifyRuntimeManifest(options.runtimeDependencies) : null;
+        if (plan.runtimeDependencyDigest && (!runtimeManifest || runtimeManifest.profileDigest !== plan.runtimeDependencyDigest)) throw new Error("Runtime dependency manifest does not match checkpoint plan.");
         cpSync(options.npmCache, join(context, "npm-cache"), {
             filter: (source) => ![".npmrc", "credentials"].includes(source.split(/[\\/]/).pop()),
             recursive: true
         });
+        if (options.runtimeDependencies) cpSync(options.runtimeDependencies, join(context, "runtime-dependencies"), { recursive: true });
+        else mkdirSync(join(context, "runtime-dependencies"));
         const provenance = join(context, "provenance");
         mkdirSync(provenance);
         writeFileSync(join(provenance, "identity.v1.json"), `${JSON.stringify(plan.identity)}\n`);
@@ -110,7 +116,8 @@ function publishCheckpoint(options, { run = defaultRun, remoteSha = readRemoteSh
         const published = immutableReference(REPOSITORY, run(["image", "inspect", immutable, "--format", "{{join .RepoDigests \"\\n\"}}"], true));
         const statement = createStatement({
             identityDigest: plan.identityDigest,
-            image: { digest: published.digest, platform: "linux/amd64", repository: REPOSITORY }
+            image: { digest: published.digest, platform: "linux/amd64", repository: REPOSITORY },
+            ...(runtimeManifest ? { runtimeDependencyManifest: { digest: digestDocument(runtimeManifest) } } : {})
         });
         const statementLabels = {
             ...checkpointLabels(plan.identity, plan.identityDigest),

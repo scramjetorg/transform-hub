@@ -50,14 +50,15 @@ function sourcePackages(packages) {
         .sort((left, right) => left.name.localeCompare(right.name));
 }
 
-function createIdentity({ repository, sourceSha, lockSha256, node, npm, platform, packages }) {
+function createIdentity({ repository, sourceSha, lockSha256, node, npm, platform, packages, runtimeDependencyDigest }) {
     return {
         schema: "https://scramjet.org/transform-hub/provenance/identity/v1",
         source: { repository, sha: assertSha(sourceSha, "source SHA") },
         sourceLock: { path: "package-lock.json", sha256: assertDigest(lockSha256, "package-lock hash") },
         toolchain: { node, npm },
         platform,
-        sourcePackages: sourcePackages(packages)
+        sourcePackages: sourcePackages(packages),
+        ...(runtimeDependencyDigest ? { runtimeDependencies: { digest: assertDigest(runtimeDependencyDigest, "runtime dependency profile digest") } } : {})
     };
 }
 
@@ -80,16 +81,18 @@ function checkpointLabels(identity, identityDigest) {
         "io.scramjet.provenance.node": identity.toolchain.node,
         "io.scramjet.provenance.npm": identity.toolchain.npm,
         "io.scramjet.provenance.platform": identity.platform.oci,
+        ...(identity.runtimeDependencies ? { "io.scramjet.provenance.runtime-dependencies": identity.runtimeDependencies.digest } : {}),
         "org.opencontainers.image.revision": identity.source.sha
     };
 }
 
-function createStatement({ identityDigest, image }) {
+function createStatement({ identityDigest, image, runtimeDependencyManifest }) {
     const statement = {
         schema: "https://scramjet.org/transform-hub/provenance/statement/v1",
         identityDigest: assertDigest(identityDigest, "identity digest"),
         outputs: { artifacts: [], images: [], packages: [] }
     };
+    if (runtimeDependencyManifest) statement.outputs.artifacts.push({ digest: assertDigest(runtimeDependencyManifest.digest, "runtime dependency manifest digest"), path: "runtime-dependencies/manifest.v1.json", role: "runtime-dependencies" });
     if (image) {
         statement.outputs.images.push({
             digest: assertDigest(image.digest, "image digest"),
