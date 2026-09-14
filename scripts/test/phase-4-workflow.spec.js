@@ -105,8 +105,9 @@ test("curated validation can pull private GHCR images before BDD execution", (t)
     const validateJob = reusable.slice(reusable.indexOf("  validate:"));
     t.regex(curatedJob, /permissions:\n\s+contents: write\n\s+packages: read/);
     t.regex(validateJob, /permissions:\n\s+contents: write\n\s+packages: read/);
-    t.true(reusable.includes("GHCR_TOKEN: ${{ github.token }}"));
-    t.true(reusable.includes("GHCR_USERNAME: ${{ github.actor }}"));
-    t.true(reusable.includes("docker login ghcr.io --username \"$GHCR_USERNAME\" --password-stdin"));
-    t.true(reusable.indexOf("docker login ghcr.io") < reusable.indexOf("node scripts/release-bdd-validation.js run --all"));
+    t.true(reusable.includes("printf '%s' \"${{ github.token }}\" | docker --config \"$DOCKER_CONFIG\" login ghcr.io --username \"${{ github.actor }}\" --password-stdin"));
+    t.true(reusable.includes('export DOCKER_CONFIG="$RUNNER_TEMP/scramjet-ghcr-docker-config"'));
+    t.true(reusable.includes('export SCRAMJET_BDD_DOCKER_AUTH_CONFIG="$DOCKER_CONFIG"'));
+    t.true(reusable.includes('docker --config "$DOCKER_CONFIG" logout ghcr.io'));
+    t.true(reusable.indexOf("docker --config \"$DOCKER_CONFIG\" login ghcr.io") < reusable.indexOf("node scripts/release-bdd-validation.js run --all"));
 });

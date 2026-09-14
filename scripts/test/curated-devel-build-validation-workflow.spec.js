@@ -23,11 +23,13 @@ test("curated candidate BDD uses isolated GHCR auth and cleans it up", (t) => {
 	const source = readFileSync(workflowPath, "utf8");
 	const validate = source.slice(source.indexOf("      - id: validate"));
 
-	t.true(validate.includes('DOCKER_CONFIG="$RUNNER_TEMP/scramjet-ghcr-docker-config"'));
+	t.true(validate.includes('export DOCKER_CONFIG="$RUNNER_TEMP/scramjet-ghcr-docker-config"'));
 	t.true(validate.includes("mkdir -m 700 -p \"$DOCKER_CONFIG\""));
 	t.true(validate.includes('docker --config "$DOCKER_CONFIG" login ghcr.io'));
+	t.true(validate.includes('docker --config "$DOCKER_CONFIG" login ghcr.io --username "${{ github.actor }}" --password-stdin >/dev/null 2>&1'));
 	t.true(validate.includes('export SCRAMJET_BDD_DOCKER_AUTH_CONFIG="$DOCKER_CONFIG"'));
 	t.true(validate.includes('docker --config "$DOCKER_CONFIG" logout ghcr.io'));
 	t.true(validate.includes('rm -rf -- "$DOCKER_CONFIG"'));
+	t.true(validate.indexOf('export DOCKER_CONFIG="$RUNNER_TEMP/scramjet-ghcr-docker-config"') < validate.indexOf("node scripts/release-bdd-validation.js run --all"));
 	t.true(validate.indexOf("trap cleanup_ghcr_auth EXIT") < validate.indexOf("docker --config \"$DOCKER_CONFIG\" login ghcr.io"));
 });

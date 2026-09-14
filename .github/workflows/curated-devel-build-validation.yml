@@ -50,7 +50,7 @@ jobs:
           SCRAMJET_BDD_CANDIDATE_IMAGE_MAP: ${{ inputs.image-map }}
           RUNTIME_ADAPTER: docker
         run: |
-          DOCKER_CONFIG="$RUNNER_TEMP/scramjet-ghcr-docker-config"
+          export DOCKER_CONFIG="$RUNNER_TEMP/scramjet-ghcr-docker-config"
           cleanup_ghcr_auth() {
             docker --config "$DOCKER_CONFIG" logout ghcr.io >/dev/null 2>&1 || true
             rm -rf -- "$DOCKER_CONFIG"
@@ -58,7 +58,7 @@ jobs:
           trap cleanup_ghcr_auth EXIT
           mkdir -m 700 -p "$DOCKER_CONFIG"
           chmod 700 "$DOCKER_CONFIG"
-          printf '%s' "${{ github.token }}" | docker --config "$DOCKER_CONFIG" login ghcr.io --username "${{ github.actor }}" --password-stdin >/dev/null
+          printf '%s' "${{ github.token }}" | docker --config "$DOCKER_CONFIG" login ghcr.io --username "${{ github.actor }}" --password-stdin >/dev/null 2>&1
           export SCRAMJET_BDD_DOCKER_AUTH_CONFIG="$DOCKER_CONFIG"
           mkdir -p "$RELEASE_CANDIDATE_DIR"
           node scripts/release-candidate-runtime.js resolve --repository "${{ inputs.repository }}" --tag "${{ inputs.candidate-tag }}" --source-sha "${{ inputs.source-sha }}" --release-id "${{ inputs.candidate-release-id }}" --release-set-digest "${{ inputs.release-set-digest }}" --sealed-state-digest "${{ inputs.sealed-state-digest }}" --bundle-dir "$RELEASE_CANDIDATE_DIR" --state "$RELEASE_CANDIDATE_STATE" --output "$RUNNER_TEMP/resolve.json"
