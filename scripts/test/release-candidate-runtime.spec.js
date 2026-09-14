@@ -85,3 +85,18 @@ test("candidate lookup treats gh's missing-release response as a first-build sta
     t.deepEqual(result, { status: "not-found" });
     t.deepEqual(JSON.parse(readFileSync(output, "utf8")), { status: "not-found", tag: `candidate-${SHA}` });
 });
+
+test("candidate lookup distinguishes an existing unsealed draft from a missing release", (t) => {
+    const root = mkdtempSync(join(tmpdir(), "candidate-locate-unsealed-release-"));
+    t.teardown(() => rmSync(root, { recursive: true, force: true }));
+    const output = join(root, "locate.json");
+    const result = runtime.locate({
+        repository: "scramjetorg/transform-hub",
+        tag: `candidate-${SHA}`,
+        sourceSha: SHA,
+        output,
+        runner: (_command, args) => args[1] === "view" ? JSON.stringify({ databaseId: 17, isDraft: true, tagName: `candidate-${SHA}`, targetCommitish: SHA, assets: [{ name: "release-set.json" }] }) : "",
+    });
+    t.deepEqual(result, { status: "unsealed", tag: `candidate-${SHA}`, releaseId: 17 });
+    t.deepEqual(JSON.parse(readFileSync(output, "utf8")), result);
+});

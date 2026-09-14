@@ -133,6 +133,9 @@ function sealCandidate(file, identity, sealed) {
     const expected = candidateIdentity(identity);
     const state = readState(file);
     if (!state || state.key !== expected.key || state.status !== "claimed") throw new Error("Candidate state is not a matching active claim.");
+    if (!sealed?.bundle || typeof sealed.bundle !== "object" || Array.isArray(sealed.bundle)) throw new Error("Candidate state bundle metadata is required.");
+    assertDigest(sealed.bundle.releaseSetDigest, "bundle release-set digest");
+    assertDigest(sealed.bundle.provenanceDigest, "bundle provenance digest");
     const next = { ...state, ...sealed, key: expected.key, identity: expected, status: "sealed" };
     atomicWriteJson(file, next);
     return next;

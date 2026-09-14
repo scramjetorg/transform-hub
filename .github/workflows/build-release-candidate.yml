@@ -74,9 +74,9 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           mkdir -p "$RUNNER_TEMP/candidate-bundle"
-          node scripts/release-candidate-runtime.js locate --repository "$GITHUB_REPOSITORY" --tag "candidate-$GITHUB_SHA" --source-sha "$GITHUB_SHA" --output "$RUNNER_TEMP/locate.json"
+          node scripts/release-candidate-runtime.js locate --repository "$GITHUB_REPOSITORY" --tag "candidate-$GITHUB_SHA" --source-sha "$GITHUB_SHA" --identity "$RUNNER_TEMP/identity/candidate-identity.json" --output "$RUNNER_TEMP/locate.json"
            if test "$(node -p "require(process.env.RUNNER_TEMP + '/locate.json').status")" = "found"; then
-             node scripts/release-candidate-runtime.js resolve --repository "$GITHUB_REPOSITORY" --tag "candidate-$GITHUB_SHA" --source-sha "$GITHUB_SHA" --release-id "$(node -p "require(process.env.RUNNER_TEMP + '/locate.json').releaseId")" --release-set-digest "$(node -p "require(process.env.RUNNER_TEMP + '/locate.json').releaseSetDigest")" --sealed-state-digest "$(node -p "require(process.env.RUNNER_TEMP + '/locate.json').sealedStateDigest")" --bundle-dir "$RUNNER_TEMP/candidate-bundle" --state "$RUNNER_TEMP/candidate-state.json" --output "$RUNNER_TEMP/resolve.json"
+             node scripts/release-candidate-runtime.js resolve --repository "$GITHUB_REPOSITORY" --tag "candidate-$GITHUB_SHA" --source-sha "$GITHUB_SHA" --identity "$RUNNER_TEMP/identity/candidate-identity.json" --release-id "$(node -p "require(process.env.RUNNER_TEMP + '/locate.json').releaseId")" --release-set-digest "$(node -p "require(process.env.RUNNER_TEMP + '/locate.json').releaseSetDigest")" --sealed-state-digest "$(node -p "require(process.env.RUNNER_TEMP + '/locate.json').sealedStateDigest")" --bundle-dir "$RUNNER_TEMP/candidate-bundle" --state "$RUNNER_TEMP/candidate-state.json" --output "$RUNNER_TEMP/resolve.json"
           else
             node scripts/release-candidate-workflow.js plan --identity "$RUNNER_TEMP/identity/candidate-identity.json" --image-digest "$IMAGE_DIGEST" --output "$RUNNER_TEMP/release-set.json"
             node scripts/release-candidate-runtime.js build --root "$GITHUB_WORKSPACE" --bundle-dir "$RUNNER_TEMP/candidate-bundle" --state "$RUNNER_TEMP/candidate-state.json" --identity "$RUNNER_TEMP/identity/candidate-identity.json" --release-set "$RUNNER_TEMP/release-set.json"
@@ -100,7 +100,9 @@ jobs:
       contents: write
     outputs:
       release-id: ${{ steps.stage.outputs.release-id }}
+      release-set-digest: ${{ steps.stage.outputs.release-set-digest }}
       sealed-state-digest: ${{ steps.stage.outputs.sealed-state-digest }}
+      image-digest: ${{ steps.stage.outputs.image-digest }}
     concurrency:
       group: candidate-staging-${{ github.sha }}
       cancel-in-progress: false
@@ -124,7 +126,9 @@ jobs:
         run: |
           node scripts/release-candidate-runtime.js stage --repository "$GITHUB_REPOSITORY" --tag "candidate-$GITHUB_SHA" --source-sha "$GITHUB_SHA" --release-id 0 --bundle-dir "$RUNNER_TEMP/candidate-bundle" --state "$RUNNER_TEMP/candidate-bundle/candidate-state.json" --identity "$RUNNER_TEMP/identity/candidate-identity.json" --output "$RUNNER_TEMP/stage.json"
           echo "release-id=$(node -p "require(process.env.RUNNER_TEMP + '/stage.json').releaseId")" >> "$GITHUB_OUTPUT"
-           echo "sealed-state-digest=$(node -p "require(process.env.RUNNER_TEMP + '/stage.json').sealedStateDigest")" >> "$GITHUB_OUTPUT"
+          echo "release-set-digest=$(node -p "require(process.env.RUNNER_TEMP + '/stage.json').releaseSetDigest")" >> "$GITHUB_OUTPUT"
+          echo "sealed-state-digest=$(node -p "require(process.env.RUNNER_TEMP + '/stage.json').sealedStateDigest")" >> "$GITHUB_OUTPUT"
+          echo "image-digest=$(node -p "require(process.env.RUNNER_TEMP + '/stage.json').imageDigest")" >> "$GITHUB_OUTPUT"
 
   curated-validation:
     needs: [preflight, build, stage]
@@ -135,8 +139,8 @@ jobs:
     with:
       source-sha: ${{ github.sha }}
       candidate-release-id: ${{ needs.stage.outputs.release-id }}
-      release-set-digest: ${{ needs.build.outputs.release-set-digest }}
-      image-digest: ${{ needs.build.outputs.image-digest }}
+      release-set-digest: ${{ needs.stage.outputs.release-set-digest }}
+      image-digest: ${{ needs.stage.outputs.image-digest }}
       sealed-state-digest: ${{ needs.stage.outputs.sealed-state-digest }}
       repository: ${{ github.repository }}
       candidate-tag: candidate-${{ github.sha }}
@@ -156,5 +160,5 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          printf '%s\n' '{"schema":"candidate-success-attestation.v1","candidateSuccess":true,"sourceSha":"${{ github.sha }}","candidateReleaseId":${{ needs.stage.outputs.release-id }},"releaseSetDigest":"${{ needs.build.outputs.release-set-digest }}","sealedStateDigest":"${{ needs.stage.outputs.sealed-state-digest }}"}' > "$RUNNER_TEMP/candidate-success.json"
+          printf '%s\n' '{"schema":"candidate-success-attestation.v1","candidateSuccess":true,"sourceSha":"${{ github.sha }}","candidateReleaseId":${{ needs.stage.outputs.release-id }},"releaseSetDigest":"${{ needs.stage.outputs.release-set-digest }}","sealedStateDigest":"${{ needs.stage.outputs.sealed-state-digest }}"}' > "$RUNNER_TEMP/candidate-success.json"
           node scripts/release-candidate-runtime.js attest --evidence "$RUNNER_TEMP/candidate-success.json" --output "$RUNNER_TEMP/candidate-success-attestation.json" --repository "$GITHUB_REPOSITORY" --tag "candidate-$GITHUB_SHA"

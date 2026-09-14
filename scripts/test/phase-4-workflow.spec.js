@@ -59,6 +59,15 @@ test("candidate authority is digest and numeric-ID based, not tag/check-name bas
     t.false(/check-name|candidate-state-key|bundle-artifact|state-artifact/i.test(candidate + reusable));
 });
 
+test("candidate retries bind lookup to identity and publish remote-derived stage outputs", (t) => {
+    const candidate = source("build-release-candidate.yml");
+    t.true(candidate.includes("locate --repository \"$GITHUB_REPOSITORY\" --tag \"candidate-$GITHUB_SHA\" --source-sha \"$GITHUB_SHA\" --identity"));
+    t.true(candidate.includes("resolve --repository \"$GITHUB_REPOSITORY\" --tag \"candidate-$GITHUB_SHA\" --source-sha \"$GITHUB_SHA\" --identity"));
+    t.true(candidate.includes("release-set-digest: ${{ needs.stage.outputs.release-set-digest }}"));
+    t.true(candidate.includes("image-digest: ${{ needs.stage.outputs.image-digest }}"));
+    t.true(candidate.includes("releaseSetDigest\":\"${{ needs.stage.outputs.release-set-digest }}\""));
+});
+
 test("candidate preflight fails closed and reusable validation is evidence-only", (t) => {
     const candidate = source("build-release-candidate.yml");
     const reusable = source("curated-devel-build-validation.yml");
