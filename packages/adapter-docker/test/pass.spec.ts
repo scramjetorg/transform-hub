@@ -104,6 +104,51 @@ test("Docker image pull rejects when progress callback reports an error", async 
     t.is(error, pullError);
 });
 
+test("Docker volume creation returns the lowercase Dockerode v5 volume name", async t => {
+    const helper = new DockerodeDockerHelper();
+    (helper as any).dockerode = {
+        createVolume: async () => ({ name: "sequence-volume" })
+    };
+
+    t.is(await helper.createVolume("candidate"), "sequence-volume");
+});
+
+test("Docker volume creation rejects responses without a volume id", async t => {
+    const helper = new DockerodeDockerHelper();
+    (helper as any).dockerode = {
+        createVolume: async () => ({})
+    };
+
+    await t.throwsAsync(() => helper.createVolume("candidate"), {
+        message: "Docker volume creation returned no nonempty volume id"
+    });
+});
+
+test("Docker sequence identification propagates the Dockerode v5 volume name to the pre-runner and config", async t => {
+    const adapter = new DockerSequenceAdapter({ adapters: { docker: adapterConfig } } as any);
+    const helper = new DockerodeDockerHelper();
+    const runCalls: any[] = [];
+    (helper as any).dockerode = {
+        createVolume: async () => ({ name: "sequence-volume" })
+    };
+    (helper as any).run = async (config: any) => {
+        runCalls.push(config);
+        return runResult(0, JSON.stringify({
+            name: "candidate",
+            version: "1.0.0",
+            main: "index.js",
+            engines: { node: ">=22" }
+        }));
+    };
+    (adapter as any).dockerHelper = helper;
+    (adapter as any).fetch = async () => undefined;
+
+    const config = await adapter.identify(Readable.from([]), "candidate");
+
+    t.is(runCalls[0].volumes[0].volume, "sequence-volume");
+    t.is(config.id, "sequence-volume");
+});
+
 test("Docker GHCR image pull uses valid direct auth credentials", async t => {
     const configDir = mkdtempSync(join(tmpdir(), "docker-auth-"));
     const previous = process.env.DOCKER_CONFIG;

@@ -79,6 +79,10 @@ export class DockerodeDockerHelper implements IDockerHelper {
                 };
             }
 
+            if (typeof cfg.volume !== "string" || cfg.volume.length === 0) {
+                throw new Error("Docker volume mount is missing a nonempty volume id");
+            }
+
             return {
                 Target: cfg.mountPoint,
                 Source: cfg.volume,
@@ -329,7 +333,12 @@ export class DockerodeDockerHelper implements IDockerHelper {
                 "org.scramjet.host.is-sequence": "true"
             }
         }).then((volume) => {
-            return volume.Name;
+            const volumeId = (volume as unknown as Dockerode.Volume & { name?: string }).name || volume.Name;
+            if (typeof volumeId !== "string" || volumeId.length === 0) {
+                throw new Error("Docker volume creation returned no nonempty volume id");
+            }
+
+            return volumeId;
         });
     }
 
