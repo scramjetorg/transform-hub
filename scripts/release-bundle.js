@@ -23,7 +23,7 @@ function defaultPack({ packageDir, destination, npm = NPM_CLI, runner = execFile
 
 function packageDir(root, name) {
     if (!name.startsWith("@scramjet/")) throw new Error(`Unsupported release package name: ${name}`);
-    return join(root, "packages", name.slice("@scramjet/".length));
+    return join(root, "dist", name.slice("@scramjet/".length));
 }
 
 function writeBundleFile(file, value) {

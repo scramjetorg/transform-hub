@@ -49,11 +49,15 @@ test("build, seal, verify, and reuse packs every package once", (t) => {
     const buildIdentity = identityForLockfile(lockfile);
     let builds = 0;
     let packs = 0;
-    const args = { root, bundleDir, stateFile, identity: buildIdentity, boundary, waves, releaseSet: releaseSet(lockfile, buildIdentity), lockfile, builder: () => { builds++; }, packer: ({ packageDir }) => { packs++; return packageDir.endsWith("/a") ? a : b; } };
+    const events = [];
+    const packageDirs = [];
+    const args = { root, bundleDir, stateFile, identity: buildIdentity, boundary, waves, releaseSet: releaseSet(lockfile, buildIdentity), lockfile, builder: () => { builds++; events.push("build"); }, packer: ({ packageDir }) => { packs++; events.push("pack"); packageDirs.push(packageDir); return packageDir.endsWith("/a") ? a : b; } };
     const created = buildAndPack(args);
     t.is(created.status, "created");
     t.is(builds, 1);
     t.is(packs, 2);
+    t.deepEqual(events, ["build", "pack", "pack"]);
+    t.deepEqual(packageDirs, [join(root, "dist", "a"), join(root, "dist", "b")]);
     t.deepEqual(verifyBundle(bundleDir).releaseSet.boundary.packages, [...boundary]);
     const reused = buildAndPack(args);
     t.is(reused.status, "reused");
