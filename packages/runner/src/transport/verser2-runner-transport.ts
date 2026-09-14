@@ -39,6 +39,11 @@ export type RunnerVerser2TransportOptions = {
     createGuest?: RunnerVerser2GuestFactory;
 };
 
+export type RunnerVerser2TransportInitOptions = {
+    /** Start the local bridge without advertising the outer guest yet. */
+    connectGuest?: boolean;
+};
+
 const REQUEST_BODY_ROUTES = new Map<string, CC>([
     [DEFAULT_VERSER2_RUNNER_ROUTE_CONTRACTS.inputPath, CC.IN]
 ]);
@@ -72,6 +77,7 @@ export class RunnerVerser2Transport implements RunnerVerser2TransportStreams {
     private readonly localChannels: LocalChannelServer;
     private guest?: RunnerVerser2Guest;
     private started = false;
+    private guestConnected = false;
     private readonly localChannelWaitMs: number;
     private rpcTarget?: { host: string; port: number };
     private readonly activeResponseDrains = new Set<Promise<void>>();
@@ -90,7 +96,11 @@ export class RunnerVerser2Transport implements RunnerVerser2TransportStreams {
         return this.localChannels.address;
     }
 
-    async init(): Promise<void> {
+    waitForLocalChannel(channel: CC, timeout = this.localChannelWaitMs): Promise<import("net").Socket> {
+        return this.localChannels.waitForStream(channel, timeout);
+    }
+
+    async init(options: RunnerVerser2TransportInitOptions = {}): Promise<void> {
         if (this.started) {
             throw new Error("RunnerVerser2Transport already started");
         }
@@ -98,17 +108,26 @@ export class RunnerVerser2Transport implements RunnerVerser2TransportStreams {
         try {
             await this.localChannels.start();
 
-            const createGuest = this.options.createGuest ?? createVerserNodeGuest as RunnerVerser2GuestFactory;
-
-            this.guest = createGuest(createRunnerVerser2GuestOptions(this.options.config))
-                .attach(this.server, this.options.config.routeDomain);
-
-            await this.guest.connect();
             this.started = true;
+
+            if (options.connectGuest !== false) await this.connectGuest();
         } catch (error) {
             await this.disconnect(true, "startup-failed").catch(() => undefined);
             throw error;
         }
+    }
+
+    /** Attach and connect the outer guest after runtime-local readiness. */
+    async connectGuest(): Promise<void> {
+        if (this.guestConnected) return;
+
+        const createGuest = this.options.createGuest ?? createVerserNodeGuest as RunnerVerser2GuestFactory;
+
+        this.guest = createGuest(createRunnerVerser2GuestOptions(this.options.config))
+            .attach(this.server, this.options.config.routeDomain);
+
+        await this.guest.connect();
+        this.guestConnected = true;
     }
 
     async disconnect(hard: boolean, reason = hard ? "hard-disconnect" : "disconnect"): Promise<void> {
@@ -130,6 +149,7 @@ export class RunnerVerser2Transport implements RunnerVerser2TransportStreams {
         await this.localChannels.close();
         await this.guest?.close(reason).catch(() => undefined);
         this.guest = undefined;
+        this.guestConnected = false;
 
         if (this.server.listening) {
             await new Promise<void>((resolve) => this.server.close(() => resolve()));

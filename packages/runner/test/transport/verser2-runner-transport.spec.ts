@@ -33,6 +33,29 @@ test("maps runner configuration to a guest contract without opening a listener",
     });
 });
 
+test("does not publish the guest route before runtime readiness", async t => {
+    let created = false;
+    const transport = new RunnerVerser2Transport({
+        config: config(),
+        instanceId: INSTANCE_ID,
+        createGuest: () => {
+            created = true;
+            const guest = {
+                attach: () => guest,
+                connect: async () => undefined,
+                close: async () => undefined
+            };
+            return guest;
+        }
+    });
+
+    await transport.init({ connectGuest: false });
+    t.false(created);
+    await transport.connectGuest();
+    t.true(created);
+    await transport.disconnect(true);
+});
+
 test("preserves an explicit runner route domain when the guest ID differs", t => {
     const explicitConfig = {
         ...config(),

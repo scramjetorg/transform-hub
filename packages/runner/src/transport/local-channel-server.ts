@@ -33,6 +33,7 @@ export class LocalChannelServer {
     private server: net.Server | null = null;
     private sockets = new Set<net.Socket>();
     private channels = new Map<CC, net.Socket>();
+    private closedChannels = new Set<CC>();
     private waiters = new Map<CC, Array<{
         resolve:(socket: net.Socket) => void;
         reject:(err: Error) => void;
@@ -72,7 +73,7 @@ export class LocalChannelServer {
             throw new Error("LocalChannelServer already started");
         }
 
-        this.server = net.createServer((socket) => {
+        this.server = net.createServer({ allowHalfOpen: false }, (socket) => {
             this.handleConnection(socket);
         });
 
@@ -113,6 +114,7 @@ export class LocalChannelServer {
         }
         this.sockets.clear();
         this.channels.clear();
+        this.closedChannels.clear();
 
         // Close the server if it was started.
         if (this.server) {
@@ -150,6 +152,9 @@ export class LocalChannelServer {
         const existing = this.channels.get(channel);
 
         if (existing) return Promise.resolve(existing);
+        if (this.closedChannels.has(channel)) {
+            return Promise.reject(new Error(`Channel ${CC[channel] ?? channel} opened and then closed`));
+        }
 
         return new Promise<net.Socket>((resolve, reject) => {
             const timer = setTimeout(() => {
@@ -204,9 +209,12 @@ export class LocalChannelServer {
             for (const [channel, channelSocket] of this.channels) {
                 if (channelSocket === socket) {
                     this.channels.delete(channel);
+                    this.closedChannels.add(channel);
                 }
             }
         });
+
+        socket.on("end", () => socket.destroy());
 
         // Swallow errors to prevent crashes from EPIPE / ECONNRESET etc.
         socket.on("error", () => {
@@ -269,6 +277,7 @@ export class LocalChannelServer {
 
             // Register the socket for the channel.
             this.channels.set(ch, socket);
+            this.closedChannels.delete(ch);
             this.notifyWaiters(ch, socket);
         };
 
