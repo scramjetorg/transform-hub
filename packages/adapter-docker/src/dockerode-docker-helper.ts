@@ -1,6 +1,8 @@
 import Dockerode from "dockerode";
 import { PassThrough } from "stream";
 import { appendFile } from "fs";
+import { readFileSync } from "fs";
+import { join } from "path";
 
 import {
     DockerAdapterRunConfig,
@@ -228,6 +230,29 @@ export class DockerodeDockerHelper implements IDockerHelper {
 
     private pulledImages: {[key: string]: Promise<void> | undefined } = {};
 
+    private ghcrAuthConfig(): { auth: string, serveraddress: string } | undefined {
+        const dockerConfig = process.env.DOCKER_CONFIG;
+        if (!dockerConfig) return undefined;
+
+        try {
+            const config = JSON.parse(readFileSync(join(dockerConfig, "config.json"), "utf8"));
+            const auth = config?.auths?.["ghcr.io"]?.auth;
+            if (typeof auth !== "string" || auth.length === 0 || !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(auth)) {
+                return undefined;
+            }
+
+            const credentials = Buffer.from(auth, "base64").toString("utf8");
+            if (Buffer.from(credentials, "utf8").toString("base64") !== auth) return undefined;
+
+            const separator = credentials.indexOf(":");
+            if (separator <= 0 || separator === credentials.length - 1) return undefined;
+
+            return { auth, serveraddress: "ghcr.io" };
+        } catch {
+            return undefined;
+        }
+    }
+
     async pullImage(name: string, fetchOnlyIfNotExists = true) {
         if (fetchOnlyIfNotExists) {
             const start = new Date();
@@ -261,7 +286,8 @@ export class DockerodeDockerHelper implements IDockerHelper {
 
             this.logger.trace("Start pulling image", name);
 
-            const pullStream = await this.dockerode.pull(name);
+            const authconfig = name === "ghcr.io" || name.startsWith("ghcr.io/") ? this.ghcrAuthConfig() : undefined;
+            const pullStream = authconfig ? await this.dockerode.pull(name, { authconfig }) : await this.dockerode.pull(name);
 
             // Wait for pull to finish
             await new Promise<void>((res, rej) => this.dockerode.modem.followProgress(pullStream, error => {

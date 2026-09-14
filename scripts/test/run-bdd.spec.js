@@ -241,6 +241,16 @@ test("candidate Docker BDD validation fails closed unless the Docker adapter is 
 	t.true(src.includes("release BDD validation requires RUNTIME_ADAPTER=docker."));
 });
 
+test("candidate tarball Docker mode mounts GHCR auth internally without forwarding its host locator", (t) => {
+	const src = fs.readFileSync(path.resolve(__dirname, "..", "run-bdd-docker.js"), "utf8");
+	t.true(src.includes("GHCR_AUTH_CONFIG_CONTAINER_PATH = \"/run/scramjet-ghcr-auth\""));
+	t.true(src.includes("GHCR_AUTH_CONFIG_HOST_PATH"));
+	t.true(src.includes(":${GHCR_AUTH_CONFIG_CONTAINER_PATH}:ro"));
+	t.true(src.includes("DOCKER_CONFIG=${GHCR_AUTH_CONFIG_CONTAINER_PATH}"));
+	t.true(src.includes('name === "SCRAMJET_DOCKER_NETWORK_MODE" || name === "SCRAMJET_BDD_DOCKER_AUTH_CONFIG"'));
+	t.true(src.includes("tarball BDD mode requires a prepared GHCR Docker auth config."));
+});
+
 // ---------------------------------------------------------------------------
 // Memory guard – NODE_OPTIONS injection in Docker mode
 // ---------------------------------------------------------------------------

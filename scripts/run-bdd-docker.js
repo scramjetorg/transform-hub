@@ -45,6 +45,8 @@ const BDD_NODE_IMAGE = process.env.BDD_NODE_IMAGE || DEFAULT_BDD_NODE_IMAGE;
 const RELEASE_CANDIDATE_ROOT = process.env.SCRAMJET_BDD_CANDIDATE_ROOT;
 const RELEASE_IMAGE_DIGEST = process.env.SCRAMJET_BDD_IMAGE_DIGEST;
 const RELEASE_TARBALL_MODE = process.env.SCRAMJET_RELEASE_TARBALL_BDD_ROOT === "1";
+const GHCR_AUTH_CONFIG_CONTAINER_PATH = "/run/scramjet-ghcr-auth";
+const GHCR_AUTH_CONFIG_HOST_PATH = process.env.SCRAMJET_BDD_DOCKER_AUTH_CONFIG;
 const BDD_DOCKER_MEMORY = memoryLimit();
 const BDD_DOCKER_CPUS = cpuLimit();
 const BDD_TIMEOUT_MS = timeoutMs();
@@ -76,6 +78,11 @@ if (process.env.SCRAMJET_RELEASE_BDD_VALIDATION === "1" && !RELEASE_TARBALL_MODE
     if (!RELEASE_IMAGE_DIGEST || !/^sha256:[a-f0-9]{64}$/i.test(RELEASE_IMAGE_DIGEST) || !BDD_NODE_IMAGE.endsWith(`@${RELEASE_IMAGE_DIGEST}`)) failPrereq("release BDD validation requires the exact digest-pinned BDD image.");
 }
 if (RELEASE_TARBALL_MODE && (!RELEASE_CANDIDATE_ROOT || !RELEASE_IMAGE_DIGEST || !BDD_NODE_IMAGE.endsWith(`@${RELEASE_IMAGE_DIGEST}`))) failPrereq("tarball BDD mode requires a prepared execution root and exact digest-pinned image.");
+if (RELEASE_TARBALL_MODE) {
+    if (!GHCR_AUTH_CONFIG_HOST_PATH || !path.isAbsolute(GHCR_AUTH_CONFIG_HOST_PATH) || !fs.existsSync(GHCR_AUTH_CONFIG_HOST_PATH)) {
+        failPrereq("tarball BDD mode requires a prepared GHCR Docker auth config.");
+    }
+}
 if (process.env.SCRAMJET_RELEASE_BDD_VALIDATION === "1" && process.env.RUNTIME_ADAPTER !== "docker") failPrereq("release BDD validation requires RUNTIME_ADAPTER=docker.");
 
 const dockerVersionProbe = spawnSync("docker", ["--version"], { stdio: ["ignore", "ignore", "ignore"] });
@@ -146,7 +153,7 @@ const collectEnvForwardArgs = () => {
 
         // The BDD launcher itself uses host networking. Do not let a caller's
         // bridge setting override the topology required by this outer container.
-        if (name === "SCRAMJET_DOCKER_NETWORK_MODE") continue;
+        if (name === "SCRAMJET_DOCKER_NETWORK_MODE" || name === "SCRAMJET_BDD_DOCKER_AUTH_CONFIG") continue;
 
         const allowed = ENV_ALLOWLIST_EXACT.has(name) || ENV_ALLOWLIST_PREFIXES.some((prefix) => name.startsWith(prefix));
 
@@ -196,7 +203,13 @@ dockerRunArgs.push(
 if (process.env.SCRAMJET_RELEASE_BDD_VALIDATION === "1" && !RELEASE_TARBALL_MODE) {
     dockerRunArgs.push("-v", `${RELEASE_CANDIDATE_ROOT}:/release-candidate:ro`, "-e", "SCRAMJET_BDD_CANDIDATE_ROOT=/release-candidate", "-e", `SCRAMJET_BDD_IMAGE_DIGEST=${RELEASE_IMAGE_DIGEST}`);
 }
-if (RELEASE_TARBALL_MODE) dockerRunArgs.push("-e", "SCRAMJET_RELEASE_TARBALL_BDD_ROOT=1", "-e", "SCRAMJET_TARBALL_BDD_ROOT=/release-root", "-e", "SCRAMJET_SPAWN_TS=", "-e", "SCRAMJET_SPAWN_JS=", "-e", "NODE_PATH=");
+if (RELEASE_TARBALL_MODE) {
+    dockerRunArgs.push(
+        "-v", `${GHCR_AUTH_CONFIG_HOST_PATH}:${GHCR_AUTH_CONFIG_CONTAINER_PATH}:ro`,
+        "-e", `DOCKER_CONFIG=${GHCR_AUTH_CONFIG_CONTAINER_PATH}`,
+        "-e", "SCRAMJET_RELEASE_TARBALL_BDD_ROOT=1", "-e", "SCRAMJET_TARBALL_BDD_ROOT=/release-root", "-e", "SCRAMJET_SPAWN_TS=", "-e", "SCRAMJET_SPAWN_JS=", "-e", "NODE_PATH="
+    );
+}
 
 dockerRunArgs.push(
     ...Object.entries(ownershipEnv(ownership))

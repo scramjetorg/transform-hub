@@ -1,5 +1,8 @@
 import test from "ava";
 import { PassThrough, Readable } from "stream";
+import { mkdtempSync, rmSync, writeFileSync } from "fs";
+import { tmpdir } from "os";
+import { join } from "path";
 import { isAlreadyGoneContainerError } from "../src/docker-removal";
 import { DockerSequenceAdapter } from "../src/docker-sequence-adapter";
 import { DockerodeDockerHelper } from "../src/dockerode-docker-helper";
@@ -99,6 +102,83 @@ test("Docker image pull rejects when progress callback reports an error", async 
     const error = await t.throwsAsync(() => helper.pullImage("pre-runner:test", false));
 
     t.is(error, pullError);
+});
+
+test("Docker GHCR image pull uses valid direct auth credentials", async t => {
+    const configDir = mkdtempSync(join(tmpdir(), "docker-auth-"));
+    const previous = process.env.DOCKER_CONFIG;
+    const auth = Buffer.from("username:password").toString("base64");
+    writeFileSync(join(configDir, "config.json"), JSON.stringify({
+        auths: { "ghcr.io": { auth } },
+        credsStore: "secretservice"
+    }));
+    const calls: unknown[][] = [];
+    const helper = new DockerodeDockerHelper();
+    (helper as any).dockerode = {
+        pull: async (...args: unknown[]) => { calls.push(args); return {}; },
+        modem: { followProgress: (_stream: unknown, callback: (error?: Error) => void) => callback() }
+    };
+    process.env.DOCKER_CONFIG = configDir;
+    try {
+        await helper.pullImage("ghcr.io/example/private@sha256:abc", false);
+        t.deepEqual(calls[0], ["ghcr.io/example/private@sha256:abc", { authconfig: { auth, serveraddress: "ghcr.io" } }]);
+    } finally {
+        if (previous === undefined) delete process.env.DOCKER_CONFIG;
+        else process.env.DOCKER_CONFIG = previous;
+        rmSync(configDir, { recursive: true, force: true });
+    }
+});
+
+test("Docker GHCR image pull ignores invalid direct auth credentials", async t => {
+    const invalidAuths = [
+        "opaque-token",
+        " dXNlcm5hbWU6cGFzc3dvcmQ=",
+        "not-base64!",
+        Buffer.from("usernamepassword").toString("base64")
+    ];
+
+    for (const auth of invalidAuths) {
+        const configDir = mkdtempSync(join(tmpdir(), "docker-auth-"));
+        const previous = process.env.DOCKER_CONFIG;
+        writeFileSync(join(configDir, "config.json"), JSON.stringify({ auths: { "ghcr.io": { auth } } }));
+        const calls: unknown[][] = [];
+        const helper = new DockerodeDockerHelper();
+        (helper as any).dockerode = {
+            pull: async (...args: unknown[]) => { calls.push(args); return {}; },
+            modem: { followProgress: (_stream: unknown, callback: (error?: Error) => void) => callback() }
+        };
+        process.env.DOCKER_CONFIG = configDir;
+        try {
+            await helper.pullImage("ghcr.io/example/private:latest", false);
+            t.deepEqual(calls, [["ghcr.io/example/private:latest"]], `auth should be ignored: ${auth}`);
+        } finally {
+            if (previous === undefined) delete process.env.DOCKER_CONFIG;
+            else process.env.DOCKER_CONFIG = previous;
+            rmSync(configDir, { recursive: true, force: true });
+        }
+    }
+});
+
+test("Docker non-GHCR and malformed auth config pulls remain unauthenticated", async t => {
+    const configDir = mkdtempSync(join(tmpdir(), "docker-auth-"));
+    const previous = process.env.DOCKER_CONFIG;
+    writeFileSync(join(configDir, "config.json"), "not-json");
+    const calls: unknown[][] = [];
+    const helper = new DockerodeDockerHelper();
+    (helper as any).dockerode = {
+        pull: async (...args: unknown[]) => { calls.push(args); return {}; },
+        modem: { followProgress: (_stream: unknown, callback: (error?: Error) => void) => callback() }
+    };
+    process.env.DOCKER_CONFIG = configDir;
+    try {
+        await helper.pullImage("docker.io/library/alpine:latest", false);
+        await helper.pullImage("ghcr.io/example/private:latest", false);
+        t.deepEqual(calls, [["docker.io/library/alpine:latest"], ["ghcr.io/example/private:latest"]]);
+    } finally {
+        if (previous === undefined) delete process.env.DOCKER_CONFIG;
+        else process.env.DOCKER_CONFIG = previous;
+        rmSync(configDir, { recursive: true, force: true });
+    }
 });
 
 test("Passing test", (t) => {
