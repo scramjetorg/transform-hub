@@ -125,6 +125,11 @@ COPY packages/runner-python/runner_python ${RUNNER_PY_DIR}/runner_python
 COPY packages/runner-python/src          ${RUNNER_PY_DIR}/src
 COPY packages/runner-python/pyproject.toml ${RUNNER_PY_DIR}/pyproject.toml
 
+# Verify the launcher is present in the final stage, rather than only in a
+# build artifact.  The outer runner's readiness check depends on this import.
+RUN test -f ${RUNNER_PY_DIR}/runner_python/__main__.py \
+    && python3 -c "import runner_python"
+
 RUN chown -R ${RUNNER_USER}:${RUNNER_GROUP} ${RUNNER_PY_DIR}
 
 # Boot scripts: use the OUTER runner's scripts (packages/runner/*.sh) since
