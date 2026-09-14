@@ -1,7 +1,7 @@
 {
   "schema": "https://scramjet.org/transform-hub/checkpoint/runtime-dependencies-manifest/v1",
   "platform": "linux/amd64",
-  "profileDigest": "sha256:854795dcb1122af96601d469eb170792a1c0b157fbebfeb7667ecb98bbad615b",
+  "profileDigest": "sha256:ea5ddd53aef7fd8a46ba9e9a80534735fb65e62fdae1f17bb434051e01aeffa8",
   "runner": {
     "lockfileSha256": "sha256:fea43315006d11505943dcbd2bc6ea9aa6c3a4945700f1899f092023de980e7b",
     "packageJsonSha256": "sha256:530af8fcda6a56dfe62b8bf16a28ca80f3e7fc5b2974d8bd4375c13f25d55276",

@@ -53,6 +53,7 @@ test("runtime profile pins the immutable runtime artifacts", (t) => {
     const profile = loadRuntimeProfile(root);
     t.is(profile.bun.sha256, "4e9edc4cba0c7c1623a288be01e53bbde11a4d073f2cf339cab026627858b548");
     t.is(profile.yarn.sha256, "88268464199d1611fcf73ce9c0a6c4d44c7d5363682720d8506f6508addf36a0");
+    t.is(profile.python.requirements.sha256, "sha256:463e7e1cf97d3214cf2689025cdfd7eb4ebe813e3de6accfe83b6a7b8c6616f8");
     t.is(profile.python.wheelhouse.verser2.sha256, "da5ab6efd2ef572a864b8f6766f043fcbe25af3d10a5f5ba0c3878e82e84eef0");
     t.false(readFileSync(resolve(root, "packages/runner-python/requirements.txt"), "utf8").includes("scramjet-framework-py\n"));
 });
