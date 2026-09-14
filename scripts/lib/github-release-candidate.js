@@ -21,6 +21,17 @@ function createCandidateHandoff({ candidateId, releaseSet, provenance }) {
     };
 }
 
+function storedAssetName(name) {
+    if (!ALLOWED_ASSET.test(name)) throw new Error("Candidate asset is not allowlisted.");
+    return name.replaceAll("/", "__");
+}
+
+function logicalAssetName(name) {
+    if (name.startsWith("artifacts__")) return `artifacts/${name.slice("artifacts__".length)}`;
+    if (name.startsWith("bdd-evidence__")) return `bdd-evidence/${name.slice("bdd-evidence__".length)}`;
+    return name;
+}
+
 function json(output) {
     try { return JSON.parse(String(output)); } catch { throw new Error("gh returned invalid JSON."); }
 }
@@ -62,7 +73,7 @@ function createGithubReleaseAssetAdapter({ repository, tag, targetSha, runner = 
             const release = ensureRelease();
             const directory = mkdtempSync(join(tmpdir(), "release-candidate-upload-"));
             try {
-                const paths = assets.map((asset) => { const path = join(directory, asset.name); require("node:fs").mkdirSync(require("node:path").dirname(path), { recursive: true }); writeFileSync(path, asset.bytes); return path; });
+                const paths = assets.map((asset) => { const name = storedAssetName(asset.name); const path = join(directory, name); writeFileSync(path, asset.bytes); return `${path}#${name}`; });
                 command(["release", "upload", tag, "--repo", repository, "--clobber", ...paths]);
             } finally { rmSync(directory, { recursive: true, force: true }); }
             return { candidateId, releaseId: release.databaseId, tag, assets: assets.map((asset) => asset.name) };
@@ -70,14 +81,15 @@ function createGithubReleaseAssetAdapter({ repository, tag, targetSha, runner = 
         list(candidateId) {
             if (candidateId !== tag) throw new Error("Candidate ID does not match the GitHub release tag.");
             const release = ensureRelease();
-            return (release.assets || []).map((asset) => asset.name);
+            return (release.assets || []).map((asset) => logicalAssetName(asset.name));
         },
         download(candidateId, name) {
             if (candidateId !== tag || !ALLOWED_ASSET.test(name)) throw new Error("Candidate asset is not allowlisted.");
             const directory = mkdtempSync(join(tmpdir(), "release-candidate-download-"));
             try {
-                command(["release", "download", tag, "--repo", repository, "--pattern", name, "--dir", directory, "--clobber"]);
-                return readFileSync(join(directory, name));
+                const storedName = storedAssetName(name);
+                command(["release", "download", tag, "--repo", repository, "--pattern", storedName, "--dir", directory, "--clobber"]);
+                return readFileSync(join(directory, storedName));
             } finally { rmSync(directory, { recursive: true, force: true }); }
         },
         persist(candidateId, name, bytes) {

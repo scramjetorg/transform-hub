@@ -65,6 +65,27 @@ test("GitHub draft adapter creates, reuses, uploads, lists, and downloads throug
     t.throws(() => adapter.stage("candidate-1", [{ name: "package.json", bytes: Buffer.from("no") }]), { message: /allowlisted/ });
 });
 
+test("GitHub draft adapter stores nested asset paths under reversible release names", (t) => {
+    const calls = [];
+    const runner = (_command, args) => {
+        calls.push(args);
+        if (args[1] === "view") return JSON.stringify({ databaseId: 42, isDraft: true, tagName: "candidate-1", targetCommitish: identity.sourceSha, assets: [{ name: "artifacts__a.tgz" }, { name: "bdd-evidence__core.json" }] });
+        if (args[1] === "download") {
+            const directory = args[args.indexOf("--dir") + 1];
+            const name = args[args.indexOf("--pattern") + 1];
+            writeFileSync(join(directory, name), "downloaded");
+        }
+        return "";
+    };
+    const adapter = createGithubReleaseAssetAdapter({ repository: "scramjetorg/transform-hub", tag: "candidate-1", targetSha: identity.sourceSha, runner });
+    adapter.stage("candidate-1", [{ name: "artifacts/a.tgz", bytes: Buffer.from("tarball") }]);
+    t.deepEqual(adapter.list("candidate-1"), ["artifacts/a.tgz", "bdd-evidence/core.json"]);
+    t.deepEqual(adapter.download("candidate-1", "artifacts/a.tgz"), Buffer.from("downloaded"));
+    const upload = calls.find((args) => args[1] === "upload");
+    t.true(upload.some((value) => value.endsWith("#artifacts__a.tgz")));
+    t.true(calls.some((args) => args[1] === "download" && args.includes("artifacts__a.tgz")));
+});
+
 test("GitHub adapter propagates non-404 release lookup failures", (t) => {
     const adapter = createGithubReleaseAssetAdapter({ repository: "scramjetorg/transform-hub", tag: "candidate-1", targetSha: identity.sourceSha, runner: () => { throw new Error("network failure"); } });
     t.throws(() => adapter.view(), { message: "network failure" });
@@ -103,8 +124,7 @@ test("GitHub draft stager verifies uploaded assets and persists release identity
         if (args[1] === "download") {
             const directory = args[args.indexOf("--dir") + 1];
             const name = args[args.indexOf("--pattern") + 1];
-            const bytes = { "release-set.json": Buffer.from(`${JSON.stringify(releaseSet)}\n`), "build-provenance.json": Buffer.from(`${JSON.stringify(provenance)}\n`), "package-lock.json": lockfile, "artifacts/a.tgz": tarball }[name];
-            mkdirSync(join(directory, "artifacts"), { recursive: true });
+            const bytes = { "release-set.json": Buffer.from(`${JSON.stringify(releaseSet)}\n`), "build-provenance.json": Buffer.from(`${JSON.stringify(provenance)}\n`), "package-lock.json": lockfile, "artifacts__a.tgz": tarball }[name];
             writeFileSync(join(directory, name), bytes);
         }
         return "";
