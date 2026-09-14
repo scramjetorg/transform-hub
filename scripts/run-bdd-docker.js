@@ -232,13 +232,19 @@ const fixturePacking = [
     "OUT_DIR=/work-tmp/bdd-packages node scripts/pack-bdd-fixtures.js",
     "OUT_DIR=/work-tmp/python-bdd-packages node scripts/pack-python-bdd-fixtures.js"
 ].join(" && ");
+const tarballFixturePacking = [
+    "node /release-root/scripts/prepare-bdd-simple-stdio.js /work-tmp",
+    "OUT_DIR=/work-tmp/appcontext-packages node /release-root/scripts/pack-appcontext-fixtures.js",
+    "OUT_DIR=/work-tmp/bdd-packages node /release-root/scripts/pack-bdd-fixtures.js",
+    "OUT_DIR=/work-tmp/python-bdd-packages node /release-root/scripts/pack-python-bdd-fixtures.js"
+].join(" && ");
 const runtimePreflight = ["node --version", "npm --version", "bun --version"].join(" && ");
 const phaseMarker = (phase) => `printf '{"phase":"${phase}","at":"%s"}\\n' "$(date -u +%Y-%m-%dT%H:%M:%S.%3NZ)" >> /work-tmp/phase-timing.jsonl`;
 const packageDirs =
     "PACKAGES_DIR=/work-tmp/appcontext-packages/:/work-tmp/python-bdd-packages/:/work-tmp/bdd-packages/ SCRAMJET_BDD_SIMPLE_STDIO_ARCHIVE=/work-tmp/simple-stdio.tar.gz";
 const bddCommand = escapedPassthrough.length > 0 ? `run test:bdd -- ${escapedPassthrough}` : "run test:bdd";
 const innerCommand = RELEASE_TARBALL_MODE
-    ? `${phaseMarker("preflight")} && ${runtimePreflight} && ${phaseMarker("fixture-packing")} && ${phaseMarker("cucumber-launch")} && PATH=/release-root/node_modules/.bin:$PATH npm --prefix /release-root/bdd ${bddCommand}`
+    ? `${phaseMarker("preflight")} && ${runtimePreflight} && ${phaseMarker("fixture-packing")} && ${tarballFixturePacking} && ${phaseMarker("cucumber-launch")} && ${packageDirs} PATH=/release-root/node_modules/.bin:$PATH npm --prefix /release-root/bdd ${bddCommand}`
     : `${phaseMarker("preflight")} && ${runtimePreflight} && ${phaseMarker("fixture-packing")} && ${fixturePacking} && ${phaseMarker("cucumber-launch")} && ${packageDirs} PATH=/work/node_modules/.bin:$PATH npm --prefix /work/bdd ${bddCommand}`;
 
 dockerRunArgs.push(BDD_NODE_IMAGE, "sh", "-c", innerCommand);

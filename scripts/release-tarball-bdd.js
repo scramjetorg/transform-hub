@@ -10,6 +10,7 @@ const RECORD_SCHEMA = "release-tarball-bdd-record.v1";
 const NPM_CLI = resolve(__dirname, "..", "node_modules/npm/bin/npm-cli.js");
 const FIRST_PARTY = /^@scramjet\//;
 const BDD_SCRIPT_ENTRIES = ["sth-bin.js", "docker-memory.js", "cgroup-memory.js", "bdd-options.js", "bdd-cleanup.js", "bdd-scenario-lifecycle.js", "bdd-memory-guard.js", "bdd-memory-hooks-lib.js", "bdd-chunk-memory-policy.js", "bdd-chunk-timing.js", "bdd-manager-exceptions.js", "bdd-cli-exceptions.js"];
+const BDD_FIXTURE_TOOL_ENTRIES = ["prepare-bdd-simple-stdio.js", "pack-appcontext-fixtures.js", "pack-bdd-fixtures.js", "pack-python-bdd-fixtures.js"];
 
 function inside(root, candidate) {
     const path = relative(resolve(root), resolve(candidate));
@@ -55,6 +56,28 @@ function copyBddScriptClosure(sourceRoot, destinationRoot) {
     return [...copied].map((source) => relative(sourceRoot, source).replaceAll("\\", "/"));
 }
 
+function copyBddFixtureToolClosure(sourceRoot, destinationRoot) {
+    const scriptsRoot = join(sourceRoot, "scripts");
+    const fixtureToolEntries = new Set(BDD_FIXTURE_TOOL_ENTRIES.map((entry) => resolve(scriptsRoot, entry)));
+    const copied = new Set();
+    const visit = (source) => {
+        const real = resolveModuleFile(source);
+        if (copied.has(real)) return;
+        if (!fixtureToolEntries.has(real) && !inside(join(scriptsRoot, "lib"), real) && !inside(join(sourceRoot, "bdd"), real)) {
+            throw new Error(`BDD fixture tool import escapes the staged scripts/bdd trees: ${real}`);
+        }
+        copied.add(real);
+        for (const specifier of relativeImports(real)) visit(resolve(dirname(real), specifier));
+    };
+    for (const entry of BDD_FIXTURE_TOOL_ENTRIES) visit(join(scriptsRoot, entry));
+    for (const source of copied) {
+        const target = join(destinationRoot, relative(sourceRoot, source));
+        mkdirSync(dirname(target), { recursive: true });
+        cpSync(source, target);
+    }
+    return [...copied].map((source) => relative(sourceRoot, source).replaceAll("\\", "/"));
+}
+
 function assertBddHarnessLoadable(root) {
     const cucumber = require(join(root, "bdd", "cucumber.js"));
     if (typeof cucumber.default !== "string") throw new Error("Prepared BDD cucumber configuration did not load from the isolated root.");
@@ -73,6 +96,14 @@ function assertBddHarnessLoadable(root) {
         }
     };
     for (const directory of [join(root, "bdd", "lib"), join(root, "bdd", "support"), join(root, "bdd", "step-definitions")]) visitBdd(directory);
+    for (const entry of BDD_FIXTURE_TOOL_ENTRIES) {
+        const source = join(root, "scripts", entry);
+        for (const specifier of relativeImports(source)) {
+            const resolved = resolveModuleFile(resolve(dirname(source), specifier));
+            if (!inside(root, resolved)) throw new Error(`Prepared fixture tool import escapes the isolated root: ${specifier}`);
+            if (!existsSync(resolved)) throw new Error(`Prepared fixture tool import is missing from the isolated root: ${specifier}`);
+        }
+    }
     require(join(root, "bdd", "cucumber.js"));
     return true;
 }
@@ -125,7 +156,7 @@ function syntheticManifest(releaseSet, externalDependencies = {}) {
 function exactHarnessDependencies(sourceRoot) {
     const bddManifest = json(join(sourceRoot, "bdd", "package.json"));
     const rootLock = json(join(sourceRoot, "package-lock.json"));
-    const names = [...Object.keys(bddManifest.dependencies || {}), ...Object.keys(bddManifest.devDependencies || {}), "ts-node", "typescript"];
+    const names = [...Object.keys(bddManifest.dependencies || {}), ...Object.keys(bddManifest.devDependencies || {}), "tar", "ts-node", "typescript"];
     return Object.fromEntries([...new Set(names)].flatMap((name) => {
         const installed = rootLock.packages?.[`node_modules/${name}`];
         return installed?.version ? [[name, installed.version]] : [];
@@ -222,7 +253,7 @@ function prepareTarballBddRoot({ candidateDir, destination, sourceRoot = resolve
     }
     writeFileSync(join(root, "package.json"), `${JSON.stringify(syntheticManifest(verified.releaseSet, externalDependencies), null, 2)}\n`);
     cpSync(join(sourceRoot, "bdd"), join(root, "bdd"), { recursive: true });
-    const stagedScripts = copyBddScriptClosure(sourceRoot, root);
+    const stagedScripts = [...copyBddScriptClosure(sourceRoot, root), ...copyBddFixtureToolClosure(sourceRoot, root)];
     cpSync(join(sourceRoot, "tsconfig.base.json"), join(root, "tsconfig.base.json"));
     const bddTsconfig = json(join(root, "bdd", "tsconfig.json"));
     if (bddTsconfig.compilerOptions) delete bddTsconfig.compilerOptions.paths;
@@ -262,4 +293,4 @@ if (require.main === module) {
     } catch (error) { console.error(`[release-tarball-bdd] ${error.message}`); process.exitCode = 1; }
 }
 
-module.exports = { RECORD_SCHEMA, directFileDependencies, syntheticManifest, exactHarnessDependencies, copyBddScriptClosure, assertBddHarnessLoadable, runHarnessLoadSmoke, resolveCandidateTarball, verifyCandidateBundle, assertDirectFileManifest, verifyInstalledRoot, prepareTarballBddRoot, readTarballRecord };
+module.exports = { RECORD_SCHEMA, directFileDependencies, syntheticManifest, exactHarnessDependencies, copyBddScriptClosure, copyBddFixtureToolClosure, assertBddHarnessLoadable, runHarnessLoadSmoke, resolveCandidateTarball, verifyCandidateBundle, assertDirectFileManifest, verifyInstalledRoot, prepareTarballBddRoot, readTarballRecord };

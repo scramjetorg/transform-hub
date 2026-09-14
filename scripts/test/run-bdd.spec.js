@@ -92,6 +92,26 @@ test("Docker BDD runner builds and preflights its Node 22 and Bun image", (t) =>
 	t.true(dockerfile.includes("/usr/local/bin/bun"));
 });
 
+test("tarball Docker mode uses staged absolute fixture tools and exports archives before Cucumber", (t) => {
+	const source = fs.readFileSync(path.resolve(__dirname, "..", "run-bdd-docker.js"), "utf8");
+	const tarballBranch = source.slice(source.indexOf("const tarballFixturePacking"), source.indexOf("dockerRunArgs.push(BDD_NODE_IMAGE"));
+	t.true(tarballBranch.includes("/release-root/scripts/prepare-bdd-simple-stdio.js"));
+	t.true(tarballBranch.includes("/release-root/scripts/pack-appcontext-fixtures.js"));
+	t.true(tarballBranch.includes("/release-root/scripts/pack-bdd-fixtures.js"));
+	t.true(tarballBranch.includes("/release-root/scripts/pack-python-bdd-fixtures.js"));
+	t.true(tarballBranch.includes("SCRAMJET_BDD_SIMPLE_STDIO_ARCHIVE=/work-tmp/simple-stdio.tar.gz"));
+	t.true(tarballBranch.indexOf("SCRAMJET_BDD_SIMPLE_STDIO_ARCHIVE") < tarballBranch.indexOf("npm --prefix /release-root/bdd"));
+	t.false(tarballBranch.includes("node scripts/"));
+});
+
+test("normal Docker mode retains repository-relative fixture setup", (t) => {
+	const source = fs.readFileSync(path.resolve(__dirname, "..", "run-bdd-docker.js"), "utf8");
+	const normalBranch = source.slice(source.indexOf("const fixturePacking"), source.indexOf("dockerRunArgs.push(BDD_NODE_IMAGE"));
+	t.true(normalBranch.includes("node scripts/prepare-bdd-simple-stdio.js /work-tmp"));
+	t.true(normalBranch.includes("OUT_DIR=/work-tmp/appcontext-packages node scripts/pack-appcontext-fixtures.js"));
+	t.true(normalBranch.includes("PACKAGES_DIR=/work-tmp/appcontext-packages/:/work-tmp/python-bdd-packages/:/work-tmp/bdd-packages/"));
+});
+
 // ---------------------------------------------------------------------------
 // Mode default
 // ---------------------------------------------------------------------------

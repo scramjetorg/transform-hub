@@ -7,7 +7,7 @@ const { tmpdir } = require("node:os");
 const { join } = require("node:path");
 
 const { digestDocument } = require("../release-contract");
-const { assertDirectFileManifest, prepareTarballBddRoot, syntheticManifest, verifyInstalledRoot } = require("../release-tarball-bdd");
+const { assertDirectFileManifest, copyBddFixtureToolClosure, exactHarnessDependencies, prepareTarballBddRoot, syntheticManifest, verifyInstalledRoot } = require("../release-tarball-bdd");
 
 function digest(bytes) { return `sha256:${createHash("sha256").update(bytes).digest("hex")}`; }
 
@@ -63,6 +63,35 @@ test("prepare creates exact file dependencies for a two-package candidate root",
     t.is(harnessCalls[0].options.env.SCRAMJET_SPAWN_TS, undefined);
     t.true(prepared.record.harnessSmoke.command.some((part) => part.includes("ts-node/register")));
     t.is(JSON.parse(readFileSync(join(prepared.root, "tarball-record.json"), "utf8")).recordDigest, prepared.recordDigest);
+});
+
+test("prepare stages only the fixture tools and their supported closure", (t) => {
+    const fixture = releaseFixture(t);
+    const prepared = prepareTarballBddRoot({ candidateDir: fixture.root, destination: join(fixture.root, "execution"), sourceRoot: process.cwd(), externalDependencies: {}, install: true, runner: (_command, args, options) => { if (args.includes("ci")) mockInstall(options.cwd); return ""; }, harnessRunner: () => "" });
+    for (const entry of ["prepare-bdd-simple-stdio.js", "pack-appcontext-fixtures.js", "pack-bdd-fixtures.js", "pack-python-bdd-fixtures.js"]) t.true(existsSync(join(prepared.root, "scripts", entry)), entry);
+    t.true(existsSync(join(prepared.root, "scripts", "lib", "bdd-fixture-archives.js")));
+    t.true(existsSync(join(prepared.root, "bdd", "lib", "ownership.js")));
+    t.false(existsSync(join(prepared.root, "scripts", "build-all.js")));
+});
+
+test("fixture tool closure rejects imports from unrelated scripts", (t) => {
+    const sourceRoot = mkdtempSync(join(tmpdir(), "release-tarball-fixture-tools-"));
+    const destinationRoot = join(sourceRoot, "staged");
+    t.teardown(() => rmSync(sourceRoot, { recursive: true, force: true }));
+    mkdirSync(join(sourceRoot, "scripts"), { recursive: true });
+    for (const entry of ["prepare-bdd-simple-stdio.js", "pack-appcontext-fixtures.js", "pack-bdd-fixtures.js", "pack-python-bdd-fixtures.js"]) {
+        writeFileSync(join(sourceRoot, "scripts", entry), entry === "pack-bdd-fixtures.js" ? 'require("./unrelated.js");\n' : "module.exports = {};\n");
+    }
+    writeFileSync(join(sourceRoot, "scripts", "unrelated.js"), "module.exports = {};\n");
+
+    t.throws(() => copyBddFixtureToolClosure(sourceRoot, destinationRoot), { message: /escapes the staged scripts\/bdd trees/ });
+});
+
+test("fixture archive helper gets an exact direct tar dependency from the lockfile", (t) => {
+    const dependencies = exactHarnessDependencies(process.cwd());
+    const lock = JSON.parse(readFileSync(join(process.cwd(), "package-lock.json"), "utf8"));
+    t.is(dependencies.tar, lock.packages["node_modules/tar"].version);
+    t.regex(dependencies.tar, /^\d+\.\d+\.\d+$/);
 });
 
 test("installed first-party packages and bins remain inside the isolated root", (t) => {
