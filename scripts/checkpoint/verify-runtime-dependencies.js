@@ -15,12 +15,30 @@ function filesUnder(directory, prefix = "") {
         return entry.isDirectory() ? filesUnder(directory, relative) : [relative];
     });
 }
+function assertSafeSymlink(root, filePath, target) {
+    if (path.isAbsolute(target) || target.includes("\0")) throw new Error(`Unsafe runtime dependency symlink: ${filePath}`);
+    const destination = path.resolve(path.dirname(filePath), target);
+    const escaped = path.relative(path.resolve(root), destination);
+    if (escaped === ".." || escaped.startsWith(`..${path.sep}`) || path.isAbsolute(escaped)) {
+        throw new Error(`Unsafe runtime dependency symlink: ${filePath}`);
+    }
+}
 const manifest = JSON.parse(fs.readFileSync(path.join(root, "manifest.v1.json"), "utf8"));
 if (!Array.isArray(manifest.files)) throw new Error("Invalid runtime dependency manifest");
 for (const file of manifest.files) {
     if (!file.path || file.path.includes("..") || file.path.startsWith("/")) throw new Error(`Invalid runtime dependency path: ${file.path}`);
-    const actual = `sha256:${crypto.createHash("sha256").update(fs.readFileSync(path.join(root, file.path))).digest("hex")}`;
-    if (actual !== file.sha256) throw new Error(`Runtime dependency file hash mismatch: ${file.path}`);
+    const actualPath = path.join(root, file.path);
+    const stat = fs.lstatSync(actualPath, { throwIfNoEntry: false });
+    if (!stat) throw new Error(`Missing runtime dependency file: ${file.path}`);
+    if (file.type === "symlink") {
+        if (!stat.isSymbolicLink() || typeof file.target !== "string") throw new Error(`Runtime dependency symlink mismatch: ${file.path}`);
+        assertSafeSymlink(root, actualPath, fs.readlinkSync(actualPath));
+        if (fs.readlinkSync(actualPath) !== file.target) throw new Error(`Runtime dependency symlink target mismatch: ${file.path}`);
+    } else {
+        if (stat.isSymbolicLink() || file.type) throw new Error(`Runtime dependency file type mismatch: ${file.path}`);
+        const actual = `sha256:${crypto.createHash("sha256").update(fs.readFileSync(actualPath)).digest("hex")}`;
+        if (actual !== file.sha256) throw new Error(`Runtime dependency file hash mismatch: ${file.path}`);
+    }
 }
 for (const file of ["bun/bun-linux-x64.zip", "yarn/yarn.tar.gz"]) {
     if (!manifest.files.some((entry) => entry.path === file)) throw new Error(`Unlisted runtime dependency file: ${file}`);

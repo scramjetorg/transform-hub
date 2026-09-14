@@ -1,7 +1,7 @@
 const { createHash } = require("node:crypto");
-const { copyFileSync, mkdirSync, readdirSync, readFileSync, writeFileSync } = require("node:fs");
+const { copyFileSync, lstatSync, mkdirSync, readdirSync, readFileSync, readlinkSync, writeFileSync } = require("node:fs");
 const { execFileSync, spawnSync } = require("node:child_process");
-const { dirname, join, resolve } = require("node:path");
+const { dirname, isAbsolute, join, relative, resolve, sep } = require("node:path");
 const { mkdtempSync, rmSync } = require("node:fs");
 const { tmpdir } = require("node:os");
 const { digestDocument } = require("./provenance.js");
@@ -17,6 +17,31 @@ function filesUnder(root, prefix = "") {
 
 function fileDigest(path) {
     return `sha256:${createHash("sha256").update(readFileSync(path)).digest("hex")}`;
+}
+
+function symlinkTarget(path) {
+    const target = readlinkSync(path);
+    if (isAbsolute(target) || target.includes("\0")) throw new Error(`Unsafe runtime dependency symlink: ${path}`);
+    return target;
+}
+
+function assertSafeSymlink(root, path, target) {
+    const destination = resolve(dirname(path), target);
+    const escaped = relative(resolve(root), destination);
+    if (escaped === ".." || escaped.startsWith(`..${sep}`) || isAbsolute(escaped)) {
+        throw new Error(`Unsafe runtime dependency symlink: ${path}`);
+    }
+}
+
+function manifestEntry(root, path) {
+    const stat = lstatSync(path);
+    const relativePath = path.slice(resolve(root).length + 1);
+    if (stat.isSymbolicLink()) {
+        const target = symlinkTarget(path);
+        assertSafeSymlink(root, path, target);
+        return { path: relativePath, type: "symlink", target };
+    }
+    return { path: relativePath, sha256: fileDigest(path), size: stat.size };
 }
 
 function loadRuntimeProfile(root = resolve(__dirname, "../..")) {
@@ -108,8 +133,8 @@ async function prefetchRuntimeDependencies({ root = resolve(__dirname, "../.."),
     }
     const runner = await prefetchRunnerYarnCache({ root, cache: join(bundle, "yarn", "cache"), version: profile.yarn.version });
     for (const path of filesUnder(join(bundle, "yarn", "cache"))) {
-        const payload = readFileSync(join(bundle, "yarn", "cache", path));
-        files.push({ path: join("yarn", "cache", path), sha256: `sha256:${createHash("sha256").update(payload).digest("hex")}`, size: payload.length });
+        const entry = manifestEntry(bundle, join(bundle, "yarn", "cache", path));
+        files.push({ ...entry, path: join("yarn", "cache", path) });
     }
     await prefetchPython({ root, wheelhouse: join(bundle, "python", "wheelhouse"), fetch });
     for (const name of readdirSync(join(bundle, "python", "wheelhouse")).sort()) {
@@ -145,7 +170,18 @@ function verifyRuntimeManifest(bundle, profile = loadRuntimeProfile()) {
     for (const path of filesUnder(bundle)) if (path !== "manifest.v1.json" && !listed.has(path)) throw new Error(`Unlisted runtime dependency file: ${path}`);
     for (const file of manifest.files || []) {
         if (file.path === "manifest.v1.json" || file.path.includes("..") || file.path.startsWith("/")) throw new Error("Invalid runtime dependency manifest path.");
-        if (fileDigest(join(bundle, file.path)) !== file.sha256) throw new Error(`Runtime dependency file hash mismatch: ${file.path}`);
+        const actualPath = join(bundle, file.path);
+        const stat = lstatSync(actualPath, { throwIfNoEntry: false });
+        if (!stat) throw new Error(`Missing runtime dependency file: ${file.path}`);
+        if (file.type === "symlink") {
+            if (!stat.isSymbolicLink() || typeof file.target !== "string") throw new Error(`Runtime dependency symlink mismatch: ${file.path}`);
+            const target = symlinkTarget(actualPath);
+            assertSafeSymlink(bundle, actualPath, target);
+            if (target !== file.target) throw new Error(`Runtime dependency symlink target mismatch: ${file.path}`);
+        } else {
+            if (stat.isSymbolicLink() || file.type) throw new Error(`Runtime dependency file type mismatch: ${file.path}`);
+            if (fileDigest(actualPath) !== file.sha256) throw new Error(`Runtime dependency file hash mismatch: ${file.path}`);
+        }
     }
     return manifest;
 }

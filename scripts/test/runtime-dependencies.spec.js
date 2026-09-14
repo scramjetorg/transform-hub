@@ -3,7 +3,7 @@
 const test = require("ava").default;
 const { execFileSync } = require("node:child_process");
 const { createHash } = require("node:crypto");
-const { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } = require("node:fs");
+const { mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } = require("node:fs");
 const { resolve } = require("node:path");
 const { loadRuntimeProfile, verifyRuntimeManifest } = require("../checkpoint/runtime-dependencies.js");
 
@@ -21,7 +21,9 @@ function verifierFixture() {
     writeFileSync(resolve(directory, "bun/bun-linux-x64.zip"), "bun");
     writeFileSync(resolve(directory, "yarn/yarn.tar.gz"), "yarn");
     mkdirSync(resolve(directory, "yarn/cache", cacheFile.slice(0, cacheFile.lastIndexOf("/"))), { recursive: true });
+    mkdirSync(resolve(directory, "yarn/cache/.bin"), { recursive: true });
     writeFileSync(resolve(directory, "yarn/cache", cacheFile), "cache");
+    symlinkSync("../node-pre-gyp/bin/node-pre-gyp.js", resolve(directory, "yarn/cache/.bin/node-pre-gyp"));
     const packageJson = resolve(directory, "package.json");
     const lockfile = resolve(directory, "yarn.lock");
     writeFileSync(packageJson, "{\"name\":\"runner\"}\n");
@@ -35,9 +37,10 @@ function verifierFixture() {
         runner: {
             packageJsonSha256: sha256(packageJson),
             lockfileSha256: sha256(lockfile),
-            cacheFiles: [cacheFile]
+            cacheFiles: [cacheFile, ".bin/node-pre-gyp"]
         }
     };
+    manifest.files.push({ path: "yarn/cache/.bin/node-pre-gyp", type: "symlink", target: "../node-pre-gyp/bin/node-pre-gyp.js" });
     writeFileSync(resolve(directory, "manifest.v1.json"), `${JSON.stringify(manifest)}\n`);
     return { directory, packageJson, lockfile, cacheFile };
 }
@@ -100,4 +103,19 @@ test("Docker verifier binds runner inputs and rejects cache extras", (t) => {
 
     writeFileSync(fixture.packageJson, "{\"name\":\"changed\"}\n");
     t.throws(() => runVerifier(fixture), { message: /package.json digest mismatch/ });
+});
+
+test("runtime manifest verifier accepts broken in-bundle Yarn symlinks", (t) => {
+    const fixture = verifierFixture();
+    t.teardown(() => rmSync(fixture.directory, { recursive: true, force: true }));
+    t.notThrows(() => runVerifier(fixture));
+
+    rmSync(resolve(fixture.directory, "yarn/cache/.bin/node-pre-gyp"));
+    symlinkSync("../../../../outside", resolve(fixture.directory, "yarn/cache/.bin/node-pre-gyp"));
+    const manifestPath = resolve(fixture.directory, "manifest.v1.json");
+    const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
+    t.throws(() => runVerifier(fixture), { message: /Unsafe runtime dependency symlink/ });
+    manifest.files.find((file) => file.path === "yarn/cache/.bin/node-pre-gyp").target = "../../../../outside";
+    writeFileSync(manifestPath, JSON.stringify(manifest));
+    t.throws(() => runVerifier(fixture), { message: /Unsafe runtime dependency symlink/ });
 });
