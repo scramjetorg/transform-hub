@@ -44,7 +44,7 @@ function validateShardEvidence({ shardEvidenceFiles, releaseId, releaseSetDigest
     if (observed.size !== expected.size || [...expected].some((shard) => !observed.has(shard))) throw new Error("BDD shard evidence is incomplete or contains unexpected shards.");
     return [...observed.values()];
 }
-function plan({ identityFile, output, imageDigest, imageRepository = "ghcr.io/scramjetorg/transform-hub-bdd-node" }) {
+function plan({ identityFile, output, imageDigest, imageRepository = "ghcr.io/scramjetorg/transform-hub/bdd-node" }) {
     const identity = json(identityFile);
     assertSha(identity.sourceSha, "candidate source SHA");
     assertDigest(imageDigest, "candidate BDD image digest");

@@ -7,12 +7,24 @@ const { join, resolve } = require("node:path");
 const { candidateIdentity, claimCandidate, sealCandidate, recordCandidateRelease, recordProducerAttestation, recordBddMatrix } = require("../lib/release-bundle-state");
 const { digestDocument } = require("../release-contract");
 const { bytesDigest, createCandidateSeal } = require("../lib/release-candidate-assets");
-const { admission, validateShardEvidence } = require("../release-candidate-workflow");
+const { admission, plan, validateShardEvidence } = require("../release-candidate-workflow");
 const { buildBddEvidenceAssets } = require("../release-candidate-runtime");
 const matrix = require("../release-bdd-matrix.v1.json");
 
 const SHA = "a".repeat(40);
 const identity = candidateIdentity({ sourceSha: SHA, sourceTree: `sha256:${"b".repeat(64)}`, lockfileDigest: `sha256:${"c".repeat(64)}`, configRevision: "phase4", configDigest: `sha256:${"d".repeat(64)}`, buildIdentity: `sha256:${"e".repeat(64)}` });
+
+test("candidate planning binds the BDD image digest to the publisher repository", (t) => {
+    const root = mkdtempSync(join(tmpdir(), "release-phase4-plan-"));
+    t.teardown(() => rmSync(root, { recursive: true, force: true }));
+    const identityFile = join(root, "identity.json");
+    writeFileSync(identityFile, JSON.stringify(identity));
+    const imageDigest = `sha256:${"1".repeat(64)}`;
+    const releaseSet = plan({ identityFile, output: join(root, "release-set.json"), imageDigest });
+
+    t.deepEqual(releaseSet.artifacts.images, [{ repository: "ghcr.io/scramjetorg/transform-hub/bdd-node", digest: imageDigest }]);
+    t.deepEqual(plan({ identityFile, output: join(root, "override-release-set.json"), imageDigest, imageRepository: "ghcr.io/example/custom-bdd-node" }).artifacts.images, [{ repository: "ghcr.io/example/custom-bdd-node", digest: imageDigest }]);
+});
 
 test("admission requires success evidence to match source, numeric release, and release-set digest", (t) => {
     const root = mkdtempSync(join(tmpdir(), "release-phase4-admission-"));
