@@ -53,6 +53,7 @@ jobs:
           RELEASE_GHCR_IMAGE_DIGEST: ${{ inputs.image-digest }}
           GH_TOKEN: ${{ github.token }}
           SCRAMJET_BDD_CANDIDATE_IMAGE_MAP: ${{ inputs.image-map }}
+          RUNTIME_ADAPTER: docker
         run: |
           mkdir -p "$RELEASE_CANDIDATE_DIR"
           node scripts/release-candidate-runtime.js resolve --repository "${{ inputs.repository }}" --tag "${{ inputs.candidate-tag }}" --source-sha "${{ inputs.source-sha }}" --release-id "${{ inputs.candidate-release-id }}" --release-set-digest "${{ inputs.release-set-digest }}" --sealed-state-digest "${{ inputs.sealed-state-digest }}" --bundle-dir "$RELEASE_CANDIDATE_DIR" --state "$RELEASE_CANDIDATE_STATE" --output "$RUNNER_TEMP/resolve.json"

@@ -76,6 +76,7 @@ if (process.env.SCRAMJET_RELEASE_BDD_VALIDATION === "1" && !RELEASE_TARBALL_MODE
     if (!RELEASE_IMAGE_DIGEST || !/^sha256:[a-f0-9]{64}$/i.test(RELEASE_IMAGE_DIGEST) || !BDD_NODE_IMAGE.endsWith(`@${RELEASE_IMAGE_DIGEST}`)) failPrereq("release BDD validation requires the exact digest-pinned BDD image.");
 }
 if (RELEASE_TARBALL_MODE && (!RELEASE_CANDIDATE_ROOT || !RELEASE_IMAGE_DIGEST || !BDD_NODE_IMAGE.endsWith(`@${RELEASE_IMAGE_DIGEST}`))) failPrereq("tarball BDD mode requires a prepared execution root and exact digest-pinned image.");
+if (process.env.SCRAMJET_RELEASE_BDD_VALIDATION === "1" && process.env.RUNTIME_ADAPTER !== "docker") failPrereq("release BDD validation requires RUNTIME_ADAPTER=docker.");
 
 const dockerVersionProbe = spawnSync("docker", ["--version"], { stdio: ["ignore", "ignore", "ignore"] });
 
@@ -130,7 +131,7 @@ const containerName = `bdd-runner-${ownership.runId}-${ownership.chunkId}-${cryp
 
 const shellEscape = (arg) => `'${String(arg).replace(/'/g, "'\\''")}'`;
 
-const ENV_ALLOWLIST_EXACT = new Set(["NO_HOST", "TEST_REPORT", "DEVELOPMENT", "PACKAGES_DIR", "SCP_ENV_VALUE", "CI", "SCRAMJET_BDD_CANDIDATE_IMAGE_MAP"]);
+const ENV_ALLOWLIST_EXACT = new Set(["NO_HOST", "TEST_REPORT", "DEVELOPMENT", "PACKAGES_DIR", "SCP_ENV_VALUE", "CI", "RUNTIME_ADAPTER", "SCRAMJET_BDD_CANDIDATE_IMAGE_MAP"]);
 const ENV_ALLOWLIST_PREFIXES = ["SCRAMJET_", "BDD_"];
 
 const collectEnvForwardArgs = () => {

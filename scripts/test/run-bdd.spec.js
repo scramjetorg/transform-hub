@@ -219,6 +219,20 @@ test("run-bdd-docker.js env forwarding includes SCRAMJET_ and BDD_ prefixes", (t
 	t.true(src.includes("SCRAMJET_"), "should forward SCRAMJET_ env vars");
 	t.true(src.includes("BDD_"), "should forward BDD_ env vars");
 	t.true(src.includes("NO_HOST"), "should forward NO_HOST env var");
+	t.true(src.includes('"RUNTIME_ADAPTER"'), "should forward the unprefixed runtime adapter into the BDD container");
+});
+
+test("candidate Docker BDD validation fails closed unless the Docker adapter is selected", (t) => {
+	const src = require("node:fs").readFileSync(
+		path.resolve(__dirname, "..", "run-bdd-docker.js"),
+		"utf8"
+	);
+
+	t.true(
+		src.includes('process.env.SCRAMJET_RELEASE_BDD_VALIDATION === "1" && process.env.RUNTIME_ADAPTER !== "docker"'),
+		"candidate validation must reject the process adapter before Docker BDD starts"
+	);
+	t.true(src.includes("release BDD validation requires RUNTIME_ADAPTER=docker."));
 });
 
 // ---------------------------------------------------------------------------
