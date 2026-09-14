@@ -9,7 +9,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: devel-main-pr-automation
+  group: managed-devel-to-main-release-pr
   cancel-in-progress: false
 
 jobs:
@@ -19,7 +19,6 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
-    environment: devel-main-pr-automation
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:

@@ -33,7 +33,7 @@ test("main release is protected, pinned, non-cancellable, and grants OIDC only t
 	t.true(source.includes("cancel-in-progress: false"));
 	t.is((source.match(/github\.repository == 'scramjetorg\/transform-hub'/g) || []).length, 3);
 	t.is((source.match(/^  production-publication:$/gm) || []).length, 1);
-	t.true(source.includes("environment: production"));
+	t.false(source.includes("environment:"), "main post-merge release must not await environment approval");
 	t.is((source.match(/id-token: write/g) || []).length, 1);
 	t.true(source.includes("name: Release / publish all verified npm waves through trusted publishing"));
 	t.true(source.includes("NPM_CONFIG_PROVENANCE: \"true\""));

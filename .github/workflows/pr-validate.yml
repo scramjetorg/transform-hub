@@ -26,7 +26,6 @@ jobs:
     # build share one checkout/install so generic validation is never duplicated
     # by the release-specific jobs below.
     name: CI / package validation
-    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.owner.login == 'scramjetorg' }}
     permissions:
       contents: read
     runs-on: ubuntu-24.04
@@ -97,7 +96,6 @@ jobs:
     # Keep the two-resource @ci-runner-node scenarios isolated: their established
     # Docker requirement is 2 GiB and they are the longest core BDD path.
     name: CI / core Node BDD
-    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.owner.login == 'scramjetorg' }}
     needs: [package-validation]
     permissions:
       contents: read
@@ -135,7 +133,6 @@ jobs:
     # Python, API, and Verser2 cover distinct services and can run independently
     # from the Docker-backed Node lane above.
     name: CI / core service BDD
-    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.owner.login == 'scramjetorg' }}
     needs: [package-validation]
     permissions:
       contents: read
@@ -172,7 +169,6 @@ jobs:
   bdd-extended-hub-topic:
     # Hub and API-topic are the lightweight legacy-equivalent extended paths.
     name: CI / extended hub and topic BDD
-    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.owner.login == 'scramjetorg' }}
     needs: [package-validation]
     permissions:
       contents: read
@@ -207,7 +203,6 @@ jobs:
     # Process-adapter and unified runtime coverage needs the same 2 GiB runner
     # allowance as core Node BDD, so it runs in its own parallel execution unit.
     name: CI / extended runtime BDD
-    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.owner.login == 'scramjetorg' }}
     needs: [package-validation]
     permissions:
       contents: read

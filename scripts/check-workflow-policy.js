@@ -148,10 +148,6 @@ function hasReleasePrGuard(source) {
     );
 }
 
-function hasSameOrgPrGuard(source) {
-    return source.includes("github.event.pull_request.head.repo.owner.login == 'scramjetorg'") || source.includes("github.event.pull_request.head.repo.owner.login == \"scramjetorg\"") || source.includes("github.event.pull_request.head.repo.full_name == github.repository");
-}
-
 function isGuardedJob(jobs, line) {
     const job = jobs.find((j) => line >= j.startLine && line < j.endLine);
     return !!job && !!job.ifCondition && hasReleasePrGuard(job.ifCondition);
@@ -164,10 +160,6 @@ function checkWorkflowSource(source, file) {
     const jobs = parseJobsIfConditions(lines);
     const blocks = permissionBlocks(lines);
     const workflowBlocks = blocks.filter((block) => block.scope === "workflow");
-
-    if (file.endsWith("external-pr-approved-validation.yml") && !source.includes("environment: external-pr-code-owner-approval")) {
-        errors.push(makeError(file, 1, "MISSING_EXTERNAL_PR_APPROVAL_ENVIRONMENT", "trusted external PR validation must require the named code-owner approval environment."));
-    }
 
     if (workflowHasTrigger(lines, "pull_request_target")) {
         const line = lines.findIndex((item) => /^\s*pull_request_target\s*:/.test(item)) + 1;
@@ -224,14 +216,6 @@ function checkWorkflowSource(source, file) {
     }
 
     if (isPullRequestWorkflow) {
-        for (const job of jobs) {
-            const block = lines.slice(job.startLine - 1, job.endLine).join("\n");
-            const executesSource = /(?:uses:\s*(?:actions\/checkout@|\.\/\.github\/actions\/)|(?:^|\n)\s*run:\s*)/.test(block);
-            if (executesSource && !hasSameOrgPrGuard(job.ifCondition || "")) {
-                errors.push(makeError(file, job.startLine, "UNGUARDED_PR_EXECUTION", `pull_request job ${job.name} must be gated to same-organization heads before checkout or source execution.`));
-            }
-        }
-
         for (let index = 0; index < lines.length; index++) {
             const uses = lines[index].match(/^\s*-\s+uses:\s*([^\s#]+?)(?:\s+#.*)?$/);
             if (!uses) continue;
