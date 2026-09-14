@@ -74,3 +74,20 @@ test("run --shard does not schedule a successful shard twice and rejects launche
     t.throws(() => runShardCommand("verser2", { candidateDir: fixture.root, imageDigest: fixture.imageDigest, imageReference: "transform-hub-bdd-bun:dev", runner }), { message: /digest-pinned/ });
     t.throws(() => runValidation({ command: "--shard=cli-basics", candidateDir: fixture.root, stateFile: fixture.stateFile, identity: fixture.identity, imageDigest: fixture.imageDigest, passthrough: ["--install"], runner, prepare: false }), { message: /Build, pack, and install/ });
 });
+
+test("failed shard results are durable, terminal, and expose child output", (t) => {
+    const fixture = candidate(t);
+    let call;
+    const runner = (_command, args, options) => {
+        call = { args, options };
+        return { status: 17 };
+    };
+
+    const result = runValidation({ command: "--shard=verser2", candidateDir: fixture.root, stateFile: fixture.stateFile, identity: fixture.identity, imageDigest: fixture.imageDigest, runner, prepare: false });
+
+    t.true(result.failed);
+    t.deepEqual(result.results, [{ shard: "verser2", status: "failed" }]);
+    t.is(readState(fixture.stateFile).bdd.shards[0].status, "failed");
+    t.is(call.options.stdio, "inherit");
+    t.deepEqual(call.args.slice(-1), ["--chunk=verser2"]);
+});

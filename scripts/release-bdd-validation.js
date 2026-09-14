@@ -67,7 +67,7 @@ function runShardCommand(shard, { runner = spawnSync, passthrough = [], candidat
     const args = [BDD_RUNNER, `--chunk=${shard}`, ...passthrough];
     if (process.env.BDD_NODE_IMAGE && process.env.BDD_NODE_IMAGE !== imageReference) throw new Error("Ambient BDD image does not match the verified candidate image.");
     if (process.env.SCRAMJET_BDD_CANDIDATE_ROOT && resolve(process.env.SCRAMJET_BDD_CANDIDATE_ROOT) !== resolve(candidateDir)) throw new Error("Ambient candidate execution root does not match the verified candidate.");
-    const result = runner(process.execPath, args, { cwd: ROOT, env: { ...process.env, SCRAMJET_SPAWN_TS: undefined, SCRAMJET_RELEASE_BDD_VALIDATION: "1", SCRAMJET_RELEASE_TARBALL_BDD_ROOT: "1", SCRAMJET_BDD_CANDIDATE_ROOT: resolve(candidateDir), SCRAMJET_BDD_IMAGE_DIGEST: imageDigest, BDD_NODE_IMAGE: imageReference } });
+    const result = runner(process.execPath, args, { cwd: ROOT, stdio: "inherit", env: { ...process.env, SCRAMJET_SPAWN_TS: undefined, SCRAMJET_RELEASE_BDD_VALIDATION: "1", SCRAMJET_RELEASE_TARBALL_BDD_ROOT: "1", SCRAMJET_BDD_CANDIDATE_ROOT: resolve(candidateDir), SCRAMJET_BDD_IMAGE_DIGEST: imageDigest, BDD_NODE_IMAGE: imageReference } });
     return typeof result === "number" ? result : (result.status ?? 1);
 }
 
@@ -98,7 +98,7 @@ function runValidation({ command = "--all", candidateDir, stateFile, identity, i
         results.push({ shard, status: result });
         if (status !== 0) break;
     }
-    return { matrix, consumed, consumedDigest, consumedPath, results };
+    return { matrix, consumed, consumedDigest, consumedPath, results, failed: results.some(({ status }) => status === "failed") };
 }
 
 if (require.main === module) {
@@ -106,7 +106,7 @@ if (require.main === module) {
         const args = process.argv.slice(2);
         if (args[0] !== "run") throw new Error("Usage: release-bdd-validation.js run --all|--shard=<name>");
         const command = args[1] || "--all";
-        process.exitCode = runValidation({ command, candidateDir: process.env.RELEASE_CANDIDATE_DIR, stateFile: process.env.RELEASE_CANDIDATE_STATE, identity: JSON.parse(process.env.RELEASE_CANDIDATE_IDENTITY), imageDigest: process.env.RELEASE_GHCR_IMAGE_DIGEST, evidenceFile: process.env.RELEASE_BDD_EVIDENCE_FILE }) ? 0 : 1;
+        process.exitCode = runValidation({ command, candidateDir: process.env.RELEASE_CANDIDATE_DIR, stateFile: process.env.RELEASE_CANDIDATE_STATE, identity: JSON.parse(process.env.RELEASE_CANDIDATE_IDENTITY), imageDigest: process.env.RELEASE_GHCR_IMAGE_DIGEST, evidenceFile: process.env.RELEASE_BDD_EVIDENCE_FILE }).failed ? 1 : 0;
     } catch (error) { console.error(`[release-bdd-validation] ${error.message}`); process.exitCode = 1; }
 }
 
