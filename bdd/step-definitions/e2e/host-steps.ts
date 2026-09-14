@@ -37,6 +37,7 @@ const { teardownFloodSource } = require("../../lib/flood-teardown.js");
 const { waitForInstanceDetachment } = require("../../lib/instance-detachment.js");
 const { resolveFixturePackagePath } = require("../../lib/fixture-package-path.js");
 const { expectedHostVersion } = require("../../lib/release-prerelease-context.js");
+const { stopAutoRemoveRunnerContainer } = require("../../lib/runner-container-cleanup.js");
 
 function resolveSequencePackage(packageName: string): string {
     const configuredDirs = (process.env.PACKAGES_DIR || "")
@@ -117,6 +118,7 @@ let externalHostBaseUrl: string | undefined;
 let scenarioHostClient: HostClient | undefined;
 const getHostClient = ({ resources }: CustomWorld): HostClient =>
     selectScenarioClient(resources.hostClient, hostClient)!;
+
 const actualResponse = () => actualStatusResponse || actualHealthResponse;
 const startWith = async function(this: CustomWorld, instanceArg: string) {
     this.resources.instance = await this.resources.sequence!.start({
@@ -834,14 +836,11 @@ When("get runner PID", { timeout: 30000 }, async function(this: CustomWorld) {
 
                 if (containerId) {
                     console.log("Container is identified.", containerId);
-                    this.scenarioLifecycle.ownContainer(containerId, "runner:docker", async () => {
-                        const container = dockerode.getContainer(containerId);
-                        try {
-                            await container.stop({ t: 10 });
-                        } catch {
-                            await container.kill();
-                        }
-                    });
+                    const runnerContainerId = containerId;
+                    const runnerContainer = dockerode.getContainer(runnerContainerId);
+                    this.scenarioLifecycle.ownContainer(runnerContainerId, "runner:docker", () =>
+                        stopAutoRemoveRunnerContainer(runnerContainer)
+                    );
                 }
                 break;
             case "process":
