@@ -12,7 +12,7 @@ import { RunnerConnectInfo, RuntimeProcessHandles, SequenceInfo } from "@scramje
 
 import { selectExecutor } from "../executor/select";
 import { forwardChildStdio } from "../executor/stream-forwarder";
-import { translateChildClose, writeTerminalLifecycleFrame } from "../executor/exit-translation";
+import { requiresHardChildTeardown, translateChildClose, writeTerminalLifecycleFrame } from "../executor/exit-translation";
 import { resolveRunnerNodeEntry } from "../executor/runner-node-launcher";
 import { resolveRunnerBunEntry } from "../executor/runner-bun-launcher";
 import { observeChildLifecycleFrames } from "../executor/lifecycle-observer";
@@ -347,7 +347,7 @@ async function main(): Promise<void> {
         tryRemove(bootConfigPath);
 
         hostClient
-            .disconnect(translated.exitCode !== RunnerExitCode.SUCCESS)
+            .disconnect(requiresHardChildTeardown(translated))
             .catch(() => undefined)
             .finally(() => {
                 process.exitCode = translated.exitCode;

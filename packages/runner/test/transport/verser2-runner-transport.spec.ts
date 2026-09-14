@@ -1,8 +1,11 @@
 import test from "ava";
 
 import {
-    createRunnerVerser2GuestOptions
+    createRunnerVerser2GuestOptions,
+    RunnerVerser2Transport
 } from "../../src/transport/verser2-runner-transport";
+
+import { PassThrough, Writable } from "stream";
 
 const INSTANCE_ID = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
 
@@ -40,4 +43,34 @@ test("preserves an explicit runner route domain when the guest ID differs", t =>
 
     t.is(options.guestId, "custom.runner.guest");
     t.deepEqual(options.routedDomains, ["runner.explicit.scramjet.internal"]);
+});
+
+test("graceful disconnect waits for active routed response streams to drain", async t => {
+    const transport = new RunnerVerser2Transport({ config: config(), instanceId: INSTANCE_ID });
+    const source = new PassThrough();
+    const body: Buffer[] = [];
+    const response = new Writable({
+        emitClose: false,
+        write: (chunk, _encoding, callback) => {
+            body.push(Buffer.from(chunk));
+            callback();
+        }
+    }) as Writable & {
+        writeHead: (status: number, headers?: Record<string, string>) => void;
+        flushHeaders: () => void;
+    };
+    response.writeHead = () => undefined;
+    response.flushHeaders = () => undefined;
+
+    (transport as any).pipeResponse(response, source);
+    let disconnected = false;
+    const disconnect = transport.disconnect(false).then(() => { disconnected = true; });
+
+    await new Promise(resolve => setImmediate(resolve));
+    t.false(disconnected);
+
+    source.end("drained");
+    await disconnect;
+    t.true(disconnected);
+    t.is(Buffer.concat(body).toString(), "drained");
 });

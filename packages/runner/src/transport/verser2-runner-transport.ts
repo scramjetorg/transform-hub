@@ -74,6 +74,7 @@ export class RunnerVerser2Transport implements RunnerVerser2TransportStreams {
     private started = false;
     private readonly localChannelWaitMs: number;
     private rpcTarget?: { host: string; port: number };
+    private readonly activeResponseDrains = new Set<Promise<void>>();
 
     constructor(private readonly options: RunnerVerser2TransportOptions) {
         this.localChannels = new LocalChannelServer({ expectedInstanceId: options.instanceId });
@@ -120,6 +121,10 @@ export class RunnerVerser2Transport implements RunnerVerser2TransportStreams {
         ]) {
             if (hard) stream.destroy();
             else stream.end();
+        }
+
+        if (!hard && this.activeResponseDrains.size > 0) {
+            await Promise.allSettled([...this.activeResponseDrains]);
         }
 
         await this.localChannels.close();
@@ -238,6 +243,21 @@ export class RunnerVerser2Transport implements RunnerVerser2TransportStreams {
         } else {
             res.write("");
         }
+        let settle!: () => void;
+        const drained = new Promise<void>(resolve => {
+            settle = () => {
+                res.off("finish", settle);
+                res.off("close", settle);
+                source.off("error", settle);
+                resolve();
+            };
+        }).finally(() => this.activeResponseDrains.delete(drained));
+
+        this.activeResponseDrains.add(drained);
+        res.once("finish", settle);
+        res.once("close", settle);
+        source.once("error", settle);
+
         source.on("error", error => res.destroy(error));
         source.pipe(res);
         source.resume();

@@ -656,9 +656,12 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
             this.provides ||= this.outputTopic || payload?.outputTopic;
             this.requires ||= this.inputTopic || payload?.inputTopic;
 
-            await this.handleHandshake(message);
-
+            // Commit the PING with the dispatcher before acknowledging it. The
+            // dispatcher may establish the runner's routed channels in its
+            // synchronous listener; sending PONG first lets the runtime race
+            // its first /input request against that establishment.
             this.emit("ping", message[1]);
+            await this.handleHandshake(message);
 
             return null;
         });
