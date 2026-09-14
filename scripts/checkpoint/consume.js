@@ -32,7 +32,7 @@ function labelsFor(run, reference) {
 }
 
 function copyFromImage(run, reference, source, destination) {
-    const container = run(["create", reference], true).trim();
+    const container = run(["create", reference, "true"], true).trim();
     if (!container) throw new Error("Docker did not create a checkpoint inspection container.");
     try {
         run(["cp", `${container}:${source}`, destination]);

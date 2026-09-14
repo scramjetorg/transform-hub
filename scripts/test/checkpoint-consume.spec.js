@@ -4,7 +4,7 @@ const test = require("ava").default;
 const { rmSync, writeFileSync } = require("node:fs");
 const { dirname, join } = require("node:path");
 
-const { consumeCheckpoint } = require("../checkpoint/consume.js");
+const { consumeCheckpoint, copyFromImage } = require("../checkpoint/consume.js");
 const { checkpointLabels, createIdentity, createStatement, digestDocument } = require("../checkpoint/provenance.js");
 
 const REPOSITORY = "ghcr.io/scramjetorg/transform-hub/ci-deps";
@@ -12,6 +12,21 @@ const SOURCE_SHA = "a".repeat(40);
 const IMAGE_DIGEST = `sha256:${"b".repeat(64)}`;
 const STATEMENT_IMAGE_DIGEST = `sha256:${"e".repeat(64)}`;
 const RUNTIME_DIGEST = `sha256:${"f".repeat(64)}`;
+
+test("creates commandless checkpoint images with an explicit harmless command", (t) => {
+	const calls = [];
+	copyFromImage((args, capture) => {
+		calls.push({ args, capture });
+		if (args[0] === "create") return "container-1";
+		return "";
+	}, "checkpoint@sha256:abc", "/checkpoint/file", "/tmp/output");
+
+	t.deepEqual(calls, [
+		{ args: ["create", "checkpoint@sha256:abc", "true"], capture: true },
+		{ args: ["cp", "container-1:/checkpoint/file", "/tmp/output"], capture: undefined },
+		{ args: ["rm", "--force", "container-1"], capture: undefined },
+	]);
+});
 
 function identity() {
 	return createIdentity({
