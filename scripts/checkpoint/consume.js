@@ -10,6 +10,13 @@ const { immutableReference } = require("./publish.js");
 const { loadRuntimeProfile, verifyRuntimeManifest } = require("./runtime-dependencies.js");
 
 const REPOSITORY = "ghcr.io/scramjetorg/transform-hub/ci-deps";
+const RUNTIME_LABELS = [
+    "io.scramjet.provenance.lock-sha256",
+    "io.scramjet.provenance.node",
+    "io.scramjet.provenance.npm",
+    "io.scramjet.provenance.platform",
+    "io.scramjet.provenance.runtime-dependencies",
+];
 
 function defaultRun(args, capture = false) {
     return execFileSync("docker", args, capture ? { encoding: "utf8" } : { stdio: "inherit" });
@@ -34,10 +41,16 @@ function copyFromImage(run, reference, source, destination) {
     }
 }
 
+function labelsMatch(actual, expected, keys) {
+    return keys.every((key) => actual?.[key] === expected?.[key]);
+}
+
 async function consumeCheckpoint({ branch, root = process.cwd(), requireRuntimeDependencies = false }, {
     createPlan: buildPlan = createPlan,
     log = console.log,
     run = defaultRun,
+    loadProfile: loadProfile = loadRuntimeProfile,
+    verifyManifest: verifyManifest = verifyRuntimeManifest,
     sourceSha: readSourceSha = (workspace) => execFileSync("git", ["rev-parse", "HEAD"], { cwd: workspace, encoding: "utf8" }).trim()
 } = {}) {
     if (!branch) return fallback("no-compatible-checkpoint-branch", log);
@@ -67,12 +80,19 @@ async function consumeCheckpoint({ branch, root = process.cwd(), requireRuntimeD
         const cacheReference = immutableReference(REPOSITORY, run(["image", "inspect", pointer, "--format", "{{join .RepoDigests \"\\n\"}}"], true));
         const cacheLabels = labelsFor(run, cacheReference.reference);
         const expectedLabels = checkpointLabels(plan.identity, plan.identityDigest);
-        if (Object.entries(expectedLabels).some(([key, value]) => cacheLabels[key] !== value)) {
+        let publishedIdentityDigest = plan.identityDigest;
+        if (requireRuntimeDependencies) {
+            if (!plan.runtimeDependencyDigest) return fallback("missing-runtime-dependency-profile", log);
+            if (!labelsMatch(cacheLabels, expectedLabels, RUNTIME_LABELS.slice(0, 4))) return fallback("runtime-policy-label-mismatch", log);
+            if (cacheLabels["io.scramjet.provenance.runtime-dependencies"] !== plan.runtimeDependencyDigest) return fallback("runtime-dependency-label-mismatch", log);
+            publishedIdentityDigest = cacheLabels["io.scramjet.provenance.identity-digest"];
+            if (!/^sha256:[a-f0-9]{64}$/i.test(publishedIdentityDigest || "")) return fallback("missing-runtime-identity", log);
+        } else if (Object.entries(expectedLabels).some(([key, value]) => cacheLabels[key] !== value)) {
             return fallback("image-label-mismatch", log);
         }
 
         copyFromImage(run, cacheReference.reference, "/opt/transform-hub/provenance/identity.v1.json", output);
-        const statementReference = `${REPOSITORY}:${statementTag(plan.identityDigest)}`;
+        const statementReference = `${REPOSITORY}:${statementTag(publishedIdentityDigest)}`;
         try {
             run(["pull", statementReference]);
         } catch {
@@ -80,13 +100,21 @@ async function consumeCheckpoint({ branch, root = process.cwd(), requireRuntimeD
         }
         const statementImage = immutableReference(REPOSITORY, run(["image", "inspect", statementReference, "--format", "{{join .RepoDigests \"\\n\"}}"], true));
         const statementLabels = labelsFor(run, statementImage.reference);
-        if (Object.entries(expectedLabels).some(([key, value]) => statementLabels[key] !== value)) {
+        if (requireRuntimeDependencies ? !labelsMatch(statementLabels, expectedLabels, RUNTIME_LABELS) : Object.entries(expectedLabels).some(([key, value]) => statementLabels[key] !== value)) {
             return fallback("statement-label-mismatch", log);
         }
         copyFromImage(run, statementImage.reference, "/opt/transform-hub/provenance/statement.v1.json", output);
 
         const identity = JSON.parse(readFileSync(join(output, "identity.v1.json"), "utf8"));
         const statement = JSON.parse(readFileSync(join(output, "statement.v1.json"), "utf8"));
+        if (requireRuntimeDependencies) {
+            if (digestDocument(identity) !== publishedIdentityDigest) return fallback("runtime-identity-digest-mismatch", log);
+            const publishedLabels = checkpointLabels(identity, publishedIdentityDigest);
+            if (!labelsMatch(cacheLabels, publishedLabels, RUNTIME_LABELS) || !labelsMatch(statementLabels, publishedLabels, RUNTIME_LABELS)) return fallback("runtime-policy-label-mismatch", log);
+            if (statement.identityDigest !== publishedIdentityDigest) return fallback("statement-identity-mismatch", log);
+            const statementImage = statement.outputs?.images?.find((candidate) => candidate.role === "dependency-checkpoint");
+            if (!statementImage || statementImage.digest !== cacheReference.digest || statementImage.repository !== REPOSITORY) return fallback("statement-image-mismatch", log);
+        }
         if (statementLabels["io.scramjet.provenance.statement-digest"] !== digestDocument(statement)) {
             return fallback("statement-digest-mismatch", log);
         }
@@ -96,10 +124,14 @@ async function consumeCheckpoint({ branch, root = process.cwd(), requireRuntimeD
             if (!artifact) return fallback("missing-runtime-dependency-statement-artifact", log);
             mkdirSync(runtimeDependencies);
             copyFromImage(run, cacheReference.reference, "/opt/transform-hub/runtime-dependencies/.", runtimeDependencies);
-            const manifest = verifyRuntimeManifest(runtimeDependencies, loadRuntimeProfile(workspace));
+            const manifest = verifyManifest(runtimeDependencies, loadProfile(workspace));
             if (manifest.profileDigest !== plan.runtimeDependencyDigest || digestDocument(manifest) !== artifact.digest) return fallback("runtime-dependency-manifest-mismatch", log);
         }
-        const resolved = resolveCheckpoint({
+        const resolved = requireRuntimeDependencies ? {
+            checkpoint: `${REPOSITORY}@${cacheReference.digest}`,
+            identityDigest: publishedIdentityDigest,
+            pointerTag: plan.promotion.pointerTag,
+        } : resolveCheckpoint({
             branch,
             expectedIdentity: plan.identity,
             checkpoint: {
@@ -148,4 +180,4 @@ if (require.main === module) {
     });
 }
 
-module.exports = { consumeCheckpoint, copyFromImage, fallback, labelsFor };
+module.exports = { consumeCheckpoint, copyFromImage, fallback, labelsFor, labelsMatch };
