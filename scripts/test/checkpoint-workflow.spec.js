@@ -44,10 +44,20 @@ test("checkpoint workflow manually publishes only trusted branch checkpoints", (
 test("trusted candidate authenticates GHCR before consuming the checkpoint", (t) => {
 	const source = readFileSync(candidateWorkflowPath, "utf8");
 	const runtimeJob = source.slice(source.indexOf("  runtime-images:"), source.indexOf("  build:", source.indexOf("  runtime-images:")));
+	const setupIndex = runtimeJob.indexOf("uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020");
+	const npmIndex = runtimeJob.indexOf("npm install --global --ignore-scripts npm@11.19.0");
+	const consumeIndex = runtimeJob.indexOf("scripts/checkpoint/consume.js");
 	t.true(runtimeJob.includes("packages: write"));
 	t.true(runtimeJob.includes("docker login ghcr.io"));
 	t.true(runtimeJob.includes("GHCR_TOKEN: ${{ github.token }}"));
-	t.true(runtimeJob.indexOf("docker login ghcr.io") < runtimeJob.indexOf("scripts/checkpoint/consume.js"));
+	t.true(runtimeJob.indexOf("docker login ghcr.io") < consumeIndex);
 	t.true(runtimeJob.includes("docker logout ghcr.io"));
+	t.true(setupIndex >= 0 && setupIndex < npmIndex && npmIndex < consumeIndex);
+	t.true(runtimeJob.includes('node-version: "22.23.2"'));
+	t.true(runtimeJob.includes("npm install --global --ignore-scripts npm@11.19.0"));
+	t.true(runtimeJob.includes('test "$(node --version)" = "v22.23.2"'));
+	t.true(runtimeJob.includes('test "$(npm --version)" = "11.19.0"'));
+	t.true(runtimeJob.includes("package-manager-cache: false"));
+	t.false(runtimeJob.includes("cache-mode:"));
 	t.false(source.includes("permissions:\n  contents: read\n  packages: read"));
 });
