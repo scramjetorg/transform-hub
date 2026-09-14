@@ -53,7 +53,7 @@ echo "${VERSER2_WHEEL_SHA256}  ${TMP_DIR}/${VERSER2_WHEEL}" | sha256sum --check 
 
 PIP_ARGS=(
     -r "${PACKAGE_DIR}/requirements.txt"
-    "${TMP_DIR}/${VERSER2_WHEEL}"
+    --find-links "${TMP_DIR}"
     --target "${PACKAGE_DIR}/${TARGET}"
     --upgrade
 )

@@ -148,6 +148,12 @@ class TestInstallDepsSourcesConfig:
             "source verser2-config.sh instead"
         )
 
+    def test_install_deps_resolves_verified_wheel_through_hashed_requirements(self) -> None:
+        content = INSTALL_DEPS.read_text("utf-8")
+        pip_args_construction = content.split("PIP_ARGS=(", 1)[1].split("python3 -m pip install", 1)[0]
+        assert '--find-links "${TMP_DIR}"' in pip_args_construction
+        assert '"${TMP_DIR}/${VERSER2_WHEEL}"' not in pip_args_construction
+
 
 class TestDockerfileUsesConfig:
     """Validates that the Dockerfile references the shared config."""
