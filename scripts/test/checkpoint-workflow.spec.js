@@ -7,6 +7,7 @@ const { resolve } = require("node:path");
 const { checkWorkflowSource } = require("../check-workflow-policy.js");
 
 const workflowPath = resolve(__dirname, "..", "..", ".github", "workflows", "checkpoint-bootstrap.yml");
+const candidateWorkflowPath = resolve(__dirname, "..", "..", ".github", "workflows", "build-release-candidate.yml");
 
 test("checkpoint workflow manually publishes only trusted branch checkpoints", (t) => {
 	const source = readFileSync(workflowPath, "utf8");
@@ -38,4 +39,15 @@ test("checkpoint workflow manually publishes only trusted branch checkpoints", (
 	t.false(source.includes("pull_request_target"));
 	t.false(source.includes("id-token: write"));
 	t.false(source.includes("upload-artifact"));
+});
+
+test("trusted candidate authenticates GHCR before consuming the checkpoint", (t) => {
+	const source = readFileSync(candidateWorkflowPath, "utf8");
+	const runtimeJob = source.slice(source.indexOf("  runtime-images:"), source.indexOf("  build:", source.indexOf("  runtime-images:")));
+	t.true(runtimeJob.includes("packages: write"));
+	t.true(runtimeJob.includes("docker login ghcr.io"));
+	t.true(runtimeJob.includes("GHCR_TOKEN: ${{ github.token }}"));
+	t.true(runtimeJob.indexOf("docker login ghcr.io") < runtimeJob.indexOf("scripts/checkpoint/consume.js"));
+	t.true(runtimeJob.includes("docker logout ghcr.io"));
+	t.false(source.includes("permissions:\n  contents: read\n  packages: read"));
 });
