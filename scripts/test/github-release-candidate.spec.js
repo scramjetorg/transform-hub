@@ -5,6 +5,7 @@ const { createHash } = require("node:crypto");
 const { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } = require("node:fs");
 const { tmpdir } = require("node:os");
 const { join } = require("node:path");
+const { spawnSync } = require("node:child_process");
 
 const { digestDocument } = require("../release-contract");
 const { createGithubReleaseAssetAdapter, stageGithubDraftCandidate } = require("../lib/github-release-candidate");
@@ -14,6 +15,12 @@ const identity = {
     sourceSha: "a".repeat(40), sourceTree: `sha256:${"b".repeat(64)}`, lockfileDigest: `sha256:${"c".repeat(64)}`,
     configRevision: "release-config-1", configDigest: `sha256:${"d".repeat(64)}`, buildIdentity: `sha256:${"e".repeat(64)}`,
 };
+
+test("GitHub candidate adapter does not load build-only dependencies", (t) => {
+    const script = "const Module=require('node:module'); const load=Module._load; Module._load=(request,...args)=>{if(request==='glob') throw new Error('glob loaded'); return load.call(Module,request,...args)}; require('./scripts/lib/github-release-candidate');";
+    const result = spawnSync(process.execPath, ["-e", script], { cwd: join(__dirname, "..", ".."), encoding: "utf8" });
+    t.is(result.status, 0, result.stderr);
+});
 
 test("candidate state records release, attestation, BDD placeholder, and terminal admission safely", (t) => {
     const root = mkdtempSync(join(tmpdir(), "release-state-fields-"));

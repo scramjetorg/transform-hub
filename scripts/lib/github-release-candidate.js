@@ -3,12 +3,23 @@ const { createHash } = require("node:crypto");
 const { mkdtempSync, readFileSync, rmSync, writeFileSync } = require("node:fs");
 const { tmpdir } = require("node:os");
 const { join } = require("node:path");
-const { assertDigest, assertSha } = require("../release-contract");
-const { createHandoff } = require("../release-bundle");
+const { assertDigest, assertSha, digestDocument, validateReleaseSet } = require("../release-contract");
 const { createCandidateSeal, downloadAndVerifyCandidate, stageCandidateAssets, validateCandidateSeal } = require("./release-candidate-assets");
 const { recordCandidateRelease } = require("./release-bundle-state");
 
 const ALLOWED_ASSET = /^(release-set\.json|build-provenance\.json|package-lock\.json|candidate-identity\.json|candidate-state\.json|candidate-seal\.json|candidate-success\.json|bdd-evidence\/[^/]+\.json|artifacts\/[^/]+\.tgz)$/;
+
+function createCandidateHandoff({ candidateId, releaseSet, provenance }) {
+    validateReleaseSet(releaseSet);
+    return {
+        schema: "release-candidate-handoff.v1",
+        candidateId,
+        candidateIdentity: provenance.identity,
+        releaseSetDigest: digestDocument(releaseSet),
+        provenanceDigest: digestDocument(provenance),
+        assets: ["release-set.json", "build-provenance.json", "package-lock.json", ...releaseSet.artifacts.tarballs.map((artifact) => artifact.path)],
+    };
+}
 
 function json(output) {
     try { return JSON.parse(String(output)); } catch { throw new Error("gh returned invalid JSON."); }
@@ -78,7 +89,7 @@ function createGithubReleaseAssetAdapter({ repository, tag, targetSha, runner = 
 function stageGithubDraftCandidate({ repository, tag, targetSha, candidateId = tag, root, releaseSet, provenance, lockfile, stateFile, identity, runner }) {
     const adapter = createGithubReleaseAssetAdapter({ repository, tag, targetSha, runner });
     const staged = stageCandidateAssets({ adapter, candidateId, root, releaseSet, provenance, lockfile });
-    const candidateReference = createHandoff({ candidateId, releaseSet, provenance });
+    const candidateReference = createCandidateHandoff({ candidateId, releaseSet, provenance });
     const verificationRoot = mkdtempSync(join(tmpdir(), "release-candidate-verify-"));
     try {
         downloadAndVerifyCandidate({ adapter, candidateId, destination: verificationRoot, releaseSet, candidateReference });
