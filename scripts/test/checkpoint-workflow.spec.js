@@ -61,3 +61,14 @@ test("trusted candidate authenticates GHCR before consuming the checkpoint", (t)
 	t.false(runtimeJob.includes("cache-mode:"));
 	t.false(source.includes("permissions:\n  contents: read\n  packages: read"));
 });
+
+test("trusted candidate passes the consumed runtime bundle through a step output before copying it", (t) => {
+	const source = readFileSync(candidateWorkflowPath, "utf8");
+	const consume = source.indexOf("id: checkpoint_runtime");
+	const stage = source.indexOf("Stage the verified runtime dependency bundle in Docker context", consume);
+	const copy = source.indexOf('cp -a "$CHECKPOINT_RUNTIME_DEPENDENCIES" runtime-dependencies', stage);
+	t.true(consume >= 0 && stage > consume && copy > stage);
+	t.true(source.slice(stage, copy).includes("steps.checkpoint_runtime.outputs.runtime_dependencies"));
+	t.true(source.slice(stage).includes("Verified runtime dependency bundle path was not exported"));
+	t.true(source.slice(stage).includes("test -d \"$CHECKPOINT_RUNTIME_DEPENDENCIES\""));
+});

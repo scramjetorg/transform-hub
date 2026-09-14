@@ -72,9 +72,17 @@ jobs:
           GHCR_TOKEN: ${{ github.token }}
           GHCR_USERNAME: ${{ github.actor }}
         run: printf '%s' "$GHCR_TOKEN" | docker login ghcr.io --username "$GHCR_USERNAME" --password-stdin
-      - name: Require the trusted runtime dependency checkpoint
+      - id: checkpoint_runtime
+        name: Require the trusted runtime dependency checkpoint
         run: |
           node scripts/checkpoint/consume.js --branch devel --require-runtime-dependencies
+      - name: Stage the verified runtime dependency bundle in Docker context
+        env:
+          CHECKPOINT_RUNTIME_DEPENDENCIES: ${{ steps.checkpoint_runtime.outputs.runtime_dependencies }}
+        run: |
+          set -euo pipefail
+          test -n "$CHECKPOINT_RUNTIME_DEPENDENCIES" || { echo "Verified runtime dependency bundle path was not exported by checkpoint consumption." >&2; exit 1; }
+          test -d "$CHECKPOINT_RUNTIME_DEPENDENCIES" || { echo "Verified runtime dependency bundle path is not a directory: $CHECKPOINT_RUNTIME_DEPENDENCIES" >&2; exit 1; }
           rm -rf runtime-dependencies
           cp -a "$CHECKPOINT_RUNTIME_DEPENDENCIES" runtime-dependencies
           test -s runtime-dependencies/manifest.v1.json

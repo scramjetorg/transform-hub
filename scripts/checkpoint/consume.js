@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 const { execFileSync } = require("node:child_process");
-const { mkdirSync, mkdtempSync, readFileSync, rmSync } = require("node:fs");
+const { appendFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync } = require("node:fs");
 const { tmpdir } = require("node:os");
 const { join, resolve } = require("node:path");
 const { createPlan } = require("./plan.js");
@@ -167,9 +167,17 @@ async function main() {
     if (process.argv.includes("--require-runtime-dependencies") && !result.runtimeDependencies) {
         throw new Error(`Required runtime dependency checkpoint unavailable: ${result.reason}`);
     }
-    if (process.env.GITHUB_ENV) {
-        if (result.cache) require("node:fs").appendFileSync(process.env.GITHUB_ENV, `CHECKPOINT_NPM_CACHE=${result.cache}\n`);
-        if (result.runtimeDependencies) require("node:fs").appendFileSync(process.env.GITHUB_ENV, `CHECKPOINT_RUNTIME_DEPENDENCIES=${result.runtimeDependencies}\nCHECKPOINT_RUNTIME_DEPENDENCY_DIGEST=${result.runtimeDependencyDigest}\n`);
+    writeOutputs(result);
+}
+
+function writeOutputs(result, env = process.env) {
+    if (env.GITHUB_ENV) {
+        if (result.cache) appendFileSync(env.GITHUB_ENV, `CHECKPOINT_NPM_CACHE=${result.cache}\n`);
+        if (result.runtimeDependencies) appendFileSync(env.GITHUB_ENV, `CHECKPOINT_RUNTIME_DEPENDENCIES=${result.runtimeDependencies}\nCHECKPOINT_RUNTIME_DEPENDENCY_DIGEST=${result.runtimeDependencyDigest}\n`);
+    }
+    if (env.GITHUB_OUTPUT) {
+        if (result.cache) appendFileSync(env.GITHUB_OUTPUT, `npm_cache=${result.cache}\n`);
+        if (result.runtimeDependencies) appendFileSync(env.GITHUB_OUTPUT, `runtime_dependencies=${result.runtimeDependencies}\n`);
     }
 }
 
@@ -180,4 +188,4 @@ if (require.main === module) {
     });
 }
 
-module.exports = { consumeCheckpoint, copyFromImage, fallback, labelsFor, labelsMatch };
+module.exports = { consumeCheckpoint, copyFromImage, fallback, labelsFor, labelsMatch, writeOutputs };

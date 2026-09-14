@@ -1,10 +1,11 @@
 "use strict";
 
 const test = require("ava").default;
-const { rmSync, writeFileSync } = require("node:fs");
+const { mkdtempSync, readFileSync, rmSync, writeFileSync } = require("node:fs");
+const { tmpdir } = require("node:os");
 const { dirname, join } = require("node:path");
 
-const { consumeCheckpoint, copyFromImage } = require("../checkpoint/consume.js");
+const { consumeCheckpoint, copyFromImage, writeOutputs } = require("../checkpoint/consume.js");
 const { checkpointLabels, createIdentity, createStatement, digestDocument } = require("../checkpoint/provenance.js");
 
 const REPOSITORY = "ghcr.io/scramjetorg/transform-hub/ci-deps";
@@ -26,6 +27,15 @@ test("creates commandless checkpoint images with an explicit harmless command", 
 		{ args: ["cp", "container-1:/checkpoint/file", "/tmp/output"], capture: undefined },
 		{ args: ["rm", "--force", "container-1"], capture: undefined },
 	]);
+});
+
+test("exports the verified runtime dependency path as a step output", (t) => {
+	const root = mkdtempSync(join(tmpdir(), "checkpoint-output-"));
+	const env = { GITHUB_ENV: join(root, "github-env"), GITHUB_OUTPUT: join(root, "github-output") };
+	t.teardown(() => rmSync(root, { force: true, recursive: true }));
+	writeOutputs({ cache: "/tmp/cache", runtimeDependencies: "/tmp/verified-runtime-dependencies", runtimeDependencyDigest: "sha256:digest" }, env);
+	t.is(readFileSync(env.GITHUB_OUTPUT, "utf8"), "npm_cache=/tmp/cache\nruntime_dependencies=/tmp/verified-runtime-dependencies\n");
+	t.true(readFileSync(env.GITHUB_ENV, "utf8").includes("CHECKPOINT_RUNTIME_DEPENDENCIES=/tmp/verified-runtime-dependencies\n"));
 });
 
 function identity() {
