@@ -13,6 +13,7 @@ const { resolveSthBin } = require("../../scripts/lib/sth-bin.js") as {
 
 type ResolverOptions = { environment?: NodeJS.ProcessEnv; workspaceRoot?: string };
 const TARBALL_ROOT_ENV = "SCRAMJET_TARBALL_BDD_ROOT";
+type BddCliArtifact = { packageDir: string; binRelativePath: string; nodeModulesDir: string; scriptsDir: string };
 
 function inside(parent: string, child: string): boolean {
     const path = relative(resolve(parent), resolve(child));
@@ -76,6 +77,52 @@ function resolveTarballBin(source: string, binName: string, root: string): strin
     const bin = realpathSync(resolve(packageDir, relativeBin));
     if (!inside(root, bin) || !inside(packageDir, bin) || !statSync(bin).isFile()) throw new Error(`Tarball BDD bin escapes the isolated execution root: ${source}/${binName}`);
     return bin;
+}
+
+function resolveCliArtifact(packageDirInput: string, installRootInput: string, mode: string): BddCliArtifact {
+    const installRoot = realpathSync(installRootInput);
+    const nodeModulesDir = realpathSync(join(installRoot, "node_modules"));
+    const packageDir = realpathSync(packageDirInput);
+    if (!inside(installRoot, nodeModulesDir) || !inside(installRoot, packageDir) || (mode !== "Normal" && !inside(nodeModulesDir, packageDir))) {
+        throw new Error(`${mode} BDD CLI package escapes its install root`);
+    }
+
+    const packageJsonPath = join(packageDir, "package.json");
+    const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8"));
+    const configured = typeof packageJson.bin === "string" ? packageJson.bin : packageJson.bin?.si;
+    if (typeof configured !== "string") throw new Error(`${mode} BDD CLI package does not expose bin si`);
+    const bin = realpathSync(resolve(packageDir, configured));
+    if (!inside(packageDir, bin) || !statSync(bin).isFile()) throw new Error(`${mode} BDD CLI bin escapes its package`);
+
+    const scripts = realpathSync(join(packageDir, "scripts"));
+    if (!inside(packageDir, scripts) || !statSync(scripts).isDirectory()) throw new Error(`${mode} BDD CLI scripts escape its package`);
+    return { packageDir, binRelativePath: relative(packageDir, bin), nodeModulesDir, scriptsDir: scripts };
+}
+
+/** Resolve the CLI package and its completion assets for the active BDD artifact mode. */
+export function resolveBddCliArtifact(options: ResolverOptions = {}): BddCliArtifact {
+    const environment = options.environment || process.env;
+    const isolated = tarballRoot(options);
+    if (isolated) {
+        rejectSourceOverride(environment);
+        const packageJson = require.resolve("@scramjet/cli/package.json", { paths: [isolated] });
+        return resolveCliArtifact(resolve(packageJson, ".."), isolated, "Tarball");
+    }
+
+    const root = bddWorkspaceRoot(options);
+    const release = verified({ ...options, workspaceRoot: root });
+    if (release) {
+        rejectSourceOverride(environment);
+        const record = readRecord(release.recordPath);
+        const entry = record.packages.find((candidate: any) => candidate.sourceName === "@scramjet/cli");
+        if (!entry) throw new Error("Verified prerelease package is not recorded: @scramjet/cli");
+        const installRoot = realpathSync(release.installDir);
+        const packageDir = realpathSync(join(installRoot, "node_modules", entry.name));
+        return resolveCliArtifact(packageDir, installRoot, "Prerelease");
+    }
+
+    const installRoot = realpathSync(join(root, "dist"));
+    return resolveCliArtifact(join(installRoot, "cli"), installRoot, "Normal");
 }
 
 /** Resolve a package or package subpath, proving the result is in the verified install. */

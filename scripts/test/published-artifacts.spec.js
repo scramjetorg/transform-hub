@@ -5,7 +5,7 @@ const { mkdirSync, mkdtempSync, realpathSync, rmSync, symlinkSync, writeFileSync
 const { tmpdir } = require("node:os");
 const { join } = require("node:path");
 require("ts-node").register({ project: join(__dirname, "../../bdd/tsconfig.json") });
-const { resolveBddBin, resolveBddWorkspaceRoot, resolvePublishedBin, resolvePublishedModule, resolveWorkspaceCliCommand } = require("../../bdd/lib/published-artifacts.ts");
+const { resolveBddBin, resolveBddCliArtifact, resolveBddWorkspaceRoot, resolvePublishedBin, resolvePublishedModule, resolveWorkspaceCliCommand } = require("../../bdd/lib/published-artifacts.ts");
 
 function fixture(t) {
     const root = mkdtempSync(join(tmpdir(), "published-artifacts-"));
@@ -15,6 +15,7 @@ function fixture(t) {
     const cliPackage = join(installDir, "node_modules", "@scramjetorg", "cli");
     mkdirSync(join(installPackage, "lib"), { recursive: true });
     mkdirSync(join(cliPackage, "bin"), { recursive: true });
+    mkdirSync(join(cliPackage, "scripts"), { recursive: true });
     const entry = (sourceName, name) => ({ sourceName, name, registryName: name, version: "2.0.0-pr.1", packageChecksum: "p", sourceChecksum: "s", sourceVersion: "2.0.0" });
     const host = entry("@scramjet/host", "@scramjetorg/host");
     const cli = entry("@scramjet/cli", "@scramjetorg/cli");
@@ -22,6 +23,7 @@ function fixture(t) {
     writeFileSync(join(installPackage, "lib/index.js"), "module.exports = 'verified';\n");
     writeFileSync(join(cliPackage, "package.json"), JSON.stringify({ name: cli.name, version: cli.version, bin: { si: "./bin/si.js" }, scramjet: { prerelease: cli }}));
     writeFileSync(join(cliPackage, "bin/si.js"), "#!/usr/bin/env node\n");
+    writeFileSync(join(cliPackage, "scripts/completion.js"), "completion\n");
     mkdirSync(join(root, "node_modules", "@scramjet"), { recursive: true });
     mkdirSync(join(root, "node_modules", ".bin"), { recursive: true });
     symlinkSync(installPackage, join(root, "node_modules", "@scramjet", "host"), "dir");
@@ -30,6 +32,18 @@ function fixture(t) {
     const recordPath = join(installDir, "verified-record.json");
     writeFileSync(recordPath, JSON.stringify({ format: "transform-hub-release-prerelease-bdd-v2", packages: [host, cli] }));
     return { root, installDir, recordPath, environment: { SCRAMJET_RELEASE_PRERELEASE_BDD_INSTALL_DIR: ".release-prerelease-bdd", SCRAMJET_RELEASE_PRERELEASE_BDD_RECORD: ".release-prerelease-bdd/verified-record.json" } };
+}
+
+function cliFixture(t, mode = "tarball") {
+    const root = mkdtempSync(join(tmpdir(), `published-${mode}-cli-`));
+    t.teardown(() => rmSync(root, { recursive: true, force: true }));
+    const packageDir = join(root, "node_modules", "@scramjet", "cli");
+    mkdirSync(join(packageDir, "bin"), { recursive: true });
+    mkdirSync(join(packageDir, "scripts"), { recursive: true });
+    writeFileSync(join(packageDir, "package.json"), JSON.stringify({ name: "@scramjet/cli", bin: { si: "bin/si.js" } }));
+    writeFileSync(join(packageDir, "bin/si.js"), "#!/usr/bin/env node\n");
+    writeFileSync(join(packageDir, "scripts/completion.js"), "completion\n");
+    return { root, packageDir, environment: { SCRAMJET_TARBALL_BDD_ROOT: root } };
 }
 
 test("verified module and bin resolve inside the prerelease install", (t) => {
@@ -51,6 +65,42 @@ test("tarball execution root resolves modules and bins without source fallback",
     t.is(resolvePublishedModule("@scramjet/a", options), realpathSync(join(packageDir, "index.js")));
     t.is(resolvePublishedBin("@scramjet/a", "tool", options), realpathSync(join(packageDir, "tool.js")));
     t.throws(() => resolvePublishedModule("@scramjet/a", { ...options, environment: { ...options.environment, SCRAMJET_SPAWN_TS: "1" } }), { message: /source override/ });
+});
+
+test("BDD CLI artifact resolver resolves normal, tarball, and prerelease layouts", (t) => {
+    const normal = cliFixture(t, "normal");
+    mkdirSync(join(normal.root, "dist/cli"), { recursive: true });
+    mkdirSync(join(normal.root, "dist/node_modules"), { recursive: true });
+    writeFileSync(join(normal.root, "dist/cli/package.json"), JSON.stringify({ bin: { si: "bin/si.js" } }));
+    mkdirSync(join(normal.root, "dist/cli/bin"));
+    mkdirSync(join(normal.root, "dist/cli/scripts"));
+    writeFileSync(join(normal.root, "dist/cli/bin/si.js"), "#!/usr/bin/env node\n");
+    t.is(resolveBddCliArtifact({ workspaceRoot: normal.root, environment: {} }).binRelativePath, "bin/si.js");
+
+    const tarball = cliFixture(t);
+    t.is(resolveBddCliArtifact({ workspaceRoot: tarball.root, environment: tarball.environment }).packageDir, realpathSync(tarball.packageDir));
+
+    const prerelease = fixture(t);
+    const artifact = resolveBddCliArtifact({ workspaceRoot: prerelease.root, environment: prerelease.environment });
+    t.is(artifact.binRelativePath, "bin/si.js");
+    t.is(artifact.packageDir, realpathSync(join(prerelease.installDir, "node_modules/@scramjetorg/cli")));
+});
+
+test("tarball CLI artifact resolver rejects escaping bin and scripts", (t) => {
+    const fixtureData = cliFixture(t);
+    const outside = join(fixtureData.root, "outside.js");
+    writeFileSync(outside, "outside\n");
+    rmSync(join(fixtureData.packageDir, "bin/si.js"));
+    symlinkSync(outside, join(fixtureData.packageDir, "bin/si.js"));
+    t.throws(() => resolveBddCliArtifact({ workspaceRoot: fixtureData.root, environment: fixtureData.environment }), { message: /bin escapes/ });
+
+    rmSync(join(fixtureData.packageDir, "bin/si.js"));
+    writeFileSync(join(fixtureData.packageDir, "bin/si.js"), "#!/usr/bin/env node\n");
+    const outsideScripts = join(fixtureData.root, "outside-scripts");
+    mkdirSync(outsideScripts);
+    rmSync(join(fixtureData.packageDir, "scripts"), { recursive: true });
+    symlinkSync(outsideScripts, join(fixtureData.packageDir, "scripts"), "dir");
+    t.throws(() => resolveBddCliArtifact({ workspaceRoot: fixtureData.root, environment: fixtureData.environment }), { message: /scripts escape/ });
 });
 
 test("default BDD artifact resolution anchors paths at the mounted workspace root", (t) => {
