@@ -161,6 +161,13 @@ class TestInstallDepsSourcesConfig:
         assert '--find-links "${TMP_DIR}"' in pip_args_construction
         assert '"${TMP_DIR}/${VERSER2_WHEEL}"' not in pip_args_construction
 
+    def test_install_deps_separates_unpinned_developer_requirements(self) -> None:
+        content = INSTALL_DEPS.read_text("utf-8")
+        runtime_install, dev_install = content.split('if [[ "${INCLUDE_DEV}" == "1" ]]', 1)
+        assert "requirements-dev.txt" not in runtime_install
+        assert "python3 -m pip install" in dev_install
+        assert 'requirements-dev.txt' in dev_install
+
 
 class TestDockerfileUsesConfig:
     """Validates that the Dockerfile references the shared config."""

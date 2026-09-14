@@ -58,8 +58,11 @@ PIP_ARGS=(
     --upgrade
 )
 
-if [[ "${INCLUDE_DEV}" == "1" ]]; then
-    PIP_ARGS+=( -r "${PACKAGE_DIR}/requirements-dev.txt" )
-fi
-
 python3 -m pip install "${PIP_ARGS[@]}"
+
+if [[ "${INCLUDE_DEV}" == "1" ]]; then
+    python3 -m pip install \
+        --target "${PACKAGE_DIR}/${TARGET}" \
+        --upgrade \
+        -r "${PACKAGE_DIR}/requirements-dev.txt"
+fi
