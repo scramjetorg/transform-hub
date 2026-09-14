@@ -230,7 +230,7 @@ export class DockerodeDockerHelper implements IDockerHelper {
 
     private pulledImages: {[key: string]: Promise<void> | undefined } = {};
 
-    private ghcrAuthConfig(): { auth: string, serveraddress: string } | undefined {
+    private ghcrAuthConfig(): { username: string, password: string, serveraddress: string } | undefined {
         const dockerConfig = process.env.DOCKER_CONFIG;
         if (!dockerConfig) return undefined;
 
@@ -247,7 +247,11 @@ export class DockerodeDockerHelper implements IDockerHelper {
             const separator = credentials.indexOf(":");
             if (separator <= 0 || separator === credentials.length - 1) return undefined;
 
-            return { auth, serveraddress: "ghcr.io" };
+            return {
+                username: credentials.slice(0, separator),
+                password: credentials.slice(separator + 1),
+                serveraddress: "ghcr.io"
+            };
         } catch {
             return undefined;
         }

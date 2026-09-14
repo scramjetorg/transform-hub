@@ -107,7 +107,7 @@ test("Docker image pull rejects when progress callback reports an error", async 
 test("Docker GHCR image pull uses valid direct auth credentials", async t => {
     const configDir = mkdtempSync(join(tmpdir(), "docker-auth-"));
     const previous = process.env.DOCKER_CONFIG;
-    const auth = Buffer.from("username:password").toString("base64");
+    const auth = Buffer.from("username:password:with:colon").toString("base64");
     writeFileSync(join(configDir, "config.json"), JSON.stringify({
         auths: { "ghcr.io": { auth } },
         credsStore: "secretservice"
@@ -121,7 +121,9 @@ test("Docker GHCR image pull uses valid direct auth credentials", async t => {
     process.env.DOCKER_CONFIG = configDir;
     try {
         await helper.pullImage("ghcr.io/example/private@sha256:abc", false);
-        t.deepEqual(calls[0], ["ghcr.io/example/private@sha256:abc", { authconfig: { auth, serveraddress: "ghcr.io" } }]);
+        t.deepEqual(calls[0], ["ghcr.io/example/private@sha256:abc", {
+            authconfig: { username: "username", password: "password:with:colon", serveraddress: "ghcr.io" }
+        }]);
     } finally {
         if (previous === undefined) delete process.env.DOCKER_CONFIG;
         else process.env.DOCKER_CONFIG = previous;
@@ -137,7 +139,7 @@ test("Docker GHCR image pull ignores invalid direct auth credentials", async t =
         Buffer.from("usernamepassword").toString("base64")
     ];
 
-    for (const auth of invalidAuths) {
+    for (const [index, auth] of invalidAuths.entries()) {
         const configDir = mkdtempSync(join(tmpdir(), "docker-auth-"));
         const previous = process.env.DOCKER_CONFIG;
         writeFileSync(join(configDir, "config.json"), JSON.stringify({ auths: { "ghcr.io": { auth } } }));
@@ -150,7 +152,7 @@ test("Docker GHCR image pull ignores invalid direct auth credentials", async t =
         process.env.DOCKER_CONFIG = configDir;
         try {
             await helper.pullImage("ghcr.io/example/private:latest", false);
-            t.deepEqual(calls, [["ghcr.io/example/private:latest"]], `auth should be ignored: ${auth}`);
+            t.deepEqual(calls, [["ghcr.io/example/private:latest"]], `invalid auth should be ignored: case ${index}`);
         } finally {
             if (previous === undefined) delete process.env.DOCKER_CONFIG;
             else process.env.DOCKER_CONFIG = previous;
