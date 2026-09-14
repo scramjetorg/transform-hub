@@ -68,6 +68,16 @@ test("uses clean npm ci when no compatible checkpoint branch exists", async (t) 
 	t.deepEqual(result, { checkpoint: null, fallback: "clean-npm-ci", reason: "no-compatible-checkpoint-branch" });
 });
 
+test("requires a runtime dependency profile for required checkpoint consumption", async (t) => {
+	const fixture = consumerFixture();
+	const result = await consumeCheckpoint({ branch: "devel", requireRuntimeDependencies: true }, {
+		...fixture,
+		log: () => {},
+		sourceSha: () => SOURCE_SHA,
+	});
+	t.deepEqual(result, { checkpoint: null, fallback: "clean-npm-ci", reason: "missing-runtime-dependency-profile" });
+});
+
 test("rejects a pointer image whose identity labels do not match the checkout", async (t) => {
 	const fixture = consumerFixture({ cacheLabels: {} });
 	const result = await consumeCheckpoint({ branch: "devel" }, {

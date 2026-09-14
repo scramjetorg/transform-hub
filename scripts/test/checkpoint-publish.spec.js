@@ -11,6 +11,7 @@ const { assertLabels, dockerfile, immutableReference, parseArgs, parseRemoteSha,
 const REPOSITORY = "ghcr.io/scramjetorg/transform-hub/ci-deps";
 const SOURCE_SHA = "b".repeat(40);
 const IMAGE_DIGEST = `sha256:${"a".repeat(64)}`;
+const RUNTIME_DIGEST = `sha256:${"e".repeat(64)}`;
 
 function identity() {
 	return createIdentity({
@@ -21,6 +22,7 @@ function identity() {
 		platform: { oci: "linux/amd64", runner: "linux/x64" },
 		repository: "https://github.com/scramjetorg/transform-hub",
 		sourceSha: SOURCE_SHA,
+		runtimeDependencyDigest: RUNTIME_DIGEST,
 	});
 }
 
@@ -31,14 +33,23 @@ test("checkpoint publication requires all trusted publication inputs", (t) => {
 		"--source-sha", "b".repeat(40),
 		"--current-sha", "b".repeat(40),
 		"--npm-cache", "/tmp/npm-cache",
+		"--runtime-dependencies", "/tmp/runtime-dependencies",
 	]), {
 		plan: "checkpoint-plan.json",
 		branch: "devel",
 		sourceSha: "b".repeat(40),
 		currentSha: "b".repeat(40),
 		npmCache: "/tmp/npm-cache",
+		runtimeDependencies: "/tmp/runtime-dependencies",
 	});
 	t.throws(() => parseArgs(["--plan", "checkpoint-plan.json"]), { message: /required/i });
+	t.throws(() => parseArgs([
+		"--plan", "checkpoint-plan.json",
+		"--branch", "devel",
+		"--source-sha", "b".repeat(40),
+		"--current-sha", "b".repeat(40),
+		"--npm-cache", "/tmp/npm-cache",
+	]), { message: /runtime dependencies/i });
 });
 
 test("checkpoint publication verifies immutable digests and provenance labels", (t) => {
@@ -60,12 +71,14 @@ test("checkpoint publication validates the remote source SHA before pointer prom
 
 test("checkpoint publication builds, verifies, and promotes only a matching immutable image", (t) => {
 	const cache = mkdtempSync(join(tmpdir(), "checkpoint-publish-test-"));
+	const runtimeDependencies = mkdtempSync(join(tmpdir(), "checkpoint-runtime-test-"));
 	const checkpointIdentity = identity();
 	const identityDigest = digestDocument(checkpointIdentity);
 	const labels = checkpointLabels(checkpointIdentity, identityDigest);
 	const statement = createStatement({
 		identityDigest,
 		image: { digest: IMAGE_DIGEST, platform: "linux/amd64", repository: REPOSITORY },
+		runtimeDependencyManifest: { digest: digestDocument({ profileDigest: RUNTIME_DIGEST }) },
 	});
 	const statementLabels = {
 		...labels,
@@ -76,6 +89,7 @@ test("checkpoint publication builds, verifies, and promotes only a matching immu
 	process.env.SCRAMJET_GHCR_SCOPED_PUBLISHER = "true";
 	t.teardown(() => {
 		rmSync(cache, { force: true, recursive: true });
+		rmSync(runtimeDependencies, { force: true, recursive: true });
 		if (previousConfiguration === undefined) delete process.env.SCRAMJET_GHCR_SCOPED_PUBLISHER;
 		else process.env.SCRAMJET_GHCR_SCOPED_PUBLISHER = previousConfiguration;
 	});
@@ -84,16 +98,19 @@ test("checkpoint publication builds, verifies, and promotes only a matching immu
 		branch: "devel",
 		currentSha: SOURCE_SHA,
 		npmCache: cache,
+		runtimeDependencies,
 		plan: {
 			dryRun: true,
 			identity: checkpointIdentity,
 			identityDigest,
 			labels,
 			promotion: { repository: REPOSITORY },
+			runtimeDependencyDigest: RUNTIME_DIGEST,
 		},
 		sourceSha: SOURCE_SHA,
 	}, {
 		remoteSha: () => SOURCE_SHA,
+		verifyManifest: () => ({ profileDigest: RUNTIME_DIGEST }),
 		run: (args, capture) => {
 			commands.push(args);
 			if (!capture) return "";

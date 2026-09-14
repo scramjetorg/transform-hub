@@ -19,8 +19,8 @@ function parseArgs(args) {
         }
         options[args[index].slice(2).replace(/-([a-z])/g, (_, letter) => letter.toUpperCase())] = args[++index];
     }
-    if (!options.plan || !options.branch || !options.sourceSha || !options.currentSha || !options.npmCache) {
-        throw new Error("Checkpoint plan, branch, source SHA, current SHA, and npm cache are required.");
+    if (!options.plan || !options.branch || !options.sourceSha || !options.currentSha || !options.npmCache || !options.runtimeDependencies) {
+        throw new Error("Checkpoint plan, branch, source SHA, current SHA, npm cache, and runtime dependencies are required.");
     }
     return options;
 }
@@ -75,7 +75,7 @@ function readRemoteSha(branch) {
     return parseRemoteSha(execFileSync("git", ["ls-remote", "origin", `refs/heads/${branch}`], { encoding: "utf8" }));
 }
 
-function publishCheckpoint(options, { run = defaultRun, remoteSha = readRemoteSha } = {}) {
+function publishCheckpoint(options, { run = defaultRun, remoteSha = readRemoteSha, verifyManifest = verifyRuntimeManifest } = {}) {
     const plan = typeof options.plan === "string" ? JSON.parse(readFileSync(options.plan, "utf8")) : options.plan;
     if (plan?.promotion?.repository !== REPOSITORY) throw new Error("Checkpoint publication repository is not the approved GHCR repository.");
     if (!plan.identity || digestDocument(plan.identity) !== plan.identityDigest) {
@@ -98,14 +98,14 @@ function publishCheckpoint(options, { run = defaultRun, remoteSha = readRemoteSh
     const context = mkdtempSync(join(tmpdir(), "transform-hub-checkpoint-"));
 
     try {
-        const runtimeManifest = options.runtimeDependencies ? verifyRuntimeManifest(options.runtimeDependencies) : null;
-        if (plan.runtimeDependencyDigest && (!runtimeManifest || runtimeManifest.profileDigest !== plan.runtimeDependencyDigest)) throw new Error("Runtime dependency manifest does not match checkpoint plan.");
+        if (!plan.runtimeDependencyDigest) throw new Error("Checkpoint plan is missing the runtime dependency profile.");
+        const runtimeManifest = verifyManifest(options.runtimeDependencies);
+        if (runtimeManifest.profileDigest !== plan.runtimeDependencyDigest) throw new Error("Runtime dependency manifest does not match checkpoint plan.");
         cpSync(options.npmCache, join(context, "npm-cache"), {
             filter: (source) => ![".npmrc", "credentials"].includes(source.split(/[\\/]/).pop()),
             recursive: true
         });
-        if (options.runtimeDependencies) cpSync(options.runtimeDependencies, join(context, "runtime-dependencies"), { recursive: true });
-        else mkdirSync(join(context, "runtime-dependencies"));
+        cpSync(options.runtimeDependencies, join(context, "runtime-dependencies"), { recursive: true });
         const provenance = join(context, "provenance");
         mkdirSync(provenance);
         writeFileSync(join(provenance, "identity.v1.json"), `${JSON.stringify(plan.identity)}\n`);
@@ -117,7 +117,7 @@ function publishCheckpoint(options, { run = defaultRun, remoteSha = readRemoteSh
         const statement = createStatement({
             identityDigest: plan.identityDigest,
             image: { digest: published.digest, platform: "linux/amd64", repository: REPOSITORY },
-            ...(runtimeManifest ? { runtimeDependencyManifest: { digest: digestDocument(runtimeManifest) } } : {})
+            runtimeDependencyManifest: { digest: digestDocument(runtimeManifest) }
         });
         const statementLabels = {
             ...checkpointLabels(plan.identity, plan.identityDigest),

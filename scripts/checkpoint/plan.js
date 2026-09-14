@@ -84,6 +84,7 @@ async function createPlan(options, root = ROOT) {
         identityDigest,
         labels: checkpointLabels(identity, identityDigest),
         promotion,
+        runtimeDependencyDigest: runtimeDigest,
         statementDigest: digestDocument(statement)
     };
 
