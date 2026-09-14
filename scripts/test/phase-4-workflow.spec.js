@@ -81,3 +81,10 @@ test("candidate preflight stays install-free while build installs before runtime
     t.true(install < build.indexOf("node scripts/release-candidate-workflow.js plan"));
     t.true(install < build.indexOf("node scripts/release-candidate-runtime.js build"));
 });
+
+test("curated validation installs its fresh-runner dependencies before BDD execution", (t) => {
+    const reusable = source("curated-devel-build-validation.yml");
+    const install = reusable.indexOf("name: Install curated validation dependencies\n        run: npm ci");
+    t.true(install >= 0);
+    t.true(install < reusable.indexOf("node scripts/release-bdd-validation.js run --all"));
+});
