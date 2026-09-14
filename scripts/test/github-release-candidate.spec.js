@@ -148,6 +148,48 @@ test("GitHub draft stager verifies uploaded assets and persists release identity
     t.is(JSON.parse(readFileSync(stateFile, "utf8")).candidateRelease.id, 7);
 });
 
+test("GitHub draft stager stages a candidate when the release does not exist", (t) => {
+    const root = mkdtempSync(join(tmpdir(), "release-github-missing-"));
+    t.teardown(() => rmSync(root, { recursive: true, force: true }));
+    mkdirSync(join(root, "artifacts"));
+    const tarball = Buffer.from("tarball");
+    writeFileSync(join(root, "artifacts", "a.tgz"), tarball);
+    const lockfile = Buffer.from("lock");
+    const releaseSet = { schema: "release-set.v1", source: { repository: "scramjetorg/transform-hub", sha: identity.sourceSha, tree: identity.sourceTree }, lockfile: { path: "package-lock.json", sha256: `sha256:${createHash("sha256").update(lockfile).digest("hex")}` }, toolchain: { node: "node", npm: "npm" }, build: { identity: identity.buildIdentity }, boundary: { packages: ["@scramjet/a"] }, waves: [["@scramjet/a"]], artifacts: { tarballs: [{ name: "@scramjet/a", path: "artifacts/a.tgz", size: tarball.length, sha256: `sha256:${createHash("sha256").update(tarball).digest("hex")}`, sri: `sha256-${createHash("sha256").update(tarball).digest("base64")}` }], images: [] }, canonical: { schema: "release-set.v1", version: 1 } };
+    const expected = candidateIdentity({ ...identity, lockfileDigest: releaseSet.lockfile.sha256 });
+    const provenance = { schema: "build-provenance.v1", releaseSetDigest: digestDocument(releaseSet), builder: "test", identity: expected.key };
+    const stateFile = join(root, "state.json");
+    claimCandidate(stateFile, expected);
+    sealCandidate(stateFile, expected, { bundle: { releaseSetDigest: digestDocument(releaseSet), provenanceDigest: digestDocument(provenance) } });
+    const assets = new Map();
+    let viewCount = 0;
+    let created = false;
+    const runner = (_command, args) => {
+        if (args[1] === "view") {
+            viewCount++;
+            if (!created) { const error = new Error("release not found"); error.status = 404; throw error; }
+            return JSON.stringify({ databaseId: 13, isDraft: true, tagName: "candidate-missing", targetCommitish: identity.sourceSha, assets: [...assets.keys()].map((name) => ({ name })) });
+        }
+        if (args[1] === "create") { created = true; return ""; }
+        if (args[1] === "upload") {
+            for (const path of args.slice(args.indexOf("--clobber") + 1)) {
+                const separator = path.lastIndexOf("#");
+                assets.set(path.slice(separator + 1), readFileSync(path.slice(0, separator)));
+            }
+        }
+        if (args[1] === "download") {
+            const directory = args[args.indexOf("--dir") + 1];
+            const name = args[args.indexOf("--pattern") + 1];
+            writeFileSync(join(directory, name), assets.get(name));
+        }
+        return "";
+    };
+    const result = stageGithubDraftCandidate({ repository: "scramjetorg/transform-hub", tag: "candidate-missing", targetSha: identity.sourceSha, root, releaseSet, provenance, lockfile, stateFile, identity: expected, runner });
+    t.is(result.releaseId, 13);
+    t.true(viewCount >= 2);
+    t.true(assets.has("candidate-seal.json"));
+});
+
 test("GitHub draft stager rejects a conflicting unsealed asset before upload", (t) => {
     const root = mkdtempSync(join(tmpdir(), "release-github-conflict-"));
     t.teardown(() => rmSync(root, { recursive: true, force: true }));

@@ -187,7 +187,7 @@ function stageGithubDraftCandidate({ repository, tag, targetSha, candidateId = t
     assertReleaseSetIdentity(releaseSet, identity);
     const localState = readState(stateFile);
     if (localState?.status === "sealed") validateCandidateState(localState, { expectedIdentity: identity, allowPendingCandidateRelease: true });
-    verifyUnsealedAssets({ adapter, candidateId, release: existingRelease, expected: expectedStageAssets({ root, releaseSet, provenance, lockfile, identity, stateFile }) });
+    if (existingRelease) verifyUnsealedAssets({ adapter, candidateId, release: existingRelease, expected: expectedStageAssets({ root, releaseSet, provenance, lockfile, identity, stateFile }) });
     const staged = stageCandidateAssets({ adapter, candidateId, root, releaseSet, provenance, lockfile });
     const verificationRoot = mkdtempSync(join(tmpdir(), "release-candidate-verify-"));
     try {
