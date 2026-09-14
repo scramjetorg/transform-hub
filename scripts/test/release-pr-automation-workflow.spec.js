@@ -17,7 +17,8 @@ test("release PR automation is trusted, pinned, and never requests auto-merge or
 	t.true(source.includes("github.event.workflow_run.event == 'push'"));
 	t.true(source.includes("github.event.workflow_run.head_branch == 'devel'"));
 	t.true(source.includes("github.event.workflow_run.head_repository.full_name == github.repository"));
-	t.true(source.includes("environment: devel-main-pr-automation"));
+	t.true(source.includes("group: managed-devel-to-main-release-pr"));
+	t.false(source.includes("environment:"), "devel post-merge automation must not await environment approval");
 	t.true(source.includes("pull-requests: write"));
 	t.true(source.includes("DEVEL_MAIN_PR_AUTOMATION_TOKEN"));
 	t.true(source.includes("actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1"));

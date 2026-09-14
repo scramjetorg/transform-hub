@@ -48,7 +48,6 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    environment: production
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:

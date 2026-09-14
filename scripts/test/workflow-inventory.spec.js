@@ -14,7 +14,6 @@ test("active workflow inventory contains only maintained Node 22/npm paths and r
 		"curated-devel-build-validation.yml",
 		"devel-bdd-image.yml",
 		"devel-validate.yml",
-		"external-pr-approved-validation.yml",
 		"main-release.yml",
 		"pr-fast-validation.yml",
 		"pr-validate.yml",
@@ -45,12 +44,4 @@ test("unified PR workflow owns normal validation and the release-PR chain in one
 	t.true(source.includes("Release PR / prerelease publication"));
 	t.true(source.includes("Release PR / prerelease BDD"));
 	t.true(source.includes("cache-mode: restore-only"));
-});
-
-test("approved external validation instructions stay on default devel and document expected skips", (t) => {
-	const instructions = readFileSync(resolve(workflowsDir, "..", "EXTERNAL_PR_APPROVAL.md"), "utf8");
-	t.true(instructions.includes("default `devel` branch, not on `main`"));
-	t.true(instructions.includes("Owner self-approval"));
-	t.true(instructions.includes("dispatch a new run"));
-	t.true(instructions.includes("remain skipped for external"));
 });

@@ -8,7 +8,6 @@ permissions:
 
 jobs:
   validate:
-    if: ${{ github.event.pull_request.head.repo.owner.login == 'scramjetorg' }}
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@0123456789012345678901234567890123456789

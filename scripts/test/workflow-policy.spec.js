@@ -17,9 +17,8 @@ test("accepts the minimal compliant replacement workflow fixture", (t) => {
 	t.deepEqual(checkFixture("compliant.yml"), []);
 });
 
-test("rejects unguarded pull-request source execution", (t) => {
-	const errors = checkFixture("unguarded-pr-execution.yml");
-	t.truthy(errors.find((error) => error.code === "UNGUARDED_PR_EXECUTION"));
+test("allows pull-request source execution for GitHub-native approved contributors", (t) => {
+	t.deepEqual(checkFixture("unguarded-pr-execution.yml"), []);
 });
 
 for (const [fixture, code] of [
@@ -54,35 +53,13 @@ test("accepts guarded-release-pr-publish as a valid release PR publisher with jo
 	t.deepEqual(checkFixture("guarded-release-pr-publish.yml"), []);
 });
 
-test("enforces same-organization guards and the trusted external approval environment", (t) => {
-
+test("keeps normal PR workflows eligible for members' fork-based pull requests", (t) => {
 	const workflows = resolve(__dirname, "..", "..", ".github", "workflows");
-	for (const name of ["pr-fast-validation.yml", "pr-validate.yml", "security-check.yml"]) {
+	for (const name of ["pr-fast-validation.yml", "pr-validate.yml", "security-check.yml", "release-promotion-admission.yml"]) {
 		const source = require("node:fs").readFileSync(resolve(workflows, name), "utf8");
-		t.true(source.includes("head.repo.owner.login == 'scramjetorg'"), `${name} must gate external PR heads`);
+		t.false(source.includes("head.repo.owner.login"), `${name} must not skip a member's fork-based PR`);
 	}
-	t.deepEqual(checker.checkFiles([resolve(workflows, "external-pr-approved-validation.yml")]), []);
 	t.is(require("node:fs").readFileSync(resolve(workflows, "..", "CODEOWNERS"), "utf8").trim(), "# Every repository path requires review from the trusted organization owners team.\n* @scramjetorg/owners");
-	const missing = checkFixture("external-pr-approved-validation.yml");
-	t.truthy(missing.find((error) => error.code === "MISSING_EXTERNAL_PR_APPROVAL_ENVIRONMENT"));
-});
-
-test("approved external validation is approval-gated, exact-SHA checked, and non-release", (t) => {
-	const workflows = resolve(__dirname, "..", "..", ".github", "workflows");
-	const source = require("node:fs").readFileSync(resolve(workflows, "external-pr-approved-validation.yml"), "utf8");
-	for (const job of ["package-validation", "bdd-core-node", "bdd-core-services", "bdd-extended-hub-topic", "bdd-extended-runtime", "external-pr-current-head-recheck"]) {
-		t.regex(source, new RegExp(`  ${job}:[\\s\\S]*?needs: \\[.*external-pr-code-owner-approval`), `${job} must depend on approval`);
-	}
-	t.true(source.includes("base-repository:") && source.includes("base-sha:") && source.includes("base-ref:"));
-	t.true(source.includes("--since=\"$BASE_SHA\"") && source.includes("--range \"$BASE_SHA..$HEAD_SHA\"") && source.includes("release-pr-smoke.js \"$BASE_SHA\""));
-	t.is((source.match(/uses: actions\/checkout@[0-9a-f]{40}/g) || []).length, 5);
-	for (const checkout of source.match(/uses: actions\/checkout@[0-9a-f]{40}[\s\S]*?fetch-depth: 0/g) || []) {
-		t.true(checkout.includes("repository: ${{ needs.external-pr-code-owner-approval.outputs.head-repository }}"));
-		t.true(checkout.includes("ref: ${{ needs.external-pr-code-owner-approval.outputs.head-sha }}"));
-		t.true(checkout.includes("persist-credentials: false"));
-	}
-	t.true(source.includes("cache-mode: off"));
-	t.false(/pull_request_target|workflow_call|upload-artifact|download-artifact|npm publish|docker push|packages:\s*write|contents:\s*write|pull-requests:\s*write/i.test(source));
 });
 
 test("CLI documents explicit scope and deferred external validation", (t) => {
