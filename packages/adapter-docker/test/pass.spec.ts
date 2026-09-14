@@ -1,5 +1,65 @@
 import test from "ava";
+import { PassThrough, Readable } from "stream";
 import { isAlreadyGoneContainerError } from "../src/docker-removal";
+import { DockerSequenceAdapter } from "../src/docker-sequence-adapter";
+
+const adapterConfig = {
+    prerunner: { image: "pre-runner:test", maxMem: 64 },
+    runner: {},
+    runnerImages: { node: "runner-node:test", python3: "runner-python:test" }
+};
+
+function runResult(statusCode: number, stdout: string, stderr = "") {
+    const streams = {
+        stdin: new PassThrough(),
+        stdout: new PassThrough(),
+        stderr: new PassThrough()
+    };
+    streams.stdout.end(stdout);
+    streams.stderr.end(stderr);
+    return { streams, wait: async () => ({ statusCode }), containerId: "pre-runner-container" };
+}
+
+test("pre-runner non-zero exit preserves bounded diagnostics", async t => {
+    const adapter = new DockerSequenceAdapter({ adapters: { docker: adapterConfig } } as any);
+    const stderr = "chown: Operation not permitted\n" + "x".repeat(20 * 1024);
+    (adapter as any).dockerHelper = {
+        createVolume: async () => "sequence-volume",
+        run: async () => runResult(1, "", stderr)
+    };
+
+    const error = await t.throwsAsync(() => adapter.identify(Readable.from([]), "candidate"));
+
+    t.is((error as any)?.code, "PRERUNNER_ERROR");
+    t.deepEqual((error as any)?.data, {
+        stage: "pre-runner",
+        image: "pre-runner:test",
+        volume: "sequence-volume",
+        status: 1,
+        stdout: "",
+        stderr: stderr.slice(0, 16 * 1024)
+    });
+});
+
+test("runner image fetch failure is reported separately from pre-runner failure", async t => {
+    const adapter = new DockerSequenceAdapter({ adapters: { docker: adapterConfig } } as any);
+    (adapter as any).dockerHelper = {
+        createVolume: async () => "sequence-volume",
+        run: async () => runResult(0, JSON.stringify({
+            name: "candidate",
+            version: "1.0.0",
+            main: "index.js",
+            engines: { node: ">=22" }
+        }))
+    };
+    (adapter as any).fetch = async () => { throw new Error("registry unavailable"); };
+
+    const error = await t.throwsAsync(() => adapter.identify(Readable.from([]), "candidate"));
+
+    t.is((error as any)?.code, "DOCKER_ERROR");
+    t.is((error as any)?.data.stage, "runner-image-fetch");
+    t.is((error as any)?.data.image, "runner-node:test");
+});
 
 test("Passing test", (t) => {
     t.pass();
