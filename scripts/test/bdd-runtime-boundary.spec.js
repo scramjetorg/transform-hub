@@ -9,7 +9,7 @@ function sourceFiles(directory) {
         const file = join(directory, name);
         if (name === "dist") return [];
         if (statSync(file).isDirectory()) return sourceFiles(file);
-        return file.endsWith(".ts") ? [file] : [];
+        return file.endsWith(".ts") || file.endsWith(".cjs") ? [file] : [];
     });
 }
 
@@ -21,7 +21,9 @@ test("BDD runtime source does not couple to private source/test or root dist pat
     ];
     const bddRoot = resolve(__dirname, "..", "..", "bdd");
     for (const file of sourceFiles(bddRoot)) {
+        if (file.endsWith("bdd/lib/published-artifacts.ts")) continue;
         const source = readFileSync(file, "utf8");
+        t.false(/(?:packages\/[^"'`\s]+\/dist|(?:\.\.\/)+dist\/(?!samples\/))/.test(source), `${file} couples to a runtime dist artifact`);
         for (const pattern of forbidden) t.false(pattern.test(source), `${file} violates ${pattern}`);
     }
 });

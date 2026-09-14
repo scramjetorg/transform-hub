@@ -24,7 +24,7 @@ test("BDD CLI defaults to the built artifact and preserves explicit source mode"
     try {
         delete process.env.SCRAMJET_SPAWN_JS;
         delete process.env.SCRAMJET_SPAWN_TS;
-        t.deepEqual(getSiCommand({ useBddConfig: false }), ["node", "../dist/cli/bin"]);
+        t.deepEqual(getSiCommand({ useBddConfig: false }), [fs.realpathSync(path.join(process.cwd(), "dist/cli/bin/index.js"))]);
 
         process.env.SCRAMJET_SPAWN_TS = "1";
         const sourceCommand = getSiCommand({ useBddConfig: false });
@@ -96,7 +96,7 @@ test("profile lifecycle commands fail closed for verified prerelease and normal 
         t.regex(error.message, /verified stderr/);
     }
 
-    const normalCommand = ["node", "../dist/cli/bin"];
+    const normalCommand = [fs.realpathSync(path.join(process.cwd(), "dist/cli/bin/index.js"))];
     const result = await runProfileCommand(["list"], {
         command: normalCommand,
         runner: async (command, args) => {

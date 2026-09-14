@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, realpathSync, statSync } from "node:fs";
+import { readFileSync, realpathSync, statSync } from "node:fs";
 import { basename, isAbsolute, join, relative, resolve, sep } from "node:path";
 
 const { context } = require("./release-prerelease-context.js") as {
@@ -7,10 +7,6 @@ const { context } = require("./release-prerelease-context.js") as {
         recordPath: string;
     } | null;
 };
-const { resolveSthBin } = require("../../scripts/lib/sth-bin.js") as {
-    resolveSthBin: (options?: { cwd?: string }) => { binPath: string };
-};
-
 type ResolverOptions = { environment?: NodeJS.ProcessEnv; workspaceRoot?: string };
 const TARBALL_ROOT_ENV = "SCRAMJET_TARBALL_BDD_ROOT";
 type BddCliArtifact = { packageDir: string; binRelativePath: string; nodeModulesDir: string; scriptsDir: string };
@@ -23,6 +19,10 @@ function inside(parent: string, child: string): boolean {
 function packageName(specifier: string): string {
     if (specifier.startsWith("@")) return specifier.split("/", 2).join("/");
     return specifier.split("/", 1)[0];
+}
+
+function compiledPackageName(source: string): string {
+    return source.startsWith("@") ? source.split("/", 2)[1] : source.split("/", 1)[0];
 }
 
 function verified(options: ResolverOptions) {
@@ -79,6 +79,33 @@ function resolveTarballBin(source: string, binName: string, root: string): strin
     return bin;
 }
 
+function resolveCompiledModule(specifier: string, root: string): string {
+    const source = packageName(specifier);
+    const packageDir = realpathSync(join(root, "dist", compiledPackageName(source)));
+    const packageJsonPath = join(packageDir, "package.json");
+    const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8"));
+    const subpath = specifier.slice(source.length).replace(/^\//, "");
+    const candidate = subpath ? join(packageDir, subpath) : join(packageDir, packageJson.main || "index.js");
+    const resolved = realpathSync(require.resolve(candidate));
+    if (!inside(root, resolved) || !inside(packageDir, resolved)) {
+        throw new Error(`Normal BDD module escapes its compiled package: ${specifier}`);
+    }
+    return resolved;
+}
+
+function resolveDeclaredBin(source: string, binName: string, root: string): string {
+    const packageDir = realpathSync(join(root, "dist", compiledPackageName(source)));
+    const packageJsonPath = join(packageDir, "package.json");
+    const configured = JSON.parse(readFileSync(packageJsonPath, "utf8")).bin;
+    const relativeBin = typeof configured === "string" ? configured : configured?.[binName];
+    if (typeof relativeBin !== "string") throw new Error(`Normal BDD package does not expose bin ${source}/${binName}`);
+    const bin = realpathSync(resolve(packageDir, relativeBin));
+    if (!inside(root, bin) || !inside(packageDir, bin) || !statSync(bin).isFile()) {
+        throw new Error(`Normal BDD bin escapes its compiled package: ${source}/${binName}`);
+    }
+    return bin;
+}
+
 function resolveCliArtifact(packageDirInput: string, installRootInput: string, mode: string): BddCliArtifact {
     const installRoot = realpathSync(installRootInput);
     const nodeModulesDir = realpathSync(join(installRoot, "node_modules"));
@@ -132,7 +159,7 @@ export function resolvePublishedModule(specifier: string, options: ResolverOptio
     const isolated = tarballRoot(options);
     if (isolated) { rejectSourceOverride(environment); return resolveTarballModule(specifier, isolated); }
     const release = verified({ ...options, workspaceRoot: root });
-    if (!release) return require.resolve(specifier, { paths: [root] });
+    if (!release) return resolveCompiledModule(specifier, root);
 
     rejectSourceOverride(environment);
     const record = readRecord(release.recordPath);
@@ -164,17 +191,7 @@ export function resolvePublishedBin(source: string, binName: string, options: Re
     if (isolated) { rejectSourceOverride(environment); return resolveTarballBin(source, binName, isolated); }
     const release = verified({ ...options, workspaceRoot: root });
     if (!release) {
-        if (binName === "scramjet-transform-hub" && source === "@scramjet/sth") return resolveSthBin({ cwd: root }).binPath;
-        const candidate = join(root, "node_modules", ".bin", binName);
-        if (existsSync(candidate) && statSync(candidate).isFile()) return candidate;
-        const packageJsonPath = require.resolve(`${source}/package.json`, { paths: [root] });
-        const packageDir = resolve(packageJsonPath, "..");
-        const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8"));
-        const configured = typeof packageJson.bin === "string" ? packageJson.bin : packageJson.bin?.[binName];
-        if (typeof configured !== "string") throw new Error(`Unable to resolve bin ${binName}`);
-        const bin = resolve(packageDir, configured);
-        if (!existsSync(bin) || !statSync(bin).isFile()) throw new Error(`Unable to resolve bin ${binName}`);
-        return bin;
+        return resolveDeclaredBin(source, binName, root);
     }
 
     rejectSourceOverride(environment);
@@ -183,6 +200,7 @@ export function resolvePublishedBin(source: string, binName: string, options: Re
     if (!entry) throw new Error(`Verified prerelease package is not recorded: ${source}`);
     const installModules = realpathSync(join(release.installDir, "node_modules"));
     const packageDir = realpathSync(join(installModules, entry.name));
+    if (!inside(installModules, packageDir)) throw new Error(`Verified prerelease package escapes its install root: ${source}`);
     const packageJson = JSON.parse(readFileSync(join(packageDir, "package.json"), "utf8"));
     const configured = typeof packageJson.bin === "string" ? packageJson.bin : packageJson.bin?.[binName];
     if (typeof configured !== "string") throw new Error(`Verified prerelease package ${source} does not expose bin ${binName}`);
@@ -192,25 +210,20 @@ export function resolvePublishedBin(source: string, binName: string, options: Re
     return real;
 }
 
-/** Preserve the normal BDD CLI launcher while keeping its artifact path here. */
-export function resolveWorkspaceCliCommand(): string[] {
-    const isolated = tarballRoot({});
-    if (isolated) return [resolveTarballBin("@scramjet/cli", "si", isolated)];
-    return ["node", "../dist/cli/bin"];
+/** Resolve the BDD CLI executable from the package's declared bin mapping. */
+export function resolveWorkspaceCliCommand(options: ResolverOptions = {}): string[] {
+    return [resolvePublishedBin("@scramjet/cli", "si", options)];
 }
 
 /** Resolve BDD command artifacts: built workspace files normally, verified bins in prerelease mode. */
 export function resolveBddBin(source: string, binName: string, options: ResolverOptions = {}): string {
     const isolated = tarballRoot(options);
-    if (isolated) return resolveTarballBin(source, binName, isolated);
+    if (isolated) {
+        rejectSourceOverride(options.environment || process.env);
+        return resolveTarballBin(source, binName, isolated);
+    }
     const root = resolve(options.workspaceRoot || __dirname, options.workspaceRoot ? "." : "../..");
-    if (verified({ ...options, workspaceRoot: root })) return resolvePublishedBin(source, binName, { ...options, workspaceRoot: root });
-
-    const packageDirectory = source === "@scramjet/sth" ? "sth" : source === "@scramjet/manager" ? "manager" : undefined;
-    if (!packageDirectory) throw new Error(`No normal BDD binary mapping exists for ${source}`);
-    const bin = join(root, "dist", packageDirectory, "bin", binName === "sth-csr-enrollment" || binName === "manager-csr-enrollment" ? "csr-enrollment.js" : binName);
-    if (!existsSync(bin) || !statSync(bin).isFile()) throw new Error(`Built BDD binary is unavailable: ${bin}`);
-    return bin;
+    return resolvePublishedBin(source, binName, { ...options, workspaceRoot: root });
 }
 
 export function createPublishedArtifactResolver(options: ResolverOptions = {}) {
@@ -219,5 +232,9 @@ export function createPublishedArtifactResolver(options: ResolverOptions = {}) {
         resolveBin: (source: string, binName: string) => resolvePublishedBin(source, binName, options),
     };
 }
+
+/** Explicit names for callers resolving compiled public package artifacts. */
+export const resolveBddPackageModule = resolvePublishedModule;
+export const resolveBddPackageBin = resolvePublishedBin;
 
 export { resolveBddWorkspaceRoot };
