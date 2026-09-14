@@ -3,9 +3,9 @@
 const test = require("ava").default;
 const { execFileSync } = require("node:child_process");
 const { createHash } = require("node:crypto");
-const { mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } = require("node:fs");
+const { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } = require("node:fs");
 const { resolve } = require("node:path");
-const { loadRuntimeProfile, verifyRuntimeManifest } = require("../checkpoint/runtime-dependencies.js");
+const { loadRuntimeProfile, normalizeGeneratedYarnBinSymlinks, verifyRuntimeManifest } = require("../checkpoint/runtime-dependencies.js");
 
 const root = resolve(__dirname, "..", "..");
 
@@ -87,6 +87,20 @@ test("prefetched manifest covers every Python wheel", (t) => {
     ]);
 });
 
+test("prefetch normalization removes Yarn-generated .bin symlinks from the cache closure", (t) => {
+    const directory = mkdtempSync(resolve(root, "runtime-yarn-normalization-test-"));
+    t.teardown(() => rmSync(directory, { recursive: true, force: true }));
+    const bin = resolve(directory, "v6/package/node_modules/example/.bin");
+    mkdirSync(bin, { recursive: true });
+    writeFileSync(resolve(bin, "kept"), "not a symlink");
+    symlinkSync("../bin/example", resolve(bin, "example"));
+
+    normalizeGeneratedYarnBinSymlinks(directory);
+
+    t.false(existsSync(resolve(bin, "example")));
+    t.true(existsSync(resolve(bin, "kept")));
+});
+
 test("Docker verifier binds runner inputs and rejects cache extras", (t) => {
     const fixture = verifierFixture();
     t.teardown(() => rmSync(fixture.directory, { recursive: true, force: true }));
@@ -105,7 +119,7 @@ test("Docker verifier binds runner inputs and rejects cache extras", (t) => {
     t.throws(() => runVerifier(fixture), { message: /package.json digest mismatch/ });
 });
 
-test("runtime manifest verifier accepts broken in-bundle Yarn symlinks", (t) => {
+test("runtime manifest verifier rejects unsafe in-bundle Yarn symlinks", (t) => {
     const fixture = verifierFixture();
     t.teardown(() => rmSync(fixture.directory, { recursive: true, force: true }));
     t.notThrows(() => runVerifier(fixture));

@@ -1900,7 +1900,6 @@
       "v6/npm-@bcoe-v8-coverage-1.0.2-bbe12dca5b4ef983a0d0af4b07b9bc90ea0ababa-integrity/node_modules/@bcoe/v8-coverage/src/lib/merge.js",
       "v6/npm-@bcoe-v8-coverage-1.0.2-bbe12dca5b4ef983a0d0af4b07b9bc90ea0ababa-integrity/node_modules/@bcoe/v8-coverage/src/lib/normalize.js",
       "v6/npm-@bcoe-v8-coverage-1.0.2-bbe12dca5b4ef983a0d0af4b07b9bc90ea0ababa-integrity/node_modules/@bcoe/v8-coverage/src/lib/range-tree.js",
-      "v6/npm-@biomejs-biome-2.5.0-e2bf9805de38b8a9ece8518514c2460eb43d229f-integrity/node_modules/@biomejs/biome/.bin/biome",
       "v6/npm-@biomejs-biome-2.5.0-e2bf9805de38b8a9ece8518514c2460eb43d229f-integrity/node_modules/@biomejs/biome/.yarn-metadata.json",
       "v6/npm-@biomejs-biome-2.5.0-e2bf9805de38b8a9ece8518514c2460eb43d229f-integrity/node_modules/@biomejs/biome/.yarn-tarball.tgz",
       "v6/npm-@biomejs-biome-2.5.0-e2bf9805de38b8a9ece8518514c2460eb43d229f-integrity/node_modules/@biomejs/biome/LICENSE-APACHE",
@@ -2076,7 +2075,6 @@
       "v6/npm-@cucumber-ci-environment-14.0.0-2980ae338f5efb7fd9a26980375986cee1604513-integrity/node_modules/@cucumber/ci-environment/dist/types.d.ts",
       "v6/npm-@cucumber-ci-environment-14.0.0-2980ae338f5efb7fd9a26980375986cee1604513-integrity/node_modules/@cucumber/ci-environment/dist/types.js",
       "v6/npm-@cucumber-ci-environment-14.0.0-2980ae338f5efb7fd9a26980375986cee1604513-integrity/node_modules/@cucumber/ci-environment/package.json",
-      "v6/npm-@cucumber-cucumber-13.2.1-3eefac1232b74a6de7ec207ef417ca6b4f62d755-integrity/node_modules/@cucumber/cucumber/.bin/cucumber-js",
       "v6/npm-@cucumber-cucumber-13.2.1-3eefac1232b74a6de7ec207ef417ca6b4f62d755-integrity/node_modules/@cucumber/cucumber/.yarn-metadata.json",
       "v6/npm-@cucumber-cucumber-13.2.1-3eefac1232b74a6de7ec207ef417ca6b4f62d755-integrity/node_modules/@cucumber/cucumber/.yarn-tarball.tgz",
       "v6/npm-@cucumber-cucumber-13.2.1-3eefac1232b74a6de7ec207ef417ca6b4f62d755-integrity/node_modules/@cucumber/cucumber/LICENSE",
@@ -2564,7 +2562,6 @@
       "v6/npm-@cucumber-gherkin-42.0.0-d54aa31b25944efbe5bcb11772cfec84921b6785-integrity/node_modules/@cucumber/gherkin/test-cli.mjs",
       "v6/npm-@cucumber-gherkin-42.0.0-d54aa31b25944efbe5bcb11772cfec84921b6785-integrity/node_modules/@cucumber/gherkin/tsconfig.build.json",
       "v6/npm-@cucumber-gherkin-42.0.0-d54aa31b25944efbe5bcb11772cfec84921b6785-integrity/node_modules/@cucumber/gherkin/tsconfig.json",
-      "v6/npm-@cucumber-gherkin-streams-7.0.1-1df7e3587c378d1b2e9b3866400a6e13e775327c-integrity/node_modules/@cucumber/gherkin-streams/.bin/gherkin-javascript",
       "v6/npm-@cucumber-gherkin-streams-7.0.1-1df7e3587c378d1b2e9b3866400a6e13e775327c-integrity/node_modules/@cucumber/gherkin-streams/.github/renovate.json",
       "v6/npm-@cucumber-gherkin-streams-7.0.1-1df7e3587c378d1b2e9b3866400a6e13e775327c-integrity/node_modules/@cucumber/gherkin-streams/.github/settings.yml",
       "v6/npm-@cucumber-gherkin-streams-7.0.1-1df7e3587c378d1b2e9b3866400a6e13e775327c-integrity/node_modules/@cucumber/gherkin-streams/.github/workflows/codeql-javascript.yaml",
@@ -2604,7 +2601,6 @@
       "v6/npm-@cucumber-gherkin-streams-7.0.1-1df7e3587c378d1b2e9b3866400a6e13e775327c-integrity/node_modules/@cucumber/gherkin-streams/testdata/good/minimal.feature",
       "v6/npm-@cucumber-gherkin-streams-7.0.1-1df7e3587c378d1b2e9b3866400a6e13e775327c-integrity/node_modules/@cucumber/gherkin-streams/tsconfig.build.json",
       "v6/npm-@cucumber-gherkin-streams-7.0.1-1df7e3587c378d1b2e9b3866400a6e13e775327c-integrity/node_modules/@cucumber/gherkin-streams/tsconfig.json",
-      "v6/npm-@cucumber-gherkin-utils-12.0.1-dbc7c83946dbd1ebc0fe90084d3dbf573d69abb8-integrity/node_modules/@cucumber/gherkin-utils/.bin/gherkin-utils",
       "v6/npm-@cucumber-gherkin-utils-12.0.1-dbc7c83946dbd1ebc0fe90084d3dbf573d69abb8-integrity/node_modules/@cucumber/gherkin-utils/.mocharc.json",
       "v6/npm-@cucumber-gherkin-utils-12.0.1-dbc7c83946dbd1ebc0fe90084d3dbf573d69abb8-integrity/node_modules/@cucumber/gherkin-utils/.yarn-metadata.json",
       "v6/npm-@cucumber-gherkin-utils-12.0.1-dbc7c83946dbd1ebc0fe90084d3dbf573d69abb8-integrity/node_modules/@cucumber/gherkin-utils/.yarn-tarball.tgz",
@@ -3805,7 +3801,6 @@
       "v6/npm-@grpc-grpc-js-1.14.4-e73ff57d97802f063999545f43ebb2b1eca65d9d-integrity/node_modules/@grpc/grpc-js/src/tls-helpers.ts",
       "v6/npm-@grpc-grpc-js-1.14.4-e73ff57d97802f063999545f43ebb2b1eca65d9d-integrity/node_modules/@grpc/grpc-js/src/transport.ts",
       "v6/npm-@grpc-grpc-js-1.14.4-e73ff57d97802f063999545f43ebb2b1eca65d9d-integrity/node_modules/@grpc/grpc-js/src/uri-parser.ts",
-      "v6/npm-@grpc-proto-loader-0.7.15-4cdfbf35a35461fc843abe8b9e2c0770b5095e60-integrity/node_modules/@grpc/proto-loader/.bin/proto-loader-gen-types",
       "v6/npm-@grpc-proto-loader-0.7.15-4cdfbf35a35461fc843abe8b9e2c0770b5095e60-integrity/node_modules/@grpc/proto-loader/.yarn-metadata.json",
       "v6/npm-@grpc-proto-loader-0.7.15-4cdfbf35a35461fc843abe8b9e2c0770b5095e60-integrity/node_modules/@grpc/proto-loader/.yarn-tarball.tgz",
       "v6/npm-@grpc-proto-loader-0.7.15-4cdfbf35a35461fc843abe8b9e2c0770b5095e60-integrity/node_modules/@grpc/proto-loader/LICENSE",
@@ -3819,7 +3814,6 @@
       "v6/npm-@grpc-proto-loader-0.7.15-4cdfbf35a35461fc843abe8b9e2c0770b5095e60-integrity/node_modules/@grpc/proto-loader/build/src/util.js",
       "v6/npm-@grpc-proto-loader-0.7.15-4cdfbf35a35461fc843abe8b9e2c0770b5095e60-integrity/node_modules/@grpc/proto-loader/build/src/util.js.map",
       "v6/npm-@grpc-proto-loader-0.7.15-4cdfbf35a35461fc843abe8b9e2c0770b5095e60-integrity/node_modules/@grpc/proto-loader/package.json",
-      "v6/npm-@grpc-proto-loader-0.8.1-5a6b290ccbfb1ae2f6775afb74e9898bd8c5d4e8-integrity/node_modules/@grpc/proto-loader/.bin/proto-loader-gen-types",
       "v6/npm-@grpc-proto-loader-0.8.1-5a6b290ccbfb1ae2f6775afb74e9898bd8c5d4e8-integrity/node_modules/@grpc/proto-loader/.yarn-metadata.json",
       "v6/npm-@grpc-proto-loader-0.8.1-5a6b290ccbfb1ae2f6775afb74e9898bd8c5d4e8-integrity/node_modules/@grpc/proto-loader/.yarn-tarball.tgz",
       "v6/npm-@grpc-proto-loader-0.8.1-5a6b290ccbfb1ae2f6775afb74e9898bd8c5d4e8-integrity/node_modules/@grpc/proto-loader/LICENSE",
@@ -6937,7 +6931,6 @@
       "v6/npm-@kubernetes-client-node-1.4.0-35b72d31f662befd9a2869e172b3153a3443e368-integrity/node_modules/@kubernetes/client-node/dist/yaml.js",
       "v6/npm-@kubernetes-client-node-1.4.0-35b72d31f662befd9a2869e172b3153a3443e368-integrity/node_modules/@kubernetes/client-node/dist/yaml.js.map",
       "v6/npm-@kubernetes-client-node-1.4.0-35b72d31f662befd9a2869e172b3153a3443e368-integrity/node_modules/@kubernetes/client-node/package.json",
-      "v6/npm-@mapbox-node-pre-gyp-2.0.3-236aa1f62c101ce4c9db15697cb652ec69dca379-integrity/node_modules/@mapbox/node-pre-gyp/.bin/node-pre-gyp",
       "v6/npm-@mapbox-node-pre-gyp-2.0.3-236aa1f62c101ce4c9db15697cb652ec69dca379-integrity/node_modules/@mapbox/node-pre-gyp/.github/dependabot.yml",
       "v6/npm-@mapbox-node-pre-gyp-2.0.3-236aa1f62c101ce4c9db15697cb652ec69dca379-integrity/node_modules/@mapbox/node-pre-gyp/.github/workflows/ci.yml",
       "v6/npm-@mapbox-node-pre-gyp-2.0.3-236aa1f62c101ce4c9db15697cb652ec69dca379-integrity/node_modules/@mapbox/node-pre-gyp/.github/workflows/codeql.yml",
@@ -7306,7 +7299,6 @@
       "v6/npm-@npmcli-agent-4.0.2-9e659c2474294cb88bd382fef5d3857dc14fcbf6-integrity/node_modules/@npmcli/agent/lib/options.js",
       "v6/npm-@npmcli-agent-4.0.2-9e659c2474294cb88bd382fef5d3857dc14fcbf6-integrity/node_modules/@npmcli/agent/lib/proxy.js",
       "v6/npm-@npmcli-agent-4.0.2-9e659c2474294cb88bd382fef5d3857dc14fcbf6-integrity/node_modules/@npmcli/agent/package.json",
-      "v6/npm-@npmcli-arborist-9.9.1-8718c86f6c23be65d6b5dbafa58f4eda5f828020-integrity/node_modules/@npmcli/arborist/.bin/arborist",
       "v6/npm-@npmcli-arborist-9.9.1-8718c86f6c23be65d6b5dbafa58f4eda5f828020-integrity/node_modules/@npmcli/arborist/.yarn-metadata.json",
       "v6/npm-@npmcli-arborist-9.9.1-8718c86f6c23be65d6b5dbafa58f4eda5f828020-integrity/node_modules/@npmcli/arborist/.yarn-tarball.tgz",
       "v6/npm-@npmcli-arborist-9.9.1-8718c86f6c23be65d6b5dbafa58f4eda5f828020-integrity/node_modules/@npmcli/arborist/LICENSE.md",
@@ -7445,7 +7437,6 @@
       "v6/npm-@npmcli-git-8.0.0-1afc0a23ab41b9bf3612e9323471ff249617fa4e-integrity/node_modules/@npmcli/git/lib/utils.js",
       "v6/npm-@npmcli-git-8.0.0-1afc0a23ab41b9bf3612e9323471ff249617fa4e-integrity/node_modules/@npmcli/git/lib/which.js",
       "v6/npm-@npmcli-git-8.0.0-1afc0a23ab41b9bf3612e9323471ff249617fa4e-integrity/node_modules/@npmcli/git/package.json",
-      "v6/npm-@npmcli-installed-package-contents-4.0.0-18e5070704cfe0278f9ae48038558b6efd438426-integrity/node_modules/@npmcli/installed-package-contents/.bin/installed-package-contents",
       "v6/npm-@npmcli-installed-package-contents-4.0.0-18e5070704cfe0278f9ae48038558b6efd438426-integrity/node_modules/@npmcli/installed-package-contents/.yarn-metadata.json",
       "v6/npm-@npmcli-installed-package-contents-4.0.0-18e5070704cfe0278f9ae48038558b6efd438426-integrity/node_modules/@npmcli/installed-package-contents/.yarn-tarball.tgz",
       "v6/npm-@npmcli-installed-package-contents-4.0.0-18e5070704cfe0278f9ae48038558b6efd438426-integrity/node_modules/@npmcli/installed-package-contents/LICENSE",
@@ -8271,7 +8262,6 @@
       "v6/npm-@scramjet-api-client-2.1.0-86f18c0e0eece79ca7adb53adb05102ddd263a8a-integrity/node_modules/@scramjet/api-client/package.json",
       "v6/npm-@scramjet-api-client-2.1.0-86f18c0e0eece79ca7adb53adb05102ddd263a8a-integrity/node_modules/@scramjet/api-client/sequence-client.d.ts",
       "v6/npm-@scramjet-api-client-2.1.0-86f18c0e0eece79ca7adb53adb05102ddd263a8a-integrity/node_modules/@scramjet/api-client/sequence-client.js",
-      "v6/npm-@scramjet-api-router-2.1.0-d68fa80dac1d14824ad00883de0c77d46d16ec5e-integrity/node_modules/@scramjet/api-router/.bin/scramjet-api-router-generate",
       "v6/npm-@scramjet-api-router-2.1.0-d68fa80dac1d14824ad00883de0c77d46d16ec5e-integrity/node_modules/@scramjet/api-router/.yarn-metadata.json",
       "v6/npm-@scramjet-api-router-2.1.0-d68fa80dac1d14824ad00883de0c77d46d16ec5e-integrity/node_modules/@scramjet/api-router/.yarn-tarball.tgz",
       "v6/npm-@scramjet-api-router-2.1.0-d68fa80dac1d14824ad00883de0c77d46d16ec5e-integrity/node_modules/@scramjet/api-router/LICENSE",
@@ -8635,7 +8625,6 @@
       "v6/npm-@scramjet-runner-bun-2.1.0-77297e8ff225a4a5935cbcbfde4c9845f340d2d3-integrity/node_modules/@scramjet/runner-bun/package.json",
       "v6/npm-@scramjet-runner-bun-2.1.0-77297e8ff225a4a5935cbcbfde4c9845f340d2d3-integrity/node_modules/@scramjet/runner-bun/verser2-runtime.d.ts",
       "v6/npm-@scramjet-runner-bun-2.1.0-77297e8ff225a4a5935cbcbfde4c9845f340d2d3-integrity/node_modules/@scramjet/runner-bun/verser2-runtime.js",
-      "v6/npm-@scramjet-runner-node-2.1.0-57a27a17700e8d4c7aaa208ff97a0c1e10f611fa-integrity/node_modules/@scramjet/runner-node/.bin/runner-node",
       "v6/npm-@scramjet-runner-node-2.1.0-57a27a17700e8d4c7aaa208ff97a0c1e10f611fa-integrity/node_modules/@scramjet/runner-node/.yarn-metadata.json",
       "v6/npm-@scramjet-runner-node-2.1.0-57a27a17700e8d4c7aaa208ff97a0c1e10f611fa-integrity/node_modules/@scramjet/runner-node/.yarn-tarball.tgz",
       "v6/npm-@scramjet-runner-node-2.1.0-57a27a17700e8d4c7aaa208ff97a0c1e10f611fa-integrity/node_modules/@scramjet/runner-node/LICENSE",
@@ -11558,7 +11547,6 @@
       "v6/npm-@types-triple-beam-1.3.5-74fef9ffbaa198eb8b588be029f38b00299caa2c-integrity/node_modules/@types/triple-beam/README.md",
       "v6/npm-@types-triple-beam-1.3.5-74fef9ffbaa198eb8b588be029f38b00299caa2c-integrity/node_modules/@types/triple-beam/index.d.ts",
       "v6/npm-@types-triple-beam-1.3.5-74fef9ffbaa198eb8b588be029f38b00299caa2c-integrity/node_modules/@types/triple-beam/package.json",
-      "v6/npm-@vercel-nft-1.11.0-ed2db36a90f54087f36c2d8aff9e91e289cdb3c0-integrity/node_modules/@vercel/nft/.bin/nft",
       "v6/npm-@vercel-nft-1.11.0-ed2db36a90f54087f36c2d8aff9e91e289cdb3c0-integrity/node_modules/@vercel/nft/.yarn-metadata.json",
       "v6/npm-@vercel-nft-1.11.0-ed2db36a90f54087f36c2d8aff9e91e289cdb3c0-integrity/node_modules/@vercel/nft/.yarn-tarball.tgz",
       "v6/npm-@vercel-nft-1.11.0-ed2db36a90f54087f36c2d8aff9e91e289cdb3c0-integrity/node_modules/@vercel/nft/LICENSE",
@@ -11718,7 +11706,6 @@
       "v6/npm-abort-controller-3.0.0-eaf54d53b62bae4138e809ca225c8439a6efb392-integrity/node_modules/abort-controller/package.json",
       "v6/npm-abort-controller-3.0.0-eaf54d53b62bae4138e809ca225c8439a6efb392-integrity/node_modules/abort-controller/polyfill.js",
       "v6/npm-abort-controller-3.0.0-eaf54d53b62bae4138e809ca225c8439a6efb392-integrity/node_modules/abort-controller/polyfill.mjs",
-      "v6/npm-acorn-8.18.0-4faf01b2d6d326bfeed97aea1f52220b5f4c1940-integrity/node_modules/acorn/.bin/acorn",
       "v6/npm-acorn-8.18.0-4faf01b2d6d326bfeed97aea1f52220b5f4c1940-integrity/node_modules/acorn/.yarn-metadata.json",
       "v6/npm-acorn-8.18.0-4faf01b2d6d326bfeed97aea1f52220b5f4c1940-integrity/node_modules/acorn/.yarn-tarball.tgz",
       "v6/npm-acorn-8.18.0-4faf01b2d6d326bfeed97aea1f52220b5f4c1940-integrity/node_modules/acorn/CHANGELOG.md",
@@ -12114,7 +12101,6 @@
       "v6/npm-at-least-node-1.0.0-602cd4b46e844ad4effc92a8011a3c46e0238dc2-integrity/node_modules/at-least-node/README.md",
       "v6/npm-at-least-node-1.0.0-602cd4b46e844ad4effc92a8011a3c46e0238dc2-integrity/node_modules/at-least-node/index.js",
       "v6/npm-at-least-node-1.0.0-602cd4b46e844ad4effc92a8011a3c46e0238dc2-integrity/node_modules/at-least-node/package.json",
-      "v6/npm-ava-8.0.1-cb41c0352171d8de427c076d08d108e5357a62f1-integrity/node_modules/ava/.bin/ava",
       "v6/npm-ava-8.0.1-cb41c0352171d8de427c076d08d108e5357a62f1-integrity/node_modules/ava/.yarn-metadata.json",
       "v6/npm-ava-8.0.1-cb41c0352171d8de427c076d08d108e5357a62f1-integrity/node_modules/ava/.yarn-tarball.tgz",
       "v6/npm-ava-8.0.1-cb41c0352171d8de427c076d08d108e5357a62f1-integrity/node_modules/ava/entrypoints/cli.js",
@@ -12558,7 +12544,6 @@
       "v6/npm-browser-or-node-2.1.1-738790b3a86a8fc020193fa581273fbe65eaea0f-integrity/node_modules/browser-or-node/package.json",
       "v6/npm-browser-or-node-2.1.1-738790b3a86a8fc020193fa581273fbe65eaea0f-integrity/node_modules/browser-or-node/src/index.d.ts",
       "v6/npm-browser-or-node-2.1.1-738790b3a86a8fc020193fa581273fbe65eaea0f-integrity/node_modules/browser-or-node/src/index.js",
-      "v6/npm-btoa-1.2.1-01a9909f8b2c93f6bf680ba26131eb30f7fa3d73-integrity/node_modules/btoa/.bin/btoa",
       "v6/npm-btoa-1.2.1-01a9909f8b2c93f6bf680ba26131eb30f7fa3d73-integrity/node_modules/btoa/.yarn-metadata.json",
       "v6/npm-btoa-1.2.1-01a9909f8b2c93f6bf680ba26131eb30f7fa3d73-integrity/node_modules/btoa/.yarn-tarball.tgz",
       "v6/npm-btoa-1.2.1-01a9909f8b2c93f6bf680ba26131eb30f7fa3d73-integrity/node_modules/btoa/LICENSE",
@@ -12631,7 +12616,6 @@
       "v6/npm-bytestreamjs-2.0.1-a32947c7ce389a6fa11a09a9a563d0a45889535e-integrity/node_modules/bytestreamjs/build/types/seq_bit_stream.d.ts",
       "v6/npm-bytestreamjs-2.0.1-a32947c7ce389a6fa11a09a9a563d0a45889535e-integrity/node_modules/bytestreamjs/build/types/seq_stream.d.ts",
       "v6/npm-bytestreamjs-2.0.1-a32947c7ce389a6fa11a09a9a563d0a45889535e-integrity/node_modules/bytestreamjs/package.json",
-      "v6/npm-c8-12.0.0-bc69f204682651a3bbc9b3b6501f3b130c9d0b36-integrity/node_modules/c8/.bin/c8",
       "v6/npm-c8-12.0.0-bc69f204682651a3bbc9b3b6501f3b130c9d0b36-integrity/node_modules/c8/.yarn-metadata.json",
       "v6/npm-c8-12.0.0-bc69f204682651a3bbc9b3b6501f3b130c9d0b36-integrity/node_modules/c8/.yarn-tarball.tgz",
       "v6/npm-c8-12.0.0-bc69f204682651a3bbc9b3b6501f3b130c9d0b36-integrity/node_modules/c8/LICENSE.txt",
@@ -12882,7 +12866,6 @@
       "v6/npm-cliui-9.0.1-6f7890f386f6f1f79953adc1f78dec46fcc2d291-integrity/node_modules/cliui/build/tsconfig.tsbuildinfo",
       "v6/npm-cliui-9.0.1-6f7890f386f6f1f79953adc1f78dec46fcc2d291-integrity/node_modules/cliui/index.mjs",
       "v6/npm-cliui-9.0.1-6f7890f386f6f1f79953adc1f78dec46fcc2d291-integrity/node_modules/cliui/package.json",
-      "v6/npm-cloc-2.11.0-f6f965b80e48d78cf7f524a8ade1902d5bcbf923-integrity/node_modules/cloc/.bin/cloc",
       "v6/npm-cloc-2.11.0-f6f965b80e48d78cf7f524a8ade1902d5bcbf923-integrity/node_modules/cloc/.github/workflows/release.yml",
       "v6/npm-cloc-2.11.0-f6f965b80e48d78cf7f524a8ade1902d5bcbf923-integrity/node_modules/cloc/.yarn-metadata.json",
       "v6/npm-cloc-2.11.0-f6f965b80e48d78cf7f524a8ade1902d5bcbf923-integrity/node_modules/cloc/.yarn-tarball.tgz",
@@ -13253,7 +13236,6 @@
       "v6/npm-cross-spawn-7.0.6-8a58fe78f00dcd70c370451759dfbfaf03e8ee9f-integrity/node_modules/cross-spawn/lib/util/readShebang.js",
       "v6/npm-cross-spawn-7.0.6-8a58fe78f00dcd70c370451759dfbfaf03e8ee9f-integrity/node_modules/cross-spawn/lib/util/resolveCommand.js",
       "v6/npm-cross-spawn-7.0.6-8a58fe78f00dcd70c370451759dfbfaf03e8ee9f-integrity/node_modules/cross-spawn/package.json",
-      "v6/npm-cssesc-3.0.0-37741919903b868565e1c09ea747445cd18983ee-integrity/node_modules/cssesc/.bin/cssesc",
       "v6/npm-cssesc-3.0.0-37741919903b868565e1c09ea747445cd18983ee-integrity/node_modules/cssesc/.yarn-metadata.json",
       "v6/npm-cssesc-3.0.0-37741919903b868565e1c09ea747445cd18983ee-integrity/node_modules/cssesc/.yarn-tarball.tgz",
       "v6/npm-cssesc-3.0.0-37741919903b868565e1c09ea747445cd18983ee-integrity/node_modules/cssesc/LICENSE-MIT.txt",
@@ -13677,7 +13659,6 @@
       "v6/npm-es-set-tostringtag-2.1.0-f31dbbe0c183b00a6d26eb6325c810c0fd18bd4d-integrity/node_modules/es-set-tostringtag/package.json",
       "v6/npm-es-set-tostringtag-2.1.0-f31dbbe0c183b00a6d26eb6325c810c0fd18bd4d-integrity/node_modules/es-set-tostringtag/test/index.js",
       "v6/npm-es-set-tostringtag-2.1.0-f31dbbe0c183b00a6d26eb6325c810c0fd18bd4d-integrity/node_modules/es-set-tostringtag/tsconfig.json",
-      "v6/npm-esbuild-0.28.2-0f43bd1bad955b72d24e2261e3abe5957ccf0816-integrity/node_modules/esbuild/.bin/esbuild",
       "v6/npm-esbuild-0.28.2-0f43bd1bad955b72d24e2261e3abe5957ccf0816-integrity/node_modules/esbuild/.yarn-metadata.json",
       "v6/npm-esbuild-0.28.2-0f43bd1bad955b72d24e2261e3abe5957ccf0816-integrity/node_modules/esbuild/.yarn-tarball.tgz",
       "v6/npm-esbuild-0.28.2-0f43bd1bad955b72d24e2261e3abe5957ccf0816-integrity/node_modules/esbuild/LICENSE.md",
@@ -13714,8 +13695,6 @@
       "v6/npm-escape-string-regexp-5.0.0-4683126b500b61762f2dbebace1806e8be31b1c8-integrity/node_modules/escape-string-regexp/license",
       "v6/npm-escape-string-regexp-5.0.0-4683126b500b61762f2dbebace1806e8be31b1c8-integrity/node_modules/escape-string-regexp/package.json",
       "v6/npm-escape-string-regexp-5.0.0-4683126b500b61762f2dbebace1806e8be31b1c8-integrity/node_modules/escape-string-regexp/readme.md",
-      "v6/npm-esprima-4.0.1-13b04cdb3e6c5d19df91ab6987a8695619b0aa71-integrity/node_modules/esprima/.bin/esparse",
-      "v6/npm-esprima-4.0.1-13b04cdb3e6c5d19df91ab6987a8695619b0aa71-integrity/node_modules/esprima/.bin/esvalidate",
       "v6/npm-esprima-4.0.1-13b04cdb3e6c5d19df91ab6987a8695619b0aa71-integrity/node_modules/esprima/.yarn-metadata.json",
       "v6/npm-esprima-4.0.1-13b04cdb3e6c5d19df91ab6987a8695619b0aa71-integrity/node_modules/esprima/.yarn-tarball.tgz",
       "v6/npm-esprima-4.0.1-13b04cdb3e6c5d19df91ab6987a8695619b0aa71-integrity/node_modules/esprima/ChangeLog",
@@ -14068,7 +14047,6 @@
       "v6/npm-fast-xml-builder-1.3.1-ef05b353b45597483dfb09d450a062a2baec3a82-integrity/node_modules/fast-xml-builder/src/orderedJs2Xml.js",
       "v6/npm-fast-xml-builder-1.3.1-ef05b353b45597483dfb09d450a062a2baec3a82-integrity/node_modules/fast-xml-builder/src/prettifyJs2Xml.js",
       "v6/npm-fast-xml-builder-1.3.1-ef05b353b45597483dfb09d450a062a2baec3a82-integrity/node_modules/fast-xml-builder/src/util.js",
-      "v6/npm-fast-xml-parser-5.11.1-0ee672fcce1710c38185b8290d77e98806ff0bfb-integrity/node_modules/fast-xml-parser/.bin/fxparser",
       "v6/npm-fast-xml-parser-5.11.1-0ee672fcce1710c38185b8290d77e98806ff0bfb-integrity/node_modules/fast-xml-parser/.yarn-metadata.json",
       "v6/npm-fast-xml-parser-5.11.1-0ee672fcce1710c38185b8290d77e98806ff0bfb-integrity/node_modules/fast-xml-parser/.yarn-tarball.tgz",
       "v6/npm-fast-xml-parser-5.11.1-0ee672fcce1710c38185b8290d77e98806ff0bfb-integrity/node_modules/fast-xml-parser/CHANGELOG.md",
@@ -15265,7 +15243,6 @@
       "v6/npm-js-tokens-4.0.0-19203fb59991df98e3a287050d4647cdeaf32499-integrity/node_modules/js-tokens/README.md",
       "v6/npm-js-tokens-4.0.0-19203fb59991df98e3a287050d4647cdeaf32499-integrity/node_modules/js-tokens/index.js",
       "v6/npm-js-tokens-4.0.0-19203fb59991df98e3a287050d4647cdeaf32499-integrity/node_modules/js-tokens/package.json",
-      "v6/npm-js-yaml-3.15.2-3f83823ac6be17f570f23b2ecdef3777ff5ea364-integrity/node_modules/js-yaml/.bin/js-yaml",
       "v6/npm-js-yaml-3.15.2-3f83823ac6be17f570f23b2ecdef3777ff5ea364-integrity/node_modules/js-yaml/.yarn-metadata.json",
       "v6/npm-js-yaml-3.15.2-3f83823ac6be17f570f23b2ecdef3777ff5ea364-integrity/node_modules/js-yaml/.yarn-tarball.tgz",
       "v6/npm-js-yaml-3.15.2-3f83823ac6be17f570f23b2ecdef3777ff5ea364-integrity/node_modules/js-yaml/LICENSE",
@@ -15304,7 +15281,6 @@
       "v6/npm-js-yaml-3.15.2-3f83823ac6be17f570f23b2ecdef3777ff5ea364-integrity/node_modules/js-yaml/lib/js-yaml/type/str.js",
       "v6/npm-js-yaml-3.15.2-3f83823ac6be17f570f23b2ecdef3777ff5ea364-integrity/node_modules/js-yaml/lib/js-yaml/type/timestamp.js",
       "v6/npm-js-yaml-3.15.2-3f83823ac6be17f570f23b2ecdef3777ff5ea364-integrity/node_modules/js-yaml/package.json",
-      "v6/npm-js-yaml-4.3.2-8e44fb14a2643c59726bb15787b5f1512cb3d3fb-integrity/node_modules/js-yaml/.bin/js-yaml",
       "v6/npm-js-yaml-4.3.2-8e44fb14a2643c59726bb15787b5f1512cb3d3fb-integrity/node_modules/js-yaml/.yarn-metadata.json",
       "v6/npm-js-yaml-4.3.2-8e44fb14a2643c59726bb15787b5f1512cb3d3fb-integrity/node_modules/js-yaml/.yarn-tarball.tgz",
       "v6/npm-js-yaml-4.3.2-8e44fb14a2643c59726bb15787b5f1512cb3d3fb-integrity/node_modules/js-yaml/LICENSE",
@@ -15425,8 +15401,6 @@
       "v6/npm-jsonparse-1.3.1-3f4dae4a91fac315f71062f8521cc239f1366280-integrity/node_modules/jsonparse/test/surrogate.js",
       "v6/npm-jsonparse-1.3.1-3f4dae4a91fac315f71062f8521cc239f1366280-integrity/node_modules/jsonparse/test/unvalid.js",
       "v6/npm-jsonparse-1.3.1-3f4dae4a91fac315f71062f8521cc239f1366280-integrity/node_modules/jsonparse/test/utf8.js",
-      "v6/npm-jsonpath-plus-10.4.0-73cf545c231afda21452150b7a2a58e48e109702-integrity/node_modules/jsonpath-plus/.bin/jsonpath",
-      "v6/npm-jsonpath-plus-10.4.0-73cf545c231afda21452150b7a2a58e48e109702-integrity/node_modules/jsonpath-plus/.bin/jsonpath-plus",
       "v6/npm-jsonpath-plus-10.4.0-73cf545c231afda21452150b7a2a58e48e109702-integrity/node_modules/jsonpath-plus/.claude/settings.local.json",
       "v6/npm-jsonpath-plus-10.4.0-73cf545c231afda21452150b7a2a58e48e109702-integrity/node_modules/jsonpath-plus/.yarn-metadata.json",
       "v6/npm-jsonpath-plus-10.4.0-73cf545c231afda21452150b7a2a58e48e109702-integrity/node_modules/jsonpath-plus/.yarn-tarball.tgz",
@@ -16988,7 +16962,6 @@
       "v6/npm-micromatch-4.0.8-d66fa18f3a47076789320b9b1af32bd86d9fa202-integrity/node_modules/micromatch/README.md",
       "v6/npm-micromatch-4.0.8-d66fa18f3a47076789320b9b1af32bd86d9fa202-integrity/node_modules/micromatch/index.js",
       "v6/npm-micromatch-4.0.8-d66fa18f3a47076789320b9b1af32bd86d9fa202-integrity/node_modules/micromatch/package.json",
-      "v6/npm-mime-4.1.0-ec55df7aa21832a36d44f0bbee5c04639b27802f-integrity/node_modules/mime/.bin/mime",
       "v6/npm-mime-4.1.0-ec55df7aa21832a36d44f0bbee5c04639b27802f-integrity/node_modules/mime/.yarn-metadata.json",
       "v6/npm-mime-4.1.0-ec55df7aa21832a36d44f0bbee5c04639b27802f-integrity/node_modules/mime/.yarn-tarball.tgz",
       "v6/npm-mime-4.1.0-ec55df7aa21832a36d44f0bbee5c04639b27802f-integrity/node_modules/mime/LICENSE",
@@ -17467,7 +17440,6 @@
       "v6/npm-node-fetch-2.7.0-d0f0fa6e3e2dc1d27efcd8ad99d550bda94d187d-integrity/node_modules/node-fetch/lib/index.js",
       "v6/npm-node-fetch-2.7.0-d0f0fa6e3e2dc1d27efcd8ad99d550bda94d187d-integrity/node_modules/node-fetch/lib/index.mjs",
       "v6/npm-node-fetch-2.7.0-d0f0fa6e3e2dc1d27efcd8ad99d550bda94d187d-integrity/node_modules/node-fetch/package.json",
-      "v6/npm-node-gyp-12.4.0-2d017b6ea1ca9294dbbee75be533728f49257024-integrity/node_modules/node-gyp/.bin/node-gyp",
       "v6/npm-node-gyp-12.4.0-2d017b6ea1ca9294dbbee75be533728f49257024-integrity/node_modules/node-gyp/.release-please-manifest.json",
       "v6/npm-node-gyp-12.4.0-2d017b6ea1ca9294dbbee75be533728f49257024-integrity/node_modules/node-gyp/.yarn-metadata.json",
       "v6/npm-node-gyp-12.4.0-2d017b6ea1ca9294dbbee75be533728f49257024-integrity/node_modules/node-gyp/.yarn-tarball.tgz",
@@ -17578,7 +17550,6 @@
       "v6/npm-node-gyp-12.4.0-2d017b6ea1ca9294dbbee75be533728f49257024-integrity/node_modules/node-gyp/package.json",
       "v6/npm-node-gyp-12.4.0-2d017b6ea1ca9294dbbee75be533728f49257024-integrity/node_modules/node-gyp/release-please-config.json",
       "v6/npm-node-gyp-12.4.0-2d017b6ea1ca9294dbbee75be533728f49257024-integrity/node_modules/node-gyp/src/win_delay_load_hook.cc",
-      "v6/npm-node-gyp-13.0.2-9bff1a63582f25b208c8901da2cfbfe5f3ba5f79-integrity/node_modules/node-gyp/.bin/node-gyp",
       "v6/npm-node-gyp-13.0.2-9bff1a63582f25b208c8901da2cfbfe5f3ba5f79-integrity/node_modules/node-gyp/.release-please-manifest.json",
       "v6/npm-node-gyp-13.0.2-9bff1a63582f25b208c8901da2cfbfe5f3ba5f79-integrity/node_modules/node-gyp/.yarn-metadata.json",
       "v6/npm-node-gyp-13.0.2-9bff1a63582f25b208c8901da2cfbfe5f3ba5f79-integrity/node_modules/node-gyp/.yarn-tarball.tgz",
@@ -17691,9 +17662,6 @@
       "v6/npm-node-gyp-13.0.2-9bff1a63582f25b208c8901da2cfbfe5f3ba5f79-integrity/node_modules/node-gyp/release-please-config.json",
       "v6/npm-node-gyp-13.0.2-9bff1a63582f25b208c8901da2cfbfe5f3ba5f79-integrity/node_modules/node-gyp/src/win_delay_load_hook.cc",
       "v6/npm-node-gyp-13.0.2-9bff1a63582f25b208c8901da2cfbfe5f3ba5f79-integrity/node_modules/node-gyp/zizmor.yml",
-      "v6/npm-node-gyp-build-4.8.4-8a70ee85464ae52327772a90d66c6077a900cfc8-integrity/node_modules/node-gyp-build/.bin/node-gyp-build",
-      "v6/npm-node-gyp-build-4.8.4-8a70ee85464ae52327772a90d66c6077a900cfc8-integrity/node_modules/node-gyp-build/.bin/node-gyp-build-optional",
-      "v6/npm-node-gyp-build-4.8.4-8a70ee85464ae52327772a90d66c6077a900cfc8-integrity/node_modules/node-gyp-build/.bin/node-gyp-build-test",
       "v6/npm-node-gyp-build-4.8.4-8a70ee85464ae52327772a90d66c6077a900cfc8-integrity/node_modules/node-gyp-build/.yarn-metadata.json",
       "v6/npm-node-gyp-build-4.8.4-8a70ee85464ae52327772a90d66c6077a900cfc8-integrity/node_modules/node-gyp-build/.yarn-tarball.tgz",
       "v6/npm-node-gyp-build-4.8.4-8a70ee85464ae52327772a90d66c6077a900cfc8-integrity/node_modules/node-gyp-build/LICENSE",
@@ -17736,7 +17704,6 @@
       "v6/npm-node-os-utils-1.3.7-77cc341ae39584e12d3aadf6046fe420ff4c9340-integrity/node_modules/node-os-utils/test/test.js",
       "v6/npm-node-os-utils-1.3.7-77cc341ae39584e12d3aadf6046fe420ff4c9340-integrity/node_modules/node-os-utils/util/co.js",
       "v6/npm-node-os-utils-1.3.7-77cc341ae39584e12d3aadf6046fe420ff4c9340-integrity/node_modules/node-os-utils/util/index.js",
-      "v6/npm-nopt-10.0.1-2d53bfda504b31c447967648ba5ea1a44e594d05-integrity/node_modules/nopt/.bin/nopt",
       "v6/npm-nopt-10.0.1-2d53bfda504b31c447967648ba5ea1a44e594d05-integrity/node_modules/nopt/.yarn-metadata.json",
       "v6/npm-nopt-10.0.1-2d53bfda504b31c447967648ba5ea1a44e594d05-integrity/node_modules/nopt/.yarn-tarball.tgz",
       "v6/npm-nopt-10.0.1-2d53bfda504b31c447967648ba5ea1a44e594d05-integrity/node_modules/nopt/LICENSE",
@@ -17746,7 +17713,6 @@
       "v6/npm-nopt-10.0.1-2d53bfda504b31c447967648ba5ea1a44e594d05-integrity/node_modules/nopt/lib/nopt.js",
       "v6/npm-nopt-10.0.1-2d53bfda504b31c447967648ba5ea1a44e594d05-integrity/node_modules/nopt/lib/type-defs.js",
       "v6/npm-nopt-10.0.1-2d53bfda504b31c447967648ba5ea1a44e594d05-integrity/node_modules/nopt/package.json",
-      "v6/npm-nopt-8.1.0-b11d38caf0f8643ce885818518064127f602eae3-integrity/node_modules/nopt/.bin/nopt",
       "v6/npm-nopt-8.1.0-b11d38caf0f8643ce885818518064127f602eae3-integrity/node_modules/nopt/.yarn-metadata.json",
       "v6/npm-nopt-8.1.0-b11d38caf0f8643ce885818518064127f602eae3-integrity/node_modules/nopt/.yarn-tarball.tgz",
       "v6/npm-nopt-8.1.0-b11d38caf0f8643ce885818518064127f602eae3-integrity/node_modules/nopt/LICENSE",
@@ -17757,7 +17723,6 @@
       "v6/npm-nopt-8.1.0-b11d38caf0f8643ce885818518064127f602eae3-integrity/node_modules/nopt/lib/nopt.js",
       "v6/npm-nopt-8.1.0-b11d38caf0f8643ce885818518064127f602eae3-integrity/node_modules/nopt/lib/type-defs.js",
       "v6/npm-nopt-8.1.0-b11d38caf0f8643ce885818518064127f602eae3-integrity/node_modules/nopt/package.json",
-      "v6/npm-nopt-9.0.0-6bff0836b2964d24508b6b41b5a9a49c4f4a1f96-integrity/node_modules/nopt/.bin/nopt",
       "v6/npm-nopt-9.0.0-6bff0836b2964d24508b6b41b5a9a49c4f4a1f96-integrity/node_modules/nopt/.yarn-metadata.json",
       "v6/npm-nopt-9.0.0-6bff0836b2964d24508b6b41b5a9a49c4f4a1f96-integrity/node_modules/nopt/.yarn-tarball.tgz",
       "v6/npm-nopt-9.0.0-6bff0836b2964d24508b6b41b5a9a49c4f4a1f96-integrity/node_modules/nopt/LICENSE",
@@ -17787,8 +17752,6 @@
       "v6/npm-normalize-url-4.5.1-0dd90cf1288ee1d1313b87081c9a5932ee48518a-integrity/node_modules/normalize-url/license",
       "v6/npm-normalize-url-4.5.1-0dd90cf1288ee1d1313b87081c9a5932ee48518a-integrity/node_modules/normalize-url/package.json",
       "v6/npm-normalize-url-4.5.1-0dd90cf1288ee1d1313b87081c9a5932ee48518a-integrity/node_modules/normalize-url/readme.md",
-      "v6/npm-npm-11.19.1-19984947ed6b8b1e0c794ceadb0a848cc5585128-integrity/node_modules/npm/.bin/npm",
-      "v6/npm-npm-11.19.1-19984947ed6b8b1e0c794ceadb0a848cc5585128-integrity/node_modules/npm/.bin/npx",
       "v6/npm-npm-11.19.1-19984947ed6b8b1e0c794ceadb0a848cc5585128-integrity/node_modules/npm/.yarn-metadata.json",
       "v6/npm-npm-11.19.1-19984947ed6b8b1e0c794ceadb0a848cc5585128-integrity/node_modules/npm/.yarn-tarball.tgz",
       "v6/npm-npm-11.19.1-19984947ed6b8b1e0c794ceadb0a848cc5585128-integrity/node_modules/npm/LICENSE",
@@ -19936,7 +19899,6 @@
       "v6/npm-package-config-5.0.0-cba78b7feb3396fa0149caca2c72677ff302b3c4-integrity/node_modules/package-config/license",
       "v6/npm-package-config-5.0.0-cba78b7feb3396fa0149caca2c72677ff302b3c4-integrity/node_modules/package-config/package.json",
       "v6/npm-package-config-5.0.0-cba78b7feb3396fa0149caca2c72677ff302b3c4-integrity/node_modules/package-config/readme.md",
-      "v6/npm-pacote-21.5.1-74ab896fc7b1f00545ecbbbf666a61895cd50d38-integrity/node_modules/pacote/.bin/pacote",
       "v6/npm-pacote-21.5.1-74ab896fc7b1f00545ecbbbf666a61895cd50d38-integrity/node_modules/pacote/.yarn-metadata.json",
       "v6/npm-pacote-21.5.1-74ab896fc7b1f00545ecbbbf666a61895cd50d38-integrity/node_modules/pacote/.yarn-tarball.tgz",
       "v6/npm-pacote-21.5.1-74ab896fc7b1f00545ecbbbf666a61895cd50d38-integrity/node_modules/pacote/LICENSE",
@@ -20333,7 +20295,6 @@
       "v6/npm-pvutils-1.2.0-4b5487a9cccd52d275b0538775790a3ca982bc22-integrity/node_modules/pvutils/build/utils.es.js",
       "v6/npm-pvutils-1.2.0-4b5487a9cccd52d275b0538775790a3ca982bc22-integrity/node_modules/pvutils/build/utils.js",
       "v6/npm-pvutils-1.2.0-4b5487a9cccd52d275b0538775790a3ca982bc22-integrity/node_modules/pvutils/package.json",
-      "v6/npm-qrcode-terminal-0.12.0-bb5b699ef7f9f0505092a3748be4464fe71b5819-integrity/node_modules/qrcode-terminal/.bin/qrcode-terminal",
       "v6/npm-qrcode-terminal-0.12.0-bb5b699ef7f9f0505092a3748be4464fe71b5819-integrity/node_modules/qrcode-terminal/.travis.yml",
       "v6/npm-qrcode-terminal-0.12.0-bb5b699ef7f9f0505092a3748be4464fe71b5819-integrity/node_modules/qrcode-terminal/.yarn-metadata.json",
       "v6/npm-qrcode-terminal-0.12.0-bb5b699ef7f9f0505092a3748be4464fe71b5819-integrity/node_modules/qrcode-terminal/.yarn-tarball.tgz",
@@ -20502,7 +20463,6 @@
       "v6/npm-regexp-match-indices-1.0.2-cf20054a6f7d5b3e116a701a7b00f82889d10da6-integrity/node_modules/regexp-match-indices/types.d.ts",
       "v6/npm-regexp-match-indices-1.0.2-cf20054a6f7d5b3e116a701a7b00f82889d10da6-integrity/node_modules/regexp-match-indices/types.js",
       "v6/npm-regexp-match-indices-1.0.2-cf20054a6f7d5b3e116a701a7b00f82889d10da6-integrity/node_modules/regexp-match-indices/types.js.map",
-      "v6/npm-regexp-tree-0.1.27-2198f0ef54518ffa743fe74d983b56ffd631b6cd-integrity/node_modules/regexp-tree/.bin/regexp-tree",
       "v6/npm-regexp-tree-0.1.27-2198f0ef54518ffa743fe74d983b56ffd631b6cd-integrity/node_modules/regexp-tree/.yarn-metadata.json",
       "v6/npm-regexp-tree-0.1.27-2198f0ef54518ffa743fe74d983b56ffd631b6cd-integrity/node_modules/regexp-tree/.yarn-tarball.tgz",
       "v6/npm-regexp-tree-0.1.27-2198f0ef54518ffa743fe74d983b56ffd631b6cd-integrity/node_modules/regexp-tree/LICENSE",
@@ -22740,7 +22700,6 @@
       "v6/npm-selfsigned-5.5.0-4c9ab7c7c9f35f18fb6a9882c253eb0e6bd6557b-integrity/node_modules/selfsigned/test/ca-signing.js",
       "v6/npm-selfsigned-5.5.0-4c9ab7c7c9f35f18fb6a9882c253eb0e6bd6557b-integrity/node_modules/selfsigned/test/ec-keys.js",
       "v6/npm-selfsigned-5.5.0-4c9ab7c7c9f35f18fb6a9882c253eb0e6bd6557b-integrity/node_modules/selfsigned/test/tests.js",
-      "v6/npm-semver-7.8.5-39b646037dd50c14fb451e7e4cac58ed8b863f69-integrity/node_modules/semver/.bin/semver",
       "v6/npm-semver-7.8.5-39b646037dd50c14fb451e7e4cac58ed8b863f69-integrity/node_modules/semver/.yarn-metadata.json",
       "v6/npm-semver-7.8.5-39b646037dd50c14fb451e7e4cac58ed8b863f69-integrity/node_modules/semver/.yarn-tarball.tgz",
       "v6/npm-semver-7.8.5-39b646037dd50c14fb451e7e4cac58ed8b863f69-integrity/node_modules/semver/LICENSE",
@@ -23964,12 +23923,6 @@
       "v6/npm-ts-data-json-2.3.1-c496398e9252d8f698d75c8004c76b34dca9bd89-integrity/node_modules/ts.data.json/dist/esm/standard-schema-v1.js",
       "v6/npm-ts-data-json-2.3.1-c496398e9252d8f698d75c8004c76b34dca9bd89-integrity/node_modules/ts.data.json/dist/esm/standard-schema-v1.js.map",
       "v6/npm-ts-data-json-2.3.1-c496398e9252d8f698d75c8004c76b34dca9bd89-integrity/node_modules/ts.data.json/package.json",
-      "v6/npm-ts-node-10.9.2-70f021c9e185bccdca820e26dc413805c101c71f-integrity/node_modules/ts-node/.bin/ts-node",
-      "v6/npm-ts-node-10.9.2-70f021c9e185bccdca820e26dc413805c101c71f-integrity/node_modules/ts-node/.bin/ts-node-cwd",
-      "v6/npm-ts-node-10.9.2-70f021c9e185bccdca820e26dc413805c101c71f-integrity/node_modules/ts-node/.bin/ts-node-esm",
-      "v6/npm-ts-node-10.9.2-70f021c9e185bccdca820e26dc413805c101c71f-integrity/node_modules/ts-node/.bin/ts-node-script",
-      "v6/npm-ts-node-10.9.2-70f021c9e185bccdca820e26dc413805c101c71f-integrity/node_modules/ts-node/.bin/ts-node-transpile-only",
-      "v6/npm-ts-node-10.9.2-70f021c9e185bccdca820e26dc413805c101c71f-integrity/node_modules/ts-node/.bin/ts-script",
       "v6/npm-ts-node-10.9.2-70f021c9e185bccdca820e26dc413805c101c71f-integrity/node_modules/ts-node/.yarn-metadata.json",
       "v6/npm-ts-node-10.9.2-70f021c9e185bccdca820e26dc413805c101c71f-integrity/node_modules/ts-node/.yarn-tarball.tgz",
       "v6/npm-ts-node-10.9.2-70f021c9e185bccdca820e26dc413805c101c71f-integrity/node_modules/ts-node/LICENSE",
@@ -24120,7 +24073,6 @@
       "v6/npm-tslib-2.8.1-612efe4ed235d567e8aba5f2a5fab70280ade83f-integrity/node_modules/tslib/tslib.es6.mjs",
       "v6/npm-tslib-2.8.1-612efe4ed235d567e8aba5f2a5fab70280ade83f-integrity/node_modules/tslib/tslib.html",
       "v6/npm-tslib-2.8.1-612efe4ed235d567e8aba5f2a5fab70280ade83f-integrity/node_modules/tslib/tslib.js",
-      "v6/npm-tsx-4.23.13-393b8dd813d49e25aed7b1d7cbac6930da49ec08-integrity/node_modules/tsx/.bin/tsx",
       "v6/npm-tsx-4.23.13-393b8dd813d49e25aed7b1d7cbac6930da49ec08-integrity/node_modules/tsx/.yarn-metadata.json",
       "v6/npm-tsx-4.23.13-393b8dd813d49e25aed7b1d7cbac6930da49ec08-integrity/node_modules/tsx/.yarn-tarball.tgz",
       "v6/npm-tsx-4.23.13-393b8dd813d49e25aed7b1d7cbac6930da49ec08-integrity/node_modules/tsx/LICENSE",
@@ -24893,8 +24845,6 @@
       "v6/npm-typed-emitter-1.4.0-38c6bf1224e764906bb20cb0b458fa914100607c-integrity/node_modules/typed-emitter/index.d.ts",
       "v6/npm-typed-emitter-1.4.0-38c6bf1224e764906bb20cb0b458fa914100607c-integrity/node_modules/typed-emitter/package.json",
       "v6/npm-typed-emitter-1.4.0-38c6bf1224e764906bb20cb0b458fa914100607c-integrity/node_modules/typed-emitter/types.js",
-      "v6/npm-typescript-4.7.4-1a88596d1cf47d59507a1bcdfb5b9dfe4d488235-integrity/node_modules/typescript/.bin/tsc",
-      "v6/npm-typescript-4.7.4-1a88596d1cf47d59507a1bcdfb5b9dfe4d488235-integrity/node_modules/typescript/.bin/tsserver",
       "v6/npm-typescript-4.7.4-1a88596d1cf47d59507a1bcdfb5b9dfe4d488235-integrity/node_modules/typescript/.yarn-metadata.json",
       "v6/npm-typescript-4.7.4-1a88596d1cf47d59507a1bcdfb5b9dfe4d488235-integrity/node_modules/typescript/.yarn-tarball.tgz",
       "v6/npm-typescript-4.7.4-1a88596d1cf47d59507a1bcdfb5b9dfe4d488235-integrity/node_modules/typescript/AUTHORS.md",
@@ -25887,7 +25837,6 @@
       "v6/npm-util-deprecate-1.0.2-450d4dc9fa70de732762fbd2d4a28981419a0ccf-integrity/node_modules/util-deprecate/browser.js",
       "v6/npm-util-deprecate-1.0.2-450d4dc9fa70de732762fbd2d4a28981419a0ccf-integrity/node_modules/util-deprecate/node.js",
       "v6/npm-util-deprecate-1.0.2-450d4dc9fa70de732762fbd2d4a28981419a0ccf-integrity/node_modules/util-deprecate/package.json",
-      "v6/npm-uuid-11.1.1-f6d81d2e1c65d00762e5e29b16c5d2d995e208ad-integrity/node_modules/uuid/.bin/uuid",
       "v6/npm-uuid-11.1.1-f6d81d2e1c65d00762e5e29b16c5d2d995e208ad-integrity/node_modules/uuid/.yarn-metadata.json",
       "v6/npm-uuid-11.1.1-f6d81d2e1c65d00762e5e29b16c5d2d995e208ad-integrity/node_modules/uuid/.yarn-tarball.tgz",
       "v6/npm-uuid-11.1.1-f6d81d2e1c65d00762e5e29b16c5d2d995e208ad-integrity/node_modules/uuid/LICENSE.md",
@@ -26394,7 +26343,6 @@
       "v6/npm-whatwg-url-5.0.0-966454e8765462e37644d3626f6742ce8b70965d-integrity/node_modules/whatwg-url/lib/url-state-machine.js",
       "v6/npm-whatwg-url-5.0.0-966454e8765462e37644d3626f6742ce8b70965d-integrity/node_modules/whatwg-url/lib/utils.js",
       "v6/npm-whatwg-url-5.0.0-966454e8765462e37644d3626f6742ce8b70965d-integrity/node_modules/whatwg-url/package.json",
-      "v6/npm-which-2.0.2-7c6a8dd0a636a0327e10b59c9286eee93f3f51b1-integrity/node_modules/which/.bin/node-which",
       "v6/npm-which-2.0.2-7c6a8dd0a636a0327e10b59c9286eee93f3f51b1-integrity/node_modules/which/.yarn-metadata.json",
       "v6/npm-which-2.0.2-7c6a8dd0a636a0327e10b59c9286eee93f3f51b1-integrity/node_modules/which/.yarn-tarball.tgz",
       "v6/npm-which-2.0.2-7c6a8dd0a636a0327e10b59c9286eee93f3f51b1-integrity/node_modules/which/CHANGELOG.md",
@@ -26403,7 +26351,6 @@
       "v6/npm-which-2.0.2-7c6a8dd0a636a0327e10b59c9286eee93f3f51b1-integrity/node_modules/which/bin/node-which",
       "v6/npm-which-2.0.2-7c6a8dd0a636a0327e10b59c9286eee93f3f51b1-integrity/node_modules/which/package.json",
       "v6/npm-which-2.0.2-7c6a8dd0a636a0327e10b59c9286eee93f3f51b1-integrity/node_modules/which/which.js",
-      "v6/npm-which-6.0.1-021642443a198fb93b784a5606721cb18cfcbfce-integrity/node_modules/which/.bin/node-which",
       "v6/npm-which-6.0.1-021642443a198fb93b784a5606721cb18cfcbfce-integrity/node_modules/which/.yarn-metadata.json",
       "v6/npm-which-6.0.1-021642443a198fb93b784a5606721cb18cfcbfce-integrity/node_modules/which/.yarn-tarball.tgz",
       "v6/npm-which-6.0.1-021642443a198fb93b784a5606721cb18cfcbfce-integrity/node_modules/which/LICENSE",
@@ -26411,7 +26358,6 @@
       "v6/npm-which-6.0.1-021642443a198fb93b784a5606721cb18cfcbfce-integrity/node_modules/which/bin/which.js",
       "v6/npm-which-6.0.1-021642443a198fb93b784a5606721cb18cfcbfce-integrity/node_modules/which/lib/index.js",
       "v6/npm-which-6.0.1-021642443a198fb93b784a5606721cb18cfcbfce-integrity/node_modules/which/package.json",
-      "v6/npm-which-7.0.0-cdfdd7bfc31c5af050b97bc7c02b1844731fb8b2-integrity/node_modules/which/.bin/node-which",
       "v6/npm-which-7.0.0-cdfdd7bfc31c5af050b97bc7c02b1844731fb8b2-integrity/node_modules/which/.yarn-metadata.json",
       "v6/npm-which-7.0.0-cdfdd7bfc31c5af050b97bc7c02b1844731fb8b2-integrity/node_modules/which/.yarn-tarball.tgz",
       "v6/npm-which-7.0.0-cdfdd7bfc31c5af050b97bc7c02b1844731fb8b2-integrity/node_modules/which/LICENSE",
@@ -26703,7 +26649,6 @@
       "v6/npm-yallist-5.0.0-00e2de443639ed0d78fd87de0d27469fbcffb533-integrity/node_modules/yallist/dist/esm/index.js.map",
       "v6/npm-yallist-5.0.0-00e2de443639ed0d78fd87de0d27469fbcffb533-integrity/node_modules/yallist/dist/esm/package.json",
       "v6/npm-yallist-5.0.0-00e2de443639ed0d78fd87de0d27469fbcffb533-integrity/node_modules/yallist/package.json",
-      "v6/npm-yaml-2.9.1-c16233fb31944e705cfefaff38795587f57588ce-integrity/node_modules/yaml/.bin/yaml",
       "v6/npm-yaml-2.9.1-c16233fb31944e705cfefaff38795587f57588ce-integrity/node_modules/yaml/.yarn-metadata.json",
       "v6/npm-yaml-2.9.1-c16233fb31944e705cfefaff38795587f57588ce-integrity/node_modules/yaml/.yarn-tarball.tgz",
       "v6/npm-yaml-2.9.1-c16233fb31944e705cfefaff38795587f57588ce-integrity/node_modules/yaml/LICENSE",
@@ -37184,11 +37129,6 @@
       "size": 3847
     },
     {
-      "path": "yarn/cache/v6/npm-@biomejs-biome-2.5.0-e2bf9805de38b8a9ece8518514c2460eb43d229f-integrity/node_modules/@biomejs/biome/.bin/biome",
-      "type": "symlink",
-      "target": "../bin/biome"
-    },
-    {
       "path": "yarn/cache/v6/npm-@biomejs-biome-2.5.0-e2bf9805de38b8a9ece8518514c2460eb43d229f-integrity/node_modules/@biomejs/biome/.yarn-metadata.json",
       "sha256": "sha256:b45b9f9e0214f298f14daa15f8f2c49c568a50a4362fbde5cde60b67847f207c",
       "size": 13987
@@ -38062,11 +38002,6 @@
       "path": "yarn/cache/v6/npm-@cucumber-ci-environment-14.0.0-2980ae338f5efb7fd9a26980375986cee1604513-integrity/node_modules/@cucumber/ci-environment/package.json",
       "sha256": "sha256:e81e636d19185e6b3da4baf37bcedfc5173abbeb30dc6560552297373123682f",
       "size": 1521
-    },
-    {
-      "path": "yarn/cache/v6/npm-@cucumber-cucumber-13.2.1-3eefac1232b74a6de7ec207ef417ca6b4f62d755-integrity/node_modules/@cucumber/cucumber/.bin/cucumber-js",
-      "type": "symlink",
-      "target": "../bin/cucumber.js"
     },
     {
       "path": "yarn/cache/v6/npm-@cucumber-cucumber-13.2.1-3eefac1232b74a6de7ec207ef417ca6b4f62d755-integrity/node_modules/@cucumber/cucumber/.yarn-metadata.json",
@@ -40504,11 +40439,6 @@
       "size": 413
     },
     {
-      "path": "yarn/cache/v6/npm-@cucumber-gherkin-streams-7.0.1-1df7e3587c378d1b2e9b3866400a6e13e775327c-integrity/node_modules/@cucumber/gherkin-streams/.bin/gherkin-javascript",
-      "type": "symlink",
-      "target": "../bin/gherkin"
-    },
-    {
       "path": "yarn/cache/v6/npm-@cucumber-gherkin-streams-7.0.1-1df7e3587c378d1b2e9b3866400a6e13e775327c-integrity/node_modules/@cucumber/gherkin-streams/.github/renovate.json",
       "sha256": "sha256:ce84563963edec3f77cc43fa253f41a1ca0ddf185248ecb9c8239b940c61ae51",
       "size": 119
@@ -40702,11 +40632,6 @@
       "path": "yarn/cache/v6/npm-@cucumber-gherkin-streams-7.0.1-1df7e3587c378d1b2e9b3866400a6e13e775327c-integrity/node_modules/@cucumber/gherkin-streams/tsconfig.json",
       "sha256": "sha256:6d3f241f9122a378c1f616b694427c24a63ec138112a8fbabcd44e88b6ce2b07",
       "size": 413
-    },
-    {
-      "path": "yarn/cache/v6/npm-@cucumber-gherkin-utils-12.0.1-dbc7c83946dbd1ebc0fe90084d3dbf573d69abb8-integrity/node_modules/@cucumber/gherkin-utils/.bin/gherkin-utils",
-      "type": "symlink",
-      "target": "../bin/gherkin-utils"
     },
     {
       "path": "yarn/cache/v6/npm-@cucumber-gherkin-utils-12.0.1-dbc7c83946dbd1ebc0fe90084d3dbf573d69abb8-integrity/node_modules/@cucumber/gherkin-utils/.mocharc.json",
@@ -46709,11 +46634,6 @@
       "size": 3165
     },
     {
-      "path": "yarn/cache/v6/npm-@grpc-proto-loader-0.7.15-4cdfbf35a35461fc843abe8b9e2c0770b5095e60-integrity/node_modules/@grpc/proto-loader/.bin/proto-loader-gen-types",
-      "type": "symlink",
-      "target": "../build/bin/proto-loader-gen-types.js"
-    },
-    {
       "path": "yarn/cache/v6/npm-@grpc-proto-loader-0.7.15-4cdfbf35a35461fc843abe8b9e2c0770b5095e60-integrity/node_modules/@grpc/proto-loader/.yarn-metadata.json",
       "sha256": "sha256:17deb120a758123d52e7888403f01e70341dcc98ea5d1ba8ef7bf2ff851365d2",
       "size": 22575
@@ -46777,11 +46697,6 @@
       "path": "yarn/cache/v6/npm-@grpc-proto-loader-0.7.15-4cdfbf35a35461fc843abe8b9e2c0770b5095e60-integrity/node_modules/@grpc/proto-loader/README.md",
       "sha256": "sha256:105764b045bb729480f71f5d6e1e94f4e612bf0d2a33d1a84f9a2724b6cf2c57",
       "size": 7298
-    },
-    {
-      "path": "yarn/cache/v6/npm-@grpc-proto-loader-0.8.1-5a6b290ccbfb1ae2f6775afb74e9898bd8c5d4e8-integrity/node_modules/@grpc/proto-loader/.bin/proto-loader-gen-types",
-      "type": "symlink",
-      "target": "../build/bin/proto-loader-gen-types.js"
     },
     {
       "path": "yarn/cache/v6/npm-@grpc-proto-loader-0.8.1-5a6b290ccbfb1ae2f6775afb74e9898bd8c5d4e8-integrity/node_modules/@grpc/proto-loader/.yarn-metadata.json",
@@ -62369,11 +62284,6 @@
       "size": 6846
     },
     {
-      "path": "yarn/cache/v6/npm-@mapbox-node-pre-gyp-2.0.3-236aa1f62c101ce4c9db15697cb652ec69dca379-integrity/node_modules/@mapbox/node-pre-gyp/.bin/node-pre-gyp",
-      "type": "symlink",
-      "target": "../bin/node-pre-gyp"
-    },
-    {
       "path": "yarn/cache/v6/npm-@mapbox-node-pre-gyp-2.0.3-236aa1f62c101ce4c9db15697cb652ec69dca379-integrity/node_modules/@mapbox/node-pre-gyp/.github/dependabot.yml",
       "sha256": "sha256:9a496a1951a0904317f886f7bb1e13d138136e3e9a689bf3e652a525c9727baa",
       "size": 657
@@ -64214,11 +64124,6 @@
       "size": 1958
     },
     {
-      "path": "yarn/cache/v6/npm-@npmcli-arborist-9.9.1-8718c86f6c23be65d6b5dbafa58f4eda5f828020-integrity/node_modules/@npmcli/arborist/.bin/arborist",
-      "type": "symlink",
-      "target": "../bin/index.js"
-    },
-    {
       "path": "yarn/cache/v6/npm-@npmcli-arborist-9.9.1-8718c86f6c23be65d6b5dbafa58f4eda5f828020-integrity/node_modules/@npmcli/arborist/.yarn-metadata.json",
       "sha256": "sha256:3d2cd92eb8582b38616b89b9fffe2330d26d21a2e94ce3208771fa41216a244f",
       "size": 21546
@@ -64907,11 +64812,6 @@
       "path": "yarn/cache/v6/npm-@npmcli-git-8.0.0-1afc0a23ab41b9bf3612e9323471ff249617fa4e-integrity/node_modules/@npmcli/git/README.md",
       "sha256": "sha256:32fe8d1e71fa043da2237140ca3298c94fd088793419303a5cdbf209f0121793",
       "size": 5447
-    },
-    {
-      "path": "yarn/cache/v6/npm-@npmcli-installed-package-contents-4.0.0-18e5070704cfe0278f9ae48038558b6efd438426-integrity/node_modules/@npmcli/installed-package-contents/.bin/installed-package-contents",
-      "type": "symlink",
-      "target": "../bin/index.js"
     },
     {
       "path": "yarn/cache/v6/npm-@npmcli-installed-package-contents-4.0.0-18e5070704cfe0278f9ae48038558b6efd438426-integrity/node_modules/@npmcli/installed-package-contents/.yarn-metadata.json",
@@ -69039,11 +68939,6 @@
       "size": 1684
     },
     {
-      "path": "yarn/cache/v6/npm-@scramjet-api-router-2.1.0-d68fa80dac1d14824ad00883de0c77d46d16ec5e-integrity/node_modules/@scramjet/api-router/.bin/scramjet-api-router-generate",
-      "type": "symlink",
-      "target": "../bin/generate.js"
-    },
-    {
       "path": "yarn/cache/v6/npm-@scramjet-api-router-2.1.0-d68fa80dac1d14824ad00883de0c77d46d16ec5e-integrity/node_modules/@scramjet/api-router/.yarn-metadata.json",
       "sha256": "sha256:2c86b8f749be04beb522273c094c5cbedcfe0734b240d71f8db588cc163e02dc",
       "size": 4017
@@ -70857,11 +70752,6 @@
       "path": "yarn/cache/v6/npm-@scramjet-runner-bun-2.1.0-77297e8ff225a4a5935cbcbfde4c9845f340d2d3-integrity/node_modules/@scramjet/runner-bun/verser2-runtime.js",
       "sha256": "sha256:98803861c8c57406228d8c37cf39a8a7566636554092928a194c1a70c4edcfe7",
       "size": 3000
-    },
-    {
-      "path": "yarn/cache/v6/npm-@scramjet-runner-node-2.1.0-57a27a17700e8d4c7aaa208ff97a0c1e10f611fa-integrity/node_modules/@scramjet/runner-node/.bin/runner-node",
-      "type": "symlink",
-      "target": "../bin/runner-node.js"
     },
     {
       "path": "yarn/cache/v6/npm-@scramjet-runner-node-2.1.0-57a27a17700e8d4c7aaa208ff97a0c1e10f611fa-integrity/node_modules/@scramjet/runner-node/.yarn-metadata.json",
@@ -85474,11 +85364,6 @@
       "size": 1013
     },
     {
-      "path": "yarn/cache/v6/npm-@vercel-nft-1.11.0-ed2db36a90f54087f36c2d8aff9e91e289cdb3c0-integrity/node_modules/@vercel/nft/.bin/nft",
-      "type": "symlink",
-      "target": "../out/cli.js"
-    },
-    {
       "path": "yarn/cache/v6/npm-@vercel-nft-1.11.0-ed2db36a90f54087f36c2d8aff9e91e289cdb3c0-integrity/node_modules/@vercel/nft/.yarn-metadata.json",
       "sha256": "sha256:1c721af59561f72ca79471f38b54b98005320de77644b0f70d5ff54c6deb73a1",
       "size": 15446
@@ -86337,11 +86222,6 @@
       "path": "yarn/cache/v6/npm-abort-controller-3.0.0-eaf54d53b62bae4138e809ca225c8439a6efb392-integrity/node_modules/abort-controller/README.md",
       "sha256": "sha256:b42e41aeab0c4fcabffe3932a3097d8a8c66082dc972f6027583c9f83ec1a5d6",
       "size": 3223
-    },
-    {
-      "path": "yarn/cache/v6/npm-acorn-8.18.0-4faf01b2d6d326bfeed97aea1f52220b5f4c1940-integrity/node_modules/acorn/.bin/acorn",
-      "type": "symlink",
-      "target": "../bin/acorn"
     },
     {
       "path": "yarn/cache/v6/npm-acorn-8.18.0-4faf01b2d6d326bfeed97aea1f52220b5f4c1940-integrity/node_modules/acorn/.yarn-metadata.json",
@@ -88317,11 +88197,6 @@
       "path": "yarn/cache/v6/npm-at-least-node-1.0.0-602cd4b46e844ad4effc92a8011a3c46e0238dc2-integrity/node_modules/at-least-node/README.md",
       "sha256": "sha256:fae15656d69b3f39cf65fd201187e7f21a8b706610f7684a8de0815d7ff69173",
       "size": 919
-    },
-    {
-      "path": "yarn/cache/v6/npm-ava-8.0.1-cb41c0352171d8de427c076d08d108e5357a62f1-integrity/node_modules/ava/.bin/ava",
-      "type": "symlink",
-      "target": "../entrypoints/cli.js"
     },
     {
       "path": "yarn/cache/v6/npm-ava-8.0.1-cb41c0352171d8de427c076d08d108e5357a62f1-integrity/node_modules/ava/.yarn-metadata.json",
@@ -90539,11 +90414,6 @@
       "size": 868
     },
     {
-      "path": "yarn/cache/v6/npm-btoa-1.2.1-01a9909f8b2c93f6bf680ba26131eb30f7fa3d73-integrity/node_modules/btoa/.bin/btoa",
-      "type": "symlink",
-      "target": "../bin/btoa.js"
-    },
-    {
       "path": "yarn/cache/v6/npm-btoa-1.2.1-01a9909f8b2c93f6bf680ba26131eb30f7fa3d73-integrity/node_modules/btoa/.yarn-metadata.json",
       "sha256": "sha256:da4f8cfa1b8ae2167471d0132fc55027d4b4d16ccfa11ac4513b13bd1a2a3215",
       "size": 13118
@@ -90902,11 +90772,6 @@
       "path": "yarn/cache/v6/npm-bytestreamjs-2.0.1-a32947c7ce389a6fa11a09a9a563d0a45889535e-integrity/node_modules/bytestreamjs/README.MD",
       "sha256": "sha256:8f988e22a534514c000956ced4ec12328b22ac4e7a66fd745639ad556768c735",
       "size": 9219
-    },
-    {
-      "path": "yarn/cache/v6/npm-c8-12.0.0-bc69f204682651a3bbc9b3b6501f3b130c9d0b36-integrity/node_modules/c8/.bin/c8",
-      "type": "symlink",
-      "target": "../bin/c8.js"
     },
     {
       "path": "yarn/cache/v6/npm-c8-12.0.0-bc69f204682651a3bbc9b3b6501f3b130c9d0b36-integrity/node_modules/c8/.yarn-metadata.json",
@@ -92157,11 +92022,6 @@
       "path": "yarn/cache/v6/npm-cliui-9.0.1-6f7890f386f6f1f79953adc1f78dec46fcc2d291-integrity/node_modules/cliui/README.md",
       "sha256": "sha256:26a6033e8111ab5660ce2579617de7ff7623582908fe4fb360f63126c382394c",
       "size": 3364
-    },
-    {
-      "path": "yarn/cache/v6/npm-cloc-2.11.0-f6f965b80e48d78cf7f524a8ade1902d5bcbf923-integrity/node_modules/cloc/.bin/cloc",
-      "type": "symlink",
-      "target": "../lib/cloc"
     },
     {
       "path": "yarn/cache/v6/npm-cloc-2.11.0-f6f965b80e48d78cf7f524a8ade1902d5bcbf923-integrity/node_modules/cloc/.github/workflows/release.yml",
@@ -94012,11 +93872,6 @@
       "path": "yarn/cache/v6/npm-cross-spawn-7.0.6-8a58fe78f00dcd70c370451759dfbfaf03e8ee9f-integrity/node_modules/cross-spawn/README.md",
       "sha256": "sha256:022aa5bc5706ce14899569741b420e8cb59108c90871d341f31b684d279bd594",
       "size": 4117
-    },
-    {
-      "path": "yarn/cache/v6/npm-cssesc-3.0.0-37741919903b868565e1c09ea747445cd18983ee-integrity/node_modules/cssesc/.bin/cssesc",
-      "type": "symlink",
-      "target": "../bin/cssesc"
     },
     {
       "path": "yarn/cache/v6/npm-cssesc-3.0.0-37741919903b868565e1c09ea747445cd18983ee-integrity/node_modules/cssesc/.yarn-metadata.json",
@@ -96134,11 +95989,6 @@
       "size": 116
     },
     {
-      "path": "yarn/cache/v6/npm-esbuild-0.28.2-0f43bd1bad955b72d24e2261e3abe5957ccf0816-integrity/node_modules/esbuild/.bin/esbuild",
-      "type": "symlink",
-      "target": "../bin/esbuild"
-    },
-    {
       "path": "yarn/cache/v6/npm-esbuild-0.28.2-0f43bd1bad955b72d24e2261e3abe5957ccf0816-integrity/node_modules/esbuild/.yarn-metadata.json",
       "sha256": "sha256:e6c628d5fccce571eaa1fc13de8fd0738ab06818dcfca4eeb41b4a1c2397e8cb",
       "size": 6396
@@ -96317,16 +96167,6 @@
       "path": "yarn/cache/v6/npm-escape-string-regexp-5.0.0-4683126b500b61762f2dbebace1806e8be31b1c8-integrity/node_modules/escape-string-regexp/readme.md",
       "sha256": "sha256:13a378a8248929bdf17721418c0eb08c5542b46d881f632c309af0d04ef90c9f",
       "size": 904
-    },
-    {
-      "path": "yarn/cache/v6/npm-esprima-4.0.1-13b04cdb3e6c5d19df91ab6987a8695619b0aa71-integrity/node_modules/esprima/.bin/esparse",
-      "type": "symlink",
-      "target": "../bin/esparse.js"
-    },
-    {
-      "path": "yarn/cache/v6/npm-esprima-4.0.1-13b04cdb3e6c5d19df91ab6987a8695619b0aa71-integrity/node_modules/esprima/.bin/esvalidate",
-      "type": "symlink",
-      "target": "../bin/esvalidate.js"
     },
     {
       "path": "yarn/cache/v6/npm-esprima-4.0.1-13b04cdb3e6c5d19df91ab6987a8695619b0aa71-integrity/node_modules/esprima/.yarn-metadata.json",
@@ -98087,11 +97927,6 @@
       "path": "yarn/cache/v6/npm-fast-xml-builder-1.3.1-ef05b353b45597483dfb09d450a062a2baec3a82-integrity/node_modules/fast-xml-builder/src/util.js",
       "sha256": "sha256:f585f26c6fa18af890c32d00fbb00fbfd05b9c7217419b6fe8675bdcee264140",
       "size": 866
-    },
-    {
-      "path": "yarn/cache/v6/npm-fast-xml-parser-5.11.1-0ee672fcce1710c38185b8290d77e98806ff0bfb-integrity/node_modules/fast-xml-parser/.bin/fxparser",
-      "type": "symlink",
-      "target": "../src/cli/cli.js"
     },
     {
       "path": "yarn/cache/v6/npm-fast-xml-parser-5.11.1-0ee672fcce1710c38185b8290d77e98806ff0bfb-integrity/node_modules/fast-xml-parser/.yarn-metadata.json",
@@ -104074,11 +103909,6 @@
       "size": 7388
     },
     {
-      "path": "yarn/cache/v6/npm-js-yaml-3.15.2-3f83823ac6be17f570f23b2ecdef3777ff5ea364-integrity/node_modules/js-yaml/.bin/js-yaml",
-      "type": "symlink",
-      "target": "../bin/js-yaml.js"
-    },
-    {
       "path": "yarn/cache/v6/npm-js-yaml-3.15.2-3f83823ac6be17f570f23b2ecdef3777ff5ea364-integrity/node_modules/js-yaml/.yarn-metadata.json",
       "sha256": "sha256:3935e752c573dc2473798eba350c588a2772e71c1a4a61b930456f52c4dd2742",
       "size": 14394
@@ -104267,11 +104097,6 @@
       "path": "yarn/cache/v6/npm-js-yaml-3.15.2-3f83823ac6be17f570f23b2ecdef3777ff5ea364-integrity/node_modules/js-yaml/README.md",
       "sha256": "sha256:5ebf2ffe315acda3499771817970c8b39a4d3558bdd3a0dd8de96f6a7dadee9b",
       "size": 10279
-    },
-    {
-      "path": "yarn/cache/v6/npm-js-yaml-4.3.2-8e44fb14a2643c59726bb15787b5f1512cb3d3fb-integrity/node_modules/js-yaml/.bin/js-yaml",
-      "type": "symlink",
-      "target": "../bin/js-yaml.js"
     },
     {
       "path": "yarn/cache/v6/npm-js-yaml-4.3.2-8e44fb14a2643c59726bb15787b5f1512cb3d3fb-integrity/node_modules/js-yaml/.yarn-metadata.json",
@@ -104872,16 +104697,6 @@
       "path": "yarn/cache/v6/npm-jsonparse-1.3.1-3f4dae4a91fac315f71062f8521cc239f1366280-integrity/node_modules/jsonparse/test/utf8.js",
       "sha256": "sha256:1feed5191cd2507e425d83a26672582e92c9b7a8b2c822d25d525cb0dd87d249",
       "size": 705
-    },
-    {
-      "path": "yarn/cache/v6/npm-jsonpath-plus-10.4.0-73cf545c231afda21452150b7a2a58e48e109702-integrity/node_modules/jsonpath-plus/.bin/jsonpath",
-      "type": "symlink",
-      "target": "../bin/jsonpath-cli.js"
-    },
-    {
-      "path": "yarn/cache/v6/npm-jsonpath-plus-10.4.0-73cf545c231afda21452150b7a2a58e48e109702-integrity/node_modules/jsonpath-plus/.bin/jsonpath-plus",
-      "type": "symlink",
-      "target": "../bin/jsonpath-cli.js"
     },
     {
       "path": "yarn/cache/v6/npm-jsonpath-plus-10.4.0-73cf545c231afda21452150b7a2a58e48e109702-integrity/node_modules/jsonpath-plus/.claude/settings.local.json",
@@ -112689,11 +112504,6 @@
       "size": 38962
     },
     {
-      "path": "yarn/cache/v6/npm-mime-4.1.0-ec55df7aa21832a36d44f0bbee5c04639b27802f-integrity/node_modules/mime/.bin/mime",
-      "type": "symlink",
-      "target": "../bin/cli.js"
-    },
-    {
       "path": "yarn/cache/v6/npm-mime-4.1.0-ec55df7aa21832a36d44f0bbee5c04639b27802f-integrity/node_modules/mime/.yarn-metadata.json",
       "sha256": "sha256:b1c197383eb8d49da2180c7eddeb72b31e09be721cb22c9116f5ca9122ab50a1",
       "size": 8441
@@ -115084,11 +114894,6 @@
       "size": 21332
     },
     {
-      "path": "yarn/cache/v6/npm-node-gyp-12.4.0-2d017b6ea1ca9294dbbee75be533728f49257024-integrity/node_modules/node-gyp/.bin/node-gyp",
-      "type": "symlink",
-      "target": "../bin/node-gyp.js"
-    },
-    {
       "path": "yarn/cache/v6/npm-node-gyp-12.4.0-2d017b6ea1ca9294dbbee75be533728f49257024-integrity/node_modules/node-gyp/.release-please-manifest.json",
       "sha256": "sha256:93ff11462b214624134b31bf3dbfbdb6f4eff15c0f79a10917d9ec2dce6ad5c9",
       "size": 22
@@ -115637,11 +115442,6 @@
       "path": "yarn/cache/v6/npm-node-gyp-12.4.0-2d017b6ea1ca9294dbbee75be533728f49257024-integrity/node_modules/node-gyp/src/win_delay_load_hook.cc",
       "sha256": "sha256:ec2357ffdf512151c21a52326ad3396aaa650b83e5c4a31153d216a155f68ecc",
       "size": 1003
-    },
-    {
-      "path": "yarn/cache/v6/npm-node-gyp-13.0.2-9bff1a63582f25b208c8901da2cfbfe5f3ba5f79-integrity/node_modules/node-gyp/.bin/node-gyp",
-      "type": "symlink",
-      "target": "../bin/node-gyp.js"
     },
     {
       "path": "yarn/cache/v6/npm-node-gyp-13.0.2-9bff1a63582f25b208c8901da2cfbfe5f3ba5f79-integrity/node_modules/node-gyp/.release-please-manifest.json",
@@ -116204,21 +116004,6 @@
       "size": 86
     },
     {
-      "path": "yarn/cache/v6/npm-node-gyp-build-4.8.4-8a70ee85464ae52327772a90d66c6077a900cfc8-integrity/node_modules/node-gyp-build/.bin/node-gyp-build",
-      "type": "symlink",
-      "target": "../bin.js"
-    },
-    {
-      "path": "yarn/cache/v6/npm-node-gyp-build-4.8.4-8a70ee85464ae52327772a90d66c6077a900cfc8-integrity/node_modules/node-gyp-build/.bin/node-gyp-build-optional",
-      "type": "symlink",
-      "target": "../optional.js"
-    },
-    {
-      "path": "yarn/cache/v6/npm-node-gyp-build-4.8.4-8a70ee85464ae52327772a90d66c6077a900cfc8-integrity/node_modules/node-gyp-build/.bin/node-gyp-build-test",
-      "type": "symlink",
-      "target": "../build-test.js"
-    },
-    {
       "path": "yarn/cache/v6/npm-node-gyp-build-4.8.4-8a70ee85464ae52327772a90d66c6077a900cfc8-integrity/node_modules/node-gyp-build/.yarn-metadata.json",
       "sha256": "sha256:f1859ddc79d16e420a5bc6fcbcdb4d9e9aaa2cf9d379bb50dfb487f3051e7957",
       "size": 5815
@@ -116429,11 +116214,6 @@
       "size": 318
     },
     {
-      "path": "yarn/cache/v6/npm-nopt-10.0.1-2d53bfda504b31c447967648ba5ea1a44e594d05-integrity/node_modules/nopt/.bin/nopt",
-      "type": "symlink",
-      "target": "../bin/nopt.js"
-    },
-    {
       "path": "yarn/cache/v6/npm-nopt-10.0.1-2d53bfda504b31c447967648ba5ea1a44e594d05-integrity/node_modules/nopt/.yarn-metadata.json",
       "sha256": "sha256:ee7faeac28d5f222eb6bd601e32c55050a4c55ea975fbb43b592c64ac7e2d29f",
       "size": 11578
@@ -116477,11 +116257,6 @@
       "path": "yarn/cache/v6/npm-nopt-10.0.1-2d53bfda504b31c447967648ba5ea1a44e594d05-integrity/node_modules/nopt/README.md",
       "sha256": "sha256:1ec3baa5dbd0b47e670d6deb7d9773dc5e83bfe9b4dd5df043b6aca332599613",
       "size": 7858
-    },
-    {
-      "path": "yarn/cache/v6/npm-nopt-8.1.0-b11d38caf0f8643ce885818518064127f602eae3-integrity/node_modules/nopt/.bin/nopt",
-      "type": "symlink",
-      "target": "../bin/nopt.js"
     },
     {
       "path": "yarn/cache/v6/npm-nopt-8.1.0-b11d38caf0f8643ce885818518064127f602eae3-integrity/node_modules/nopt/.yarn-metadata.json",
@@ -116532,11 +116307,6 @@
       "path": "yarn/cache/v6/npm-nopt-8.1.0-b11d38caf0f8643ce885818518064127f602eae3-integrity/node_modules/nopt/README.md",
       "sha256": "sha256:f23a4ae4ba5f494cf303c55db67aa6d45ac72f47ac44f6faea8a7cdb36150b4d",
       "size": 7983
-    },
-    {
-      "path": "yarn/cache/v6/npm-nopt-9.0.0-6bff0836b2964d24508b6b41b5a9a49c4f4a1f96-integrity/node_modules/nopt/.bin/nopt",
-      "type": "symlink",
-      "target": "../bin/nopt.js"
     },
     {
       "path": "yarn/cache/v6/npm-nopt-9.0.0-6bff0836b2964d24508b6b41b5a9a49c4f4a1f96-integrity/node_modules/nopt/.yarn-metadata.json",
@@ -116682,16 +116452,6 @@
       "path": "yarn/cache/v6/npm-normalize-url-4.5.1-0dd90cf1288ee1d1313b87081c9a5932ee48518a-integrity/node_modules/normalize-url/readme.md",
       "sha256": "sha256:b9e2b643c4c1cc4f18c35a6929df96aeb63ef11408eb60d941a5a1507b1d7c9e",
       "size": 5291
-    },
-    {
-      "path": "yarn/cache/v6/npm-npm-11.19.1-19984947ed6b8b1e0c794ceadb0a848cc5585128-integrity/node_modules/npm/.bin/npm",
-      "type": "symlink",
-      "target": "../bin/npm-cli.js"
-    },
-    {
-      "path": "yarn/cache/v6/npm-npm-11.19.1-19984947ed6b8b1e0c794ceadb0a848cc5585128-integrity/node_modules/npm/.bin/npx",
-      "type": "symlink",
-      "target": "../bin/npx-cli.js"
     },
     {
       "path": "yarn/cache/v6/npm-npm-11.19.1-19984947ed6b8b1e0c794ceadb0a848cc5585128-integrity/node_modules/npm/.yarn-metadata.json",
@@ -127429,11 +127189,6 @@
       "size": 2637
     },
     {
-      "path": "yarn/cache/v6/npm-pacote-21.5.1-74ab896fc7b1f00545ecbbbf666a61895cd50d38-integrity/node_modules/pacote/.bin/pacote",
-      "type": "symlink",
-      "target": "../bin/index.js"
-    },
-    {
       "path": "yarn/cache/v6/npm-pacote-21.5.1-74ab896fc7b1f00545ecbbbf666a61895cd50d38-integrity/node_modules/pacote/.yarn-metadata.json",
       "sha256": "sha256:a3abd2105c74ece6e17215a68056d69ced6ae760def821206383c81c11da9920",
       "size": 17178
@@ -129414,11 +129169,6 @@
       "size": 925
     },
     {
-      "path": "yarn/cache/v6/npm-qrcode-terminal-0.12.0-bb5b699ef7f9f0505092a3748be4464fe71b5819-integrity/node_modules/qrcode-terminal/.bin/qrcode-terminal",
-      "type": "symlink",
-      "target": "../bin/qrcode-terminal.js"
-    },
-    {
       "path": "yarn/cache/v6/npm-qrcode-terminal-0.12.0-bb5b699ef7f9f0505092a3748be4464fe71b5819-integrity/node_modules/qrcode-terminal/.travis.yml",
       "sha256": "sha256:e36b9b52fccb8114b8b8b13bdfbaa87342b07bda069b517ca34db9f85adaa3e3",
       "size": 38
@@ -130257,11 +130007,6 @@
       "path": "yarn/cache/v6/npm-regexp-match-indices-1.0.2-cf20054a6f7d5b3e116a701a7b00f82889d10da6-integrity/node_modules/regexp-match-indices/types.js.map",
       "sha256": "sha256:3a1f34a399c76a2686410aec7ec46977ef26c8d6e5856c3a034497553c4693f1",
       "size": 1134
-    },
-    {
-      "path": "yarn/cache/v6/npm-regexp-tree-0.1.27-2198f0ef54518ffa743fe74d983b56ffd631b6cd-integrity/node_modules/regexp-tree/.bin/regexp-tree",
-      "type": "symlink",
-      "target": "../bin/regexp-tree"
     },
     {
       "path": "yarn/cache/v6/npm-regexp-tree-0.1.27-2198f0ef54518ffa743fe74d983b56ffd631b6cd-integrity/node_modules/regexp-tree/.yarn-metadata.json",
@@ -141449,11 +141194,6 @@
       "size": 22943
     },
     {
-      "path": "yarn/cache/v6/npm-semver-7.8.5-39b646037dd50c14fb451e7e4cac58ed8b863f69-integrity/node_modules/semver/.bin/semver",
-      "type": "symlink",
-      "target": "../bin/semver.js"
-    },
-    {
       "path": "yarn/cache/v6/npm-semver-7.8.5-39b646037dd50c14fb451e7e4cac58ed8b863f69-integrity/node_modules/semver/.yarn-metadata.json",
       "sha256": "sha256:eb64ef5f8e354bc5cdf9a12e62ce2d6ab1e04e1cb09a570c723bde0a8e05927f",
       "size": 29978
@@ -147569,36 +147309,6 @@
       "size": 4175
     },
     {
-      "path": "yarn/cache/v6/npm-ts-node-10.9.2-70f021c9e185bccdca820e26dc413805c101c71f-integrity/node_modules/ts-node/.bin/ts-node",
-      "type": "symlink",
-      "target": "../dist/bin.js"
-    },
-    {
-      "path": "yarn/cache/v6/npm-ts-node-10.9.2-70f021c9e185bccdca820e26dc413805c101c71f-integrity/node_modules/ts-node/.bin/ts-node-cwd",
-      "type": "symlink",
-      "target": "../dist/bin-cwd.js"
-    },
-    {
-      "path": "yarn/cache/v6/npm-ts-node-10.9.2-70f021c9e185bccdca820e26dc413805c101c71f-integrity/node_modules/ts-node/.bin/ts-node-esm",
-      "type": "symlink",
-      "target": "../dist/bin-esm.js"
-    },
-    {
-      "path": "yarn/cache/v6/npm-ts-node-10.9.2-70f021c9e185bccdca820e26dc413805c101c71f-integrity/node_modules/ts-node/.bin/ts-node-script",
-      "type": "symlink",
-      "target": "../dist/bin-script.js"
-    },
-    {
-      "path": "yarn/cache/v6/npm-ts-node-10.9.2-70f021c9e185bccdca820e26dc413805c101c71f-integrity/node_modules/ts-node/.bin/ts-node-transpile-only",
-      "type": "symlink",
-      "target": "../dist/bin-transpile.js"
-    },
-    {
-      "path": "yarn/cache/v6/npm-ts-node-10.9.2-70f021c9e185bccdca820e26dc413805c101c71f-integrity/node_modules/ts-node/.bin/ts-script",
-      "type": "symlink",
-      "target": "../dist/bin-script-deprecated.js"
-    },
-    {
       "path": "yarn/cache/v6/npm-ts-node-10.9.2-70f021c9e185bccdca820e26dc413805c101c71f-integrity/node_modules/ts-node/.yarn-metadata.json",
       "sha256": "sha256:436fc51d1a9c939e6c7c158fe367bf6de5a8261dc341f8da5f3035df93911abc",
       "size": 59279
@@ -148347,11 +148057,6 @@
       "path": "yarn/cache/v6/npm-tslib-2.8.1-612efe4ed235d567e8aba5f2a5fab70280ade83f-integrity/node_modules/tslib/tslib.js",
       "sha256": "sha256:8855865a058bc0a6df8f5db45347be041a2d6bbe1654216c51a805648c1b6e8a",
       "size": 23382
-    },
-    {
-      "path": "yarn/cache/v6/npm-tsx-4.23.13-393b8dd813d49e25aed7b1d7cbac6930da49ec08-integrity/node_modules/tsx/.bin/tsx",
-      "type": "symlink",
-      "target": "../dist/cli.mjs"
     },
     {
       "path": "yarn/cache/v6/npm-tsx-4.23.13-393b8dd813d49e25aed7b1d7cbac6930da49ec08-integrity/node_modules/tsx/.yarn-metadata.json",
@@ -152212,16 +151917,6 @@
       "path": "yarn/cache/v6/npm-typed-emitter-1.4.0-38c6bf1224e764906bb20cb0b458fa914100607c-integrity/node_modules/typed-emitter/types.js",
       "sha256": "sha256:f300b17fe85f08ad16daa1bbd773ba812d55f57e4b89eaafe13672e041b11738",
       "size": 80
-    },
-    {
-      "path": "yarn/cache/v6/npm-typescript-4.7.4-1a88596d1cf47d59507a1bcdfb5b9dfe4d488235-integrity/node_modules/typescript/.bin/tsc",
-      "type": "symlink",
-      "target": "../bin/tsc"
-    },
-    {
-      "path": "yarn/cache/v6/npm-typescript-4.7.4-1a88596d1cf47d59507a1bcdfb5b9dfe4d488235-integrity/node_modules/typescript/.bin/tsserver",
-      "type": "symlink",
-      "target": "../bin/tsserver"
     },
     {
       "path": "yarn/cache/v6/npm-typescript-4.7.4-1a88596d1cf47d59507a1bcdfb5b9dfe4d488235-integrity/node_modules/typescript/.yarn-metadata.json",
@@ -157184,11 +156879,6 @@
       "size": 1666
     },
     {
-      "path": "yarn/cache/v6/npm-uuid-11.1.1-f6d81d2e1c65d00762e5e29b16c5d2d995e208ad-integrity/node_modules/uuid/.bin/uuid",
-      "type": "symlink",
-      "target": "../dist/esm/bin/uuid"
-    },
-    {
       "path": "yarn/cache/v6/npm-uuid-11.1.1-f6d81d2e1c65d00762e5e29b16c5d2d995e208ad-integrity/node_modules/uuid/.yarn-metadata.json",
       "sha256": "sha256:338ae961aaf6d96b8972fa913a9724df7f725add1f1a0adbbbfa9b846dc2e80e",
       "size": 24861
@@ -159719,11 +159409,6 @@
       "size": 5136
     },
     {
-      "path": "yarn/cache/v6/npm-which-2.0.2-7c6a8dd0a636a0327e10b59c9286eee93f3f51b1-integrity/node_modules/which/.bin/node-which",
-      "type": "symlink",
-      "target": "../bin/node-which"
-    },
-    {
       "path": "yarn/cache/v6/npm-which-2.0.2-7c6a8dd0a636a0327e10b59c9286eee93f3f51b1-integrity/node_modules/which/.yarn-metadata.json",
       "sha256": "sha256:c6d30fac7078b87fdefa4f7ff4c67d49d9f30456869065800b4eca13cc752487",
       "size": 4348
@@ -159764,11 +159449,6 @@
       "size": 3163
     },
     {
-      "path": "yarn/cache/v6/npm-which-6.0.1-021642443a198fb93b784a5606721cb18cfcbfce-integrity/node_modules/which/.bin/node-which",
-      "type": "symlink",
-      "target": "../bin/which.js"
-    },
-    {
       "path": "yarn/cache/v6/npm-which-6.0.1-021642443a198fb93b784a5606721cb18cfcbfce-integrity/node_modules/which/.yarn-metadata.json",
       "sha256": "sha256:17f71f015c75e74fe204c5ba627e3400b022d0ec462ed9f999364a511941d8f5",
       "size": 4559
@@ -159802,11 +159482,6 @@
       "path": "yarn/cache/v6/npm-which-6.0.1-021642443a198fb93b784a5606721cb18cfcbfce-integrity/node_modules/which/README.md",
       "sha256": "sha256:6fb4ed7dceebccb0e0ec1cf2ac83e1025d5cf9bb0b918bc65ff98c11b8f02777",
       "size": 1378
-    },
-    {
-      "path": "yarn/cache/v6/npm-which-7.0.0-cdfdd7bfc31c5af050b97bc7c02b1844731fb8b2-integrity/node_modules/which/.bin/node-which",
-      "type": "symlink",
-      "target": "../bin/which.js"
     },
     {
       "path": "yarn/cache/v6/npm-which-7.0.0-cdfdd7bfc31c5af050b97bc7c02b1844731fb8b2-integrity/node_modules/which/.yarn-metadata.json",
@@ -161262,11 +160937,6 @@
       "path": "yarn/cache/v6/npm-yallist-5.0.0-00e2de443639ed0d78fd87de0d27469fbcffb533-integrity/node_modules/yallist/README.md",
       "sha256": "sha256:6c65b8751f634565491381192cf5a4f05cf4b26fb955b79eb5988fa8bbe3cb13",
       "size": 4528
-    },
-    {
-      "path": "yarn/cache/v6/npm-yaml-2.9.1-c16233fb31944e705cfefaff38795587f57588ce-integrity/node_modules/yaml/.bin/yaml",
-      "type": "symlink",
-      "target": "../bin.mjs"
     },
     {
       "path": "yarn/cache/v6/npm-yaml-2.9.1-c16233fb31944e705cfefaff38795587f57588ce-integrity/node_modules/yaml/.yarn-metadata.json",

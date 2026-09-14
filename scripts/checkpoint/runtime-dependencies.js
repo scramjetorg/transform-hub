@@ -1,5 +1,5 @@
 const { createHash } = require("node:crypto");
-const { copyFileSync, lstatSync, mkdirSync, readdirSync, readFileSync, readlinkSync, writeFileSync } = require("node:fs");
+const { copyFileSync, lstatSync, mkdirSync, readdirSync, readFileSync, readlinkSync, unlinkSync, writeFileSync } = require("node:fs");
 const { execFileSync, spawnSync } = require("node:child_process");
 const { dirname, isAbsolute, join, relative, resolve, sep } = require("node:path");
 const { mkdtempSync, rmSync } = require("node:fs");
@@ -104,6 +104,7 @@ async function prefetchRunnerYarnCache({ root, cache, version }) {
         copyFileSync(lockfilePath, join(stagingFolder, "yarn.lock"));
         const result = spawnSync("npx", ["--yes", `yarn@${version}`, "install", "--production", "--ignore-engines", "--ignore-scripts", "--frozen-lockfile", "--modules-folder", modulesFolder, "--cache-folder", cache], { cwd: stagingFolder, encoding: "utf8", env: { ...process.env, RAYON_NUM_THREADS: "1" } });
         if (result.status !== 0) throw new Error(`Runner Yarn cache prefetch failed: ${result.stderr || result.stdout}`);
+        normalizeGeneratedYarnBinSymlinks(cache);
         return {
             lockfileSha256: fileDigest(lockfilePath),
             packageJsonSha256: fileDigest(packageJsonPath),
@@ -112,6 +113,14 @@ async function prefetchRunnerYarnCache({ root, cache, version }) {
     } finally {
         rmSync(stagingFolder, { recursive: true, force: true });
         rmSync(modulesFolder, { recursive: true, force: true });
+    }
+}
+
+function normalizeGeneratedYarnBinSymlinks(cache) {
+    for (const entry of readdirSync(cache, { withFileTypes: true })) {
+        const path = join(cache, entry.name);
+        if (entry.isDirectory()) normalizeGeneratedYarnBinSymlinks(path);
+        else if (entry.isSymbolicLink() && dirname(path).split(sep).pop() === ".bin") unlinkSync(path);
     }
 }
 
@@ -186,4 +195,4 @@ function verifyRuntimeManifest(bundle, profile = loadRuntimeProfile()) {
     return manifest;
 }
 
-module.exports = { fileDigest, loadRuntimeProfile, prefetchRuntimeDependencies, runtimeDependencyDigest, verifyRuntimeManifest };
+module.exports = { fileDigest, loadRuntimeProfile, normalizeGeneratedYarnBinSymlinks, prefetchRuntimeDependencies, runtimeDependencyDigest, verifyRuntimeManifest };
