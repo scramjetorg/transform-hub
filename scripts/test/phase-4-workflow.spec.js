@@ -88,3 +88,16 @@ test("curated validation installs its fresh-runner dependencies before BDD execu
     t.true(install >= 0);
     t.true(install < reusable.indexOf("node scripts/release-bdd-validation.js run --all"));
 });
+
+test("curated validation can pull private GHCR images before BDD execution", (t) => {
+    const candidate = source("build-release-candidate.yml");
+    const reusable = source("curated-devel-build-validation.yml");
+    const curatedJob = candidate.slice(candidate.indexOf("  curated-validation:"), candidate.indexOf("  candidate-success:"));
+    const validateJob = reusable.slice(reusable.indexOf("  validate:"));
+    t.regex(curatedJob, /permissions:\n\s+contents: write\n\s+packages: read/);
+    t.regex(validateJob, /permissions:\n\s+contents: write\n\s+packages: read/);
+    t.true(reusable.includes("GHCR_TOKEN: ${{ github.token }}"));
+    t.true(reusable.includes("GHCR_USERNAME: ${{ github.actor }}"));
+    t.true(reusable.includes("docker login ghcr.io --username \"$GHCR_USERNAME\" --password-stdin"));
+    t.true(reusable.indexOf("docker login ghcr.io") < reusable.indexOf("node scripts/release-bdd-validation.js run --all"));
+});

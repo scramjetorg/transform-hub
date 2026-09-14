@@ -130,6 +130,7 @@ jobs:
     needs: [preflight, build, stage]
     permissions:
       contents: write
+      packages: read
     uses: ./.github/workflows/curated-devel-build-validation.yml
     with:
       source-sha: ${{ github.sha }}
