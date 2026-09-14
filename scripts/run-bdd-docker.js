@@ -144,6 +144,10 @@ const collectEnvForwardArgs = () => {
             continue;
         }
 
+        // The BDD launcher itself uses host networking. Do not let a caller's
+        // bridge setting override the topology required by this outer container.
+        if (name === "SCRAMJET_DOCKER_NETWORK_MODE") continue;
+
         const allowed = ENV_ALLOWLIST_EXACT.has(name) || ENV_ALLOWLIST_PREFIXES.some((prefix) => name.startsWith(prefix));
 
         if (!allowed) {
@@ -209,6 +213,7 @@ dockerRunArgs.push(
         .flat()
 );
 dockerRunArgs.push(...collectEnvForwardArgs());
+dockerRunArgs.push("-e", "SCRAMJET_DOCKER_NETWORK_MODE=host");
 dockerRunArgs.push("-e", "BDD_CHUNK_MEMORY_REPORT_FILE=/work-tmp/chunk-memory.json");
 dockerRunArgs.push("-e", "BDD_CHUNK_MEMORY_READY_FILE=/work-tmp/chunk-ready.json");
 dockerRunArgs.push("-e", "BDD_CHUNK_TIMING_REPORT_FILE=/work-tmp/chunk-timing.json");

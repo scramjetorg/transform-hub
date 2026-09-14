@@ -222,6 +222,12 @@ test("run-bdd-docker.js env forwarding includes SCRAMJET_ and BDD_ prefixes", (t
 	t.true(src.includes('"RUNTIME_ADAPTER"'), "should forward the unprefixed runtime adapter into the BDD container");
 });
 
+test("run-bdd-docker.js forces host topology inside its outer container", (t) => {
+	const src = fs.readFileSync(path.resolve(__dirname, "..", "run-bdd-docker.js"), "utf8");
+	t.true(src.includes('dockerRunArgs.push("-e", "SCRAMJET_DOCKER_NETWORK_MODE=host")'));
+	t.true(src.includes('"--network", "host"'));
+});
+
 test("candidate Docker BDD validation fails closed unless the Docker adapter is selected", (t) => {
 	const src = require("node:fs").readFileSync(
 		path.resolve(__dirname, "..", "run-bdd-docker.js"),
