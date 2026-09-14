@@ -11,6 +11,15 @@ on:
         description: Full 40-character expected external head SHA
         required: true
         type: string
+      expected_base_sha:
+        description: Full 40-character expected devel base SHA
+        required: true
+        type: string
+      expected_base_ref:
+        description: Expected base ref (must be devel)
+        required: true
+        default: devel
+        type: string
 
 permissions:
   contents: read
@@ -27,32 +36,48 @@ jobs:
     outputs:
       head-repository: ${{ steps.verify.outputs.head-repository }}
       head-sha: ${{ steps.verify.outputs.head-sha }}
+      base-repository: ${{ steps.verify.outputs.base-repository }}
+      base-sha: ${{ steps.verify.outputs.base-sha }}
+      base-ref: ${{ steps.verify.outputs.base-ref }}
     steps:
       - id: verify
         name: Verify unchanged open external PR metadata
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
         env:
           EXPECTED_HEAD_SHA: ${{ inputs.expected_head_sha }}
+          EXPECTED_BASE_SHA: ${{ inputs.expected_base_sha }}
+          EXPECTED_BASE_REF: ${{ inputs.expected_base_ref }}
           PULL_REQUEST_NUMBER: ${{ inputs.pull_request_number }}
         with:
           script: |
-            const expected = process.env.EXPECTED_HEAD_SHA;
-            if (!/^[a-f0-9]{40}$/i.test(expected)) throw new Error("expected_head_sha must be a full SHA");
+            const expectedHead = process.env.EXPECTED_HEAD_SHA;
+            const expectedBase = process.env.EXPECTED_BASE_SHA;
+            const expectedBaseRef = process.env.EXPECTED_BASE_REF;
+            if (!/^[a-f0-9]{40}$/i.test(expectedHead)) throw new Error("expected_head_sha must be a full SHA");
+            if (!/^[a-f0-9]{40}$/i.test(expectedBase)) throw new Error("expected_base_sha must be a full SHA");
+            if (expectedBaseRef !== "devel") throw new Error("expected_base_ref must be devel");
             const number = Number(process.env.PULL_REQUEST_NUMBER);
             if (!Number.isSafeInteger(number) || number <= 0) throw new Error("pull_request_number must be positive");
             const { data: pull } = await github.rest.pulls.get({ owner: context.repo.owner, repo: context.repo.repo, pull_number: number });
             if (pull.state !== "open") throw new Error("External PR must be open");
             if (!pull.head?.repo?.owner?.login || pull.head.repo.owner.login.toLowerCase() === "scramjetorg") throw new Error("PR head must belong to an external owner");
-            if (pull.head.sha !== expected) throw new Error("PR head SHA changed");
+            if (pull.head.sha !== expectedHead) throw new Error("PR head SHA changed");
+            if (pull.base?.repo?.full_name !== context.repo.owner + "/" + context.repo.repo) throw new Error("PR base repository changed");
+            if (pull.base?.sha !== expectedBase) throw new Error("PR base SHA changed");
+            if (pull.base?.ref !== expectedBaseRef) throw new Error("PR base ref changed");
             core.setOutput("head-repository", pull.head.repo.full_name);
             core.setOutput("head-sha", pull.head.sha);
+            core.setOutput("base-repository", pull.base.repo.full_name);
+            core.setOutput("base-sha", pull.base.sha);
+            core.setOutput("base-ref", pull.base.ref);
 
-  validate:
+  package-validation:
+    name: External PR / package validation
     needs: [external-pr-code-owner-approval]
     runs-on: ubuntu-24.04
+    timeout-minutes: 60
     permissions:
       contents: read
-      pull-requests: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -62,15 +87,164 @@ jobs:
           fetch-depth: 0
       - uses: ./.github/actions/setup-workspace
         with:
-          cache-mode: restore-only
-          checkpoint-branch: devel
-      - name: Lockfile gate
+          cache-mode: off
+      - name: Validate package-lock.json reproducibility
         run: npm run check:lockfile
-      - name: Static repository policy
+      - name: Mergeability and merge-queue eligibility
+        run: echo "Approved external PR validation runs against the verified immutable head SHA."
+      - name: Repository security policy
         run: npm run check:security-workflow
-      - name: Lint changed files
-        run: RAYON_NUM_THREADS=12 ./node_modules/.bin/biome lint --changed --since="${{ inputs.expected_head_sha }}" --error-on-warnings --no-errors-on-unmatched
-      - name: Offline Phase 4 contract and adapter tests
-        run: node scripts/run-ava.js scripts/test/phase-4-workflow.spec.js scripts/test/workflow-inventory.spec.js scripts/test/release-contract.spec.js scripts/test/release-phase4.spec.js scripts/test/github-release-candidate.spec.js scripts/test/release-candidate-assets.spec.js scripts/test/release-bdd-validation.spec.js scripts/test/release-bundle.spec.js
+      - name: Install verified Gitleaks
+        run: npm run security:bootstrap
+      - name: Scan the verified PR range with redaction
+        env:
+          BASE_SHA: ${{ needs.external-pr-code-owner-approval.outputs.base-sha }}
+          HEAD_SHA: ${{ needs.external-pr-code-owner-approval.outputs.head-sha }}
+        run: npm run security:scan-history -- --range "$BASE_SHA..$HEAD_SHA"
+      - name: Lint verified changed files
+        env:
+          BASE_SHA: ${{ needs.external-pr-code-owner-approval.outputs.base-sha }}
+        run: RAYON_NUM_THREADS=12 ./node_modules/.bin/biome lint --changed --since="$BASE_SHA" --error-on-warnings --no-errors-on-unmatched
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Dependency and release alignment
+        run: npm run release:align:check -- --release-version="$(node -p "require('./package.json').version")"
+      - name: Runtime invariants
+        run: npm run check:runtime-invariants
+      - name: License validation
+        run: npm run check:licenses
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6
+        with:
+          bun-version: "1"
+      - name: Run package tests
+        run: npm run test:packages:ci
+      - name: Build packages
+        run: npm run build:packages
       - name: Configured risk-area TypeScript smoke
-        run: node scripts/release-pr-smoke.js "${{ github.event.repository.default_branch }}"
+        env:
+          BASE_SHA: ${{ needs.external-pr-code-owner-approval.outputs.base-sha }}
+        run: node scripts/release-pr-smoke.js "$BASE_SHA"
+
+  bdd-core-node:
+    name: External PR / core Node BDD
+    needs: [external-pr-code-owner-approval, package-validation]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: ${{ needs.external-pr-code-owner-approval.outputs.head-repository }}
+          ref: ${{ needs.external-pr-code-owner-approval.outputs.head-sha }}
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: ./.github/actions/setup-workspace
+        with:
+          cache-mode: off
+      - name: Build disposable BDD inputs
+        run: npm run build:packages
+      - name: Run Docker-backed Node BDD validation
+        env:
+          BDD_DOCKER_MEMORY: 2g
+          BDD_INCLUDE_LONG_RUNNING: "1"
+        run: npm run test:bdd-ci-node
+
+  bdd-core-services:
+    name: External PR / core service BDD
+    needs: [external-pr-code-owner-approval, package-validation]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: ${{ needs.external-pr-code-owner-approval.outputs.head-repository }}
+          ref: ${{ needs.external-pr-code-owner-approval.outputs.head-sha }}
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: ./.github/actions/setup-workspace
+        with:
+          cache-mode: off
+      - name: Build disposable BDD inputs
+        run: npm run build:packages
+      - name: Run Docker-backed Python BDD validation
+        run: npm run test:bdd-ci-python
+      - name: Run Docker-backed API BDD validation
+        run: npm run test:bdd-ci-api-node
+      - name: Run isolated Verser2 BDD validation
+        run: npm run test:bdd-ci-verser2
+
+  bdd-extended-hub-topic:
+    name: External PR / extended hub and topic BDD
+    needs: [external-pr-code-owner-approval, package-validation]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: ${{ needs.external-pr-code-owner-approval.outputs.head-repository }}
+          ref: ${{ needs.external-pr-code-owner-approval.outputs.head-sha }}
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: ./.github/actions/setup-workspace
+        with:
+          cache-mode: off
+      - name: Build disposable BDD inputs
+        run: npm run build:packages
+      - name: Run hub and topic BDD validation
+        run: |
+          npm run test:bdd-ci-hub
+          BDD_DOCKER_MEMORY=2g npm run test:bdd-ci-api-topic
+
+  bdd-extended-runtime:
+    name: External PR / extended runtime BDD
+    needs: [external-pr-code-owner-approval, package-validation]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: ${{ needs.external-pr-code-owner-approval.outputs.head-repository }}
+          ref: ${{ needs.external-pr-code-owner-approval.outputs.head-sha }}
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: ./.github/actions/setup-workspace
+        with:
+          cache-mode: off
+      - name: Build disposable BDD inputs
+        run: npm run build:packages
+      - name: Run process-adapter and unified BDD validation
+        run: |
+          BDD_DOCKER_MEMORY=2g BDD_INCLUDE_LONG_RUNNING=1 RUNTIME_ADAPTER=process npm run test:bdd-ci-node
+          npm run test:unified-py
+          npm run test:unified-js
+
+  external-pr-current-head-recheck:
+    name: External PR / current-head recheck
+    needs: [external-pr-code-owner-approval, package-validation, bdd-core-node, bdd-core-services, bdd-extended-hub-topic, bdd-extended-runtime]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - name: Recheck the approved PR head and base before accepting validation
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        env:
+          EXPECTED_HEAD_REPOSITORY: ${{ needs.external-pr-code-owner-approval.outputs.head-repository }}
+          EXPECTED_HEAD_SHA: ${{ needs.external-pr-code-owner-approval.outputs.head-sha }}
+          EXPECTED_BASE_REPOSITORY: ${{ needs.external-pr-code-owner-approval.outputs.base-repository }}
+          EXPECTED_BASE_SHA: ${{ needs.external-pr-code-owner-approval.outputs.base-sha }}
+          EXPECTED_BASE_REF: ${{ needs.external-pr-code-owner-approval.outputs.base-ref }}
+          PULL_REQUEST_NUMBER: ${{ inputs.pull_request_number }}
+        with:
+          script: |
+            const number = Number(process.env.PULL_REQUEST_NUMBER);
+            const { data: pull } = await github.rest.pulls.get({ owner: context.repo.owner, repo: context.repo.repo, pull_number: number });
+            if (pull.state !== "open" || pull.head?.repo?.full_name !== process.env.EXPECTED_HEAD_REPOSITORY || pull.head?.sha !== process.env.EXPECTED_HEAD_SHA || pull.base?.repo?.full_name !== process.env.EXPECTED_BASE_REPOSITORY || pull.base?.sha !== process.env.EXPECTED_BASE_SHA || pull.base?.ref !== process.env.EXPECTED_BASE_REF) throw new Error("External PR head or base changed during approved validation");
