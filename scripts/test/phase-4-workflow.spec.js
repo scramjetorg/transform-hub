@@ -81,7 +81,7 @@ test("candidate preflight fails closed and reusable validation is evidence-only"
 
 test("candidate preflight stays install-free while build installs before runtime planning", (t) => {
     const candidate = source("build-release-candidate.yml");
-    const preflight = candidate.slice(candidate.indexOf("  preflight:"), candidate.indexOf("  build:"));
+    const preflight = candidate.slice(candidate.indexOf("  preflight:"), candidate.indexOf("  runtime-images:"));
     const build = candidate.slice(candidate.indexOf("  build:"), candidate.indexOf("  stage:"));
     const install = build.indexOf("run: npm ci");
     t.false(preflight.includes("npm ci"));

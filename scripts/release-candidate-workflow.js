@@ -12,6 +12,7 @@ const { bytesDigest, validateCandidateSeal } = require("./lib/release-candidate-
 const { readState } = require("./lib/release-bundle-state");
 const { verifyBundle } = require("./release-bundle");
 const BDD_MATRIX = require("./release-bdd-matrix.v1.json");
+const { validateCandidateRuntimeImages } = require("./lib/candidate-runtime-images");
 
 function option(args, name) {
     const index = args.indexOf(name);
@@ -44,10 +45,12 @@ function validateShardEvidence({ shardEvidenceFiles, releaseId, releaseSetDigest
     if (observed.size !== expected.size || [...expected].some((shard) => !observed.has(shard))) throw new Error("BDD shard evidence is incomplete or contains unexpected shards.");
     return [...observed.values()];
 }
-function plan({ identityFile, output, imageDigest, imageRepository = "ghcr.io/scramjetorg/transform-hub/bdd-node" }) {
+function plan({ identityFile, output, imageDigest, imageRepository = "ghcr.io/scramjetorg/transform-hub/bdd-node", imageMapFile }) {
     const identity = json(identityFile);
     assertSha(identity.sourceSha, "candidate source SHA");
-    assertDigest(imageDigest, "candidate BDD image digest");
+    if (!imageMapFile) assertDigest(imageDigest, "candidate BDD image digest");
+    const images = imageMapFile ? Object.entries(json(imageMapFile)).map(([role, image]) => ({ role, ...image })) : [{ repository: imageRepository, digest: imageDigest }];
+    if (imageMapFile) validateCandidateRuntimeImages(images);
     const releaseSet = {
         schema: "release-set.v1",
         source: { repository: "scramjetorg/transform-hub", sha: identity.sourceSha, tree: identity.sourceTree },
@@ -55,7 +58,7 @@ function plan({ identityFile, output, imageDigest, imageRepository = "ghcr.io/sc
         toolchain: { node: process.version, npm: "offline-plan" },
         build: { identity: identity.buildIdentity },
         boundary: { packages: [...INCLUDED_PACKAGES] }, waves: RELEASE_WAVES,
-        artifacts: { tarballs: [], images: [{ repository: imageRepository, digest: imageDigest }] },
+        artifacts: { tarballs: [], images },
         canonical: { schema: "release-set.v1", version: 1 },
     };
     write(output, releaseSet);
@@ -101,7 +104,7 @@ function admission({ stateFile, releaseSetFile, evidenceFile, sealFile = null, s
 
 function main() {
     const [command, ...args] = process.argv.slice(2);
-    if (command === "plan") return plan({ identityFile: option(args, "--identity"), output: option(args, "--output"), imageDigest: option(args, "--image-digest"), imageRepository: args.includes("--image-repository") ? option(args, "--image-repository") : undefined });
+    if (command === "plan") return plan({ identityFile: option(args, "--identity"), output: option(args, "--output"), imageDigest: args.includes("--image-digest") ? option(args, "--image-digest") : undefined, imageRepository: args.includes("--image-repository") ? option(args, "--image-repository") : undefined, imageMapFile: args.includes("--image-map") ? option(args, "--image-map") : undefined });
     if (command === "verify") return verify({ bundleDir: option(args, "--bundle-dir"), identityFile: option(args, "--identity"), stateFile: option(args, "--state"), output: option(args, "--output") });
     if (command === "admission") return admission({ stateFile: option(args, "--state"), releaseSetFile: option(args, "--release-set"), evidenceFile: option(args, "--evidence"), sealFile: args.includes("--seal") ? option(args, "--seal") : null, shardEvidenceFiles: repeatedOptions(args, "--shard-evidence"), sourceSha: option(args, "--source-sha"), releaseId: option(args, "--release-id"), output: option(args, "--output") });
     throw new Error("Usage: release-candidate-workflow.js plan|verify|admission");

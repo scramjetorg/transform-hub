@@ -116,7 +116,8 @@ function stage(args) {
     const provenance = json(`${args.bundleDir}/build-provenance.json`);
     const result = stageGithubDraftCandidate({ repository: args.repository, tag: args.tag, targetSha: args.sourceSha, root: args.bundleDir, releaseSet, provenance, lockfile: readFileSync(`${args.bundleDir}/package-lock.json`), stateFile: args.stateFile, identity, runner: args.runner });
     if (args.releaseId > 0 && result.releaseId !== args.releaseId) throw new Error("Draft release ID changed while staging candidate assets.");
-    write(args.output, { releaseId: result.releaseId, candidateId: result.candidateId, releaseSetDigest: result.releaseSetDigest || digestDocument(releaseSet), sealedStateDigest: result.seal.sealedStateDigest, imageDigest: result.imageDigest || null, sealDigest: digestDocument(result.seal) });
+    const imageMap = Object.fromEntries((releaseSet.artifacts.images || []).filter(image => image.role).map(image => [image.role, `${image.repository}@${image.digest}`]));
+    write(args.output, { releaseId: result.releaseId, candidateId: result.candidateId, releaseSetDigest: result.releaseSetDigest || digestDocument(releaseSet), sealedStateDigest: result.seal.sealedStateDigest, imageDigest: result.imageDigest || null, imageMap, sealDigest: digestDocument(result.seal) });
     return result;
 }
 

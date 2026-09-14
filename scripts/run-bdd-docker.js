@@ -130,7 +130,7 @@ const containerName = `bdd-runner-${ownership.runId}-${ownership.chunkId}-${cryp
 
 const shellEscape = (arg) => `'${String(arg).replace(/'/g, "'\\''")}'`;
 
-const ENV_ALLOWLIST_EXACT = new Set(["NO_HOST", "TEST_REPORT", "DEVELOPMENT", "PACKAGES_DIR", "SCP_ENV_VALUE", "CI"]);
+const ENV_ALLOWLIST_EXACT = new Set(["NO_HOST", "TEST_REPORT", "DEVELOPMENT", "PACKAGES_DIR", "SCP_ENV_VALUE", "CI", "SCRAMJET_BDD_CANDIDATE_IMAGE_MAP"]);
 const ENV_ALLOWLIST_PREFIXES = ["SCRAMJET_", "BDD_"];
 
 const collectEnvForwardArgs = () => {

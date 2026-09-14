@@ -8,6 +8,7 @@ const { assertDigest, digestDocument, validateArtifactContent, validateReleaseSe
 const { candidateIdentity, claimBddShard, recordBddShardResult } = require("./lib/release-bundle-state");
 const { prepareTarballBddRoot, readTarballRecord } = require("./release-tarball-bdd");
 const waves = require("./run-bdd-waves.js");
+const { validateCandidateRuntimeImages, imageMapReferences } = require("./lib/candidate-runtime-images");
 
 const ROOT = resolve(__dirname, "..");
 const MATRIX_FILE = join(__dirname, "release-bdd-matrix.v1.json");
@@ -34,10 +35,18 @@ function validateCandidateInputs({ candidateDir, identity, imageDigest }) {
     if (provenance.identity !== expected.key || provenance.releaseSetDigest !== digestDocument(releaseSet)) throw new Error("Candidate provenance does not bind the candidate identity.");
     const lockfileDigest = `sha256:${createHash("sha256").update(readFileSync(join(candidateDir, releaseSet.lockfile.path))).digest("hex")}`;
     if (lockfileDigest !== releaseSet.lockfile.sha256) throw new Error("Candidate lockfile does not match the release set.");
-    if (!(releaseSet.artifacts.images || []).some((image) => image.digest === imageDigest)) throw new Error("Candidate GHCR image digest does not match the release set.");
+    const closure = (releaseSet.artifacts.images || []).some(image => image.role) ? validateCandidateRuntimeImages(releaseSet.artifacts.images) : null;
+    if (closure && closure["bdd-node"].digest !== imageDigest) throw new Error("Candidate BDD image digest does not match the release set.");
+    if (!closure && !(releaseSet.artifacts.images || []).some((image) => image.digest === imageDigest)) throw new Error("Candidate GHCR image digest does not match the release set.");
     for (const artifact of releaseSet.artifacts.tarballs) validateArtifactContent(candidateDir, artifact);
     const image = (releaseSet.artifacts.images || []).find((candidate) => candidate.digest === imageDigest);
-    return { expected, releaseSet, provenance, releaseSetDigest: digestDocument(releaseSet), imageDigest, imageReference: `${image.repository}@${imageDigest}`, candidateDir: resolve(candidateDir) };
+    const imageMap = closure ? imageMapReferences(closure) : undefined;
+    if (imageMap && process.env.SCRAMJET_BDD_CANDIDATE_IMAGE_MAP) {
+        let supplied;
+        try { supplied = JSON.parse(process.env.SCRAMJET_BDD_CANDIDATE_IMAGE_MAP); } catch { throw new Error("Candidate image map is not valid JSON."); }
+        if (JSON.stringify(supplied) !== JSON.stringify(imageMap)) throw new Error("Candidate image map does not match the resolved release set.");
+    }
+    return { expected, releaseSet, provenance, releaseSetDigest: digestDocument(releaseSet), imageDigest, imageReference: `${image.repository}@${imageDigest}`, imageMap, candidateDir: resolve(candidateDir) };
 }
 
 function consumedInput(validation, matrix) {
@@ -61,13 +70,13 @@ function assertSafeShardRun(options = {}) {
     if (/build|pack|install/i.test(text)) throw new Error("Build, pack, and install actions are not permitted for release BDD validation.");
 }
 
-function runShardCommand(shard, { runner = spawnSync, passthrough = [], candidateDir, imageDigest, imageReference } = {}) {
+function runShardCommand(shard, { runner = spawnSync, passthrough = [], candidateDir, imageDigest, imageReference, imageMap } = {}) {
     assertSafeShardRun({ passthrough });
     if (!candidateDir || !existsSync(candidateDir) || !imageReference || !imageDigest || !imageReference.endsWith(`@${imageDigest}`)) throw new Error("Verified candidate execution root and digest-pinned BDD image are required.");
     const args = [BDD_RUNNER, `--chunk=${shard}`, ...passthrough];
     if (process.env.BDD_NODE_IMAGE && process.env.BDD_NODE_IMAGE !== imageReference) throw new Error("Ambient BDD image does not match the verified candidate image.");
     if (process.env.SCRAMJET_BDD_CANDIDATE_ROOT && resolve(process.env.SCRAMJET_BDD_CANDIDATE_ROOT) !== resolve(candidateDir)) throw new Error("Ambient candidate execution root does not match the verified candidate.");
-    const result = runner(process.execPath, args, { cwd: ROOT, stdio: "inherit", env: { ...process.env, SCRAMJET_SPAWN_TS: undefined, SCRAMJET_RELEASE_BDD_VALIDATION: "1", SCRAMJET_RELEASE_TARBALL_BDD_ROOT: "1", SCRAMJET_BDD_CANDIDATE_ROOT: resolve(candidateDir), SCRAMJET_BDD_IMAGE_DIGEST: imageDigest, BDD_NODE_IMAGE: imageReference } });
+    const result = runner(process.execPath, args, { cwd: ROOT, stdio: "inherit", env: { ...process.env, SCRAMJET_SPAWN_TS: undefined, SCRAMJET_RELEASE_BDD_VALIDATION: "1", SCRAMJET_RELEASE_TARBALL_BDD_ROOT: "1", SCRAMJET_BDD_CANDIDATE_ROOT: resolve(candidateDir), SCRAMJET_BDD_IMAGE_DIGEST: imageDigest, BDD_NODE_IMAGE: imageReference, ...(imageMap ? { SCRAMJET_BDD_CANDIDATE_IMAGE_MAP: JSON.stringify(imageMap) } : {}) } });
     return typeof result === "number" ? result : (result.status ?? 1);
 }
 
@@ -92,7 +101,7 @@ function runValidation({ command = "--all", candidateDir, stateFile, identity, i
         const claim = claimBddShard(stateFile, identity, matrix.revision, shard, { owner });
         if (claim.status === "reused") { results.push({ shard, status: "reused" }); continue; }
         if (claim.status === "failed") throw new Error(`BDD shard ${shard} previously failed; candidate is non-admissible.`);
-        const status = runShardCommand(shard, { runner, passthrough, candidateDir: executionValidation.candidateDir, imageDigest, imageReference: validation.imageReference });
+        const status = runShardCommand(shard, { runner, passthrough, candidateDir: executionValidation.candidateDir, imageDigest, imageReference: validation.imageReference, imageMap: validation.imageMap });
         const result = status === 0 ? "success" : "failed";
         recordBddShardResult(stateFile, identity, matrix.revision, shard, { owner, status: result, evidence: { schema: "bdd-shard-evidence.v1", shard, matrixRevision: matrix.revision, consumedInput: consumedDigest, candidateExecutionRoot: executionValidation.candidateDir, imageDigest, exitStatus: status } });
         results.push({ shard, status: result });

@@ -44,6 +44,16 @@ const MAX_OUTPUT_BYTES = Number.isFinite(configuredMaxOutputBytes) && configured
     : 1024 * 1024;
 const ownership = getOwnership(process.env);
 
+function candidateImageArgs(): string[] {
+    const raw = process.env.SCRAMJET_BDD_CANDIDATE_IMAGE_MAP;
+    if (!raw) return [];
+    let map: Record<string, string>;
+    try { map = JSON.parse(raw); } catch { throw new Error("Candidate image map is not valid JSON."); }
+    const roles = ["runner-node", "pre-runner", "runner-python", "runner-bun"];
+    if (roles.some(role => typeof map[role] !== "string" || !/^.+@sha256:[a-f0-9]{64}$/i.test(map[role]))) throw new Error("Candidate image map is incomplete or not digest pinned.");
+    return [`--runner-image=${map["runner-node"]}`, `--prerunner-image=${map["pre-runner"]}`, `--runner-py-image=${map["runner-python"]}`, `--runner-bun-image=${map["runner-bun"]}`];
+}
+
 export class HostUtils {
     private static cleanupHandlersInstalled = false;
     private static hosts = new Set<ChildProcess>();
@@ -443,7 +453,9 @@ export class HostUtils {
             command.push(`--instance-lifetime-extension-delay=${bddRun ? 1000 : 100}`);
         if (extraArgs.length) command.push(...extraArgs);
 
-        if (process.env.RUNNER_IMGS_TAG) {
+        const candidateArgs = candidateImageArgs();
+        if (candidateArgs.length) command.push(...candidateArgs);
+        else if (process.env.RUNNER_IMGS_TAG) {
             // Keep the Python runner image flag aligned with the image built from packages/runner-python/Dockerfile.
             command.push(
                 `--runner-image=scramjetorg/runner:${process.env.RUNNER_IMGS_TAG}`,

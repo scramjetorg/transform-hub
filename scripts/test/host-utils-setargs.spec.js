@@ -110,6 +110,23 @@ test("setArgs does not inject default -P when LOCAL_HOST_PORT is unset", (t) => 
 	t.false(command.includes("-P"), "-P must not appear when env port is unset");
 });
 
+test("setArgs resolves the verified candidate image map to explicit runner flags", t => {
+    const saved = process.env.SCRAMJET_BDD_CANDIDATE_IMAGE_MAP;
+    process.env.SCRAMJET_BDD_CANDIDATE_IMAGE_MAP = JSON.stringify({
+        "runner-node": "ghcr.io/scramjetorg/transform-hub/runner@sha256:" + "1".repeat(64),
+        "pre-runner": "ghcr.io/scramjetorg/transform-hub/pre-runner@sha256:" + "2".repeat(64),
+        "runner-python": "ghcr.io/scramjetorg/transform-hub/runner-py@sha256:" + "3".repeat(64),
+        "runner-bun": "ghcr.io/scramjetorg/transform-hub/runner-bun@sha256:" + "4".repeat(64)
+    });
+    try {
+        const command = makeSetArgs([], []);
+        t.true(command.includes("--runner-image=ghcr.io/scramjetorg/transform-hub/runner@sha256:" + "1".repeat(64)));
+        t.true(command.includes("--prerunner-image=ghcr.io/scramjetorg/transform-hub/pre-runner@sha256:" + "2".repeat(64)));
+        t.true(command.includes("--runner-py-image=ghcr.io/scramjetorg/transform-hub/runner-py@sha256:" + "3".repeat(64)));
+        t.true(command.includes("--runner-bun-image=ghcr.io/scramjetorg/transform-hub/runner-bun@sha256:" + "4".repeat(64)));
+    } finally { if (saved === undefined) delete process.env.SCRAMJET_BDD_CANDIDATE_IMAGE_MAP; else process.env.SCRAMJET_BDD_CANDIDATE_IMAGE_MAP = saved; }
+});
+
 test("setArgs applies the 1s lifetime extension only for BDD-generated configuration", t => {
     const savedRun = process.env.SCRAMJET_BDD_RUN_ID;
     const savedAdapter = process.env.RUNTIME_ADAPTER;

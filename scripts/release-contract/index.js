@@ -140,6 +140,7 @@ function validateReleaseSet(document) {
     validateReleaseBoundary(document.boundary, document.waves);
     validateTarballs(document.artifacts?.tarballs, document.boundary.packages);
     for (const image of document.artifacts?.images || []) assertDigest(image.digest, `image ${image.repository} digest`);
+    if ((document.artifacts?.images || []).some(image => image.role)) require("../lib/candidate-runtime-images").validateCandidateRuntimeImages(document.artifacts.images);
     if (!document.canonical || document.canonical.schema !== SCHEMA_VERSION || document.canonical.version !== 1) {
         throw new Error("Release set canonical schema identity is missing.");
     }
