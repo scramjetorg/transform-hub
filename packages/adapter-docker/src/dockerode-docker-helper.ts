@@ -264,7 +264,13 @@ export class DockerodeDockerHelper implements IDockerHelper {
             const pullStream = await this.dockerode.pull(name);
 
             // Wait for pull to finish
-            await new Promise(res => this.dockerode.modem.followProgress(pullStream, res));
+            await new Promise<void>((res, rej) => this.dockerode.modem.followProgress(pullStream, error => {
+                if (error) {
+                    rej(error);
+                } else {
+                    res();
+                }
+            }));
 
             const seconds = (new Date().getTime() - start.getTime()) / 1000;
 

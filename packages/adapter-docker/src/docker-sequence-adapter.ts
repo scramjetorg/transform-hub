@@ -19,6 +19,13 @@ import { sequencePackageJSONDecoder, detectLanguage, selectRunnerImageForEngines
 
 const PACKAGE_DIR = "/package";
 const MAX_PRERUNNER_OUTPUT = 16 * 1024;
+const MAX_PULL_ERROR_MESSAGE = 16 * 1024;
+
+function getBoundedErrorMessage(error: unknown): string {
+    const message = error instanceof Error ? error.message : String(error);
+
+    return message.slice(0, MAX_PULL_ERROR_MESSAGE);
+}
 
 async function readBoundedStream(stream: Readable, limit = MAX_PRERUNNER_OUTPUT): Promise<string> {
     let output = "";
@@ -59,7 +66,17 @@ class DockerSequenceAdapter implements ISequenceAdapter {
     async init(): Promise<void> {
         this.logger.trace("Initializing");
 
-        await this.fetch(this.dockerConfig.prerunner.image);
+        try {
+            await this.fetch(this.dockerConfig.prerunner.image);
+        } catch (error) {
+            this.logger.error("Pre-runner image pull failed", {
+                stage: "pre-runner-image-pull",
+                image: this.dockerConfig.prerunner.image,
+                error: getBoundedErrorMessage(error)
+            });
+
+            throw new SequenceAdapterError("DOCKER_ERROR");
+        }
 
         this.logger.info("Docker adapter initialized with options", {
             "py runner image": this.dockerConfig.runnerImages.python3,
