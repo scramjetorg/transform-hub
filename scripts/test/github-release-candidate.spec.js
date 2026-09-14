@@ -63,6 +63,20 @@ test("GitHub adapter propagates non-404 release lookup failures", (t) => {
     t.throws(() => adapter.view(), { message: "network failure" });
 });
 
+test("GitHub adapter treats gh's missing-release response as an absent candidate", (t) => {
+    const adapter = createGithubReleaseAssetAdapter({
+        repository: "scramjetorg/transform-hub",
+        tag: "candidate-1",
+        targetSha: identity.sourceSha,
+        runner: () => {
+            const error = new Error("Command failed");
+            error.stderr = "release not found\n";
+            throw error;
+        },
+    });
+    t.is(adapter.view(), null);
+});
+
 test("GitHub draft stager verifies uploaded assets and persists release identity", (t) => {
     const root = mkdtempSync(join(tmpdir(), "release-github-stage-"));
     t.teardown(() => rmSync(root, { recursive: true, force: true }));

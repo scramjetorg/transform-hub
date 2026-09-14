@@ -18,7 +18,7 @@ function isExplicitNotFound(error) {
     const status = error?.status ?? error?.statusCode ?? error?.code;
     if (Number(status) === 404 || status === "404") return true;
     const text = `${error?.stderr || ""}\n${error?.stdout || ""}`;
-    return /(?:HTTP|status)\s*404\b/i.test(text);
+    return /(?:HTTP|status)\s*404\b/i.test(text) || /^release not found\s*$/im.test(text);
 }
 
 function createGithubReleaseAssetAdapter({ repository, tag, targetSha, runner = execFileSync }) {

@@ -1,7 +1,7 @@
 "use strict";
 
 const test = require("ava").default;
-const { existsSync, mkdtempSync, rmSync } = require("node:fs");
+const { existsSync, mkdtempSync, readFileSync, rmSync } = require("node:fs");
 const { spawnSync } = require("node:child_process");
 const { tmpdir } = require("node:os");
 const { join, resolve } = require("node:path");
@@ -65,4 +65,23 @@ test("candidate workflow keeps preflight before build and install-free", (t) => 
     t.true(workflow.indexOf("  preflight:") < workflow.indexOf("  build:"));
     t.true(workflow.includes("release-candidate-runtime.js preflight"));
     t.false(workflow.includes("npm install"));
+});
+
+test("candidate lookup treats gh's missing-release response as a first-build state", (t) => {
+    const root = mkdtempSync(join(tmpdir(), "candidate-locate-missing-release-"));
+    t.teardown(() => rmSync(root, { recursive: true, force: true }));
+    const output = join(root, "locate.json");
+    const result = runtime.locate({
+        repository: "scramjetorg/transform-hub",
+        tag: `candidate-${SHA}`,
+        sourceSha: SHA,
+        output,
+        runner: () => {
+            const error = new Error("Command failed");
+            error.stderr = "release not found\n";
+            throw error;
+        },
+    });
+    t.deepEqual(result, { status: "not-found" });
+    t.deepEqual(JSON.parse(readFileSync(output, "utf8")), { status: "not-found", tag: `candidate-${SHA}` });
 });
