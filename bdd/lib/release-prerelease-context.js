@@ -34,7 +34,7 @@ function expectedHostVersion(rootVersion, options = {}) {
 
 function selectedSiCommand(options = {}) {
     const verified = context(options);
-    if (!verified) return null;
+    if (!verified || !verified.cli) return null;
     return ["env", `HOME=${verified.cli.configHome}`, verified.cli.binPath];
 }
 
