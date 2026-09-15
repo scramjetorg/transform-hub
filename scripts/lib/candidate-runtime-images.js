@@ -1,6 +1,5 @@
-"use strict";
-const { assertDigest } = require("../release-contract");
 const CANDIDATE_RUNTIME_IMAGE_ROLES = ["bdd-node", "runner-node", "runner-python", "runner-bun", "pre-runner"];
+const DIGEST = /^sha256:[a-f0-9]{64}$/i;
 const CANDIDATE_RUNTIME_IMAGE_REPOSITORIES = Object.freeze({
     "bdd-node": "ghcr.io/scramjetorg/transform-hub/bdd-node",
     "runner-node": "ghcr.io/scramjetorg/transform-hub/runner",
@@ -8,6 +7,10 @@ const CANDIDATE_RUNTIME_IMAGE_REPOSITORIES = Object.freeze({
     "runner-bun": "ghcr.io/scramjetorg/transform-hub/runner-bun",
     "pre-runner": "ghcr.io/scramjetorg/transform-hub/pre-runner"
 });
+function assertDigest(value, label = "digest") {
+    if (typeof value !== "string" || !DIGEST.test(value)) throw new Error(`${label} must be a SHA-256 digest.`);
+    return value.toLowerCase();
+}
 function validateCandidateRuntimeImages(images) {
     if (!Array.isArray(images) || images.length !== CANDIDATE_RUNTIME_IMAGE_ROLES.length) throw new Error("Candidate runtime image closure must contain exactly the required roles.");
     const seen = new Set(); const result = {};

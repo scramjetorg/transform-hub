@@ -194,7 +194,6 @@ function stageGithubDraftCandidate({ repository, tag, targetSha, candidateId = t
     try {
         downloadAndVerifyCandidate({ adapter, candidateId, destination: verificationRoot, releaseSet, candidateReference });
     } finally { rmSync(verificationRoot, { recursive: true, force: true }); }
-    const stateBytes = readFileSync(stateFile);
     const release = recordCandidateRelease(stateFile, identity, { id: staged.releaseId, tag, releaseSetDigest: assertDigest(candidateReference.releaseSetDigest, "candidate release-set digest") });
     const sealedStateBytes = readFileSync(stateFile);
     const seal = createCandidateSeal({ releaseId: staged.releaseId, identity, sourceSha: identity.sourceSha, sourceTree: identity.sourceTree, releaseSet, provenance, stateBytes: sealedStateBytes });
