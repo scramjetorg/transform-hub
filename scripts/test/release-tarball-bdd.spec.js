@@ -7,7 +7,7 @@ const { tmpdir } = require("node:os");
 const { join } = require("node:path");
 
 const { digestDocument } = require("../release-contract");
-const { assertDirectFileManifest, copyBddFixtureToolClosure, exactHarnessDependencies, prepareTarballBddRoot, syntheticManifest, verifyInstalledRoot } = require("../release-tarball-bdd");
+const { assertDirectFileManifest, copyBddCompiledSupportClosure, copyBddFixtureToolClosure, exactHarnessDependencies, prepareTarballBddRoot, syntheticManifest, verifyInstalledRoot } = require("../release-tarball-bdd");
 
 function digest(bytes) { return `sha256:${createHash("sha256").update(bytes).digest("hex")}`; }
 
@@ -57,6 +57,7 @@ test("prepare creates exact file dependencies for a two-package candidate root",
     t.deepEqual(manifest.dependencies, { "@scramjet/a": "file:./candidate/artifacts/a.tgz", "@scramjet/b": "file:./candidate/artifacts/b.tgz" });
     t.is(prepared.record.packages.length, 2);
     t.true(existsSync(join(prepared.root, "bdd", "cucumber.js")));
+    t.true(existsSync(join(prepared.root, "bdd", "lib", "runner-container-cleanup.js")));
     t.true(harnessCalls[0].args.includes("--dry-run"));
     t.is(harnessCalls[0].options.cwd, join(prepared.root, "bdd"));
     t.is(harnessCalls[0].options.env.NODE_PATH, undefined);
@@ -72,6 +73,17 @@ test("prepare stages only the fixture tools and their supported closure", (t) =>
     t.true(existsSync(join(prepared.root, "scripts", "lib", "bdd-fixture-archives.js")));
     t.true(existsSync(join(prepared.root, "bdd", "lib", "ownership.js")));
     t.false(existsSync(join(prepared.root, "scripts", "build-all.js")));
+});
+
+test("prepare stages the compiled BDD support module into the isolated root", (t) => {
+    const sourceRoot = mkdtempSync(join(tmpdir(), "release-tarball-compiled-bdd-"));
+    const destinationRoot = join(sourceRoot, "staged");
+    t.teardown(() => rmSync(sourceRoot, { recursive: true, force: true }));
+    mkdirSync(join(sourceRoot, "bdd", "dist", "bdd", "lib"), { recursive: true });
+    writeFileSync(join(sourceRoot, "bdd", "dist", "bdd", "lib", "runner-container-cleanup.js"), "module.exports = { compiled: true };\n");
+
+    t.deepEqual(copyBddCompiledSupportClosure(sourceRoot, destinationRoot), ["bdd/dist/bdd/lib/runner-container-cleanup.js"]);
+    t.is(readFileSync(join(destinationRoot, "bdd", "lib", "runner-container-cleanup.js"), "utf8"), "module.exports = { compiled: true };\n");
 });
 
 test("fixture tool closure rejects imports from unrelated scripts", (t) => {

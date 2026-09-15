@@ -11,6 +11,7 @@ const NPM_CLI = resolve(__dirname, "..", "node_modules/npm/bin/npm-cli.js");
 const FIRST_PARTY = /^@scramjet\//;
 const BDD_SCRIPT_ENTRIES = ["sth-bin.js", "docker-memory.js", "cgroup-memory.js", "bdd-options.js", "bdd-cleanup.js", "bdd-scenario-lifecycle.js", "bdd-memory-guard.js", "bdd-memory-hooks-lib.js", "bdd-chunk-memory-policy.js", "bdd-chunk-timing.js", "bdd-manager-exceptions.js", "bdd-cli-exceptions.js"];
 const BDD_FIXTURE_TOOL_ENTRIES = ["prepare-bdd-simple-stdio.js", "pack-appcontext-fixtures.js", "pack-bdd-fixtures.js", "pack-python-bdd-fixtures.js"];
+const BDD_COMPILED_SUPPORT_ENTRIES = ["runner-container-cleanup.js"];
 
 function inside(root, candidate) {
     const path = relative(resolve(root), resolve(candidate));
@@ -76,6 +77,20 @@ function copyBddFixtureToolClosure(sourceRoot, destinationRoot) {
         cpSync(source, target);
     }
     return [...copied].map((source) => relative(sourceRoot, source).replaceAll("\\", "/"));
+}
+
+function copyBddCompiledSupportClosure(sourceRoot, destinationRoot) {
+    const sourceRootCompiled = join(sourceRoot, "bdd", "dist", "bdd");
+    const copied = [];
+    for (const entry of BDD_COMPILED_SUPPORT_ENTRIES) {
+        const source = join(sourceRootCompiled, "lib", entry);
+        if (!existsSync(source) || !statSync(source).isFile()) throw new Error(`Unable to stage compiled BDD support module: ${source}`);
+        const target = join(destinationRoot, "bdd", "lib", entry);
+        mkdirSync(dirname(target), { recursive: true });
+        cpSync(source, target);
+        copied.push(relative(sourceRoot, source).replaceAll("\\", "/"));
+    }
+    return copied;
 }
 
 function assertBddHarnessLoadable(root) {
@@ -253,7 +268,7 @@ function prepareTarballBddRoot({ candidateDir, destination, sourceRoot = resolve
     }
     writeFileSync(join(root, "package.json"), `${JSON.stringify(syntheticManifest(verified.releaseSet, externalDependencies), null, 2)}\n`);
     cpSync(join(sourceRoot, "bdd"), join(root, "bdd"), { recursive: true });
-    const stagedScripts = [...copyBddScriptClosure(sourceRoot, root), ...copyBddFixtureToolClosure(sourceRoot, root)];
+    const stagedScripts = [...copyBddScriptClosure(sourceRoot, root), ...copyBddFixtureToolClosure(sourceRoot, root), ...copyBddCompiledSupportClosure(sourceRoot, root)];
     cpSync(join(sourceRoot, "tsconfig.base.json"), join(root, "tsconfig.base.json"));
     const bddTsconfig = json(join(root, "bdd", "tsconfig.json"));
     if (bddTsconfig.compilerOptions) delete bddTsconfig.compilerOptions.paths;
@@ -293,4 +308,4 @@ if (require.main === module) {
     } catch (error) { console.error(`[release-tarball-bdd] ${error.message}`); process.exitCode = 1; }
 }
 
-module.exports = { RECORD_SCHEMA, directFileDependencies, syntheticManifest, exactHarnessDependencies, copyBddScriptClosure, copyBddFixtureToolClosure, assertBddHarnessLoadable, runHarnessLoadSmoke, resolveCandidateTarball, verifyCandidateBundle, assertDirectFileManifest, verifyInstalledRoot, prepareTarballBddRoot, readTarballRecord };
+module.exports = { RECORD_SCHEMA, directFileDependencies, syntheticManifest, exactHarnessDependencies, copyBddScriptClosure, copyBddFixtureToolClosure, copyBddCompiledSupportClosure, assertBddHarnessLoadable, runHarnessLoadSmoke, resolveCandidateTarball, verifyCandidateBundle, assertDirectFileManifest, verifyInstalledRoot, prepareTarballBddRoot, readTarballRecord };
