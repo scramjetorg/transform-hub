@@ -534,6 +534,7 @@ export class Host implements IHost, IComponent {
             instanceName: sequenceConfig.instanceName,
             sequenceName: sequenceConfig.sequenceName,
             exposePath: sequenceConfig.exposePath || sequence.config.exposePath,
+            exposeHost: sequenceConfig.exposeHost || sequence.config.exposeHost,
             logLevel: this.logger.logLevel,
             forwardRunnerLogs: this.config.log?.forwardRunner !== false
         };

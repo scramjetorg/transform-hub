@@ -57,3 +57,17 @@ test("a late end from the old controller cannot remove its stable-ID replacement
     t.is(store.get(replacement.id), replacement);
     t.is(restartAttempts, 0);
 });
+
+test("configured startup runner config propagates stored AppContext exposure host", t => {
+    const host = Object.create(Host.prototype) as any;
+    host.logger = { logLevel: "info" };
+    host.config = { log: { forwardRunner: true } };
+
+    const payload = host.buildStartupRunnerConfig(
+        { config: { exposePath: "/api", exposeHost: "0.0.0.0" } },
+        { id: "sequence" }
+    );
+
+    t.is(payload.exposePath, "/api");
+    t.is(payload.exposeHost, "0.0.0.0");
+});

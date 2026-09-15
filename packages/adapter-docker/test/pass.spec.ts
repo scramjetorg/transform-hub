@@ -149,6 +149,27 @@ test("Docker sequence identification propagates the Dockerode v5 volume name to 
     t.is(config.id, "sequence-volume");
 });
 
+test("Docker sequence identification preserves AppContext exposure fields", async t => {
+    const adapter = new DockerSequenceAdapter({ adapters: { docker: adapterConfig } } as any);
+    (adapter as any).dockerHelper = {
+        createVolume: async () => "sequence-volume",
+        run: async () => runResult(0, JSON.stringify({
+            name: "candidate",
+            version: "1.0.0",
+            main: "index.js",
+            engines: { node: ">=22" },
+            exposePath: "/api",
+            exposeHost: "0.0.0.0"
+        }))
+    };
+    (adapter as any).fetch = async () => undefined;
+
+    const config = await adapter.identify(Readable.from([]), "candidate");
+
+    t.is(config.exposePath, "/api");
+    t.is(config.exposeHost, "0.0.0.0");
+});
+
 test("Docker GHCR image pull uses valid direct auth credentials", async t => {
     const configDir = mkdtempSync(join(tmpdir(), "docker-auth-"));
     const previous = process.env.DOCKER_CONFIG;
