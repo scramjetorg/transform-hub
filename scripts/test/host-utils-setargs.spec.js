@@ -110,6 +110,49 @@ test("setArgs does not inject default -P when LOCAL_HOST_PORT is unset", (t) => 
 	t.false(command.includes("-P"), "-P must not appear when env port is unset");
 });
 
+// ---------------------------------------------------------------------------
+// Runtime adapter default injection
+// ---------------------------------------------------------------------------
+
+function makeRuntimeAdapterSetArgs(extraArgs, noDefault = []) {
+	const saved = process.env.RUNTIME_ADAPTER;
+	process.env.RUNTIME_ADAPTER = "docker";
+	try {
+		return makeSetArgs(extraArgs, noDefault);
+	} finally {
+		if (saved === undefined) delete process.env.RUNTIME_ADAPTER;
+		else process.env.RUNTIME_ADAPTER = saved;
+	}
+}
+
+test("setArgs injects default Docker runtime adapter when no adapter is given", (t) => {
+	const command = makeRuntimeAdapterSetArgs([]);
+	t.true(command.includes("--runtime-adapter=docker"));
+});
+
+test("setArgs preserves equals-form runtime adapter", (t) => {
+	const command = makeRuntimeAdapterSetArgs(["--runtime-adapter=process"]);
+	t.true(command.includes("--runtime-adapter=process"));
+	t.false(command.includes("--runtime-adapter=docker"));
+});
+
+test("setArgs preserves separated long-form runtime adapter", (t) => {
+	const command = makeRuntimeAdapterSetArgs(["--runtime-adapter", "process"]);
+	t.deepEqual(command.slice(-2), ["--runtime-adapter", "process"]);
+	t.false(command.includes("--runtime-adapter=docker"));
+});
+
+test("setArgs preserves short-form runtime adapter", (t) => {
+	const command = makeRuntimeAdapterSetArgs(["-a", "process"]);
+	t.deepEqual(command.slice(-2), ["-a", "process"]);
+	t.false(command.includes("--runtime-adapter=docker"));
+});
+
+test("setArgs does not inject runtime adapter when it is in noDefault", (t) => {
+	const command = makeRuntimeAdapterSetArgs([], ["runtime-adapter"]);
+	t.false(command.some((arg) => arg.startsWith("--runtime-adapter")));
+});
+
 test("setArgs resolves the verified candidate image map to explicit runner flags", t => {
     const saved = process.env.SCRAMJET_BDD_CANDIDATE_IMAGE_MAP;
     process.env.SCRAMJET_BDD_CANDIDATE_IMAGE_MAP = JSON.stringify({

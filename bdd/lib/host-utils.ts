@@ -443,7 +443,11 @@ export class HostUtils {
             command.push("--instances-server-port", process.env.LOCAL_HOST_INSTANCES_SERVER_PORT);
         if (!noDefault.includes("cpm-url") && !extraArgs.includes("-C") && !command.includes("--cpm-url") && process.env.CPM_URL)
             command.push("-C", process.env.CPM_URL);
-        if (!noDefault.includes("runtime-adapter") && !extraArgs.includes("--runtime-adapter") && process.env.RUNTIME_ADAPTER)
+        const hasRuntimeAdapter = [...command, ...extraArgs].some((arg, index, args) =>
+            arg === "--runtime-adapter" || arg.startsWith("--runtime-adapter=") || arg === "-a" ||
+            (args[index - 1] === "-a" && index > 0)
+        );
+        if (!noDefault.includes("runtime-adapter") && !hasRuntimeAdapter && process.env.RUNTIME_ADAPTER)
             command.push(`--runtime-adapter=${process.env.RUNTIME_ADAPTER}`);
         // Only an explicitly owned BDD run may receive the shortened lifecycle
         // window. A config path is also used by non-BDD callers and must not
