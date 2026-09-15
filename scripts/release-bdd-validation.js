@@ -39,6 +39,7 @@ function validateCandidateInputs({ candidateDir, identity, imageDigest }) {
     if (closure && closure["bdd-node"].digest !== imageDigest) throw new Error("Candidate BDD image digest does not match the release set.");
     if (!closure && !(releaseSet.artifacts.images || []).some((image) => image.digest === imageDigest)) throw new Error("Candidate GHCR image digest does not match the release set.");
     for (const artifact of releaseSet.artifacts.tarballs) validateArtifactContent(candidateDir, artifact);
+    validateArtifactContent(candidateDir, releaseSet.artifacts.bddSupport);
     const image = (releaseSet.artifacts.images || []).find((candidate) => candidate.digest === imageDigest);
     const imageMap = closure ? imageMapReferences(closure) : undefined;
     if (imageMap && process.env.SCRAMJET_BDD_CANDIDATE_IMAGE_MAP) {
@@ -61,6 +62,7 @@ function consumedInput(validation, matrix) {
         candidateExecutionRoot: validation.candidateDir,
         matrixRevision: matrix.revision,
         inputs: validation.releaseSet.artifacts.tarballs.map((artifact) => ({ path: artifact.path, sha256: artifact.sha256 })),
+        bddSupport: { path: validation.releaseSet.artifacts.bddSupport.path, size: validation.releaseSet.artifacts.bddSupport.size, sha256: validation.releaseSet.artifacts.bddSupport.sha256, sri: validation.releaseSet.artifacts.bddSupport.sri },
     };
 }
 

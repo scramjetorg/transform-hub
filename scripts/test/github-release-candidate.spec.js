@@ -11,6 +11,7 @@ const { digestDocument } = require("../release-contract");
 const { createGithubReleaseAssetAdapter, stageGithubDraftCandidate } = require("../lib/github-release-candidate");
 const { createCandidateSeal } = require("../lib/release-candidate-assets");
 const { candidateIdentity, claimCandidate, recordAdmission, recordBddMatrix, recordCandidateRelease, recordProducerAttestation, sealCandidate, STATE_SCHEMA } = require("../lib/release-bundle-state");
+const { bddSupportArtifact, bddSupportBytes, githubAssetName, writeBddSupportFixture } = require("./release-test-fixtures");
 
 const identity = {
     sourceSha: "a".repeat(40), sourceTree: `sha256:${"b".repeat(64)}`, lockfileDigest: `sha256:${"c".repeat(64)}`,
@@ -121,11 +122,12 @@ test("GitHub draft stager verifies uploaded assets and persists release identity
     const root = mkdtempSync(join(tmpdir(), "release-github-stage-"));
     t.teardown(() => rmSync(root, { recursive: true, force: true }));
     mkdirSync(join(root, "artifacts"));
+    writeBddSupportFixture(root);
     const tarball = Buffer.from("tarball");
     writeFileSync(join(root, "artifacts", "a.tgz"), tarball);
     const lockfile = Buffer.from("lock");
     const artifact = { name: "@scramjet/a", path: "artifacts/a.tgz", size: tarball.length, sha256: `sha256:${createHash("sha256").update(tarball).digest("hex")}`, sri: `sha256-${createHash("sha256").update(tarball).digest("base64")}` };
-    const releaseSet = { schema: "release-set.v1", source: { repository: "scramjetorg/transform-hub", sha: identity.sourceSha, tree: identity.sourceTree }, lockfile: { path: "package-lock.json", sha256: `sha256:${createHash("sha256").update(lockfile).digest("hex")}` }, toolchain: { node: "node", npm: "npm" }, build: { identity: identity.buildIdentity }, boundary: { packages: ["@scramjet/a"] }, waves: [["@scramjet/a"]], artifacts: { tarballs: [artifact], images: [] }, canonical: { schema: "release-set.v1", version: 1 } };
+    const releaseSet = { schema: "release-set.v1", source: { repository: "scramjetorg/transform-hub", sha: identity.sourceSha, tree: identity.sourceTree }, lockfile: { path: "package-lock.json", sha256: `sha256:${createHash("sha256").update(lockfile).digest("hex")}` }, toolchain: { node: "node", npm: "npm" }, build: { identity: identity.buildIdentity }, boundary: { packages: ["@scramjet/a"] }, waves: [["@scramjet/a"]], artifacts: { tarballs: [artifact], images: [], bddSupport: bddSupportArtifact() }, canonical: { schema: "release-set.v1", version: 1 } };
     const expected = candidateIdentity({ ...identity, lockfileDigest: releaseSet.lockfile.sha256 });
     const provenance = { schema: "build-provenance.v1", releaseSetDigest: digestDocument(releaseSet), builder: "test", identity: expected.key };
     const stateFile = join(root, "state.json");
@@ -136,7 +138,7 @@ test("GitHub draft stager verifies uploaded assets and persists release identity
         if (args[1] === "download") {
             const directory = args[args.indexOf("--dir") + 1];
             const name = args[args.indexOf("--pattern") + 1];
-            const bytes = { "release-set.json": Buffer.from(`${JSON.stringify(releaseSet, null, 2)}\n`), "build-provenance.json": Buffer.from(`${JSON.stringify(provenance, null, 2)}\n`), "package-lock.json": lockfile, "artifacts__a.tgz": tarball }[name];
+            const bytes = { "release-set.json": Buffer.from(`${JSON.stringify(releaseSet, null, 2)}\n`), "build-provenance.json": Buffer.from(`${JSON.stringify(provenance, null, 2)}\n`), "package-lock.json": lockfile, "artifacts__a.tgz": tarball, [githubAssetName(releaseSet.artifacts.bddSupport.path)]: bddSupportBytes() }[name];
             writeFileSync(join(directory, name), bytes);
         }
         return "";
@@ -152,10 +154,11 @@ test("GitHub draft stager stages a candidate when the release does not exist", (
     const root = mkdtempSync(join(tmpdir(), "release-github-missing-"));
     t.teardown(() => rmSync(root, { recursive: true, force: true }));
     mkdirSync(join(root, "artifacts"));
+    writeBddSupportFixture(root);
     const tarball = Buffer.from("tarball");
     writeFileSync(join(root, "artifacts", "a.tgz"), tarball);
     const lockfile = Buffer.from("lock");
-    const releaseSet = { schema: "release-set.v1", source: { repository: "scramjetorg/transform-hub", sha: identity.sourceSha, tree: identity.sourceTree }, lockfile: { path: "package-lock.json", sha256: `sha256:${createHash("sha256").update(lockfile).digest("hex")}` }, toolchain: { node: "node", npm: "npm" }, build: { identity: identity.buildIdentity }, boundary: { packages: ["@scramjet/a"] }, waves: [["@scramjet/a"]], artifacts: { tarballs: [{ name: "@scramjet/a", path: "artifacts/a.tgz", size: tarball.length, sha256: `sha256:${createHash("sha256").update(tarball).digest("hex")}`, sri: `sha256-${createHash("sha256").update(tarball).digest("base64")}` }], images: [] }, canonical: { schema: "release-set.v1", version: 1 } };
+    const releaseSet = { schema: "release-set.v1", source: { repository: "scramjetorg/transform-hub", sha: identity.sourceSha, tree: identity.sourceTree }, lockfile: { path: "package-lock.json", sha256: `sha256:${createHash("sha256").update(lockfile).digest("hex")}` }, toolchain: { node: "node", npm: "npm" }, build: { identity: identity.buildIdentity }, boundary: { packages: ["@scramjet/a"] }, waves: [["@scramjet/a"]], artifacts: { tarballs: [{ name: "@scramjet/a", path: "artifacts/a.tgz", size: tarball.length, sha256: `sha256:${createHash("sha256").update(tarball).digest("hex")}`, sri: `sha256-${createHash("sha256").update(tarball).digest("base64")}` }], images: [], bddSupport: bddSupportArtifact() }, canonical: { schema: "release-set.v1", version: 1 } };
     const expected = candidateIdentity({ ...identity, lockfileDigest: releaseSet.lockfile.sha256 });
     const provenance = { schema: "build-provenance.v1", releaseSetDigest: digestDocument(releaseSet), builder: "test", identity: expected.key };
     const stateFile = join(root, "state.json");
@@ -194,10 +197,11 @@ test("GitHub draft stager rejects a conflicting unsealed asset before upload", (
     const root = mkdtempSync(join(tmpdir(), "release-github-conflict-"));
     t.teardown(() => rmSync(root, { recursive: true, force: true }));
     mkdirSync(join(root, "artifacts"));
+    writeBddSupportFixture(root);
     const tarball = Buffer.from("tarball");
     writeFileSync(join(root, "artifacts", "a.tgz"), tarball);
     const lockfile = Buffer.from("lock");
-    const releaseSet = { schema: "release-set.v1", source: { repository: "scramjetorg/transform-hub", sha: identity.sourceSha, tree: identity.sourceTree }, lockfile: { path: "package-lock.json", sha256: `sha256:${createHash("sha256").update(lockfile).digest("hex")}` }, toolchain: { node: "node", npm: "npm" }, build: { identity: identity.buildIdentity }, boundary: { packages: ["@scramjet/a"] }, waves: [["@scramjet/a"]], artifacts: { tarballs: [{ name: "@scramjet/a", path: "artifacts/a.tgz", size: tarball.length, sha256: `sha256:${createHash("sha256").update(tarball).digest("hex")}`, sri: `sha256-${createHash("sha256").update(tarball).digest("base64")}` }], images: [] }, canonical: { schema: "release-set.v1", version: 1 } };
+    const releaseSet = { schema: "release-set.v1", source: { repository: "scramjetorg/transform-hub", sha: identity.sourceSha, tree: identity.sourceTree }, lockfile: { path: "package-lock.json", sha256: `sha256:${createHash("sha256").update(lockfile).digest("hex")}` }, toolchain: { node: "node", npm: "npm" }, build: { identity: identity.buildIdentity }, boundary: { packages: ["@scramjet/a"] }, waves: [["@scramjet/a"]], artifacts: { tarballs: [{ name: "@scramjet/a", path: "artifacts/a.tgz", size: tarball.length, sha256: `sha256:${createHash("sha256").update(tarball).digest("hex")}`, sri: `sha256-${createHash("sha256").update(tarball).digest("base64")}` }], images: [], bddSupport: bddSupportArtifact() }, canonical: { schema: "release-set.v1", version: 1 } };
     const expected = candidateIdentity({ ...identity, lockfileDigest: releaseSet.lockfile.sha256 });
     const provenance = { schema: "build-provenance.v1", releaseSetDigest: digestDocument(releaseSet), builder: "test", identity: expected.key };
     const stateFile = join(root, "state.json");
@@ -218,10 +222,11 @@ test("GitHub draft stager reuses a sealed candidate without uploads", (t) => {
     const root = mkdtempSync(join(tmpdir(), "release-github-sealed-"));
     t.teardown(() => rmSync(root, { recursive: true, force: true }));
     mkdirSync(join(root, "artifacts"));
+    writeBddSupportFixture(root);
     const tarball = Buffer.from("tarball");
     writeFileSync(join(root, "artifacts", "a.tgz"), tarball);
     const lockfile = Buffer.from("lock");
-    const releaseSet = { schema: "release-set.v1", source: { repository: "scramjetorg/transform-hub", sha: identity.sourceSha, tree: identity.sourceTree }, lockfile: { path: "package-lock.json", sha256: `sha256:${createHash("sha256").update(lockfile).digest("hex")}` }, toolchain: { node: "node", npm: "npm" }, build: { identity: identity.buildIdentity }, boundary: { packages: ["@scramjet/a"] }, waves: [["@scramjet/a"]], artifacts: { tarballs: [{ name: "@scramjet/a", path: "artifacts/a.tgz", size: tarball.length, sha256: `sha256:${createHash("sha256").update(tarball).digest("hex")}`, sri: `sha256-${createHash("sha256").update(tarball).digest("base64")}` }], images: [] }, canonical: { schema: "release-set.v1", version: 1 } };
+    const releaseSet = { schema: "release-set.v1", source: { repository: "scramjetorg/transform-hub", sha: identity.sourceSha, tree: identity.sourceTree }, lockfile: { path: "package-lock.json", sha256: `sha256:${createHash("sha256").update(lockfile).digest("hex")}` }, toolchain: { node: "node", npm: "npm" }, build: { identity: identity.buildIdentity }, boundary: { packages: ["@scramjet/a"] }, waves: [["@scramjet/a"]], artifacts: { tarballs: [{ name: "@scramjet/a", path: "artifacts/a.tgz", size: tarball.length, sha256: `sha256:${createHash("sha256").update(tarball).digest("hex")}`, sri: `sha256-${createHash("sha256").update(tarball).digest("base64")}` }], images: [], bddSupport: bddSupportArtifact() }, canonical: { schema: "release-set.v1", version: 1 } };
     const expected = candidateIdentity({ ...identity, lockfileDigest: releaseSet.lockfile.sha256 });
     const provenance = { schema: "build-provenance.v1", releaseSetDigest: digestDocument(releaseSet), builder: "test", identity: expected.key };
     const stateFile = join(root, "state.json");
@@ -231,7 +236,7 @@ test("GitHub draft stager reuses a sealed candidate without uploads", (t) => {
     const stateBytes = Buffer.from(`${JSON.stringify(sealed, null, 2)}\n`);
     writeFileSync(stateFile, stateBytes);
     const seal = createCandidateSeal({ releaseId: 9, identity: expected, sourceSha: expected.sourceSha, sourceTree: expected.sourceTree, releaseSet, provenance, stateBytes });
-    const assets = { "release-set.json": Buffer.from(`${JSON.stringify(releaseSet, null, 2)}\n`), "build-provenance.json": Buffer.from(`${JSON.stringify(provenance, null, 2)}\n`), "package-lock.json": lockfile, "artifacts__a.tgz": tarball, "candidate-state.json": stateBytes, "candidate-identity.json": Buffer.from(`${JSON.stringify(expected, null, 2)}\n`), "candidate-seal.json": Buffer.from(`${JSON.stringify(seal, null, 2)}\n`) };
+    const assets = { "release-set.json": Buffer.from(`${JSON.stringify(releaseSet, null, 2)}\n`), "build-provenance.json": Buffer.from(`${JSON.stringify(provenance, null, 2)}\n`), "package-lock.json": lockfile, "artifacts__a.tgz": tarball, "candidate-state.json": stateBytes, "candidate-identity.json": Buffer.from(`${JSON.stringify(expected, null, 2)}\n`), "candidate-seal.json": Buffer.from(`${JSON.stringify(seal, null, 2)}\n`), [githubAssetName(releaseSet.artifacts.bddSupport.path)]: bddSupportBytes() };
     let uploads = 0;
     const runner = (_command, args) => {
         if (args[1] === "view") return JSON.stringify({ databaseId: 9, isDraft: true, tagName: "candidate-4", targetCommitish: identity.sourceSha, assets: Object.keys(assets).map((name) => ({ name })) });
@@ -256,15 +261,16 @@ test("GitHub draft stager rejects malformed sealed state without uploads", (t) =
     const root = mkdtempSync(join(tmpdir(), "release-github-malformed-sealed-"));
     t.teardown(() => rmSync(root, { recursive: true, force: true }));
     mkdirSync(join(root, "artifacts"));
+    writeBddSupportFixture(root);
     const tarball = Buffer.from("tarball");
     writeFileSync(join(root, "artifacts", "a.tgz"), tarball);
     const lockfile = Buffer.from("lock");
-    const releaseSet = { schema: "release-set.v1", source: { repository: "scramjetorg/transform-hub", sha: identity.sourceSha, tree: identity.sourceTree }, lockfile: { path: "package-lock.json", sha256: `sha256:${createHash("sha256").update(lockfile).digest("hex")}` }, toolchain: { node: "node", npm: "npm" }, build: { identity: identity.buildIdentity }, boundary: { packages: ["@scramjet/a"] }, waves: [["@scramjet/a"]], artifacts: { tarballs: [{ name: "@scramjet/a", path: "artifacts/a.tgz", size: tarball.length, sha256: `sha256:${createHash("sha256").update(tarball).digest("hex")}`, sri: `sha256-${createHash("sha256").update(tarball).digest("base64")}` }], images: [] }, canonical: { schema: "release-set.v1", version: 1 } };
+    const releaseSet = { schema: "release-set.v1", source: { repository: "scramjetorg/transform-hub", sha: identity.sourceSha, tree: identity.sourceTree }, lockfile: { path: "package-lock.json", sha256: `sha256:${createHash("sha256").update(lockfile).digest("hex")}` }, toolchain: { node: "node", npm: "npm" }, build: { identity: identity.buildIdentity }, boundary: { packages: ["@scramjet/a"] }, waves: [["@scramjet/a"]], artifacts: { tarballs: [{ name: "@scramjet/a", path: "artifacts/a.tgz", size: tarball.length, sha256: `sha256:${createHash("sha256").update(tarball).digest("hex")}`, sri: `sha256-${createHash("sha256").update(tarball).digest("base64")}` }], images: [], bddSupport: bddSupportArtifact() }, canonical: { schema: "release-set.v1", version: 1 } };
     const expected = candidateIdentity({ ...identity, lockfileDigest: releaseSet.lockfile.sha256 });
     const provenance = { schema: "build-provenance.v1", releaseSetDigest: digestDocument(releaseSet), builder: "test", identity: expected.key };
     const stateBytes = Buffer.from(`${JSON.stringify({ status: "sealed", key: expected.key, identity: expected, candidateRelease: { id: 10, tag: "candidate-5", releaseSetDigest: digestDocument(releaseSet) } }, null, 2)}\n`);
     const seal = createCandidateSeal({ releaseId: 10, identity: expected, sourceSha: expected.sourceSha, sourceTree: expected.sourceTree, releaseSet, provenance, stateBytes });
-    const assets = { "release-set.json": Buffer.from(`${JSON.stringify(releaseSet, null, 2)}\n`), "build-provenance.json": Buffer.from(`${JSON.stringify(provenance, null, 2)}\n`), "package-lock.json": lockfile, "artifacts__a.tgz": tarball, "candidate-state.json": stateBytes, "candidate-identity.json": Buffer.from(`${JSON.stringify(expected, null, 2)}\n`), "candidate-seal.json": Buffer.from(`${JSON.stringify(seal, null, 2)}\n`) };
+    const assets = { "release-set.json": Buffer.from(`${JSON.stringify(releaseSet, null, 2)}\n`), "build-provenance.json": Buffer.from(`${JSON.stringify(provenance, null, 2)}\n`), "package-lock.json": lockfile, "artifacts__a.tgz": tarball, "candidate-state.json": stateBytes, "candidate-identity.json": Buffer.from(`${JSON.stringify(expected, null, 2)}\n`), "candidate-seal.json": Buffer.from(`${JSON.stringify(seal, null, 2)}\n`), [githubAssetName(releaseSet.artifacts.bddSupport.path)]: bddSupportBytes() };
     let uploads = 0;
     const runner = (_command, args) => {
         if (args[1] === "view") return JSON.stringify({ databaseId: 10, isDraft: true, tagName: "candidate-5", targetCommitish: identity.sourceSha, assets: Object.keys(assets).map((name) => ({ name })) });
@@ -279,8 +285,9 @@ test("GitHub draft stager rejects malformed sealed state without uploads", (t) =
 test("GitHub draft stager rejects malformed local sealed state before uploads", (t) => {
     const root = mkdtempSync(join(tmpdir(), "release-github-local-sealed-"));
     t.teardown(() => rmSync(root, { recursive: true, force: true }));
+    writeBddSupportFixture(root);
     const lockfile = Buffer.from("lock");
-    const releaseSet = { schema: "release-set.v1", source: { repository: "scramjetorg/transform-hub", sha: identity.sourceSha, tree: identity.sourceTree }, lockfile: { path: "package-lock.json", sha256: `sha256:${createHash("sha256").update(lockfile).digest("hex")}` }, toolchain: { node: "node", npm: "npm" }, build: { identity: identity.buildIdentity }, boundary: { packages: ["@scramjet/a"] }, waves: [["@scramjet/a"]], artifacts: { tarballs: [{ name: "@scramjet/a", path: "artifacts/a.tgz", size: 1, sha256: `sha256:${"1".repeat(64)}`, sri: "sha256-1" }], images: [] }, canonical: { schema: "release-set.v1", version: 1 } };
+    const releaseSet = { schema: "release-set.v1", source: { repository: "scramjetorg/transform-hub", sha: identity.sourceSha, tree: identity.sourceTree }, lockfile: { path: "package-lock.json", sha256: `sha256:${createHash("sha256").update(lockfile).digest("hex")}` }, toolchain: { node: "node", npm: "npm" }, build: { identity: identity.buildIdentity }, boundary: { packages: ["@scramjet/a"] }, waves: [["@scramjet/a"]], artifacts: { tarballs: [{ name: "@scramjet/a", path: "artifacts/a.tgz", size: 1, sha256: `sha256:${"1".repeat(64)}`, sri: "sha256-1" }], images: [], bddSupport: bddSupportArtifact() }, canonical: { schema: "release-set.v1", version: 1 } };
     const expected = candidateIdentity({ ...identity, lockfileDigest: releaseSet.lockfile.sha256 });
     const stateFile = join(root, "state.json");
     writeFileSync(stateFile, JSON.stringify({ schema: STATE_SCHEMA, key: expected.key, identity: expected, status: "sealed", bundle: { releaseSetDigest: "invalid", provenanceDigest: "invalid" } }));
@@ -298,10 +305,11 @@ test("GitHub draft stager rejects a non-bundle malformed local sealed state befo
     const root = mkdtempSync(join(tmpdir(), "release-github-local-shape-"));
     t.teardown(() => rmSync(root, { recursive: true, force: true }));
     mkdirSync(join(root, "artifacts"));
+    writeBddSupportFixture(root);
     const tarball = Buffer.from("tarball");
     writeFileSync(join(root, "artifacts", "a.tgz"), tarball);
     const lockfile = Buffer.from("lock");
-    const releaseSet = { schema: "release-set.v1", source: { repository: "scramjetorg/transform-hub", sha: identity.sourceSha, tree: identity.sourceTree }, lockfile: { path: "package-lock.json", sha256: `sha256:${createHash("sha256").update(lockfile).digest("hex")}` }, toolchain: { node: "node", npm: "npm" }, build: { identity: identity.buildIdentity }, boundary: { packages: ["@scramjet/a"] }, waves: [["@scramjet/a"]], artifacts: { tarballs: [{ name: "@scramjet/a", path: "artifacts/a.tgz", size: tarball.length, sha256: `sha256:${createHash("sha256").update(tarball).digest("hex")}`, sri: `sha256-${createHash("sha256").update(tarball).digest("base64")}` }], images: [] }, canonical: { schema: "release-set.v1", version: 1 } };
+    const releaseSet = { schema: "release-set.v1", source: { repository: "scramjetorg/transform-hub", sha: identity.sourceSha, tree: identity.sourceTree }, lockfile: { path: "package-lock.json", sha256: `sha256:${createHash("sha256").update(lockfile).digest("hex")}` }, toolchain: { node: "node", npm: "npm" }, build: { identity: identity.buildIdentity }, boundary: { packages: ["@scramjet/a"] }, waves: [["@scramjet/a"]], artifacts: { tarballs: [{ name: "@scramjet/a", path: "artifacts/a.tgz", size: tarball.length, sha256: `sha256:${createHash("sha256").update(tarball).digest("hex")}`, sri: `sha256-${createHash("sha256").update(tarball).digest("base64")}` }], images: [], bddSupport: bddSupportArtifact() }, canonical: { schema: "release-set.v1", version: 1 } };
     const expected = candidateIdentity({ ...identity, lockfileDigest: releaseSet.lockfile.sha256 });
     const stateFile = join(root, "state.json");
     writeFileSync(stateFile, JSON.stringify({ schema: STATE_SCHEMA, key: expected.key, identity: { ...expected, buildIdentity: `sha256:${"f".repeat(64)}` }, status: "sealed", bundle: { releaseSetDigest: digestDocument(releaseSet), provenanceDigest: `sha256:${"1".repeat(64)}` }, candidateRelease: { id: null, tag: null, releaseSetDigest: null, status: "pending" }, producerAttestation: { reference: null, status: "pending" }, bdd: { matrixRevision: null, shards: [] }, admission: { status: "pending" } }));

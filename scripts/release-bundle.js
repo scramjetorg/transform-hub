@@ -7,6 +7,7 @@ const { INCLUDED_PACKAGES, RELEASE_WAVES, validateReleaseWaves } = require("./li
 const { canonicalize, digestDocument, validateArtifactContent, validateReleaseSet } = require("./release-contract");
 const { candidateIdentity, claimCandidate, sealCandidate } = require("./lib/release-bundle-state");
 const { inspectTarballs } = require("./lib/release-bundle-inspection");
+const { buildBddSupport } = require("./lib/release-bdd-support");
 
 const NPM_CLI = resolve(__dirname, "..", "node_modules/npm/bin/npm-cli.js");
 
@@ -44,21 +45,25 @@ function verifyBundle(bundleDir, expectedProvenance = null, expectedIdentity = n
     }
     if (expectedState && provenance.identity !== expectedState.key) throw new Error("Bundle provenance identity does not match the candidate state.");
     for (const artifact of releaseSet.artifacts.tarballs) validateArtifactContent(bundleDir, artifact);
+    validateArtifactContent(bundleDir, releaseSet.artifacts.bddSupport);
     if (expectedState?.status === "sealed" && (digestDocument(releaseSet) !== expectedState.bundle?.releaseSetDigest || digestDocument(provenance) !== expectedState.bundle?.provenanceDigest)) {
         throw new Error("Bundle digests do not match the sealed candidate state.");
     }
     return { releaseSet, provenance };
 }
 
-function buildAndPack({ root = process.cwd(), bundleDir, stateFile, identity, releaseSet, boundary = INCLUDED_PACKAGES, waves = RELEASE_WAVES, builder = defaultBuild, packer = defaultPack, npm, runner, lockfile = readFileSync(join(root, "package-lock.json")), provenance = {} }) {
+function buildAndPack({ root = process.cwd(), bundleDir, stateFile, identity, releaseSet, boundary = INCLUDED_PACKAGES, waves = RELEASE_WAVES, builder = defaultBuild, bddBuilder = null, packer = defaultPack, npm, runner, lockfile = readFileSync(join(root, "package-lock.json")), provenance = {} }) {
     const candidate = candidateIdentity(identity);
     const claim = claimCandidate(stateFile, candidate);
     if (claim.status === "reused") return { status: "reused", ...verifyBundle(bundleDir, null, claim.identity, claim.state) };
 
     validateReleaseWaves(waves, { boundary: new Set(boundary) });
     builder(root);
+    const bddSupport = bddBuilder ? bddBuilder({ root, npm, runner }) : buildBddSupport({ root, npm, runner });
     const temporary = join(bundleDir, ".pack-tmp");
     mkdirSync(join(temporary, "artifacts"), { recursive: true });
+    mkdirSync(join(temporary, "bdd-support"), { recursive: true });
+    copyFileSync(bddSupport.source, join(temporary, bddSupport.path));
     const packed = [];
     try {
         for (const name of waves.flat()) {
@@ -73,10 +78,12 @@ function buildAndPack({ root = process.cwd(), bundleDir, stateFile, identity, re
             waves,
             runner,
         });
-        const document = { ...releaseSet, artifacts: { ...releaseSet.artifacts, tarballs: inspected.map(({ metadata, entries, ...artifact }) => artifact) } };
+        const document = { ...releaseSet, artifacts: { ...releaseSet.artifacts, tarballs: inspected.map(({ metadata, entries, ...artifact }) => artifact), bddSupport: { path: bddSupport.path, size: bddSupport.size, sha256: bddSupport.sha256, sri: bddSupport.sri } } };
         validateReleaseSet(document);
         mkdirSync(join(bundleDir, "artifacts"), { recursive: true });
+        mkdirSync(join(bundleDir, "bdd-support"), { recursive: true });
         for (const artifact of document.artifacts.tarballs) copyFileSync(join(temporary, artifact.path), join(bundleDir, artifact.path));
+        copyFileSync(bddSupport.source, join(bundleDir, document.artifacts.bddSupport.path));
         writeBundleFile(join(bundleDir, "release-set.json"), document);
         writeBundleFile(join(bundleDir, "package-lock.json"), lockfile);
         const buildProvenance = { schema: "build-provenance.v1", releaseSetDigest: digestDocument(document), builder: provenance.builder || "credentialless-release-bundle", identity: candidate.key };
@@ -97,7 +104,7 @@ function createHandoff({ candidateId, releaseSet, provenance }) {
         candidateIdentity: provenance.identity,
         releaseSetDigest: digestDocument(releaseSet),
         provenanceDigest: digestDocument(provenance),
-        assets: ["release-set.json", "build-provenance.json", "package-lock.json", ...releaseSet.artifacts.tarballs.map((artifact) => artifact.path)],
+        assets: ["release-set.json", "build-provenance.json", "package-lock.json", releaseSet.artifacts.bddSupport.path, ...releaseSet.artifacts.tarballs.map((artifact) => artifact.path)],
     };
 }
 

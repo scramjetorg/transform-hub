@@ -61,6 +61,10 @@ function stageCandidateAssets({ adapter, candidateId, root, releaseSet, provenan
         validateArtifactContent(root, artifact);
         files.push({ name: artifact.path, bytes: require("node:fs").readFileSync(file) });
     }
+    const support = releaseSet.artifacts.bddSupport;
+    const supportFile = join(root, support.path);
+    validateArtifactContent(root, support);
+    files.push({ name: support.path, bytes: require("node:fs").readFileSync(supportFile) });
     return adapter.stage(candidateId, files);
 }
 
@@ -90,7 +94,7 @@ function downloadAndVerifyCandidate({ adapter, candidateId, destination, release
     const lockfile = adapter.download(candidateId, "package-lock.json");
     const lockDigest = `sha256:${createHash("sha256").update(lockfile).digest("hex")}`;
     if (lockDigest !== releaseSet.lockfile.sha256) throw new Error("Candidate lockfile digest does not match the release set.");
-    const names = ["release-set.json", "build-provenance.json", "package-lock.json", ...releaseSet.artifacts.tarballs.map((a) => a.path)];
+    const names = ["release-set.json", "build-provenance.json", "package-lock.json", releaseSet.artifacts.bddSupport.path, ...releaseSet.artifacts.tarballs.map((a) => a.path)];
     const downloaded = new Map([["release-set.json", manifestBytes], ["build-provenance.json", provenanceBytes], ["package-lock.json", lockfile]]);
     for (const name of names) {
         const bytes = downloaded.get(name) || adapter.download(candidateId, name);
@@ -100,6 +104,7 @@ function downloadAndVerifyCandidate({ adapter, candidateId, destination, release
         writeFileSync(target, bytes, { flag: "wx" });
     }
     for (const artifact of releaseSet.artifacts.tarballs) validateArtifactContent(destination, artifact);
+    validateArtifactContent(destination, releaseSet.artifacts.bddSupport);
     return { candidateId, assets: names, releaseSet, provenance };
 }
 

@@ -139,6 +139,11 @@ function validateReleaseSet(document) {
     assertDigest(document.lockfile?.sha256, "lockfile digest");
     validateReleaseBoundary(document.boundary, document.waves);
     validateTarballs(document.artifacts?.tarballs, document.boundary.packages);
+    const support = document.artifacts?.bddSupport;
+    if (!support || support.path !== "bdd-support/runner-container-cleanup.js") throw new Error("Release set BDD support artifact is required and must use the canonical path.");
+    assertDigest(support.sha256, "BDD support SHA-256");
+    assertSRI(support.sri, "BDD support SRI");
+    if (!Number.isSafeInteger(support.size) || support.size <= 0) throw new Error("BDD support size must be a positive integer.");
     for (const image of document.artifacts?.images || []) assertDigest(image.digest, `image ${image.repository} digest`);
     if ((document.artifacts?.images || []).some(image => image.role)) require("../lib/candidate-runtime-images").validateCandidateRuntimeImages(document.artifacts.images);
     if (!document.canonical || document.canonical.schema !== SCHEMA_VERSION || document.canonical.version !== 1) {

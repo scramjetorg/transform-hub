@@ -7,7 +7,7 @@ const { assertDigest, assertSha, digestDocument, validateReleaseSet, canonicaliz
 const { createCandidateSeal, downloadAndVerifyCandidate, stageCandidateAssets, validateCandidateSeal } = require("./release-candidate-assets");
 const { candidateIdentity, readState, recordCandidateRelease, STATE_SCHEMA } = require("./release-bundle-state");
 
-const ALLOWED_ASSET = /^(release-set\.json|build-provenance\.json|package-lock\.json|candidate-identity\.json|candidate-state\.json|candidate-seal\.json|candidate-success\.json|bdd-evidence\/[^/]+\.json|artifacts\/[^/]+\.tgz)$/;
+const ALLOWED_ASSET = /^(release-set\.json|build-provenance\.json|package-lock\.json|candidate-identity\.json|candidate-state\.json|candidate-seal\.json|candidate-success\.json|bdd-support\/runner-container-cleanup\.js|bdd-evidence\/[^/]+\.json|artifacts\/[^/]+\.tgz)$/;
 
 function createCandidateHandoff({ candidateId, releaseSet, provenance }) {
     validateReleaseSet(releaseSet);
@@ -17,7 +17,7 @@ function createCandidateHandoff({ candidateId, releaseSet, provenance }) {
         candidateIdentity: provenance.identity,
         releaseSetDigest: digestDocument(releaseSet),
         provenanceDigest: digestDocument(provenance),
-        assets: ["release-set.json", "build-provenance.json", "package-lock.json", ...releaseSet.artifacts.tarballs.map((artifact) => artifact.path)],
+        assets: ["release-set.json", "build-provenance.json", "package-lock.json", releaseSet.artifacts.bddSupport.path, ...releaseSet.artifacts.tarballs.map((artifact) => artifact.path)],
     };
 }
 
@@ -75,6 +75,7 @@ function expectedStageAssets({ root, releaseSet, provenance, lockfile, identity,
         ["candidate-identity.json", Buffer.from(`${JSON.stringify(identity, null, 2)}\n`)],
     ]);
     for (const artifact of releaseSet.artifacts.tarballs) assets.set(artifact.path, readFileSync(join(root, artifact.path)));
+    assets.set(releaseSet.artifacts.bddSupport.path, readFileSync(join(root, releaseSet.artifacts.bddSupport.path)));
     if (stateFile) assets.set("candidate-state.json", readFileSync(stateFile));
     return assets;
 }

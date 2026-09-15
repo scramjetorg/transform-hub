@@ -36,6 +36,13 @@ function releaseSet(lockfile, candidate = identity, candidateBoundary = boundary
 function identityForLockfile(lockfile, candidate = identity) {
     return { ...candidate, lockfileDigest: `sha256:${createHash("sha256").update(lockfile).digest("hex")}` };
 }
+function bddSupportFixture(root) {
+    const source = join(root, "bdd-support-source.js");
+    const bytes = Buffer.from("compiled bdd support\n");
+    writeFileSync(source, bytes);
+    const hash = createHash("sha256").update(bytes);
+    return { source, path: "bdd-support/runner-container-cleanup.js", size: bytes.length, sha256: `sha256:${hash.copy().digest("hex")}`, sri: `sha256-${hash.digest("base64")}` };
+}
 
 test("build, seal, verify, and reuse packs every package once", (t) => {
     const root = mkdtempSync(join(tmpdir(), "release-bundle-"));
@@ -51,7 +58,7 @@ test("build, seal, verify, and reuse packs every package once", (t) => {
     let packs = 0;
     const events = [];
     const packageDirs = [];
-    const args = { root, bundleDir, stateFile, identity: buildIdentity, boundary, waves, releaseSet: releaseSet(lockfile, buildIdentity), lockfile, builder: () => { builds++; events.push("build"); }, packer: ({ packageDir }) => { packs++; events.push("pack"); packageDirs.push(packageDir); return packageDir.endsWith("/a") ? a : b; } };
+    const args = { root, bundleDir, stateFile, identity: buildIdentity, boundary, waves, releaseSet: releaseSet(lockfile, buildIdentity), lockfile, builder: () => { builds++; events.push("build"); }, bddBuilder: () => bddSupportFixture(root), packer: ({ packageDir }) => { packs++; events.push("pack"); packageDirs.push(packageDir); return packageDir.endsWith("/a") ? a : b; } };
     const created = buildAndPack(args);
     t.is(created.status, "created");
     t.is(builds, 1);
@@ -99,10 +106,10 @@ test("sealed reuse rejects a self-consistent bundle for a different candidate", 
     const bundleDir = join(root, "bundle");
     const stateFile = join(root, "candidate.json");
     const buildIdentity = identityForLockfile(lockfile);
-    buildAndPack({ root, bundleDir, stateFile, identity: buildIdentity, boundary: new Set(["@scramjet/a"]), waves: [["@scramjet/a"]], releaseSet: { ...releaseSet(lockfile, buildIdentity), boundary: { packages: ["@scramjet/a"] }, waves: [["@scramjet/a"]] }, lockfile, builder: () => {}, packer: () => a });
+    buildAndPack({ root, bundleDir, stateFile, identity: buildIdentity, boundary: new Set(["@scramjet/a"]), waves: [["@scramjet/a"]], releaseSet: { ...releaseSet(lockfile, buildIdentity), boundary: { packages: ["@scramjet/a"] }, waves: [["@scramjet/a"]] }, lockfile, builder: () => {}, bddBuilder: () => bddSupportFixture(root), packer: () => a });
     const alternateIdentity = { ...buildIdentity, sourceTree: `sha256:${"f".repeat(64)}`, buildIdentity: `sha256:${"f".repeat(64)}` };
     const alternateBundle = join(root, "alternate-bundle");
-    buildAndPack({ root, bundleDir: alternateBundle, stateFile: join(root, "alternate-state.json"), identity: alternateIdentity, boundary: new Set(["@scramjet/a"]), waves: [["@scramjet/a"]], releaseSet: releaseSet(lockfile, alternateIdentity, new Set(["@scramjet/a"]), [["@scramjet/a"]]), lockfile, builder: () => {}, packer: () => a });
+    buildAndPack({ root, bundleDir: alternateBundle, stateFile: join(root, "alternate-state.json"), identity: alternateIdentity, boundary: new Set(["@scramjet/a"]), waves: [["@scramjet/a"]], releaseSet: releaseSet(lockfile, alternateIdentity, new Set(["@scramjet/a"]), [["@scramjet/a"]]), lockfile, builder: () => {}, bddBuilder: () => bddSupportFixture(root), packer: () => a });
     for (const file of ["release-set.json", "build-provenance.json", "package-lock.json"]) copyFileSync(join(alternateBundle, file), join(bundleDir, file));
     copyFileSync(join(alternateBundle, "artifacts", "a.tgz"), join(bundleDir, "artifacts", "a.tgz"));
     t.throws(() => buildAndPack({ root, bundleDir, stateFile, identity: buildIdentity, boundary: new Set(["@scramjet/a"]), waves: [["@scramjet/a"]], releaseSet: releaseSet(lockfile, buildIdentity), lockfile, builder: () => t.fail(), packer: () => a }), { message: /manifest identity|provenance|digest/i });

@@ -19,9 +19,12 @@ function releaseFixture(t) {
     const a = Buffer.from("a-tarball");
     const b = Buffer.from("b-tarball");
     writeFileSync(join(root, "package-lock.json"), lock);
+    const support = Buffer.from("compiled bdd support");
+    mkdirSync(join(root, "bdd-support"));
+    writeFileSync(join(root, "bdd-support", "runner-container-cleanup.js"), support);
     writeFileSync(join(root, "artifacts", "a.tgz"), a);
     writeFileSync(join(root, "artifacts", "b.tgz"), b);
-    const releaseSet = { schema: "release-set.v1", source: { repository: "scramjetorg/transform-hub", sha: "a".repeat(40), tree: `sha256:${"b".repeat(64)}` }, lockfile: { path: "package-lock.json", sha256: digest(lock) }, toolchain: { node: "node", npm: "npm" }, build: { identity: `sha256:${"c".repeat(64)}` }, boundary: { packages: ["@scramjet/a", "@scramjet/b"] }, waves: [["@scramjet/a"], ["@scramjet/b"]], artifacts: { tarballs: [{ name: "@scramjet/a", path: "artifacts/a.tgz", size: a.length, sha256: digest(a), sri: `sha256-${createHash("sha256").update(a).digest("base64")}` }, { name: "@scramjet/b", path: "artifacts/b.tgz", size: b.length, sha256: digest(b), sri: `sha256-${createHash("sha256").update(b).digest("base64")}` }], images: [] }, canonical: { schema: "release-set.v1", version: 1 } };
+    const releaseSet = { schema: "release-set.v1", source: { repository: "scramjetorg/transform-hub", sha: "a".repeat(40), tree: `sha256:${"b".repeat(64)}` }, lockfile: { path: "package-lock.json", sha256: digest(lock) }, toolchain: { node: "node", npm: "npm" }, build: { identity: `sha256:${"c".repeat(64)}` }, boundary: { packages: ["@scramjet/a", "@scramjet/b"] }, waves: [["@scramjet/a"], ["@scramjet/b"]], artifacts: { tarballs: [{ name: "@scramjet/a", path: "artifacts/a.tgz", size: a.length, sha256: digest(a), sri: `sha256-${createHash("sha256").update(a).digest("base64")}` }, { name: "@scramjet/b", path: "artifacts/b.tgz", size: b.length, sha256: digest(b), sri: `sha256-${createHash("sha256").update(b).digest("base64")}` }], images: [], bddSupport: { path: "bdd-support/runner-container-cleanup.js", size: support.length, sha256: digest(support), sri: `sha256-${createHash("sha256").update(support).digest("base64")}` } }, canonical: { schema: "release-set.v1", version: 1 } };
     writeFileSync(join(root, "release-set.json"), `${JSON.stringify(releaseSet)}\n`);
     writeFileSync(join(root, "build-provenance.json"), `${JSON.stringify({ schema: "build-provenance.v1", releaseSetDigest: digestDocument(releaseSet), builder: "test", identity: "test" })}\n`);
     return { root, releaseSet };
@@ -75,15 +78,16 @@ test("prepare stages only the fixture tools and their supported closure", (t) =>
     t.false(existsSync(join(prepared.root, "scripts", "build-all.js")));
 });
 
-test("prepare stages the compiled BDD support module into the isolated root", (t) => {
-    const sourceRoot = mkdtempSync(join(tmpdir(), "release-tarball-compiled-bdd-"));
-    const destinationRoot = join(sourceRoot, "staged");
-    t.teardown(() => rmSync(sourceRoot, { recursive: true, force: true }));
-    mkdirSync(join(sourceRoot, "bdd", "dist", "bdd", "lib"), { recursive: true });
-    writeFileSync(join(sourceRoot, "bdd", "dist", "bdd", "lib", "runner-container-cleanup.js"), "module.exports = { compiled: true };\n");
+test("prepare stages the canonical compiled BDD support module into the isolated root", (t) => {
+    const sourceRoot = process.cwd();
+    const destinationRoot = mkdtempSync(join(tmpdir(), "release-tarball-compiled-bdd-"));
+    const source = join(destinationRoot, "bdd-support", "runner-container-cleanup.js");
+    t.teardown(() => rmSync(destinationRoot, { recursive: true, force: true }));
 
-    t.deepEqual(copyBddCompiledSupportClosure(sourceRoot, destinationRoot), ["bdd/dist/bdd/lib/runner-container-cleanup.js"]);
-    t.is(readFileSync(join(destinationRoot, "bdd", "lib", "runner-container-cleanup.js"), "utf8"), "module.exports = { compiled: true };\n");
+    mkdirSync(join(destinationRoot, "bdd-support"), { recursive: true });
+    writeFileSync(source, "compiled bdd support");
+    t.deepEqual(copyBddCompiledSupportClosure(destinationRoot, destinationRoot, { path: "bdd-support/runner-container-cleanup.js" }), ["bdd-support/runner-container-cleanup.js"]);
+    t.is(readFileSync(join(destinationRoot, "bdd", "lib", "runner-container-cleanup.js"), "utf8"), readFileSync(source, "utf8"));
 });
 
 test("fixture tool closure rejects imports from unrelated scripts", (t) => {

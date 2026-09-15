@@ -79,16 +79,16 @@ function copyBddFixtureToolClosure(sourceRoot, destinationRoot) {
     return [...copied].map((source) => relative(sourceRoot, source).replaceAll("\\", "/"));
 }
 
-function copyBddCompiledSupportClosure(sourceRoot, destinationRoot) {
-    const sourceRootCompiled = join(sourceRoot, "bdd", "dist", "bdd");
+function copyBddCompiledSupportClosure(candidateRoot, destinationRoot, artifact) {
     const copied = [];
     for (const entry of BDD_COMPILED_SUPPORT_ENTRIES) {
-        const source = join(sourceRootCompiled, "lib", entry);
+        if (!artifact || artifact.path !== "bdd-support/runner-container-cleanup.js") throw new Error("Verified BDD support artifact is required.");
+        const source = join(candidateRoot, artifact.path);
         if (!existsSync(source) || !statSync(source).isFile()) throw new Error(`Unable to stage compiled BDD support module: ${source}`);
         const target = join(destinationRoot, "bdd", "lib", entry);
         mkdirSync(dirname(target), { recursive: true });
         cpSync(source, target);
-        copied.push(relative(sourceRoot, source).replaceAll("\\", "/"));
+        copied.push(artifact ? artifact.path : relative(candidateRoot, source).replaceAll("\\", "/"));
     }
     return copied;
 }
@@ -150,6 +150,7 @@ function verifyCandidateBundle({ candidateDir, identity, imageDigest }) {
     if (bytesDigest(lockfile) !== releaseSet.lockfile.sha256) throw new Error("Candidate lockfile does not match the release set.");
     if (imageDigest && !(releaseSet.artifacts.images || []).some((image) => image.digest === imageDigest)) throw new Error("Candidate image digest does not match the release set.");
     for (const artifact of releaseSet.artifacts.tarballs) validateArtifactContent(candidateDir, artifact);
+    validateArtifactContent(candidateDir, releaseSet.artifacts.bddSupport);
     return { releaseSet, provenance, lockfile, releaseSetDigest: digestDocument(releaseSet) };
 }
 
@@ -267,8 +268,10 @@ function prepareTarballBddRoot({ candidateDir, destination, sourceRoot = resolve
         cpSync(join(candidateDir, artifact.path), target);
     }
     writeFileSync(join(root, "package.json"), `${JSON.stringify(syntheticManifest(verified.releaseSet, externalDependencies), null, 2)}\n`);
-    cpSync(join(sourceRoot, "bdd"), join(root, "bdd"), { recursive: true });
-    const stagedScripts = [...copyBddScriptClosure(sourceRoot, root), ...copyBddFixtureToolClosure(sourceRoot, root), ...copyBddCompiledSupportClosure(sourceRoot, root)];
+    const sourceBdd = join(sourceRoot, "bdd");
+    const sourceDist = join(sourceBdd, "dist");
+    cpSync(sourceBdd, join(root, "bdd"), { recursive: true, filter: (entry) => entry !== sourceDist && !entry.startsWith(`${sourceDist}${require("node:path").sep}`) });
+    const stagedScripts = [...copyBddScriptClosure(sourceRoot, root), ...copyBddFixtureToolClosure(sourceRoot, root), ...copyBddCompiledSupportClosure(candidateDir, root, verified.releaseSet.artifacts.bddSupport)];
     cpSync(join(sourceRoot, "tsconfig.base.json"), join(root, "tsconfig.base.json"));
     const bddTsconfig = json(join(root, "bdd", "tsconfig.json"));
     if (bddTsconfig.compilerOptions) delete bddTsconfig.compilerOptions.paths;

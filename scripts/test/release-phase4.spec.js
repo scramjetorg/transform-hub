@@ -5,10 +5,11 @@ const { mkdtempSync, rmSync, writeFileSync } = require("node:fs");
 const { tmpdir } = require("node:os");
 const { join, resolve } = require("node:path");
 const { candidateIdentity, claimCandidate, sealCandidate, recordCandidateRelease, recordProducerAttestation, recordBddMatrix } = require("../lib/release-bundle-state");
-const { digestDocument } = require("../release-contract");
+const { digestDocument, validateReleaseSet } = require("../release-contract");
 const { bytesDigest, createCandidateSeal } = require("../lib/release-candidate-assets");
 const { admission, plan, validateShardEvidence } = require("../release-candidate-workflow");
 const { buildBddEvidenceAssets } = require("../release-candidate-runtime");
+const { bddSupportArtifact, writeBddSupportFixture } = require("./release-test-fixtures");
 const matrix = require("../release-bdd-matrix.v1.json");
 
 const SHA = "a".repeat(40);
@@ -29,8 +30,9 @@ test("candidate planning binds the BDD image digest to the publisher repository"
 test("admission requires success evidence to match source, numeric release, and release-set digest", (t) => {
     const root = mkdtempSync(join(tmpdir(), "release-phase4-admission-"));
     t.teardown(() => rmSync(root, { recursive: true, force: true }));
+    writeBddSupportFixture(root);
     const stateFile = join(root, "state.json");
-    const releaseSet = { schema: "release-set.v1", source: { repository: "scramjetorg/transform-hub", sha: SHA, tree: identity.sourceTree }, lockfile: { path: "package-lock.json", sha256: identity.lockfileDigest }, toolchain: { node: "node", npm: "npm" }, build: { identity: identity.buildIdentity }, boundary: { packages: ["@scramjet/a"] }, waves: [["@scramjet/a"]], artifacts: { tarballs: [{ name: "@scramjet/a", path: "artifacts/a.tgz", size: 1, sha256: `sha256:${"1".repeat(64)}`, sri: "sha256-1" }], images: [] }, canonical: { schema: "release-set.v1", version: 1 } };
+    const releaseSet = { schema: "release-set.v1", source: { repository: "scramjetorg/transform-hub", sha: SHA, tree: identity.sourceTree }, lockfile: { path: "package-lock.json", sha256: identity.lockfileDigest }, toolchain: { node: "node", npm: "npm" }, build: { identity: identity.buildIdentity }, boundary: { packages: ["@scramjet/a"] }, waves: [["@scramjet/a"]], artifacts: { tarballs: [{ name: "@scramjet/a", path: "artifacts/a.tgz", size: 1, sha256: `sha256:${"1".repeat(64)}`, sri: "sha256-1" }], images: [], bddSupport: bddSupportArtifact() }, canonical: { schema: "release-set.v1", version: 1 } };
     const digest = digestDocument(releaseSet);
     claimCandidate(stateFile, identity);
     sealCandidate(stateFile, identity, { bundle: { releaseSetDigest: digest, provenanceDigest: `sha256:${"f".repeat(64)}` } });
@@ -66,8 +68,9 @@ test("runtime BDD persistence uses unique canonical shard asset paths", (t) => {
 test("admission accepts exactly the canonical durable BDD shard set", (t) => {
     const root = mkdtempSync(join(tmpdir(), "release-phase4-shards-"));
     t.teardown(() => rmSync(root, { recursive: true, force: true }));
+    writeBddSupportFixture(root);
     const stateFile = join(root, "state.json");
-    const releaseSet = { schema: "release-set.v1", source: { repository: "scramjetorg/transform-hub", sha: SHA, tree: identity.sourceTree }, lockfile: { path: "package-lock.json", sha256: identity.lockfileDigest }, toolchain: { node: "node", npm: "npm" }, build: { identity: identity.buildIdentity }, boundary: { packages: ["@scramjet/a"] }, waves: [["@scramjet/a"]], artifacts: { tarballs: [{ name: "@scramjet/a", path: "artifacts/a.tgz", size: 1, sha256: `sha256:${"1".repeat(64)}`, sri: "sha256-1" }], images: [] }, canonical: { schema: "release-set.v1", version: 1 } };
+    const releaseSet = { schema: "release-set.v1", source: { repository: "scramjetorg/transform-hub", sha: SHA, tree: identity.sourceTree }, lockfile: { path: "package-lock.json", sha256: identity.lockfileDigest }, toolchain: { node: "node", npm: "npm" }, build: { identity: identity.buildIdentity }, boundary: { packages: ["@scramjet/a"] }, waves: [["@scramjet/a"]], artifacts: { tarballs: [{ name: "@scramjet/a", path: "artifacts/a.tgz", size: 1, sha256: `sha256:${"1".repeat(64)}`, sri: "sha256-1" }], images: [], bddSupport: bddSupportArtifact() }, canonical: { schema: "release-set.v1", version: 1 } };
     const releaseSetDigest = digestDocument(releaseSet);
     claimCandidate(stateFile, identity);
     sealCandidate(stateFile, identity, { bundle: { releaseSetDigest, provenanceDigest: `sha256:${"f".repeat(64)}` } });
@@ -101,4 +104,12 @@ test("phase 4 admission runs only for the same-repository devel-to-main release 
     t.true(buildWorkflow.includes("release-candidate-runtime.js resolve"));
     t.true(admissionWorkflow.includes("release-candidate-runtime.js admit"));
     t.false(admissionWorkflow.includes("RELEASE_CANDIDATE_ID"));
+});
+
+test("admission rejects a release set missing the required BDD support artifact", (t) => {
+    const root = mkdtempSync(join(tmpdir(), "release-phase4-missing-bdd-support-"));
+    t.teardown(() => rmSync(root, { recursive: true, force: true }));
+    const releaseSet = { schema: "release-set.v1", source: { repository: "scramjetorg/transform-hub", sha: SHA, tree: identity.sourceTree }, lockfile: { path: "package-lock.json", sha256: identity.lockfileDigest }, toolchain: { node: "node", npm: "npm" }, build: { identity: identity.buildIdentity }, boundary: { packages: ["@scramjet/a"] }, waves: [["@scramjet/a"]], artifacts: { tarballs: [{ name: "@scramjet/a", path: "artifacts/a.tgz", size: 1, sha256: `sha256:${"1".repeat(64)}`, sri: "sha256-1" }], images: [] }, canonical: { schema: "release-set.v1", version: 1 } };
+    writeFileSync(join(root, "release-set.json"), JSON.stringify(releaseSet));
+    t.throws(() => validateReleaseSet(releaseSet), { message: /BDD support artifact is required/ });
 });

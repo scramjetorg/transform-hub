@@ -20,9 +20,12 @@ function candidate(t) {
     const lockfile = Buffer.from("candidate lockfile");
     writeFileSync(join(root, "artifacts", "a.tgz"), tarball);
     writeFileSync(join(root, "package-lock.json"), lockfile);
+    const support = Buffer.from("compiled bdd support");
+    mkdirSync(join(root, "bdd-support"));
+    writeFileSync(join(root, "bdd-support", "runner-container-cleanup.js"), support);
     const digest = (bytes) => `sha256:${createHash("sha256").update(bytes).digest("hex")}`;
     const identity = { ...baseIdentity, lockfileDigest: digest(lockfile) };
-    const releaseSet = { schema: "release-set.v1", source: { repository: "scramjetorg/transform-hub", sha: identity.sourceSha, tree: identity.sourceTree }, lockfile: { path: "package-lock.json", sha256: digest(lockfile) }, toolchain: { node: "node", npm: "npm" }, build: { identity: identity.buildIdentity }, boundary: { packages: ["@scramjet/a"] }, waves: [["@scramjet/a"]], artifacts: { tarballs: [{ name: "@scramjet/a", path: "artifacts/a.tgz", size: tarball.length, sha256: digest(tarball), sri: `sha256-${createHash("sha256").update(tarball).digest("base64")}` }], images: [{ repository: "ghcr.io/scramjet/bdd", digest: `sha256:${"f".repeat(64)}` }] }, canonical: { schema: "release-set.v1", version: 1 } };
+    const releaseSet = { schema: "release-set.v1", source: { repository: "scramjetorg/transform-hub", sha: identity.sourceSha, tree: identity.sourceTree }, lockfile: { path: "package-lock.json", sha256: digest(lockfile) }, toolchain: { node: "node", npm: "npm" }, build: { identity: identity.buildIdentity }, boundary: { packages: ["@scramjet/a"] }, waves: [["@scramjet/a"]], artifacts: { tarballs: [{ name: "@scramjet/a", path: "artifacts/a.tgz", size: tarball.length, sha256: digest(tarball), sri: `sha256-${createHash("sha256").update(tarball).digest("base64")}` }], images: [{ repository: "ghcr.io/scramjet/bdd", digest: `sha256:${"f".repeat(64)}` }], bddSupport: { path: "bdd-support/runner-container-cleanup.js", size: support.length, sha256: digest(support), sri: `sha256-${createHash("sha256").update(support).digest("base64")}` } }, canonical: { schema: "release-set.v1", version: 1 } };
     const expected = candidateIdentity(identity);
     const provenance = { schema: "build-provenance.v1", releaseSetDigest: digestDocument(releaseSet), builder: "test", identity: expected.key };
     writeFileSync(join(root, "release-set.json"), `${JSON.stringify(releaseSet)}\n`);

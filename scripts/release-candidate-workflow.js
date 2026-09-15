@@ -58,7 +58,7 @@ function plan({ identityFile, output, imageDigest, imageRepository = "ghcr.io/sc
         toolchain: { node: process.version, npm: "offline-plan" },
         build: { identity: identity.buildIdentity },
         boundary: { packages: [...INCLUDED_PACKAGES] }, waves: RELEASE_WAVES,
-        artifacts: { tarballs: [], images },
+        artifacts: { tarballs: [], images, bddSupport: { path: "bdd-support/runner-container-cleanup.js", size: 1, sha256: `sha256:${"0".repeat(64)}`, sri: "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=" } },
         canonical: { schema: "release-set.v1", version: 1 },
     };
     write(output, releaseSet);

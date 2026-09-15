@@ -16,7 +16,10 @@ test("injected candidate adapter stages and verifies exact bundle bytes", (t) =>
     const sri = `sha256-${createHash("sha256").update(bytes).digest("base64")}`;
     mkdirSync(join(root, "artifacts"), { recursive: true });
     writeFileSync(join(root, "artifacts", "a.tgz"), bytes);
-    const releaseSet = { schema: "release-set.v1", source: { repository: "repo", sha: "a".repeat(40), tree: `sha256:${"b".repeat(64)}` }, lockfile: { path: "package-lock.json", sha256: `sha256:${"c".repeat(64)}` }, toolchain: { node: "node", npm: "npm" }, build: { identity: `sha256:${"d".repeat(64)}` }, boundary: { packages: ["@scramjet/a"] }, waves: [["@scramjet/a"]], artifacts: { tarballs: [{ name: "@scramjet/a", path: "artifacts/a.tgz", size: bytes.length, sha256: digest, sri }], images: [] }, canonical: { schema: "release-set.v1", version: 1 } };
+    const support = Buffer.from("compiled bdd support");
+    mkdirSync(join(root, "bdd-support"), { recursive: true });
+    writeFileSync(join(root, "bdd-support", "runner-container-cleanup.js"), support);
+    const releaseSet = { schema: "release-set.v1", source: { repository: "repo", sha: "a".repeat(40), tree: `sha256:${"b".repeat(64)}` }, lockfile: { path: "package-lock.json", sha256: `sha256:${"c".repeat(64)}` }, toolchain: { node: "node", npm: "npm" }, build: { identity: `sha256:${"d".repeat(64)}` }, boundary: { packages: ["@scramjet/a"] }, waves: [["@scramjet/a"]], artifacts: { tarballs: [{ name: "@scramjet/a", path: "artifacts/a.tgz", size: bytes.length, sha256: digest, sri }], images: [], bddSupport: { path: "bdd-support/runner-container-cleanup.js", size: support.length, sha256: `sha256:${createHash("sha256").update(support).digest("hex")}`, sri: `sha256-${createHash("sha256").update(support).digest("base64")}` } }, canonical: { schema: "release-set.v1", version: 1 } };
     const adapter = createMemoryCandidateAssetAdapter();
     const lockfile = Buffer.from("lock");
     // The contract fixture is intentionally made self-consistent for the adapter test.
