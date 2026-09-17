@@ -45,6 +45,17 @@ test("release-train workflows are manual, delegated, and never request npm OIDC"
 	}
 });
 
+test("release start installs dependencies before validating inputs or starting a release train", (t) => {
+	const source = readFileSync(resolve(workflowsDir, "release-start.yml"), "utf8");
+	const install = source.indexOf("run: npm ci");
+	const validate = source.indexOf("name: Validate inputs before mutation");
+	const start = source.indexOf("name: Start release train");
+
+	t.true(install >= 0, "release start must install workspace dependencies");
+	t.true(install < validate, "release start must install dependencies before validation");
+	t.true(validate < start, "release start must validate inputs before starting a release train");
+});
+
 test("production is the only workflow environment gate", (t) => {
 	const environments = [];
 	for (const workflow of readdirSync(workflowsDir).filter((name) => name.endsWith(".yml"))) {
