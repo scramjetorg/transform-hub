@@ -110,6 +110,15 @@ test("setArgs does not inject default -P when LOCAL_HOST_PORT is unset", (t) => 
 	t.false(command.includes("-P"), "-P must not appear when env port is unset");
 });
 
+test("setArgs explicitly enables runner log forwarding", t => {
+    const command = makeSetArgs([], []);
+    t.true(command.includes("--log-forward-runner"));
+});
+
+test("setArgs rejects disabling runner log forwarding", t => {
+    t.throws(() => makeSetArgs(["--no-log-forward-runner"], []), { message: /require --log-forward-runner/ });
+});
+
 // ---------------------------------------------------------------------------
 // Runtime adapter default injection
 // ---------------------------------------------------------------------------
@@ -138,13 +147,15 @@ test("setArgs preserves equals-form runtime adapter", (t) => {
 
 test("setArgs preserves separated long-form runtime adapter", (t) => {
 	const command = makeRuntimeAdapterSetArgs(["--runtime-adapter", "process"]);
-	t.deepEqual(command.slice(-2), ["--runtime-adapter", "process"]);
+	const adapterIndex = command.indexOf("--runtime-adapter");
+	t.deepEqual(command.slice(adapterIndex, adapterIndex + 2), ["--runtime-adapter", "process"]);
 	t.false(command.includes("--runtime-adapter=docker"));
 });
 
 test("setArgs preserves short-form runtime adapter", (t) => {
 	const command = makeRuntimeAdapterSetArgs(["-a", "process"]);
-	t.deepEqual(command.slice(-2), ["-a", "process"]);
+	const adapterIndex = command.indexOf("-a");
+	t.deepEqual(command.slice(adapterIndex, adapterIndex + 2), ["-a", "process"]);
 	t.false(command.includes("--runtime-adapter=docker"));
 });
 

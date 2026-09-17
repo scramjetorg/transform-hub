@@ -127,6 +127,7 @@ const clearRunnerProcessState = (world: CustomWorld) => {
 };
 const rememberStartedInstance = (world: CustomWorld, instance: any) => {
     world.resources.instance = instance;
+    world.recordStartedInstance(instance);
     const pid = instance?.processId;
     if (isPositiveProcessId(pid)) {
         world.runnerProcessIds.set(instance.id, pid);
@@ -874,6 +875,7 @@ When("get runner PID", { timeout: 30000 }, async function(this: CustomWorld) {
 
                 if (isPositiveProcessId(res)) {
                     processId = success = res;
+                    this.lifecycleTrace.addRunnerPid(res);
                     console.log("Process is identified.", processId);
                     this.scenarioLifecycle.ownProcess(processId, "runner:process");
                 }

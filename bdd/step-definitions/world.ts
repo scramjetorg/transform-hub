@@ -5,6 +5,8 @@ import { STHRestAPI } from "@scramjet/api-types";
 import { ChildProcess, ChildProcessWithoutNullStreams } from "child_process";
 import { Readable } from "stream";
 import type { ScenarioIsolation } from "../lib/scenario-isolation";
+import { LifecycleTrace } from "../lib/lifecycle-trace";
+import { subscribeHostLifecycleObserver } from "../lib/host-utils";
 import * as dns from "dns";
 const { ScenarioLifecycle } = require("../../scripts/lib/bdd-scenario-lifecycle.js");
 const { memoryRegistry } = require("../lib/memory-registry");
@@ -81,6 +83,8 @@ export class CustomWorld implements IWorld {
     readonly scenarioLifecycle = new ScenarioLifecycle(memoryRegistry);
     /** Process PIDs handed off by successful process-adapter starts, keyed by instance ID. */
     readonly runnerProcessIds = new Map<string, number>();
+    readonly lifecycleTrace: LifecycleTrace;
+    private lifecycleTraceUnsubscribe?: () => void;
 
     /** Per-scenario HOME, config, artifact, port, child-process, and PKI owner. */
     scenarioIsolation?: ScenarioIsolation;
@@ -104,6 +108,21 @@ export class CustomWorld implements IWorld {
         this.link = link;
         this.parameters = parameters;
         this.cliResources.collectedTopicData = "";
+        this.lifecycleTrace = new LifecycleTrace();
+        this.lifecycleTraceUnsubscribe = subscribeHostLifecycleObserver(this.lifecycleTrace);
+    }
+
+    recordStartedInstance(instance: { id?: unknown; processId?: unknown }): void {
+        if (typeof instance.id === "string" && instance.id) this.lifecycleTrace.addInstanceId(instance.id);
+        if (typeof instance.processId === "number" && Number.isFinite(instance.processId) && instance.processId > 0) {
+            this.lifecycleTrace.addRunnerPid(instance.processId);
+        }
+    }
+
+    disposeLifecycleTrace(): void {
+        this.lifecycleTraceUnsubscribe?.();
+        this.lifecycleTraceUnsubscribe = undefined;
+        this.lifecycleTrace.dispose();
     }
 }
 

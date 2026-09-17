@@ -24,6 +24,8 @@ const common = [
     // reverse definition order).
     "--require support/memory-hooks.ts",
     "--require step-definitions/**/*.ts",
+    // Render failure diagnostics before step-definition cleanup and timing-boundary.
+    "--require support/failure-lifecycle-trace.ts",
     "--require support/timing-boundary.ts",
     "--require-module ts-node/register",
     "--exit",
