@@ -105,20 +105,34 @@ function createGithubReleaseTrainAdapters({
         return JSON.parse(command("gh", ["pr", "create", "--repo", repo, "--head", head, "--base", base, "--title", `Release ${head}`, "--body", "Release train promotion", "--json", "number,headRefName,baseRefName"]));
     };
     const align = {
-        validateRelease: ({ version, branch }) => {
+        validateRelease: ({ version, branch, expected }) => {
+            if (!expected) throw new Error("validateRelease requires an expected SHA");
             const worktree = mkdtempSync(`${tmpdir()}/release-train-validate-`);
             try {
-                command("git", ["worktree", "add", "--detach", worktree, branch]);
-                const result = command(process.execPath, [resolve(__dirname, "..", "release-align.js"), "check", `--release-version=${version}`], { cwd: worktree, env: { SCRAMJET_RELEASE_ROOT: worktree } });
-                return result;
+                command("git", ["worktree", "add", "--detach", worktree, expected]);
+                try {
+                    return command(process.execPath, [resolve(__dirname, "..", "release-align.js"), "check", `--release-version=${version}`], { cwd: worktree, env: { SCRAMJET_RELEASE_ROOT: worktree } });
+                } catch (error) {
+                    const stdout = String(error?.stdout || "").trim();
+                    const stderr = String(error?.stderr || "").trim();
+                    const output = [stdout, stderr].filter(Boolean).join("\n");
+                    throw new Error(`release-align check failed${output ? `:\n${output}` : ""}`, { cause: error });
+                }
             } finally { command("git", ["worktree", "remove", "--force", worktree]); rmSync(worktree, { recursive: true, force: true }); }
         },
-        validateDevelopment: ({ version, branch }) => {
+        validateDevelopment: ({ version, branch, expected }) => {
+            if (!expected) throw new Error("validateDevelopment requires an expected SHA");
             const worktree = mkdtempSync(`${tmpdir()}/release-train-validate-`);
             try {
-                command("git", ["worktree", "add", "--detach", worktree, branch]);
-                const result = command(process.execPath, [resolve(__dirname, "..", "release-align.js"), "check-development", `--development-version=${version}`], { cwd: worktree, env: { SCRAMJET_RELEASE_ROOT: worktree } });
-                return result;
+                command("git", ["worktree", "add", "--detach", worktree, expected]);
+                try {
+                    return command(process.execPath, [resolve(__dirname, "..", "release-align.js"), "check-development", `--development-version=${version}`], { cwd: worktree, env: { SCRAMJET_RELEASE_ROOT: worktree } });
+                } catch (error) {
+                    const stdout = String(error?.stdout || "").trim();
+                    const stderr = String(error?.stderr || "").trim();
+                    const output = [stdout, stderr].filter(Boolean).join("\n");
+                    throw new Error(`release-align check failed${output ? `:\n${output}` : ""}`, { cause: error });
+                }
             } finally { command("git", ["worktree", "remove", "--force", worktree]); rmSync(worktree, { recursive: true, force: true }); }
         },
         release: ({ version, branch, expected }) => {
