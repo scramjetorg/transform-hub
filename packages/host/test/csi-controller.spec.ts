@@ -82,6 +82,17 @@ test("CSI immediate kill sends KILL and cancels lifetime extension", async t => 
     t.deepEqual(calls, [[RunnerMessageCode.KILL, {}]]);
 });
 
+test("CSI exposes only a positive handshaken runner PID", t => {
+    const controller = createController({
+        _instanceAdapter: { getRunnerProcessId: () => 1234 }
+    });
+
+    t.is(controller.getRunnerProcessId(), 1234);
+
+    controller._instanceAdapter.getRunnerProcessId = () => 0;
+    t.is(controller.getRunnerProcessId(), undefined);
+});
+
 test("PING dispatcher establishment is committed before PONG is written", async t => {
     const order: string[] = [];
     const controller = createController({

@@ -60,7 +60,7 @@ export class SequenceClient {
                 { json: true, parse: "json", throwOnErrorHttpCode: true }
             );
 
-            return InstanceClient.from(response.id, this.host);
+            return InstanceClient.from(response.id, this.host, response);
         } catch (error: any) {
             return Promise.reject(JSON.parse(error.body)?.error || error);
         }

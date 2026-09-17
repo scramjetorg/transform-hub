@@ -131,6 +131,33 @@ test("get runner PID polls process health for the full step timeout", t => {
     t.true(step.includes("Math.min(50, remaining)"));
 });
 
+test("get runner PID prefers the process handoff before health fallback", t => {
+    const source = fs.readFileSync(
+        path.join(__dirname, "../../bdd/step-definitions/e2e/host-steps.ts"),
+        "utf8"
+    );
+    const step = source.slice(source.indexOf('When("get runner PID"'), source.indexOf('When("runner has ended execution"'));
+
+    t.true(step.includes("this.runnerProcessIds.get(this.resources.instance.id)"));
+    t.true(step.includes('if (adapter === "process" && isPositiveProcessId(handedOffProcessId))'));
+    t.true(step.indexOf("Process is identified from start handoff.") < step.indexOf("getHealth()"));
+});
+
+test("BDD runner PID state is cleared even when scenario cleanup throws", t => {
+    const source = fs.readFileSync(
+        path.join(__dirname, "../../bdd/step-definitions/e2e/host-steps.ts"),
+        "utf8"
+    );
+    const cleanup = source.slice(source.indexOf('After({}, async function'), source.indexOf('Before({ tags: "@test-si-init"'));
+    const finallyOffset = cleanup.indexOf("} finally {");
+
+    t.true(finallyOffset >= 0);
+    t.true(cleanup.slice(finallyOffset).includes("clearRunnerProcessState(this)"));
+    t.true(cleanup.slice(finallyOffset).indexOf("clearRunnerProcessState(this)") < cleanup.slice(finallyOffset).indexOf("clearE2eScenarioState"));
+    t.true(source.includes("Before(function(this: CustomWorld)"));
+    t.true(source.includes("clearRunnerProcessState(this);\n    actualHealthResponse"));
+});
+
 test("start-host callback forwards AbortSignal to getLoadCheck", async (t) => {
     let capturedSignal;
     let signalNotAbortedAtCallTime = false;

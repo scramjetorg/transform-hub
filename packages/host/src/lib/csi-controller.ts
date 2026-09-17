@@ -197,6 +197,11 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
         return this._instanceAdapter;
     }
 
+    getRunnerProcessId(): number | undefined {
+        const processId = this.instanceAdapter.getRunnerProcessId?.();
+        return typeof processId === "number" && Number.isFinite(processId) && processId > 0 ? processId : undefined;
+    }
+
     _endOfSequence?: Promise<number>;
 
     get endOfSequence(): Promise<number> {

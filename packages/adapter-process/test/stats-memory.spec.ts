@@ -14,6 +14,16 @@ function createAdapter(): ProcessInstanceAdapter {
     } as any);
 }
 
+test("getRunnerProcessId exposes only a positive handshaken PID", t => {
+    const adapter = createAdapter();
+
+    t.is(adapter.getRunnerProcessId(), undefined);
+    adapter.setRunner({ processPID: String(process.pid) });
+    t.is(adapter.getRunnerProcessId(), process.pid);
+    adapter.setRunner({ processPID: "0" });
+    t.is(adapter.getRunnerProcessId(), undefined);
+});
+
 test("stats returns processId and RSS memory fields when runnerProcess pid is set", async (t) => {
     const adapter = createAdapter();
 

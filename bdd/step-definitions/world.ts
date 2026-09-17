@@ -79,6 +79,8 @@ export class CustomWorld implements IWorld {
 
     /** Explicit owner for Hub, Manager, and runner resources created by this scenario. */
     readonly scenarioLifecycle = new ScenarioLifecycle(memoryRegistry);
+    /** Process PIDs handed off by successful process-adapter starts, keyed by instance ID. */
+    readonly runnerProcessIds = new Map<string, number>();
 
     /** Per-scenario HOME, config, artifact, port, child-process, and PKI owner. */
     scenarioIsolation?: ScenarioIsolation;
