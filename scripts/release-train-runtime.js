@@ -75,22 +75,29 @@ function startRelease({ stableVersion, nextDevelopmentVersion, repository = REPO
         if (sameIdentity(existing, identity)) fail("the requested train has already been consumed by a terminal lock.");
     }
     if (!recoveryRequested && !markerRead(adapters, identity) && typeof adapters.reservation.isReserved === "function" && adapters.reservation.isReserved(stableVersion)) fail("stable version is already reserved or burned.");
-    const d0 = adapters.git.ref("devel");
-    const mainAtStart = adapters.git.ref("main");
     const releaseBranch = `release/${stableVersion}`;
-    const expectedMarker = markerFor(identity, d0);
     const existingMarker = markerRead(adapters, identity);
-    if (existingMarker) { validateStartMarker(existingMarker); if (!sameMarker(existingMarker, expectedMarker)) fail("start marker identity or anchor differs."); }
-    else {
+    let d0;
+    let expectedMarker;
+    if (existingMarker) {
+        validateStartMarker(existingMarker);
+        if (!sameMarker(existingMarker, markerFor(identity, existingMarker.anchor))) fail("start marker identity or anchor differs.");
+        d0 = existingMarker.anchor;
+        expectedMarker = existingMarker;
+    } else {
+        d0 = adapters.git.ref("devel");
+        expectedMarker = markerFor(identity, d0);
         const oldBranch = readRef(adapters.git, releaseBranch);
         if (oldBranch && !recoveryRequested) fail("unrecorded release branch requires explicit authorized recovery.");
         if (oldBranch && oldBranch !== d0) fail("recovery release branch is not anchored at D0.");
         markerCreate(adapters, expectedMarker);
     }
+    const mainAtStart = adapters.git.ref("main");
     let releaseHead = readRef(adapters.git, releaseBranch);
     if (!releaseHead) { adapters.git.createRef(releaseBranch, d0); releaseHead = d0; }
     if (releaseHead !== d0) {
-        if (typeof adapters.align.validateRelease === "function") adapters.align.validateRelease({ version: stableVersion, branch: releaseBranch, expected: releaseHead });
+        if (typeof adapters.align.validateRelease !== "function") fail("release branch alignment cannot be validated live.");
+        adapters.align.validateRelease({ version: stableVersion, branch: releaseBranch, expected: releaseHead });
     } else releaseHead = adapters.align.release({ version: stableVersion, branch: releaseBranch, expected: d0 });
     if (readRef(adapters.git, releaseBranch) !== releaseHead) fail("release branch moved during stable alignment.");
     const r1 = releaseHead;

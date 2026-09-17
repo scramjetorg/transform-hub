@@ -113,10 +113,33 @@ test("authorized recovery creates a missing exact marker despite the reserved re
     t.is(result.startMarker.anchor, sha("a"));
 });
 
-test("mismatched start marker fails closed before mutation", (t) => {
+test("existing marker anchor is authoritative when devel has advanced", (t) => {
     const a = adapters();
-    a.reservation.readMarker = () => ({ schema: "release-train-start.v1", repository: "scramjetorg/transform-hub", stableVersion: "2.1.1", nextDevelopmentVersion: "2.1.2-devel", releaseBranch: "release/2.1.1", anchor: sha("9") });
-    t.throws(() => startRelease({ stableVersion: "2.1.1", nextDevelopmentVersion: "2.1.2-devel", adapters: a }), { message: /anchor differs/ });
+    const marker = { schema: "release-train-start.v1", repository: "scramjetorg/transform-hub", stableVersion: "2.1.1", nextDevelopmentVersion: "2.1.2-devel", releaseBranch: "release/2.1.1", anchor: sha("9") };
+    a.reservation.readMarker = () => marker;
+    a.reservation.createMarker = () => t.fail("existing marker must not be recreated");
+    const result = startRelease({ stableVersion: "2.1.1", nextDevelopmentVersion: "2.1.2-devel", adapters: a });
+    t.is(result.refs.D0, marker.anchor);
+    t.is(result.startMarker, marker);
+    t.is(a.alignments[0].options.expected, marker.anchor);
+});
+
+test("wrong marker identity fails closed before mutation", (t) => {
+    const a = adapters();
+    a.reservation.readMarker = () => ({ schema: "release-train-start.v1", repository: "scramjetorg/transform-hub", stableVersion: "2.1.0", nextDevelopmentVersion: "2.1.1-devel", releaseBranch: "release/2.1.0", anchor: sha("9") });
+    t.throws(() => startRelease({ stableVersion: "2.1.1", nextDevelopmentVersion: "2.1.2-devel", adapters: a }), { message: /identity/ });
     t.is(a.writes.length, 0);
     t.is(a.alignments.length, 0);
+});
+
+test("missing marker captures current devel as D0", (t) => {
+    const a = adapters();
+    a.refs.devel = sha("9");
+    let stored;
+    a.reservation.readMarker = () => stored || null;
+    a.reservation.createMarker = (marker) => { stored = marker; };
+    const result = startRelease({ stableVersion: "2.1.1", nextDevelopmentVersion: "2.1.2-devel", adapters: a });
+    t.is(stored.anchor, sha("9"));
+    t.is(result.refs.D0, sha("9"));
+    t.is(result.startMarker.anchor, sha("9"));
 });
