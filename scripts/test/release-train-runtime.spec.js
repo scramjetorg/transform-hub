@@ -9,10 +9,12 @@ function adapters(lock = null) {
     if (lock) { refs[lock.releaseBranch] = lock.refs.R1; refs.devel = lock.currentCommit; }
     const writes = [];
     const alignments = [];
+    const validations = [];
     return {
         refs,
         writes,
         alignments,
+        validations,
         git: {
             ref: (name) => refs[name],
             createRef: (name, value) => { refs[name] = value; },
@@ -26,6 +28,7 @@ function adapters(lock = null) {
         github: { createPromotion: () => ({ number: 42 }), promotion: () => ({ number: 42, headSha: sha("c"), branch: "release/2.0.0", base: "main", repository: "scramjetorg/transform-hub" }) },
         align: {
             release: (options) => { alignments.push({ kind: "release", options }); refs[options.branch] = sha("c"); return sha("c"); },
+            validateRelease: (options) => { validations.push(options); },
             development: (options) => { alignments.push({ kind: "development", options }); refs.devel = sha("e"); return sha("e"); }
         },
     };
@@ -111,6 +114,34 @@ test("authorized recovery creates a missing exact marker despite the reserved re
     const result = startRelease({ stableVersion: "2.1.1", nextDevelopmentVersion: "2.1.2-devel", adapters: recovery, recovery: "release/2.1.1" });
     t.deepEqual(stored, marker);
     t.is(result.startMarker.anchor, sha("a"));
+});
+
+test("recovery aligns D0 to R1 before strictly validating R1", (t) => {
+    const recovery = adapters();
+    recovery.refs.devel = sha("d");
+    recovery.refs["release/2.1.1"] = sha("a");
+    recovery.reservation.readMarker = () => ({ schema: "release-train-start.v1", repository: "scramjetorg/transform-hub", stableVersion: "2.1.1", nextDevelopmentVersion: "2.1.2-devel", releaseBranch: "release/2.1.1", anchor: sha("a") });
+    recovery.align.validateRelease = (options) => {
+        t.not(options.expected, sha("a"));
+        recovery.validations.push(options);
+    };
+    const result = startRelease({ stableVersion: "2.1.1", nextDevelopmentVersion: "2.1.2-devel", adapters: recovery, recovery: "release/2.1.1" });
+    t.deepEqual(recovery.alignments[0], { kind: "release", options: { version: "2.1.1", branch: "release/2.1.1", expected: sha("a") } });
+    t.deepEqual(recovery.validations, [{ version: "2.1.1", branch: "release/2.1.1", expected: sha("c") }]);
+    t.is(result.refs.R1, sha("c"));
+    t.is(result.currentCommit, sha("d"));
+});
+
+test("recovery strictly validates an existing R1 descendant without realigning it", (t) => {
+    const recovery = adapters();
+    recovery.refs.devel = sha("d");
+    recovery.refs["release/2.1.1"] = sha("c");
+    recovery.reservation.readMarker = () => ({ schema: "release-train-start.v1", repository: "scramjetorg/transform-hub", stableVersion: "2.1.1", nextDevelopmentVersion: "2.1.2-devel", releaseBranch: "release/2.1.1", anchor: sha("a") });
+    const result = startRelease({ stableVersion: "2.1.1", nextDevelopmentVersion: "2.1.2-devel", adapters: recovery, recovery: "release/2.1.1" });
+    t.false(recovery.alignments.some(({ kind }) => kind === "release"));
+    t.deepEqual(recovery.validations, [{ version: "2.1.1", branch: "release/2.1.1", expected: sha("c") }]);
+    t.is(result.refs.R1, sha("c"));
+    t.is(result.currentCommit, sha("d"));
 });
 
 test("existing marker anchor is authoritative when devel has advanced", (t) => {

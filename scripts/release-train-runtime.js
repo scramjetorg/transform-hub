@@ -95,10 +95,9 @@ function startRelease({ stableVersion, nextDevelopmentVersion, repository = REPO
     const mainAtStart = adapters.git.ref("main");
     let releaseHead = readRef(adapters.git, releaseBranch);
     if (!releaseHead) { adapters.git.createRef(releaseBranch, d0); releaseHead = d0; }
-    if (releaseHead !== d0) {
-        if (typeof adapters.align.validateRelease !== "function") fail("release branch alignment cannot be validated live.");
-        adapters.align.validateRelease({ version: stableVersion, branch: releaseBranch, expected: releaseHead });
-    } else releaseHead = adapters.align.release({ version: stableVersion, branch: releaseBranch, expected: d0 });
+    if (releaseHead === d0) releaseHead = adapters.align.release({ version: stableVersion, branch: releaseBranch, expected: d0 });
+    if (typeof adapters.align.validateRelease !== "function") fail("release branch alignment cannot be validated live.");
+    adapters.align.validateRelease({ version: stableVersion, branch: releaseBranch, expected: releaseHead });
     if (readRef(adapters.git, releaseBranch) !== releaseHead) fail("release branch moved during stable alignment.");
     const r1 = releaseHead;
     let d1 = readRef(adapters.git, "devel");
