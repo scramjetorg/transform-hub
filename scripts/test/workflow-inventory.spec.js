@@ -45,7 +45,7 @@ test("release-train workflows are manual, delegated, and never request npm OIDC"
 	}
 });
 
-test("release start fetches the main audit ref and installs dependencies before delegated start without a future-state check", (t) => {
+test("release start fetches the main audit ref and installs dependencies before delegated start with local Git identity", (t) => {
 	const source = readFileSync(resolve(workflowsDir, "release-start.yml"), "utf8");
 	const mainRefFetch = source.indexOf("git fetch --no-tags origin main:main");
 	const install = source.indexOf("run: npm ci");
@@ -57,6 +57,9 @@ test("release start fetches the main audit ref and installs dependencies before 
 	t.true(install >= 0, "release start must install workspace dependencies");
 	t.true(install < start, "release start must install dependencies before starting a release train");
 	t.true(gitAuthentication > start, "release start must configure Git authentication in the trusted start step");
+	t.true(source.includes('git config --local user.name "github-actions[bot]"'), "release start must configure a deterministic local Git author name");
+	t.true(source.includes('git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"'), "release start must configure a deterministic local Git author email");
+	t.false(source.includes("git config --global user."), "release start must not modify global Git identity");
 	t.true(source.includes("GITHUB_TOKEN: ${{ github.token }}"), "release start must provide an ephemeral GitHub token to Git");
 	t.false(source.includes("scripts/release-align.js check --release-version"), "release start must not check future release state before start");
 	t.true(source.includes('start --repository "$GITHUB_REPOSITORY"'), "release start must pass a non-empty repository argument");
