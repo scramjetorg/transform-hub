@@ -18,9 +18,11 @@ test("active workflow inventory contains only maintained Node 22/npm paths and r
 		"pr-fast-validation.yml",
 		"pr-validate.yml",
 		"production-registry-verification.yml",
+		"release-devel-reconciliation.yml",
 		"release-pr-automation.yml",
 		"release-promotion-admission.yml",
 		"release-publish-recovery.yml",
+		"release-start.yml",
 		"security-check.yml",
 		"tarball-release-validation.yml",
 	]);
@@ -30,6 +32,16 @@ test("active workflow inventory contains only maintained Node 22/npm paths and r
 		t.false(/node-version:\s*['"]?18(?:\.x)?['"]?/i.test(source), `${workflow} must not use Node 18`);
 		t.false(/\byarn\b/i.test(source), `${workflow} must not use Yarn`);
 		t.false(/docker\/login-action|DOCKER_HUB_TOKEN|docker\s+push/i.test(source), `${workflow} must not implement deferred Docker Hub publication`);
+	}
+});
+
+test("release-train workflows are manual, delegated, and never request npm OIDC", (t) => {
+	for (const workflow of ["release-start.yml", "release-devel-reconciliation.yml"]) {
+		const source = readFileSync(resolve(workflowsDir, workflow), "utf8");
+		t.true(source.includes("workflow_dispatch"));
+		t.true(source.includes("scripts/release-train.js"));
+		t.false(source.includes("id-token: write"), `${workflow} must not request npm OIDC`);
+		t.false(source.includes("NPM_TOKEN"), `${workflow} must not publish npm packages`);
 	}
 });
 

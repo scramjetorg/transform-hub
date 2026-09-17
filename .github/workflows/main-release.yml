@@ -45,8 +45,8 @@ jobs:
           test "$RELEASE_PRODUCTION_POLICY_CONFIRMED" = true
           test "$RELEASE_REMOTE_POLICY_CONFIRMED" = true
           mkdir -p "$RUNNER_TEMP/release-candidate"
-          node scripts/release-candidate-runtime.js admit --repository "$GITHUB_REPOSITORY" --tag "candidate-$(git rev-parse HEAD^)" --source-sha "$(git rev-parse HEAD^)" --bundle-dir "$RUNNER_TEMP/release-candidate" --output "$RUNNER_TEMP/admission.json"
-          node -e 'const { readFileSync } = require("node:fs"); const a = JSON.parse(readFileSync(process.env.RUNNER_TEMP + "/admission.json")); for (const [k,v] of Object.entries({"main-sha":process.env.GITHUB_SHA,"candidate-source-sha":a.sourceSha,"candidate-release-id":a.releaseId,"release-set-digest":a.releaseSetDigest,"sealed-state-digest":a.sealedStateDigest,"admission-digest":a.digest})) { if (v === undefined || v === null || v === "") throw new Error(k + " is missing"); console.log(`${k}=${v}`); }' >> "$GITHUB_OUTPUT"
+          node scripts/release-production-runtime.js admit-main --repository "$GITHUB_REPOSITORY" --candidate-tag "candidate-$(git rev-parse HEAD^2)" --main-sha "$GITHUB_SHA" --bundle-dir "$RUNNER_TEMP/release-candidate" --output "$RUNNER_TEMP/admission.json"
+          node -e 'const { readFileSync } = require("node:fs"); const a = JSON.parse(readFileSync(process.env.RUNNER_TEMP + "/admission.json")); for (const [k,v] of Object.entries({"main-sha":a.mainSha,"candidate-source-sha":a.candidate.sourceSha,"candidate-release-id":a.candidate.releaseId,"release-set-digest":a.releaseSetDigest,"sealed-state-digest":a.sealedStateDigest,"admission-digest":a.digest})) { if (v === undefined || v === null || v === "") throw new Error(k + " is missing"); console.log(`${k}=${v}`); }' >> "$GITHUB_OUTPUT"
           node -e 'const runtime = require("./scripts/release-production-runtime"); if (!runtime.admitMain) throw new Error("production admission contract is unavailable");'
 
   tarball-bdd:

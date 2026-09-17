@@ -73,12 +73,13 @@ Replace the CI/release topology with a from-scratch artifact-promotion system: f
 - [x] User-confirmed: release initiation creates a managed release branch and promotion PR for an explicit stable version while advancing `devel` through that release alignment to the explicit next development version; candidates are built from the promotion PR `head.sha`, never from `devel` or GitHub's synthetic merge SHA.
 - [x] User-confirmed: one release train may be active from release start through successful devel reconciliation and its required checks; retries reuse its durable record and a second release start is rejected while reconciliation is pending or requires manual resolution.
 - [x] User-confirmed: the next development version uses the explicit SemVer prerelease form `<next-stable>-devel` (for example, `2.1.3-devel`).
-- [x] User-confirmed: `devel` is normally frozen from release start through the `main` merge. Exceptional PRs may be admitted with ordinary validation only as linear or squash commits; after the merge, replay the recorded development-version continuation and exceptional commit range on `main`, stopping on conflicts and updating `devel` only with a backup ref and lease-guarded history rewrite.
-- [x] User-confirmed: if a release PR closes without merging, retain an aborted train record and burn its stable version; do not reuse its candidate identity or version reservation.
+- [x] User-confirmed: `devel` is normally frozen from release start through the `main` merge. An administrator may use GitHub's native PR override for an exceptional linear or squash commit; after the merge, replay only the lock-invariant single-parent continuation discovered after the lock-bearing commit, stopping on conflicts and updating `devel` only with a backup ref and lease-guarded history rewrite. There is no separate approval or exception-recording workflow.
+- [x] User-confirmed: if a release PR closes without merging, retain its `release/<stable-version>` branch and closed-PR history as the burned-version record; do not reuse its candidate identity or version reservation.
+- [x] User-confirmed: use a simple committed `.github/release-train-lock.json` on `devel` as the durable release-train record. It blocks ordinary `devel` PRs while active; release-branch candidate PRs are not gated by it and revalidate it remotely. An owner may force-push `devel` to clear it for manual recovery, after which automation fails closed until an exact active or terminal record is restored.
 
 ## Review
 
-- Status: revision under final Oracle and Architect re-review.
+- Status: Phase 6 local implementation and validation are complete; protected remote-policy configuration and rehearsal remain pending.
 - Review evidence: candidate state claims/reuse; digest-bound workflow handoffs; explicit verifier/finalizer permissions; direct `latest`; draft asset-copy integrity; exact-tarball publish recovery; gated abandoned-path removal; release-branch candidate and devel-continuation revision.
 - Root registry: `.slim/plans/review.md`.
 
@@ -87,4 +88,3 @@ Replace the CI/release topology with a from-scratch artifact-promotion system: f
 - Confirm GitHub candidate-release asset API, immutable manifest/attestation binding, access controls, one-month cleanup, and a fallback storage representation.
 - Confirm protected-branch rules can authorize only the release-start/reconciliation actor to create managed release refs and perform a lease-guarded `devel` rewrite, while preserving the required release-branch to `main` merge-parent/tree policy.
 - Select the TypeScript smoke runner (`tsx` or Node with explicit type-check omission) and define the affected-workspace dependency-closure algorithm.
-- Define the durable release-train record storage, retention, and manual recovery interface for partial release start, candidate retries, abandoned trains, and interrupted devel reconciliation.

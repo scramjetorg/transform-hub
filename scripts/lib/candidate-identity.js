@@ -16,6 +16,21 @@ function digest(value) { return `sha256:${require("node:crypto").createHash("sha
 function assertSha(value, label = "source SHA") { if (typeof value !== "string" || !SHA.test(value)) throw new Error(`${label} must be a 40-character Git SHA.`); return value.toLowerCase(); }
 function assertDigest(value, label = "digest") { if (typeof value !== "string" || !DIGEST.test(value)) throw new Error(`${label} must be a SHA-256 digest.`); return value.toLowerCase(); }
 
+function candidateTrainBinding(input) {
+    if (!input || typeof input !== "object") throw new Error("Candidate train binding is required.");
+    const promotion = input.promotion;
+    if (!promotion || typeof promotion !== "object" || Array.isArray(promotion)) throw new Error("Candidate promotion binding is required.");
+    if (!Number.isSafeInteger(promotion.number) || promotion.number <= 0) throw new Error("Candidate promotion PR number must be positive.");
+    if (typeof promotion.repository !== "string" || !promotion.repository || promotion.base !== "main") throw new Error("Candidate promotion repository and main base are required.");
+    const continuationBase = assertSha(input.continuationBase, "candidate continuation base");
+    return {
+        trainId: typeof input.trainId === "string" && input.trainId ? input.trainId : undefined,
+        continuationBase,
+        promotion: { number: promotion.number, repository: promotion.repository, base: "main" },
+        sourceSha: assertSha(input.sourceSha, "candidate Rk"),
+    };
+}
+
 function candidateIdentity(input) {
     if (!input || typeof input !== "object") throw new Error("Candidate identity is required.");
     const sourceSha = assertSha(input.sourceSha, "candidate source SHA");
@@ -25,7 +40,12 @@ function candidateIdentity(input) {
     const configDigest = assertDigest(input.configDigest, "candidate config digest");
     const buildIdentity = assertDigest(input.buildIdentity, "candidate build identity");
     const identity = { sourceSha, sourceTree, lockfileDigest, configRevision: input.configRevision, configDigest, buildIdentity };
+    if (input.trainBinding) {
+        const binding = candidateTrainBinding({ ...input.trainBinding, sourceSha });
+        if (!binding.trainId) delete binding.trainId;
+        identity.trainBinding = binding;
+    }
     return { ...identity, key: digest(identity) };
 }
 
-module.exports = { canonicalize, digest, assertSha, assertDigest, candidateIdentity };
+module.exports = { canonicalize, digest, assertSha, assertDigest, candidateTrainBinding, candidateIdentity };

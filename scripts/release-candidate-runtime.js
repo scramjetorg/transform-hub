@@ -5,6 +5,7 @@ const { createHash } = require("node:crypto");
 const { mkdirSync, readFileSync, writeFileSync } = require("node:fs");
 const { resolve } = require("node:path");
 const { assertSha, candidateIdentity, canonicalize } = require("./lib/candidate-identity");
+const { validateReleaseTrainLock } = require("./release-train-lock");
 
 function option(args, name) { const i = args.indexOf(name); if (i < 0 || !args[i + 1]) throw new Error(`${name} is required.`); return args[i + 1]; }
 function json(file) { return JSON.parse(readFileSync(resolve(file), "utf8")); }
@@ -26,10 +27,47 @@ function remoteSha(repository, branch, runner = execFileSync) {
     return assertSha(output.split(/\s+/)[0], "protected remote SHA");
 }
 
-function preflight({ repository, branch, sourceSha, output, env = process.env, runner = execFileSync }) {
+function readRemoteTrainLock({ repository, runner = execFileSync }) {
+    if (repository !== "scramjetorg/transform-hub") throw new Error("Candidate remote lock requires the managed repository.");
+    const remote = remoteSha(repository, "devel", runner);
+    runner("git", ["fetch", "--no-tags", "--depth=1", `https://github.com/${repository}.git`, "refs/heads/devel"], { encoding: "utf8" });
+    let lock;
+    try { lock = JSON.parse(runner("git", ["show", "FETCH_HEAD:.github/release-train-lock.json"], { encoding: "utf8" })); } catch { throw new Error("Active devel release-train lock is unavailable remotely."); }
+    validateReleaseTrainLock(lock);
+    if (remote !== lock.currentCommit && !lock.continuation.includes(remote)) throw new Error("Remote devel does not carry the active release-train lock.");
+    if (["aborted", "reconciled", "manual-recovery-required"].includes(lock.status)) throw new Error("Active devel release-train lock is terminal.");
+    return lock;
+}
+
+function assertCandidatePullRequest({ repository, event, lock, runner = execFileSync }) {
+    const pr = event?.pull_request || event;
+    const head = pr?.head || {}, base = pr?.base || {};
+    const headRepo = head.repo?.full_name;
+    if (event?.repository?.full_name !== repository || pr?.number !== lock.promotion.number || base.ref !== "main" || head.ref !== lock.releaseBranch || headRepo !== repository) throw new Error("Candidate authority is limited to the locked same-repository release promotion targeting main.");
+    const sourceSha = assertSha(head.sha, "pull request head SHA");
+    if (sourceSha === event?.after || sourceSha === event?.merge_commit_sha || sourceSha === pr.merge_commit_sha) throw new Error("Synthetic pull request merge SHA cannot be used as candidate source.");
+    const status = runner("git", ["merge-base", "--is-ancestor", lock.refs.R1, sourceSha], { encoding: "utf8" });
+    void status;
+    const trainId = `${lock.repository}:${lock.stableVersion}`;
+    return { sourceSha, trainBinding: { trainId, continuationBase: lock.refs.R1, promotion: { number: pr.number, repository, base: "main" } } };
+}
+
+function preflight({ repository, branch, sourceSha, output, env = process.env, runner = execFileSync, event = null }) {
     if (repository !== "scramjetorg/transform-hub" || branch !== "devel") throw new Error("Candidate preflight requires the managed devel repository and branch.");
     const expectedSha = assertSha(sourceSha, "candidate source SHA");
     if (env.RELEASE_REMOTE_POLICY_CONFIRMED !== "true") throw new Error("Remote release policy is unconfirmed; refusing to build or stage a candidate.");
+    if (event) {
+        const lock = readRemoteTrainLock({ repository, runner });
+        const binding = assertCandidatePullRequest({ repository, event, lock, runner });
+        if (binding.sourceSha !== expectedSha) throw new Error("Candidate source SHA is not the pull request head SHA.");
+        const treeObjectId = assertSha(runner("git", ["rev-parse", `${expectedSha}^{tree}`], { encoding: "utf8" }).trim(), "Git tree object ID");
+        const sourceTree = sha256(treeObjectId);
+        const lockfileDigest = sha256(readFileSync("package-lock.json"));
+        const configRevision = env.RELEASE_CONFIG_REVISION || "release-config-v1";
+        const configDigest = sha256(Buffer.from(configRevision));
+        const identity = candidateIdentity({ sourceSha: expectedSha, sourceTree, lockfileDigest, configRevision, configDigest, buildIdentity: sha256(Buffer.from(`${expectedSha}:${sourceTree}:${lockfileDigest}:${configDigest}`)), trainBinding: binding.trainBinding });
+        write(output, identity); return identity;
+    }
     if (remoteSha(repository, branch, runner) !== expectedSha) throw new Error("Protected remote devel moved during candidate preflight.");
     const treeObjectId = assertSha(runner("git", ["rev-parse", `${expectedSha}^{tree}`], { encoding: "utf8" }).trim(), "Git tree object ID");
     const sourceTree = sha256(treeObjectId);
@@ -133,7 +171,7 @@ function buildBddEvidenceAssets({ state, releaseId, releaseSetDigest, sealedStat
         seen.add(shard.name);
         if (shard.status !== "success") throw new Error("All BDD shards must succeed before durable evidence persistence.");
         if (!shard.evidence || shard.evidence.schema !== "bdd-shard-evidence.v1" || shard.evidence.shard !== shard.name || shard.evidence.matrixRevision !== BDD_MATRIX.revision || shard.evidence.exitStatus !== 0) throw new Error(`BDD shard evidence payload is invalid: ${shard.name}`);
-        const item = { schema: "release-bdd-shard-evidence.v1", shard: shard.name, status: shard.status, matrixRevision: state.bdd.matrixRevision, candidateReleaseId: Number(releaseId), releaseSetDigest, sealedStateDigest, evidence: shard.evidence || null };
+        const item = { schema: "release-bdd-shard-evidence.v1", shard: shard.name, status: shard.status, matrixRevision: state.bdd.matrixRevision, candidateReleaseId: Number(releaseId), releaseSetDigest, sealedStateDigest, trainBinding: state.identity?.trainBinding || null, evidence: shard.evidence || null };
         return { name: `bdd-evidence/${item.shard}.json`, bytes: Buffer.from(`${JSON.stringify(item, null, 2)}\n`), item };
     });
 }
@@ -178,7 +216,7 @@ function admit({ repository, tag, sourceSha, bundleDir, output, runner }) {
 
 function main() {
     const [command, ...args] = process.argv.slice(2);
-    if (command === "preflight") return preflight({ repository: option(args, "--repository"), branch: option(args, "--branch"), sourceSha: option(args, "--source-sha"), output: option(args, "--output") });
+    if (command === "preflight") return preflight({ repository: option(args, "--repository"), branch: option(args, "--branch"), sourceSha: option(args, "--source-sha"), output: option(args, "--output"), event: args.includes("--event") ? json(option(args, "--event")) : null });
     if (command === "build") return build({ root: option(args, "--root"), bundleDir: option(args, "--bundle-dir"), stateFile: option(args, "--state"), identityFile: option(args, "--identity"), releaseSetFile: option(args, "--release-set") });
     if (command === "locate") return locate({ repository: option(args, "--repository"), tag: option(args, "--tag"), sourceSha: option(args, "--source-sha"), identity: args.includes("--identity") ? json(option(args, "--identity")) : null, output: option(args, "--output") });
     if (command === "resolve") return resolveCandidate({ repository: option(args, "--repository"), releaseId: Number(option(args, "--release-id")), tag: option(args, "--tag"), sourceSha: option(args, "--source-sha"), identity: args.includes("--identity") ? json(option(args, "--identity")) : null, releaseSetDigest: option(args, "--release-set-digest"), sealedStateDigest: option(args, "--sealed-state-digest"), bundleDir: option(args, "--bundle-dir"), stateFile: option(args, "--state"), output: option(args, "--output") });
@@ -209,4 +247,4 @@ function main() {
     throw new Error("Usage: release-candidate-runtime.js preflight|build|resolve|stage|attest");
 }
 if (require.main === module) { try { main(); } catch (error) { console.error(`[release-candidate-runtime] ${error.message}`); process.exitCode = 1; } }
-module.exports = { preflight, build, locate, resolveCandidate, stage, buildBddEvidenceAssets, persistBdd, admit };
+module.exports = { preflight, build, locate, resolveCandidate, stage, buildBddEvidenceAssets, persistBdd, admit, readRemoteTrainLock, assertCandidatePullRequest };

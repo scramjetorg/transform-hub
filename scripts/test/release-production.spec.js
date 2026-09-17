@@ -26,6 +26,7 @@ test("main admission is exact and digest bound", (t) => {
     t.throws(() => production.validateMainAdmission({ ...admission, parents: [admission.parents[0], sha("9")] }), { message: /second parent/ });
     t.throws(() => production.validateMainAdmission({ ...admission, secondParentTree: digest("0") }), { message: /tree digests/ });
     t.throws(() => production.validateMainAdmission({ ...admission, candidate: { ...admission.candidate, releaseId: "42" } }), { message: /numeric/ });
+    t.throws(() => production.validateMainAdmission({ ...admission, mainFirstParentAtAdmission: sha("9") }), { message: /first parent/ });
 });
 
 function journalFixture() {

@@ -11,6 +11,7 @@ on:
       image-map: { required: true, type: string }
       repository: { required: true, type: string }
       candidate-tag: { required: true, type: string }
+      train-binding: { required: true, type: string }
     outputs:
       consumed-input-digest:
         value: ${{ jobs.validate.outputs.consumed-input-digest }}

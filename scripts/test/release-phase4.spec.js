@@ -95,14 +95,13 @@ test("admission accepts exactly the canonical durable BDD shard set", (t) => {
     t.throws(() => admission({ stateFile, releaseSetFile: releaseFile, evidenceFile: stale, sealFile, shardEvidenceFiles: shards, sourceSha: SHA, releaseId: 9, output: join(root, "stale-out.json") }), { message: /does not match/ });
 });
 
-test("phase 4 admission runs only for the same-repository devel-to-main release PR", (t) => {
+test("phase 4 admission runs only for the same-repository release-to-main PR", (t) => {
     const admissionWorkflow = require("node:fs").readFileSync(resolve(__dirname, "..", "..", ".github", "workflows", "release-promotion-admission.yml"), "utf8");
     const buildWorkflow = require("node:fs").readFileSync(resolve(__dirname, "..", "..", ".github", "workflows", "build-release-candidate.yml"), "utf8");
-    t.regex(admissionWorkflow, /  preflight:\n    if: \$\{\{ github\.event\.pull_request\.base\.ref == 'main' && github\.event\.pull_request\.head\.ref == 'devel' && github\.event\.pull_request\.head\.repo\.full_name == github\.repository \}\}\n    runs-on:/);
-    t.regex(admissionWorkflow, /  evidence:\n    needs: \[preflight\]/);
-    t.false(admissionWorkflow.includes("preflight:\n    runs-on:"));
+    t.regex(admissionWorkflow, /  verify:\n    if: \$\{\{ github\.repository == 'scramjetorg\/transform-hub' && startsWith\(github\.event\.pull_request\.head\.ref, 'release\/'\) && github\.event\.pull_request\.head\.repo\.full_name == github\.repository && github\.event\.pull_request\.base\.ref == 'main' \}\}\n    runs-on:/);
+    t.true(admissionWorkflow.includes("Read-only promotion verification"));
     t.true(buildWorkflow.includes("release-candidate-runtime.js resolve"));
-    t.true(admissionWorkflow.includes("release-candidate-runtime.js admit"));
+    t.false(admissionWorkflow.includes("release-candidate-runtime.js admit"));
     t.false(admissionWorkflow.includes("RELEASE_CANDIDATE_ID"));
 });
 
