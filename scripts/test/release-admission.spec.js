@@ -13,10 +13,10 @@ const { bddSupportArtifact, writeBddSupportFixture } = require("./release-test-f
 const matrix = require("../release-bdd-matrix.v1.json");
 
 const SHA = "a".repeat(40);
-const identity = candidateIdentity({ sourceSha: SHA, sourceTree: `sha256:${"b".repeat(64)}`, lockfileDigest: `sha256:${"c".repeat(64)}`, configRevision: "phase4", configDigest: `sha256:${"d".repeat(64)}`, buildIdentity: `sha256:${"e".repeat(64)}` });
+const identity = candidateIdentity({ sourceSha: SHA, sourceTree: `sha256:${"b".repeat(64)}`, lockfileDigest: `sha256:${"c".repeat(64)}`, configRevision: "release-admission", configDigest: `sha256:${"d".repeat(64)}`, buildIdentity: `sha256:${"e".repeat(64)}` });
 
 test("candidate planning binds the BDD image digest to the publisher repository", (t) => {
-    const root = mkdtempSync(join(tmpdir(), "release-phase4-plan-"));
+    const root = mkdtempSync(join(tmpdir(), "release-admission-plan-"));
     t.teardown(() => rmSync(root, { recursive: true, force: true }));
     const identityFile = join(root, "identity.json");
     writeFileSync(identityFile, JSON.stringify(identity));
@@ -28,7 +28,7 @@ test("candidate planning binds the BDD image digest to the publisher repository"
 });
 
 test("admission requires success evidence to match source, numeric release, and release-set digest", (t) => {
-    const root = mkdtempSync(join(tmpdir(), "release-phase4-admission-"));
+    const root = mkdtempSync(join(tmpdir(), "release-admission-evidence-"));
     t.teardown(() => rmSync(root, { recursive: true, force: true }));
     writeBddSupportFixture(root);
     const stateFile = join(root, "state.json");
@@ -66,7 +66,7 @@ test("runtime BDD persistence uses unique canonical shard asset paths", (t) => {
 });
 
 test("admission accepts exactly the canonical durable BDD shard set", (t) => {
-    const root = mkdtempSync(join(tmpdir(), "release-phase4-shards-"));
+    const root = mkdtempSync(join(tmpdir(), "release-admission-shards-"));
     t.teardown(() => rmSync(root, { recursive: true, force: true }));
     writeBddSupportFixture(root);
     const stateFile = join(root, "state.json");
@@ -95,7 +95,7 @@ test("admission accepts exactly the canonical durable BDD shard set", (t) => {
     t.throws(() => admission({ stateFile, releaseSetFile: releaseFile, evidenceFile: stale, sealFile, shardEvidenceFiles: shards, sourceSha: SHA, releaseId: 9, output: join(root, "stale-out.json") }), { message: /does not match/ });
 });
 
-test("phase 4 admission runs only for the same-repository release-to-main PR", (t) => {
+test("release admission runs only for the same-repository release-to-main PR", (t) => {
     const admissionWorkflow = require("node:fs").readFileSync(resolve(__dirname, "..", "..", ".github", "workflows", "release-promotion-admission.yml"), "utf8");
     const buildWorkflow = require("node:fs").readFileSync(resolve(__dirname, "..", "..", ".github", "workflows", "build-release-candidate.yml"), "utf8");
     t.regex(admissionWorkflow, /  verify:\n    if: \$\{\{ github\.repository == 'scramjetorg\/transform-hub' && startsWith\(github\.event\.pull_request\.head\.ref, 'release\/'\) && github\.event\.pull_request\.head\.repo\.full_name == github\.repository && github\.event\.pull_request\.base\.ref == 'main' \}\}\n    runs-on:/);
@@ -106,7 +106,7 @@ test("phase 4 admission runs only for the same-repository release-to-main PR", (
 });
 
 test("admission rejects a release set missing the required BDD support artifact", (t) => {
-    const root = mkdtempSync(join(tmpdir(), "release-phase4-missing-bdd-support-"));
+    const root = mkdtempSync(join(tmpdir(), "release-admission-missing-bdd-support-"));
     t.teardown(() => rmSync(root, { recursive: true, force: true }));
     const releaseSet = { schema: "release-set.v1", source: { repository: "scramjetorg/transform-hub", sha: SHA, tree: identity.sourceTree }, lockfile: { path: "package-lock.json", sha256: identity.lockfileDigest }, toolchain: { node: "node", npm: "npm" }, build: { identity: identity.buildIdentity }, boundary: { packages: ["@scramjet/a"] }, waves: [["@scramjet/a"]], artifacts: { tarballs: [{ name: "@scramjet/a", path: "artifacts/a.tgz", size: 1, sha256: `sha256:${"1".repeat(64)}`, sri: "sha256-1" }], images: [] }, canonical: { schema: "release-set.v1", version: 1 } };
     writeFileSync(join(root, "release-set.json"), JSON.stringify(releaseSet));

@@ -6,9 +6,9 @@ const { resolve } = require("node:path");
 
 const root = resolve(__dirname, "..", "..", ".github", "workflows");
 const source = (name) => readFileSync(resolve(root, name), "utf8");
-const phase4 = ["pr-fast-validation.yml", "build-release-candidate.yml", "curated-devel-build-validation.yml", "release-promotion-admission.yml"];
+const releaseWorkflowFiles = ["pr-fast-validation.yml", "build-release-candidate.yml", "curated-devel-build-validation.yml", "release-promotion-admission.yml"];
 
-test("Phase 4 workflows use the intended triggers, least privilege, and cancellation boundaries", (t) => {
+test("Release workflows use the intended triggers, least privilege, and cancellation boundaries", (t) => {
     const pr = source("pr-fast-validation.yml");
     t.true(pr.includes("pull_request:"));
     t.true(pr.includes("branches: [devel]"));
@@ -17,7 +17,9 @@ test("Phase 4 workflows use the intended triggers, least privilege, and cancella
     t.true(pr.includes("biome lint --changed"));
     t.true(pr.includes("--no-errors-on-unmatched"));
     const candidate = source("build-release-candidate.yml");
-    t.true(candidate.includes("branches: [devel]"));
+    t.true(candidate.includes("pull_request_target:"));
+    t.regex(candidate, /if: \$\{\{ github\.repository == 'scramjetorg\/transform-hub' && github\.event\.pull_request\.base\.ref == 'main' && startsWith\(github\.event\.pull_request\.head\.ref, 'release\/'\) && github\.event\.pull_request\.head\.repo\.full_name == github\.repository \}\}/);
+    t.false(candidate.includes("branches: [devel]"));
     t.true(candidate.includes("cancel-in-progress: false"));
     t.true(candidate.includes("release-candidate-runtime.js locate"));
     t.true(candidate.includes("candidate-seal.json") || candidate.includes("sealed-state-digest"));
@@ -25,11 +27,13 @@ test("Phase 4 workflows use the intended triggers, least privilege, and cancella
     const admission = source("release-promotion-admission.yml");
     t.true(admission.includes("github.event.pull_request.head.repo.full_name == github.repository"));
     t.true(admission.includes("github.event.pull_request.base.ref == 'main'"));
-    for (const file of phase4) {
+    for (const file of releaseWorkflowFiles) {
         const text = source(file);
-        t.false(text.includes("pull_request_target"), `${file} must remain fork-safe`);
         t.false(/uses:\s+actions\/[\w-]+@v\d/.test(text), `${file} has an unpinned action`);
         t.true(text.includes("persist-credentials: false"), `${file} must not persist checkout credentials`);
+    }
+    for (const file of ["pr-fast-validation.yml", "curated-devel-build-validation.yml", "release-promotion-admission.yml"]) {
+        t.false(source(file).includes("pull_request_target"), `${file} must remain fork-safe`);
     }
 });
 
@@ -37,7 +41,7 @@ test("PR and admission contain no release/build/full-BDD authority", (t) => {
     const pr = source("pr-fast-validation.yml");
     const admission = source("release-promotion-admission.yml");
     t.regex(pr, /actions\/checkout@[0-9a-f]{40}[\s\S]*?name: Install dependencies\n\s+run: npm ci/);
-    t.regex(pr, /name: Offline contract and adapter tests\n\s+run: node scripts\/run-ava\.js[\s\S]*?scripts\/test\/release-contract\.spec\.js[\s\S]*?scripts\/test\/release-phase4\.spec\.js[\s\S]*?scripts\/test\/github-release-candidate\.spec\.js[\s\S]*?scripts\/test\/release-candidate-assets\.spec\.js[\s\S]*?scripts\/test\/release-bdd-validation\.spec\.js[\s\S]*?scripts\/test\/release-bundle\.spec\.js/);
+    t.regex(pr, /name: Offline contract and adapter tests\n\s+run: node scripts\/run-ava\.js[\s\S]*?scripts\/test\/release-contract\.spec\.js[\s\S]*?scripts\/test\/release-admission\.spec\.js[\s\S]*?scripts\/test\/github-release-candidate\.spec\.js[\s\S]*?scripts\/test\/release-candidate-assets\.spec\.js[\s\S]*?scripts\/test\/release-bdd-validation\.spec\.js[\s\S]*?scripts\/test\/release-bundle\.spec\.js/);
     t.true(pr.indexOf("run: npm ci") > pr.indexOf("uses: actions/checkout@"));
     for (const text of [pr, admission]) {
         t.false(/npm run (?:build|pack|publish)|build-all\.js|npm\s+pack|test:bdd|run-bdd/.test(text));
@@ -61,8 +65,8 @@ test("candidate authority is digest and numeric-ID based, not tag/check-name bas
 
 test("candidate retries bind lookup to identity and publish remote-derived stage outputs", (t) => {
     const candidate = source("build-release-candidate.yml");
-    t.true(candidate.includes("locate --repository \"$GITHUB_REPOSITORY\" --tag \"candidate-$GITHUB_SHA\" --source-sha \"$GITHUB_SHA\" --identity"));
-    t.true(candidate.includes("resolve --repository \"$GITHUB_REPOSITORY\" --tag \"candidate-$GITHUB_SHA\" --source-sha \"$GITHUB_SHA\" --identity"));
+    t.true(candidate.includes("locate --repository \"$GITHUB_REPOSITORY\" --tag \"candidate-${{ github.event.pull_request.head.sha }}\" --source-sha \"${{ github.event.pull_request.head.sha }}\" --identity"));
+    t.true(candidate.includes("resolve --repository \"$GITHUB_REPOSITORY\" --tag \"candidate-${{ github.event.pull_request.head.sha }}\" --source-sha \"${{ github.event.pull_request.head.sha }}\" --identity"));
     t.true(candidate.includes("release-set-digest: ${{ needs.stage.outputs.release-set-digest }}"));
     t.true(candidate.includes("image-digest: ${{ needs.stage.outputs.image-digest }}"));
     t.true(candidate.includes("releaseSetDigest\":\"${{ needs.stage.outputs.release-set-digest }}\""));
