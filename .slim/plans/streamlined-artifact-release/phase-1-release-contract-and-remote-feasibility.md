@@ -20,12 +20,19 @@ An approved, versioned artifact and trust contract plus confirmed GitHub/npm cap
 - [x] Exact promotion policy is: merge commit with admitted `devel` as second parent and resulting tree verified before merge; direct pushes to main are rejected by later required admission/publisher checks.
 - [x] Recovery policy: npm versions are immutable, only exact tarball reuse is permitted, checksum mismatches hard-stop publication, and rebuild/repack is never allowed.
 
+## Reset-Initialize Contract
+
+- `reset-initialize` is a protected/manual command, not a generic ignore-state flag. It accepts stable version, next `<stable>-devel` version, exact expected `devel` SHA, and `confirm-reset` equal to stable.
+- It is limited to failed same-release partial initialization: after rejecting an active different train, a final tag/GitHub Release, a merged promotion PR, ambiguous promotion PRs, a changed `devel` SHA, or a confirmation mismatch, it may clear the failed same-release partial marker/lock state and force-reset only the named `release/<stable>` and `devel` refs under leases.
+- It then runs ordinary stable/development alignment and creates or reuses the promotion PR and normal active lock. It never writes `main`, publishes npm, merges PRs, bypasses branch protection, or uses a GitHub environment. The existing `production` environment remains the only npm approval.
+
 ## Acceptance Criteria
 
 - A signed release-set manifest digest plus candidate release identity, not a mutable tag or check name, uniquely identifies every promotion input.
 - Every privileged action has an explicit trust boundary and least-privilege permission set.
 - The existing GitHub `production` environment is the sole environment approval: it is used only immediately before production npm publication and manual missing-package npm recovery. Release Start, devel reconciliation, candidate staging/BDD/admission, GitHub Packages prereleases, registry proof, and release finalization are automatic and use no GitHub environment approval; branch protections are their promotion guardrail, not an environment approval.
 - Blocking remote capability decisions are confirmed or have an approved fallback.
+- The reset-initialize command has a protected/manual trust boundary, explicit inputs, lease-guarded named-ref scope, and no authority over `main`, npm publication, PR merges, branch-protection bypass, or GitHub environments.
 
 ## Validation Evidence
 

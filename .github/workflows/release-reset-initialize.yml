@@ -1,0 +1,40 @@
+name: Release train reset initialize
+
+on:
+  workflow_dispatch:
+    inputs:
+      repository: { required: true, type: string, description: Managed repository }
+      stable-version: { required: true, type: string, description: Stable release version }
+      next-development-version: { required: true, type: string, description: Next development version }
+      devel-sha: { required: true, type: string, description: Exact devel SHA }
+      confirm-reset: { required: true, type: string, description: Type the stable version to confirm reset }
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: release-train-initialize
+  cancel-in-progress: false
+
+jobs:
+  reset-initialize:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: { persist-credentials: false, fetch-depth: 0, ref: devel }
+      - name: Fetch release train refs
+        run: git fetch --no-tags origin main:main 'refs/heads/release/*:refs/heads/release/*' 'refs/tags/release-train-start.v1/*:refs/tags/release-train-start.v1/*'
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe502c1
+        with: { node-version: "22", cache: "" }
+      - name: Install dependencies
+        run: npm ci
+      - name: Reset and initialize release train
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --local credential.helper '!f() { echo "username=x-access-token"; echo "password=$GITHUB_TOKEN"; }; f'
+          node scripts/release-train.js reset-initialize --repository "${{ inputs.repository }}" --stable-version "${{ inputs.stable-version }}" --next-development-version "${{ inputs.next-development-version }}" --devel-sha "${{ inputs.devel-sha }}" --confirm-reset "${{ inputs.confirm-reset }}"

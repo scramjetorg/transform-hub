@@ -2,6 +2,7 @@ const { execFileSync } = require("node:child_process");
 const { existsSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } = require("node:fs");
 const { tmpdir } = require("node:os");
 const { resolve } = require("node:path");
+const { validateStartMarker } = require("../release-train-lock");
 
 function createGithubReleaseTrainAdapters({
     repository = "scramjetorg/transform-hub",
@@ -13,6 +14,11 @@ function createGithubReleaseTrainAdapters({
     const command = (program, args, options = {}) =>
         runner(program, args, { encoding: "utf8", ...options, env: { ...process.env, ...(options.env || {}), ...(githubToken ? { GH_TOKEN: githubToken } : {}) } });
     const refs = (name) => String(command("git", ["rev-parse", name])).trim();
+    const remoteRef = (name) => {
+        const result = String(command("git", ["ls-remote", "origin", `refs/heads/${name}`])).trim().split(/\s+/)[0];
+        if (!result) throw new Error(`remote ref ${name} is unavailable`);
+        return result;
+    };
     const git = {
         ref: refs,
         createRef: (name, value) => {
@@ -55,7 +61,8 @@ function createGithubReleaseTrainAdapters({
             command("git", ["update-ref", `refs/${name}`, value]);
             return { name, value };
         },
-        updateRef: (name, value, options) => { command("git", ["update-ref", `refs/heads/${name}`, value, options.expected]); command("git", ["push", "origin", `${value}:refs/heads/${name}`]); }
+        updateRef: (name, value, options) => { command("git", ["update-ref", `refs/heads/${name}`, value, options.expected]); const lease = options.force ? `--force-with-lease=refs/heads/${name}:${options.expected}` : ""; command("git", ["push", "origin", ...(lease ? [lease] : []), `${value}:refs/heads/${name}`]); },
+        remoteRef
     };
     const lockStore = {
         read: () => (existsSync(resolve(lockPath)) ? JSON.parse(readFileSync(resolve(lockPath), "utf8")) : null),
@@ -70,6 +77,10 @@ function createGithubReleaseTrainAdapters({
             command("git", ["add", lockPath]);
             command("git", ["commit", "-m", `release: update train lock ${value.status}`]);
             command("git", ["push", "origin", "HEAD:refs/heads/devel"]);
+        },
+        clearResetState: (identity, state) => {
+            if (!state || state.kind !== "failed-partial") throw new Error("release-train lock reset requires a failed partial start");
+            if (existsSync(resolve(lockPath))) throw new Error("release-train lock reset refused while lock state exists");
         }
     };
     const github = {
@@ -98,6 +109,11 @@ function createGithubReleaseTrainAdapters({
             if (!result[0]) return null;
             return { ...result[0], headSha: result[0].headRefOid, merged: Boolean(result[0].mergedAt) };
         },
+        findPromotions: ({ repository: repo, head, base }) => {
+            const result = JSON.parse(command("gh", ["pr", "list", "--repo", repo, "--head", head, "--base", base, "--state", "all", "--json", "number,state,mergedAt,headRefOid"]));
+            return result.map((item) => ({ ...item, headSha: item.headRefOid, merged: Boolean(item.mergedAt) }));
+        },
+        reopenPromotion: ({ repository: repo, number }) => command("gh", ["pr", "reopen", String(number), "--repo", repo]),
     };
     github.createPromotion = ({ repository: repo, head, base }) => {
         const existing = JSON.parse(command("gh", ["pr", "list", "--repo", repo, "--head", head, "--base", base, "--state", "open", "--json", "number,headRefName,baseRefName"]));
@@ -142,7 +158,7 @@ function createGithubReleaseTrainAdapters({
             if (!result.ok) throw new Error(result.errors.join("; "));
             command("git", ["add", "-A"]);
             command("git", ["commit", "-m", `release: align ${version}`]);
-            command("git", ["push", "origin", `HEAD:refs/heads/${branch}`]);
+            command("git", ["push", "origin", `--force-with-lease=refs/heads/${branch}:${expected}`, `HEAD:refs/heads/${branch}`]);
             return refs("HEAD");
         },
         development: ({ version, branch = "devel", expected }) => {
@@ -152,7 +168,7 @@ function createGithubReleaseTrainAdapters({
             if (!result.ok) throw new Error(result.errors.join("; "));
             command("git", ["add", "-A"]);
             command("git", ["commit", "-m", `release: align ${version}`]);
-            command("git", ["push", "origin", `HEAD:refs/heads/${branch}`]);
+            command("git", ["push", "origin", `--force-with-lease=refs/heads/${branch}:${expected}`, `HEAD:refs/heads/${branch}`]);
             return refs("HEAD");
         }
     };
@@ -163,8 +179,14 @@ function createGithubReleaseTrainAdapters({
                 const anchor = String(command("git", ["rev-parse", "--verify", "--quiet", `${markerRef}^{}`])).trim();
                 const subject = String(command("git", ["for-each-ref", "--format=%(contents:subject)", markerRef])).trim();
                 if (!anchor || !subject) return null;
-                return { ...JSON.parse(subject), anchor };
-            } catch { return null; }
+                let marker;
+                try { marker = JSON.parse(subject); } catch (error) { throw new Error("release-train start marker is malformed", { cause: error }); }
+                validateStartMarker({ ...marker, anchor });
+                return { ...marker, anchor };
+            } catch (error) {
+                if (/malformed|Invalid release-train/.test(String(error?.message))) throw error;
+                return null;
+            }
         },
         createMarker: (marker) => {
             const markerRef = `refs/tags/release-train-start.v1/${marker.stableVersion}/${marker.nextDevelopmentVersion}`;
@@ -183,6 +205,16 @@ function createGithubReleaseTrainAdapters({
         isReserved: (version) => {
             try { command("git", ["ls-remote", "--exit-code", "origin", `refs/heads/release/${version}`]); return true; } catch {}
             try { command("gh", ["release", "view", `v${version}`, "--repo", repository]); return true; } catch { return false; }
+        },
+        finalTagExists: (version) => { try { command("git", ["ls-remote", "--exit-code", "origin", `refs/tags/v${version}`]); return true; } catch { return false; } },
+        releaseExists: (version) => { try { command("gh", ["release", "view", `v${version}`, "--repo", repository]); return true; } catch { return false; } },
+        clearResetState: (identity, state) => {
+            if (!state || state.kind !== "failed-partial" || !state.marker) throw new Error("release-train marker reset requires a failed partial start");
+            const marker = reservation.readMarker(identity);
+            if (!marker || marker.repository !== identity.repository || marker.stableVersion !== identity.stableVersion || marker.nextDevelopmentVersion !== identity.nextDevelopmentVersion || marker.releaseBranch !== identity.releaseBranch || marker.anchor !== state.marker.anchor)
+                throw new Error("release-train start marker identity cannot be verified");
+            const markerRef = `refs/tags/release-train-start.v1/${identity.stableVersion}/${identity.nextDevelopmentVersion}`;
+            try { command("git", ["push", "origin", `:${markerRef}`]); } catch {}
         },
         reserve: () => {}
     };

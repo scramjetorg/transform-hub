@@ -5,13 +5,12 @@ on:
     inputs:
       stable-version: { required: true, type: string, description: Stable release version }
       next-development-version: { required: true, type: string, description: Next stable version with -devel suffix }
-      recovery: { required: false, type: string, description: Explicit recovery train identity (release/2.1.1 only) }
 
 permissions:
   contents: read
 
 concurrency:
-  group: release-train-start
+  group: release-train-initialize
   cancel-in-progress: false
 
 jobs:
@@ -26,7 +25,7 @@ jobs:
         with: { persist-credentials: false, fetch-depth: 0, ref: devel }
       - name: Fetch main audit ref
         run: git fetch --no-tags origin main:main
-      - name: Fetch release recovery refs
+      - name: Fetch release refs
         run: git fetch --no-tags origin "refs/heads/release/*:refs/heads/release/*"
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
         with: { node-version: "22", cache: "" }
@@ -40,6 +39,4 @@ jobs:
           git config --local user.name "github-actions[bot]"
           git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config --local credential.helper '!f() { echo "username=x-access-token"; echo "password=$GITHUB_TOKEN"; }; f'
-          RECOVERY_ARGS=()
-          if [ -n "${{ inputs.recovery }}" ]; then RECOVERY_ARGS+=(--recovery "${{ inputs.recovery }}"); fi
-          node scripts/release-train.js start --repository "$GITHUB_REPOSITORY" --stable-version "${{ inputs.stable-version }}" --next-development-version "${{ inputs.next-development-version }}" "${RECOVERY_ARGS[@]}"
+          node scripts/release-train.js start --repository "$GITHUB_REPOSITORY" --stable-version "${{ inputs.stable-version }}" --next-development-version "${{ inputs.next-development-version }}"

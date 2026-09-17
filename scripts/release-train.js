@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-const { startRelease, reconcileDevel, prepareReconciliation, finalizeReconciliation } = require("./release-train-runtime");
+const { startRelease, resetInitialize, reconcileDevel, prepareReconciliation, finalizeReconciliation } = require("./release-train-runtime");
 const { createGithubReleaseTrainAdapters } = require("./lib/github-release-train-adapters");
 
 function option(args, name) {
@@ -20,13 +20,14 @@ function main() {
     const adapters = createGithubReleaseTrainAdapters({ repository, githubToken: process.env.GH_TOKEN });
     if (command === "start")
         return console.log(
-            JSON.stringify(startRelease({ stableVersion: option(args, "--stable-version"), nextDevelopmentVersion: option(args, "--next-development-version"), recovery: optionalOption(args, "--recovery"), adapters }))
+            JSON.stringify(startRelease({ stableVersion: option(args, "--stable-version"), nextDevelopmentVersion: option(args, "--next-development-version"), adapters }))
         );
+    if (command === "reset-initialize") return console.log(JSON.stringify(resetInitialize({ repository, stableVersion: option(args, "--stable-version"), nextDevelopmentVersion: option(args, "--next-development-version"), develSha: option(args, "--devel-sha"), confirmReset: option(args, "--confirm-reset"), adapters })));
     if (command === "prepare") return console.log(JSON.stringify(prepareReconciliation({ mergeSha: option(args, "--merge-sha"), adapters })));
     if (command === "finalize")
         return console.log(JSON.stringify(finalizeReconciliation({ mergeSha: option(args, "--merge-sha"), adapters, validationPassed: args.includes("--validation-passed") })));
     if (command === "reconcile") return console.log(JSON.stringify(reconcileDevel({ mergeSha: option(args, "--merge-sha"), adapters, validationPassed: true })));
-    throw new Error("Usage: release-train.js start|prepare|finalize|reconcile");
+    throw new Error("Usage: release-train.js start|reset-initialize|prepare|finalize|reconcile");
 }
 
 if (require.main === module) {

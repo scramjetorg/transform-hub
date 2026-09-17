@@ -23,6 +23,8 @@ Replace the CI/release topology with a from-scratch artifact-promotion system: f
 
 ## Target Trigger Map
 
+`reset-initialize` is a protected/manual command for failed same-release partial starts, not a generic ignore-state flag. It takes stable version, next `<stable>-devel`, exact expected `devel` SHA, and `confirm-reset` equal to stable; it may force-reset only the named `release/<stable>` and `devel` refs under leases, clear failed same-release partial marker/lock state, then run ordinary alignment and create or reuse the promotion PR and normal active lock. It never writes `main`, publishes npm, merges PRs, bypasses branch protection, or uses a GitHub environment. Existing `production` remains the only npm approval. It rejects an active different train, final tag/GitHub Release, merged promotion PR, ambiguous PRs, changed `devel` SHA, or confirmation mismatch.
+
 | Trigger | Workflow | Result / GitHub environment approval |
 | --- | --- | --- |
 | `pull_request` to `devel` | PR Fast Validation | Fast source checks only; automatic, with no environment approval. |

@@ -24,6 +24,14 @@ Each release begins from an explicit versioned branch and promotion PR, while `d
 - [x] Require a changed release-branch SHA to start a new candidate cycle; never reuse prior tarballs, BDD evidence, seals, or admission solely because the version is unchanged.
 - [x] Replace fixed `devel -> main` branch assumptions in PR automation, candidate, admission, and publication guards with the release-train record and exact promotion-PR identity.
 
+## Protected Manual Reset-Initialize
+
+- Release Start and reset-initialize use the identical non-cancelling GitHub Actions concurrency group, so shared initialization cannot overlap; neither workflow binds an environment or approval.
+- `reset-initialize` is a protected/manual command, not a generic ignore-state flag. Its inputs are the stable version, the next `<stable>-devel` version, the exact expected `devel` SHA, and `confirm-reset`, which must equal the stable version.
+- Preconditions fail closed when another train is active, the stable version already has a final tag or GitHub Release, the promotion PR is merged, promotion PR discovery is ambiguous, the current `devel` SHA differs from the expected SHA, or the confirmation does not match the stable version.
+- For a failed same-release partial start only, it may clear that release's partial marker/lock state and force-reset only the named `release/<stable>` and `devel` refs, each under a lease. It then runs the ordinary stable/development alignment and creates or reuses the promotion PR and normal active lock.
+- It never writes `main`, publishes npm, merges PRs, bypasses branch protection, or uses a GitHub environment. The existing `production` environment remains the only npm approval.
+
 ## Acceptance Criteria
 
 - A candidate cannot be built, sealed, or admitted from `devel`; every candidate identifies one managed release branch, promotion PR, immutable `Rk` source SHA, and train record.
@@ -32,6 +40,7 @@ Each release begins from an explicit versioned branch and promotion PR, while `d
 - `devel` carries the recorded `<next-stable>-devel` version while a release branch is being validated; ordinary changes are frozen and exceptional linear/squash changes are bounded, auditable, and replayed after the `main` merge or stopped on conflict.
 - Reconciliation never alters candidate evidence or `main`, never discards commits outside the recorded continuation list based at `R1`, uses a lease-guarded rewrite with a retained backup ref, and reruns required devel validation.
 - A release-branch fix invalidates the preceding candidate and requires a fresh candidate, curated BDD evidence, and admission.
+- `reset-initialize` is available only as the protected/manual, explicitly confirmed recovery path for a failed same-release partial start; it rejects the listed unsafe preconditions and leaves the ordinary alignment, promotion-PR, and active-lock contracts authoritative.
 
 ## Dependencies
 

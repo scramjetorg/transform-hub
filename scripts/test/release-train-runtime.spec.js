@@ -1,7 +1,7 @@
 "use strict";
 
 const test = require("ava").default;
-const { reconcileDevel, startRelease } = require("../release-train-runtime");
+const { reconcileDevel, resetInitialize, startRelease } = require("../release-train-runtime");
 
 const sha = (letter) => letter.repeat(40);
 function adapters(lock = null) {
@@ -10,21 +10,23 @@ function adapters(lock = null) {
     const writes = [];
     const alignments = [];
     const validations = [];
+    const clears = [];
     return {
         refs,
         writes,
         alignments,
         validations,
+        clears,
         git: {
             ref: (name) => refs[name],
             createRef: (name, value) => { refs[name] = value; },
             commit: (value) => ({ sha: value, parents: [sha("b"), sha("c")], tree: refs["release/2.0.0"] }),
             replay: ({ base, commits }) => sha("d"),
             backupRef: (name, value) => ({ name, value }),
-            updateRef: (name, value, options) => { if (options.expected !== refs[name]) throw new Error("lease failed"); refs[name] = value; },
+            updateRef: (name, value, options) => { if (options.expected !== refs[name] && !(options.expected === sha("0") && refs[name] === undefined)) throw new Error("lease failed"); refs[name] = value; },
         },
-        lockStore: { read: () => lock, readLive: () => lock, write: (value, options) => writes.push({ value, options }) },
-        reservation: { isReserved: () => false, reserve: () => {}, readMarker: () => lock ? ({ schema: "release-train-start.v1", repository: lock.repository, stableVersion: lock.stableVersion, nextDevelopmentVersion: lock.nextDevelopmentVersion, releaseBranch: lock.releaseBranch, anchor: lock.refs.D0 }) : null },
+        lockStore: { read: () => lock, readLive: () => lock, write: (value, options) => writes.push({ value, options }), clearResetState: (identity, state) => clears.push({ type: "lock", identity, state }) },
+        reservation: { isReserved: () => false, reserve: () => {}, readMarker: () => lock ? ({ schema: "release-train-start.v1", repository: lock.repository, stableVersion: lock.stableVersion, nextDevelopmentVersion: lock.nextDevelopmentVersion, releaseBranch: lock.releaseBranch, anchor: lock.refs.D0 }) : null, clearResetState: (identity, state) => clears.push({ type: "marker", identity, state }) },
         github: { createPromotion: () => ({ number: 42 }), promotion: () => ({ number: 42, headSha: sha("c"), branch: "release/2.0.0", base: "main", repository: "scramjetorg/transform-hub" }) },
         align: {
             release: (options) => { alignments.push({ kind: "release", options }); refs[options.branch] = sha("c"); return sha("c"); },
@@ -92,58 +94,6 @@ test("wrong merge parent or tree is rejected without writing the lock", (t) => {
     t.is(a.writes.length, 0);
 });
 
-test("unrecorded branch is fail-closed and recovery is exact and one-time", (t) => {
-    const blocked = adapters();
-    blocked.refs["release/2.0.0"] = sha("a");
-    t.throws(() => startRelease({ stableVersion: "2.0.0", nextDevelopmentVersion: "2.1.0-devel", adapters: blocked }), { message: /authorized recovery/ });
-    const recovery = adapters();
-    recovery.refs["release/2.1.1"] = sha("a");
-    const result = startRelease({ stableVersion: "2.1.1", nextDevelopmentVersion: "2.1.2-devel", adapters: recovery, recovery: "release/2.1.1" });
-    t.is(result.stableVersion, "2.1.1");
-    t.throws(() => startRelease({ stableVersion: "2.1.0", nextDevelopmentVersion: "2.1.1-devel", adapters: adapters(), recovery: "release/2.1.1" }), { message: /only for/ });
-});
-
-test("authorized recovery creates a missing exact marker despite the reserved release branch", (t) => {
-    const recovery = adapters();
-    const marker = { schema: "release-train-start.v1", repository: "scramjetorg/transform-hub", stableVersion: "2.1.1", nextDevelopmentVersion: "2.1.2-devel", releaseBranch: "release/2.1.1", anchor: sha("a") };
-    let stored = null;
-    recovery.refs["release/2.1.1"] = sha("a");
-    recovery.reservation.isReserved = () => true;
-    recovery.reservation.readMarker = () => stored;
-    recovery.reservation.createMarker = (value) => { t.deepEqual(value, marker); stored = value; return value; };
-    const result = startRelease({ stableVersion: "2.1.1", nextDevelopmentVersion: "2.1.2-devel", adapters: recovery, recovery: "release/2.1.1" });
-    t.deepEqual(stored, marker);
-    t.is(result.startMarker.anchor, sha("a"));
-});
-
-test("recovery aligns D0 to R1 before strictly validating R1", (t) => {
-    const recovery = adapters();
-    recovery.refs.devel = sha("d");
-    recovery.refs["release/2.1.1"] = sha("a");
-    recovery.reservation.readMarker = () => ({ schema: "release-train-start.v1", repository: "scramjetorg/transform-hub", stableVersion: "2.1.1", nextDevelopmentVersion: "2.1.2-devel", releaseBranch: "release/2.1.1", anchor: sha("a") });
-    recovery.align.validateRelease = (options) => {
-        t.not(options.expected, sha("a"));
-        recovery.validations.push(options);
-    };
-    const result = startRelease({ stableVersion: "2.1.1", nextDevelopmentVersion: "2.1.2-devel", adapters: recovery, recovery: "release/2.1.1" });
-    t.deepEqual(recovery.alignments[0], { kind: "release", options: { version: "2.1.1", branch: "release/2.1.1", expected: sha("a") } });
-    t.deepEqual(recovery.validations, [{ version: "2.1.1", branch: "release/2.1.1", expected: sha("c") }]);
-    t.is(result.refs.R1, sha("c"));
-    t.is(result.currentCommit, sha("d"));
-});
-
-test("recovery strictly validates an existing R1 descendant without realigning it", (t) => {
-    const recovery = adapters();
-    recovery.refs.devel = sha("d");
-    recovery.refs["release/2.1.1"] = sha("c");
-    recovery.reservation.readMarker = () => ({ schema: "release-train-start.v1", repository: "scramjetorg/transform-hub", stableVersion: "2.1.1", nextDevelopmentVersion: "2.1.2-devel", releaseBranch: "release/2.1.1", anchor: sha("a") });
-    const result = startRelease({ stableVersion: "2.1.1", nextDevelopmentVersion: "2.1.2-devel", adapters: recovery, recovery: "release/2.1.1" });
-    t.false(recovery.alignments.some(({ kind }) => kind === "release"));
-    t.deepEqual(recovery.validations, [{ version: "2.1.1", branch: "release/2.1.1", expected: sha("c") }]);
-    t.is(result.refs.R1, sha("c"));
-    t.is(result.currentCommit, sha("d"));
-});
-
 test("existing marker anchor is authoritative when devel has advanced", (t) => {
     const a = adapters();
     const marker = { schema: "release-train-start.v1", repository: "scramjetorg/transform-hub", stableVersion: "2.1.1", nextDevelopmentVersion: "2.1.2-devel", releaseBranch: "release/2.1.1", anchor: sha("9") };
@@ -173,4 +123,62 @@ test("missing marker captures current devel as D0", (t) => {
     t.is(stored.anchor, sha("9"));
     t.is(result.refs.D0, sha("9"));
     t.is(result.startMarker.anchor, sha("9"));
+});
+
+test("reset-initialize requires exact confirmation and lower-case SHA", (t) => {
+    const a = adapters();
+    t.throws(() => resetInitialize({ stableVersion: "2.0.0", nextDevelopmentVersion: "2.1.0-devel", develSha: sha("a"), confirmReset: "2.0.1", adapters: a }), { message: /exactly equal/ });
+    t.throws(() => resetInitialize({ stableVersion: "2.0.0", nextDevelopmentVersion: "2.1.0-devel", develSha: sha("A"), confirmReset: "2.0.0", adapters: a }), { message: /lower-case/ });
+});
+
+test("reset-initialize creates ordinary lock state in D0, R1, D1 order", (t) => {
+    const a = adapters();
+    const result = resetInitialize({ stableVersion: "2.0.0", nextDevelopmentVersion: "2.1.0-devel", develSha: sha("a"), confirmReset: "2.0.0", adapters: a });
+    t.deepEqual(result.refs, { D0: sha("a"), R1: sha("c"), D1: sha("e"), mainAtStart: sha("b") });
+    t.false("startMarker" in result);
+    t.false("currentCommit" in result);
+    t.is(a.alignments[0].kind, "release");
+    t.is(a.alignments[1].kind, "development");
+});
+
+test("reset-initialize rejects an active same-release train without clearing state", (t) => {
+    const a = adapters(lock());
+    t.throws(() => resetInitialize({ stableVersion: "2.0.0", nextDevelopmentVersion: "2.1.0-devel", develSha: sha("e"), confirmReset: "2.0.0", adapters: a }), { message: /active same-release/ });
+    t.is(a.clears.length, 0);
+});
+
+test("reset-initialize rejects a different or terminal lock without clearing state", (t) => {
+    const different = lock();
+    different.stableVersion = "2.1.0";
+    different.nextStableVersion = "2.2.0";
+    different.nextDevelopmentVersion = "2.2.0-devel";
+    different.releaseBranch = "release/2.1.0";
+    different.promotion.branch = different.releaseBranch;
+    const a = adapters(different);
+    t.throws(() => resetInitialize({ stableVersion: "2.0.0", nextDevelopmentVersion: "2.1.0-devel", develSha: sha("e"), confirmReset: "2.0.0", adapters: a }), { message: /identity differs/ });
+    t.is(a.clears.length, 0);
+
+    const terminal = lock();
+    terminal.status = "aborted";
+    const b = adapters(terminal);
+    t.throws(() => resetInitialize({ stableVersion: "2.0.0", nextDevelopmentVersion: "2.1.0-devel", develSha: sha("e"), confirmReset: "2.0.0", adapters: b }), { message: /not a failed partial/ });
+    t.is(b.clears.length, 0);
+});
+
+test("reset-initialize clears a marker-only failed same-release partial start", (t) => {
+    const a = adapters();
+    const marker = { schema: "release-train-start.v1", repository: "scramjetorg/transform-hub", stableVersion: "2.0.0", nextDevelopmentVersion: "2.1.0-devel", releaseBranch: "release/2.0.0", anchor: sha("a") };
+    a.reservation.readMarker = () => marker;
+    const result = resetInitialize({ stableVersion: "2.0.0", nextDevelopmentVersion: "2.1.0-devel", develSha: sha("a"), confirmReset: "2.0.0", adapters: a });
+    t.is(result.status, "active");
+    t.is(a.writes.length, 1);
+    t.deepEqual(a.clears.map((clear) => clear.type), ["lock", "marker"]);
+});
+
+test("reset-initialize rejects a normal promotion PR train without clearing its marker", (t) => {
+    const a = adapters();
+    a.reservation.readMarker = () => ({ schema: "release-train-start.v1", repository: "scramjetorg/transform-hub", stableVersion: "2.0.0", nextDevelopmentVersion: "2.1.0-devel", releaseBranch: "release/2.0.0", anchor: sha("a") });
+    a.github.findPromotions = () => [{ number: 42, state: "open", headSha: sha("c") }];
+    t.throws(() => resetInitialize({ stableVersion: "2.0.0", nextDevelopmentVersion: "2.1.0-devel", develSha: sha("a"), confirmReset: "2.0.0", adapters: a }), { message: /normal promotion PR train/ });
+    t.is(a.clears.length, 0);
 });

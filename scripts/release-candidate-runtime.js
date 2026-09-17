@@ -34,7 +34,8 @@ function readRemoteTrainLock({ repository, runner = execFileSync }) {
     let lock;
     try { lock = JSON.parse(runner("git", ["show", "FETCH_HEAD:.github/release-train-lock.json"], { encoding: "utf8" })); } catch { throw new Error("Active devel release-train lock is unavailable remotely."); }
     validateReleaseTrainLock(lock);
-    if (remote !== lock.currentCommit && !lock.continuation.includes(remote)) throw new Error("Remote devel does not carry the active release-train lock.");
+    const lockBearingCommit = lock.refs.D1 || lock.currentCommit;
+    if (remote !== lockBearingCommit && !lock.continuation.includes(remote)) throw new Error("Remote devel does not carry the active release-train lock.");
     if (["aborted", "reconciled", "manual-recovery-required"].includes(lock.status)) throw new Error("Active devel release-train lock is terminal.");
     return lock;
 }

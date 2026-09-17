@@ -70,16 +70,18 @@ function validateReleaseTrainLock(lock) {
     if (!lock.refs || typeof lock.refs !== "object") fail("refs are required.");
     for (const ref of ["D0", "R1"]) sha(lock.refs[ref], `refs.${ref}`);
     sha(lock.refs.mainAtStart || lock.refs.main, "refs.mainAtStart");
+    if (lock.refs.D1 !== undefined) sha(lock.refs.D1, "refs.D1");
     if (lock.startMarker) {
         validateStartMarker(lock.startMarker);
         if (lock.startMarker.anchor !== lock.refs.D0) fail("start marker must be anchored at D0.");
     }
     promotionOf(lock);
-    sha(lock.currentCommit, "currentCommit");
+    if (lock.currentCommit !== undefined) sha(lock.currentCommit, "currentCommit");
+    if (lock.refs.D1 === undefined && lock.currentCommit === undefined) fail("refs.D1 or currentCommit is required.");
     if (!Array.isArray(lock.continuation)) fail("continuation must be an ordered list.");
     const continuation = lock.continuation.map((commit, index) => sha(commit, `continuation[${index}]`));
     if (new Set(continuation).size !== continuation.length) fail("continuation must not contain duplicate commits.");
-    if (continuation.includes(lock.currentCommit)) fail("currentCommit must not already be in continuation.");
+    if (lock.currentCommit !== undefined && continuation.includes(lock.currentCommit)) fail("currentCommit must not already be in continuation.");
     return lock;
 }
 
@@ -118,8 +120,9 @@ function createNextRevision(lock, changes = {}) {
 
 function validatedReplayList(lock) {
     assertActive(lock);
-    if (lock.currentCommit === lock.refs.R1) fail("currentCommit must be distinct from R1.");
-    return [...lock.continuation, lock.currentCommit];
+    const current = lock.refs.D1 || lock.currentCommit;
+    if (current === lock.refs.R1) fail("D1 must be distinct from R1.");
+    return [...lock.continuation, current];
 }
 
 function validateDevelopmentTopology({ R1, L1, commits, lockPath = ".github/release-train-lock.json", lockBlob }) {

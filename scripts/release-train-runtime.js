@@ -4,13 +4,14 @@ const semver = require("semver");
 
 const LOCK_PATH = ".github/release-train-lock.json";
 const REPOSITORY = "scramjetorg/transform-hub";
-const RECOVERY_IDENTITY = { repository: REPOSITORY, stableVersion: "2.1.1", nextDevelopmentVersion: "2.1.2-devel", releaseBranch: "release/2.1.1" };
+const SHA_PATTERN = /^[0-9a-f]{40}$/;
 
 function fail(message) {
     throw new Error(`Release train refused: ${message}`);
 }
+function assertSha(value, name) { if (typeof value !== "string" || !SHA_PATTERN.test(value)) fail(`${name} must be a lower-case 40-character SHA.`); return value; }
 function sameIdentity(lock, input) {
-    return lock.repository === input.repository && lock.stableVersion === input.stableVersion && lock.nextDevelopmentVersion === input.nextDevelopmentVersion;
+    return lock.repository === input.repository && lock.stableVersion === input.stableVersion && lock.nextDevelopmentVersion === input.nextDevelopmentVersion && lock.releaseBranch === input.releaseBranch;
 }
 function ensureAdapters(adapters) {
     for (const name of ["git", "lockStore", "reservation", "github", "align"]) if (!adapters?.[name]) fail(`${name} adapter is required.`);
@@ -35,6 +36,22 @@ function markerCreate(adapters, marker) {
     return adapters.reservation.reserve(marker.stableVersion, marker);
 }
 
+function classifyResetState({ existing, marker, matches, identity }) {
+    if (existing) {
+        try { validateLock(existing); } catch { fail("existing lock is malformed or unverifiable; reset is unsafe."); }
+        if (!sameIdentity(existing, identity)) fail("existing lock identity differs; reset is unsafe.");
+        fail(existing.status === "active" ? "an active same-release train cannot be reset." : "existing same-release lock is not a failed partial start.");
+    }
+    if (marker) {
+        try { validateStartMarker(marker); } catch { fail("existing start marker is malformed or unverifiable; reset is unsafe."); }
+        if (!sameMarker(marker, markerFor(identity, marker.anchor))) fail("existing start marker identity differs; reset is unsafe.");
+        if (matches.length) fail("an existing normal promotion PR train cannot be reset.");
+        return { kind: "failed-partial", marker };
+    }
+    if (matches.length) fail("an existing normal promotion PR train cannot be reset.");
+    return { kind: "none" };
+}
+
 function validateActiveRetry({ existing, identity, adapters }) {
     if (typeof adapters.reservation.readMarker !== "function" && typeof adapters.reservation.marker !== "function") fail("active lock start marker cannot be validated live.");
     if (typeof adapters.git.ref !== "function") fail("active lock refs cannot be validated live.");
@@ -46,7 +63,7 @@ function validateActiveRetry({ existing, identity, adapters }) {
     const releaseHead = readRef(adapters.git, existing.releaseBranch);
     if (!releaseHead || releaseHead !== existing.refs.R1) fail("active lock release branch moved.");
     const devel = readRef(adapters.git, "devel");
-    if (!devel || devel !== existing.currentCommit) fail("active lock devel ref moved.");
+    if (!devel || (devel !== (existing.refs.D1 || existing.currentCommit) && !existing.continuation.includes(devel))) fail("active lock devel ref moved.");
     const promotion = adapters.github.promotion(existing.promotion.number);
     if (!promotion) fail("active lock promotion pull request is unavailable.");
     if (String(promotion.state || "").toLowerCase() === "closed" && !promotion.merged && !promotion.merged_at && !promotion.mergedAt)
@@ -61,20 +78,18 @@ function startRelease({ stableVersion, nextDevelopmentVersion, repository = REPO
     const nextStableVersion = nextDevelopmentVersion.replace(/-devel$/, "");
     if (!semver.gt(nextStableVersion, stableVersion)) fail("next stable version must be greater than stable version.");
     const identity = { repository, stableVersion, nextDevelopmentVersion, releaseBranch: `release/${stableVersion}` };
-    if (recovery !== undefined && recovery !== RECOVERY_IDENTITY.releaseBranch) fail("recovery is authorized only for release/2.1.1.");
-    const recoveryRequested = recovery === RECOVERY_IDENTITY.releaseBranch;
-    if (recoveryRequested && (repository !== RECOVERY_IDENTITY.repository || stableVersion !== RECOVERY_IDENTITY.stableVersion || nextDevelopmentVersion !== RECOVERY_IDENTITY.nextDevelopmentVersion || identity.releaseBranch !== RECOVERY_IDENTITY.releaseBranch)) fail("recovery is authorized only for the recorded 2.1.1 train identity.");
+    if (recovery !== undefined) fail("recovery is retired; use reset-initialize with explicit confirmation.");
     const existing = adapters.lockStore.read();
     if (existing) {
         validateLock(existing);
         if (existing.status === "active") {
-            if (!sameIdentity(existing, { repository, stableVersion, nextDevelopmentVersion })) fail("existing active lock identity differs; retry is unsafe.");
+            if (!sameIdentity(existing, identity)) fail("existing active lock identity differs; retry is unsafe.");
             validateActiveRetry({ existing, identity, adapters });
             return existing;
         }
         if (sameIdentity(existing, identity)) fail("the requested train has already been consumed by a terminal lock.");
     }
-    if (!recoveryRequested && !markerRead(adapters, identity) && typeof adapters.reservation.isReserved === "function" && adapters.reservation.isReserved(stableVersion)) fail("stable version is already reserved or burned.");
+    if (!markerRead(adapters, identity) && typeof adapters.reservation.isReserved === "function" && adapters.reservation.isReserved(stableVersion)) fail("stable version is already reserved or burned.");
     const releaseBranch = `release/${stableVersion}`;
     const existingMarker = markerRead(adapters, identity);
     let d0;
@@ -88,8 +103,7 @@ function startRelease({ stableVersion, nextDevelopmentVersion, repository = REPO
         d0 = adapters.git.ref("devel");
         expectedMarker = markerFor(identity, d0);
         const oldBranch = readRef(adapters.git, releaseBranch);
-        if (oldBranch && !recoveryRequested) fail("unrecorded release branch requires explicit authorized recovery.");
-        if (oldBranch && oldBranch !== d0) fail("recovery release branch is not anchored at D0.");
+        if (oldBranch) fail("unrecorded release branch requires reset-initialize.");
         markerCreate(adapters, expectedMarker);
     }
     const mainAtStart = adapters.git.ref("main");
@@ -125,6 +139,51 @@ function startRelease({ stableVersion, nextDevelopmentVersion, repository = REPO
         currentCommit: d1
     };
     validateLockAgainstPromotionMetadata(lock, { ...admittedPromotion, number: admittedPromotion.number, headSha: r1, branch: releaseBranch, base: "main", repository });
+    adapters.lockStore.write(lock, { expected: null, path: LOCK_PATH });
+    return lock;
+}
+
+function resetInitialize({ stableVersion, nextDevelopmentVersion, develSha, confirmReset, repository = REPOSITORY, adapters }) {
+    ensureAdapters(adapters);
+    stableVersion = resolveReleaseVersion(stableVersion);
+    nextDevelopmentVersion = resolveDevelopmentVersion(nextDevelopmentVersion);
+    develSha = assertSha(develSha, "devel-sha");
+    if (confirmReset !== stableVersion) fail("confirm-reset must exactly equal stable version.");
+    const nextStableVersion = nextDevelopmentVersion.replace(/-devel$/, "");
+    if (!semver.gt(nextStableVersion, stableVersion)) fail("next stable version must be greater than stable version.");
+    const releaseBranch = `release/${stableVersion}`;
+    const identity = { repository, stableVersion, nextDevelopmentVersion, releaseBranch };
+    const remoteDevel = typeof adapters.git.remoteRef === "function" ? adapters.git.remoteRef("devel") : adapters.git.ref("devel");
+    if (remoteDevel !== develSha) fail("remote devel does not equal supplied devel-sha.");
+    if (adapters.reservation.finalTagExists?.(stableVersion)) fail("final release tag already exists.");
+    if (adapters.reservation.releaseExists?.(stableVersion)) fail("GitHub Release already exists.");
+    const matches = adapters.github.findPromotions?.({ repository, head: releaseBranch, base: "main" }) || [];
+    if (matches.some((pr) => pr.merged || pr.mergedAt || pr.merged_at)) fail("matching promotion PR is already merged.");
+    if (matches.length > 1) fail("more than one matching promotion PR exists.");
+    let existing;
+    try { existing = adapters.lockStore.read(); } catch { fail("existing lock is malformed or unverifiable; reset is unsafe."); }
+    let existingMarker;
+    try { existingMarker = markerRead(adapters, identity); } catch { fail("existing start marker is malformed or unverifiable; reset is unsafe."); }
+    const resetState = classifyResetState({ existing, marker: existingMarker, matches, identity });
+    if (resetState.kind === "failed-partial") {
+        adapters.lockStore.clearResetState?.(identity, resetState);
+        adapters.reservation.clearResetState?.(identity, resetState);
+    }
+    const observedRelease = readRef(adapters.git, releaseBranch);
+    if (typeof adapters.git.updateRef !== "function") fail("lease-guarded ref updates are required.");
+    adapters.git.updateRef(releaseBranch, develSha, { expected: observedRelease || "0".repeat(40), force: true });
+    const r1 = adapters.align.release({ version: stableVersion, branch: releaseBranch, expected: develSha });
+    adapters.git.updateRef("devel", r1, { expected: develSha, force: true });
+    const d1 = adapters.align.development({ version: nextDevelopmentVersion, branch: "devel", expected: r1 });
+    let promotion = matches[0];
+    if (!promotion) promotion = adapters.github.createPromotion({ repository, head: releaseBranch, base: "main", headSha: r1 });
+    if (promotion.headSha && promotion.headSha !== r1) fail("matching promotion PR head differs from R1.");
+    if (String(promotion.state || "").toLowerCase() === "closed" && !promotion.merged) {
+        if (typeof adapters.github.reopenPromotion !== "function") fail("closed promotion PR cannot be reopened by the adapter.");
+        adapters.github.reopenPromotion({ repository, number: promotion.number });
+    }
+    const lock = { schema: "release-train-lock.v1", revision: 1, status: "active", branch: "devel", repository, stableVersion, nextStableVersion, nextDevelopmentVersion, releaseBranch, refs: { D0: develSha, R1: r1, D1: d1, mainAtStart: adapters.git.ref("main") }, promotion: { number: promotion.number, headSha: r1, branch: releaseBranch, base: "main", repository }, continuation: [] };
+    validateLock(lock);
     adapters.lockStore.write(lock, { expected: null, path: LOCK_PATH });
     return lock;
 }
@@ -175,4 +234,4 @@ function reconcileDevel(options) {
     return finalizeReconciliation({ ...options, validationPassed: true });
 }
 
-module.exports = { LOCK_PATH, REPOSITORY, startRelease, reconcileDevel, prepareReconciliation, finalizeReconciliation, applyChanges, applyDevelopmentChanges };
+module.exports = { LOCK_PATH, REPOSITORY, startRelease, resetInitialize, reconcileDevel, prepareReconciliation, finalizeReconciliation, applyChanges, applyDevelopmentChanges };

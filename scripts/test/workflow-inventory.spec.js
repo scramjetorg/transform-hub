@@ -22,6 +22,7 @@ test("active workflow inventory contains only maintained Node 22/npm paths and r
 		"release-pr-automation.yml",
 		"release-promotion-admission.yml",
 		"release-publish-recovery.yml",
+		"release-reset-initialize.yml",
 		"release-start.yml",
 		"security-check.yml",
 		"tarball-release-validation.yml",

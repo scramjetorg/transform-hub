@@ -1,6 +1,9 @@
 "use strict";
 
 const test = require("ava").default;
+const { existsSync, mkdtempSync, rmSync, writeFileSync } = require("node:fs");
+const { join } = require("node:path");
+const { tmpdir } = require("node:os");
 const { createGithubReleaseTrainAdapters } = require("../lib/github-release-train-adapters");
 
 test("release-train adapters are factory-scoped and inject the runner/token", (t) => {
@@ -72,4 +75,17 @@ test("release validation surfaces child stdout and stderr when check fails", (t)
     const error = t.throws(() => adapters.align.validateRelease({ version: "2.1.1", branch: "release/2.1.1", expected: "R1" }));
     t.regex(error.message, /release drift report/);
     t.regex(error.message, /check diagnostics/);
+});
+
+test("adapter lock reset refuses to clear an existing lock without failed-partial proof", (t) => {
+    const directory = mkdtempSync(join(tmpdir(), "release-train-adapter-test-"));
+    try {
+        const lockPath = join(directory, "lock.json");
+        writeFileSync(lockPath, "existing lock");
+        const adapters = createGithubReleaseTrainAdapters({ lockPath, runner: () => "" });
+        t.throws(() => adapters.lockStore.clearResetState({}, { kind: "failed-partial" }), { message: /while lock state exists/ });
+        t.true(existsSync(lockPath));
+    } finally {
+        rmSync(directory, { recursive: true, force: true });
+    }
 });

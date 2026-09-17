@@ -6,7 +6,7 @@ const { resolve } = require("node:path");
 
 const root = resolve(__dirname, "..", "..", ".github", "workflows");
 const source = (name) => readFileSync(resolve(root, name), "utf8");
-const releaseWorkflowFiles = ["pr-fast-validation.yml", "build-release-candidate.yml", "curated-devel-build-validation.yml", "release-promotion-admission.yml"];
+const releaseWorkflowFiles = ["pr-fast-validation.yml", "build-release-candidate.yml", "curated-devel-build-validation.yml", "release-promotion-admission.yml", "release-reset-initialize.yml"];
 
 test("Release workflows use the intended triggers, least privilege, and cancellation boundaries", (t) => {
     const pr = source("pr-fast-validation.yml");
@@ -49,6 +49,30 @@ test("PR and admission contain no release/build/full-BDD authority", (t) => {
     }
     t.true(pr.includes("release-pr-smoke.js"));
     t.true(readFileSync(resolve(__dirname, "..", "release-pr-smoke.js"), "utf8").includes("release-risk-smoke.ts"));
+});
+
+test("reset initialize is manual, unbound to an environment, and invokes only the reset command", (t) => {
+    const reset = source("release-reset-initialize.yml");
+    t.true(reset.includes("workflow_dispatch:"));
+    t.false(reset.includes("environment:"));
+    t.true(reset.includes("--repository") && reset.includes("--stable-version") && reset.includes("--next-development-version") && reset.includes("--devel-sha") && reset.includes("--confirm-reset"));
+    t.false(reset.includes("release-train.js start"));
+    t.regex(reset, /node scripts\/release-train\.js reset-initialize/);
+});
+
+test("release initialization workflows share a non-cancelling concurrency group", (t) => {
+    const start = source("release-start.yml");
+    const reset = source("release-reset-initialize.yml");
+    const concurrency = (workflow) => workflow.match(/concurrency:\n  group: ([^\n]+)\n  cancel-in-progress: ([^\n]+)/);
+    const startConcurrency = concurrency(start);
+    const resetConcurrency = concurrency(reset);
+    t.truthy(startConcurrency);
+    t.truthy(resetConcurrency);
+    t.is(startConcurrency[1], resetConcurrency[1]);
+    t.is(startConcurrency[2], "false");
+    t.is(resetConcurrency[2], "false");
+    t.false(start.includes("environment:"));
+    t.false(reset.includes("environment:"));
 });
 
 test("candidate authority is digest and numeric-ID based, not tag/check-name based", (t) => {
