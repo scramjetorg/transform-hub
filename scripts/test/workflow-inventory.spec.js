@@ -50,11 +50,14 @@ test("release start fetches the main audit ref and installs dependencies before 
 	const mainRefFetch = source.indexOf("git fetch --no-tags origin main:main");
 	const install = source.indexOf("run: npm ci");
 	const start = source.indexOf("name: Start release train");
+	const gitAuthentication = source.indexOf("git config --local credential.helper");
 
 	t.true(mainRefFetch >= 0, "release start must make the local main audit ref available");
 	t.true(mainRefFetch < start, "release start must fetch the main audit ref before starting a release train");
 	t.true(install >= 0, "release start must install workspace dependencies");
 	t.true(install < start, "release start must install dependencies before starting a release train");
+	t.true(gitAuthentication > start, "release start must configure Git authentication in the trusted start step");
+	t.true(source.includes("GITHUB_TOKEN: ${{ github.token }}"), "release start must provide an ephemeral GitHub token to Git");
 	t.false(source.includes("scripts/release-align.js check --release-version"), "release start must not check future release state before start");
 	t.true(source.includes('start --repository "$GITHUB_REPOSITORY"'), "release start must pass a non-empty repository argument");
 });

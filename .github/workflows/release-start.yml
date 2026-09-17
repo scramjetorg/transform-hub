@@ -32,4 +32,7 @@ jobs:
       - name: Start release train
         env:
           GH_TOKEN: ${{ github.token }}
-        run: node scripts/release-train.js start --repository "$GITHUB_REPOSITORY" --stable-version "${{ inputs.stable-version }}" --next-development-version "${{ inputs.next-development-version }}"
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          git config --local credential.helper '!f() { echo "username=x-access-token"; echo "password=$GITHUB_TOKEN"; }; f'
+          node scripts/release-train.js start --repository "$GITHUB_REPOSITORY" --stable-version "${{ inputs.stable-version }}" --next-development-version "${{ inputs.next-development-version }}"
