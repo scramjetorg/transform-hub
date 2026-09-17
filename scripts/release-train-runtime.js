@@ -36,7 +36,7 @@ function startRelease({ stableVersion, nextDevelopmentVersion, repository = REPO
     adapters.git.createRef(releaseBranch, d0);
     const r1 = adapters.align.release({ version: stableVersion, branch: releaseBranch, expected: d0 });
     if (adapters.git.ref(releaseBranch) !== r1) fail("release branch moved during stable alignment.");
-    const d1 = adapters.align.development({ version: nextDevelopmentVersion, branch: "devel", expected: d0 });
+    const d1 = adapters.align.development({ version: nextDevelopmentVersion, branch: "devel", expected: r1 });
     if (adapters.git.ref("devel") !== d1) fail("devel moved during development alignment.");
     const promotion = adapters.github.createPromotion({ repository, head: releaseBranch, base: "main", headSha: r1 });
     const lock = {

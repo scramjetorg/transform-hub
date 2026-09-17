@@ -27,9 +27,7 @@ jobs:
         with: { node-version: "22", cache: "" }
       - name: Install workspace dependencies
         run: npm ci
-      - name: Validate inputs before mutation
-        run: node scripts/release-align.js check --release-version="${{ inputs.stable-version }}"
       - name: Start release train
         env:
           GH_TOKEN: ${{ github.token }}
-        run: node scripts/release-train.js start --repository "" --stable-version "${{ inputs.stable-version }}" --next-development-version "${{ inputs.next-development-version }}"
+        run: node scripts/release-train.js start --repository "$GITHUB_REPOSITORY" --stable-version "${{ inputs.stable-version }}" --next-development-version "${{ inputs.next-development-version }}"

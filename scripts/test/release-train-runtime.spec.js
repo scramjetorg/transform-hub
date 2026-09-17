@@ -7,9 +7,11 @@ const sha = (letter) => letter.repeat(40);
 function adapters(lock = null) {
     const refs = { devel: sha("a"), main: sha("b"), "release/2.0.0": sha("c") };
     const writes = [];
+    const alignments = [];
     return {
         refs,
         writes,
+        alignments,
         git: {
             ref: (name) => refs[name],
             createRef: (name, value) => { refs[name] = value; },
@@ -21,7 +23,10 @@ function adapters(lock = null) {
         lockStore: { read: () => lock, readLive: () => lock, write: (value, options) => writes.push({ value, options }) },
         reservation: { isReserved: () => false, reserve: () => {} },
         github: { createPromotion: () => ({ number: 42 }) },
-        align: { release: () => { refs["release/2.0.0"] = sha("c"); return sha("c"); }, development: () => { refs.devel = sha("e"); return sha("e"); } },
+        align: {
+            release: (options) => { alignments.push({ kind: "release", options }); refs["release/2.0.0"] = sha("c"); return sha("c"); },
+            development: (options) => { alignments.push({ kind: "development", options }); refs.devel = sha("e"); return sha("e"); }
+        },
     };
 }
 function lock() {
@@ -38,6 +43,7 @@ test("start rejects burned reservations before mutation and records exact PR ide
     t.is(result.promotion.number, 42);
     t.is(result.refs.D0, sha("a"));
     t.is(b.writes.length, 1);
+    t.is(b.alignments[1].options.expected, sha("c"));
 });
 
 test("active retry reuses exact identity and changed retry fails closed", (t) => {
