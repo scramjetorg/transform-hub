@@ -464,7 +464,8 @@ export class HostUtils {
             command.push(
                 `--runner-image=scramjetorg/runner:${process.env.RUNNER_IMGS_TAG}`,
                 `--prerunner-image=scramjetorg/pre-runner:${process.env.RUNNER_IMGS_TAG}`,
-                `--runner-py-image=scramjetorg/runner-py:${process.env.RUNNER_IMGS_TAG}`
+                `--runner-py-image=scramjetorg/runner-py:${process.env.RUNNER_IMGS_TAG}`,
+                `--runner-bun-image=scramjetorg/runner-bun:${process.env.RUNNER_IMGS_TAG}`
             );
         }
 

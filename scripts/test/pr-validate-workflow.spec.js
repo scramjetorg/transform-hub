@@ -39,7 +39,7 @@ test("base PR workflow is read-only, cancellable, and uses a fresh restore-only 
 	t.false(source.includes("pull_request_target"));
 	t.is((source.match(/^ {6}packages: write$/gm) || []).length, 1, "only the guarded release publication job may grant packages: write");
 	t.false(source.includes("id-token: write"));
-	t.false(source.includes("upload-artifact"));
+	t.true(source.includes("actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08"));
 	t.false(source.includes("actions/cache"));
 });
 
@@ -146,8 +146,8 @@ test("validation, BDD, and release jobs are isolated with no artifact or node_mo
 	t.is((source.match(/cache-mode: off/g) || []).length, 1);
 	t.is((source.match(/persist-credentials: false/g) || []).length, 7);
 	t.is((source.match(/needs: \[package-validation\]/g) || []).length, 4);
-	t.false(source.includes("upload-artifact"));
-	t.false(source.includes("download-artifact"));
+	t.is((source.match(/actions\/upload-artifact@/g) || []).length, 1);
+	t.is((source.match(/actions\/download-artifact@/g) || []).length, 4);
 	t.false(source.includes("actions/cache"));
 });
 
@@ -237,8 +237,8 @@ test("PR outputs remain disposable and the repository security scan is connected
 	t.true(securitySource.includes("name: Security / repository policy"));
 	t.true(securitySource.includes("npm run security:scan-history -- --range"));
 	t.true(scannerSource.includes("--redact"));
-	t.false(source.includes("upload-artifact"));
-	t.false(source.includes("download-artifact"));
+	t.true(source.includes("pr-bdd-image-closure-${{ github.run_id }}"));
+	t.is((source.match(/retention-days: 1/g) || []).length, 1);
 	t.false(source.includes("actions/cache"));
 	t.false(source.includes("docker push"));
 	t.false(source.includes("npm publish"));
@@ -262,6 +262,27 @@ test("release runs are scoped to same-repository devel-to-main changes and never
 	t.true(source.includes("needs: [prerelease-publication, release-candidate-admission]"), "prerelease BDD must need publication and current-SHA admission");
 	t.is((source.match(/^ {4}if: \${{ github\.event\.pull_request\.base\.ref == 'main' && github\.event\.pull_request\.head\.ref == 'devel' && github\.event\.pull_request\.head\.repo\.full_name == github\.repository }}$/gm) || []).length, 1, "the admission job carries the base release guard");
 	t.false(source.includes("pull_request_target"));
+});
+
+test("ordinary PR BDD uses only the checked-out SHA-tagged local Docker closure", (t) => {
+	const source = workflowSource();
+	const ordinary = source.slice(0, source.indexOf("  release-candidate-admission:\n"));
+	for (const image of [
+		"scramjetorg/pre-runner",
+		"scramjetorg/runner",
+		"scramjetorg/runner-py",
+		"scramjetorg/runner-bun",
+		"ghcr.io/scramjetorg/transform-hub/bdd-node",
+	]) t.true(ordinary.includes(image), `${image} must be part of the local closure`);
+	t.true(ordinary.includes("test \"$(git rev-parse HEAD)\" = \"$VALIDATION_SHA\""));
+	t.true(ordinary.includes("docker load --input"));
+	t.true(ordinary.includes("docker image inspect"));
+	t.false(ordinary.includes(":dev"));
+	t.false(ordinary.includes(":latest"));
+	t.false(ordinary.includes(":2.1.0"));
+	t.false(ordinary.includes("SCRAMJET_BDD_CANDIDATE_IMAGE_MAP"));
+	t.false(ordinary.includes("docker push"));
+	t.false(ordinary.includes("docker login ghcr.io"));
 });
 
 test("release prerelease publication is guarded, serialized, environment-gated, and isolated to GitHub Packages", (t) => {
@@ -377,8 +398,8 @@ test("release PR BDD consumes only verified publisher output and exact prereleas
 	t.true(bdd.includes("NODE_AUTH_TOKEN: ${{ github.token }}"), "BDD read auth must use the automatic GITHUB_TOKEN");
 	t.false(/^ {4}environment:/m.test(bdd), "prerelease BDD must not be bound to the approval environment");
 	t.true(source.includes("live=false"));
-	t.false(source.includes("download-artifact"));
-	t.false(source.includes("upload-artifact"));
+	t.false(bdd.includes("download-artifact"));
+	t.false(bdd.includes("upload-artifact"));
 	t.false(/^ {6}id-token: write$/m.test(bdd), "the read-only BDD job must not mint an OIDC token");
 });
 

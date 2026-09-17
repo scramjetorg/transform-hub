@@ -170,6 +170,25 @@ test("setArgs resolves the verified candidate image map to explicit runner flags
     } finally { if (saved === undefined) delete process.env.SCRAMJET_BDD_CANDIDATE_IMAGE_MAP; else process.env.SCRAMJET_BDD_CANDIDATE_IMAGE_MAP = saved; }
 });
 
+test("setArgs applies the full SHA runner image closure", t => {
+    const saved = process.env.RUNNER_IMGS_TAG;
+    const savedCandidate = process.env.SCRAMJET_BDD_CANDIDATE_IMAGE_MAP;
+    process.env.RUNNER_IMGS_TAG = "a".repeat(40);
+    delete process.env.SCRAMJET_BDD_CANDIDATE_IMAGE_MAP;
+    try {
+        const command = makeSetArgs([], []);
+        for (const [flag, image] of [
+            ["--runner-image", "scramjetorg/runner"],
+            ["--prerunner-image", "scramjetorg/pre-runner"],
+            ["--runner-py-image", "scramjetorg/runner-py"],
+            ["--runner-bun-image", "scramjetorg/runner-bun"],
+        ]) t.true(command.includes(`${flag}=${image}:${process.env.RUNNER_IMGS_TAG}`));
+    } finally {
+        if (saved === undefined) delete process.env.RUNNER_IMGS_TAG; else process.env.RUNNER_IMGS_TAG = saved;
+        if (savedCandidate === undefined) delete process.env.SCRAMJET_BDD_CANDIDATE_IMAGE_MAP; else process.env.SCRAMJET_BDD_CANDIDATE_IMAGE_MAP = savedCandidate;
+    }
+});
+
 test("setArgs applies the 1s lifetime extension only for BDD-generated configuration", t => {
     const savedRun = process.env.SCRAMJET_BDD_RUN_ID;
     const savedAdapter = process.env.RUNTIME_ADAPTER;
