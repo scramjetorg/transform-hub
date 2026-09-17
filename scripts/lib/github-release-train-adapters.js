@@ -146,7 +146,7 @@ function createGithubReleaseTrainAdapters({
         readMarker: (identity) => {
             try {
                 const markerRef = `refs/tags/release-train-start.v1/${identity.stableVersion}/${identity.nextDevelopmentVersion}`;
-                const anchor = String(command("git", ["rev-parse", `${markerRef}^{}`])).trim();
+                const anchor = String(command("git", ["rev-parse", "--verify", "--quiet", `${markerRef}^{}`])).trim();
                 const subject = String(command("git", ["for-each-ref", "--format=%(contents:subject)", markerRef])).trim();
                 if (!anchor || !subject) return null;
                 return { ...JSON.parse(subject), anchor };

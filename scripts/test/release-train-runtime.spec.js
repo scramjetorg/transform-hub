@@ -99,3 +99,24 @@ test("unrecorded branch is fail-closed and recovery is exact and one-time", (t) 
     t.is(result.stableVersion, "2.1.1");
     t.throws(() => startRelease({ stableVersion: "2.1.0", nextDevelopmentVersion: "2.1.1-devel", adapters: adapters(), recovery: "release/2.1.1" }), { message: /only for/ });
 });
+
+test("authorized recovery creates a missing exact marker despite the reserved release branch", (t) => {
+    const recovery = adapters();
+    const marker = { schema: "release-train-start.v1", repository: "scramjetorg/transform-hub", stableVersion: "2.1.1", nextDevelopmentVersion: "2.1.2-devel", releaseBranch: "release/2.1.1", anchor: sha("a") };
+    let stored = null;
+    recovery.refs["release/2.1.1"] = sha("a");
+    recovery.reservation.isReserved = () => true;
+    recovery.reservation.readMarker = () => stored;
+    recovery.reservation.createMarker = (value) => { t.deepEqual(value, marker); stored = value; return value; };
+    const result = startRelease({ stableVersion: "2.1.1", nextDevelopmentVersion: "2.1.2-devel", adapters: recovery, recovery: "release/2.1.1" });
+    t.deepEqual(stored, marker);
+    t.is(result.startMarker.anchor, sha("a"));
+});
+
+test("mismatched start marker fails closed before mutation", (t) => {
+    const a = adapters();
+    a.reservation.readMarker = () => ({ schema: "release-train-start.v1", repository: "scramjetorg/transform-hub", stableVersion: "2.1.1", nextDevelopmentVersion: "2.1.2-devel", releaseBranch: "release/2.1.1", anchor: sha("9") });
+    t.throws(() => startRelease({ stableVersion: "2.1.1", nextDevelopmentVersion: "2.1.2-devel", adapters: a }), { message: /anchor differs/ });
+    t.is(a.writes.length, 0);
+    t.is(a.alignments.length, 0);
+});

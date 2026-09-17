@@ -74,7 +74,7 @@ function startRelease({ stableVersion, nextDevelopmentVersion, repository = REPO
         }
         if (sameIdentity(existing, identity)) fail("the requested train has already been consumed by a terminal lock.");
     }
-    if (!markerRead(adapters, identity) && typeof adapters.reservation.isReserved === "function" && adapters.reservation.isReserved(stableVersion)) fail("stable version is already reserved or burned.");
+    if (!recoveryRequested && !markerRead(adapters, identity) && typeof adapters.reservation.isReserved === "function" && adapters.reservation.isReserved(stableVersion)) fail("stable version is already reserved or burned.");
     const d0 = adapters.git.ref("devel");
     const mainAtStart = adapters.git.ref("main");
     const releaseBranch = `release/${stableVersion}`;
