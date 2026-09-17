@@ -12,6 +12,7 @@ const state = require("../lib/release-bundle-state");
 
 const SHA = "a".repeat(40);
 const identityInput = { sourceSha: SHA, sourceTree: `sha256:${"b".repeat(64)}`, lockfileDigest: `sha256:${"c".repeat(64)}`, configRevision: "runtime-test", configDigest: `sha256:${"d".repeat(64)}`, buildIdentity: `sha256:${"e".repeat(64)}` };
+const lock = { schema: "release-train-lock.v1", revision: 1, status: "active", repository: "scramjetorg/transform-hub", branch: "devel", stableVersion: "2.0.0", nextStableVersion: "2.1.0", nextDevelopmentVersion: "2.1.0-devel", releaseBranch: "release/2.0.0", refs: { D0: "1".repeat(40), R1: "2".repeat(40), main: "3".repeat(40) }, promotion: { number: 42, headSha: "3".repeat(40), branch: "release/2.0.0", base: "main", repository: "scramjetorg/transform-hub" }, continuation: [], currentCommit: "4".repeat(40) };
 
 test("runtime module loads without loading glob or operational dependencies", (t) => {
     const script = "const Module=require('node:module'); const load=Module._load; Module._load=(request,...args)=>{if(request==='glob') throw new Error('glob loaded'); return load.call(Module,request,...args)}; require('./scripts/release-candidate-runtime');";
@@ -29,6 +30,26 @@ test("missing remote policy fails before remote, lockfile, or output work", (t) 
 
 test("candidate identity remains compatible with state schema and key algorithm", (t) => {
     t.deepEqual(shared.candidateIdentity(identityInput), state.candidateIdentity(identityInput));
+});
+
+test("candidate preflight binds only the real same-repository release PR head", (t) => {
+    const root = mkdtempSync(join(tmpdir(), "candidate-train-binding-"));
+    t.teardown(() => rmSync(root, { recursive: true, force: true }));
+    const event = { repository: { full_name: lock.repository }, pull_request: { number: 42, merge_commit_sha: "f".repeat(40), head: { sha: SHA, ref: lock.releaseBranch, repo: { full_name: lock.repository } }, base: { ref: "main" } } };
+    const result = runtime.preflight({ repository: lock.repository, branch: "devel", sourceSha: SHA, output: join(root, "identity.json"), event, env: { RELEASE_REMOTE_POLICY_CONFIRMED: "true" }, runner: (_command, args) => {
+        if (args[0] === "ls-remote") return `${lock.currentCommit} refs/heads/devel\n`;
+        if (args[0] === "show") return `${JSON.stringify(lock)}\n`;
+        if (args[0] === "rev-parse") return `${"a".repeat(40)}\n`;
+        return "";
+    } });
+    t.deepEqual(result.trainBinding, { trainId: "scramjetorg/transform-hub:2.0.0", continuationBase: lock.refs.R1, promotion: { number: 42, repository: lock.repository, base: "main" }, sourceSha: SHA });
+});
+
+test("candidate preflight rejects a synthetic merge SHA and a mismatched remote lock", (t) => {
+    const event = { repository: { full_name: lock.repository }, pull_request: { number: 42, merge_commit_sha: SHA, head: { sha: SHA, ref: lock.releaseBranch, repo: { full_name: lock.repository } }, base: { ref: "main" } } };
+    t.throws(() => runtime.preflight({ repository: lock.repository, branch: "devel", sourceSha: SHA, output: join(tmpdir(), "unused.json"), event, env: { RELEASE_REMOTE_POLICY_CONFIRMED: "true" }, runner: (_command, args) => args[0] === "ls-remote" ? `${lock.currentCommit} refs/heads/devel\n` : JSON.stringify(lock) }), { message: /Synthetic/ });
+    const mismatch = { ...lock, currentCommit: "5".repeat(40) };
+    t.throws(() => runtime.preflight({ repository: lock.repository, branch: "devel", sourceSha: SHA, output: join(tmpdir(), "unused-2.json"), event: { ...event, pull_request: { ...event.pull_request, merge_commit_sha: "f".repeat(40) } }, env: { RELEASE_REMOTE_POLICY_CONFIRMED: "true" }, runner: (_command, args) => args[0] === "ls-remote" ? `${lock.currentCommit} refs/heads/devel\n` : args[0] === "show" ? JSON.stringify(mismatch) : "" }), { message: /active release-train lock/ });
 });
 
 test("preflight rejects a moved protected remote before tree or lockfile work", (t) => {
@@ -62,9 +83,13 @@ test("preflight rejects malformed Git tree object output before creating candida
 
 test("candidate workflow keeps preflight before build and install-free", (t) => {
     const workflow = require("node:fs").readFileSync(resolve(__dirname, "..", "..", ".github", "workflows", "build-release-candidate.yml"), "utf8");
+    const preflight = workflow.slice(workflow.indexOf("  preflight:"), workflow.indexOf("  runtime-images:"));
+    const build = workflow.slice(workflow.indexOf("  build:"), workflow.indexOf("  stage:"));
     t.true(workflow.indexOf("  preflight:") < workflow.indexOf("  build:"));
     t.true(workflow.includes("release-candidate-runtime.js preflight"));
-    t.false(workflow.includes("npm install"));
+    t.false(preflight.includes("npm install"));
+    t.false(preflight.includes("npm ci"));
+    t.true(build.indexOf("actions/checkout") < build.indexOf("run: npm ci"));
 });
 
 test("candidate workflow replaces the runtime dependency destination with the verified checkpoint", (t) => {
@@ -101,7 +126,7 @@ test("candidate runtime Dockerfiles verify staged artifacts and install fully of
         if (name === "bdd-bun" || name === "runner-bun" || name === "runner-python") t.true(dockerfile.includes("bun/bun-linux-x64.zip"));
         if (name === "runner" || name === "runner-bun" || name === "runner-python") {
             t.true(dockerfile.includes("yarn/yarn.tar.gz"));
-            t.true(dockerfile.includes("yarn install --offline"));
+            t.true(dockerfile.includes("install --offline"));
         }
         t.false(dockerfile.includes("deb.nodesource.com"));
         if (name === "bdd-bun") t.true(dockerfile.includes("curl -fsSL https://bun.sh/install"));

@@ -1,41 +1,43 @@
 name: Build release candidate
 
 on:
-  push:
-    branches: [devel]
+  pull_request_target:
+    types: [opened, synchronize, reopened]
 
 permissions:
   contents: read
 
 concurrency:
-  group: release-candidate-${{ github.sha }}
+  group: release-candidate-${{ github.event.pull_request.head.sha }}
   cancel-in-progress: false
 
 jobs:
   preflight:
-    if: ${{ github.repository == 'scramjetorg/transform-hub' && github.ref == 'refs/heads/devel' }}
+    if: ${{ github.repository == 'scramjetorg/transform-hub' && github.event.pull_request.base.ref == 'main' && startsWith(github.event.pull_request.head.ref, 'release/') && github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: ubuntu-24.04
     permissions:
       contents: read
     outputs:
       identity: ${{ steps.identity.outputs.identity }}
       identity-key: ${{ steps.identity.outputs.identity-key }}
+      train-binding: ${{ steps.identity.outputs.train-binding }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           persist-credentials: false
-          ref: ${{ github.sha }}
+          ref: ${{ github.event.pull_request.head.sha }}
       - id: identity
         name: Fail-closed protected remote preflight
         env:
           RELEASE_REMOTE_POLICY_CONFIRMED: ${{ vars.SCRAMJET_RELEASE_REMOTE_POLICY_CONFIRMED }}
         run: |
-          node scripts/release-candidate-runtime.js preflight --repository "$GITHUB_REPOSITORY" --branch devel --source-sha "$GITHUB_SHA" --output "$RUNNER_TEMP/candidate-identity.json" --require-policy-confirmation
+          node scripts/release-candidate-runtime.js preflight --repository "$GITHUB_REPOSITORY" --branch devel --source-sha "${{ github.event.pull_request.head.sha }}" --event "$GITHUB_EVENT_PATH" --output "$RUNNER_TEMP/candidate-identity.json" --require-policy-confirmation
           echo "identity=$(base64 -w 0 "$RUNNER_TEMP/candidate-identity.json")" >> "$GITHUB_OUTPUT"
+           echo "train-binding=$(node -p 'JSON.stringify(require(process.env.RUNNER_TEMP + "/candidate-identity.json").trainBinding)')" >> "$GITHUB_OUTPUT"
           echo "identity-key=$(node -p "require(process.env.RUNNER_TEMP + '/candidate-identity.json').key")" >> "$GITHUB_OUTPUT"
       - uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08
         with:
-          name: candidate-identity-${{ github.sha }}
+          name: candidate-identity-${{ github.event.pull_request.head.sha }}
           path: ${{ runner.temp }}/candidate-identity.json
           if-no-files-found: error
           retention-days: 90
@@ -52,7 +54,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           persist-credentials: false
-          ref: ${{ github.sha }}
+          ref: ${{ github.event.pull_request.head.sha }}
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
         with:
           node-version: "22.23.2"
@@ -91,7 +93,7 @@ jobs:
         run: |
           set -euo pipefail
           trap 'docker logout ghcr.io' EXIT
-          build_image() { local role="$1" repo="$2" file="$3" context="$4"; local metadata="$RUNNER_TEMP/$role.json"; docker buildx build --push --platform linux/amd64 --build-arg CHECKPOINT_RUNTIME_DEPENDENCIES=true --file "$file" --tag "$repo:$GITHUB_SHA" --metadata-file "$metadata" "$context" >/dev/null; local digest; digest="$(jq -r '.["containerimage.digest"]' "$metadata")"; test "$digest" != null; docker buildx imagetools inspect "$repo@$digest" >/dev/null; printf '%s\t%s\t%s\n' "$role" "$repo" "$digest"; }
+          build_image() { local role="$1" repo="$2" file="$3" context="$4"; local metadata="$RUNNER_TEMP/$role.json"; docker buildx build --push --platform linux/amd64 --build-arg CHECKPOINT_RUNTIME_DEPENDENCIES=true --file "$file" --tag "$repo:${{ github.event.pull_request.head.sha }}" --metadata-file "$metadata" "$context" >/dev/null; local digest; digest="$(jq -r '.["containerimage.digest"]' "$metadata")"; test "$digest" != null; docker buildx imagetools inspect "$repo@$digest" >/dev/null; printf '%s\t%s\t%s\n' "$role" "$repo" "$digest"; }
           { build_image bdd-node ghcr.io/scramjetorg/transform-hub/bdd-node docker/Dockerfile.bdd-bun .; build_image runner-node ghcr.io/scramjetorg/transform-hub/runner packages/runner/Dockerfile .; build_image runner-python ghcr.io/scramjetorg/transform-hub/runner-py packages/runner-python/Dockerfile .; build_image runner-bun ghcr.io/scramjetorg/transform-hub/runner-bun packages/runner-bun/Dockerfile .; build_image pre-runner ghcr.io/scramjetorg/transform-hub/pre-runner packages/pre-runner/Dockerfile packages/pre-runner; } > "$RUNNER_TEMP/images.tsv"
           node - "$RUNNER_TEMP/images.tsv" "$RUNNER_TEMP/runtime-images.json" <<'NODE'
           const fs = require("node:fs"); const out = {}; for (const line of fs.readFileSync(process.argv[2], "utf8").trim().split("\n")) { const [role, repository, digest] = line.split("\t"); out[role] = { repository, digest }; } fs.writeFileSync(process.argv[3], JSON.stringify(out));
@@ -112,12 +114,12 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           persist-credentials: false
-          ref: ${{ github.sha }}
+          ref: ${{ github.event.pull_request.head.sha }}
       - name: Install dependencies
         run: npm ci
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
-          name: candidate-identity-${{ github.sha }}
+          name: candidate-identity-${{ github.event.pull_request.head.sha }}
           path: ${{ runner.temp }}/identity
       - id: image
         name: Require the immutable BDD image digest
@@ -133,9 +135,9 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           mkdir -p "$RUNNER_TEMP/candidate-bundle"
-          node scripts/release-candidate-runtime.js locate --repository "$GITHUB_REPOSITORY" --tag "candidate-$GITHUB_SHA" --source-sha "$GITHUB_SHA" --identity "$RUNNER_TEMP/identity/candidate-identity.json" --output "$RUNNER_TEMP/locate.json"
+          node scripts/release-candidate-runtime.js locate --repository "$GITHUB_REPOSITORY" --tag "candidate-${{ github.event.pull_request.head.sha }}" --source-sha "${{ github.event.pull_request.head.sha }}" --identity "$RUNNER_TEMP/identity/candidate-identity.json" --output "$RUNNER_TEMP/locate.json"
            if test "$(node -p "require(process.env.RUNNER_TEMP + '/locate.json').status")" = "found"; then
-             node scripts/release-candidate-runtime.js resolve --repository "$GITHUB_REPOSITORY" --tag "candidate-$GITHUB_SHA" --source-sha "$GITHUB_SHA" --identity "$RUNNER_TEMP/identity/candidate-identity.json" --release-id "$(node -p "require(process.env.RUNNER_TEMP + '/locate.json').releaseId")" --release-set-digest "$(node -p "require(process.env.RUNNER_TEMP + '/locate.json').releaseSetDigest")" --sealed-state-digest "$(node -p "require(process.env.RUNNER_TEMP + '/locate.json').sealedStateDigest")" --bundle-dir "$RUNNER_TEMP/candidate-bundle" --state "$RUNNER_TEMP/candidate-state.json" --output "$RUNNER_TEMP/resolve.json"
+             node scripts/release-candidate-runtime.js resolve --repository "$GITHUB_REPOSITORY" --tag "candidate-${{ github.event.pull_request.head.sha }}" --source-sha "${{ github.event.pull_request.head.sha }}" --identity "$RUNNER_TEMP/identity/candidate-identity.json" --release-id "$(node -p "require(process.env.RUNNER_TEMP + '/locate.json').releaseId")" --release-set-digest "$(node -p "require(process.env.RUNNER_TEMP + '/locate.json').releaseSetDigest")" --sealed-state-digest "$(node -p "require(process.env.RUNNER_TEMP + '/locate.json').sealedStateDigest")" --bundle-dir "$RUNNER_TEMP/candidate-bundle" --state "$RUNNER_TEMP/candidate-state.json" --output "$RUNNER_TEMP/resolve.json"
           else
             printf '%s' '${{ needs.runtime-images.outputs.image-map }}' > "$RUNNER_TEMP/image-map.json"
              node scripts/release-candidate-workflow.js plan --identity "$RUNNER_TEMP/identity/candidate-identity.json" --image-map "$RUNNER_TEMP/image-map.json" --output "$RUNNER_TEMP/release-set.json"
@@ -148,7 +150,7 @@ jobs:
           echo "release-set-digest=$(node -p "require('$RUNNER_TEMP/candidate-bundle/release-set.json').source.sha && require('./scripts/release-contract').digestDocument(require('$RUNNER_TEMP/candidate-bundle/release-set.json'))")" >> "$GITHUB_OUTPUT"
       - uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08
         with:
-          name: candidate-bundle-${{ github.sha }}
+          name: candidate-bundle-${{ github.event.pull_request.head.sha }}
           path: ${{ runner.temp }}/candidate-bundle
           if-no-files-found: error
           retention-days: 90
@@ -165,27 +167,27 @@ jobs:
       image-digest: ${{ steps.stage.outputs.image-digest }}
       image-map: ${{ steps.stage.outputs.image-map }}
     concurrency:
-      group: candidate-staging-${{ github.sha }}
+      group: candidate-staging-${{ github.event.pull_request.head.sha }}
       cancel-in-progress: false
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           persist-credentials: false
-          ref: ${{ github.sha }}
+          ref: ${{ github.event.pull_request.head.sha }}
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
-          name: candidate-bundle-${{ github.sha }}
+          name: candidate-bundle-${{ github.event.pull_request.head.sha }}
           path: ${{ runner.temp }}/candidate-bundle
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
-          name: candidate-identity-${{ github.sha }}
+          name: candidate-identity-${{ github.event.pull_request.head.sha }}
           path: ${{ runner.temp }}/identity
       - id: stage
         name: Stage candidate assets in one immutable draft release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          node scripts/release-candidate-runtime.js stage --repository "$GITHUB_REPOSITORY" --tag "candidate-$GITHUB_SHA" --source-sha "$GITHUB_SHA" --release-id 0 --bundle-dir "$RUNNER_TEMP/candidate-bundle" --state "$RUNNER_TEMP/candidate-bundle/candidate-state.json" --identity "$RUNNER_TEMP/identity/candidate-identity.json" --output "$RUNNER_TEMP/stage.json"
+          node scripts/release-candidate-runtime.js stage --repository "$GITHUB_REPOSITORY" --tag "candidate-${{ github.event.pull_request.head.sha }}" --source-sha "${{ github.event.pull_request.head.sha }}" --release-id 0 --bundle-dir "$RUNNER_TEMP/candidate-bundle" --state "$RUNNER_TEMP/candidate-bundle/candidate-state.json" --identity "$RUNNER_TEMP/identity/candidate-identity.json" --output "$RUNNER_TEMP/stage.json"
           echo "release-id=$(node -p "require(process.env.RUNNER_TEMP + '/stage.json').releaseId")" >> "$GITHUB_OUTPUT"
           echo "release-set-digest=$(node -p "require(process.env.RUNNER_TEMP + '/stage.json').releaseSetDigest")" >> "$GITHUB_OUTPUT"
           echo "sealed-state-digest=$(node -p "require(process.env.RUNNER_TEMP + '/stage.json').sealedStateDigest")" >> "$GITHUB_OUTPUT"
@@ -199,14 +201,15 @@ jobs:
       packages: read
     uses: ./.github/workflows/curated-devel-build-validation.yml
     with:
-      source-sha: ${{ github.sha }}
+      source-sha: ${{ github.event.pull_request.head.sha }}
       candidate-release-id: ${{ needs.stage.outputs.release-id }}
       release-set-digest: ${{ needs.stage.outputs.release-set-digest }}
       image-digest: ${{ needs.stage.outputs.image-digest }}
       image-map: ${{ needs.stage.outputs.image-map }}
       sealed-state-digest: ${{ needs.stage.outputs.sealed-state-digest }}
       repository: ${{ github.repository }}
-      candidate-tag: candidate-${{ github.sha }}
+      candidate-tag: candidate-${{ github.event.pull_request.head.sha }}
+      train-binding: ${{ needs.preflight.outputs.train-binding }}
 
   candidate-success:
     needs: [preflight, build, stage, curated-validation]
@@ -218,10 +221,10 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           persist-credentials: false
-          ref: ${{ github.sha }}
+          ref: ${{ github.event.pull_request.head.sha }}
       - name: Persist candidate-success evidence after complete validation
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          printf '%s\n' '{"schema":"candidate-success-attestation.v1","candidateSuccess":true,"sourceSha":"${{ github.sha }}","candidateReleaseId":${{ needs.stage.outputs.release-id }},"releaseSetDigest":"${{ needs.stage.outputs.release-set-digest }}","sealedStateDigest":"${{ needs.stage.outputs.sealed-state-digest }}"}' > "$RUNNER_TEMP/candidate-success.json"
-          node scripts/release-candidate-runtime.js attest --evidence "$RUNNER_TEMP/candidate-success.json" --output "$RUNNER_TEMP/candidate-success-attestation.json" --repository "$GITHUB_REPOSITORY" --tag "candidate-$GITHUB_SHA"
+          printf '%s\n' '{"schema":"candidate-success-attestation.v1","candidateSuccess":true,"sourceSha":"${{ github.event.pull_request.head.sha }}","candidateReleaseId":${{ needs.stage.outputs.release-id }},"releaseSetDigest":"${{ needs.stage.outputs.release-set-digest }}","sealedStateDigest":"${{ needs.stage.outputs.sealed-state-digest }}"}' > "$RUNNER_TEMP/candidate-success.json"
+          node scripts/release-candidate-runtime.js attest --evidence "$RUNNER_TEMP/candidate-success.json" --output "$RUNNER_TEMP/candidate-success-attestation.json" --repository "$GITHUB_REPOSITORY" --tag "candidate-${{ github.event.pull_request.head.sha }}"

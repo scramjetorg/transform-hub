@@ -41,6 +41,7 @@ function validateMainAdmission(admission) {
     assertSha(admission.mainSha, "main merge SHA");
     assertSha(parents[0], "main first parent");
     assertSha(parents[1], "main second parent");
+    if (admission.mainFirstParentAtAdmission !== undefined && admission.mainFirstParentAtAdmission !== parents[0]) fail("Main first parent at admission does not match the admitted merge.");
     assertSha(candidate?.sourceSha, "candidate source SHA");
     if (parents[1].toLowerCase() !== candidate.sourceSha.toLowerCase()) fail("Main second parent must be the candidate source SHA.");
     assertDigest(admission.mainTree, "main tree");

@@ -141,11 +141,11 @@ test("four BDD jobs partition core and extended commands into non-overlapping pa
 
 test("validation, BDD, and release jobs are isolated with no artifact or node_modules handoff", (t) => {
 	const source = workflowSource();
-	t.is((source.match(/uses: actions\/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1/g) || []).length, 7);
+	t.is((source.match(/uses: actions\/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1/g) || []).length, 8);
 	t.is((source.match(/uses: \.\/\.github\/actions\/setup-workspace/g) || []).length, 6);
 	t.is((source.match(/cache-mode: restore-only/g) || []).length, 5);
 	t.is((source.match(/cache-mode: off/g) || []).length, 1);
-	t.is((source.match(/persist-credentials: false/g) || []).length, 7);
+	t.is((source.match(/persist-credentials: false/g) || []).length, 8);
 	t.is((source.match(/needs: \[package-validation\]/g) || []).length, 4);
 	t.is((source.match(/actions\/upload-artifact@/g) || []).length, 1);
 	t.is((source.match(/actions\/download-artifact@/g) || []).length, 4);
@@ -194,9 +194,9 @@ test("PR and merge-group workflow keeps fork-safe read-only permissions and stal
 	t.true(source.includes("types: [checks_requested]"));
 	t.true(source.includes("format('pr-{0}'"));
 	t.true(source.includes("format('merge-group-{0}'"));
-	t.is((source.match(/permissions:\n\s+contents: read/g) || []).length, 8);
-	t.is((source.match(/uses: actions\/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1/g) || []).length, 7);
-	t.is((source.match(/persist-credentials: false/g) || []).length, 7);
+	t.is((source.match(/permissions:\n\s+contents: read/g) || []).length, 9);
+	t.is((source.match(/uses: actions\/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1/g) || []).length, 8);
+	t.is((source.match(/persist-credentials: false/g) || []).length, 8);
 	t.is((source.match(/uses: \.\/\.github\/actions\/setup-workspace/g) || []).length, 6);
 	t.is((source.match(/cache-mode: restore-only/g) || []).length, 5);
 	t.is((source.match(/cache-mode: off/g) || []).length, 1);
@@ -225,8 +225,8 @@ test("every PR job checks out an explicit ref before invoking the local setup he
 
 	// The prerelease-bdd job uses its own raw setup-node after checkout.
 	const rawSetupNode = "uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020";
-	const lastCheckout = source.lastIndexOf(checkout);
-	t.true(lastCheckout < source.indexOf(rawSetupNode), "prerelease BDD must check out before raw setup-node");
+	const prereleaseCheckout = source.indexOf(checkout, source.indexOf("  prerelease-bdd:\n"));
+	t.true(prereleaseCheckout < source.indexOf(rawSetupNode), "prerelease BDD must check out before raw setup-node");
 });
 
 test("PR outputs remain disposable and the repository security scan is connected without claiming external enforcement", (t) => {
@@ -474,4 +474,26 @@ test("release PR BDD preserves raw setup-node without package-manager cache and 
 	t.true(prepare < prefixInstall, "the generated install lock must be built after prepare");
 	const between = bdd.slice(prepare, prefixInstall);
 	t.false(between.includes("npm ci --ignore-scripts"), "the redundant second root npm ci must be removed after prepare");
+});
+
+test("ordinary devel PRs use a dedicated trusted-base release-train freeze check", (t) => {
+	const source = workflowSource();
+	const start = source.indexOf("  devel-pr-release-train-lock:\n");
+	t.true(start >= 0, "the dedicated devel lock check must exist");
+	const job = source.slice(start);
+
+	t.true(job.includes("name: CI / devel PR release-train lock"));
+	t.true(job.includes("github.event.pull_request.base.ref == 'devel'"));
+	t.true(job.includes("github.event.merge_group.base_ref == 'devel'"));
+	t.true(job.includes("ref: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha }}"));
+	t.true(job.includes("git show \"$BASE_SHA:$lock_path\""));
+	t.true(job.includes('git rev-parse --verify "$BASE_SHA^{commit}"'));
+	t.true(job.includes(".github/release-train-lock.json"));
+	t.true(job.includes("active|manual-recovery-required"));
+	t.true(job.includes("aborted|reconciled"));
+	t.true(job.includes("Invalid release-train lock status on trusted devel base; failing closed."));
+	t.true(job.includes("No release-train lock exists on the trusted devel base; ordinary PR is permitted."));
+	t.false(job.includes("pull_request_target"));
+	t.false(job.includes("packages: write"));
+	t.false(job.includes("exception"), "no undocumented exception mechanism may bypass the freeze");
 });

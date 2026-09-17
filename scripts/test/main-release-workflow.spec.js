@@ -30,6 +30,8 @@ test("main release uses distinct main and candidate source SHAs and scalar diges
 	t.false(source.includes("base64"));
 	t.false(source.includes("download-artifact"));
 	t.false(source.includes("triggering-run"));
+	t.true(source.includes("release-production-runtime.js admit-main"));
+	t.false(source.includes("release-candidate-runtime.js admit"));
 });
 
 test("main release orders BDD, production publish, read-only registry proof, and finalization", (t) => {

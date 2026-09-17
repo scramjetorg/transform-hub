@@ -1,0 +1,33 @@
+name: Release train devel reconciliation
+
+on:
+  workflow_dispatch:
+    inputs:
+      merge-sha: { required: true, type: string, description: Exact admitted main merge SHA }
+      next-development-version: { required: true, type: string, description: Expected devel alignment }
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-train-reconciliation
+  cancel-in-progress: false
+
+jobs:
+  reconcile:
+    name: Release train / reconcile devel
+    runs-on: ubuntu-24.04
+    environment: release-train
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with: { persist-credentials: false, fetch-depth: 0, ref: devel }
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with: { node-version: "22", cache: "" }
+      - name: Prepare reconciliation (no mutation)
+        run: node scripts/release-train.js prepare --repository "$GITHUB_REPOSITORY" --merge-sha "${{ inputs.merge-sha }}"
+      - name: Required devel validation
+        run: node scripts/release-align.js check-development --development-version="${{ inputs.next-development-version }}"
+      - name: Finalize reconciliation after validation
+        run: node scripts/release-train.js finalize --repository "$GITHUB_REPOSITORY" --merge-sha "${{ inputs.merge-sha }}" --validation-passed

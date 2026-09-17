@@ -650,3 +650,48 @@ jobs:
           node scripts/release-prerelease-bdd.js validate-cli --workspace-root .
           cp "$RUNNER_TEMP/release-prerelease-bdd.json" .release-prerelease-bdd/verified-record.json
           SCRAMJET_RELEASE_PRERELEASE_BDD_RECORD=.release-prerelease-bdd/verified-record.json SCRAMJET_RELEASE_PRERELEASE_BDD_INSTALL_DIR=.release-prerelease-bdd BDD_NODE_IMAGE="$(node -p "require(process.env.RUNNER_TEMP + '/release-prerelease-bdd.json').images.find((image) => image.role === 'bdd-node').reference")" npm run test:bdd-ci-api-node
+
+
+  devel-pr-release-train-lock:
+    name: CI / devel PR release-train lock
+    # Release-branch PRs to main are deliberately outside this freeze check.
+    if: ${{ (github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'devel') || (github.event_name == 'merge_group' && github.event.merge_group.base_ref == 'devel') }}
+    permissions:
+      contents: read
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Checkout trusted devel base
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          # Never read the lock from the PR head: the freeze decision is based
+          # on the trusted base commit only.
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha }}
+
+      - name: Enforce ordinary devel PR freeze
+        shell: bash
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha }}
+        run: |
+          set -euo pipefail
+          lock_path=".github/release-train-lock.json"
+          git rev-parse --verify "$BASE_SHA^{commit}" >/dev/null
+          if ! lock_json="$(git show "$BASE_SHA:$lock_path" 2>/dev/null)"; then
+            echo "No release-train lock exists on the trusted devel base; ordinary PR is permitted."
+            exit 0
+          fi
+          lock_status="$(node -e 'const lock = JSON.parse(process.argv[1]); process.stdout.write(typeof lock.status === "string" ? lock.status : "")' "$lock_json")"
+          case "$lock_status" in
+            active|manual-recovery-required)
+              echo "Ordinary PRs targeting devel are frozen while release-train lock status is $lock_status." >&2
+              exit 1
+              ;;
+            aborted|reconciled)
+              echo "Release-train lock status is terminal ($lock_status); ordinary PR is permitted."
+              ;;
+            *)
+              echo "Invalid release-train lock status on trusted devel base; failing closed." >&2
+              exit 1
+              ;;
+          esac

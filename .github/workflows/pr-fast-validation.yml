@@ -32,7 +32,7 @@ jobs:
       - name: Lint changed files
         run: RAYON_NUM_THREADS=12 ./node_modules/.bin/biome lint --changed --since="${{ github.event.pull_request.base.sha }}" --error-on-warnings --no-errors-on-unmatched
       - name: Offline contract and adapter tests
-        run: node scripts/run-ava.js scripts/test/phase-4-workflow.spec.js scripts/test/workflow-inventory.spec.js scripts/test/release-contract.spec.js scripts/test/release-phase4.spec.js scripts/test/github-release-candidate.spec.js scripts/test/release-candidate-assets.spec.js scripts/test/release-bdd-validation.spec.js scripts/test/release-bundle.spec.js
+        run: node scripts/run-ava.js scripts/test/release-workflow-policy.spec.js scripts/test/workflow-inventory.spec.js scripts/test/release-contract.spec.js scripts/test/release-admission.spec.js scripts/test/github-release-candidate.spec.js scripts/test/release-candidate-assets.spec.js scripts/test/release-bdd-validation.spec.js scripts/test/release-bundle.spec.js
       - name: Affected unit and workflow policy tests
         run: node scripts/run-ava.js scripts/test/release-pr-smoke.spec.js scripts/test/workflow-policy.spec.js
       - name: Configured risk-area TypeScript smoke

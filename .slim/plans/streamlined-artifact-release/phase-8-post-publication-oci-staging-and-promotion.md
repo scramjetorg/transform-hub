@@ -1,4 +1,4 @@
-# Phase 7 — Post-publication OCI Staging and Promotion
+# Phase 8 — Post-publication OCI Staging and Promotion
 
 ## Outcome
 
@@ -7,7 +7,7 @@ After production npm publication and registry proof, OCI images are built from t
 ## Tasks
 
 - [ ] Define the required OCI image map for STH, MultiManager, SI, and every supported runner runtime. Fix SI to `ghcr.io/scramjetorg/si`; record the approved GHCR repositories, npm package inputs, Dockerfile contexts, and supported architectures for all other roles.
-- [ ] Create a protected **OCI Image Staging and Promotion** workflow that can run only after the matching protected-`main` publication journal and credentialless registry proof are verified. It accepts only the final release identity, main SHA, manifest digest, journal digest, and registry-proof digest as inputs.
+- [ ] Create a protected **OCI Image Staging and Promotion** workflow that can run only after the matching protected-`main` publication journal, credentialless registry proof, and finalization-state record are verified. It accepts only the final release/tag identity, main SHA, manifest digest, journal digest, registry-proof address/digest, and finalization-state digest as inputs.
 - [ ] Build each OCI image in a clean context using only exact first-party package versions downloaded from npm and verified against the publication journal. Reject workspace links, source-directory copies, local tarballs, unpinned ranges, and a package version or integrity mismatch.
 - [ ] Push each successful image under an immutable staging tag bound to the release identity and main SHA; record repository, tag, digest, package-version input set, build provenance, SBOM, scan result, and smoke-test result in signed OCI-staging evidence.
 - [ ] Verify every staging digest by pull and inspect, run role-appropriate container smoke checks, and reject an incomplete, duplicate, or mismatched role set before any mutable tag update.
@@ -25,8 +25,8 @@ After production npm publication and registry proof, OCI images are built from t
 
 ## Dependencies
 
-- Phase 5 production publication, tarball BDD validation, registry proof, final release identity, and publication journal.
-- Phase 6 cutover evidence and confirmed active workflow/required-check configuration.
+- Phase 5 production publication, tarball BDD validation, registry proof, finalization-state record, final release identity, and publication journal.
+- Phase 7 cutover evidence and confirmed active workflow/required-check configuration.
 - Approved GHCR repository map and package-to-image input map for STH, MultiManager, SI, and runners.
 
 ## Non-goals

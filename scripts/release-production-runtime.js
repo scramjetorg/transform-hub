@@ -9,6 +9,7 @@ const { resolve } = require("node:path");
 const { assertSha, digestDocument } = require("./release-contract");
 const production = require("./release-production");
 const { DEFAULT_REGISTRY } = require("./release-registry-proof");
+const { validateReleaseTrainLock, validateAgainstPromotionMetadata } = require("./release-train-lock");
 
 const write = (file, value) => writeFileSync(resolve(file), `${JSON.stringify(value, null, 2)}\n`);
 const bytes = (value) => Buffer.isBuffer(value) ? value : Buffer.from(value);
@@ -26,6 +27,33 @@ function gitParents({ mainSha, gitRunner = execFileSync }) {
     const trees = [main, parents[2]].map((ref) => sha(String(gitRunner("git", ["rev-parse", `${ref}^{tree}`], { encoding: "utf8" })).trim()));
     if (trees[0] !== trees[1]) throw new Error("Main and candidate-source trees must match.");
     return { mainSha: main, parents: parents.slice(1), mainTree: trees[0], secondParentTree: trees[1] };
+}
+
+function readRemoteTrainLock({ repository, gitRunner = execFileSync }) {
+    if (repository !== "scramjetorg/transform-hub") throw new Error("Admission requires the managed repository.");
+    const remote = sha(String(gitRunner("git", ["ls-remote", `https://github.com/${repository}.git`, "refs/heads/devel"], { encoding: "utf8" })).trim().split(/\s+/)[0]);
+    gitRunner("git", ["fetch", "--no-tags", "--depth=1", `https://github.com/${repository}.git`, "refs/heads/devel"], { encoding: "utf8" });
+    let lock;
+    try { lock = JSON.parse(gitRunner("git", ["show", "FETCH_HEAD:.github/release-train-lock.json"], { encoding: "utf8" })); } catch { throw new Error("Active devel release-train lock is unavailable remotely."); }
+    validateReleaseTrainLock(lock);
+    if (remote !== lock.currentCommit && !lock.continuation.includes(remote)) throw new Error("Remote devel does not carry the active release-train lock.");
+    if (lock.status !== "active") throw new Error("Active devel release-train lock is terminal.");
+    return lock;
+}
+
+function readPromotion({ repository, number, githubRunner = execFileSync }) {
+    let metadata;
+    try { metadata = JSON.parse(githubRunner("gh", ["api", `repos/${repository}/pulls/${number}`], { encoding: "utf8" })); } catch { throw new Error("Live release promotion PR metadata is unavailable."); }
+    return metadata;
+}
+
+function validateTrainEvidence({ evidence, lock, promotion, sourceSha }) {
+    const binding = evidence?.trainBinding || evidence?.identity?.trainBinding;
+    if (!binding) throw new Error("Candidate train evidence is missing.");
+    if (binding.trainId !== `${lock.repository}:${lock.stableVersion}` || binding.continuationBase !== lock.refs.R1 || binding.sourceSha !== sourceSha) throw new Error("Candidate train evidence does not match the active lock or current source.");
+    const linked = binding.promotion;
+    if (!linked || linked.number !== promotion.number || linked.repository !== lock.repository || linked.base !== "main") throw new Error("Candidate train evidence promotion binding does not match the live PR.");
+    return binding;
 }
 
 function candidateAssets({ adapter, candidateId, bundleDir, releaseSetDigest, sealedStateDigest }) {
@@ -74,17 +102,25 @@ function recordRegistryVerification({ adapter, candidateId, tuple, report }) {
     return appendEvidence({ adapter, candidateId, tuple, name: "registry-verification.json", value: report });
 }
 
-async function admitMain({ mainSha, bundleDir, candidateId, candidateAdapter, candidateResolver, gitRunner, output, evidenceAdapter = candidateAdapter, env = process.env, policyFlags = ["RELEASE_PRODUCTION_POLICY_CONFIRMED"] }) {
+async function admitMain({ mainSha, bundleDir, candidateId, candidateAdapter, candidateResolver, gitRunner, githubRunner, repository = "scramjetorg/transform-hub", output, evidenceAdapter = candidateAdapter, env = process.env, policyFlags = ["RELEASE_PRODUCTION_POLICY_CONFIRMED"] }) {
     policy(env, policyFlags);
     const commit = gitParents({ mainSha, gitRunner });
     const sourceSha = sha(commit.parents[1]);
-    if (!candidateId || !Number.isSafeInteger(Number(candidateId)) || Number(candidateId) <= 0) throw new Error("A numeric sealed candidate release ID is required.");
-    const candidate = await (candidateResolver ? candidateResolver(Number(candidateId), sourceSha) : typeof candidateAdapter.resolve === "function" ? candidateAdapter.resolve(Number(candidateId)) : null);
+    const lock = readRemoteTrainLock({ repository, gitRunner });
+    const promotion = readPromotion({ repository, number: lock.promotion.number, githubRunner });
+    validateAgainstPromotionMetadata(lock, promotion);
+    if (promotion.head.sha !== sourceSha) throw new Error("Live promotion PR head does not match the main second parent.");
+    const candidateReleaseId = Number(candidateId);
+    if (!candidateId || (Number.isFinite(candidateReleaseId) && (!Number.isSafeInteger(candidateReleaseId) || candidateReleaseId <= 0))) throw new Error("A sealed candidate release ID or tag is required.");
+    const candidate = await (candidateResolver ? candidateResolver(Number.isFinite(candidateReleaseId) ? candidateReleaseId : candidateId, sourceSha) : typeof candidateAdapter.resolve === "function" ? candidateAdapter.resolve(candidateReleaseId) : null);
     if (!candidate || !(candidate.draft ?? candidate.isDraft)) throw new Error("A matching sealed draft candidate is required.");
     if ((candidate.target_commitish || candidate.targetCommitish) !== sourceSha) throw new Error("Candidate source SHA does not match the main second parent.");
     const resolved = candidateAssets({ adapter: candidateAdapter, candidateId: candidateId, bundleDir, releaseSetDigest: candidate.releaseSetDigest, sealedStateDigest: candidate.sealedStateDigest });
-    const tuple = { mainSha: commit.mainSha, sourceSha, candidateReleaseId: Number(candidateId), releaseSetDigest: resolved.seal.releaseSetDigest, sealedStateDigest: resolved.seal.sealedStateDigest };
-    const admissionBody = { schema: "main-admission.v1", ...commit, candidate: { sourceSha, releaseId: tuple.candidateReleaseId, releaseSetDigest: tuple.releaseSetDigest, sealedStateDigest: tuple.sealedStateDigest }, releaseSetDigest: tuple.releaseSetDigest, sealedStateDigest: tuple.sealedStateDigest };
+    const trainBinding = validateTrainEvidence({ evidence: resolved.state, lock, promotion: promotion.pull_request || promotion, sourceSha });
+    const releaseId = Number(candidate.id || candidate.databaseId || candidateReleaseId);
+    if (!Number.isSafeInteger(releaseId) || releaseId <= 0) throw new Error("Matching sealed candidate release has no numeric ID.");
+    const tuple = { mainSha: commit.mainSha, sourceSha, candidateReleaseId: releaseId, releaseSetDigest: resolved.seal.releaseSetDigest, sealedStateDigest: resolved.seal.sealedStateDigest };
+    const admissionBody = { schema: "main-admission.v1", ...commit, mainFirstParentAtAdmission: commit.parents[0], trainBinding, candidate: { sourceSha, releaseId: tuple.candidateReleaseId, releaseSetDigest: tuple.releaseSetDigest, sealedStateDigest: tuple.sealedStateDigest }, releaseSetDigest: tuple.releaseSetDigest, sealedStateDigest: tuple.sealedStateDigest };
     const admission = { ...admissionBody, digest: digestDocument(admissionBody) };
     production.validateMainAdmission(admission);
     appendEvidence({ adapter: evidenceAdapter, candidateId: candidate.tag_name || candidate.tagName || candidateId, tuple, name: "main-admission.json", value: admission });
@@ -127,13 +163,20 @@ async function publishMain({ tuple, releaseSet, tarballPaths, root, journal, pub
     return { journal: finalJournal, snapshots };
 }
 
-module.exports = { admitMain, publishMain, verifyRegistry, preflightRecovery, recordRegistryVerification, listEvidence, candidateEvidence, gitParents, candidateAssets };
+module.exports = { admitMain, publishMain, verifyRegistry, preflightRecovery, recordRegistryVerification, listEvidence, candidateEvidence, gitParents, candidateAssets, readRemoteTrainLock, readPromotion, validateTrainEvidence };
 
 if (require.main === module) {
     const args = process.argv.slice(2);
     const option = (name) => { const index = args.indexOf(name); if (index < 0 || !args[index + 1]) throw new Error(`${name} is required.`); return args[index + 1]; };
     try {
-        if (args[0] === "publish-main") {
+        if (args[0] === "admit-main") {
+            const { createGithubReleaseAssetAdapter } = require("./lib/github-release-candidate");
+            const repository = option("--repository"); const mainSha = option("--main-sha"); const candidateTag = option("--candidate-tag"); const bundleDir = option("--bundle-dir");
+            const adapter = createGithubReleaseAssetAdapter({ repository, tag: candidateTag, targetSha: "0".repeat(40) });
+            const release = adapter.view(); if (!release) throw new Error("Matching draft candidate release is required for admission.");
+            const candidateId = Number(release.databaseId || release.id); if (!Number.isSafeInteger(candidateId) || candidateId <= 0) throw new Error("Candidate release is missing a numeric ID.");
+            admitMain({ mainSha, repository, bundleDir, candidateId: candidateTag, candidateAdapter: adapter, candidateResolver: (id) => adapter.resolve(id), gitRunner: execFileSync, githubRunner: execFileSync, output: option("--output") }).then(() => {}).catch((error) => { console.error(`[release-production-runtime] ${error.message}`); process.exitCode = 1; });
+        } else if (args[0] === "publish-main") {
             const bundleDir = option("--bundle-dir");
             const releaseSet = json(`${bundleDir}/release-set.json`);
             const tuple = { mainSha: option("--main-sha"), sourceSha: option("--source-sha"), candidateReleaseId: Number(option("--candidate-release-id")), releaseSetDigest: option("--release-set-digest"), sealedStateDigest: option("--sealed-state-digest"), version: option("--version") };
