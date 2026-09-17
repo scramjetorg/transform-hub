@@ -4,7 +4,7 @@ const { copyFileSync, lstatSync, mkdirSync, readFileSync } = require("node:fs");
 const { join, resolve } = require("node:path");
 
 const CANONICAL_PATH = "bdd-support/runner-container-cleanup.js";
-const SOURCE_PATH = ["bdd", "dist", "lib", "runner-container-cleanup.js"];
+const SOURCE_PATH = ["bdd", "dist", "bdd", "lib", "runner-container-cleanup.js"];
 const NPM_CLI = resolve(__dirname, "..", "..", "node_modules/npm/bin/npm-cli.js");
 function metadata(bytes) { const hash = createHash("sha256").update(bytes); return { path: CANONICAL_PATH, size: bytes.length, sha256: `sha256:${hash.copy().digest("hex")}`, sri: `sha256-${hash.digest("base64")}` }; }
 function buildBddSupport({ root = process.cwd(), npm = NPM_CLI, runner = execFileSync } = {}) {

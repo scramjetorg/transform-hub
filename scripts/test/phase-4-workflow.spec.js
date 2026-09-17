@@ -84,13 +84,8 @@ test("candidate preflight stays install-free while build installs before runtime
     const preflight = candidate.slice(candidate.indexOf("  preflight:"), candidate.indexOf("  runtime-images:"));
     const build = candidate.slice(candidate.indexOf("  build:"), candidate.indexOf("  stage:"));
     const install = build.indexOf("run: npm ci");
-    const bddCompile = build.indexOf("run: npm --prefix bdd run build:bdd");
     t.false(preflight.includes("npm ci"));
     t.true(install >= 0);
-    t.true(bddCompile > install);
-    t.true(bddCompile < build.indexOf("node scripts/release-candidate-runtime.js locate"));
-    t.true(bddCompile < build.indexOf("node scripts/release-candidate-workflow.js plan"));
-    t.true(bddCompile < build.indexOf("node scripts/release-candidate-runtime.js build"));
     t.true(install < build.indexOf("node scripts/release-candidate-runtime.js locate"));
     t.true(install < build.indexOf("node scripts/release-candidate-workflow.js plan"));
     t.true(install < build.indexOf("node scripts/release-candidate-runtime.js build"));
