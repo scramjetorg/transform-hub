@@ -99,13 +99,14 @@ jobs:
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$VALIDATION_SHA"
           rm -rf dist/docker-runner
+          mkdir -p runtime-dependencies
           node scripts/build-all.js --no-install --link-packages -d packages/runner -o ./dist/docker-runner/ --ts-config tsconfig.build.json
           cp -r packages/runner-python ./dist/docker-runner/runner-python
-          docker build --build-arg CHECKPOINT_RUNTIME_DEPENDENCIES=true --file packages/runner/Dockerfile --tag "scramjetorg/runner:$VALIDATION_SHA" .
-          docker build --build-arg CHECKPOINT_RUNTIME_DEPENDENCIES=true --file packages/runner-python/Dockerfile --tag "scramjetorg/runner-py:$VALIDATION_SHA" .
-          docker build --build-arg CHECKPOINT_RUNTIME_DEPENDENCIES=true --file packages/runner-bun/Dockerfile --tag "scramjetorg/runner-bun:$VALIDATION_SHA" .
+          docker build --file packages/runner/Dockerfile --tag "scramjetorg/runner:$VALIDATION_SHA" .
+          docker build --file packages/runner-python/Dockerfile --tag "scramjetorg/runner-py:$VALIDATION_SHA" .
+          docker build --file packages/runner-bun/Dockerfile --tag "scramjetorg/runner-bun:$VALIDATION_SHA" .
           docker build --file packages/pre-runner/Dockerfile --tag "scramjetorg/pre-runner:$VALIDATION_SHA" packages/pre-runner
-          docker build --build-arg CHECKPOINT_RUNTIME_DEPENDENCIES=true --file docker/Dockerfile.bdd-bun --tag "ghcr.io/scramjetorg/transform-hub/bdd-node:$VALIDATION_SHA" .
+          docker build --file docker/Dockerfile.bdd-bun --tag "ghcr.io/scramjetorg/transform-hub/bdd-node:$VALIDATION_SHA" .
           node - "$RUNNER_TEMP/pr-bdd-image-manifest.json" "$VALIDATION_SHA" <<'NODE'
           const fs = require("node:fs");
           const [,, output, sha] = process.argv;
