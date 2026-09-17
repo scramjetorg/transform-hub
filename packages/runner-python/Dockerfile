@@ -59,10 +59,7 @@ FROM target
 ARG CHECKPOINT_RUNTIME_DEPENDENCIES=false
 COPY runtime-dependencies/ /opt/transform-hub/runtime-dependencies/
 COPY scripts/checkpoint/verify-runtime-dependencies.js /usr/local/bin/verify-runtime-dependencies.js
-COPY --from=node-runtime /usr/local/bin/node /usr/local/bin/node
-COPY --from=node-runtime /usr/local/bin/npm /usr/local/bin/npm
-COPY --from=node-runtime /usr/local/bin/npx /usr/local/bin/npx
-COPY --from=node-runtime /usr/local/lib/node_modules /usr/local/lib/node_modules
+COPY --from=node-runtime /usr/local /usr/local
 
 # Outer Node-based runner lives under ${HUB_DIR}/runner so that the
 # workdir-relative `node bin/start-runner` in docker-entrypoint.sh resolves.
@@ -85,7 +82,8 @@ RUN if [ "${CHECKPOINT_RUNTIME_DEPENDENCIES}" = "true" ]; then \
         && yarn --cwd /tmp/scramjet-runner-install install --offline --ignore-engines --frozen-lockfile --production --silent \
             --cache-folder ${HUB_DIR}/runtime-dependencies/yarn/cache \
             --modules-folder ${HUB_DIR}/node_modules; \
-    else npm install -g --no-audit --no-fund yarn \
+    else rm -f /usr/local/bin/yarn /usr/local/bin/yarnpkg \
+        && npm install -g --no-audit --no-fund yarn \
         && yarn install --ignore-engines --frozen-lockfile --production --silent; fi \
     && yarn cache clean \
     && chmod +x ./bin/start-runner.js
@@ -108,13 +106,7 @@ RUN set -eux \
     else \
         . /tmp/verser2-config.sh \
         && TMP_DIR="$(mktemp -d)" \
-        && python3 -c "\
- import sys; \
- from pathlib import Path; \
- from urllib.request import urlopen; \
- url, dst = sys.argv[1], Path(sys.argv[2]); \
- dst.write_bytes(urlopen(url).read()) \
-" "${VERSER2_WHEEL_URL}" "${TMP_DIR}/${VERSER2_WHEEL}" \
+        && python3 -c "import sys; from pathlib import Path; from urllib.request import urlopen; url, dst = sys.argv[1], Path(sys.argv[2]); dst.write_bytes(urlopen(url).read())" "${VERSER2_WHEEL_URL}" "${TMP_DIR}/${VERSER2_WHEEL}" \
         && echo "${VERSER2_WHEEL_SHA256}  ${TMP_DIR}/${VERSER2_WHEEL}" | sha256sum --check --status \
         && pip install --no-cache-dir --find-links "${TMP_DIR}" -r ${RUNNER_PY_DIR}/requirements.txt \
         && rm -rf "${TMP_DIR}"; \
