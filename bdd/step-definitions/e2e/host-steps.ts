@@ -821,8 +821,9 @@ When("get runner PID", { timeout: 30000 }, async function(this: CustomWorld) {
     let tries = 0;
 
     const adapter = process.env.RUNTIME_ADAPTER || "process";
+    const processIdDeadline = Date.now() + 30000;
 
-    while (!success && tries < 3) {
+    while (!success && (adapter === "process" ? Date.now() < processIdDeadline : tries < 3)) {
         const health = await this.resources.instance?.getHealth();
 
         console.log("Health", health);
@@ -861,7 +862,8 @@ When("get runner PID", { timeout: 30000 }, async function(this: CustomWorld) {
         tries++;
 
         if (!success) {
-            await defer(50);
+            const remaining = processIdDeadline - Date.now();
+            if (adapter !== "process" || remaining > 0) await defer(adapter === "process" ? Math.min(50, remaining) : 50);
         }
     }
 

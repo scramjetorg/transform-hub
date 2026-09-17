@@ -118,6 +118,19 @@ test("runner cleanup preserves a non-404 stop error when kill succeeds", async t
     t.is(rejected, error);
 });
 
+test("get runner PID polls process health for the full step timeout", t => {
+    const source = fs.readFileSync(
+        path.join(__dirname, "../../bdd/step-definitions/e2e/host-steps.ts"),
+        "utf8"
+    );
+    const step = source.slice(source.indexOf('When("get runner PID"'), source.indexOf('When("runner has ended execution"'));
+
+    t.true(step.includes("const processIdDeadline = Date.now() + 30000"));
+    t.true(step.includes('adapter === "process" ? Date.now() < processIdDeadline : tries < 3'));
+    t.true(step.includes("health?.processId"));
+    t.true(step.includes("Math.min(50, remaining)"));
+});
+
 test("start-host callback forwards AbortSignal to getLoadCheck", async (t) => {
     let capturedSignal;
     let signalNotAbortedAtCallTime = false;

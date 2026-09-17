@@ -1,7 +1,7 @@
 "use strict";
 
 const test = require("ava").default;
-const { affectedWorkspaces, assertSmokeCommands, selectPrSmoke } = require("../release-pr-smoke");
+const { affectedWorkspaces, assertSmokeCommands, selectPrSmoke, SMOKE_COMMANDS } = require("../release-pr-smoke");
 
 const manifests = [
     { name: "@scramjet/a", directory: "packages/a", manifest: { name: "@scramjet/a" } },
@@ -26,4 +26,12 @@ test("PR smoke risk mapping is ordered and commands use local tsx without releas
     t.deepEqual(selection.risks, ["config", "runner", "bdd"]);
     assertSmokeCommands(selection.commands);
     t.true(selection.commands.every((command) => command[0] === process.execPath && command[1] === "node_modules/tsx/dist/cli.mjs"));
+});
+
+test("PR smoke checks the runner export entrypoint without runner environment", (t) => {
+    t.deepEqual(SMOKE_COMMANDS.runner, [
+        process.execPath,
+        "node_modules/tsx/dist/cli.mjs",
+        "packages/runner/src/index.ts",
+    ]);
 });

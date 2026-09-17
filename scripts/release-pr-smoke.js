@@ -8,7 +8,7 @@ const TSX = [process.execPath, "node_modules/tsx/dist/cli.mjs"];
 const SMOKE_COMMANDS = Object.freeze({
     config: [...TSX, "packages/sth/src/bin/hub.ts", "--help"],
     cli: [...TSX, "packages/cli/src/bin/index.ts", "--help"],
-    runner: [...TSX, "packages/runner/src/bin/start-runner.ts", "--help"],
+    runner: [...TSX, "packages/runner/src/index.ts"],
     // The BDD risk area gets a source-level TypeScript smoke only.  Full BDD is
     // deliberately owned by the candidate workflow and is never a PR gate.
     bdd: [...TSX, "scripts/release-risk-smoke.ts", "bdd"],
