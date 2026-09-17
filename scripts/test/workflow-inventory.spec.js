@@ -45,15 +45,18 @@ test("release-train workflows are manual, delegated, and never request npm OIDC"
 	}
 });
 
-test("release start fetches the main audit ref and installs dependencies before delegated start with local Git identity", (t) => {
+test("release start fetches audit and recovery refs and installs dependencies before delegated start with local Git identity", (t) => {
 	const source = readFileSync(resolve(workflowsDir, "release-start.yml"), "utf8");
 	const mainRefFetch = source.indexOf("git fetch --no-tags origin main:main");
+	const releaseRefFetch = source.indexOf('git fetch --no-tags origin "refs/heads/release/*:refs/heads/release/*"');
 	const install = source.indexOf("run: npm ci");
 	const start = source.indexOf("name: Start release train");
 	const gitAuthentication = source.indexOf("git config --local credential.helper");
 
 	t.true(mainRefFetch >= 0, "release start must make the local main audit ref available");
 	t.true(mainRefFetch < start, "release start must fetch the main audit ref before starting a release train");
+	t.true(releaseRefFetch >= 0, "release start must make release recovery refs available locally");
+	t.true(releaseRefFetch < start, "release start must fetch release recovery refs before starting a release train");
 	t.true(install >= 0, "release start must install workspace dependencies");
 	t.true(install < start, "release start must install dependencies before starting a release train");
 	t.true(gitAuthentication > start, "release start must configure Git authentication in the trusted start step");

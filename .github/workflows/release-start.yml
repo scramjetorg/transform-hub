@@ -26,6 +26,8 @@ jobs:
         with: { persist-credentials: false, fetch-depth: 0, ref: devel }
       - name: Fetch main audit ref
         run: git fetch --no-tags origin main:main
+      - name: Fetch release recovery refs
+        run: git fetch --no-tags origin "refs/heads/release/*:refs/heads/release/*"
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
         with: { node-version: "22", cache: "" }
       - name: Install workspace dependencies
