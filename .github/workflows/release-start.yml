@@ -17,7 +17,6 @@ jobs:
   release-start:
     name: Release train / start
     runs-on: ubuntu-24.04
-    environment: release-train
     permissions:
       contents: write
       pull-requests: write

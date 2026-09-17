@@ -27,6 +27,7 @@ Each release begins from an explicit versioned branch and promotion PR, while `d
 ## Acceptance Criteria
 
 - A candidate cannot be built, sealed, or admitted from `devel`; every candidate identifies one managed release branch, promotion PR, immutable `Rk` source SHA, and train record.
+- Release Start, candidate staging/BDD/admission, and devel reconciliation are automatic and use no GitHub environment approval; branch protections, including PR review and code-owner requirements, guard promotion PRs and are not environment approvals.
 - Release start rejects an already-published/reserved stable version and invalid/regressive development version; it never derives either from the current `devel` manifest. One active train remains authoritative through successful devel reconciliation and an aborted stable version is burned.
 - `devel` carries the recorded `<next-stable>-devel` version while a release branch is being validated; ordinary changes are frozen and exceptional linear/squash changes are bounded, auditable, and replayed after the `main` merge or stopped on conflict.
 - Reconciliation never alters candidate evidence or `main`, never discards commits outside the recorded continuation list based at `R1`, uses a lease-guarded rewrite with a retained backup ref, and reruns required devel validation.

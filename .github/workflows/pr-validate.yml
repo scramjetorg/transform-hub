@@ -428,14 +428,6 @@ jobs:
       # newer release run never cancels a publication partway through.
       group: release-prerelease-publication
       cancel-in-progress: false
-    # Environment-gated publication: this job is bound to the
-    # github-packages-prerelease environment, so it awaits environment approval
-    # before publishing. The environment holds the
-    # SCRAMJET_RELEASE_PRERELEASE_PUBLISH and SCRAMJET_GH_PACKAGES_PRERELEASE_PUBLISHER
-    # configuration variables and carries no secrets. npm authentication uses the
-    # automatic ${{ github.token }} (GITHUB_TOKEN) scoped by this job's
-    # packages: write permission; no PAT or npm token secret is used.
-    environment: github-packages-prerelease
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
@@ -522,8 +514,6 @@ jobs:
     name: Release PR / prerelease BDD
     if: ${{ github.event.pull_request.base.ref == 'main' && github.event.pull_request.head.ref == 'devel' && github.event.pull_request.head.repo.full_name == github.repository && needs.release-candidate-admission.outputs.admitted == 'true' }}
     needs: [prerelease-publication, release-candidate-admission]
-    # BDD stays outside the github-packages-prerelease environment: it only
-    # consumes verified prereleases with read-only automatic-token auth.
     permissions:
       attestations: read
       contents: read

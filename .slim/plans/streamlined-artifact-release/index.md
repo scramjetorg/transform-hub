@@ -23,20 +23,25 @@ Replace the CI/release topology with a from-scratch artifact-promotion system: f
 
 ## Target Trigger Map
 
-| Trigger | Workflow | Result |
+| Trigger | Workflow | Result / GitHub environment approval |
 | --- | --- | --- |
-| `pull_request` to `devel` | PR Fast Validation | Fast source checks only. |
-| protected `workflow_dispatch` | Release Start | Capture one `devel` base, create the managed release branch/PR for an explicit stable version, and advance `devel` to an explicit development version. |
-| `pull_request` from managed release branch to `main` | Build Release Candidate | Immutable candidate GitHub Release asset set for the exact promotion-PR SHA; never build a candidate from `devel`. |
-| `workflow_call` from Build Release Candidate | Curated Release Build Validation | Full BDD evidence for one built promotion-PR candidate. |
-| `pull_request` from managed release branch to `main` | Release Promotion Admission | Exact-candidate admission only. |
-| protected `push` to `main` | Production Publish | Ordered publication of staged tarballs. |
-| `workflow_call` from Production Publish | Tarball Release Validation | Full BDD evidence for installed staged tarballs. |
-| `workflow_call` from Production Publish | Production Registry Verification | Credentialless registry proof. |
-| protected finalization job in Production Publish | Release Finalizer | Tag and GitHub Release after proof. |
-| protected `workflow_dispatch` | Release Publish Recovery | Resume byte-identical missing tarball publication. |
-| protected `main` merge | Devel Continuation Reconciliation | Rebase the recorded next-development continuation range on `main` and update `devel` only with a lease-guarded rewrite. |
-| protected post-publication workflow | OCI Image Staging and Promotion | Build, verify, attest, and promote OCI images from published package versions only. |
+| `pull_request` to `devel` | PR Fast Validation | Fast source checks only; automatic, with no environment approval. |
+| protected `workflow_dispatch` | Release Start | Capture one `devel` base, create the managed release branch/PR for an explicit stable version, and advance `devel` to an explicit development version; automatic, with no environment approval. |
+| `pull_request` from managed release branch to `main` | Build Release Candidate | Immutable candidate GitHub Release asset set for the exact promotion-PR SHA; never build a candidate from `devel`; automatic, with no environment approval. |
+| `workflow_call` from Build Release Candidate | Curated Release Build Validation | Full BDD evidence for one built promotion-PR candidate; automatic, with no environment approval. |
+| `pull_request` from managed release branch to `main` | Release Promotion Admission | Exact-candidate admission only; automatic, with no environment approval. |
+| protected `push` to `main` | Production Publish | Ordered publication of staged tarballs; the existing GitHub `production` environment is the sole approval and is requested only immediately before npm publication. |
+| `workflow_call` from Production Publish | Tarball Release Validation | Full BDD evidence for installed staged tarballs; automatic, with no environment approval. |
+| `workflow_call` from Production Publish | Production Registry Verification | Credentialless registry proof; automatic, with no environment approval. |
+| finalization job in Production Publish | Release Finalizer | Tag and GitHub Release after proof; automatic, with no environment approval. |
+| protected `workflow_dispatch` | Release Publish Recovery | Resume byte-identical missing tarball publication; use the existing GitHub `production` environment only immediately before manual missing-package npm recovery. |
+| protected `main` merge | Devel Continuation Reconciliation | Rebase the recorded next-development continuation range on `main` and update `devel` only with a lease-guarded rewrite; automatic, with no environment approval. |
+| protected post-publication workflow | OCI Image Staging and Promotion | Build, verify, attest, and promote OCI images from published package versions only; automatic, with no environment approval. |
+
+The existing GitHub `production` environment is the sole environment approval in this plan. It is used only immediately before production npm publication and manual missing-package npm recovery. Branch protections, including PR review and code-owner requirements, guard promotion PRs; they are not environment approvals.
+
+GitHub Packages prerelease publication, when retained for non-production use, is automatic and has
+no GitHub environment approval.
 
 ## Phase Order
 
@@ -69,7 +74,7 @@ Replace the CI/release topology with a from-scratch artifact-promotion system: f
 - [x] User-confirmed: rename abandoned executable scripts to `unused-*` while intentionally leaving references in place; run automatic and manual entrypoint checks to expose callers before deletion.
 - [x] User-confirmed: obtain an explicit user decision for every legacy workflow and npm script deletion, and perform a complete documentation sweep.
 - [x] User-confirmed: OCI images are built only after npm publication and registry proof, install exact published package versions without workspace/source inputs, and stage before mutable tag promotion; SI is published as `ghcr.io/scramjetorg/si`.
-- [x] User-confirmed: after npm accepts a package, production continues immediately without inline registry polling or a pacing delay; npm acceptance is treated as publication success. A separate read-only, no-OIDC registry-verification environment waits 30 minutes after publication, verifies all published tarballs, and is the only trigger for manual recovery when packages are not ready. Existing npm versions are never republished and may be reused only when byte-identical.
+- [x] User-confirmed: after npm accepts a package, production continues immediately without inline registry polling or a pacing delay; npm acceptance is treated as publication success. A separate read-only, no-OIDC registry-verification job waits 30 minutes after publication, verifies all published tarballs, and is the only trigger for manual recovery when packages are not ready; it has no GitHub environment approval. Existing npm versions are never republished and may be reused only when byte-identical.
 - [x] User-confirmed: release initiation creates a managed release branch and promotion PR for an explicit stable version while advancing `devel` through that release alignment to the explicit next development version; candidates are built from the promotion PR `head.sha`, never from `devel` or GitHub's synthetic merge SHA.
 - [x] User-confirmed: one release train may be active from release start through successful devel reconciliation and its required checks; retries reuse its durable record and a second release start is rejected while reconciliation is pending or requires manual resolution.
 - [x] User-confirmed: the next development version uses the explicit SemVer prerelease form `<next-stable>-devel` (for example, `2.1.3-devel`).

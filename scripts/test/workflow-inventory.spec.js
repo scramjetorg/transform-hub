@@ -45,6 +45,31 @@ test("release-train workflows are manual, delegated, and never request npm OIDC"
 	}
 });
 
+test("production is the only workflow environment gate", (t) => {
+	const environments = [];
+	for (const workflow of readdirSync(workflowsDir).filter((name) => name.endsWith(".yml"))) {
+		const source = readFileSync(resolve(workflowsDir, workflow), "utf8");
+		for (const match of source.matchAll(/^\s+environment:\s*(\S+)\s*$/gm)) {
+			environments.push({ workflow, environment: match[1] });
+		}
+	}
+	t.deepEqual(
+		environments.sort((a, b) => `${a.workflow}:${a.environment}`.localeCompare(`${b.workflow}:${b.environment}`)),
+		[
+			{ workflow: "main-release.yml", environment: "production" },
+			{ workflow: "release-publish-recovery.yml", environment: "production" },
+		],
+	);
+
+	for (const workflow of ["pr-validate.yml", "release-start.yml", "release-devel-reconciliation.yml"]) {
+		const source = readFileSync(resolve(workflowsDir, workflow), "utf8");
+		t.false(/^\s+environment:/m.test(source), `${workflow} must run without environment approval`);
+	}
+	const prValidate = readFileSync(resolve(workflowsDir, "pr-validate.yml"), "utf8");
+	t.false(prValidate.includes("github-packages-prerelease"));
+	t.false(prValidate.includes("awaits environment approval"));
+});
+
 test("unified PR workflow owns normal validation and the release-PR chain in one read-only file", (t) => {
 	const source = readFileSync(resolve(workflowsDir, "pr-validate.yml"), "utf8");
 	t.true(source.includes("release/**"));

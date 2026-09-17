@@ -316,17 +316,14 @@ test("release prerelease publication is guarded, serialized, environment-gated, 
 	t.false(source.includes("npm publish"));
 });
 
-test("release prerelease publication awaits the github-packages-prerelease environment and uses only the automatic token", (t) => {
+test("release prerelease publication remains automatic and uses only the automatic token", (t) => {
 	const source = workflowSource();
 	const publicationStart = source.indexOf("  prerelease-publication:\n");
 	const publicationEnd = source.indexOf("  prerelease-bdd:\n");
 	const publication = source.slice(publicationStart, publicationEnd);
 	const bdd = source.slice(publicationEnd);
 
-	t.is((source.match(/environment: github-packages-prerelease/g) || []).length, 1, "the environment must be bound exactly once");
-	t.true(publication.includes("environment: github-packages-prerelease"), "the prerelease-publication job must await environment approval");
-	t.false(source.slice(0, publicationStart).includes("environment: github-packages-prerelease"), "validation and BDD jobs must not use the environment");
-	t.false(bdd.includes("environment: github-packages-prerelease"), "prerelease BDD must stay outside the environment");
+	t.false(publication.includes("environment:"), "the prerelease-publication job must remain automatic without an environment binding");
 	t.true(publication.includes("packages: write"), "publication keeps least-privilege packages: write");
 	t.true(bdd.includes("packages: read"), "BDD keeps least-privilege packages: read");
 	t.true(publication.includes("NODE_AUTH_TOKEN: ${{ github.token }}"), "publication npm auth must use the automatic GITHUB_TOKEN");
