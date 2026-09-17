@@ -3,11 +3,24 @@
 const { createHash } = require("node:crypto");
 const { mkdirSync, readFileSync, writeFileSync } = require("node:fs");
 const { join, resolve } = require("node:path");
+const typescript = require("typescript");
 
 const BDD_SUPPORT_PATH = "bdd-support/runner-container-cleanup.js";
-const BDD_SUPPORT_SOURCE = resolve(__dirname, "..", "..", "bdd", "dist", "bdd", "lib", "runner-container-cleanup.js");
+const BDD_SUPPORT_SOURCE = resolve(__dirname, "..", "..", "bdd", "lib", "runner-container-cleanup.ts");
 
-function bddSupportBytes() { return readFileSync(BDD_SUPPORT_SOURCE); }
+function bddSupportBytes() {
+    const source = readFileSync(BDD_SUPPORT_SOURCE, "utf8");
+    const output = typescript.transpileModule(source, {
+        fileName: BDD_SUPPORT_SOURCE,
+        compilerOptions: {
+            module: typescript.ModuleKind.CommonJS,
+            removeComments: true,
+            sourceMap: true,
+            target: typescript.ScriptTarget.ES2019,
+        },
+    });
+    return Buffer.from(output.outputText);
+}
 function bddSupportArtifact() {
     const bytes = bddSupportBytes();
     const hash = createHash("sha256").update(bytes);
