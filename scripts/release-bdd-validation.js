@@ -5,10 +5,13 @@ const { createHash } = require("node:crypto");
 const { existsSync, mkdirSync, readFileSync, writeFileSync } = require("node:fs");
 const { join, resolve } = require("node:path");
 const { assertDigest, digestDocument, validateArtifactContent, validateReleaseSet } = require("./release-contract");
+const { validateTarballBdd } = require("./release-production");
 const { candidateIdentity, claimBddShard, recordBddShardResult } = require("./lib/release-bundle-state");
 const { prepareTarballBddRoot, readTarballRecord } = require("./release-tarball-bdd");
 const waves = require("./run-bdd-waves.js");
 const { validateCandidateRuntimeImages, imageMapReferences } = require("./lib/candidate-runtime-images");
+const { createGithubReleaseAssetAdapter } = require("./lib/github-release-candidate");
+const { validateCandidateSeal } = require("./lib/release-candidate-assets");
 
 const ROOT = resolve(__dirname, "..");
 const MATRIX_FILE = join(__dirname, "release-bdd-matrix.v1.json");
@@ -112,13 +115,70 @@ function runValidation({ command = "--all", candidateDir, stateFile, identity, i
     return { matrix, consumed, consumedDigest, consumedPath, results, failed: results.some(({ status }) => status === "failed") };
 }
 
+function prepareMainBddState({ source, destination }) {
+    if (!source || !destination) throw new Error("Main BDD state source and destination are required.");
+    const state = JSON.parse(readFileSync(resolve(source), "utf8"));
+    state.bdd = { matrixRevision: null, shards: [] };
+    mkdirSync(resolve(destination, ".."), { recursive: true });
+    writeFileSync(resolve(destination), `${JSON.stringify(state, null, 2)}\n`);
+    return state;
+}
+
+function persistMainTarballBddEvidence({ mainSha, candidateSourceSha, candidateReleaseId, releaseSetDigest, sealedStateDigest, bundleDir, bddStateFile = process.env.RELEASE_BDD_STATE, repository = process.env.GITHUB_REPOSITORY, runner }) {
+    if (!/^[a-f0-9]{40}$/.test(mainSha || "")) throw new Error("Main SHA must be a canonical 40-character lowercase SHA.");
+    if (!Number.isSafeInteger(Number(candidateReleaseId)) || Number(candidateReleaseId) <= 0) throw new Error("Candidate release ID must be a positive number.");
+    if (!/^sha256:[a-f0-9]{64}$/.test(releaseSetDigest || "") || !/^sha256:[a-f0-9]{64}$/.test(sealedStateDigest || "")) throw new Error("Tarball BDD evidence requires canonical release-set and sealed-state digests.");
+    if (!/^[a-f0-9]{40}$/.test(candidateSourceSha || "")) throw new Error("Candidate source SHA must be a canonical 40-character lowercase SHA.");
+    if (!repository || !bundleDir) throw new Error("Tarball BDD evidence requires a repository and downloaded candidate bundle.");
+
+    const seal = JSON.parse(readFileSync(join(bundleDir, "candidate-seal.json"), "utf8"));
+    validateCandidateSeal(seal);
+    if (seal.candidateReleaseId !== Number(candidateReleaseId) || seal.sourceSha !== candidateSourceSha || seal.releaseSetDigest !== releaseSetDigest || seal.sealedStateDigest !== sealedStateDigest) throw new Error("Tarball BDD evidence inputs do not match the downloaded candidate seal.");
+    const state = JSON.parse(readFileSync(bddStateFile || join(bundleDir, "candidate-state.json"), "utf8"));
+    const matrix = loadMatrix();
+    const shards = state.bdd?.shards || [];
+    if (state.bdd?.matrixRevision !== matrix.revision || shards.length !== matrix.chunks.length || new Set(shards.map((shard) => shard.name)).size !== matrix.chunks.length) throw new Error("Tarball BDD evidence is incomplete or uses a non-canonical matrix.");
+    for (const shard of shards) {
+        if (!matrix.chunks.includes(shard.name) || shard.status !== "success" || shard.evidence?.schema !== "bdd-shard-evidence.v1" || shard.evidence.exitStatus !== 0) throw new Error(`Tarball BDD evidence is incomplete for shard ${shard.name}.`);
+    }
+    const consumedPath = join(bundleDir, "bdd-evidence", matrix.revision, "consumed-input.json");
+    const consumed = JSON.parse(readFileSync(consumedPath, "utf8"));
+    const { recordDigest, ...unsignedConsumed } = consumed;
+    if (!recordDigest || recordDigest !== digestDocument(unsignedConsumed) || consumed.sourceSha !== candidateSourceSha || consumed.releaseSetDigest !== releaseSetDigest || consumed.matrixRevision !== matrix.revision) throw new Error("Consumed tarball BDD input evidence is incomplete or mismatched.");
+    for (const shard of shards) if (shard.evidence.consumedInput !== recordDigest) throw new Error(`Tarball BDD shard ${shard.name} is bound to different consumed inputs.`);
+
+    const envelopeBody = {
+        schema: "tarball-bdd.v1",
+        mainSha,
+        sourceSha: candidateSourceSha,
+        candidateReleaseId: Number(candidateReleaseId),
+        releaseSetDigest,
+        sealedStateDigest,
+        matrixRevision: matrix.revision,
+        consumedInputDigest: recordDigest,
+        shards: shards.map(({ name, status, evidence }) => ({ name, status, evidence })),
+    };
+    const envelope = { ...envelopeBody, digest: digestDocument(envelopeBody) };
+    validateTarballBdd(envelope, { mainSha, sourceSha: candidateSourceSha, candidateReleaseId: Number(candidateReleaseId), releaseSetDigest, sealedStateDigest });
+    const bytes = Buffer.from(`${JSON.stringify(envelope, null, 2)}\n`);
+    const adapter = createGithubReleaseAssetAdapter({ repository, tag: `candidate-${candidateSourceSha}`, targetSha: candidateSourceSha, runner });
+    return adapter.persistProductionEvidence(`candidate-${candidateSourceSha}`, { mainSha, releaseSetDigest, name: "tarball-bdd.json", bytes });
+}
+
 if (require.main === module) {
     try {
         const args = process.argv.slice(2);
-        if (args[0] !== "run") throw new Error("Usage: release-bdd-validation.js run --all|--shard=<name>");
-        const command = args[1] || "--all";
-        process.exitCode = runValidation({ command, candidateDir: process.env.RELEASE_CANDIDATE_DIR, stateFile: process.env.RELEASE_CANDIDATE_STATE, identity: JSON.parse(process.env.RELEASE_CANDIDATE_IDENTITY), imageDigest: process.env.RELEASE_GHCR_IMAGE_DIGEST, evidenceFile: process.env.RELEASE_BDD_EVIDENCE_FILE }).failed ? 1 : 0;
+        if (args[0] === "persist-main") {
+            persistMainTarballBddEvidence({ mainSha: process.env.MAIN_SHA, candidateSourceSha: process.env.CANDIDATE_SOURCE_SHA, candidateReleaseId: process.env.CANDIDATE_RELEASE_ID, releaseSetDigest: process.env.RELEASE_SET_DIGEST, sealedStateDigest: process.env.SEALED_STATE_DIGEST, bundleDir: process.env.RELEASE_CANDIDATE_DIR, bddStateFile: process.env.RELEASE_BDD_STATE });
+            process.exitCode = 0;
+        } else if (args[0] === "prepare-main-state") {
+            prepareMainBddState({ source: args[1] === "--source" ? args[2] : null, destination: args[3] === "--destination" ? args[4] : null });
+        } else {
+            if (args[0] !== "run") throw new Error("Usage: release-bdd-validation.js run --all|--shard=<name>");
+            const command = args[1] || "--all";
+            process.exitCode = runValidation({ command, candidateDir: process.env.RELEASE_CANDIDATE_DIR, stateFile: process.env.RELEASE_CANDIDATE_STATE, identity: JSON.parse(process.env.RELEASE_CANDIDATE_IDENTITY), imageDigest: process.env.RELEASE_GHCR_IMAGE_DIGEST, evidenceFile: process.env.RELEASE_BDD_EVIDENCE_FILE }).failed ? 1 : 0;
+        }
     } catch (error) { console.error(`[release-bdd-validation] ${error.message}`); process.exitCode = 1; }
 }
 
-module.exports = { loadMatrix, readCandidate, validateCandidateInputs, consumedInput, assertSafeShardRun, runShardCommand, runValidation };
+module.exports = { loadMatrix, readCandidate, validateCandidateInputs, consumedInput, assertSafeShardRun, runShardCommand, runValidation, prepareMainBddState, persistMainTarballBddEvidence };

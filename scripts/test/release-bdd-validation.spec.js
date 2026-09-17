@@ -8,7 +8,7 @@ const { join } = require("node:path");
 
 const { digestDocument, SCHEMAS } = require("../release-contract");
 const { candidateIdentity, claimCandidate, claimBddShard, readState, recordBddShardResult, sealCandidate } = require("../lib/release-bundle-state");
-const { loadMatrix, runShardCommand, runValidation, validateCandidateInputs } = require("../release-bdd-validation");
+const { loadMatrix, persistMainTarballBddEvidence, runShardCommand, runValidation, validateCandidateInputs } = require("../release-bdd-validation");
 
 const baseIdentity = { sourceSha: "a".repeat(40), sourceTree: `sha256:${"b".repeat(64)}`, lockfileDigest: `sha256:${"c".repeat(64)}`, configRevision: "matrix-test", configDigest: `sha256:${"d".repeat(64)}`, buildIdentity: `sha256:${"e".repeat(64)}` };
 
@@ -93,4 +93,9 @@ test("failed shard results are durable, terminal, and expose child output", (t) 
     t.is(readState(fixture.stateFile).bdd.shards[0].status, "failed");
     t.is(call.options.stdio, "inherit");
     t.deepEqual(call.args.slice(-1), ["--chunk=verser2"]);
+});
+
+test("main tarball evidence rejects non-canonical or incomplete reuse inputs", (t) => {
+    t.throws(() => persistMainTarballBddEvidence({ mainSha: "A".repeat(40), candidateReleaseId: 7, releaseSetDigest: `sha256:${"a".repeat(64)}`, sealedStateDigest: `sha256:${"b".repeat(64)}`, bundleDir: "/does-not-exist" }), { message: /canonical 40-character lowercase/ });
+    t.throws(() => persistMainTarballBddEvidence({ mainSha: "a".repeat(40), candidateReleaseId: 0, releaseSetDigest: `sha256:${"a".repeat(64)}`, sealedStateDigest: `sha256:${"b".repeat(64)}`, bundleDir: "/does-not-exist" }), { message: /positive number/ });
 });

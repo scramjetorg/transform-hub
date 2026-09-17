@@ -15,6 +15,10 @@ const SCHEMAS = {
     publicationJournal: require("./schemas/publication-journal.v1.schema.json"),
     registryVerification: require("./schemas/registry-verification.v1.schema.json"),
     releaseTrustPolicy: require("./schemas/release-trust-policy.v1.schema.json"),
+    mainAdmission: require("./schemas/main-admission.v1.schema.json"),
+    tarballBdd: require("./schemas/tarball-bdd.v1.schema.json"),
+    registryProof: require("./schemas/registry-proof.v1.schema.json"),
+    finalizationState: require("./schemas/finalization-state.v1.schema.json"),
 };
 
 function canonicalize(value) {
