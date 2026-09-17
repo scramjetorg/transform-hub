@@ -25,7 +25,7 @@ jobs:
         with: { persist-credentials: false, fetch-depth: 0, ref: devel }
       - name: Fetch release train refs
         run: git fetch --no-tags origin main:main 'refs/heads/release/*:refs/heads/release/*' 'refs/tags/release-train-start.v1/*:refs/tags/release-train-start.v1/*'
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe502c1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
         with: { node-version: "22", cache: "" }
       - name: Install dependencies
         run: npm ci
