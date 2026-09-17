@@ -6,6 +6,7 @@ const {
     validateAgainstPromotionMetadata,
     validateReleaseTrainLock,
     validateDevelopmentTopology,
+    validateStartMarker,
     validatedReplayList,
 } = require("../release-train-lock");
 
@@ -84,4 +85,12 @@ test("development topology isolates L1 and replays only linear exceptional commi
     t.deepEqual(validateDevelopmentTopology({ R1: sha("b"), L1: sha("1"), commits }), [sha("2"), sha("3")]);
     t.throws(() => validateDevelopmentTopology({ R1: sha("b"), L1: sha("1"), commits: [{ ...commits[0], changedPaths: [".github/release-train-lock.json"] }, { ...commits[1], parents: [sha("9"), sha("8")] }] }), { message: /one-parent/ });
     t.throws(() => validateDevelopmentTopology({ R1: sha("b"), L1: sha("1"), commits: [commits[0], { ...commits[1], changedPaths: [".github/release-train-lock.json"] }] }), { message: /exactly one/ });
+});
+
+test("start marker is immutable and anchored", (t) => {
+    const marker = { schema: "release-train-start.v1", repository: "scramjetorg/transform-hub", stableVersion: "2.1.1", nextDevelopmentVersion: "2.1.2-devel", releaseBranch: "release/2.1.1", anchor: sha("a") };
+    t.deepEqual(validateStartMarker(marker), marker);
+    t.notThrows(() => validateStartMarker({ ...marker, anchor: sha("b") }));
+    t.throws(() => validateStartMarker({ ...marker, nextDevelopmentVersion: "2.1.3" }), { message: /nextDevelopmentVersion/ });
+    t.throws(() => validateReleaseTrainLock({ ...fixture(), startMarker: { ...marker, anchor: sha("c") } }), { message: /anchored/ });
 });

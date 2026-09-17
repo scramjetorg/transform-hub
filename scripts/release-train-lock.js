@@ -4,6 +4,7 @@ const SCHEMA = "release-train-lock.v1";
 const STATUSES = new Set(["active", "aborted", "reconciled", "manual-recovery-required"]);
 const TERMINAL_STATUSES = new Set(["aborted", "reconciled", "manual-recovery-required"]);
 const SHA_PATTERN = /^[0-9a-f]{40}$/;
+const START_MARKER_SCHEMA = "release-train-start.v1";
 
 function fail(message) {
     throw new Error(`Invalid release-train lock: ${message}`);
@@ -22,6 +23,25 @@ function version(value, name) {
 function text(value, name) {
     if (typeof value !== "string" || value.length === 0) fail(`${name} is required.`);
     return value;
+}
+
+function validateStartMarker(marker) {
+    if (!marker || typeof marker !== "object" || Array.isArray(marker)) fail("start marker must be an object.");
+    if (marker.schema !== START_MARKER_SCHEMA) fail(`start marker schema must be ${START_MARKER_SCHEMA}.`);
+    text(marker.repository, "start marker repository");
+    version(marker.stableVersion, "start marker stableVersion");
+    const next = semver.valid(marker.nextDevelopmentVersion?.replace(/-devel$/, ""));
+    if (!next || marker.nextDevelopmentVersion !== `${next}-devel`) fail("start marker nextDevelopmentVersion is invalid.");
+    if (marker.releaseBranch !== `release/${marker.stableVersion}`) fail("start marker releaseBranch must match stableVersion.");
+    sha(marker.anchor, "start marker anchor");
+    return marker;
+}
+
+function startMarkerRef({ stableVersion, nextDevelopmentVersion }) {
+    version(stableVersion, "start marker stableVersion");
+    const next = semver.valid(String(nextDevelopmentVersion || "").replace(/-devel$/, ""));
+    if (!next || nextDevelopmentVersion !== `${next}-devel`) fail("start marker nextDevelopmentVersion is invalid.");
+    return `refs/tags/release-train-start.v1/${stableVersion}/${nextDevelopmentVersion}`;
 }
 
 function promotionOf(lock) {
@@ -50,6 +70,10 @@ function validateReleaseTrainLock(lock) {
     if (!lock.refs || typeof lock.refs !== "object") fail("refs are required.");
     for (const ref of ["D0", "R1"]) sha(lock.refs[ref], `refs.${ref}`);
     sha(lock.refs.mainAtStart || lock.refs.main, "refs.mainAtStart");
+    if (lock.startMarker) {
+        validateStartMarker(lock.startMarker);
+        if (lock.startMarker.anchor !== lock.refs.D0) fail("start marker must be anchored at D0.");
+    }
     promotionOf(lock);
     sha(lock.currentCommit, "currentCommit");
     if (!Array.isArray(lock.continuation)) fail("continuation must be an ordered list.");
@@ -116,6 +140,7 @@ function validateDevelopmentTopology({ R1, L1, commits, lockPath = ".github/rele
 
 module.exports = {
     SCHEMA,
+    START_MARKER_SCHEMA,
     STATUSES: [...STATUSES],
     TERMINAL_STATUSES: [...TERMINAL_STATUSES],
     validateReleaseTrainLock,
@@ -125,5 +150,7 @@ module.exports = {
     createNextRevision,
     validatedReplayList,
     validateDevelopmentTopology,
-    produceValidatedReplayList: validatedReplayList
+    produceValidatedReplayList: validatedReplayList,
+    validateStartMarker,
+    startMarkerRef
 };

@@ -15,7 +15,14 @@ function createGithubReleaseTrainAdapters({
     const refs = (name) => String(command("git", ["rev-parse", name])).trim();
     const git = {
         ref: refs,
-        createRef: (name, value) => { command("git", ["update-ref", `refs/heads/${name}`, value]); command("git", ["push", "origin", `${value}:refs/heads/${name}`]); },
+        createRef: (name, value) => {
+            let current;
+            try { current = String(command("git", ["ls-remote", "origin", `refs/heads/${name}`])).trim().split(/\s+/)[0]; } catch {}
+            if (current) { if (current !== value) throw new Error(`ref ${name} already exists at a different commit`); return current; }
+            command("git", ["update-ref", `refs/heads/${name}`, value, "0".repeat(40)]);
+            command("git", ["push", "origin", `${value}:refs/heads/${name}`]);
+            return value;
+        },
         commit: (value) => ({
             sha: value,
             parents: String(command("git", ["show", "-s", "--format=%P", value]))
@@ -86,6 +93,11 @@ function createGithubReleaseTrainAdapters({
                 ])
             ),
         promotion: (number) => JSON.parse(command("gh", ["api", `repos/${repository}/pulls/${number}`])),
+        findPromotion: ({ repository: repo, head, base }) => {
+            const result = JSON.parse(command("gh", ["pr", "list", "--repo", repo, "--head", head, "--base", base, "--state", "all", "--json", "number,state,mergedAt,headRefOid"]));
+            if (!result[0]) return null;
+            return { ...result[0], headSha: result[0].headRefOid, merged: Boolean(result[0].mergedAt) };
+        },
     };
     github.createPromotion = ({ repository: repo, head, base }) => {
         const existing = JSON.parse(command("gh", ["pr", "list", "--repo", repo, "--head", head, "--base", base, "--state", "open", "--json", "number,headRefName,baseRefName"]));
@@ -93,6 +105,22 @@ function createGithubReleaseTrainAdapters({
         return JSON.parse(command("gh", ["pr", "create", "--repo", repo, "--head", head, "--base", base, "--title", `Release ${head}`, "--body", "Release train promotion", "--json", "number,headRefName,baseRefName"]));
     };
     const align = {
+        validateRelease: ({ version, branch }) => {
+            const worktree = mkdtempSync(`${tmpdir()}/release-train-validate-`);
+            try {
+                command("git", ["worktree", "add", "--detach", worktree, branch]);
+                const result = command(process.execPath, [resolve(__dirname, "..", "release-align.js"), "check", `--release-version=${version}`], { cwd: worktree, env: { SCRAMJET_RELEASE_ROOT: worktree } });
+                return result;
+            } finally { command("git", ["worktree", "remove", "--force", worktree]); rmSync(worktree, { recursive: true, force: true }); }
+        },
+        validateDevelopment: ({ version, branch }) => {
+            const worktree = mkdtempSync(`${tmpdir()}/release-train-validate-`);
+            try {
+                command("git", ["worktree", "add", "--detach", worktree, branch]);
+                const result = command(process.execPath, [resolve(__dirname, "..", "release-align.js"), "check-development", `--development-version=${version}`], { cwd: worktree, env: { SCRAMJET_RELEASE_ROOT: worktree } });
+                return result;
+            } finally { command("git", ["worktree", "remove", "--force", worktree]); rmSync(worktree, { recursive: true, force: true }); }
+        },
         release: ({ version, branch, expected }) => {
             command("git", ["switch", "--detach", expected]);
             command("git", ["switch", "-C", branch]);
@@ -115,6 +143,29 @@ function createGithubReleaseTrainAdapters({
         }
     };
     const reservation = {
+        readMarker: (identity) => {
+            try {
+                const markerRef = `refs/tags/release-train-start.v1/${identity.stableVersion}/${identity.nextDevelopmentVersion}`;
+                const anchor = String(command("git", ["rev-parse", `${markerRef}^{}`])).trim();
+                const subject = String(command("git", ["for-each-ref", "--format=%(contents:subject)", markerRef])).trim();
+                if (!anchor || !subject) return null;
+                return { ...JSON.parse(subject), anchor };
+            } catch { return null; }
+        },
+        createMarker: (marker) => {
+            const markerRef = `refs/tags/release-train-start.v1/${marker.stableVersion}/${marker.nextDevelopmentVersion}`;
+            const existing = reservation.readMarker(marker);
+            if (existing) { if (JSON.stringify(existing) !== JSON.stringify(marker)) throw new Error("release-train start marker already exists with different identity"); return existing; }
+            try {
+                const remote = String(command("git", ["ls-remote", "origin", markerRef])).trim();
+                if (remote) throw new Error("release-train start marker already exists remotely");
+            } catch (error) {
+                if (/already exists remotely/.test(error.message)) throw error;
+            }
+            command("git", ["tag", "-a", markerRef.slice("refs/tags/".length), marker.anchor, "-m", JSON.stringify(marker)]);
+            command("git", ["push", "origin", markerRef]);
+            return marker;
+        },
         isReserved: (version) => {
             try { command("git", ["ls-remote", "--exit-code", "origin", `refs/heads/release/${version}`]); return true; } catch {}
             try { command("gh", ["release", "view", `v${version}`, "--repo", repository]); return true; } catch { return false; }

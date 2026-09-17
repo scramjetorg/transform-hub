@@ -5,7 +5,8 @@ const { reconcileDevel, startRelease } = require("../release-train-runtime");
 
 const sha = (letter) => letter.repeat(40);
 function adapters(lock = null) {
-    const refs = { devel: sha("a"), main: sha("b"), "release/2.0.0": sha("c") };
+    const refs = { devel: sha("a"), main: sha("b") };
+    if (lock) { refs[lock.releaseBranch] = lock.refs.R1; refs.devel = lock.currentCommit; }
     const writes = [];
     const alignments = [];
     return {
@@ -21,10 +22,10 @@ function adapters(lock = null) {
             updateRef: (name, value, options) => { if (options.expected !== refs[name]) throw new Error("lease failed"); refs[name] = value; },
         },
         lockStore: { read: () => lock, readLive: () => lock, write: (value, options) => writes.push({ value, options }) },
-        reservation: { isReserved: () => false, reserve: () => {} },
-        github: { createPromotion: () => ({ number: 42 }) },
+        reservation: { isReserved: () => false, reserve: () => {}, readMarker: () => lock ? ({ schema: "release-train-start.v1", repository: lock.repository, stableVersion: lock.stableVersion, nextDevelopmentVersion: lock.nextDevelopmentVersion, releaseBranch: lock.releaseBranch, anchor: lock.refs.D0 }) : null },
+        github: { createPromotion: () => ({ number: 42 }), promotion: () => ({ number: 42, headSha: sha("c"), branch: "release/2.0.0", base: "main", repository: "scramjetorg/transform-hub" }) },
         align: {
-            release: (options) => { alignments.push({ kind: "release", options }); refs["release/2.0.0"] = sha("c"); return sha("c"); },
+            release: (options) => { alignments.push({ kind: "release", options }); refs[options.branch] = sha("c"); return sha("c"); },
             development: (options) => { alignments.push({ kind: "development", options }); refs.devel = sha("e"); return sha("e"); }
         },
     };
@@ -53,12 +54,20 @@ test("active retry reuses exact identity and changed retry fails closed", (t) =>
     t.throws(() => startRelease({ stableVersion: "2.0.0", nextDevelopmentVersion: "2.2.0-devel", adapters: a }), { message: /identity/ });
 });
 
+test("active retry fails closed without live validation data", (t) => {
+    const existing = lock();
+    const a = adapters(existing);
+    delete a.reservation.readMarker;
+    delete a.github.promotion;
+    t.throws(() => startRelease({ stableVersion: "2.0.0", nextDevelopmentVersion: "2.1.0-devel", adapters: a }), { message: /validated live/ });
+});
+
 test("reconciliation verifies exact merge, retains backup, replays in order, and terminalizes", (t) => {
     const a = adapters(lock());
     const result = reconcileDevel({ mergeSha: sha("b"), adapters: a });
     t.deepEqual(result.replay, [sha("f"), sha("e")]);
     t.is(result.lock.status, "reconciled");
-    t.is(result.backup.value, sha("a"));
+    t.is(result.backup.value, sha("e"));
     t.is(a.writes[0].options.expected, 1);
 });
 
@@ -78,4 +87,15 @@ test("wrong merge parent or tree is rejected without writing the lock", (t) => {
     a.git.commit = () => ({ sha: sha("b"), parents: [sha("b"), sha("9")], tree: sha("8") });
     t.throws(() => reconcileDevel({ mergeSha: sha("b"), adapters: a }), { message: /exact admitted/ });
     t.is(a.writes.length, 0);
+});
+
+test("unrecorded branch is fail-closed and recovery is exact and one-time", (t) => {
+    const blocked = adapters();
+    blocked.refs["release/2.0.0"] = sha("a");
+    t.throws(() => startRelease({ stableVersion: "2.0.0", nextDevelopmentVersion: "2.1.0-devel", adapters: blocked }), { message: /authorized recovery/ });
+    const recovery = adapters();
+    recovery.refs["release/2.1.1"] = sha("a");
+    const result = startRelease({ stableVersion: "2.1.1", nextDevelopmentVersion: "2.1.2-devel", adapters: recovery, recovery: "release/2.1.1" });
+    t.is(result.stableVersion, "2.1.1");
+    t.throws(() => startRelease({ stableVersion: "2.1.0", nextDevelopmentVersion: "2.1.1-devel", adapters: adapters(), recovery: "release/2.1.1" }), { message: /only for/ });
 });

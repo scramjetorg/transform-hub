@@ -5,6 +5,7 @@ on:
     inputs:
       stable-version: { required: true, type: string, description: Stable release version }
       next-development-version: { required: true, type: string, description: Next stable version with -devel suffix }
+      recovery: { required: false, type: string, description: Explicit recovery train identity (release/2.1.1 only) }
 
 permissions:
   contents: read
@@ -37,4 +38,6 @@ jobs:
           git config --local user.name "github-actions[bot]"
           git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config --local credential.helper '!f() { echo "username=x-access-token"; echo "password=$GITHUB_TOKEN"; }; f'
-          node scripts/release-train.js start --repository "$GITHUB_REPOSITORY" --stable-version "${{ inputs.stable-version }}" --next-development-version "${{ inputs.next-development-version }}"
+          RECOVERY_ARGS=()
+          if [ -n "${{ inputs.recovery }}" ]; then RECOVERY_ARGS+=(--recovery "${{ inputs.recovery }}"); fi
+          node scripts/release-train.js start --repository "$GITHUB_REPOSITORY" --stable-version "${{ inputs.stable-version }}" --next-development-version "${{ inputs.next-development-version }}" "${RECOVERY_ARGS[@]}"

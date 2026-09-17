@@ -7,6 +7,12 @@ function option(args, name) {
     if (index < 0 || !args[index + 1]) throw new Error(`${name} is required.`);
     return args[index + 1];
 }
+function optionalOption(args, name) {
+    const index = args.indexOf(name);
+    if (index < 0) return undefined;
+    if (!args[index + 1]) throw new Error(`${name} requires a value.`);
+    return args[index + 1];
+}
 
 function main() {
     const [command, ...args] = process.argv.slice(2);
@@ -14,7 +20,7 @@ function main() {
     const adapters = createGithubReleaseTrainAdapters({ repository, githubToken: process.env.GH_TOKEN });
     if (command === "start")
         return console.log(
-            JSON.stringify(startRelease({ stableVersion: option(args, "--stable-version"), nextDevelopmentVersion: option(args, "--next-development-version"), adapters }))
+            JSON.stringify(startRelease({ stableVersion: option(args, "--stable-version"), nextDevelopmentVersion: option(args, "--next-development-version"), recovery: optionalOption(args, "--recovery"), adapters }))
         );
     if (command === "prepare") return console.log(JSON.stringify(prepareReconciliation({ mergeSha: option(args, "--merge-sha"), adapters })));
     if (command === "finalize")
@@ -31,4 +37,4 @@ if (require.main === module) {
         process.exitCode = 1;
     }
 }
-module.exports = { main, option };
+module.exports = { main, option, optionalOption };
