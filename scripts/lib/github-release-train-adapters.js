@@ -118,7 +118,13 @@ function createGithubReleaseTrainAdapters({
     github.createPromotion = ({ repository: repo, head, base }) => {
         const existing = JSON.parse(command("gh", ["pr", "list", "--repo", repo, "--head", head, "--base", base, "--state", "open", "--json", "number,headRefName,baseRefName"]));
         if (existing[0]) return existing[0];
-        return JSON.parse(command("gh", ["pr", "create", "--repo", repo, "--head", head, "--base", base, "--title", `Release ${head}`, "--body", "Release train promotion", "--json", "number,headRefName,baseRefName"]));
+        const url = String(command("gh", ["pr", "create", "--repo", repo, "--head", head, "--base", base, "--title", `Release ${head}`, "--body", "Release train promotion"])).trim();
+        const number = Number(new URL(url).pathname.split("/").pop());
+        if (!Number.isInteger(number) || number < 1) throw new Error("created promotion pull request did not return a pull request URL");
+        const promotion = JSON.parse(command("gh", ["api", `repos/${repo}/pulls/${number}`]));
+        if (promotion.number !== number || promotion.head?.ref !== head || promotion.base?.ref !== base)
+            throw new Error("created promotion pull request metadata does not match its requested head and base");
+        return { number, headRefName: promotion.head.ref, baseRefName: promotion.base.ref };
     };
     const align = {
         validateRelease: ({ version, branch, expected }) => {

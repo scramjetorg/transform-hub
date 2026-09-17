@@ -89,3 +89,21 @@ test("adapter lock reset refuses to clear an existing lock without failed-partia
         rmSync(directory, { recursive: true, force: true });
     }
 });
+
+test("promotion creation obtains and validates metadata through the GitHub API", (t) => {
+    const calls = [];
+    const adapters = createGithubReleaseTrainAdapters({ runner: (command, args) => {
+        calls.push({ command, args });
+        if (args[1] === "list") return "[]";
+        if (args[1] === "create") return "https://github.com/scramjetorg/transform-hub/pull/42\n";
+        if (args[0] === "api") return JSON.stringify({ number: 42, head: { ref: "release/2.1.1" }, base: { ref: "main" } });
+        throw new Error(`unexpected command: ${command} ${args.join(" ")}`);
+    } });
+
+    t.deepEqual(adapters.github.createPromotion({ repository: "scramjetorg/transform-hub", head: "release/2.1.1", base: "main" }), { number: 42, headRefName: "release/2.1.1", baseRefName: "main" });
+    t.deepEqual(calls.map(({ args }) => args), [
+        ["pr", "list", "--repo", "scramjetorg/transform-hub", "--head", "release/2.1.1", "--base", "main", "--state", "open", "--json", "number,headRefName,baseRefName"],
+        ["pr", "create", "--repo", "scramjetorg/transform-hub", "--head", "release/2.1.1", "--base", "main", "--title", "Release release/2.1.1", "--body", "Release train promotion"],
+        ["api", "repos/scramjetorg/transform-hub/pulls/42"]
+    ]);
+});
