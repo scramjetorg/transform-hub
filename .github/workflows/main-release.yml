@@ -12,129 +12,146 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  release-validation:
-    name: Release / boundary validation
-    if: ${{ github.repository == 'scramjetorg/transform-hub' && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+  release-admission:
+    name: Release / read-only admission
+    if: ${{ github.repository == 'scramjetorg/transform-hub' && github.ref == 'refs/heads/main' && github.event_name == 'push' }}
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
-    runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    outputs:
+      main-sha: ${{ steps.admission.outputs.main-sha }}
+      candidate-source-sha: ${{ steps.admission.outputs.candidate-source-sha }}
+      candidate-release-id: ${{ steps.admission.outputs.candidate-release-id }}
+      release-set-digest: ${{ steps.admission.outputs.release-set-digest }}
+      sealed-state-digest: ${{ steps.admission.outputs.sealed-state-digest }}
+      admission-digest: ${{ steps.admission.outputs.admission-digest }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           persist-credentials: false
+          fetch-depth: 0
           ref: ${{ github.sha }}
-
       - uses: ./.github/actions/setup-workspace
         with:
-          # Trusted boundary validation: read-write npm tarball cache.
-          cache-mode: read-write
+          cache-mode: restore-only
+      - id: admission
+        name: Fail closed on protected remote policy and admit the sealed candidate
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_PRODUCTION_POLICY_CONFIRMED: ${{ vars.SCRAMJET_RELEASE_PRODUCTION_POLICY_CONFIRMED }}
+          RELEASE_REMOTE_POLICY_CONFIRMED: ${{ vars.SCRAMJET_RELEASE_REMOTE_POLICY_CONFIRMED }}
+        run: |
+          set -euo pipefail
+          test "$RELEASE_PRODUCTION_POLICY_CONFIRMED" = true
+          test "$RELEASE_REMOTE_POLICY_CONFIRMED" = true
+          mkdir -p "$RUNNER_TEMP/release-candidate"
+          node scripts/release-candidate-runtime.js admit --repository "$GITHUB_REPOSITORY" --tag "candidate-$(git rev-parse HEAD^)" --source-sha "$(git rev-parse HEAD^)" --bundle-dir "$RUNNER_TEMP/release-candidate" --output "$RUNNER_TEMP/admission.json"
+          node -e 'const { readFileSync } = require("node:fs"); const a = JSON.parse(readFileSync(process.env.RUNNER_TEMP + "/admission.json")); for (const [k,v] of Object.entries({"main-sha":process.env.GITHUB_SHA,"candidate-source-sha":a.sourceSha,"candidate-release-id":a.releaseId,"release-set-digest":a.releaseSetDigest,"sealed-state-digest":a.sealedStateDigest,"admission-digest":a.digest})) { if (v === undefined || v === null || v === "") throw new Error(k + " is missing"); console.log(`${k}=${v}`); }' >> "$GITHUB_OUTPUT"
+          node -e 'const runtime = require("./scripts/release-production-runtime"); if (!runtime.admitMain) throw new Error("production admission contract is unavailable");'
 
-      - name: Release / verify aligned package boundary
-        run: npm run release:align:check -- --release-version="$(node -p "require('./package.json').version")"
+  tarball-bdd:
+    name: Release / tarball BDD
+    needs: [release-admission]
+    if: ${{ needs.release-admission.result == 'success' }}
+    permissions:
+      contents: read
+      packages: read
+    uses: ./.github/workflows/tarball-release-validation.yml
+    with:
+      main-sha: ${{ needs.release-admission.outputs.main-sha }}
+      candidate-source-sha: ${{ needs.release-admission.outputs.candidate-source-sha }}
+      candidate-release-id: ${{ needs.release-admission.outputs.candidate-release-id }}
+      release-set-digest: ${{ needs.release-admission.outputs.release-set-digest }}
+      sealed-state-digest: ${{ needs.release-admission.outputs.sealed-state-digest }}
 
-      - name: Release / clean package build
-        run: node node_modules/npm/bin/npm-cli.js run build:packages
-
-  production-publication:
-    name: Release / npm publish
-    if: ${{ github.repository == 'scramjetorg/transform-hub' && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-    needs: [release-validation]
-    outputs:
-      identity: ${{ steps.release_identity.outputs.identity }}
-      identity-digest: ${{ steps.release_identity.outputs.identity-digest }}
-      publication-evidence: ${{ steps.publish.outputs.publication-evidence }}
-      publication-verified: ${{ steps.publish.outputs.publication-verified }}
+  production-publish:
+    name: Release / production publish
+    needs: [release-admission, tarball-bdd]
+    if: ${{ needs.release-admission.result == 'success' && needs.tarball-bdd.result == 'success' }}
+    runs-on: ubuntu-24.04
+    environment: production
     permissions:
       contents: read
       id-token: write
-    runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    outputs:
+      journal-digest: ${{ steps.publish.outputs.journal-digest }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           persist-credentials: false
-          ref: ${{ github.sha }}
-
+          ref: ${{ needs.release-admission.outputs.main-sha }}
       - uses: ./.github/actions/setup-workspace
         with:
-          # Production publisher job holds publish credentials: cache stays off.
           cache-mode: off
-
-      - name: Release / verify aligned package boundary
-        run: npm run release:align:check -- --release-version="$(node -p "require('./package.json').version")"
-
-      - name: Release / clean publishable package build
-        run: FLAT_PACKAGES=true MAKE_PUBLIC=true NO_INSTALL=true node scripts/build-all.js -w release --ts-config tsconfig.build.json
-
-      - id: release_identity
-        name: Release / create immutable release identity
-        env:
-          SOURCE_SHA: ${{ github.sha }}
-        run: |
-          node scripts/release-main.js prepare --packages-dir dist --source-sha "$SOURCE_SHA" --node "$(node --version)" --npm "$(node node_modules/npm/bin/npm-cli.js --version)" --output "$RUNNER_TEMP/main-release.v1.json"
-          echo "identity=$(base64 -w 0 "$RUNNER_TEMP/main-release.v1.json")" >> "$GITHUB_OUTPUT"
-          echo "identity-digest=$(node -p "require(process.env.RUNNER_TEMP + '/main-release.v1.json').identityDigest")" >> "$GITHUB_OUTPUT"
-
-      - name: Release / retain immutable release manifest
-        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08
-        with:
-          name: main-release-manifest-${{ github.sha }}
-          path: ${{ runner.temp }}/main-release.v1.json
-          if-no-files-found: error
-          retention-days: 90
-
       - id: publish
-        name: Release / publish all verified npm waves through trusted publishing
+        name: Publish sealed tarballs through trusted publishing
         env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_PRODUCTION_POLICY_CONFIRMED: ${{ vars.SCRAMJET_RELEASE_PRODUCTION_POLICY_CONFIRMED }}
           MAIN_RELEASE_PUBLISH_ENABLED: ${{ vars.SCRAMJET_MAIN_RELEASE_PUBLISH }}
           NPM_CONFIG_PROVENANCE: "true"
+          CANDIDATE_RELEASE_ID: ${{ needs.release-admission.outputs.candidate-release-id }}
+          RELEASE_SET_DIGEST: ${{ needs.release-admission.outputs.release-set-digest }}
+          SEALED_STATE_DIGEST: ${{ needs.release-admission.outputs.sealed-state-digest }}
         run: |
-          test "$MAIN_RELEASE_PUBLISH_ENABLED" = "true"
-          test -n "$ACTIONS_ID_TOKEN_REQUEST_URL"
-          test -n "$ACTIONS_ID_TOKEN_REQUEST_TOKEN"
+          set -euo pipefail
+          test "$RELEASE_PRODUCTION_POLICY_CONFIRMED" = true
+          test "$MAIN_RELEASE_PUBLISH_ENABLED" = true
+          test -n "${ACTIONS_ID_TOKEN_REQUEST_URL:-}"
+          test -n "${ACTIONS_ID_TOKEN_REQUEST_TOKEN:-}"
           test -z "${NPM_TOKEN:-}"
           test -z "${NODE_AUTH_TOKEN:-}"
-          node scripts/release-main.js publish --release "$RUNNER_TEMP/main-release.v1.json" --packages-dir dist --output "$RUNNER_TEMP/main-release-publication.v1.json"
-          node -e 'const release = require(process.env.RUNNER_TEMP + "/main-release.v1.json"); const publication = require(process.env.RUNNER_TEMP + "/main-release-publication.v1.json"); require("./scripts/release-main.js").verifyPublication(publication, release);'
-          echo "publication-evidence=$(base64 -w 0 "$RUNNER_TEMP/main-release-publication.v1.json")" >> "$GITHUB_OUTPUT"
-          echo "publication-verified=true" >> "$GITHUB_OUTPUT"
+          node scripts/release-candidate-runtime.js resolve --repository "$GITHUB_REPOSITORY" --tag "candidate-${{ needs.release-admission.outputs.candidate-source-sha }}" --source-sha "${{ needs.release-admission.outputs.candidate-source-sha }}" --release-id "$CANDIDATE_RELEASE_ID" --release-set-digest "$RELEASE_SET_DIGEST" --sealed-state-digest "$SEALED_STATE_DIGEST" --bundle-dir "$RUNNER_TEMP/release-candidate" --state "$RUNNER_TEMP/release-candidate/candidate-state.json" --output "$RUNNER_TEMP/candidate-resolve.json"
+          RELEASE_VERSION="$(node -p "require(process.env.RUNNER_TEMP + '/release-candidate/release-set.json').artifacts.tarballs[0].version")"
+          node scripts/release-production-runtime.js publish-main --repository "$GITHUB_REPOSITORY" --candidate-tag "candidate-${{ needs.release-admission.outputs.candidate-source-sha }}" --bundle-dir "$RUNNER_TEMP/release-candidate" --main-sha "${{ needs.release-admission.outputs.main-sha }}" --source-sha "${{ needs.release-admission.outputs.candidate-source-sha }}" --candidate-release-id "$CANDIDATE_RELEASE_ID" --release-set-digest "$RELEASE_SET_DIGEST" --sealed-state-digest "$SEALED_STATE_DIGEST" --version "$RELEASE_VERSION" --output "$RUNNER_TEMP/release-candidate/publication-journal-final.json"
+          echo "journal-digest=$(node -e 'const { digestDocument } = require("./scripts/release-contract"); const fs = require("node:fs"); const p = process.env.RUNNER_TEMP + "/release-candidate/publication-journal-final.json"; process.stdout.write(digestDocument(JSON.parse(fs.readFileSync(p))));')" >> "$GITHUB_OUTPUT"
 
-  main-checkpoint-promotion:
-    name: Release / checkpoint promotion
-    if: ${{ needs.production-publication.outputs.publication-verified == 'true' && needs.production-publication.outputs.publication-evidence != '' && github.repository == 'scramjetorg/transform-hub' && github.ref == 'refs/heads/main' }}
-    needs: [production-publication]
+  registry-proof:
+    name: Release / read-only registry proof
+    needs: [release-admission, tarball-bdd, production-publish]
+    if: ${{ needs.production-publish.result == 'success' }}
     permissions:
       contents: read
-      packages: write
+      packages: read
+    uses: ./.github/workflows/production-registry-verification.yml
+    with:
+      main-sha: ${{ needs.release-admission.outputs.main-sha }}
+      candidate-source-sha: ${{ needs.release-admission.outputs.candidate-source-sha }}
+      candidate-release-id: ${{ needs.release-admission.outputs.candidate-release-id }}
+      release-set-digest: ${{ needs.release-admission.outputs.release-set-digest }}
+      sealed-state-digest: ${{ needs.release-admission.outputs.sealed-state-digest }}
+      journal-digest: ${{ needs.production-publish.outputs.journal-digest }}
+
+  release-finalization:
+    name: Release / finalization
+    needs: [release-admission, tarball-bdd, production-publish, registry-proof]
+    if: ${{ needs.registry-proof.result == 'success' }}
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
-    concurrency:
-      group: checkpoint-pointer-main
-      cancel-in-progress: false
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           persist-credentials: false
-          ref: ${{ github.sha }}
-
+          ref: ${{ needs.release-admission.outputs.main-sha }}
       - uses: ./.github/actions/setup-workspace
         with:
-          # Checkpoint promotion job holds GHCR publish credentials: cache stays off.
-          cache-mode: off
-
-      - name: Release / build, publish, verify, and promote checkpoint
+          cache-mode: restore-only
+      - name: Resolve candidate assets before finalization
         env:
-          GITHUB_TOKEN: ${{ github.token }}
-          SCRAMJET_GHCR_SCOPED_PUBLISHER: ${{ vars.SCRAMJET_GHCR_SCOPED_PUBLISHER }}
+          GH_TOKEN: ${{ github.token }}
         run: |
-          current_sha="$(git ls-remote origin refs/heads/main | cut -f1)"
-          source_sha="$(git rev-parse HEAD)"
-          test -n "$current_sha"
-          test "$SCRAMJET_GHCR_SCOPED_PUBLISHER" = "true"
-          test -n "$GITHUB_TOKEN"
-          node scripts/checkpoint/plan.js --dry-run --branch main --source-sha "$source_sha" --current-sha "$current_sha" --output "$RUNNER_TEMP/checkpoint-promotion"
-          node scripts/checkpoint/prefetch.js --output "$RUNNER_TEMP/runtime-dependencies"
-          printf '%s' "$GITHUB_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
-          trap 'docker logout ghcr.io' EXIT
-          node scripts/checkpoint/publish.js --plan "$RUNNER_TEMP/checkpoint-promotion/checkpoint-plan.v1.json" --branch main --source-sha "$source_sha" --current-sha "$current_sha" --npm-cache "$HOME/.npm" --runtime-dependencies "$RUNNER_TEMP/runtime-dependencies"
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/release-finalizer-candidate"
+          node scripts/release-candidate-runtime.js resolve --repository "$GITHUB_REPOSITORY" --tag "candidate-${{ needs.release-admission.outputs.candidate-source-sha }}" --source-sha "${{ needs.release-admission.outputs.candidate-source-sha }}" --release-id "${{ needs.release-admission.outputs.candidate-release-id }}" --release-set-digest "${{ needs.release-admission.outputs.release-set-digest }}" --sealed-state-digest "${{ needs.release-admission.outputs.sealed-state-digest }}" --bundle-dir "$RUNNER_TEMP/release-finalizer-candidate" --state "$RUNNER_TEMP/release-finalizer-candidate/candidate-state.json" --output "$RUNNER_TEMP/finalizer-resolve.json"
+      - name: Finalize the digest-bound release set
+        env:
+          GH_TOKEN: ${{ github.token }}
+          MAIN_SHA: ${{ needs.release-admission.outputs.main-sha }}
+          CANDIDATE_RELEASE_ID: ${{ needs.release-admission.outputs.candidate-release-id }}
+          RELEASE_SET_DIGEST: ${{ needs.release-admission.outputs.release-set-digest }}
+          SEALED_STATE_DIGEST: ${{ needs.release-admission.outputs.sealed-state-digest }}
+        run: |
+          set -euo pipefail
+          RELEASE_VERSION="$(node -p "require(process.env.RUNNER_TEMP + '/release-finalizer-candidate/release-set.json').artifacts.tarballs[0].version")"
+          node scripts/release-finalizer.js --repository "$GITHUB_REPOSITORY" --candidate-tag "candidate-${{ needs.release-admission.outputs.candidate-source-sha }}" --final-tag "v$RELEASE_VERSION" --version "$RELEASE_VERSION" --main-sha "$MAIN_SHA" --candidate-release-id "$CANDIDATE_RELEASE_ID" --sealed-state-digest "$SEALED_STATE_DIGEST" --release-set-digest "$RELEASE_SET_DIGEST" --journal-digest "${{ needs.production-publish.outputs.journal-digest }}" --registry-verification-digest "${{ needs.registry-proof.outputs.registry-proof-digest }}"

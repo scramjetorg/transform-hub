@@ -37,7 +37,7 @@ test("PR and admission contain no release/build/full-BDD authority", (t) => {
     const pr = source("pr-fast-validation.yml");
     const admission = source("release-promotion-admission.yml");
     t.regex(pr, /actions\/checkout@[0-9a-f]{40}[\s\S]*?name: Install dependencies\n\s+run: npm ci/);
-    t.regex(pr, /name: Offline Phase 4 contract and adapter tests\n\s+run: node scripts\/run-ava\.js[\s\S]*?scripts\/test\/release-contract\.spec\.js[\s\S]*?scripts\/test\/release-phase4\.spec\.js[\s\S]*?scripts\/test\/github-release-candidate\.spec\.js[\s\S]*?scripts\/test\/release-candidate-assets\.spec\.js[\s\S]*?scripts\/test\/release-bdd-validation\.spec\.js[\s\S]*?scripts\/test\/release-bundle\.spec\.js/);
+    t.regex(pr, /name: Offline contract and adapter tests\n\s+run: node scripts\/run-ava\.js[\s\S]*?scripts\/test\/release-contract\.spec\.js[\s\S]*?scripts\/test\/release-phase4\.spec\.js[\s\S]*?scripts\/test\/github-release-candidate\.spec\.js[\s\S]*?scripts\/test\/release-candidate-assets\.spec\.js[\s\S]*?scripts\/test\/release-bdd-validation\.spec\.js[\s\S]*?scripts\/test\/release-bundle\.spec\.js/);
     t.true(pr.indexOf("run: npm ci") > pr.indexOf("uses: actions/checkout@"));
     for (const text of [pr, admission]) {
         t.false(/npm run (?:build|pack|publish)|build-all\.js|npm\s+pack|test:bdd|run-bdd/.test(text));

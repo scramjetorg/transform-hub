@@ -1,0 +1,88 @@
+name: Tarball release validation
+
+on:
+  workflow_call:
+    inputs:
+      main-sha: { required: true, type: string }
+      candidate-source-sha: { required: true, type: string }
+      candidate-release-id: { required: true, type: number }
+      release-set-digest: { required: true, type: string }
+      sealed-state-digest: { required: true, type: string }
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tarball-release-validation-${{ inputs.main-sha }}-${{ inputs.candidate-source-sha }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: write
+      packages: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          ref: ${{ inputs.main-sha }}
+
+      - uses: ./.github/actions/setup-workspace
+        with:
+          cache-mode: off
+
+      - name: Download and verify the candidate tarballs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_CANDIDATE_DIR: ${{ runner.temp }}/candidate-bundle
+          RELEASE_CANDIDATE_STATE: ${{ runner.temp }}/candidate-bundle/candidate-state.json
+        run: |
+          set -euo pipefail
+          mkdir -p "$RELEASE_CANDIDATE_DIR"
+          node scripts/release-candidate-runtime.js resolve \
+            --repository "$GITHUB_REPOSITORY" \
+            --tag "candidate-${{ inputs.candidate-source-sha }}" \
+            --source-sha "${{ inputs.candidate-source-sha }}" \
+            --release-id "${{ inputs.candidate-release-id }}" \
+            --release-set-digest "${{ inputs.release-set-digest }}" \
+            --sealed-state-digest "${{ inputs.sealed-state-digest }}" \
+            --bundle-dir "$RELEASE_CANDIDATE_DIR" \
+            --state "$RELEASE_CANDIDATE_STATE" \
+            --output "$RUNNER_TEMP/candidate-resolve.json"
+          test "$(node -p "require(process.env.RUNNER_TEMP + '/candidate-resolve.json').status")" = reused
+          test "$(node -p "require(process.env.RUNNER_TEMP + '/candidate-resolve.json').releaseSetDigest")" = "${{ inputs.release-set-digest }}"
+          test "$(node -p "require(process.env.RUNNER_TEMP + '/candidate-resolve.json').sealedStateDigest")" = "${{ inputs.sealed-state-digest }}"
+
+      - name: Run exactly one curated BDD matrix against the isolated tarball root
+        env:
+          GH_TOKEN: ${{ github.token }}
+          MAIN_SHA: ${{ inputs.main-sha }}
+          RELEASE_CANDIDATE_DIR: ${{ runner.temp }}/candidate-bundle
+          RELEASE_CANDIDATE_STATE: ${{ runner.temp }}/main-bdd-state.json
+          RUNTIME_ADAPTER: docker
+        id: candidate
+        run: |
+          set -euo pipefail
+          image_digest="$(node -p "require(process.env.RUNNER_TEMP + '/candidate-resolve.json').imageDigest")"
+          test "$image_digest" != null
+          echo "image-digest=$image_digest" >> "$GITHUB_OUTPUT"
+          export RELEASE_GHCR_IMAGE_DIGEST="$image_digest"
+          node scripts/release-bdd-validation.js prepare-main-state \
+            --source "$RELEASE_CANDIDATE_DIR/candidate-state.json" \
+            --destination "$RELEASE_CANDIDATE_STATE"
+          export RELEASE_CANDIDATE_IDENTITY="$(node -e 'process.stdout.write(require(process.env.RELEASE_CANDIDATE_DIR + "/candidate-identity.json"))')"
+          node scripts/release-bdd-validation.js run --all
+
+      - name: Append or reuse tuple-bound tarball BDD evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+          MAIN_SHA: ${{ inputs.main-sha }}
+          CANDIDATE_SOURCE_SHA: ${{ inputs.candidate-source-sha }}
+          CANDIDATE_RELEASE_ID: ${{ inputs.candidate-release-id }}
+          RELEASE_SET_DIGEST: ${{ inputs.release-set-digest }}
+          SEALED_STATE_DIGEST: ${{ inputs.sealed-state-digest }}
+          RELEASE_CANDIDATE_DIR: ${{ runner.temp }}/candidate-bundle
+          RELEASE_BDD_STATE: ${{ runner.temp }}/main-bdd-state.json
+        run: node scripts/release-bdd-validation.js persist-main

@@ -92,6 +92,50 @@ jobs:
       - name: Build packages
         run: npm run build:packages
 
+      - name: Build the local SHA-tagged BDD Docker closure
+        env:
+          VALIDATION_SHA: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha || github.sha }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$VALIDATION_SHA"
+          rm -rf dist/docker-runner
+          mkdir -p runtime-dependencies
+          node scripts/build-all.js --no-install --link-packages -d packages/runner -o ./dist/docker-runner/ --ts-config tsconfig.build.json
+          cp -r packages/runner-python ./dist/docker-runner/runner-python
+          docker build --file packages/runner/Dockerfile --tag "scramjetorg/runner:$VALIDATION_SHA" .
+          docker build --file packages/runner-python/Dockerfile --tag "scramjetorg/runner-py:$VALIDATION_SHA" .
+          docker build --file packages/runner-bun/Dockerfile --tag "scramjetorg/runner-bun:$VALIDATION_SHA" .
+          docker build --file packages/pre-runner/Dockerfile --tag "scramjetorg/pre-runner:$VALIDATION_SHA" packages/pre-runner
+          docker build --file docker/Dockerfile.bdd-bun --tag "ghcr.io/scramjetorg/transform-hub/bdd-node:$VALIDATION_SHA" .
+          node - "$RUNNER_TEMP/pr-bdd-image-manifest.json" "$VALIDATION_SHA" <<'NODE'
+          const fs = require("node:fs");
+          const [,, output, sha] = process.argv;
+          const images = [
+            `scramjetorg/pre-runner:${sha}`,
+            `scramjetorg/runner:${sha}`,
+            `scramjetorg/runner-py:${sha}`,
+            `scramjetorg/runner-bun:${sha}`,
+            `ghcr.io/scramjetorg/transform-hub/bdd-node:${sha}`,
+          ];
+          fs.writeFileSync(output, JSON.stringify({ sourceSha: sha, tag: sha, bddImage: images[4], images }, null, 2));
+          NODE
+          docker save \
+            "scramjetorg/pre-runner:$VALIDATION_SHA" \
+            "scramjetorg/runner:$VALIDATION_SHA" \
+            "scramjetorg/runner-py:$VALIDATION_SHA" \
+            "scramjetorg/runner-bun:$VALIDATION_SHA" \
+            "ghcr.io/scramjetorg/transform-hub/bdd-node:$VALIDATION_SHA" \
+            | gzip > "$RUNNER_TEMP/pr-bdd-image-closure.tar.gz"
+
+      - name: Upload disposable SHA-tagged BDD Docker closure
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08
+        with:
+          name: pr-bdd-image-closure-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/pr-bdd-image-closure.tar.gz
+            ${{ runner.temp }}/pr-bdd-image-manifest.json
+          retention-days: 1
+
   bdd-core-node:
     # Keep the two-resource @ci-runner-node scenarios isolated: their established
     # Docker requirement is 2 GiB and they are the longest core BDD path.
@@ -120,6 +164,31 @@ jobs:
       # PR outputs remain disposable: no build artifact or cache crosses jobs.
       - name: Build disposable BDD inputs
         run: npm run build:packages
+
+      - name: Download the disposable SHA-tagged BDD Docker closure
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: pr-bdd-image-closure-${{ github.run_id }}
+          path: ${{ runner.temp }}/pr-bdd-image-closure
+
+      - name: Load and verify the local SHA-tagged BDD Docker closure
+        env:
+          VALIDATION_SHA: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha || github.sha }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$VALIDATION_SHA"
+          mkdir -p "$RUNNER_TEMP/pr-bdd-image-closure"
+          test -s "$RUNNER_TEMP/pr-bdd-image-closure/pr-bdd-image-manifest.json"
+          node - "$RUNNER_TEMP/pr-bdd-image-closure/pr-bdd-image-manifest.json" "$VALIDATION_SHA" <<'NODE'
+          const fs = require("node:fs");
+          const [,, manifestPath, sha] = process.argv;
+          const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+          if (manifest.sourceSha !== sha || manifest.tag !== sha || manifest.bddImage !== `ghcr.io/scramjetorg/transform-hub/bdd-node:${sha}` || !Array.isArray(manifest.images) || manifest.images.length !== 5 || manifest.images.some(image => !image.endsWith(`:${sha}`))) process.exit(1);
+          NODE
+          docker load --input "$RUNNER_TEMP/pr-bdd-image-closure/pr-bdd-image-closure.tar.gz"
+          while IFS= read -r image; do docker image inspect "$image" >/dev/null; done < <(node -p 'require(process.argv[1]).images.join("\n")' "$RUNNER_TEMP/pr-bdd-image-closure/pr-bdd-image-manifest.json")
+          echo "RUNNER_IMGS_TAG=$VALIDATION_SHA" >> "$GITHUB_ENV"
+          echo "BDD_NODE_IMAGE=ghcr.io/scramjetorg/transform-hub/bdd-node:$VALIDATION_SHA" >> "$GITHUB_ENV"
 
       - name: Run Docker-backed Node BDD validation
         env:
@@ -156,6 +225,29 @@ jobs:
 
       - name: Build disposable BDD inputs
         run: npm run build:packages
+
+      - name: Download the disposable SHA-tagged BDD Docker closure
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: pr-bdd-image-closure-${{ github.run_id }}
+          path: ${{ runner.temp }}/pr-bdd-image-closure
+
+      - name: Load and verify the local SHA-tagged BDD Docker closure
+        env:
+          VALIDATION_SHA: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha || github.sha }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$VALIDATION_SHA"
+          node - "$RUNNER_TEMP/pr-bdd-image-closure/pr-bdd-image-manifest.json" "$VALIDATION_SHA" <<'NODE'
+          const fs = require("node:fs");
+          const [,, manifestPath, sha] = process.argv;
+          const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+          if (manifest.sourceSha !== sha || manifest.tag !== sha || manifest.bddImage !== `ghcr.io/scramjetorg/transform-hub/bdd-node:${sha}` || !Array.isArray(manifest.images) || manifest.images.length !== 5 || manifest.images.some(image => !image.endsWith(`:${sha}`))) process.exit(1);
+          NODE
+          docker load --input "$RUNNER_TEMP/pr-bdd-image-closure/pr-bdd-image-closure.tar.gz"
+          while IFS= read -r image; do docker image inspect "$image" >/dev/null; done < <(node -p 'require(process.argv[1]).images.join("\n")' "$RUNNER_TEMP/pr-bdd-image-closure/pr-bdd-image-manifest.json")
+          echo "RUNNER_IMGS_TAG=$VALIDATION_SHA" >> "$GITHUB_ENV"
+          echo "BDD_NODE_IMAGE=ghcr.io/scramjetorg/transform-hub/bdd-node:$VALIDATION_SHA" >> "$GITHUB_ENV"
 
       - name: Run Docker-backed Python BDD validation
         run: npm run test:bdd-ci-python
@@ -194,6 +286,29 @@ jobs:
       - name: Build disposable BDD inputs
         run: npm run build:packages
 
+      - name: Download the disposable SHA-tagged BDD Docker closure
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: pr-bdd-image-closure-${{ github.run_id }}
+          path: ${{ runner.temp }}/pr-bdd-image-closure
+
+      - name: Load and verify the local SHA-tagged BDD Docker closure
+        env:
+          VALIDATION_SHA: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha || github.sha }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$VALIDATION_SHA"
+          node - "$RUNNER_TEMP/pr-bdd-image-closure/pr-bdd-image-manifest.json" "$VALIDATION_SHA" <<'NODE'
+          const fs = require("node:fs");
+          const [,, manifestPath, sha] = process.argv;
+          const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+          if (manifest.sourceSha !== sha || manifest.tag !== sha || manifest.bddImage !== `ghcr.io/scramjetorg/transform-hub/bdd-node:${sha}` || !Array.isArray(manifest.images) || manifest.images.length !== 5 || manifest.images.some(image => !image.endsWith(`:${sha}`))) process.exit(1);
+          NODE
+          docker load --input "$RUNNER_TEMP/pr-bdd-image-closure/pr-bdd-image-closure.tar.gz"
+          while IFS= read -r image; do docker image inspect "$image" >/dev/null; done < <(node -p 'require(process.argv[1]).images.join("\n")' "$RUNNER_TEMP/pr-bdd-image-closure/pr-bdd-image-manifest.json")
+          echo "RUNNER_IMGS_TAG=$VALIDATION_SHA" >> "$GITHUB_ENV"
+          echo "BDD_NODE_IMAGE=ghcr.io/scramjetorg/transform-hub/bdd-node:$VALIDATION_SHA" >> "$GITHUB_ENV"
+
       - name: Run hub BDD validation
         run: |
           npm run test:bdd-ci-hub
@@ -226,6 +341,29 @@ jobs:
 
       - name: Build disposable BDD inputs
         run: npm run build:packages
+
+      - name: Download the disposable SHA-tagged BDD Docker closure
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: pr-bdd-image-closure-${{ github.run_id }}
+          path: ${{ runner.temp }}/pr-bdd-image-closure
+
+      - name: Load and verify the local SHA-tagged BDD Docker closure
+        env:
+          VALIDATION_SHA: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha || github.sha }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$VALIDATION_SHA"
+          node - "$RUNNER_TEMP/pr-bdd-image-closure/pr-bdd-image-manifest.json" "$VALIDATION_SHA" <<'NODE'
+          const fs = require("node:fs");
+          const [,, manifestPath, sha] = process.argv;
+          const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+          if (manifest.sourceSha !== sha || manifest.tag !== sha || manifest.bddImage !== `ghcr.io/scramjetorg/transform-hub/bdd-node:${sha}` || !Array.isArray(manifest.images) || manifest.images.length !== 5 || manifest.images.some(image => !image.endsWith(`:${sha}`))) process.exit(1);
+          NODE
+          docker load --input "$RUNNER_TEMP/pr-bdd-image-closure/pr-bdd-image-closure.tar.gz"
+          while IFS= read -r image; do docker image inspect "$image" >/dev/null; done < <(node -p 'require(process.argv[1]).images.join("\n")' "$RUNNER_TEMP/pr-bdd-image-closure/pr-bdd-image-manifest.json")
+          echo "RUNNER_IMGS_TAG=$VALIDATION_SHA" >> "$GITHUB_ENV"
+          echo "BDD_NODE_IMAGE=ghcr.io/scramjetorg/transform-hub/bdd-node:$VALIDATION_SHA" >> "$GITHUB_ENV"
 
       - name: Run process-adapter and unified BDD validation
         run: |

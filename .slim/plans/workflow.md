@@ -1,10 +1,10 @@
-# Planning Workflow
+# Effective Planning Workflow
 
-1. Read repository and workflow constraints.
-2. Record user requirements, delivery mode, evidence, decisions, risks, and open questions.
-3. Design the target state independently of the existing implementation; use existing files only to identify migration and removal scope.
-4. Break delivery into bounded phases with ownership, dependencies, acceptance criteria, and validation evidence.
-5. Obtain formal plan review before execution.
-6. @orchestrator executes approved phases and records completion evidence only after required validation.
+Source: shipped `planning-workflow` skill; no repository-specific planner workflow exists.
 
-No `outcomes.md` is created during planning or partial execution.
+1. Research repository intent, constraints, affected paths, and existing test/CI patterns before drafting.
+2. Keep requirements optional; create `.slim/plans/requirements.md` only when explicitly requested.
+3. Maintain `.slim/plans/index.md`, this workflow record, and one directory per plan containing `index.md`, `review.md`, and phase files.
+4. Record objective, scope, non-goals, observable acceptance criteria, dependencies, delivery mode, approved decisions, evidence, and unresolved decisions.
+5. Do not implement, execute tests, or create `outcomes.md` during planning. `outcomes.md` is created only by plan completion after actual completion evidence.
+6. Phase tasks use `[ ]`, `[~]`, `[x]`, `[!]`, or `[-]` states and at most two nesting levels.

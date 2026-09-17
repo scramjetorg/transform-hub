@@ -13,6 +13,7 @@ Replace the CI/release topology with a from-scratch artifact-promotion system: f
 - Define new workflows and release-tool contracts independently of current workflow behavior.
 - Build, stage, attest, validate, admit, publish, verify, and finalize one immutable release bundle.
 - Remove obsolete release paths after cutover proof and remote protection changes.
+- Build and promote post-publication OCI images from exact npm-published package versions.
 
 ## Non-goals
 
@@ -31,8 +32,9 @@ Replace the CI/release topology with a from-scratch artifact-promotion system: f
 | protected `push` to `main` | Production Publish | Ordered publication of staged tarballs. |
 | `workflow_call` from Production Publish | Tarball Release Validation | Full BDD evidence for installed staged tarballs. |
 | `workflow_call` from Production Publish | Production Registry Verification | Credentialless registry proof. |
-| protected finalization job in Production Publish | Release Finalizer | Tag, GitHub Release, and mutable image promotion after proof. |
+| protected finalization job in Production Publish | Release Finalizer | Tag and GitHub Release after proof. |
 | protected `workflow_dispatch` | Release Publish Recovery | Resume byte-identical missing tarball publication. |
+| protected post-publication workflow | OCI Image Staging and Promotion | Build, verify, attest, and promote OCI images from published package versions only. |
 
 ## Phase Order
 
@@ -42,6 +44,7 @@ Replace the CI/release topology with a from-scratch artifact-promotion system: f
 4. [Phase 4 — Candidate and admission workflows](phase-4-candidate-and-admission-workflows.md)
 5. [Phase 5 — Production publication and finalization](phase-5-production-publication-and-finalization.md)
 6. [Phase 6 — Cutover and abandoned-path removal](phase-6-cutover-and-abandoned-path-removal.md)
+7. [Phase 7 — Post-publication OCI staging and promotion](phase-7-post-publication-oci-staging-and-promotion.md)
 
 ## Evidence and Decisions
 
@@ -62,6 +65,8 @@ Replace the CI/release topology with a from-scratch artifact-promotion system: f
 - [x] User-confirmed: protected manual recovery resumes exact-tarball publishing—reuse valid packages and publish only missing wave members; it never rebuilds or repacks.
 - [x] User-confirmed: rename abandoned executable scripts to `unused-*` while intentionally leaving references in place; run automatic and manual entrypoint checks to expose callers before deletion.
 - [x] User-confirmed: obtain an explicit user decision for every legacy workflow and npm script deletion, and perform a complete documentation sweep.
+- [x] User-confirmed: OCI images are built only after npm publication and registry proof, install exact published package versions without workspace/source inputs, and stage before mutable tag promotion; SI is published as `ghcr.io/scramjetorg/si`.
+- [x] User-confirmed: after npm accepts a package, production continues immediately without inline registry polling or a pacing delay; npm acceptance is treated as publication success. A separate read-only, no-OIDC registry-verification environment waits 30 minutes after publication, verifies all published tarballs, and is the only trigger for manual recovery when packages are not ready. Existing npm versions are never republished and may be reused only when byte-identical.
 
 ## Review
 

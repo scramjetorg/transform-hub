@@ -5,7 +5,7 @@ const { createHash } = require("node:crypto");
 const { mkdtempSync, mkdirSync, rmSync, writeFileSync } = require("node:fs");
 const { tmpdir } = require("node:os");
 const { join } = require("node:path");
-const { createMemoryCandidateAssetAdapter, downloadAndVerifyCandidate, stageCandidateAssets } = require("../lib/release-candidate-assets");
+const { createMemoryCandidateAssetAdapter, downloadAndVerifyCandidate, productionEvidenceAssetName, stageCandidateAssets, validateProductionEvidenceAssetName } = require("../lib/release-candidate-assets");
 const { createHandoff } = require("../release-bundle");
 
 test("injected candidate adapter stages and verifies exact bundle bytes", (t) => {
@@ -37,4 +37,21 @@ test("injected candidate adapter stages and verifies exact bundle bytes", (t) =>
         const corrupted = { download: (_candidateId, asset) => asset === name ? Buffer.from("corrupt") : adapter.download("candidate-1", asset) };
         t.throws(() => downloadAndVerifyCandidate({ adapter: corrupted, candidateId: "candidate-1", destination: join(root, `corrupt-${name.replaceAll("/", "-")}`), releaseSet, candidateReference }), { message });
     }
+});
+
+test("production evidence asset names bind the canonical namespace and payload digest", (t) => {
+    const bytes = Buffer.from("evidence");
+    const name = productionEvidenceAssetName({ mainSha: "a".repeat(40), releaseSetDigest: `sha256:${"b".repeat(64)}`, name: "bdd/tarball.json", bytes });
+    t.deepEqual(validateProductionEvidenceAssetName(name), {
+        name,
+        mainSha: "a".repeat(40),
+        releaseSetDigest: `sha256:${"b".repeat(64)}`,
+        logicalName: "bdd/tarball.json",
+        sha256: `sha256:${createHash("sha256").update(bytes).digest("hex")}`,
+    });
+    for (const bad of ["production-evidence/not-a-sha/sha256:" + "b".repeat(64) + "/e.json--sha256-" + "c".repeat(64), "production-evidence/" + "a".repeat(40) + "/bad/e.json--sha256-" + "c".repeat(64)]) {
+        t.throws(() => validateProductionEvidenceAssetName(bad), { message: /invalid/ });
+    }
+    t.throws(() => productionEvidenceAssetName({ mainSha: "a".repeat(40), releaseSetDigest: `sha256:${"b".repeat(64)}`, name: "boundary__case.json", bytes }), { message: /invalid/ });
+    t.throws(() => validateProductionEvidenceAssetName(`production-evidence/${"a".repeat(40)}/sha256:${"b".repeat(64)}/boundary__case.json--sha256-${"c".repeat(64)}`), { message: /invalid/ });
 });

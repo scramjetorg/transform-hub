@@ -7,6 +7,7 @@ import { StringDecoder } from "string_decoder";
 import { memoryRegistry } from "../lib/memory-registry";
 import { resolvePublishedBin } from "./published-artifacts";
 import { publishedSourceEntry } from "./published-modules";
+import type { HostExitEvent } from "./lifecycle-trace";
 const { getOwnership } = require("./ownership.js");
 
 /**
@@ -43,6 +44,28 @@ const MAX_OUTPUT_BYTES = Number.isFinite(configuredMaxOutputBytes) && configured
     ? configuredMaxOutputBytes
     : 1024 * 1024;
 const ownership = getOwnership(process.env);
+export interface HostLifecycleObserver {
+    recordHostStdout?(value: string): void;
+    recordHostStderr?(value: string): void;
+    recordHostExit?(event: HostExitEvent): void;
+}
+
+const lifecycleObservers = new Set<HostLifecycleObserver>();
+export function subscribeHostLifecycleObserver(observer: HostLifecycleObserver): () => void {
+    lifecycleObservers.add(observer);
+    return () => lifecycleObservers.delete(observer);
+}
+
+function publishHostOutput(kind: "stdout" | "stderr", value: string): void {
+    for (const observer of lifecycleObservers) {
+        if (kind === "stdout") observer.recordHostStdout?.(value);
+        else observer.recordHostStderr?.(value);
+    }
+}
+
+function publishHostExit(event: HostExitEvent): void {
+    for (const observer of lifecycleObservers) observer.recordHostExit?.(event);
+}
 
 function candidateImageArgs(): string[] {
     const raw = process.env.SCRAMJET_BDD_CANDIDATE_IMAGE_MAP;
@@ -364,10 +387,14 @@ export class HostUtils {
                 this.captureOutput(data.toString());
             };
             const stdoutListener = (data: Buffer) => {
-                this.stdoutTail = (this.stdoutTail + data.toString()).slice(-MAX_OUTPUT_BYTES);
+                const value = data.toString();
+                this.stdoutTail = (this.stdoutTail + value).slice(-MAX_OUTPUT_BYTES);
+                publishHostOutput("stdout", value);
             };
             const stderrListener = (data: Buffer) => {
-                this.stderrTail = (this.stderrTail + data.toString()).slice(-MAX_OUTPUT_BYTES);
+                const value = data.toString();
+                this.stderrTail = (this.stderrTail + value).slice(-MAX_OUTPUT_BYTES);
+                publishHostOutput("stderr", value);
             };
 
             let decodedData = "";
@@ -413,6 +440,7 @@ export class HostUtils {
                 this.exitCode = code;
                 this.exitSignal = signal;
                 this.exitFinishedAt = Date.now();
+                publishHostExit({ code, signal });
 
                 // Skip startup-failure assertion when the Hub is being
                 // deliberately stopped (stopHost or scenario-lifecycle
@@ -437,6 +465,10 @@ export class HostUtils {
     }
 
     setArgs(command: string[], extraArgs: string[], noDefault: NoDefault = []) {
+        const allArgs = [...command, ...extraArgs];
+        if (allArgs.some(arg => arg === "--no-log-forward-runner" || arg.startsWith("--no-log-forward-runner="))) {
+            throw new Error("BDD-managed Hosts require --log-forward-runner.");
+        }
         if (!noDefault.includes("port") && !extraArgs.includes("-P") && !extraArgs.includes("--port") && !command.includes("--port") && process.env.LOCAL_HOST_PORT)
             command.push("-P", process.env.LOCAL_HOST_PORT);
         if (!noDefault.includes("instances-server-port") && !extraArgs.includes("--instances-server-port") && process.env.LOCAL_HOST_INSTANCES_SERVER_PORT)
@@ -456,6 +488,7 @@ export class HostUtils {
         if (!noDefault.includes("instance-lifetime-extension-delay") && !extraArgs.includes("--instance-lifetime-extension-delay") && (process.env.RUNTIME_ADAPTER || bddRun))
             command.push(`--instance-lifetime-extension-delay=${bddRun ? 1000 : 100}`);
         if (extraArgs.length) command.push(...extraArgs);
+        if (!command.includes("--log-forward-runner")) command.push("--log-forward-runner");
 
         const candidateArgs = candidateImageArgs();
         if (candidateArgs.length) command.push(...candidateArgs);
@@ -464,7 +497,8 @@ export class HostUtils {
             command.push(
                 `--runner-image=scramjetorg/runner:${process.env.RUNNER_IMGS_TAG}`,
                 `--prerunner-image=scramjetorg/pre-runner:${process.env.RUNNER_IMGS_TAG}`,
-                `--runner-py-image=scramjetorg/runner-py:${process.env.RUNNER_IMGS_TAG}`
+                `--runner-py-image=scramjetorg/runner-py:${process.env.RUNNER_IMGS_TAG}`,
+                `--runner-bun-image=scramjetorg/runner-bun:${process.env.RUNNER_IMGS_TAG}`
             );
         }
 

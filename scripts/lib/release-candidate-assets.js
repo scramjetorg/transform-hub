@@ -36,6 +36,26 @@ function assetDigest(bytes) {
     return { size: bytes.length, sha256: `sha256:${hash.copy().digest("hex")}`, sri: `sha256-${hash.digest("base64")}` };
 }
 
+const SHA256 = /^sha256:[a-f0-9]{64}$/i;
+const MAIN_SHA = /^[a-f0-9]{40}$/i;
+const EVIDENCE_NAME = /^[^/\\.][^/\\]*(?:\/[^/\\.][^/\\]*)*$/;
+
+function productionEvidenceAssetName({ mainSha, releaseSetDigest, name, bytes }) {
+    if (!MAIN_SHA.test(mainSha || "")) throw new Error("Production evidence main SHA is invalid.");
+    if (!SHA256.test(releaseSetDigest || "")) throw new Error("Production evidence release-set digest is invalid.");
+    if (mainSha !== mainSha.toLowerCase() || releaseSetDigest !== releaseSetDigest.toLowerCase()) throw new Error("Production evidence namespace is not canonical.");
+    if (typeof name !== "string" || !EVIDENCE_NAME.test(name) || name.includes("..") || name.includes("__")) throw new Error("Production evidence asset name is invalid.");
+    const digest = assetDigest(Buffer.from(bytes)).sha256.slice("sha256:".length);
+    return `production-evidence/${mainSha}/${releaseSetDigest}/${name}--sha256-${digest}`;
+}
+
+function validateProductionEvidenceAssetName(name) {
+    const match = /^(production-evidence\/([a-f0-9]{40})\/(sha256:[a-f0-9]{64})\/(.+))--sha256-([a-f0-9]{64})$/i.exec(name || "");
+    if (!match || !EVIDENCE_NAME.test(match[4]) || match[4].includes("..") || match[4].includes("__")) throw new Error("Production evidence asset name is invalid.");
+    if (match[2] !== match[2].toLowerCase() || match[3] !== match[3].toLowerCase() || match[5] !== match[5].toLowerCase()) throw new Error("Production evidence namespace is not canonical.");
+    return { name, mainSha: match[2], releaseSetDigest: match[3], logicalName: match[4], sha256: `sha256:${match[5].toLowerCase()}` };
+}
+
 function createMemoryCandidateAssetAdapter() {
     const candidates = new Map();
     return {
@@ -108,4 +128,4 @@ function downloadAndVerifyCandidate({ adapter, candidateId, destination, release
     return { candidateId, assets: names, releaseSet, provenance };
 }
 
-module.exports = { assetDigest, bytesDigest, createCandidateSeal, validateCandidateSeal, createMemoryCandidateAssetAdapter, stageCandidateAssets, downloadAndVerifyCandidate };
+module.exports = { assetDigest, bytesDigest, productionEvidenceAssetName, validateProductionEvidenceAssetName, createCandidateSeal, validateCandidateSeal, createMemoryCandidateAssetAdapter, stageCandidateAssets, downloadAndVerifyCandidate };

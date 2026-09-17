@@ -118,6 +118,62 @@ test("GitHub adapter treats gh's missing-release response as an absent candidate
     t.is(adapter.view(), null);
 });
 
+test("GitHub adapter persists production evidence append-only and reuses identical bytes", (t) => {
+    const assets = new Map();
+    let uploads = 0;
+    const runner = (_command, args) => {
+        if (args[1] === "view") return JSON.stringify({ databaseId: 19, isDraft: true, tagName: "candidate-evidence", targetCommitish: identity.sourceSha, assets: [...assets.keys()].map((name) => ({ name })) });
+        if (args[1] === "upload") {
+            uploads++;
+            for (const value of args.filter((value) => value.includes("#"))) {
+                const separator = value.lastIndexOf("#");
+                assets.set(value.slice(separator + 1), readFileSync(value.slice(0, separator)));
+            }
+        }
+        if (args[1] === "download") {
+            const directory = args[args.indexOf("--dir") + 1];
+            const name = args[args.indexOf("--pattern") + 1];
+            writeFileSync(join(directory, name), assets.get(name));
+        }
+        return "";
+    };
+    const adapter = createGithubReleaseAssetAdapter({ repository: "repo", tag: "candidate-evidence", targetSha: identity.sourceSha, runner });
+    const input = { mainSha: identity.sourceSha, releaseSetDigest: `sha256:${"1".repeat(64)}`, name: "tarball-bdd.json", bytes: Buffer.from("evidence") };
+    const first = adapter.persistProductionEvidence("candidate-evidence", input);
+    const second = adapter.persistProductionEvidence("candidate-evidence", input);
+    t.false(first.reused);
+    t.true(second.reused);
+    t.is(uploads, 1);
+    t.throws(() => adapter.persistProductionEvidence("candidate-evidence", { ...input, bytes: Buffer.from("different") }), { message: /Conflicting/ });
+    t.is(uploads, 1);
+});
+
+test("GitHub adapter rejects production evidence names that collide with storage encoding", (t) => {
+    const adapter = createGithubReleaseAssetAdapter({
+        repository: "repo",
+        tag: "candidate-evidence-boundary",
+        targetSha: identity.sourceSha,
+        runner: () => { t.fail("ambiguous evidence name must be rejected before gh"); return ""; },
+    });
+    t.throws(() => adapter.persistProductionEvidence("candidate-evidence-boundary", {
+        mainSha: identity.sourceSha,
+        releaseSetDigest: `sha256:${"1".repeat(64)}`,
+        name: "nested__boundary.json",
+        bytes: Buffer.from("evidence"),
+    }), { message: /invalid/ });
+});
+
+test("production evidence rejects invalid namespaces and never uses clobber", (t) => {
+    const runner = (_command, args) => {
+        if (args[1] === "view") return JSON.stringify({ databaseId: 20, isDraft: true, tagName: "candidate-evidence-invalid", targetCommitish: identity.sourceSha, assets: [] });
+        t.fail(`unexpected gh invocation: ${args.join(" ")}`);
+        return "";
+    };
+    const adapter = createGithubReleaseAssetAdapter({ repository: "repo", tag: "candidate-evidence-invalid", targetSha: identity.sourceSha, runner });
+    const input = { mainSha: identity.sourceSha, releaseSetDigest: `sha256:${"2".repeat(64)}`, name: "../escape.json", bytes: Buffer.from("evidence") };
+    t.throws(() => adapter.persistProductionEvidence("candidate-evidence-invalid", input), { message: /invalid/ });
+});
+
 test("GitHub draft stager verifies uploaded assets and persists release identity", (t) => {
     const root = mkdtempSync(join(tmpdir(), "release-github-stage-"));
     t.teardown(() => rmSync(root, { recursive: true, force: true }));

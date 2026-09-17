@@ -1,10 +1,11 @@
 const { execFileSync } = require("node:child_process");
 const { createHash } = require("node:crypto");
-const { mkdtempSync, readFileSync, rmSync, writeFileSync } = require("node:fs");
+const { lstatSync, mkdtempSync, readFileSync, rmSync, writeFileSync } = require("node:fs");
 const { tmpdir } = require("node:os");
 const { join } = require("node:path");
 const { assertDigest, assertSha, digestDocument, validateReleaseSet, canonicalize } = require("../release-contract");
 const { createCandidateSeal, downloadAndVerifyCandidate, stageCandidateAssets, validateCandidateSeal } = require("./release-candidate-assets");
+const { assetDigest, productionEvidenceAssetName, validateProductionEvidenceAssetName } = require("./release-candidate-assets");
 const { candidateIdentity, readState, recordCandidateRelease, STATE_SCHEMA } = require("./release-bundle-state");
 
 const ALLOWED_ASSET = /^(release-set\.json|build-provenance\.json|package-lock\.json|candidate-identity\.json|candidate-state\.json|candidate-seal\.json|candidate-success\.json|bdd-support\/runner-container-cleanup\.js|bdd-evidence\/[^/]+\.json|artifacts\/[^/]+\.tgz)$/;
@@ -26,9 +27,15 @@ function storedAssetName(name) {
     return name.replaceAll("/", "__");
 }
 
+function storedProductionEvidenceName(name) {
+    validateProductionEvidenceAssetName(name);
+    return name.replaceAll("/", "__");
+}
+
 function logicalAssetName(name) {
     if (name.startsWith("artifacts__")) return `artifacts/${name.slice("artifacts__".length)}`;
     if (name.startsWith("bdd-evidence__")) return `bdd-evidence/${name.slice("bdd-evidence__".length)}`;
+    if (name.startsWith("production-evidence__")) return `production-evidence/${name.slice("production-evidence__".length).replaceAll("__", "/")}`;
     return name;
 }
 
@@ -137,20 +144,51 @@ function createGithubReleaseAssetAdapter({ repository, tag, targetSha, runner = 
         },
         list(candidateId) {
             if (candidateId !== tag) throw new Error("Candidate ID does not match the GitHub release tag.");
-            const release = ensureRelease();
+            const release = view();
+            if (!release) return [];
             return (release.assets || []).map((asset) => logicalAssetName(asset.name));
         },
+        listEvidence(candidateId) {
+            return this.list(candidateId).filter((name) => name.startsWith("bdd-evidence/") || name.startsWith("production-evidence/"));
+        },
         download(candidateId, name) {
-            if (candidateId !== tag || !ALLOWED_ASSET.test(name)) throw new Error("Candidate asset is not allowlisted.");
+            const production = /^production-evidence\//.test(name);
+            if (candidateId !== tag || (!ALLOWED_ASSET.test(name) && !production)) throw new Error("Candidate asset is not allowlisted.");
             const directory = mkdtempSync(join(tmpdir(), "release-candidate-download-"));
             try {
-                const storedName = storedAssetName(name);
+                const storedName = production ? storedProductionEvidenceName(name) : storedAssetName(name);
                 command(["release", "download", tag, "--repo", repository, "--pattern", storedName, "--dir", directory, "--clobber"]);
                 return readFileSync(join(directory, storedName));
             } finally { rmSync(directory, { recursive: true, force: true }); }
         },
         persist(candidateId, name, bytes) {
             return this.stage(candidateId, [{ name, bytes }]);
+        },
+        persistProductionEvidence(candidateId, { mainSha, releaseSetDigest, name, bytes }) {
+            if (candidateId !== tag) throw new Error("Candidate ID does not match the GitHub release tag.");
+            const payload = Buffer.from(bytes);
+            const canonicalName = productionEvidenceAssetName({ mainSha, releaseSetDigest, name, bytes: payload });
+            const expected = validateProductionEvidenceAssetName(canonicalName);
+            if (expected.sha256 !== assetDigest(payload).sha256) throw new Error("Production evidence asset digest does not match its name.");
+            const release = ensureRelease();
+            const existing = (release.assets || []).map((asset) => logicalAssetName(asset.name)).filter((assetName) => assetName.startsWith(`production-evidence/${mainSha}/${releaseSetDigest}/${name}--sha256-`));
+            for (const existingName of existing) {
+                const existingInfo = validateProductionEvidenceAssetName(existingName);
+                if (existingInfo.sha256 !== expected.sha256) throw new Error("Conflicting production evidence asset already exists.");
+                const actual = this.download(candidateId, existingName);
+                if (!Buffer.from(actual).equals(payload)) throw new Error("Existing production evidence asset conflicts with the requested bytes.");
+                return { candidateId, releaseId: Number(release.databaseId || release.id), name: existingName, reused: true, sha256: expected.sha256 };
+            }
+            if ((release.assets || []).some((asset) => logicalAssetName(asset.name) === canonicalName)) throw new Error("Production evidence asset already exists.");
+            const directory = mkdtempSync(join(tmpdir(), "release-production-evidence-"));
+            try {
+                const storedName = storedProductionEvidenceName(canonicalName);
+                const path = join(directory, storedName);
+                writeFileSync(path, payload, { flag: "wx" });
+                if (lstatSync(path).isSymbolicLink()) throw new Error("Production evidence upload path must not be a symlink.");
+                command(["release", "upload", tag, "--repo", repository, `${path}#${storedName}`]);
+            } finally { rmSync(directory, { recursive: true, force: true }); }
+            return { candidateId, releaseId: Number(release.databaseId || release.id), name: canonicalName, reused: false, sha256: expected.sha256 };
         },
     };
 }

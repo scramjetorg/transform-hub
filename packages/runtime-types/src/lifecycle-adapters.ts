@@ -22,6 +22,7 @@ export interface ILifeCycleAdapterMain {
 export interface ILifeCycleAdapterRun extends ILifeCycleAdapterMain {
     limits: any;
     setRunner?(system: Record<string, string> | undefined): void | Promise<void>;
+    getRunnerProcessId?(): number | undefined;
     dispatch(config: any, instancesServerPort: number, instanceId: string, sequenceInfo: any, payload: any): Promise<number>;
     run(config: any, instancesServerPort: number, instanceId: string, sequenceInfo: any, payload: any): Promise<ExitCode>;
 }

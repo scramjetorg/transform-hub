@@ -42,10 +42,7 @@ FROM target
 ARG CHECKPOINT_RUNTIME_DEPENDENCIES=false
 COPY runtime-dependencies/ /opt/transform-hub/runtime-dependencies/
 COPY scripts/checkpoint/verify-runtime-dependencies.js /usr/local/bin/verify-runtime-dependencies.js
-COPY --from=node-runtime /usr/local/bin/node /usr/local/bin/node
-COPY --from=node-runtime /usr/local/bin/npm /usr/local/bin/npm
-COPY --from=node-runtime /usr/local/bin/npx /usr/local/bin/npx
-COPY --from=node-runtime /usr/local/lib/node_modules /usr/local/lib/node_modules
+COPY --from=node-runtime /usr/local /usr/local
 
 COPY --from=builder /app/dist ${HUB_DIR}
 COPY packages/runner/package.json /tmp/scramjet-runner-install/package.json
@@ -66,7 +63,8 @@ RUN if [ "${CHECKPOINT_RUNTIME_DEPENDENCIES}" = "true" ]; then \
         && yarn --cwd /tmp/scramjet-runner-install install --offline --ignore-engines --frozen-lockfile --production --silent \
             --cache-folder ${HUB_DIR}/runtime-dependencies/yarn/cache \
             --modules-folder ${HUB_DIR}/node_modules; \
-    else npm install -g --no-audit --no-fund yarn \
+    else rm -f /usr/local/bin/yarn /usr/local/bin/yarnpkg \
+        && npm install -g --no-audit --no-fund yarn \
         && yarn install --ignore-engines --frozen-lockfile --production --silent; fi \
     && yarn cache clean \
     && chmod +x ./bin/start-runner.js

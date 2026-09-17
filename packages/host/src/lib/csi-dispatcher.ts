@@ -350,7 +350,7 @@ export class CSIDispatcher extends TypedEmitter<Events> {
 
             let established = false;
 
-            const result = await Promise.race([
+            const result: StartInstanceReturnType = await Promise.race([
                 new Promise<void>((resolve, _reject) => {
                     const resolveFunction = (instance: Instance) => {
                         if (instance.id === id) {
@@ -415,6 +415,8 @@ export class CSIDispatcher extends TypedEmitter<Events> {
                 const controller = this.instanceStore.get(id) as any;
                 try {
                     await controller?.waitForReady(this.STHConfig.timings.startupTimeout || 30_000);
+                    const processId = controller?.getRunnerProcessId?.();
+                    if (typeof processId === "number" && Number.isFinite(processId) && processId > 0) result.processId = processId;
                 } catch (error) {
                     this.logger.warn("Runner readiness failed; terminating instance before returning failure", id, error);
                     throw error;

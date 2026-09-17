@@ -226,6 +226,7 @@ dockerRunArgs.push(
         .flat()
 );
 dockerRunArgs.push(...collectEnvForwardArgs());
+if (process.env.RUNNER_IMGS_TAG) dockerRunArgs.push("-e", `RUNNER_IMGS_TAG=${process.env.RUNNER_IMGS_TAG}`);
 dockerRunArgs.push("-e", "SCRAMJET_DOCKER_NETWORK_MODE=host");
 dockerRunArgs.push("-e", "BDD_CHUNK_MEMORY_REPORT_FILE=/work-tmp/chunk-memory.json");
 dockerRunArgs.push("-e", "BDD_CHUNK_MEMORY_READY_FILE=/work-tmp/chunk-ready.json");

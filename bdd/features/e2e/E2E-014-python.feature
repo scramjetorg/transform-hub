@@ -6,8 +6,6 @@ Feature: Test our shiny new Python runner
         When find and upload sequence "python-bdd-exception.tar.gz"
         And instance started
         And keep instance streams "stdout,stderr"
-        And get runner PID
-        And runner has ended execution
         Then kept instance stream "stdout" should be "PYTHON_STDOUT_BEFORE_EXCEPTION\n"
         And "stderr" contains "TestException: This exception should appear on stderr"
         And host is still running

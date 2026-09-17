@@ -222,6 +222,12 @@ test("run-bdd-docker.js env forwarding includes SCRAMJET_ and BDD_ prefixes", (t
 	t.true(src.includes('"RUNTIME_ADAPTER"'), "should forward the unprefixed runtime adapter into the BDD container");
 });
 
+test("run-bdd-docker.js forwards the local runner image SHA tag into the BDD container", (t) => {
+	const src = fs.readFileSync(path.resolve(__dirname, "..", "run-bdd-docker.js"), "utf8");
+	t.true(src.includes("process.env.RUNNER_IMGS_TAG"));
+	t.true(src.includes('`RUNNER_IMGS_TAG=${process.env.RUNNER_IMGS_TAG}`'));
+});
+
 test("run-bdd-docker.js forces host topology inside its outer container", (t) => {
 	const src = fs.readFileSync(path.resolve(__dirname, "..", "run-bdd-docker.js"), "utf8");
 	t.true(src.includes('dockerRunArgs.push("-e", "SCRAMJET_DOCKER_NETWORK_MODE=host")'));

@@ -17,9 +17,12 @@ test("active workflow inventory contains only maintained Node 22/npm paths and r
 		"main-release.yml",
 		"pr-fast-validation.yml",
 		"pr-validate.yml",
+		"production-registry-verification.yml",
 		"release-pr-automation.yml",
 		"release-promotion-admission.yml",
+		"release-publish-recovery.yml",
 		"security-check.yml",
+		"tarball-release-validation.yml",
 	]);
 	t.true(workflows.includes("security-check.yml"));
 	for (const workflow of workflows) {

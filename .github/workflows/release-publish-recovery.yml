@@ -1,0 +1,130 @@
+name: Release publish recovery
+
+on:
+  workflow_dispatch:
+    inputs:
+      main-sha: { required: true, type: string, description: Protected main merge SHA }
+      candidate-release-id: { required: true, type: number, description: Sealed candidate release ID }
+      release-set-digest: { required: true, type: string, description: Release-set digest }
+      sealed-state-digest: { required: true, type: string, description: Sealed candidate state digest }
+      journal-digest: { required: true, type: string, description: Final publication journal digest }
+      registry-verification-digest: { required: true, type: string, description: Persisted incomplete registry verification digest }
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-publish-recovery-${{ inputs.main-sha }}-${{ inputs.journal-digest }}
+  cancel-in-progress: false
+
+jobs:
+  recovery-preflight:
+    name: Recovery / read-only preflight
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: read
+    outputs:
+      candidate-source-sha: ${{ steps.preflight.outputs.candidate-source-sha }}
+      sealed-state-digest: ${{ steps.preflight.outputs.sealed-state-digest }}
+      missing-packages: ${{ steps.preflight.outputs.missing-packages }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+          ref: ${{ inputs.main-sha }}
+      - uses: ./.github/actions/setup-workspace
+        with:
+          cache-mode: restore-only
+      - id: preflight
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_PRODUCTION_POLICY_CONFIRMED: ${{ vars.SCRAMJET_RELEASE_PRODUCTION_POLICY_CONFIRMED }}
+          RELEASE_REMOTE_POLICY_CONFIRMED: ${{ vars.SCRAMJET_RELEASE_REMOTE_POLICY_CONFIRMED }}
+        run: |
+          set -euo pipefail
+          test "$RELEASE_PRODUCTION_POLICY_CONFIRMED" = true
+          test "$RELEASE_REMOTE_POLICY_CONFIRMED" = true
+          SOURCE_SHA="$(git rev-parse HEAD^)"
+          mkdir -p "$RUNNER_TEMP/recovery"
+          node scripts/release-candidate-runtime.js resolve --repository "$GITHUB_REPOSITORY" --tag "candidate-$SOURCE_SHA" --source-sha "$SOURCE_SHA" --release-id "${{ inputs.candidate-release-id }}" --release-set-digest "${{ inputs.release-set-digest }}" --sealed-state-digest "${{ inputs.sealed-state-digest }}" --bundle-dir "$RUNNER_TEMP/recovery" --state "$RUNNER_TEMP/recovery/candidate-state.json" --output "$RUNNER_TEMP/recovery-resolve.json"
+          SEALED_STATE_DIGEST="$(node -p "require(process.env.RUNNER_TEMP + '/recovery-resolve.json').sealedStateDigest")"
+          node scripts/release-production-runtime.js fetch-evidence --repository "$GITHUB_REPOSITORY" --candidate-tag "candidate-$SOURCE_SHA" --source-sha "$SOURCE_SHA" --name publication-journal-final.json --digest "${{ inputs.journal-digest }}" --output "$RUNNER_TEMP/recovery-journal.json"
+          node scripts/release-production-runtime.js fetch-evidence --repository "$GITHUB_REPOSITORY" --candidate-tag "candidate-$SOURCE_SHA" --source-sha "$SOURCE_SHA" --name tarball-bdd.json --output "$RUNNER_TEMP/recovery-bdd.json"
+          node scripts/release-production-runtime.js fetch-evidence --repository "$GITHUB_REPOSITORY" --candidate-tag "candidate-$SOURCE_SHA" --source-sha "$SOURCE_SHA" --name registry-verification.json --digest "${{ inputs.registry-verification-digest }}" --output "$RUNNER_TEMP/recovery-verification.json"
+          # mismatched statuses are terminal; only persisted missing names may recover.
+          node scripts/release-production-runtime.js preflight-recovery --main-sha "${{ inputs.main-sha }}" --source-sha "$SOURCE_SHA" --candidate-release-id "${{ inputs.candidate-release-id }}" --release-set-digest "${{ inputs.release-set-digest }}" --sealed-state-digest "$SEALED_STATE_DIGEST" --journal "$RUNNER_TEMP/recovery-journal.json" --tarball-bdd "$RUNNER_TEMP/recovery-bdd.json" --registry-verification "$RUNNER_TEMP/recovery-verification.json" --output "$RUNNER_TEMP/recovery-report.json" | tee "$RUNNER_TEMP/missing.out"
+          echo "candidate-source-sha=$SOURCE_SHA" >> "$GITHUB_OUTPUT"
+          echo "sealed-state-digest=$SEALED_STATE_DIGEST" >> "$GITHUB_OUTPUT"
+          echo "missing-packages=$(cut -d= -f2- "$RUNNER_TEMP/missing.out")" >> "$GITHUB_OUTPUT"
+
+  production-publish:
+    name: Recovery / publish only missing packages
+    needs: [recovery-preflight]
+    runs-on: ubuntu-24.04
+    environment: production
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          ref: ${{ inputs.main-sha }}
+      - uses: ./.github/actions/setup-workspace
+        with:
+          cache-mode: off
+      - id: publish
+        env:
+          RELEASE_PRODUCTION_POLICY_CONFIRMED: ${{ vars.SCRAMJET_RELEASE_PRODUCTION_POLICY_CONFIRMED }}
+          MAIN_RELEASE_PUBLISH_ENABLED: ${{ vars.SCRAMJET_MAIN_RELEASE_PUBLISH }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          test "$RELEASE_PRODUCTION_POLICY_CONFIRMED" = true
+          test "$MAIN_RELEASE_PUBLISH_ENABLED" = true
+          test -n "${ACTIONS_ID_TOKEN_REQUEST_URL:-}"
+          test -z "${NPM_TOKEN:-}"; test -z "${NODE_AUTH_TOKEN:-}"
+          SOURCE_SHA="${{ needs.recovery-preflight.outputs.candidate-source-sha }}"
+          node scripts/release-candidate-runtime.js resolve --repository "$GITHUB_REPOSITORY" --tag "candidate-$SOURCE_SHA" --source-sha "$SOURCE_SHA" --release-id "${{ inputs.candidate-release-id }}" --release-set-digest "${{ inputs.release-set-digest }}" --sealed-state-digest "${{ needs.recovery-preflight.outputs.sealed-state-digest }}" --bundle-dir "$RUNNER_TEMP/recovery" --state "$RUNNER_TEMP/recovery/candidate-state.json" --output "$RUNNER_TEMP/recovery-resolve.json"
+          node scripts/release-production-runtime.js fetch-evidence --repository "$GITHUB_REPOSITORY" --candidate-tag "candidate-$SOURCE_SHA" --source-sha "$SOURCE_SHA" --name publication-journal-final.json --digest "${{ inputs.journal-digest }}" --output "$RUNNER_TEMP/recovery-journal.json"
+          node scripts/release-production-runtime.js fetch-evidence --repository "$GITHUB_REPOSITORY" --candidate-tag "candidate-$SOURCE_SHA" --source-sha "$SOURCE_SHA" --name registry-verification.json --digest "${{ inputs.registry-verification-digest }}" --output "$RUNNER_TEMP/recovery-verification.json"
+          VERSION="$(node -p "require(process.env.RUNNER_TEMP + '/recovery/release-set.json').artifacts.tarballs[0].version")"
+          node scripts/release-production-runtime.js publish-main --repository "$GITHUB_REPOSITORY" --candidate-tag "candidate-$SOURCE_SHA" --bundle-dir "$RUNNER_TEMP/recovery" --main-sha "${{ inputs.main-sha }}" --source-sha "$SOURCE_SHA" --candidate-release-id "${{ inputs.candidate-release-id }}" --release-set-digest "${{ inputs.release-set-digest }}" --sealed-state-digest "${{ needs.recovery-preflight.outputs.sealed-state-digest }}" --version "$VERSION" --journal "$RUNNER_TEMP/recovery-journal.json" --registry-verification "$RUNNER_TEMP/recovery-verification.json" --output "$RUNNER_TEMP/recovery-journal-final.json" --only-packages "${{ needs.recovery-preflight.outputs.missing-packages }}"
+
+  registry-proof:
+    needs: [recovery-preflight, production-publish]
+    permissions:
+      contents: read
+      packages: read
+    uses: ./.github/workflows/production-registry-verification.yml
+    with:
+      main-sha: ${{ inputs.main-sha }}
+      candidate-source-sha: ${{ needs.recovery-preflight.outputs.candidate-source-sha }}
+      candidate-release-id: ${{ inputs.candidate-release-id }}
+      release-set-digest: ${{ inputs.release-set-digest }}
+      sealed-state-digest: ${{ needs.recovery-preflight.outputs.sealed-state-digest }}
+      journal-digest: ${{ inputs.journal-digest }}
+
+  release-finalization:
+    needs: [recovery-preflight, production-publish, registry-proof]
+    if: ${{ needs.registry-proof.result == 'success' }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          ref: ${{ inputs.main-sha }}
+      - uses: ./.github/actions/setup-workspace
+        with:
+          cache-mode: restore-only
+      - run: |
+          set -euo pipefail
+          SOURCE_SHA="${{ needs.recovery-preflight.outputs.candidate-source-sha }}"
+          mkdir -p "$RUNNER_TEMP/finalizer-candidate"
+          node scripts/release-candidate-runtime.js resolve --repository "$GITHUB_REPOSITORY" --tag "candidate-$SOURCE_SHA" --source-sha "$SOURCE_SHA" --release-id "${{ inputs.candidate-release-id }}" --release-set-digest "${{ inputs.release-set-digest }}" --sealed-state-digest "${{ needs.recovery-preflight.outputs.sealed-state-digest }}" --bundle-dir "$RUNNER_TEMP/finalizer-candidate" --state "$RUNNER_TEMP/finalizer-candidate/candidate-state.json" --output "$RUNNER_TEMP/finalizer-resolve.json"
+          VERSION="$(node -p "require(process.env.RUNNER_TEMP + '/finalizer-candidate/release-set.json').artifacts.tarballs[0].version")"
+          node scripts/release-finalizer.js --repository "$GITHUB_REPOSITORY" --candidate-tag "candidate-$SOURCE_SHA" --final-tag "v$VERSION" --version "$VERSION" --main-sha "${{ inputs.main-sha }}" --candidate-release-id "${{ inputs.candidate-release-id }}" --sealed-state-digest "${{ needs.recovery-preflight.outputs.sealed-state-digest }}" --release-set-digest "${{ inputs.release-set-digest }}" --journal-digest "${{ inputs.journal-digest }}" --registry-verification-digest "${{ needs.registry-proof.outputs.registry-proof-digest }}"

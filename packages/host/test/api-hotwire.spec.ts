@@ -259,8 +259,8 @@ test("HostAPIHandler unit start sequence validates payload and maps startup erro
     const audits: any[] = [];
 
     host.auditor = { auditInstanceStart: (...args: any[]) => audits.push(args) };
-    host.startSequence = async () => ({ id: "inst-started", limits: { memory: 1 } });
-    t.deepEqual(await api.handleStartSequence({ params: { id: "seq" }, body: {}, headers: {} }), { opStatus: "OK", id: "inst-started" });
+    host.startSequence = async () => ({ id: "inst-started", processId: 4321, limits: { memory: 1 } });
+    t.deepEqual(await api.handleStartSequence({ params: { id: "seq" }, body: {}, headers: {} }), { opStatus: "OK", id: "inst-started", processId: 4321 });
     t.is(audits.length, 1);
 
     host.startSequence = async () => { throw new HostError("UNKNOWN_SEQUENCE", "missing"); };

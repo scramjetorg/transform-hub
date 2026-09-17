@@ -1,0 +1,96 @@
+name: Production registry verification
+
+on:
+  workflow_call:
+    inputs:
+      main-sha: { required: true, type: string }
+      candidate-source-sha: { required: true, type: string }
+      candidate-release-id: { required: true, type: number }
+      release-set-digest: { required: true, type: string }
+      sealed-state-digest: { required: true, type: string }
+      journal-digest: { required: true, type: string }
+    outputs:
+      registry-proof-digest:
+        value: ${{ jobs.record.outputs.registry-proof-digest }}
+      registry-verification-digest:
+        value: ${{ jobs.record.outputs.registry-verification-digest }}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-registry-verification-${{ inputs.main-sha }}-${{ inputs.journal-digest }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: Verify published tarballs without write credentials
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: read
+    outputs:
+      registry-proof-digest: ${{ steps.proof.outputs.registry-proof-digest }}
+      report: ${{ steps.proof.outputs.report }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          ref: ${{ inputs.main-sha }}
+      - uses: ./.github/actions/setup-workspace
+        with:
+          cache-mode: restore-only
+      - id: proof
+        name: Resolve candidate and run the delayed read-only registry proof
+        env:
+          GH_TOKEN: ${{ github.token }}
+          MAIN_SHA: ${{ inputs.main-sha }}
+          CANDIDATE_SOURCE_SHA: ${{ inputs.candidate-source-sha }}
+          CANDIDATE_RELEASE_ID: ${{ inputs.candidate-release-id }}
+          RELEASE_SET_DIGEST: ${{ inputs.release-set-digest }}
+          SEALED_STATE_DIGEST: ${{ inputs.sealed-state-digest }}
+          JOURNAL_DIGEST: ${{ inputs.journal-digest }}
+        run: |
+          set -euo pipefail
+          test -z "${NPM_TOKEN:-}"
+          test -z "${NODE_AUTH_TOKEN:-}"
+          mkdir -p "$RUNNER_TEMP/verified-candidate"
+          node scripts/release-candidate-runtime.js resolve --repository "$GITHUB_REPOSITORY" --tag "candidate-$CANDIDATE_SOURCE_SHA" --source-sha "$CANDIDATE_SOURCE_SHA" --release-id "$CANDIDATE_RELEASE_ID" --release-set-digest "$RELEASE_SET_DIGEST" --sealed-state-digest "$SEALED_STATE_DIGEST" --bundle-dir "$RUNNER_TEMP/verified-candidate" --state "$RUNNER_TEMP/verified-candidate/candidate-state.json" --output "$RUNNER_TEMP/candidate-resolve.json"
+          node scripts/release-production-runtime.js fetch-evidence --repository "$GITHUB_REPOSITORY" --candidate-tag "candidate-$CANDIDATE_SOURCE_SHA" --source-sha "$CANDIDATE_SOURCE_SHA" --name publication-journal-final.json --digest "$JOURNAL_DIGEST" --output "$RUNNER_TEMP/publication-journal-final.json"
+          node scripts/release-production-runtime.js verify-registry --journal "$RUNNER_TEMP/publication-journal-final.json" --release-set "$RUNNER_TEMP/verified-candidate/release-set.json" --main-sha "$MAIN_SHA" --source-sha "$CANDIDATE_SOURCE_SHA" --candidate-release-id "$CANDIDATE_RELEASE_ID" --release-set-digest "$RELEASE_SET_DIGEST" --sealed-state-digest "$SEALED_STATE_DIGEST" --journal-digest "$JOURNAL_DIGEST" --output "$RUNNER_TEMP/registry-verification.json"
+          echo "registry-proof-digest=$(node -p "require(process.env.RUNNER_TEMP + '/registry-verification.json').digest")" >> "$GITHUB_OUTPUT"
+          {
+            echo 'report<<REPORT_EOF'
+            cat "$RUNNER_TEMP/registry-verification.json"
+            echo REPORT_EOF
+          } >> "$GITHUB_OUTPUT"
+
+  record:
+    needs: [verify]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    outputs:
+      registry-proof-digest: ${{ steps.record.outputs.registry-proof-digest }}
+      registry-verification-digest: ${{ steps.record.outputs.registry-verification-digest }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          ref: ${{ inputs.main-sha }}
+      - uses: ./.github/actions/setup-workspace
+        with:
+          cache-mode: restore-only
+      - id: record
+        name: Append digest-validated report evidence to the candidate
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          test -n "${{ needs.verify.outputs.registry-proof-digest }}"
+          cat > "$RUNNER_TEMP/registry-verification.json" <<'REPORT_EOF'
+          ${{ needs.verify.outputs.report }}
+          REPORT_EOF
+          node scripts/release-production-runtime.js record-registry-verification --repository "$GITHUB_REPOSITORY" --candidate-tag "candidate-${{ inputs.candidate-source-sha }}" --source-sha "${{ inputs.candidate-source-sha }}" --main-sha "${{ inputs.main-sha }}" --candidate-release-id "${{ inputs.candidate-release-id }}" --release-set-digest "${{ inputs.release-set-digest }}" --sealed-state-digest "${{ inputs.sealed-state-digest }}" --report "$RUNNER_TEMP/registry-verification.json"
+          echo "registry-proof-digest=${{ needs.verify.outputs.registry-proof-digest }}" >> "$GITHUB_OUTPUT"
+          echo "registry-verification-digest=${{ needs.verify.outputs.registry-proof-digest }}" >> "$GITHUB_OUTPUT"
