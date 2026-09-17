@@ -37,7 +37,7 @@ const { teardownFloodSource } = require("../../lib/flood-teardown.js");
 const { waitForInstanceDetachment } = require("../../lib/instance-detachment.js");
 const { resolveFixturePackagePath } = require("../../lib/fixture-package-path.js");
 const { expectedHostVersion } = require("../../lib/release-prerelease-context.js");
-const { stopAutoRemoveRunnerContainer } = require("../../lib/runner-container-cleanup.js");
+const { stopAutoRemoveRunnerContainer } = require("../../lib/runner-container-cleanup");
 
 function resolveSequencePackage(packageName: string): string {
     const configuredDirs = (process.env.PACKAGES_DIR || "")
