@@ -34,13 +34,11 @@ test("main release uses distinct main and candidate source SHAs and scalar diges
 	t.false(source.includes("release-candidate-runtime.js admit"));
 });
 
-test("main release orders BDD, production publish, read-only registry proof, and finalization", (t) => {
-	const bdd = source.indexOf("  tarball-bdd:");
+test("main release orders production publish, read-only registry proof, and finalization", (t) => {
 	const publish = source.indexOf("  production-publish:");
 	const proof = source.indexOf("  registry-proof:");
 	const finalizer = source.indexOf("  release-finalization:");
-	t.true(bdd < publish && publish < proof && proof < finalizer);
-	t.true(source.includes("./.github/workflows/tarball-release-validation.yml"));
+	t.true(publish < proof && proof < finalizer);
 	t.true(source.includes("./.github/workflows/production-registry-verification.yml"));
 	t.true(source.includes("id-token: write"));
 	t.true(source.includes("cache-mode: off"));

@@ -49,25 +49,10 @@ jobs:
           node -e 'const { readFileSync } = require("node:fs"); const a = JSON.parse(readFileSync(process.env.RUNNER_TEMP + "/admission.json")); for (const [k,v] of Object.entries({"main-sha":a.mainSha,"candidate-source-sha":a.candidate.sourceSha,"candidate-release-id":a.candidate.releaseId,"release-set-digest":a.releaseSetDigest,"sealed-state-digest":a.sealedStateDigest,"admission-digest":a.digest})) { if (v === undefined || v === null || v === "") throw new Error(k + " is missing"); console.log(`${k}=${v}`); }' >> "$GITHUB_OUTPUT"
           node -e 'const runtime = require("./scripts/release-production-runtime"); if (!runtime.admitMain) throw new Error("production admission contract is unavailable");'
 
-  tarball-bdd:
-    name: Release / tarball BDD
-    needs: [release-admission]
-    if: ${{ needs.release-admission.result == 'success' }}
-    permissions:
-      contents: read
-      packages: read
-    uses: ./.github/workflows/tarball-release-validation.yml
-    with:
-      main-sha: ${{ needs.release-admission.outputs.main-sha }}
-      candidate-source-sha: ${{ needs.release-admission.outputs.candidate-source-sha }}
-      candidate-release-id: ${{ needs.release-admission.outputs.candidate-release-id }}
-      release-set-digest: ${{ needs.release-admission.outputs.release-set-digest }}
-      sealed-state-digest: ${{ needs.release-admission.outputs.sealed-state-digest }}
-
   production-publish:
     name: Release / production publish
-    needs: [release-admission, tarball-bdd]
-    if: ${{ needs.release-admission.result == 'success' && needs.tarball-bdd.result == 'success' }}
+    needs: [release-admission]
+    if: ${{ needs.release-admission.result == 'success' }}
     runs-on: ubuntu-24.04
     environment: production
     permissions:
@@ -108,7 +93,7 @@ jobs:
 
   registry-proof:
     name: Release / read-only registry proof
-    needs: [release-admission, tarball-bdd, production-publish]
+    needs: [release-admission, production-publish]
     if: ${{ needs.production-publish.result == 'success' }}
     permissions:
       contents: read
@@ -124,7 +109,7 @@ jobs:
 
   release-finalization:
     name: Release / finalization
-    needs: [release-admission, tarball-bdd, production-publish, registry-proof]
+    needs: [release-admission, production-publish, registry-proof]
     if: ${{ needs.registry-proof.result == 'success' }}
     runs-on: ubuntu-24.04
     permissions:

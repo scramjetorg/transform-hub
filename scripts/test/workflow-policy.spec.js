@@ -55,7 +55,7 @@ test("accepts guarded-release-pr-publish as a valid release PR publisher with jo
 
 test("keeps normal PR workflows eligible for members' fork-based pull requests", (t) => {
 	const workflows = resolve(__dirname, "..", "..", ".github", "workflows");
-	for (const name of ["pr-fast-validation.yml", "pr-validate.yml", "security-check.yml", "release-promotion-admission.yml"]) {
+	for (const name of ["pr-fast-validation.yml", "pr-validate.yml", "security-check.yml"]) {
 		const source = require("node:fs").readFileSync(resolve(workflows, name), "utf8");
 		t.false(source.includes("head.repo.owner.login"), `${name} must not skip a member's fork-based PR`);
 	}

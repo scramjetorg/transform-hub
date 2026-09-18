@@ -81,33 +81,6 @@ test("preflight rejects malformed Git tree object output before creating candida
     t.false(existsSync(output));
 });
 
-test("candidate workflow keeps preflight before build and install-free", (t) => {
-    const workflow = require("node:fs").readFileSync(resolve(__dirname, "..", "..", ".github", "workflows", "build-release-candidate.yml"), "utf8");
-    const preflight = workflow.slice(workflow.indexOf("  preflight:"), workflow.indexOf("  runtime-images:"));
-    const build = workflow.slice(workflow.indexOf("  build:"), workflow.indexOf("  stage:"));
-    t.true(workflow.indexOf("  preflight:") < workflow.indexOf("  build:"));
-    t.true(workflow.includes("release-candidate-runtime.js preflight"));
-    t.false(preflight.includes("npm install"));
-    t.false(preflight.includes("npm ci"));
-    t.true(build.indexOf("actions/checkout") < build.indexOf("run: npm ci"));
-});
-
-test("candidate workflow replaces the runtime dependency destination with the verified checkpoint", (t) => {
-    const workflow = readFileSync(resolve(__dirname, "..", "..", ".github", "workflows", "build-release-candidate.yml"), "utf8");
-    const consume = workflow.indexOf("checkpoint/consume.js --branch devel --require-runtime-dependencies");
-    const replace = workflow.indexOf("rm -rf runtime-dependencies", consume);
-    const copy = workflow.indexOf('cp -a "$CHECKPOINT_RUNTIME_DEPENDENCIES" runtime-dependencies', consume);
-    t.true(consume >= 0 && replace > consume && copy > replace);
-    t.true(workflow.includes("test -s runtime-dependencies/manifest.v1.json"));
-});
-
-test("candidate workflow supplies the verified dependency bundle to every runtime image build", (t) => {
-    const workflow = readFileSync(resolve(__dirname, "..", "..", ".github", "workflows", "build-release-candidate.yml"), "utf8");
-    const build = workflow.slice(workflow.indexOf("build_image()"), workflow.indexOf(" > \"$RUNNER_TEMP/images.tsv\""));
-    t.is((build.match(/--build-arg CHECKPOINT_RUNTIME_DEPENDENCIES=true/g) || []).length, 1);
-    for (const role of ["bdd-node", "runner-node", "runner-python", "runner-bun", "pre-runner"]) t.true(build.includes(`build_image ${role} `));
-});
-
 test("candidate runtime Dockerfiles verify staged artifacts and install fully offline", (t) => {
     const verifier = readFileSync(resolve(__dirname, "..", "checkpoint", "verify-runtime-dependencies.js"), "utf8");
     const dockerfiles = [

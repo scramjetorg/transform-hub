@@ -9,7 +9,6 @@ const { checkWorkflowSource } = require("../check-workflow-policy.js");
 const workflowPath = resolve(__dirname, "..", "..", ".github", "workflows", "pr-validate.yml");
 const setupActionPath = resolve(__dirname, "..", "..", ".github", "actions", "setup-workspace", "action.yml");
 const securityWorkflowPath = resolve(__dirname, "..", "..", ".github", "workflows", "security-check.yml");
-const candidateWorkflowPath = resolve(__dirname, "..", "..", ".github", "workflows", "build-release-candidate.yml");
 const securityScannerPath = resolve(__dirname, "..", "security", "scan-git-history.js");
 
 function workflowSource() {
@@ -286,12 +285,10 @@ test("ordinary PR BDD uses only the checked-out SHA-tagged local Docker closure"
 	t.false(ordinary.includes("docker login ghcr.io"));
 });
 
-test("ordinary PR closure does not consume checkpoint mode while candidate builds retain it", (t) => {
+test("ordinary PR closure does not consume checkpoint mode", (t) => {
 	const ordinary = workflowSource().slice(0, workflowSource().indexOf("  release-candidate-admission:\n"));
-	const candidate = readFileSync(candidateWorkflowPath, "utf8");
 	t.false(ordinary.includes("CHECKPOINT_RUNTIME_DEPENDENCIES"));
 	t.true(ordinary.includes("mkdir -p runtime-dependencies"));
-	t.true(candidate.includes("--build-arg CHECKPOINT_RUNTIME_DEPENDENCIES=true"));
 });
 
 test("release prerelease publication is guarded, serialized, environment-gated, and isolated to GitHub Packages", (t) => {
