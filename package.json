@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/transform-hub",
-  "version": "2.1.0",
+  "version": "2.1.1-devel",
   "private": true,
   "description": "A development repo for Scramjet Transform Hub, a container supervisor that allows deployment, execution and monitoring of any application based on a simple interface.",
   "main": "index.js",
@@ -71,6 +71,7 @@
     "release:align:dry-run": "node scripts/release-align.js dry-run",
     "release:align:apply": "node scripts/release-align.js apply",
     "release:align:apply-licenses": "node scripts/release-align.js apply-licenses",
+    "release:simple": "node scripts/release-simple.js",
     "start": "DEVELOPMENT=true node dist/sth/bin/hub.js",
     "start:dev": "tsx packages/sth/src/bin/hub.ts",
     "start:dev:cli": "DEVELOPMENT=true tsx packages/cli/src/bin/index.ts",

@@ -232,6 +232,11 @@ test("development alignment requires canonical -devel SemVer and keeps stable mo
 		releaseVersion: undefined,
 		developmentVersion: "2.1.3-devel",
 	});
+	t.deepEqual(releaseAlign.parseCliArguments(["check-development", "--development-version=2.1.3-devel"]), {
+		mode: "check-development",
+		releaseVersion: undefined,
+		developmentVersion: "2.1.3-devel",
+	});
 	for (const value of ["2.1.3", "2.1.3-rc.1", "2.1.3-devel.1", "2.1", "02.1.3-devel", "2.1.3-"]) {
 		t.throws(() => releaseAlign.resolveDevelopmentVersion(value), { message: /canonical SemVer prerelease/ });
 	}

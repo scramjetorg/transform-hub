@@ -1,0 +1,86 @@
+name: Release candidate
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-candidate-${{ github.event.pull_request.number }}-${{ github.event.pull_request.head.sha }}
+  cancel-in-progress: true
+
+jobs:
+  candidate:
+    name: Release / candidate validation and draft
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository && startsWith(github.event.pull_request.head.ref, 'release/') }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    permissions:
+      contents: write
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Verify release branch descends from devel
+        run: git merge-base --is-ancestor origin/devel HEAD
+      - name: Install dependencies
+        run: npm ci
+      - name: Lockfile gate
+        run: npm run check:lockfile
+      - name: Security policy
+        run: npm run check:security-workflow
+      - name: Lint
+        run: npm run lint
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Runtime invariants
+        run: npm run check:runtime-invariants
+      - name: Package tests
+        run: npm run test:packages:ci
+      - name: Package build
+        run: npm run build:packages
+      - name: BDD validation
+        run: npm run test:bdd-ci-node
+      - name: Pack packages
+        run: |
+          mkdir -p "$RUNNER_TEMP/release-candidate"
+          npm pack --workspaces --include-workspace-root=false --pack-destination "$RUNNER_TEMP/release-candidate"
+      - id: release
+        name: Create the release manifest
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          stable_version="$(node -p "require('./package.json').version.replace(/-devel$/, '')")"
+          node scripts/release-simple.js pack --stable-version "$stable_version" --source-sha "$HEAD_SHA" --packages-dir "$RUNNER_TEMP/release-candidate" --output "$RUNNER_TEMP/release-candidate/candidate-manifest.json"
+          echo "stable-version=$stable_version" >> "$GITHUB_OUTPUT"
+      - name: Reject an existing tag or draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: v${{ steps.release.outputs.stable-version }}
+        run: |
+          set -euo pipefail
+          if gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$TAG" >/dev/null 2>&1; then echo "Tag $TAG already exists" >&2; exit 1; fi
+          if gh release view "$TAG" >/dev/null 2>&1; then echo "Release $TAG already exists" >&2; exit 1; fi
+      - name: Create draft GitHub release and upload candidate assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: v${{ steps.release.outputs.stable-version }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          mapfile -t assets < <(node -e 'const fs = require("node:fs"); const path = process.argv[1]; const manifest = JSON.parse(fs.readFileSync(path, "utf8")); for (const asset of manifest.assets) console.log(asset.asset);' "$RUNNER_TEMP/release-candidate/candidate-manifest.json")
+          test "${#assets[@]}" -gt 0
+          upload_assets=()
+          for asset in "${assets[@]}"; do
+            test -s "$RUNNER_TEMP/release-candidate/$asset"
+            upload_assets+=("$RUNNER_TEMP/release-candidate/$asset")
+          done
+          gh release create "$TAG" --draft --title "$TAG" --target "$HEAD_SHA" "$RUNNER_TEMP/release-candidate/candidate-manifest.json" "${upload_assets[@]}"
