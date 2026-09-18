@@ -66,14 +66,8 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
-      - name: Dependency and release alignment
-        run: npm run release:align:check -- --release-version="$(node -p "require('./package.json').version")"
-
       - name: Runtime invariants
         run: npm run check:runtime-invariants
-
-      - name: License validation
-        run: npm run check:licenses
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6

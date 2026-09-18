@@ -33,6 +33,16 @@ test("devel eligibility is read-only and checks the live promotion set", (t) => 
 	t.true(source.includes("open_promotions"));
 });
 
+test("devel promotion checks are independent and include development alignment", (t) => {
+	const source = read("pr-fast-validation.yml");
+	t.true(source.includes("release-promotion-eligibility:"));
+	t.true(source.includes("release-promotion-alignment:"));
+	t.false(source.includes("needs: [release-promotion-eligibility]"));
+	t.true(source.includes("node scripts/release-align.js check-development"));
+	t.true(source.includes('--development-version="$(node -p "require(\'./package.json\').version")"'));
+	t.false(source.includes("continue-on-error: true"));
+});
+
 test("release start is manually restricted to devel and performs only stable promotion", (t) => {
 	const source = read("release-start.yml");
 	t.true(source.includes("workflow_dispatch:"));

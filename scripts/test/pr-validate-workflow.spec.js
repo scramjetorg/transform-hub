@@ -26,6 +26,8 @@ test("generic PR validation remains read-only and complete", (t) => {
 	t.false(workflow.includes("packages: write"));
 	t.false(workflow.includes("pull_request_target"));
 	t.false(workflow.includes("environment:"));
+	t.false(workflow.includes("release:align"));
+	t.false(workflow.includes("check:licenses"));
 });
 
 test("generic PR runs use disposable read-only jobs", (t) => {

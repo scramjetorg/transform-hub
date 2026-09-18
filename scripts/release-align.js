@@ -1076,6 +1076,7 @@ function applyLicenses() {
 function usage() {
 	console.error(`Usage:
   node scripts/release-align.js check --release-version=X.Y.Z
+  node scripts/release-align.js check-development --development-version=X.Y.Z-devel
   node scripts/release-align.js dry-run --release-version=X.Y.Z
   node scripts/release-align.js apply --release-version=X.Y.Z
   node scripts/release-align.js development --development-version=X.Y.Z-devel
@@ -1083,7 +1084,8 @@ function usage() {
   node scripts/release-align.js apply-licenses
 
 Modes:
-  check            — validate full alignment; exit 0 if aligned, 1 if drift
+  check            — validate full stable alignment; exit 0 if aligned, 1 if drift
+  check-development — validate development alignment; exit 0 if aligned, 1 if drift
   dry-run          — show the change plan without writing files
   apply            — execute alignment changes (version, deps, images)
   development      — execute alignment against an explicit X.Y.Z-devel version
@@ -1131,7 +1133,7 @@ function parseCliArguments(args) {
 	if ((developmentMode || developmentCheckMode) && releaseVersion !== undefined || versionedMode && developmentVersion !== undefined) {
 		throw new Error("Error: stable and development version options cannot be combined or used with the wrong mode.");
 	}
-	if (!versionedMode && !developmentMode && (releaseVersion !== undefined || developmentVersion !== undefined)) {
+	if (!versionedMode && !developmentMode && !developmentCheckMode && (releaseVersion !== undefined || developmentVersion !== undefined)) {
 		throw new Error("Error: apply-licenses is version-independent and does not accept --release-version.");
 	}
 
