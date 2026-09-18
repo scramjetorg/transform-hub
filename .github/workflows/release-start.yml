@@ -49,7 +49,9 @@ jobs:
           branch="release/$STABLE_VERSION"
           git switch --create "$branch" "$GITHUB_SHA"
           development_version="$(node -p "require('./package.json').version")"
-          node scripts/release-simple.js promote --development-version "$development_version" --stable-version "$STABLE_VERSION"
+          node scripts/release-simple.js promote --context release-start --development-version "$development_version" --stable-version "$STABLE_VERSION"
+          npm run build:lockfile
+          npm run check:lockfile
           git add -A
           git diff --cached --quiet && { echo "promote produced no version suffix change" >&2; exit 1; }
           git config user.name github-actions[bot]

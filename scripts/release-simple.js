@@ -75,21 +75,52 @@ function files(root) {
     return result;
 }
 
-function assertSuffixOnly(before, after) {
+function promotionPlan(root, stableVersion) {
+    const script = [
+        "const align = require(process.argv[1]);",
+        "const plan = align.computeChangePlan({ releaseVersion: process.argv[2] });",
+        "const paths = new Set();",
+        "if (plan.rootVersion.changed) paths.add('package.json');",
+        "for (const pkg of plan.packages.values()) if (pkg.versionChange || pkg.depChanges.length > 0) paths.add(pkg.filePath);",
+        "if (plan.imageConfig.changed) paths.add(require('node:path').resolve(process.env.SCRAMJET_RELEASE_ROOT, 'packages/config/src/sth/image-config.ts'));",
+        "if (plan.runtimeMetadata.runnerPython) paths.add(plan.runtimeMetadata.runnerPython.filePath);",
+        "process.stdout.write(JSON.stringify({ paths: [...paths], errors: plan.errors }));"
+    ].join("\n");
+    const output = execFileSync(process.execPath, ["-e", script, resolve(__dirname, "release-align.js"), stableVersion], {
+        cwd: root,
+        env: { ...process.env, SCRAMJET_RELEASE_ROOT: root },
+        encoding: "utf8"
+    });
+    const plan = JSON.parse(output);
+    if (plan.errors.length > 0) throw new Error(`Stable release alignment plan is invalid: ${plan.errors.join("; ")}`);
+    return new Set(plan.paths.map((path) => resolve(root, path)));
+}
+
+function assertReleaseStartPromotion(before, after, { root, developmentVersion, stableVersion, planned }) {
     const names = new Set([...before.keys(), ...after.keys()]);
     for (const name of names) {
+        if (!before.has(name) || !after.has(name)) throw new Error(`Promotion changed file set outside the release-align plan: ${name}`);
+        const absolutePath = resolve(root, name);
+        const changed = !before.get(name).equals(after.get(name));
+        if (changed !== planned.has(absolutePath)) throw new Error(`Promotion changed an unauthorized file: ${name}`);
+    }
+    for (const absolutePath of planned) {
+        const name = absolutePath.slice(root.length + 1);
         if (!before.has(name) || !after.has(name)) throw new Error(`Promotion changed file set: ${name}`);
         const oldText = before.get(name).toString("utf8");
-        const newText = after.get(name).toString("utf8");
-        if (newText !== oldText.replaceAll("-devel", "")) throw new Error(`Promotion changed ${name} beyond removal of -devel.`);
+        const expected = oldText.replaceAll(developmentVersion, stableVersion);
+        if (expected === oldText) throw new Error(`Promotion did not replace the development version in planned file ${name}.`);
+        if (after.get(name).toString("utf8") !== expected) throw new Error(`Promotion changed ${name} beyond exact version replacement.`);
     }
 }
 
-function promote({ root = process.cwd(), developmentVersion, stableVersion = stablePart(developmentVersion), align = null } = {}) {
+function promote({ root = process.cwd(), developmentVersion, stableVersion = stablePart(developmentVersion), context, align = null } = {}) {
+    if (context !== "release-start") throw new Error("Promotion requires the supported --context release-start.");
     if (!DEVEL.test(String(developmentVersion)) || !STABLE.test(String(stableVersion)) || stableVersion !== stablePart(developmentVersion)) {
         throw new Error("Promotion requires a canonical X.Y.Z-devel version and its stable X.Y.Z form.");
     }
     const before = files(resolve(root));
+    const planned = promotionPlan(resolve(root), stableVersion);
     const result = align
         ? align({ root: resolve(root), releaseVersion: stableVersion })
         : spawnSync(process.execPath, [resolve(__dirname, "release-align.js"), "apply", `--release-version=${stableVersion}`], {
@@ -98,7 +129,7 @@ function promote({ root = process.cwd(), developmentVersion, stableVersion = sta
               encoding: "utf8"
           });
     if (result && result.status !== undefined && result.status !== 0) throw new Error(result.stderr || "Stable release alignment failed.");
-    assertSuffixOnly(before, files(resolve(root)));
+    assertReleaseStartPromotion(before, files(resolve(root)), { root: resolve(root), developmentVersion, stableVersion, planned });
     return { releaseVersion: stableVersion, result };
 }
 
@@ -278,7 +309,8 @@ function parseCliArguments(args) {
         assetsDir: option(args, "--assets-dir", false),
         packagesDir: option(args, "--packages-dir", false),
         output: option(args, "--output", false),
-        manifest: option(args, "--manifest", false)
+        manifest: option(args, "--manifest", false),
+        context: option(args, "--context", false)
     };
 }
 
@@ -300,7 +332,8 @@ async function main() {
                 promote({
                     root: parsed.root || process.cwd(),
                     developmentVersion: parsed.developmentVersion,
-                    stableVersion: parsed.stableVersion
+                    stableVersion: parsed.stableVersion,
+                    context: parsed.context
                 })
             )
         );
@@ -363,7 +396,6 @@ if (require.main === module)
 module.exports = {
     FORMAT,
     assertDevelEligibility,
-    assertSuffixOnly,
     promote,
     packCandidate,
     verifyCandidate,

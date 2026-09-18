@@ -1,9 +1,9 @@
 "use strict";
 
 const test = require("ava").default;
-const { mkdtempSync, mkdirSync, rmSync, writeFileSync, readFileSync } = require("node:fs");
+const { existsSync, mkdtempSync, mkdirSync, rmSync, writeFileSync, readFileSync } = require("node:fs");
 const { tmpdir } = require("node:os");
-const { join } = require("node:path");
+const { dirname, join, resolve } = require("node:path");
 const tar = require("tar");
 const simple = require("../release-simple");
 const { INCLUDED_PACKAGES, RELEASE_WAVES } = require("../lib/release-boundary");
@@ -31,11 +31,41 @@ test("CLI contract accepts workflow commands and both eligibility aliases", (t) 
     t.is(simple.parseCliArguments(["verify", "--manifest", "/tmp/manifest.json", "--source-sha", sha, "--version", "2.1.0"]).version, "2.1.0");
     t.is(simple.parseCliArguments(["publish", "--manifest", "/tmp/manifest.json", "--assets-dir", "/tmp/assets"]).command, "publish");
     t.is(simple.parseCliArguments(["verify-registry", "--manifest", "/tmp/manifest.json", "--source-sha", sha, "--version", "2.1.0"]).command, "verify-registry");
+    t.is(simple.parseCliArguments(["promote", "--context", "release-start", "--development-version", "2.1.0-devel", "--stable-version", "2.1.0"]).context, "release-start");
 });
 
-test("promotion accepts only removal of -devel", (t) => {
-    const before = new Map([["a", Buffer.from("2.1.0-devel")]]); const after = new Map([["a", Buffer.from("2.1.0")]]); t.notThrows(() => simple.assertSuffixOnly(before, after));
-    t.throws(() => simple.assertSuffixOnly(new Map([["a", Buffer.from("2.1.0-devel")]]), new Map([["a", Buffer.from("2.2.0")]])), { message: /beyond/ });
+test("promotion requires the named supported context", (t) => {
+    t.throws(() => simple.promote({ developmentVersion: "2.1.1-devel", stableVersion: "2.1.1" }), { message: /context/ });
+    t.throws(() => simple.promote({ context: "unknown", developmentVersion: "2.1.1-devel", stableVersion: "2.1.1" }), { message: /context/ });
+});
+
+test("release-start promotes the planned boundary and preserves unrelated devel workflow text", (t) => {
+    const sourceRoot = resolve(__dirname, "..", "..");
+    const root = mkdtempSync(join(tmpdir(), "simple-promotion-"));
+    t.teardown(() => rmSync(root, { recursive: true, force: true }));
+    writeFileSync(join(root, "package.json"), readFileSync(join(sourceRoot, "package.json")));
+    for (const name of INCLUDED_PACKAGES) {
+        const source = join(sourceRoot, "packages", name.replace("@scramjet/", ""), "package.json");
+        const target = join(root, "packages", name.replace("@scramjet/", ""), "package.json");
+        mkdirSync(dirname(target), { recursive: true });
+        writeFileSync(target, readFileSync(source));
+    }
+    const image = join(root, "packages/config/src/sth/image-config.ts");
+    mkdirSync(dirname(image), { recursive: true });
+    writeFileSync(image, readFileSync(join(sourceRoot, "packages/config/src/sth/image-config.ts")));
+    const workflow = join(root, ".github/workflows/devel-validate.yml");
+    mkdirSync(dirname(workflow), { recursive: true });
+    writeFileSync(workflow, "name: devel\n# preserve -devel in unrelated content\n");
+    const pyproject = join(sourceRoot, "packages/runner-python/pyproject.toml");
+    if (existsSync(pyproject)) {
+        const target = join(root, "packages/runner-python/pyproject.toml");
+        mkdirSync(dirname(target), { recursive: true });
+        writeFileSync(target, readFileSync(pyproject));
+    }
+
+    t.notThrows(() => simple.promote({ root, context: "release-start", developmentVersion: "2.1.1-devel", stableVersion: "2.1.1" }));
+    t.is(readFileSync(workflow, "utf8"), "name: devel\n# preserve -devel in unrelated content\n");
+    t.is(JSON.parse(readFileSync(join(root, "package.json"), "utf8")).version, "2.1.1");
 });
 
 test("candidate manifests are complete and tamper evident", (t) => {
