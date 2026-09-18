@@ -68,6 +68,8 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
       - name: Install dependencies
         run: npm ci
+      - name: Config package contract test
+        run: npm run test --workspace=@scramjet/config
       - name: Lockfile gate
         run: npm run check:lockfile
       - name: Static repository policy

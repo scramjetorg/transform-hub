@@ -5,6 +5,7 @@ const { readFileSync } = require("node:fs");
 const { resolve } = require("node:path");
 const { parseCliArguments } = require("../release-simple.js");
 
+const rootPackage = require(resolve(__dirname, "..", "..", "package.json"));
 const root = resolve(__dirname, "..", "..", ".github", "workflows");
 const read = (name) => readFileSync(resolve(root, name), "utf8");
 
@@ -41,6 +42,19 @@ test("devel promotion checks are independent and include development alignment",
 	t.true(source.includes("node scripts/release-align.js check-development"));
 	t.true(source.includes('--development-version="$(node -p "require(\'./package.json\').version")"'));
 	t.false(source.includes("continue-on-error: true"));
+});
+
+test("runner image config tags match the root package version", (t) => {
+	const imageConfig = readFileSync(resolve(__dirname, "..", "..", "packages", "config", "src", "sth", "image-config.ts"), "utf8");
+	const tags = [...imageConfig.matchAll(/scramjetorg\/[^\"]+:([^\"]+)/g)].map((match) => match[1]);
+
+	t.true(tags.length > 0, "image config should declare runner image tags");
+	for (const tag of tags) t.is(tag, rootPackage.version);
+});
+
+test("PR fast validation runs the focused config package contract", (t) => {
+	const source = read("pr-fast-validation.yml");
+	t.true(source.includes("npm run test --workspace=@scramjet/config"));
 });
 
 test("release start is manually restricted to devel and performs only stable promotion", (t) => {

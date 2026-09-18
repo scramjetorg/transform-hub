@@ -129,6 +129,7 @@ jobs:
     # Docker requirement is 2 GiB and they are the longest core BDD path.
     name: CI / core Node BDD
     needs: [package-validation]
+    if: ${{ !cancelled() }}
     permissions:
       contents: read
     runs-on: ubuntu-24.04
@@ -191,6 +192,7 @@ jobs:
     # from the Docker-backed Node lane above.
     name: CI / core service BDD
     needs: [package-validation]
+    if: ${{ !cancelled() }}
     permissions:
       contents: read
     runs-on: ubuntu-24.04
@@ -250,6 +252,7 @@ jobs:
     # Hub and API-topic are the lightweight legacy-equivalent extended paths.
     name: CI / extended hub and topic BDD
     needs: [package-validation]
+    if: ${{ !cancelled() }}
     permissions:
       contents: read
     runs-on: ubuntu-24.04
@@ -307,6 +310,7 @@ jobs:
     # allowance as core Node BDD, so it runs in its own parallel execution unit.
     name: CI / extended runtime BDD
     needs: [package-validation]
+    if: ${{ !cancelled() }}
     permissions:
       contents: read
     runs-on: ubuntu-24.04

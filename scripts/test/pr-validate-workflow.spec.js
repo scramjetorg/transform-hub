@@ -39,3 +39,12 @@ test("generic PR runs use disposable read-only jobs", (t) => {
 	t.false(workflow.includes("actions/cache"));
 	t.false(workflow.includes("npm publish"));
 });
+
+test("BDD jobs run after package validation even when it fails", (t) => {
+	const workflow = source();
+	for (const job of ["bdd-core-node", "bdd-core-services", "bdd-extended-hub-topic", "bdd-extended-runtime"]) {
+		const block = workflow.match(new RegExp(`^  ${job}:\\n([\\s\\S]*?)(?=^  [\\w-]+:|(?![\\s\\S]))`, "m"));
+		t.truthy(block, `${job} must remain in the workflow`);
+		t.regex(block[1], /\n    needs: \[package-validation\]\n    if: \$\{\{ !cancelled\(\) \}\}/);
+	}
+});
