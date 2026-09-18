@@ -6,7 +6,7 @@ const { resolve } = require("node:path");
 
 const root = resolve(__dirname, "..", "..", ".github", "workflows");
 const source = (name) => readFileSync(resolve(root, name), "utf8");
-const releaseWorkflowFiles = ["pr-fast-validation.yml"];
+const releaseWorkflowFiles = ["pr-fast-validation.yml", "release-start.yml", "release-candidate.yml"];
 
 test("Release workflows use the intended triggers, least privilege, and cancellation boundaries", (t) => {
     const pr = source("pr-fast-validation.yml");

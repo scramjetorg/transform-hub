@@ -15,7 +15,8 @@ test("active workflow inventory contains only maintained Node 22/npm paths and r
 		"main-release.yml",
 		"pr-fast-validation.yml",
 		"pr-validate.yml",
-		"production-registry-verification.yml",
+		"release-candidate.yml",
+		"release-start.yml",
 		"security-check.yml",
 	]);
 	t.true(workflows.includes("security-check.yml"));
@@ -27,7 +28,7 @@ test("active workflow inventory contains only maintained Node 22/npm paths and r
 	}
 });
 
-test("unified PR workflow owns normal validation and the release-PR chain in one read-only file", (t) => {
+test("PR workflow owns generic validation while release workflows own promotion", (t) => {
 	const source = readFileSync(resolve(workflowsDir, "pr-validate.yml"), "utf8");
 	t.true(source.includes("release/**"));
 	t.true(source.includes("CI / package validation"));
@@ -38,7 +39,7 @@ test("unified PR workflow owns normal validation and the release-PR chain in one
 	t.true(source.includes("RUNTIME_ADAPTER=process"));
 	t.true(source.includes("test:unified-py"));
 	t.true(source.includes("test:unified-js"));
-	t.true(source.includes("Release PR / prerelease publication"));
-	t.true(source.includes("Release PR / prerelease BDD"));
+	t.false(source.includes("Release PR / prerelease publication"));
+	t.false(source.includes("Release PR / prerelease BDD"));
 	t.true(source.includes("cache-mode: restore-only"));
 });

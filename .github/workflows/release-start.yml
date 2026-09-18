@@ -1,0 +1,64 @@
+name: Release start
+
+on:
+  workflow_dispatch:
+    inputs:
+      stable-version:
+        description: Stable SemVer to release
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  start:
+    name: Release / start devel promotion
+    if: ${{ github.ref == 'refs/heads/devel' }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+          ref: ${{ github.sha }}
+      - name: Install release helper dependencies
+        run: npm ci --ignore-scripts
+      - name: Check live promotion eligibility
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ github.sha }}
+          STABLE_VERSION: ${{ inputs.stable-version }}
+        run: |
+          set -euo pipefail
+          head_version="$(node -p "require('./package.json').version")"
+          main_version="$(gh api "repos/$GITHUB_REPOSITORY/contents/package.json?ref=main" --jq '.content' | base64 --decode | node -p "JSON.parse(require('fs').readFileSync(0, 'utf8')).version")"
+          open_promotions="$(gh api --paginate "repos/$GITHUB_REPOSITORY/pulls?state=open&base=main&per_page=100" --jq '[.[] | select(.head.repo.full_name == env.GITHUB_REPOSITORY and (.head.ref | startswith("release/")))] | length' | awk '{ total += $1 } END { print total + 0 }')"
+          eligibility="$(node scripts/release-simple.js assert-eligible --development-version "$head_version" --main-version "$main_version" --open-release-prs "$open_promotions" --stable-version "$STABLE_VERSION" --source-sha "$HEAD_SHA")"
+          eligible_stable="$(node -p 'JSON.parse(process.argv[1]).releaseVersion' "$eligibility")"
+          test "$eligible_stable" = "$STABLE_VERSION"
+      - name: Create release branch and promote stable version
+        env:
+          STABLE_VERSION: ${{ inputs.stable-version }}
+        run: |
+          set -euo pipefail
+          branch="release/$STABLE_VERSION"
+          git switch --create "$branch" "$GITHUB_SHA"
+          development_version="$(node -p "require('./package.json').version")"
+          node scripts/release-simple.js promote --development-version "$development_version" --stable-version "$STABLE_VERSION"
+          git add -A
+          git diff --cached --quiet && { echo "promote produced no version suffix change" >&2; exit 1; }
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git commit -m "release: promote $STABLE_VERSION"
+          git push --set-upstream origin "$branch"
+      - name: Open release promotion pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+          STABLE_VERSION: ${{ inputs.stable-version }}
+        run: |
+          gh pr create --base main --head "release/$STABLE_VERSION" --title "Release $STABLE_VERSION" --body "Promote release/$STABLE_VERSION to main."
