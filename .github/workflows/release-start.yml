@@ -51,6 +51,7 @@ jobs:
           development_version="$(node -p "require('./package.json').version")"
           node scripts/release-simple.js promote --context release-start --development-version "$development_version" --stable-version "$STABLE_VERSION"
           npm run build:lockfile
+          git add package-lock.json
           npm run check:lockfile
           git add -A
           git diff --cached --quiet && { echo "promote produced no version suffix change" >&2; exit 1; }

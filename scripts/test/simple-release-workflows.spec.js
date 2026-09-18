@@ -68,6 +68,8 @@ test("release start is manually restricted to devel and performs only stable pro
 	t.true(source.includes("release-simple.js promote"));
 	t.true(source.includes("--context release-start"));
 	t.true(source.includes("npm run build:lockfile"));
+	t.true(source.indexOf("git add package-lock.json") > source.indexOf("npm run build:lockfile"));
+	t.true(source.indexOf("git add package-lock.json") < source.indexOf("npm run check:lockfile"));
 	t.true(source.includes("npm run check:lockfile"));
 	t.false(source.includes("--branch \"$branch\""));
 	t.true(source.includes("git push --set-upstream origin \"$branch\""));
