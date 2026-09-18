@@ -72,7 +72,17 @@ test("release start is manually restricted to devel and performs only stable pro
 	t.true(source.indexOf("git add package-lock.json") < source.indexOf("npm run check:lockfile"));
 	t.true(source.includes("npm run check:lockfile"));
 	t.false(source.includes("--branch \"$branch\""));
-	t.true(source.includes("git push --set-upstream origin \"$branch\""));
+	const checkout = source.slice(source.indexOf("uses: actions/checkout@"), source.indexOf("- name: Install release helper dependencies"));
+	const promotionStep = source.slice(source.indexOf("- name: Create release branch and promote stable version"), source.indexOf("- name: Push release branch"));
+	const pushStep = source.slice(source.indexOf("- name: Push release branch"), source.indexOf("- name: Open release promotion pull request"));
+	t.true(checkout.includes("persist-credentials: false"));
+	t.true(source.includes("contents: write"));
+	t.false(promotionStep.includes("GITHUB_TOKEN:"));
+	t.true(pushStep.includes("GITHUB_TOKEN: ${{ github.token }}"));
+	t.true(pushStep.includes("http.https://github.com/.extraheader"));
+	t.true(pushStep.includes("AUTHORIZATION: basic $(printf 'x-access-token:%s' \"$GITHUB_TOKEN\" | base64 -w 0)"));
+	t.true(pushStep.includes("git -c http.https://github.com/.extraheader"));
+	t.true(pushStep.includes("push --set-upstream origin \"$branch\""));
 	t.true(source.includes("gh pr create --base main"));
 	for (const retired of ["release-train", "recovery", "reset", "force-with-lease"]) t.false(source.toLowerCase().includes(retired));
 });

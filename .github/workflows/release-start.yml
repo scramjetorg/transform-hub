@@ -58,7 +58,14 @@ jobs:
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git commit -m "release: promote $STABLE_VERSION"
-          git push --set-upstream origin "$branch"
+      - name: Push release branch
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          STABLE_VERSION: ${{ inputs.stable-version }}
+        run: |
+          set -euo pipefail
+          branch="release/$STABLE_VERSION"
+          git -c http.https://github.com/.extraheader="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GITHUB_TOKEN" | base64 -w 0)" push --set-upstream origin "$branch"
       - name: Open release promotion pull request
         env:
           GH_TOKEN: ${{ github.token }}
