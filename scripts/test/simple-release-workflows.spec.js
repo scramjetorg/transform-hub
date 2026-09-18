@@ -66,6 +66,9 @@ test("release start is manually restricted to devel and performs only stable pro
 	t.true(source.includes('test "$eligible_stable" = "$STABLE_VERSION"'));
 	t.true(source.includes("git switch --create \"$branch\" \"$GITHUB_SHA\""));
 	t.true(source.includes("release-simple.js promote"));
+	t.true(source.includes("--context release-start"));
+	t.true(source.includes("npm run build:lockfile"));
+	t.true(source.includes("npm run check:lockfile"));
 	t.false(source.includes("--branch \"$branch\""));
 	t.true(source.includes("git push --set-upstream origin \"$branch\""));
 	t.true(source.includes("gh pr create --base main"));
@@ -80,6 +83,8 @@ test("release candidate validates same-repository release branches and creates a
 	t.true(source.includes("git merge-base --is-ancestor origin/devel HEAD"));
 	for (const command of ["npm run check:lockfile", "npm run check:security-workflow", "npm run lint", "npm run typecheck", "npm run check:runtime-invariants", "npm run test:packages:ci", "npm run build:packages", "npm run test:bdd-ci-node", "npm pack"]) t.true(source.includes(command));
 	t.true(source.includes("release-simple.js pack"));
+	t.true(source.includes('stable_version="$(node -p "require(\'./package.json\').version")"'));
+	t.false(source.includes("replace(/-devel$/"));
 	t.true(source.includes("--packages-dir \"$RUNNER_TEMP/release-candidate\""));
 	t.true(source.includes("candidate-manifest.json"));
 	t.false(source.includes("release-candidate/manifest.json"));

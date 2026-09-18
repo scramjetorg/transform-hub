@@ -58,7 +58,7 @@ jobs:
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           set -euo pipefail
-          stable_version="$(node -p "require('./package.json').version.replace(/-devel$/, '')")"
+          stable_version="$(node -p "require('./package.json').version")"
           node scripts/release-simple.js pack --stable-version "$stable_version" --source-sha "$HEAD_SHA" --packages-dir "$RUNNER_TEMP/release-candidate" --output "$RUNNER_TEMP/release-candidate/candidate-manifest.json"
           echo "stable-version=$stable_version" >> "$GITHUB_OUTPUT"
       - name: Reject an existing tag or draft release
