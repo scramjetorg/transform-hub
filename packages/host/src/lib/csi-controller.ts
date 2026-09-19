@@ -197,6 +197,11 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
         return this._instanceAdapter;
     }
 
+    getRunnerProcessId(): number | undefined {
+        const processId = this.instanceAdapter.getRunnerProcessId?.();
+        return typeof processId === "number" && Number.isFinite(processId) && processId > 0 ? processId : undefined;
+    }
+
     _endOfSequence?: Promise<number>;
 
     get endOfSequence(): Promise<number> {
@@ -656,9 +661,12 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
             this.provides ||= this.outputTopic || payload?.outputTopic;
             this.requires ||= this.inputTopic || payload?.inputTopic;
 
-            await this.handleHandshake(message);
-
+            // Commit the PING with the dispatcher before acknowledging it. The
+            // dispatcher may establish the runner's routed channels in its
+            // synchronous listener; sending PONG first lets the runtime race
+            // its first /input request against that establishment.
             this.emit("ping", message[1]);
+            await this.handleHandshake(message);
 
             return null;
         });

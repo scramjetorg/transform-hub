@@ -3,14 +3,15 @@ import { strict as assert } from "assert";
 import { spawn, type ChildProcessWithoutNullStreams } from "child_process";
 import { existsSync, readFileSync } from "fs";
 import { join, resolve } from "path";
+import { resolvePublishedBin, resolvePublishedModule } from "../../lib/published-artifacts";
 import { CustomWorld } from "../world";
-import { resolvePublishedBin } from "../../lib/published-artifacts";
 
 type GeneratorResult = { code: number | null; stdout: string; stderr: string };
 
 type GeneratorState = {
     binary: string;
     schema: string;
+    routerModule: string;
     result?: GeneratorResult;
     outputPath?: string;
 };
@@ -19,7 +20,8 @@ function state(world: CustomWorld): GeneratorState {
     if (!world.resources.apiRouterGenerator) {
         world.resources.apiRouterGenerator = {
             binary: resolvePublishedBin("@scramjet/api-router", "scramjet-api-router-generate"),
-            schema: resolve(__dirname, "../../fixtures/api-router-openapi/schema.cjs")
+            schema: resolve(__dirname, "../../fixtures/api-router-openapi/schema.cjs"),
+            routerModule: resolvePublishedModule("@scramjet/api-router")
         } as GeneratorState;
     }
     return world.resources.apiRouterGenerator as GeneratorState;
@@ -29,9 +31,9 @@ async function runGenerator(world: CustomWorld, args: string[]): Promise<Generat
     const current = state(world);
     const isolation = world.scenarioIsolation;
     assert.ok(isolation, "ScenarioIsolation must be installed before invoking the API router generator");
-    const child = spawn(process.execPath, [current.binary, ...args], {
+    const child = spawn(current.binary, args, {
         cwd: process.cwd(),
-        env: isolation.environment()
+        env: { ...isolation.environment(), SCRAMJET_API_ROUTER_MODULE: current.routerModule }
     });
     world.scenarioLifecycle.ownChild(child, `api-router generator: ${args.join(" ")}`, { group: true });
     world.scenarioLifecycle.expect(child);
@@ -60,6 +62,7 @@ Given("the built API router generator and schema fixture are available", functio
     const current = state(this);
     assert.ok(existsSync(current.binary), `Built API router generator is unavailable at ${current.binary}; run npm --prefix packages/api-router run build.`);
     assert.ok(existsSync(current.schema), `API router schema fixture is unavailable at ${current.schema}`);
+    assert.ok(current.routerModule, "API router compiled module path was not resolved");
 });
 
 When("I run the built API router generator with the schema fixture", async function(this: CustomWorld) {

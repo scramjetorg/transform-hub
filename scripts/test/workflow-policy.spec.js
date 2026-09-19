@@ -17,6 +17,10 @@ test("accepts the minimal compliant replacement workflow fixture", (t) => {
 	t.deepEqual(checkFixture("compliant.yml"), []);
 });
 
+test("allows pull-request source execution for GitHub-native approved contributors", (t) => {
+	t.deepEqual(checkFixture("unguarded-pr-execution.yml"), []);
+});
+
 for (const [fixture, code] of [
 	["forbidden-pull-request-target.yml", "PULL_REQUEST_TARGET"],
 	["mutable-action.yml", "MUTABLE_ACTION_REF"],
@@ -47,6 +51,15 @@ for (const [fixture, code] of [
 
 test("accepts guarded-release-pr-publish as a valid release PR publisher with job-level guard", (t) => {
 	t.deepEqual(checkFixture("guarded-release-pr-publish.yml"), []);
+});
+
+test("keeps normal PR workflows eligible for members' fork-based pull requests", (t) => {
+	const workflows = resolve(__dirname, "..", "..", ".github", "workflows");
+	for (const name of ["pr-fast-validation.yml", "pr-validate.yml", "security-check.yml"]) {
+		const source = require("node:fs").readFileSync(resolve(workflows, name), "utf8");
+		t.false(source.includes("head.repo.owner.login"), `${name} must not skip a member's fork-based PR`);
+	}
+	t.is(require("node:fs").readFileSync(resolve(workflows, "..", "CODEOWNERS"), "utf8").trim(), "# Every repository path requires review from the trusted organization owners team.\n* @scramjetorg/owners");
 });
 
 test("CLI documents explicit scope and deferred external validation", (t) => {

@@ -6,6 +6,7 @@ const { mkdir, writeFile } = require("node:fs/promises");
 const { execFileSync } = require("node:child_process");
 const { join, resolve } = require("node:path");
 const { assertAllowedBranch, checkpointLabels, createIdentity, createStatement, digestDocument, pointerUpdatePlan } = require("./provenance.js");
+const { loadRuntimeProfile, runtimeDependencyDigest } = require("./runtime-dependencies.js");
 
 const ROOT = resolve(__dirname, "..", "..");
 
@@ -49,6 +50,8 @@ function npmVersion() {
 
 async function createPlan(options, root = ROOT) {
     assertAllowedBranch(options.branch);
+    const runtimeProfile = loadRuntimeProfile(root);
+    const runtimeDigest = runtimeDependencyDigest(runtimeProfile);
     const identity = createIdentity({
         lockSha256: sha256File(join(root, "package-lock.json")),
         node: process.version,
@@ -56,7 +59,8 @@ async function createPlan(options, root = ROOT) {
         packages: packageVersions(root),
         platform: { oci: "linux/amd64", runner: `${process.platform}/${process.arch}` },
         repository: "https://github.com/scramjetorg/transform-hub",
-        sourceSha: options.sourceSha
+        sourceSha: options.sourceSha,
+        runtimeDependencyDigest: runtimeDigest
     });
     const identityDigest = digestDocument(identity);
     const statement = createStatement({ identityDigest });
@@ -64,6 +68,8 @@ async function createPlan(options, root = ROOT) {
         branch: options.branch,
         currentSha: options.currentSha,
         identityDigest,
+        runtimeDependencyDigest: runtimeDigest,
+        runtimeProfile,
         repository: options.repository,
         sourceSha: options.sourceSha
     });
@@ -78,6 +84,7 @@ async function createPlan(options, root = ROOT) {
         identityDigest,
         labels: checkpointLabels(identity, identityDigest),
         promotion,
+        runtimeDependencyDigest: runtimeDigest,
         statementDigest: digestDocument(statement)
     };
 

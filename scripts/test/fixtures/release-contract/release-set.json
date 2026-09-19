@@ -1,0 +1,18 @@
+{
+  "schema": "release-set.v1",
+  "source": { "repository": "scramjetorg/transform-hub", "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "tree": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb" },
+  "lockfile": { "path": "package-lock.json", "sha256": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc" },
+  "toolchain": { "node": "v22.16.0", "npm": "11.19.1" },
+  "build": { "identity": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd" },
+  "boundary": { "packages": ["@scramjet/a", "@scramjet/b"] },
+  "waves": [["@scramjet/b"], ["@scramjet/a"]],
+  "artifacts": {
+    "tarballs": [
+      { "name": "@scramjet/a", "path": "artifacts/a.tgz", "sha256": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", "sri": "sha256-7uPmZ7y8c7fJ5jL3n8Yw8Jj4GmW8e4hB9C7n6V5x4Y0=", "size": 12 },
+      { "name": "@scramjet/b", "path": "artifacts/b.tgz", "sha256": "sha256:1111111111111111111111111111111111111111111111111111111111111111", "sri": "sha256-7uPmZ7y8c7fJ5jL3n8Yw8Jj4GmW8e4hB9C7n6V5x4Y0=", "size": 1 }
+    ],
+    "images": [{ "repository": "ghcr.io/scramjetorg/runner", "digest": "sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff" }],
+    "bddSupport": { "path": "bdd-support/runner-container-cleanup.js", "size": 1, "sha256": "sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", "sri": "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=" }
+  },
+  "canonical": { "schema": "release-set.v1", "version": 1 }
+}

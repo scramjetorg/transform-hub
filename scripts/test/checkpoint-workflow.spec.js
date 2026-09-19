@@ -22,6 +22,8 @@ test("checkpoint workflow manually publishes only trusted branch checkpoints", (
 	t.true(source.includes("packages: write"));
 	t.true(source.includes("SCRAMJET_GHCR_SCOPED_PUBLISHER"));
 	t.true(source.includes("scripts/checkpoint/publish.js"));
+	t.true(source.includes('--runtime-dependencies "$RUNNER_TEMP/runtime-dependencies"'));
+	t.true(source.includes("test -s \"$RUNNER_TEMP/runtime-dependencies/manifest.v1.json\""));
 	t.true(source.includes("docker login ghcr.io"));
 	t.true(source.includes("rm -rf node_modules"));
 	const checkoutIndex = source.indexOf("uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1");

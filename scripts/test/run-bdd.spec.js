@@ -86,9 +86,30 @@ test("Docker BDD runner builds and preflights its Node 22 and Bun image", (t) =>
 	t.true(dockerRunner.includes('const DEFAULT_BDD_NODE_IMAGE = "transform-hub-bdd-bun:dev"'));
 	t.true(dockerRunner.includes('["build", "--file", path.join(repoRoot, "docker", "Dockerfile.bdd-bun")'));
 	t.true(dockerRunner.includes('const runtimePreflight = ["node --version", "npm --version", "bun --version"].join(" && ")'));
-	t.true(dockerRunner.includes("`${runtimePreflight} && ${fixturePacking}"), "preflight runs inside the BDD container before fixtures");
+	t.true(dockerRunner.includes('phaseMarker("preflight")'), "preflight runs inside the BDD container");
+	t.true(dockerRunner.includes("${runtimePreflight}") && dockerRunner.includes("${fixturePacking}"), "preflight and fixtures are both part of the container command");
 	t.true(dockerfile.includes("FROM node:22-bookworm-slim"));
 	t.true(dockerfile.includes("/usr/local/bin/bun"));
+});
+
+test("tarball Docker mode uses staged absolute fixture tools and exports archives before Cucumber", (t) => {
+	const source = fs.readFileSync(path.resolve(__dirname, "..", "run-bdd-docker.js"), "utf8");
+	const tarballBranch = source.slice(source.indexOf("const tarballFixturePacking"), source.indexOf("dockerRunArgs.push(BDD_NODE_IMAGE"));
+	t.true(tarballBranch.includes("/release-root/scripts/prepare-bdd-simple-stdio.js"));
+	t.true(tarballBranch.includes("/release-root/scripts/pack-appcontext-fixtures.js"));
+	t.true(tarballBranch.includes("/release-root/scripts/pack-bdd-fixtures.js"));
+	t.true(tarballBranch.includes("/release-root/scripts/pack-python-bdd-fixtures.js"));
+	t.true(tarballBranch.includes("SCRAMJET_BDD_SIMPLE_STDIO_ARCHIVE=/work-tmp/simple-stdio.tar.gz"));
+	t.true(tarballBranch.indexOf("SCRAMJET_BDD_SIMPLE_STDIO_ARCHIVE") < tarballBranch.indexOf("npm --prefix /release-root/bdd"));
+	t.false(tarballBranch.includes("node scripts/"));
+});
+
+test("normal Docker mode retains repository-relative fixture setup", (t) => {
+	const source = fs.readFileSync(path.resolve(__dirname, "..", "run-bdd-docker.js"), "utf8");
+	const normalBranch = source.slice(source.indexOf("const fixturePacking"), source.indexOf("dockerRunArgs.push(BDD_NODE_IMAGE"));
+	t.true(normalBranch.includes("node scripts/prepare-bdd-simple-stdio.js /work-tmp"));
+	t.true(normalBranch.includes("OUT_DIR=/work-tmp/appcontext-packages node scripts/pack-appcontext-fixtures.js"));
+	t.true(normalBranch.includes("PACKAGES_DIR=/work-tmp/appcontext-packages/:/work-tmp/python-bdd-packages/:/work-tmp/bdd-packages/"));
 });
 
 // ---------------------------------------------------------------------------
@@ -198,13 +219,49 @@ test("run-bdd-docker.js env forwarding includes SCRAMJET_ and BDD_ prefixes", (t
 	t.true(src.includes("SCRAMJET_"), "should forward SCRAMJET_ env vars");
 	t.true(src.includes("BDD_"), "should forward BDD_ env vars");
 	t.true(src.includes("NO_HOST"), "should forward NO_HOST env var");
+	t.true(src.includes('"RUNTIME_ADAPTER"'), "should forward the unprefixed runtime adapter into the BDD container");
+});
+
+test("run-bdd-docker.js forwards the local runner image SHA tag into the BDD container", (t) => {
+	const src = fs.readFileSync(path.resolve(__dirname, "..", "run-bdd-docker.js"), "utf8");
+	t.true(src.includes("process.env.RUNNER_IMGS_TAG"));
+	t.true(src.includes('`RUNNER_IMGS_TAG=${process.env.RUNNER_IMGS_TAG}`'));
+});
+
+test("run-bdd-docker.js forces host topology inside its outer container", (t) => {
+	const src = fs.readFileSync(path.resolve(__dirname, "..", "run-bdd-docker.js"), "utf8");
+	t.true(src.includes('dockerRunArgs.push("-e", "SCRAMJET_DOCKER_NETWORK_MODE=host")'));
+	t.true(src.includes('"--network", "host"'));
+});
+
+test("candidate Docker BDD validation fails closed unless the Docker adapter is selected", (t) => {
+	const src = require("node:fs").readFileSync(
+		path.resolve(__dirname, "..", "run-bdd-docker.js"),
+		"utf8"
+	);
+
+	t.true(
+		src.includes('process.env.SCRAMJET_RELEASE_BDD_VALIDATION === "1" && process.env.RUNTIME_ADAPTER !== "docker"'),
+		"candidate validation must reject the process adapter before Docker BDD starts"
+	);
+	t.true(src.includes("release BDD validation requires RUNTIME_ADAPTER=docker."));
+});
+
+test("candidate tarball Docker mode mounts GHCR auth internally without forwarding its host locator", (t) => {
+	const src = fs.readFileSync(path.resolve(__dirname, "..", "run-bdd-docker.js"), "utf8");
+	t.true(src.includes("GHCR_AUTH_CONFIG_CONTAINER_PATH = \"/run/scramjet-ghcr-auth\""));
+	t.true(src.includes("GHCR_AUTH_CONFIG_HOST_PATH"));
+	t.true(src.includes(":${GHCR_AUTH_CONFIG_CONTAINER_PATH}:ro"));
+	t.true(src.includes("DOCKER_CONFIG=${GHCR_AUTH_CONFIG_CONTAINER_PATH}"));
+	t.true(src.includes('name === "SCRAMJET_DOCKER_NETWORK_MODE" || name === "SCRAMJET_BDD_DOCKER_AUTH_CONFIG"'));
+	t.true(src.includes("tarball BDD mode requires a prepared GHCR Docker auth config."));
 });
 
 // ---------------------------------------------------------------------------
 // Memory guard – NODE_OPTIONS injection in Docker mode
 // ---------------------------------------------------------------------------
 
-test("run-bdd-docker.js imports isBddMemoryGuardEnabled and bddNodeOptions", (t) => {
+test("run-bdd-docker.js imports the BDD guard and Docker parent option builder", (t) => {
 	const src = require("node:fs").readFileSync(
 		path.resolve(__dirname, "..", "run-bdd-docker.js"),
 		"utf8"
@@ -215,29 +272,28 @@ test("run-bdd-docker.js imports isBddMemoryGuardEnabled and bddNodeOptions", (t)
 		"should import isBddMemoryGuardEnabled from bdd-options"
 	);
 	t.true(
-		src.includes("bddNodeOptions"),
-		"should import bddNodeOptions from bdd-options"
+		src.includes("bddDockerNodeOptions"),
+		"should import bddDockerNodeOptions from bdd-options"
 	);
 });
 
-test("run-bdd-docker.js injects NODE_OPTIONS when memory guard is enabled", (t) => {
+test("run-bdd-docker.js injects bounded parent NODE_OPTIONS and transpile-only ts-node", (t) => {
 	const src = require("node:fs").readFileSync(
 		path.resolve(__dirname, "..", "run-bdd-docker.js"),
 		"utf8"
 	);
 
 	t.true(
-		src.includes("isBddMemoryGuardEnabled()"),
-		"should check guard before injecting NODE_OPTIONS"
-	);
-	t.true(
 		src.includes("NODE_OPTIONS"),
 		"should reference NODE_OPTIONS in docker run args"
 	);
 	t.true(
-		src.includes("bddNodeOptions()"),
-		"should call bddNodeOptions() for NODE_OPTIONS value"
+		src.includes("bddDockerNodeOptions()"),
+		"should call the Docker parent option builder"
 	);
+	t.true(src.includes('dockerRunArgs.push("-e", "TS_NODE_TRANSPILE_ONLY=1")'));
+	t.true(src.includes('"--memory-swap", BDD_DOCKER_MEMORY'));
+	t.true(src.includes('"--cpus", BDD_DOCKER_CPUS'));
 });
 
 // ---------------------------------------------------------------------------
@@ -398,15 +454,15 @@ test("run-bdd-docker.js defines printContainerSummary", (t) => {
 	);
 });
 
-test("run-bdd-docker.js defines WORKING_SET_SAMPLE_INTERVAL_MS = 30000", (t) => {
+test("run-bdd-docker.js caps report sampling at one second", (t) => {
 	const src = require("node:fs").readFileSync(
 		path.resolve(__dirname, "..", "run-bdd-docker.js"),
 		"utf8"
 	);
 
 	t.true(
-		src.includes("WORKING_SET_SAMPLE_INTERVAL_MS = 30000"),
-		"should define 30s sampling interval"
+		src.includes("WORKING_SET_SAMPLE_INTERVAL_MS = telemetrySampleIntervalMs()"),
+		"should use the bounded telemetry sampling policy"
 	);
 });
 
@@ -436,7 +492,7 @@ test("run-bdd-docker.js captures readiness working-set baseline after container 
 	t.true(src.includes("consumeChunkReadySignal()"), "should consume readiness before sampling");
 	t.true(src.includes("workingSetBaseline = bytes"), "should establish baseline at readiness");
 	t.true(src.includes("const READINESS_POLL_INTERVAL_MS = 50"), "should poll readiness promptly");
-	t.true(src.includes("const READINESS_SAMPLE_INTERVAL_MS = 250"), "should use short follow-up samples");
+	t.true(src.includes("telemetrySampleIntervalMs()"), "should use the telemetry sampling policy");
 	t.true(src.includes("chunkContainer"), "should finalize from the mounted cgroup report");
 });
 
@@ -544,7 +600,7 @@ test("run-bdd-docker.js samples quickly when chunk policy is active", (t) => {
 		"utf8"
 	);
 
-	t.true(src.includes('process.env.BDD_CHUNK_MEMORY_SHORT === "1" ? 250 : 1000'));
+	t.true(src.includes("telemetrySampleIntervalMs()"));
 	t.true(src.includes("BDD_CHUNK_MEMORY_REPORT_FILE=/work-tmp/chunk-memory.json"));
 });
 

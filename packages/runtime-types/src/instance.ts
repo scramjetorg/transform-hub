@@ -69,6 +69,7 @@ export type StartInstanceReturnType =
     | { message: string; exitcode: number; status: string }
     | {
           id: string;
+          processId?: number;
           appConfig: any;
           args: any[] | undefined;
           sequenceId: string;

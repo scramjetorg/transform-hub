@@ -225,6 +225,50 @@ test("release-version is required for alignment commands and validates explicit 
 	});
 });
 
+test("development alignment requires canonical -devel SemVer and keeps stable mode strict", (t) => {
+	t.is(releaseAlign.resolveDevelopmentVersion("2.1.3-devel"), "2.1.3-devel");
+	t.deepEqual(releaseAlign.parseCliArguments(["development", "--development-version=2.1.3-devel"]), {
+		mode: "development",
+		releaseVersion: undefined,
+		developmentVersion: "2.1.3-devel",
+	});
+	t.deepEqual(releaseAlign.parseCliArguments(["check-development", "--development-version=2.1.3-devel"]), {
+		mode: "check-development",
+		releaseVersion: undefined,
+		developmentVersion: "2.1.3-devel",
+	});
+	for (const value of ["2.1.3", "2.1.3-rc.1", "2.1.3-devel.1", "2.1", "02.1.3-devel", "2.1.3-"]) {
+		t.throws(() => releaseAlign.resolveDevelopmentVersion(value), { message: /canonical SemVer prerelease/ });
+	}
+	t.throws(() => releaseAlign.parseCliArguments(["development", "--development-version=2.1.3"]), {
+		message: /canonical SemVer prerelease/,
+	});
+	t.throws(() => releaseAlign.parseCliArguments(["check", "--release-version=2.1.3-devel"]), {
+		message: /stable SemVer/,
+	});
+});
+
+test("development alignment updates boundary versions, ranges, images, and Python metadata", (t) => {
+	const target = "3.4.5-devel";
+	const fix = createFixture(t, {
+		version: "3.4.5",
+		managerVersion: "3.4.5",
+		included: ["@scramjet/sth", "@scramjet/host"],
+		depOverrides: { "@scramjet/sth.deps": { "@scramjet/host": "^3.4.5" } },
+	});
+	const pyprojectPath = path.join(fix.root, "packages", "runner-python", "pyproject.toml");
+	mkdirSync(path.dirname(pyprojectPath), { recursive: true });
+	writeFileSync(pyprojectPath, '[project]\nname = "scramjet-runner-python"\nversion = "3.4.5"\n');
+
+	const result = runAlign(fix.root, "development", [`--development-version=${target}`]);
+	t.is(result.status, 0);
+	t.is(readManifest(fix.rootPkg).version, target);
+	t.is(readManifest(fix.packages.get("@scramjet/sth").manifestPath).version, target);
+	t.is(readManifest(fix.packages.get("@scramjet/sth").manifestPath).dependencies["@scramjet/host"], `^${target}`);
+	t.true(readFileSync(fix.imageConfigPath, "utf8").includes(`:${target}`));
+	t.true(readFileSync(pyprojectPath, "utf8").includes(`version = "${target}"`));
+});
+
 test("release-version override checks and dry-runs without writing", (t) => {
 	const fix = createFixture(t, {
 		version: "2.0.0",

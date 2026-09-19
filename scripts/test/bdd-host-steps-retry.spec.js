@@ -32,6 +32,7 @@ require("ts-node/register");
 
 // Import the real helper from the BDD source.
 const { retryLoadCheck } = require("../../bdd/lib/utils");
+const { stopAutoRemoveRunnerContainer } = require("../../bdd/lib/runner-container-cleanup");
 
 test("production start-host path probes readiness after spawn", (t) => {
     const source = fs.readFileSync(
@@ -60,6 +61,101 @@ test("scenario-owned E2E-003 client is prepared before wave/chunk scenarios", (t
     t.true(selectorOffset >= 0);
     t.true(clientOffset > selectorOffset, "wave-selected E2E-003 must prepare the owned client");
     t.true(clientOffset > beforeOffset, "scenario-owned client must be prepared from suite startup");
+});
+
+test("runner cleanup keeps the registered container handle after module state is cleared", async t => {
+    const source = fs.readFileSync(
+        path.join(__dirname, "../../bdd/step-definitions/e2e/host-steps.ts"),
+        "utf8"
+    );
+    let stoppedWith;
+    const container = {
+        stop: async options => { stoppedWith = options; },
+        kill: async () => {}
+    };
+
+    let containerId = "runner-container";
+    const registeredContainer = container;
+    containerId = undefined;
+
+    await stopAutoRemoveRunnerContainer(registeredContainer);
+
+    t.true(source.includes("const runnerContainerId = containerId"));
+    t.true(source.includes("const runnerContainer = dockerode.getContainer(runnerContainerId)"));
+    t.deepEqual(stoppedWith, { t: 10 });
+});
+
+test("runner cleanup tolerates Docker 404 from an auto-removed container", async t => {
+    const container = {
+        stop: async () => { throw { statusCode: 404 }; },
+        kill: async () => { throw new Error("kill should not be attempted"); }
+    };
+
+    await t.notThrowsAsync(() => stopAutoRemoveRunnerContainer(container));
+});
+
+test("runner cleanup does not suppress non-404 Docker errors", async t => {
+    const error = Object.assign(new Error("permission denied"), { statusCode: 500 });
+    const container = {
+        stop: async () => { throw error; },
+        kill: async () => { throw error; }
+    };
+
+    await t.throwsAsync(() => stopAutoRemoveRunnerContainer(container), { is: error });
+});
+
+test("runner cleanup preserves a non-404 stop error when kill succeeds", async t => {
+    const error = Object.assign(new Error("stop failed"), { statusCode: 500 });
+    let killed = false;
+    const container = {
+        stop: async () => { throw error; },
+        kill: async () => { killed = true; }
+    };
+
+    const rejected = await t.throwsAsync(() => stopAutoRemoveRunnerContainer(container));
+
+    t.true(killed);
+    t.is(rejected, error);
+});
+
+test("get runner PID polls process health for the full step timeout", t => {
+    const source = fs.readFileSync(
+        path.join(__dirname, "../../bdd/step-definitions/e2e/host-steps.ts"),
+        "utf8"
+    );
+    const step = source.slice(source.indexOf('When("get runner PID"'), source.indexOf('When("runner has ended execution"'));
+
+    t.true(step.includes("const processIdDeadline = Date.now() + 30000"));
+    t.true(step.includes('adapter === "process" ? Date.now() < processIdDeadline : tries < 3'));
+    t.true(step.includes("health?.processId"));
+    t.true(step.includes("Math.min(50, remaining)"));
+});
+
+test("get runner PID prefers the process handoff before health fallback", t => {
+    const source = fs.readFileSync(
+        path.join(__dirname, "../../bdd/step-definitions/e2e/host-steps.ts"),
+        "utf8"
+    );
+    const step = source.slice(source.indexOf('When("get runner PID"'), source.indexOf('When("runner has ended execution"'));
+
+    t.true(step.includes("this.runnerProcessIds.get(this.resources.instance.id)"));
+    t.true(step.includes('if (adapter === "process" && isPositiveProcessId(handedOffProcessId))'));
+    t.true(step.indexOf("Process is identified from start handoff.") < step.indexOf("getHealth()"));
+});
+
+test("BDD runner PID state is cleared even when scenario cleanup throws", t => {
+    const source = fs.readFileSync(
+        path.join(__dirname, "../../bdd/step-definitions/e2e/host-steps.ts"),
+        "utf8"
+    );
+    const cleanup = source.slice(source.indexOf('After({}, async function'), source.indexOf('Before({ tags: "@test-si-init"'));
+    const finallyOffset = cleanup.indexOf("} finally {");
+
+    t.true(finallyOffset >= 0);
+    t.true(cleanup.slice(finallyOffset).includes("clearRunnerProcessState(this)"));
+    t.true(cleanup.slice(finallyOffset).indexOf("clearRunnerProcessState(this)") < cleanup.slice(finallyOffset).indexOf("clearE2eScenarioState"));
+    t.true(source.includes("Before(function(this: CustomWorld)"));
+    t.true(source.includes("clearRunnerProcessState(this);\n    actualHealthResponse"));
 });
 
 test("start-host callback forwards AbortSignal to getLoadCheck", async (t) => {

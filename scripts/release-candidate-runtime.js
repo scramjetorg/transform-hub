@@ -1,0 +1,250 @@
+#!/usr/bin/env node
+/* The only module allowed to cross the protected GitHub boundary. */
+const { execFileSync } = require("node:child_process");
+const { createHash } = require("node:crypto");
+const { mkdirSync, readFileSync, writeFileSync } = require("node:fs");
+const { resolve } = require("node:path");
+const { assertSha, candidateIdentity, canonicalize } = require("./lib/candidate-identity");
+const { validateReleaseTrainLock } = require("./release-train-lock");
+
+function option(args, name) { const i = args.indexOf(name); if (i < 0 || !args[i + 1]) throw new Error(`${name} is required.`); return args[i + 1]; }
+function json(file) { return JSON.parse(readFileSync(resolve(file), "utf8")); }
+function write(file, value) { writeFileSync(resolve(file), `${JSON.stringify(value, null, 2)}\n`, "utf8"); }
+function sha256(bytes) { return `sha256:${createHash("sha256").update(bytes).digest("hex")}`; }
+
+function assertReleaseSetIdentity(releaseSet, identity) {
+    const { validateReleaseSet } = require("./release-contract");
+    validateReleaseSet(releaseSet);
+    if (releaseSet.source.sha !== identity.sourceSha || releaseSet.source.tree !== identity.sourceTree || releaseSet.lockfile.sha256 !== identity.lockfileDigest || releaseSet.build?.identity !== identity.buildIdentity) throw new Error("Durable candidate release set conflicts with the requested identity.");
+}
+
+function assertStateIdentity(state, identity) {
+    if (canonicalize(state.identity) !== canonicalize(identity) || state.key !== identity.key) throw new Error("Durable candidate state conflicts with the requested identity.");
+}
+
+function remoteSha(repository, branch, runner = execFileSync) {
+    const output = runner("git", ["ls-remote", `https://github.com/${repository}.git`, `refs/heads/${branch}`], { encoding: "utf8" }).trim();
+    return assertSha(output.split(/\s+/)[0], "protected remote SHA");
+}
+
+function readRemoteTrainLock({ repository, runner = execFileSync }) {
+    if (repository !== "scramjetorg/transform-hub") throw new Error("Candidate remote lock requires the managed repository.");
+    const remote = remoteSha(repository, "devel", runner);
+    runner("git", ["fetch", "--no-tags", "--depth=1", `https://github.com/${repository}.git`, "refs/heads/devel"], { encoding: "utf8" });
+    let lock;
+    try { lock = JSON.parse(runner("git", ["show", "FETCH_HEAD:.github/release-train-lock.json"], { encoding: "utf8" })); } catch { throw new Error("Active devel release-train lock is unavailable remotely."); }
+    validateReleaseTrainLock(lock);
+    if (remote !== lock.currentCommit && !lock.continuation.includes(remote)) throw new Error("Remote devel does not carry the active release-train lock.");
+    if (["aborted", "reconciled", "manual-recovery-required"].includes(lock.status)) throw new Error("Active devel release-train lock is terminal.");
+    return lock;
+}
+
+function assertCandidatePullRequest({ repository, event, lock, runner = execFileSync }) {
+    const pr = event?.pull_request || event;
+    const head = pr?.head || {}, base = pr?.base || {};
+    const headRepo = head.repo?.full_name;
+    if (event?.repository?.full_name !== repository || pr?.number !== lock.promotion.number || base.ref !== "main" || head.ref !== lock.releaseBranch || headRepo !== repository) throw new Error("Candidate authority is limited to the locked same-repository release promotion targeting main.");
+    const sourceSha = assertSha(head.sha, "pull request head SHA");
+    if (sourceSha === event?.after || sourceSha === event?.merge_commit_sha || sourceSha === pr.merge_commit_sha) throw new Error("Synthetic pull request merge SHA cannot be used as candidate source.");
+    const status = runner("git", ["merge-base", "--is-ancestor", lock.refs.R1, sourceSha], { encoding: "utf8" });
+    void status;
+    const trainId = `${lock.repository}:${lock.stableVersion}`;
+    return { sourceSha, trainBinding: { trainId, continuationBase: lock.refs.R1, promotion: { number: pr.number, repository, base: "main" } } };
+}
+
+function preflight({ repository, branch, sourceSha, output, env = process.env, runner = execFileSync, event = null }) {
+    if (repository !== "scramjetorg/transform-hub" || branch !== "devel") throw new Error("Candidate preflight requires the managed devel repository and branch.");
+    const expectedSha = assertSha(sourceSha, "candidate source SHA");
+    if (env.RELEASE_REMOTE_POLICY_CONFIRMED !== "true") throw new Error("Remote release policy is unconfirmed; refusing to build or stage a candidate.");
+    if (event) {
+        const lock = readRemoteTrainLock({ repository, runner });
+        const binding = assertCandidatePullRequest({ repository, event, lock, runner });
+        if (binding.sourceSha !== expectedSha) throw new Error("Candidate source SHA is not the pull request head SHA.");
+        const treeObjectId = assertSha(runner("git", ["rev-parse", `${expectedSha}^{tree}`], { encoding: "utf8" }).trim(), "Git tree object ID");
+        const sourceTree = sha256(treeObjectId);
+        const lockfileDigest = sha256(readFileSync("package-lock.json"));
+        const configRevision = env.RELEASE_CONFIG_REVISION || "release-config-v1";
+        const configDigest = sha256(Buffer.from(configRevision));
+        const identity = candidateIdentity({ sourceSha: expectedSha, sourceTree, lockfileDigest, configRevision, configDigest, buildIdentity: sha256(Buffer.from(`${expectedSha}:${sourceTree}:${lockfileDigest}:${configDigest}`)), trainBinding: binding.trainBinding });
+        write(output, identity); return identity;
+    }
+    if (remoteSha(repository, branch, runner) !== expectedSha) throw new Error("Protected remote devel moved during candidate preflight.");
+    const treeObjectId = assertSha(runner("git", ["rev-parse", `${expectedSha}^{tree}`], { encoding: "utf8" }).trim(), "Git tree object ID");
+    const sourceTree = sha256(treeObjectId);
+    const lockfileDigest = sha256(readFileSync("package-lock.json"));
+    const configRevision = env.RELEASE_CONFIG_REVISION || "release-config-v1";
+    const configDigest = sha256(Buffer.from(configRevision));
+    const identity = candidateIdentity({ sourceSha: expectedSha, sourceTree, lockfileDigest, configRevision, configDigest, buildIdentity: sha256(Buffer.from(`${expectedSha}:${sourceTree}:${lockfileDigest}:${configDigest}`)) });
+    write(output, identity);
+    return identity;
+}
+
+function build({ root, bundleDir, stateFile, identityFile, releaseSetFile }) {
+    const { buildAndPack } = require("./release-bundle");
+    const { digestDocument } = require("./release-contract");
+    const result = buildAndPack({ root, bundleDir, stateFile, identity: json(identityFile), releaseSet: json(releaseSetFile) });
+    write(`${bundleDir}/candidate-result.json`, { status: result.status, releaseSetDigest: digestDocument(result.releaseSet), identity: json(identityFile).key });
+    return result;
+}
+
+function locate({ repository, tag, sourceSha, identity: expectedIdentity, output, runner }) {
+    const { createGithubReleaseAssetAdapter, validateCandidateState } = require("./lib/github-release-candidate");
+    const { validateCandidateSeal } = require("./lib/release-candidate-assets");
+    const adapter = createGithubReleaseAssetAdapter({ repository, tag, targetSha: sourceSha, runner });
+    const release = adapter.view();
+    if (!release) { write(output, { status: "not-found", tag }); return { status: "not-found" }; }
+    if (!(release.draft ?? release.isDraft) || (release.target_commitish ?? release.targetCommitish) !== sourceSha) throw new Error("Durable candidate release conflicts with the requested identity.");
+    const releaseId = Number(release.id || release.databaseId);
+    if (!Number.isSafeInteger(releaseId) || releaseId <= 0) throw new Error("Located candidate release has no numeric ID.");
+    const assets = (release.assets || []).map((asset) => asset.name.replaceAll("__", "/"));
+    if (!assets.includes("candidate-seal.json")) { const result = { status: "unsealed", tag, releaseId }; write(output, result); return result; }
+    let seal;
+    try { seal = JSON.parse(adapter.download(tag, "candidate-seal.json").toString("utf8")); } catch { throw new Error("Candidate seal is invalid JSON."); }
+    validateCandidateSeal(seal);
+    if (seal.candidateReleaseId !== releaseId || seal.sourceSha !== sourceSha || expectedIdentity && seal.identity !== expectedIdentity.key) throw new Error("Durable candidate release conflicts with the requested identity.");
+    if (expectedIdentity) {
+        const remoteIdentity = JSON.parse(adapter.download(tag, "candidate-identity.json").toString("utf8"));
+        const remoteState = validateCandidateState(JSON.parse(adapter.download(tag, "candidate-state.json").toString("utf8")));
+        assertStateIdentity(remoteState, expectedIdentity);
+        if (canonicalize(remoteIdentity) !== canonicalize(expectedIdentity) || seal.sourceTree !== expectedIdentity.sourceTree) throw new Error("Durable candidate release conflicts with the requested identity.");
+        assertReleaseSetIdentity(JSON.parse(adapter.download(tag, "release-set.json").toString("utf8")), expectedIdentity);
+    }
+    const result = { status: "found", tag, releaseId, releaseSetDigest: seal.releaseSetDigest, sealedStateDigest: seal.sealedStateDigest, imageDigest: seal.imageDigests?.[0]?.digest || null };
+    write(output, result);
+    return result;
+}
+
+function resolveCandidate({ repository, releaseId, tag, sourceSha, identity: expectedIdentity, releaseSetDigest, sealedStateDigest, bundleDir, stateFile, output, runner }) {
+    const { createGithubReleaseAssetAdapter, validateCandidateState } = require("./lib/github-release-candidate");
+    const { bytesDigest, downloadAndVerifyCandidate, validateCandidateSeal } = require("./lib/release-candidate-assets");
+    const adapter = createGithubReleaseAssetAdapter({ repository, tag, targetSha: sourceSha, runner });
+    if (!Number.isSafeInteger(Number(releaseId)) || Number(releaseId) <= 0) throw new Error("Candidate resolve requires a numeric release ID.");
+    if (!/^sha256:[a-f0-9]{64}$/i.test(releaseSetDigest || "") || !/^sha256:[a-f0-9]{64}$/i.test(sealedStateDigest || "")) throw new Error("Candidate resolve requires release-set and sealed-state digests.");
+    const release = adapter.resolve(releaseId);
+    if (!release) { write(output, { status: "not-found" }); return { status: "not-found" }; }
+    if (Number(release.id) !== Number(releaseId) || release.tag_name && release.tag_name !== tag || release.tagName && release.tagName !== tag || !(release.draft ?? release.isDraft) || (release.target_commitish ?? release.targetCommitish) !== sourceSha) throw new Error("Durable candidate release conflicts with the requested identity.");
+    const stateBytes = adapter.download(tag, "candidate-state.json");
+    const state = JSON.parse(stateBytes.toString("utf8"));
+    validateCandidateState(state);
+    const seal = JSON.parse(adapter.download(tag, "candidate-seal.json").toString("utf8"));
+    validateCandidateSeal(seal);
+    const remoteIdentity = JSON.parse(adapter.download(tag, "candidate-identity.json").toString("utf8"));
+    if (state.bundle.releaseSetDigest !== seal.releaseSetDigest || state.bundle.provenanceDigest !== seal.provenanceDigest) throw new Error("Candidate state bundle digests do not match the candidate seal.");
+    if (seal.candidateReleaseId !== Number(releaseId) || seal.releaseSetDigest !== releaseSetDigest || seal.sealedStateDigest !== sealedStateDigest || bytesDigest(stateBytes) !== sealedStateDigest || seal.sourceSha !== sourceSha || expectedIdentity && (seal.identity !== expectedIdentity.key || seal.sourceTree !== expectedIdentity.sourceTree || canonicalize(remoteIdentity) !== canonicalize(expectedIdentity))) throw new Error("Candidate seal does not match the requested durable identity.");
+    if (state.status === "claimed") throw new Error("Durable candidate state is interrupted; refusing to rebuild.");
+    if (state.status !== "sealed" || state.admission?.status !== "pending" || expectedIdentity && (state.key !== expectedIdentity.key || canonicalize(state.identity) !== canonicalize(expectedIdentity))) throw new Error("Durable candidate state conflicts with the requested identity or is terminal.");
+    const releaseSet = JSON.parse(adapter.download(tag, "release-set.json").toString("utf8"));
+    if (expectedIdentity) assertReleaseSetIdentity(releaseSet, expectedIdentity);
+    JSON.parse(adapter.download(tag, "build-provenance.json").toString("utf8"));
+    const candidateReference = { candidateId: tag, candidateIdentity: seal.identity, releaseSetDigest, provenanceDigest: seal.provenanceDigest, sealedStateDigest, candidateSeal: seal };
+    mkdirSync(bundleDir, { recursive: true });
+    downloadAndVerifyCandidate({ adapter, candidateId: tag, destination: bundleDir, candidateReference });
+    writeFileSync(stateFile, `${JSON.stringify(state, null, 2)}\n`);
+    writeFileSync(`${bundleDir}/candidate-identity.json`, adapter.download(tag, "candidate-identity.json"));
+    const result = { status: "reused", releaseId: Number(releaseId), releaseSetDigest, sealedStateDigest, imageDigest: seal.imageDigests?.[0]?.digest || null };
+    write(output, result);
+    return { ...result, state, releaseSet };
+}
+
+function stage(args) {
+    const { digestDocument } = require("./release-contract");
+    const { stageGithubDraftCandidate } = require("./lib/github-release-candidate");
+    const identity = json(args.identityFile);
+    const releaseSet = json(`${args.bundleDir}/release-set.json`);
+    const provenance = json(`${args.bundleDir}/build-provenance.json`);
+    const result = stageGithubDraftCandidate({ repository: args.repository, tag: args.tag, targetSha: args.sourceSha, root: args.bundleDir, releaseSet, provenance, lockfile: readFileSync(`${args.bundleDir}/package-lock.json`), stateFile: args.stateFile, identity, runner: args.runner });
+    if (args.releaseId > 0 && result.releaseId !== args.releaseId) throw new Error("Draft release ID changed while staging candidate assets.");
+    const imageMap = Object.fromEntries((releaseSet.artifacts.images || []).filter(image => image.role).map(image => [image.role, `${image.repository}@${image.digest}`]));
+    write(args.output, { releaseId: result.releaseId, candidateId: result.candidateId, releaseSetDigest: result.releaseSetDigest || digestDocument(releaseSet), sealedStateDigest: result.seal.sealedStateDigest, imageDigest: result.imageDigest || null, imageMap, sealDigest: digestDocument(result.seal) });
+    return result;
+}
+
+function buildBddEvidenceAssets({ state, releaseId, releaseSetDigest, sealedStateDigest }) {
+    const BDD_MATRIX = require("./release-bdd-matrix.v1.json");
+    const shards = state.bdd?.shards || [];
+    const expected = new Set(BDD_MATRIX.chunks);
+    const seen = new Set();
+    if (shards.length !== expected.size) throw new Error("All canonical BDD shards are required before durable evidence persistence.");
+    if (state.bdd.matrixRevision !== BDD_MATRIX.revision) throw new Error("BDD shard matrix revision is not canonical.");
+    return shards.map((shard) => {
+        if (!shard.name || seen.has(shard.name) || !expected.has(shard.name)) throw new Error("BDD shard names must be unique and canonical.");
+        seen.add(shard.name);
+        if (shard.status !== "success") throw new Error("All BDD shards must succeed before durable evidence persistence.");
+        if (!shard.evidence || shard.evidence.schema !== "bdd-shard-evidence.v1" || shard.evidence.shard !== shard.name || shard.evidence.matrixRevision !== BDD_MATRIX.revision || shard.evidence.exitStatus !== 0) throw new Error(`BDD shard evidence payload is invalid: ${shard.name}`);
+        const item = { schema: "release-bdd-shard-evidence.v1", shard: shard.name, status: shard.status, matrixRevision: state.bdd.matrixRevision, candidateReleaseId: Number(releaseId), releaseSetDigest, sealedStateDigest, trainBinding: state.identity?.trainBinding || null, evidence: shard.evidence || null };
+        return { name: `bdd-evidence/${item.shard}.json`, bytes: Buffer.from(`${JSON.stringify(item, null, 2)}\n`), item };
+    });
+}
+
+function persistBdd({ repository, tag, releaseId, bundleDir, releaseSetDigest, sealedStateDigest, runner = execFileSync }) {
+    const { createGithubReleaseAssetAdapter } = require("./lib/github-release-candidate");
+    const { digestDocument } = require("./release-contract");
+    const { validateCandidateSeal } = require("./lib/release-candidate-assets");
+    const adapter = createGithubReleaseAssetAdapter({ repository, tag, targetSha: JSON.parse(readFileSync(`${bundleDir}/candidate-seal.json`, "utf8")).sourceSha, runner });
+    const release = adapter.resolve(releaseId);
+    if (!release || Number(release.id) !== Number(releaseId)) throw new Error("BDD evidence target release does not match the numeric candidate ID.");
+    const seal = JSON.parse(readFileSync(`${bundleDir}/candidate-seal.json`, "utf8"));
+    validateCandidateSeal(seal);
+    if (seal.releaseSetDigest !== releaseSetDigest || seal.sealedStateDigest !== sealedStateDigest) throw new Error("BDD evidence inputs do not match the candidate seal.");
+    const state = JSON.parse(readFileSync(`${bundleDir}/candidate-state.json`, "utf8"));
+    const stagedEvidence = buildBddEvidenceAssets({ state, releaseId, releaseSetDigest, sealedStateDigest });
+    const evidence = stagedEvidence.map((asset) => asset.item);
+    const consumed = `${bundleDir}/bdd-evidence/${require("./release-bdd-matrix.v1.json").revision}/consumed-input.json`;
+    const assets = stagedEvidence.map(({ name, bytes }) => ({ name, bytes }));
+    assets.push({ name: "bdd-evidence/consumed-input.json", bytes: readFileSync(consumed) });
+    adapter.stage(tag, assets);
+    return { releaseId: Number(releaseId), evidenceDigest: digestDocument(evidence) };
+}
+
+function admit({ repository, tag, sourceSha, bundleDir, output, runner }) {
+    const { createGithubReleaseAssetAdapter } = require("./lib/github-release-candidate");
+    const { validateCandidateSeal } = require("./lib/release-candidate-assets");
+    const { admission: offlineAdmission } = require("./release-candidate-workflow");
+    const adapter = createGithubReleaseAssetAdapter({ repository, tag, targetSha: sourceSha, runner });
+    const release = adapter.view();
+    if (!release || !(release.databaseId || release.id)) throw new Error("Matching draft candidate release is required for admission.");
+    const releaseId = Number(release.databaseId || release.id);
+    mkdirSync(bundleDir, { recursive: true });
+    const seal = JSON.parse(adapter.download(tag, "candidate-seal.json").toString("utf8"));
+    validateCandidateSeal(seal);
+    resolveCandidate({ repository, tag, sourceSha, releaseId, releaseSetDigest: seal.releaseSetDigest, sealedStateDigest: seal.sealedStateDigest, bundleDir, stateFile: `${bundleDir}/candidate-state.json`, output: `${bundleDir}/resolve.json`, runner });
+    writeFileSync(`${bundleDir}/candidate-success.json`, adapter.download(tag, "candidate-success.json"));
+    const shardFiles = adapter.list(tag).filter((name) => /^bdd-evidence\/[^/]+\.json$/.test(name) && !name.endsWith("consumed-input.json"));
+    for (const name of shardFiles) writeFileSync(`${bundleDir}/${name.replaceAll("/", "-")}`, adapter.download(tag, name));
+    return offlineAdmission({ stateFile: `${bundleDir}/candidate-state.json`, releaseSetFile: `${bundleDir}/release-set.json`, evidenceFile: `${bundleDir}/candidate-success.json`, sealFile: `${bundleDir}/candidate-seal.json`, shardEvidenceFiles: shardFiles.map((name) => ({ file: `${bundleDir}/${name.replaceAll("/", "-")}`, assetName: name })), sourceSha, releaseId, output });
+}
+
+function main() {
+    const [command, ...args] = process.argv.slice(2);
+    if (command === "preflight") return preflight({ repository: option(args, "--repository"), branch: option(args, "--branch"), sourceSha: option(args, "--source-sha"), output: option(args, "--output"), event: args.includes("--event") ? json(option(args, "--event")) : null });
+    if (command === "build") return build({ root: option(args, "--root"), bundleDir: option(args, "--bundle-dir"), stateFile: option(args, "--state"), identityFile: option(args, "--identity"), releaseSetFile: option(args, "--release-set") });
+    if (command === "locate") return locate({ repository: option(args, "--repository"), tag: option(args, "--tag"), sourceSha: option(args, "--source-sha"), identity: args.includes("--identity") ? json(option(args, "--identity")) : null, output: option(args, "--output") });
+    if (command === "resolve") return resolveCandidate({ repository: option(args, "--repository"), releaseId: Number(option(args, "--release-id")), tag: option(args, "--tag"), sourceSha: option(args, "--source-sha"), identity: args.includes("--identity") ? json(option(args, "--identity")) : null, releaseSetDigest: option(args, "--release-set-digest"), sealedStateDigest: option(args, "--sealed-state-digest"), bundleDir: option(args, "--bundle-dir"), stateFile: option(args, "--state"), output: option(args, "--output") });
+    if (command === "stage") return stage({ repository: option(args, "--repository"), tag: option(args, "--tag"), sourceSha: option(args, "--source-sha"), releaseId: Number(option(args, "--release-id")), bundleDir: option(args, "--bundle-dir"), stateFile: option(args, "--state"), identityFile: option(args, "--identity"), output: option(args, "--output") });
+    if (command === "persist-bdd") return write(option(args, "--output"), persistBdd({ repository: option(args, "--repository"), tag: option(args, "--tag"), releaseId: Number(option(args, "--release-id")), bundleDir: option(args, "--bundle-dir"), releaseSetDigest: option(args, "--release-set-digest"), sealedStateDigest: option(args, "--sealed-state-digest") }));
+    if (command === "attest") {
+        const { digestDocument } = require("./release-contract");
+        const evidenceFile = option(args, "--evidence");
+        if (args.includes("--repository")) {
+            const { createGithubReleaseAssetAdapter } = require("./lib/github-release-candidate");
+            const evidence = json(evidenceFile);
+            const adapter = createGithubReleaseAssetAdapter({ repository: option(args, "--repository"), tag: option(args, "--tag"), targetSha: evidence.sourceSha });
+            const release = adapter.view();
+            const candidateId = release?.databaseId || release?.id;
+            if (!Number.isSafeInteger(candidateId) || candidateId <= 0) throw new Error("Candidate release is missing a numeric ID.");
+            const tag = option(args, "--tag");
+            const seal = JSON.parse(adapter.download(tag, "candidate-seal.json").toString("utf8"));
+            if (evidence.candidateReleaseId !== candidateId || evidence.releaseSetDigest !== seal.releaseSetDigest || evidence.sealedStateDigest !== seal.sealedStateDigest) throw new Error("Candidate-success evidence is not bound to the durable candidate seal.");
+            adapter.stage(tag, [{ name: "candidate-success.json", bytes: readFileSync(evidenceFile) }]);
+        } else {
+            const { recordProducerAttestation } = require("./lib/release-bundle-state");
+            const identity = json(option(args, "--identity"));
+            recordProducerAttestation(option(args, "--state"), identity, { reference: resolve(evidenceFile), status: "available" });
+        }
+        return write(option(args, "--output"), { candidateSuccess: true, evidenceDigest: digestDocument(json(evidenceFile)) });
+    }
+    if (command === "admit") return admit({ repository: option(args, "--repository"), tag: option(args, "--tag"), sourceSha: option(args, "--source-sha"), bundleDir: option(args, "--bundle-dir"), output: option(args, "--output") });
+    throw new Error("Usage: release-candidate-runtime.js preflight|build|resolve|stage|attest");
+}
+if (require.main === module) { try { main(); } catch (error) { console.error(`[release-candidate-runtime] ${error.message}`); process.exitCode = 1; } }
+module.exports = { preflight, build, locate, resolveCandidate, stage, buildBddEvidenceAssets, persistBdd, admit, readRemoteTrainLock, assertCandidatePullRequest };

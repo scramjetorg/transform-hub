@@ -8,6 +8,14 @@ tsNode.register({ project: path.resolve(__dirname, "../../bdd/tsconfig.json") })
 
 const { HostUtils } = require("../../bdd/lib/host-utils");
 
+test("HostUtils publishes managed host output and exit events to observers", t => {
+    const source = require("node:fs").readFileSync(path.resolve(__dirname, "../../bdd/lib/host-utils.ts"), "utf8");
+    t.true(source.includes("subscribeHostLifecycleObserver"));
+    t.true(source.includes('publishHostOutput("stdout", value)'));
+    t.true(source.includes('publishHostOutput("stderr", value)'));
+    t.true(source.includes("publishHostExit({ code, signal })"));
+});
+
 test("captures only the exact structured flood marker", async t => {
     const hostUtils = new HostUtils();
     const waiter = hostUtils.createStructuredOutputWaiter("abort-close", "/stdin", "flood-1");

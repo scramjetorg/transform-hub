@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://scramjet.org/transform-hub/release-set/v1",
+  "title": "Scramjet release set v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "source", "lockfile", "toolchain", "build", "boundary", "waves", "artifacts", "canonical"],
+  "properties": {
+    "schema": { "const": "release-set.v1" },
+    "source": { "type": "object", "additionalProperties": false, "required": ["repository", "sha", "tree"], "properties": { "repository": { "type": "string" }, "sha": { "type": "string", "pattern": "^[a-f0-9]{40}$" }, "tree": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" } } },
+    "lockfile": { "type": "object", "additionalProperties": false, "required": ["path", "sha256"], "properties": { "path": { "const": "package-lock.json" }, "sha256": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" } } },
+    "toolchain": { "type": "object", "additionalProperties": false, "required": ["node", "npm"], "properties": { "node": { "type": "string" }, "npm": { "type": "string" } } },
+    "build": { "type": "object", "additionalProperties": false, "required": ["identity"], "properties": { "identity": { "type": "string" } } },
+    "boundary": { "type": "object", "additionalProperties": false, "required": ["packages"], "properties": { "packages": { "type": "array", "items": { "type": "string" }, "minItems": 1 } } },
+    "waves": { "type": "array", "items": { "type": "array", "items": { "type": "string" }, "minItems": 1 }, "minItems": 1 },
+    "artifacts": { "type": "object", "additionalProperties": false, "required": ["tarballs", "images", "bddSupport"], "properties": { "tarballs": { "type": "array", "minItems": 1, "items": { "type": "object", "additionalProperties": false, "required": ["name", "path", "size", "sha256", "sri"], "properties": { "name": { "type": "string", "minLength": 1 }, "path": { "type": "string", "pattern": "^artifacts/[^/]+\\.tgz$" }, "size": { "type": "integer", "exclusiveMinimum": 0 }, "sha256": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" }, "sri": { "type": "string", "pattern": "^sha256-[A-Za-z0-9+/]+={0,2}$" } } } }, "images": { "type": "array" }, "bddSupport": { "type": "object", "additionalProperties": false, "required": ["path", "size", "sha256", "sri"], "properties": { "path": { "const": "bdd-support/runner-container-cleanup.js" }, "size": { "type": "integer", "exclusiveMinimum": 0 }, "sha256": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" }, "sri": { "type": "string", "pattern": "^sha256-[A-Za-z0-9+/]+={0,2}$" } } } } },
+    "canonical": { "type": "object", "additionalProperties": false, "required": ["schema", "version"], "properties": { "schema": { "const": "release-set.v1" }, "version": { "const": 1 } } }
+  }
+}

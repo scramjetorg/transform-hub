@@ -37,6 +37,7 @@ const { teardownFloodSource } = require("../../lib/flood-teardown.js");
 const { waitForInstanceDetachment } = require("../../lib/instance-detachment.js");
 const { resolveFixturePackagePath } = require("../../lib/fixture-package-path.js");
 const { expectedHostVersion } = require("../../lib/release-prerelease-context.js");
+const { stopAutoRemoveRunnerContainer } = require("../../lib/runner-container-cleanup");
 
 function resolveSequencePackage(packageName: string): string {
     const configuredDirs = (process.env.PACKAGES_DIR || "")
@@ -117,12 +118,29 @@ let externalHostBaseUrl: string | undefined;
 let scenarioHostClient: HostClient | undefined;
 const getHostClient = ({ resources }: CustomWorld): HostClient =>
     selectScenarioClient(resources.hostClient, hostClient)!;
+
 const actualResponse = () => actualStatusResponse || actualHealthResponse;
+const isPositiveProcessId = (value: unknown): value is number => typeof value === "number" && Number.isFinite(value) && value > 0;
+const clearRunnerProcessState = (world: CustomWorld) => {
+    processId = undefined as unknown as number;
+    world.runnerProcessIds.clear();
+};
+const rememberStartedInstance = (world: CustomWorld, instance: any) => {
+    world.resources.instance = instance;
+    world.recordStartedInstance(instance);
+    const pid = instance?.processId;
+    if (isPositiveProcessId(pid)) {
+        world.runnerProcessIds.set(instance.id, pid);
+        processId = pid;
+        world.scenarioLifecycle.ownProcess(pid, "runner:process");
+    }
+    return instance;
+};
 const startWith = async function(this: CustomWorld, instanceArg: string) {
-    this.resources.instance = await this.resources.sequence!.start({
+    rememberStartedInstance(this, await this.resources.sequence!.start({
         appConfig: {},
         args: instanceArg.split(" ")
-    });
+    }));
     this.resources.sequence = undefined;
 };
 const waitForContainerToClose = async () => {
@@ -374,7 +392,8 @@ AfterAll(async () => {
     cleanupBddConfig();
 });
 
-Before(() => {
+Before(function(this: CustomWorld) {
+    clearRunnerProcessState(this);
     actualHealthResponse = "";
     actualStatusResponse = "";
     streams = {};
@@ -446,9 +465,9 @@ After({}, async function (this: any) {
         actualStatusResponse = undefined;
         actualApiResponse = undefined;
         containerId = undefined as unknown as string;
-        processId = undefined as unknown as number;
         hostUtils.output = "";
     } finally {
+        clearRunnerProcessState(this);
         // Scenario-owned clients are disposed only after all scenario cleanup
         // operations. The module-level suite client remains shared and usable.
         const state = clearE2eScenarioState(this.resources, {
@@ -627,7 +646,7 @@ When("sequence {string} is loaded", { timeout: 15000 }, async function(this: Cus
 });
 
 When("instance started", async function(this: CustomWorld) {
-    this.resources.instance = await this.resources.sequence!.start({ appConfig: {}, args: [] });
+    rememberStartedInstance(this, await this.resources.sequence!.start({ appConfig: {}, args: [] }));
     this.resources.sequence = undefined;
 });
 
@@ -643,9 +662,9 @@ Then("instance is ready for stdin", async function(this: CustomWorld) {
 
 When("start Instance by name {string}", async function(this: CustomWorld, name: string) {
     this.resources.sequence = getHostClient(this).getSequenceClient(name);
-    this.resources.instance = await this.resources.sequence!.start({
+    rememberStartedInstance(this, await this.resources.sequence!.start({
         appConfig: {}
-    });
+    }));
 });
 
 When("start Instance by name {string} with JSON arguments {string}", async function(this: CustomWorld, name: string, args: string) {
@@ -654,20 +673,20 @@ When("start Instance by name {string} with JSON arguments {string}", async funct
     if (!Array.isArray(instanceArgs)) throw new Error("Args must be an array");
 
     this.resources.sequence = getHostClient(this).getSequenceClient(name);
-    this.resources.instance = await this.resources.sequence!.start({
+    rememberStartedInstance(this, await this.resources.sequence!.start({
         appConfig: {},
         args: instanceArgs
-    });
+    }));
 });
 
 When("starting Instance by name {string} fails", async function(this: CustomWorld, name: string) {
     this.resources.sequence = getHostClient(this).getSequenceClient(name);
 
     try {
-        this.resources.instance = await this.resources.sequence!.start({
+        rememberStartedInstance(this, await this.resources.sequence!.start({
             appConfig: {},
             args: []
-        });
+        }));
     } catch (error) {
         this.resources.lastError = error;
         return;
@@ -684,10 +703,10 @@ When("starting Instance by name {string} with JSON arguments {string} fails", as
     this.resources.sequence = getHostClient(this).getSequenceClient(name);
 
     try {
-        this.resources.instance = await this.resources.sequence!.start({
+        rememberStartedInstance(this, await this.resources.sequence!.start({
             appConfig: {},
             args: instanceArgs
-        });
+        }));
     } catch (error) {
         this.resources.lastError = error;
         return;
@@ -709,38 +728,38 @@ When("switch to instance {string}", function(this: CustomWorld, seq: string) {
 });
 
 When("start Instance with output topic name {string}", async function(this: CustomWorld, topicOut: string) {
-    this.resources.instance = await this.resources.sequence!.start({
+    rememberStartedInstance(this, await this.resources.sequence!.start({
         appConfig: {},
         outputTopic: topicOut
-    });
+    }));
 });
 
 When("start Instance with input topic name {string}", async function(this: CustomWorld, topicIn: string) {
-    this.resources.instance = await this.resources.sequence!.start({
+    rememberStartedInstance(this, await this.resources.sequence!.start({
         appConfig: {},
         inputTopic: topicIn
-    });
+    }));
 });
 
 When(
     "start Instance with args {string} and output topic name {string}",
     async function(this: CustomWorld, instanceArg: string, topicOut: string) {
-        this.resources.instance = await this.resources.sequence!.start({
+        rememberStartedInstance(this, await this.resources.sequence!.start({
             appConfig: {},
             args: instanceArg.split(" "),
             outputTopic: topicOut
-        });
+        }));
     }
 );
 
 When(
     "start Instance with args {string} and input topic name {string}",
     async function(this: CustomWorld, instanceArg: string, topicIn: string) {
-        this.resources.instance = await this.resources.sequence!.start({
+        rememberStartedInstance(this, await this.resources.sequence!.start({
             appConfig: {},
             args: instanceArg.split(" "),
             inputTopic: topicIn
-        });
+        }));
     }
 );
 
@@ -819,8 +838,16 @@ When("get runner PID", { timeout: 30000 }, async function(this: CustomWorld) {
     let tries = 0;
 
     const adapter = process.env.RUNTIME_ADAPTER || "process";
+    const processIdDeadline = Date.now() + 30000;
+    const handedOffProcessId = this.resources.instance?.id ? this.runnerProcessIds.get(this.resources.instance.id) : undefined;
 
-    while (!success && tries < 3) {
+    if (adapter === "process" && isPositiveProcessId(handedOffProcessId)) {
+        processId = handedOffProcessId;
+        console.log("Process is identified from start handoff.", processId);
+        return;
+    }
+
+    while (!success && (adapter === "process" ? Date.now() < processIdDeadline : tries < 3)) {
         const health = await this.resources.instance?.getHealth();
 
         console.log("Health", health);
@@ -834,14 +861,11 @@ When("get runner PID", { timeout: 30000 }, async function(this: CustomWorld) {
 
                 if (containerId) {
                     console.log("Container is identified.", containerId);
-                    this.scenarioLifecycle.ownContainer(containerId, "runner:docker", async () => {
-                        const container = dockerode.getContainer(containerId);
-                        try {
-                            await container.stop({ t: 10 });
-                        } catch {
-                            await container.kill();
-                        }
-                    });
+                    const runnerContainerId = containerId;
+                    const runnerContainer = dockerode.getContainer(runnerContainerId);
+                    this.scenarioLifecycle.ownContainer(runnerContainerId, "runner:docker", () =>
+                        stopAutoRemoveRunnerContainer(runnerContainer)
+                    );
                 }
                 break;
             case "process":
@@ -849,8 +873,9 @@ When("get runner PID", { timeout: 30000 }, async function(this: CustomWorld) {
 
                 console.log("Health", health);
 
-                if (res) {
+                if (isPositiveProcessId(res)) {
                     processId = success = res;
+                    this.lifecycleTrace.addRunnerPid(res);
                     console.log("Process is identified.", processId);
                     this.scenarioLifecycle.ownProcess(processId, "runner:process");
                 }
@@ -862,7 +887,8 @@ When("get runner PID", { timeout: 30000 }, async function(this: CustomWorld) {
         tries++;
 
         if (!success) {
-            await defer(50);
+            const remaining = processIdDeadline - Date.now();
+            if (adapter !== "process" || remaining > 0) await defer(adapter === "process" ? Math.min(50, remaining) : 50);
         }
     }
 

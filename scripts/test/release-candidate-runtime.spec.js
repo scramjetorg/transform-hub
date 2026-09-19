@@ -1,0 +1,141 @@
+"use strict";
+
+const test = require("ava").default;
+const { existsSync, mkdtempSync, readFileSync, rmSync } = require("node:fs");
+const { spawnSync } = require("node:child_process");
+const { tmpdir } = require("node:os");
+const { join, resolve } = require("node:path");
+
+const runtime = require("../release-candidate-runtime");
+const shared = require("../lib/candidate-identity");
+const state = require("../lib/release-bundle-state");
+
+const SHA = "a".repeat(40);
+const identityInput = { sourceSha: SHA, sourceTree: `sha256:${"b".repeat(64)}`, lockfileDigest: `sha256:${"c".repeat(64)}`, configRevision: "runtime-test", configDigest: `sha256:${"d".repeat(64)}`, buildIdentity: `sha256:${"e".repeat(64)}` };
+const lock = { schema: "release-train-lock.v1", revision: 1, status: "active", repository: "scramjetorg/transform-hub", branch: "devel", stableVersion: "2.0.0", nextStableVersion: "2.1.0", nextDevelopmentVersion: "2.1.0-devel", releaseBranch: "release/2.0.0", refs: { D0: "1".repeat(40), R1: "2".repeat(40), main: "3".repeat(40) }, promotion: { number: 42, headSha: "3".repeat(40), branch: "release/2.0.0", base: "main", repository: "scramjetorg/transform-hub" }, continuation: [], currentCommit: "4".repeat(40) };
+
+test("runtime module loads without loading glob or operational dependencies", (t) => {
+    const script = "const Module=require('node:module'); const load=Module._load; Module._load=(request,...args)=>{if(request==='glob') throw new Error('glob loaded'); return load.call(Module,request,...args)}; require('./scripts/release-candidate-runtime');";
+    const result = spawnSync(process.execPath, ["-e", script], { cwd: resolve(__dirname, "..", ".."), encoding: "utf8" });
+    t.is(result.status, 0, result.stderr);
+});
+
+test("missing remote policy fails before remote, lockfile, or output work", (t) => {
+    const root = mkdtempSync(join(tmpdir(), "candidate-preflight-order-"));
+    t.teardown(() => rmSync(root, { recursive: true, force: true }));
+    const output = join(root, "identity.json");
+    t.throws(() => runtime.preflight({ repository: "scramjetorg/transform-hub", branch: "devel", sourceSha: SHA, output, env: {}, runner: () => { throw new Error("remote called"); } }), { message: /unconfirmed/ });
+    t.false(existsSync(output));
+});
+
+test("candidate identity remains compatible with state schema and key algorithm", (t) => {
+    t.deepEqual(shared.candidateIdentity(identityInput), state.candidateIdentity(identityInput));
+});
+
+test("candidate preflight binds only the real same-repository release PR head", (t) => {
+    const root = mkdtempSync(join(tmpdir(), "candidate-train-binding-"));
+    t.teardown(() => rmSync(root, { recursive: true, force: true }));
+    const event = { repository: { full_name: lock.repository }, pull_request: { number: 42, merge_commit_sha: "f".repeat(40), head: { sha: SHA, ref: lock.releaseBranch, repo: { full_name: lock.repository } }, base: { ref: "main" } } };
+    const result = runtime.preflight({ repository: lock.repository, branch: "devel", sourceSha: SHA, output: join(root, "identity.json"), event, env: { RELEASE_REMOTE_POLICY_CONFIRMED: "true" }, runner: (_command, args) => {
+        if (args[0] === "ls-remote") return `${lock.currentCommit} refs/heads/devel\n`;
+        if (args[0] === "show") return `${JSON.stringify(lock)}\n`;
+        if (args[0] === "rev-parse") return `${"a".repeat(40)}\n`;
+        return "";
+    } });
+    t.deepEqual(result.trainBinding, { trainId: "scramjetorg/transform-hub:2.0.0", continuationBase: lock.refs.R1, promotion: { number: 42, repository: lock.repository, base: "main" }, sourceSha: SHA });
+});
+
+test("candidate preflight rejects a synthetic merge SHA and a mismatched remote lock", (t) => {
+    const event = { repository: { full_name: lock.repository }, pull_request: { number: 42, merge_commit_sha: SHA, head: { sha: SHA, ref: lock.releaseBranch, repo: { full_name: lock.repository } }, base: { ref: "main" } } };
+    t.throws(() => runtime.preflight({ repository: lock.repository, branch: "devel", sourceSha: SHA, output: join(tmpdir(), "unused.json"), event, env: { RELEASE_REMOTE_POLICY_CONFIRMED: "true" }, runner: (_command, args) => args[0] === "ls-remote" ? `${lock.currentCommit} refs/heads/devel\n` : JSON.stringify(lock) }), { message: /Synthetic/ });
+    const mismatch = { ...lock, currentCommit: "5".repeat(40) };
+    t.throws(() => runtime.preflight({ repository: lock.repository, branch: "devel", sourceSha: SHA, output: join(tmpdir(), "unused-2.json"), event: { ...event, pull_request: { ...event.pull_request, merge_commit_sha: "f".repeat(40) } }, env: { RELEASE_REMOTE_POLICY_CONFIRMED: "true" }, runner: (_command, args) => args[0] === "ls-remote" ? `${lock.currentCommit} refs/heads/devel\n` : args[0] === "show" ? JSON.stringify(mismatch) : "" }), { message: /active release-train lock/ });
+});
+
+test("preflight rejects a moved protected remote before tree or lockfile work", (t) => {
+    const calls = [];
+    t.throws(() => runtime.preflight({ repository: "scramjetorg/transform-hub", branch: "devel", sourceSha: SHA, output: join(tmpdir(), "unused-candidate-identity.json"), env: { RELEASE_REMOTE_POLICY_CONFIRMED: "true" }, runner: (_command, args) => { calls.push(args); return `${"b".repeat(40)} refs/heads/devel\n`; } }), { message: /moved/ });
+    t.is(calls.length, 1);
+    t.deepEqual(calls[0], ["ls-remote", "https://github.com/scramjetorg/transform-hub.git", "refs/heads/devel"]);
+});
+
+test("preflight hashes the SHA-1 Git tree object ID into a valid SHA-256 identity digest", (t) => {
+    const root = mkdtempSync(join(tmpdir(), "candidate-preflight-tree-"));
+    t.teardown(() => rmSync(root, { recursive: true, force: true }));
+    const calls = [];
+    const identity = runtime.preflight({ repository: "scramjetorg/transform-hub", branch: "devel", sourceSha: SHA, output: join(root, "identity.json"), env: { RELEASE_REMOTE_POLICY_CONFIRMED: "true" }, runner: (_command, args) => {
+        calls.push(args);
+        if (args[0] === "ls-remote") return `${SHA} refs/heads/devel\n`;
+        return `${"b".repeat(40)}\n`;
+    } });
+    t.regex(identity.sourceTree, /^sha256:[a-f0-9]{64}$/);
+    t.is(calls.length, 2);
+    t.deepEqual(calls[1], ["rev-parse", `${SHA}^{tree}`]);
+});
+
+test("preflight rejects malformed Git tree object output before creating candidate identity", (t) => {
+    const root = mkdtempSync(join(tmpdir(), "candidate-preflight-malformed-tree-"));
+    t.teardown(() => rmSync(root, { recursive: true, force: true }));
+    const output = join(root, "identity.json");
+    t.throws(() => runtime.preflight({ repository: "scramjetorg/transform-hub", branch: "devel", sourceSha: SHA, output, env: { RELEASE_REMOTE_POLICY_CONFIRMED: "true" }, runner: (_command, args) => args[0] === "ls-remote" ? `${SHA} refs/heads/devel\n` : "not-a-git-tree\n" }), { message: /Git tree object ID must be a 40-character Git SHA/ });
+    t.false(existsSync(output));
+});
+
+test("candidate runtime Dockerfiles verify staged artifacts and install fully offline", (t) => {
+    const verifier = readFileSync(resolve(__dirname, "..", "checkpoint", "verify-runtime-dependencies.js"), "utf8");
+    const dockerfiles = [
+        ["bdd-bun", resolve(__dirname, "..", "..", "docker", "Dockerfile.bdd-bun")],
+        ["runner", resolve(__dirname, "..", "..", "packages", "runner", "Dockerfile")],
+        ["runner-bun", resolve(__dirname, "..", "..", "packages", "runner-bun", "Dockerfile")],
+        ["runner-python", resolve(__dirname, "..", "..", "packages", "runner-python", "Dockerfile")],
+        ["pre-runner", resolve(__dirname, "..", "..", "packages", "pre-runner", "Dockerfile")],
+    ];
+    for (const [name, file] of dockerfiles) {
+        const dockerfile = readFileSync(file, "utf8");
+        if (name !== "pre-runner") {
+            t.true(dockerfile.includes('CHECKPOINT_RUNTIME_DEPENDENCIES}" = "true"'));
+            t.true(verifier.includes("Runtime dependency file hash mismatch"));
+        }
+        if (name === "bdd-bun" || name === "runner-bun" || name === "runner-python") t.true(dockerfile.includes("bun/bun-linux-x64.zip"));
+        if (name === "runner" || name === "runner-bun" || name === "runner-python") {
+            t.true(dockerfile.includes("yarn/yarn.tar.gz"));
+            t.true(dockerfile.includes("install --offline"));
+        }
+        t.false(dockerfile.includes("deb.nodesource.com"));
+        if (name === "bdd-bun") t.true(dockerfile.includes("curl -fsSL https://bun.sh/install"));
+    }
+});
+
+test("candidate lookup treats gh's missing-release response as a first-build state", (t) => {
+    const root = mkdtempSync(join(tmpdir(), "candidate-locate-missing-release-"));
+    t.teardown(() => rmSync(root, { recursive: true, force: true }));
+    const output = join(root, "locate.json");
+    const result = runtime.locate({
+        repository: "scramjetorg/transform-hub",
+        tag: `candidate-${SHA}`,
+        sourceSha: SHA,
+        output,
+        runner: () => {
+            const error = new Error("Command failed");
+            error.stderr = "release not found\n";
+            throw error;
+        },
+    });
+    t.deepEqual(result, { status: "not-found" });
+    t.deepEqual(JSON.parse(readFileSync(output, "utf8")), { status: "not-found", tag: `candidate-${SHA}` });
+});
+
+test("candidate lookup distinguishes an existing unsealed draft from a missing release", (t) => {
+    const root = mkdtempSync(join(tmpdir(), "candidate-locate-unsealed-release-"));
+    t.teardown(() => rmSync(root, { recursive: true, force: true }));
+    const output = join(root, "locate.json");
+    const result = runtime.locate({
+        repository: "scramjetorg/transform-hub",
+        tag: `candidate-${SHA}`,
+        sourceSha: SHA,
+        output,
+        runner: (_command, args) => args[1] === "view" ? JSON.stringify({ databaseId: 17, isDraft: true, tagName: `candidate-${SHA}`, targetCommitish: SHA, assets: [{ name: "release-set.json" }] }) : "",
+    });
+    t.deepEqual(result, { status: "unsealed", tag: `candidate-${SHA}`, releaseId: 17 });
+    t.deepEqual(JSON.parse(readFileSync(output, "utf8")), result);
+});

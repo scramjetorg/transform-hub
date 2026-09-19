@@ -16,6 +16,7 @@
  *
  * Usage:
  *   node scripts/release-align.js check|dry-run|apply --release-version=X.Y.Z
+ *   node scripts/release-align.js development --development-version=X.Y.Z-devel
  *   node scripts/release-align.js apply-licenses
  *
  * The tool uses the shared boundary module (scripts/lib/release-boundary.js)
@@ -57,6 +58,7 @@ const ROOT_DIR = process.env.SCRAMJET_RELEASE_ROOT
 	: path.resolve(__dirname, "..");
 
 const STABLE_SEMVER = /^(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)$/;
+const DEVELOPMENT_SEMVER = /^(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)-devel$/;
 
 /**
  * Validate an explicitly requested stable release version.
@@ -71,6 +73,28 @@ function resolveReleaseVersion(value) {
 		throw new Error(`Release version must be a stable SemVer version, received ${JSON.stringify(value)}.`);
 	}
 	return value;
+}
+
+/**
+ * Validate an explicitly requested development version. Only the canonical
+ * repository-specific `-devel` prerelease form is accepted.
+ * @param {string|undefined} value
+ * @returns {string}
+ */
+function resolveDevelopmentVersion(value) {
+	if (value === undefined) {
+		throw new Error("A --development-version=X.Y.Z-devel option is required.");
+	}
+	if (!DEVELOPMENT_SEMVER.test(value)) {
+		throw new Error(`Development version must be a canonical SemVer prerelease ending in -devel, received ${JSON.stringify(value)}.`);
+	}
+	return value;
+}
+
+function resolveAlignmentVersion(options) {
+	return options.developmentVersion === undefined
+		? resolveReleaseVersion(options.releaseVersion)
+		: resolveDevelopmentVersion(options.developmentVersion);
 }
 
 /**
@@ -131,7 +155,7 @@ function writeTextAtomically(filePath, content) {
  * @returns {{ content: string, changed: boolean }}
  */
 function updateImageTags(content, newVersion) {
-	const re = /(scramjetorg\/[-\w]+):([\d.]+)"/g;
+	const re = /(scramjetorg\/[-\w]+):([\d.]+(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?)"/g;
 	let result = content;
 	let changed = false;
 
@@ -320,7 +344,7 @@ function planRuntimeMetadata(releaseVersion) {
  *   - errors: string[] (drift / validation failures)
  */
 function computeChangePlan(options = {}) {
-	const releaseVersion = resolveReleaseVersion(options.releaseVersion);
+	const releaseVersion = resolveAlignmentVersion(options);
 	const errors = [];
 	const plan = {
 		rootVersion: { current: null, expected: releaseVersion, changed: false },
@@ -524,7 +548,7 @@ function computeChangePlan(options = {}) {
 		plan.imageConfig.changed = changed;
 		if (changed) {
 			// Collect individual changes
-			const re = /(scramjetorg\/[-\w]+):([\d.]+)"/g;
+			const re = /(scramjetorg\/[-\w]+):([\d.]+(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?)"/g;
 			for (let m = re.exec(imgContent); m !== null; m = re.exec(imgContent)) {
 				plan.imageConfig.changes.push({ image: m[1], from: m[2], to: releaseVersion });
 			}
@@ -706,6 +730,10 @@ function check(options = {}) {
 	}
 
 	return { ok: !hasDrift, errors: [...plan.errors, ...licErrors], reportLines: lines };
+}
+
+function checkDevelopment(options = {}) {
+	return check({ developmentVersion: resolveDevelopmentVersion(options.developmentVersion) });
 }
 
 // ---------------------------------------------------------------------------
@@ -952,6 +980,11 @@ function applyChanges(options = {}) {
 	return { ok, modified, reportLines: report, errors };
 }
 
+/** Apply an explicitly validated development-version alignment. */
+function applyDevelopmentChanges(options = {}) {
+	return applyChanges({ developmentVersion: resolveDevelopmentVersion(options.developmentVersion) });
+}
+
 // ---------------------------------------------------------------------------
 // License Apply Mode
 // ---------------------------------------------------------------------------
@@ -1043,14 +1076,20 @@ function applyLicenses() {
 function usage() {
 	console.error(`Usage:
   node scripts/release-align.js check --release-version=X.Y.Z
+  node scripts/release-align.js check-development --development-version=X.Y.Z-devel
   node scripts/release-align.js dry-run --release-version=X.Y.Z
   node scripts/release-align.js apply --release-version=X.Y.Z
+  node scripts/release-align.js development --development-version=X.Y.Z-devel
+  node scripts/release-align.js apply-development --development-version=X.Y.Z-devel
   node scripts/release-align.js apply-licenses
 
 Modes:
-  check            — validate full alignment; exit 0 if aligned, 1 if drift
+  check            — validate full stable alignment; exit 0 if aligned, 1 if drift
+  check-development — validate development alignment; exit 0 if aligned, 1 if drift
   dry-run          — show the change plan without writing files
   apply            — execute alignment changes (version, deps, images)
+  development      — execute alignment against an explicit X.Y.Z-devel version
+  apply-development — alias for development
   apply-licenses   — write MIT LICENSE files and update license fields only
 
 Options:
@@ -1062,29 +1101,45 @@ Options:
 function parseCliArguments(args) {
 	const [mode, ...options] = args;
 	let releaseVersion;
+	let developmentVersion;
 	const versionedMode = ["check", "dry-run", "apply"].includes(mode);
+	const developmentMode = ["development", "devel", "apply-development"].includes(mode);
+	const developmentCheckMode = mode === "check-development";
 
-	if (!mode || !["check", "dry-run", "apply", "apply-licenses"].includes(mode)) {
+	if (!mode || !["check", "check-development", "dry-run", "apply", "development", "devel", "apply-development", "apply-licenses"].includes(mode)) {
 		throw new Error(`Error: invalid mode "${mode}"`);
 	}
 
 	for (const option of options) {
-		if (!option.startsWith("--release-version=")) {
+		if (!option.startsWith("--release-version=") && !option.startsWith("--development-version=")) {
 			throw new Error(`Error: invalid option "${option}"`);
 		}
-		if (releaseVersion !== undefined) {
+		const isDevelopmentOption = option.startsWith("--development-version=");
+		if (isDevelopmentOption && developmentVersion !== undefined || !isDevelopmentOption && releaseVersion !== undefined) {
 			throw new Error("Error: --release-version may be specified only once.");
 		}
-		releaseVersion = resolveReleaseVersion(option.slice("--release-version=".length));
+		if (isDevelopmentOption) {
+			developmentVersion = resolveDevelopmentVersion(option.slice("--development-version=".length));
+		} else {
+			releaseVersion = resolveReleaseVersion(option.slice("--release-version=".length));
+		}
 	}
 	if (versionedMode && releaseVersion === undefined) {
 		throw new Error(`Error: ${mode} requires --release-version=X.Y.Z.`);
 	}
-	if (!versionedMode && releaseVersion !== undefined) {
+	if ((developmentMode || developmentCheckMode) && developmentVersion === undefined) {
+		throw new Error(`Error: ${mode} requires --development-version=X.Y.Z-devel.`);
+	}
+	if ((developmentMode || developmentCheckMode) && releaseVersion !== undefined || versionedMode && developmentVersion !== undefined) {
+		throw new Error("Error: stable and development version options cannot be combined or used with the wrong mode.");
+	}
+	if (!versionedMode && !developmentMode && !developmentCheckMode && (releaseVersion !== undefined || developmentVersion !== undefined)) {
 		throw new Error("Error: apply-licenses is version-independent and does not accept --release-version.");
 	}
 
-	return { mode, releaseVersion };
+	const parsed = { mode, releaseVersion };
+	if (developmentVersion !== undefined) parsed.developmentVersion = developmentVersion;
+	return parsed;
 }
 
 function main() {
@@ -1101,20 +1156,29 @@ function main() {
 		console.error(error.message);
 		usage();
 	}
-	const { mode, releaseVersion } = parsed;
+	const { mode, releaseVersion, developmentVersion } = parsed;
+	const alignmentOptions = developmentVersion === undefined ? { releaseVersion } : { developmentVersion };
+	const developmentMode = ["development", "devel", "apply-development"].includes(mode);
 
-	if (mode === "check") {
-		const result = check({ releaseVersion });
+	if (mode === "check" || mode === "check-development") {
+		const result = mode === "check-development" ? checkDevelopment(alignmentOptions) : check(alignmentOptions);
 		for (const line of result.reportLines) {
 			console.log(line);
 		}
 		if (!result.ok) {
 			process.exit(1);
 		}
-	} else if (mode === "dry-run") {
-		dryRun({ releaseVersion });
+	} else if (mode === "dry-run" || developmentMode) {
+		if (developmentMode) {
+			const result = applyChanges(alignmentOptions);
+			for (const line of result.reportLines) console.log(line);
+			if (result.modified > 0) console.log(`\n${result.modified} file(s) modified.`);
+			if (!result.ok) process.exit(1);
+		} else {
+			dryRun(alignmentOptions);
+		}
 	} else if (mode === "apply") {
-		const result = applyChanges({ releaseVersion });
+		const result = applyChanges(alignmentOptions);
 		for (const line of result.reportLines) {
 			console.log(line);
 		}
@@ -1150,4 +1214,8 @@ if (require.main === module) {
 	main();
 }
 
-module.exports = { check, dryRun, applyChanges, applyLicenses, computeChangePlan, discoverLicensePackages, parseCliArguments, resolveReleaseVersion };
+module.exports = {
+	check, checkDevelopment, dryRun, applyChanges, applyDevelopmentChanges, applyLicenses,
+	computeChangePlan, discoverLicensePackages, parseCliArguments,
+	resolveReleaseVersion, resolveDevelopmentVersion,
+};

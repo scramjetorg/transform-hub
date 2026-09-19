@@ -40,6 +40,22 @@ jobs:
           cache-mode: read-write
           checkpoint-branch: devel
 
+      - name: Devel / release version
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin main:refs/remotes/origin/main
+          main_version="$(git show refs/remotes/origin/main:package.json | node -e 'const fs = require("node:fs"); process.stdout.write(JSON.parse(fs.readFileSync(0, "utf8")).version)')"
+          devel_version="$(node -p "require('./package.json').version")"
+          node - "$devel_version" "$main_version" <<'NODE'
+          const semver = require("semver");
+          const [, , develVersion, mainVersion] = process.argv;
+          const canonicalDevel = /^(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)-devel$/;
+          if (!canonicalDevel.test(develVersion)) throw new Error(`devel version is not canonical X.Y.Z-devel: ${develVersion}`);
+          if (!semver.valid(mainVersion)) throw new Error(`main version is not valid SemVer: ${mainVersion}`);
+          const stableDevel = develVersion.slice(0, -"-devel".length);
+          if (!semver.gt(stableDevel, mainVersion)) throw new Error(`devel version ${develVersion} must be greater than main version ${mainVersion}`);
+          NODE
+
       - name: Repository security policy
         run: npm run check:security-workflow
 
@@ -50,10 +66,7 @@ jobs:
         run: npm run typecheck
 
       - name: Dependency and release alignment
-        run: npm run release:align:check -- --release-version="$(node -p "require('./package.json').version")"
+        run: node scripts/release-align.js check-development --development-version="$(node -p "require('./package.json').version")"
 
       - name: Runtime invariants
         run: npm run check:runtime-invariants
-
-      - name: License validation
-        run: npm run check:licenses

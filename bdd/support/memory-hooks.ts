@@ -465,11 +465,12 @@ export function beginCleanupTiming(world: any): void {
 // before strict memory measurement/GC begins.
 After(async function (this: any, scenario: any) {
     const cleanupErrors: Error[] = [];
+    let traceFailure = false;
+    // Scenario isolation was established before the memory baseline. Its
+    // cleanup runs here, after all step-definition hooks and before the
+    // final measurement, so owned HOME/config/artifact/PKI paths and port
+    // reservations cannot retain scenario state across measurements.
     try {
-        // Scenario isolation was established before the memory baseline. Its
-        // cleanup runs here, after all step-definition hooks and before the
-        // final measurement, so owned HOME/config/artifact/PKI paths and port
-        // reservations cannot retain scenario state across measurements.
         await this.scenarioIsolation?.cleanup();
         this.scenarioIsolation = undefined;
     } catch (err: any) {
@@ -491,7 +492,8 @@ After(async function (this: any, scenario: any) {
         });
     }
 
-    const baseline: number | undefined = this[BASELINE_KEY];
+    try {
+        const baseline: number | undefined = this[BASELINE_KEY];
 
     // Derive scenario metadata from the Cucumber pickle.
     const scenarioName: string =
@@ -526,6 +528,7 @@ After(async function (this: any, scenario: any) {
 
     if (!isBddMemoryGuardEnabled() || memorySkip.skip || baseline === undefined) {
         if (cleanupErrors.length > 0) {
+            traceFailure = true;
             throw new Error(`BDD world cleanup failed: ${cleanupErrors.map(e => e.message).join("; ")}`);
         }
         return;
@@ -574,6 +577,7 @@ After(async function (this: any, scenario: any) {
 
     // ---- Check threshold ----
     if (delta > effectiveThreshold) {
+        traceFailure = true;
         const diagnostics = buildBddMemoryDiagnostics({
             scenarioName,
             baseline,
@@ -605,6 +609,7 @@ After(async function (this: any, scenario: any) {
     const registryErrors = await getMemoryRegistry().assertAll();
 
     if (registryErrors.length > 0) {
+        traceFailure = true;
         failures.push(new Error(
             "BDD child process / container memory checks failed:\n" +
             registryErrors.join("\n---\n")
@@ -612,6 +617,7 @@ After(async function (this: any, scenario: any) {
     }
 
     if (failures.length > 0) {
+        traceFailure = true;
         throw new Error(
             `BDD scenario "${scenarioName}" collected ${failures.length} failure(s):\n` +
             failures.map((failure, index) => `--- failure ${index + 1} ---\n${failure.message}`).join("\n")
@@ -622,6 +628,12 @@ After(async function (this: any, scenario: any) {
     delete this[BASELINE_KEY];
     delete this[BEFORE_USAGE_KEY];
     delete this[BASELINE_USAGE_KEY];
+    } finally {
+        if (traceFailure || cleanupErrors.length > 0) {
+            try { this.lifecycleTrace?.render("cleanup or memory failure"); } catch { /* best effort only */ }
+        }
+        try { this.disposeLifecycleTrace?.(); } catch { /* disposal must not mask scenario errors */ }
+    }
 });
 
 // ---------------------------------------------------------------------------

@@ -1,0 +1,84 @@
+name: PR fast validation
+
+on:
+  pull_request:
+    branches: [devel]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-fast-validation-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  release-promotion-eligibility:
+    name: Release / devel promotion eligibility
+    if: ${{ github.event.pull_request.base.ref == 'devel' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Install release helper dependencies
+        run: npm ci --ignore-scripts
+      - name: Read release versions and open release promotions
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          head_version="$(node -p "require('./package.json').version")"
+          main_version="$(gh api "repos/$GITHUB_REPOSITORY/contents/package.json?ref=main" --jq '.content' | base64 --decode | node -p "JSON.parse(require('fs').readFileSync(0, 'utf8')).version")"
+          open_promotions="$(gh api --paginate "repos/$GITHUB_REPOSITORY/pulls?state=open&base=main&per_page=100" --jq '[.[] | select(.head.repo.full_name == env.GITHUB_REPOSITORY and (.head.ref | startswith("release/")))] | length' | awk '{ total += $1 } END { print total + 0 }')"
+          node scripts/release-simple.js assert-eligible --head-version "$head_version" --main-version "$main_version" --open-release-prs "$open_promotions" --head-sha "$HEAD_SHA"
+  release-promotion-alignment:
+    name: Release / devel package alignment
+    if: ${{ github.event.pull_request.base.ref == 'devel' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Install release helper dependencies
+        run: npm ci --ignore-scripts
+      - name: Check development package alignment
+        run: node scripts/release-align.js check-development --development-version="$(node -p "require('./package.json').version")"
+  fast-validation:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Install dependencies
+        run: npm ci
+      - name: Config package contract test
+        run: npm run test --workspace=@scramjet/config
+      - name: Lockfile gate
+        run: npm run check:lockfile
+      - name: Static repository policy
+        run: npm run check:security-workflow
+      - name: Lint changed files
+        run: RAYON_NUM_THREADS=12 ./node_modules/.bin/biome lint --changed --since="${{ github.event.pull_request.base.sha }}" --error-on-warnings --no-errors-on-unmatched
+      - name: Offline contract and adapter tests
+        run: node scripts/run-ava.js scripts/test/release-simple.spec.js scripts/test/release-workflow-policy.spec.js scripts/test/workflow-inventory.spec.js scripts/test/simple-release-workflows.spec.js scripts/test/release-contract.spec.js scripts/test/release-admission.spec.js scripts/test/github-release-candidate.spec.js scripts/test/release-candidate-assets.spec.js scripts/test/release-bdd-validation.spec.js scripts/test/release-bundle.spec.js
+      - name: Affected unit and workflow policy tests
+        run: node scripts/run-ava.js scripts/test/release-pr-smoke.spec.js scripts/test/workflow-policy.spec.js
+      - name: Configured risk-area TypeScript smoke
+        run: node scripts/release-pr-smoke.js "${{ github.event.pull_request.base.sha }}"

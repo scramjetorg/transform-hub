@@ -1,6 +1,8 @@
 import Dockerode from "dockerode";
 import { PassThrough } from "stream";
 import { appendFile } from "fs";
+import { readFileSync } from "fs";
+import { join } from "path";
 
 import {
     DockerAdapterRunConfig,
@@ -75,6 +77,10 @@ export class DockerodeDockerHelper implements IDockerHelper {
                     Type: "bind",
                     ReadOnly: !cfg.writeable
                 };
+            }
+
+            if (typeof cfg.volume !== "string" || cfg.volume.length === 0) {
+                throw new Error("Docker volume mount is missing a nonempty volume id");
             }
 
             return {
@@ -228,6 +234,33 @@ export class DockerodeDockerHelper implements IDockerHelper {
 
     private pulledImages: {[key: string]: Promise<void> | undefined } = {};
 
+    private ghcrAuthConfig(): { username: string, password: string, serveraddress: string } | undefined {
+        const dockerConfig = process.env.DOCKER_CONFIG;
+        if (!dockerConfig) return undefined;
+
+        try {
+            const config = JSON.parse(readFileSync(join(dockerConfig, "config.json"), "utf8"));
+            const auth = config?.auths?.["ghcr.io"]?.auth;
+            if (typeof auth !== "string" || auth.length === 0 || !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(auth)) {
+                return undefined;
+            }
+
+            const credentials = Buffer.from(auth, "base64").toString("utf8");
+            if (Buffer.from(credentials, "utf8").toString("base64") !== auth) return undefined;
+
+            const separator = credentials.indexOf(":");
+            if (separator <= 0 || separator === credentials.length - 1) return undefined;
+
+            return {
+                username: credentials.slice(0, separator),
+                password: credentials.slice(separator + 1),
+                serveraddress: "ghcr.io"
+            };
+        } catch {
+            return undefined;
+        }
+    }
+
     async pullImage(name: string, fetchOnlyIfNotExists = true) {
         if (fetchOnlyIfNotExists) {
             const start = new Date();
@@ -261,10 +294,17 @@ export class DockerodeDockerHelper implements IDockerHelper {
 
             this.logger.trace("Start pulling image", name);
 
-            const pullStream = await this.dockerode.pull(name);
+            const authconfig = name === "ghcr.io" || name.startsWith("ghcr.io/") ? this.ghcrAuthConfig() : undefined;
+            const pullStream = authconfig ? await this.dockerode.pull(name, { authconfig }) : await this.dockerode.pull(name);
 
             // Wait for pull to finish
-            await new Promise(res => this.dockerode.modem.followProgress(pullStream, res));
+            await new Promise<void>((res, rej) => this.dockerode.modem.followProgress(pullStream, error => {
+                if (error) {
+                    rej(error);
+                } else {
+                    res();
+                }
+            }));
 
             const seconds = (new Date().getTime() - start.getTime()) / 1000;
 
@@ -293,7 +333,12 @@ export class DockerodeDockerHelper implements IDockerHelper {
                 "org.scramjet.host.is-sequence": "true"
             }
         }).then((volume) => {
-            return volume.Name;
+            const volumeId = (volume as unknown as Dockerode.Volume & { name?: string }).name || volume.Name;
+            if (typeof volumeId !== "string" || volumeId.length === 0) {
+                throw new Error("Docker volume creation returned no nonempty volume id");
+            }
+
+            return volumeId;
         });
     }
 

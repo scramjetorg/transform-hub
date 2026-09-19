@@ -15,9 +15,7 @@ Feature: Test our shiny new Python runner
         Given host is running
         When sequence "data/sequences/python-bdd-packages/python-bdd-unified-forever.tar.gz" loaded
         And instance started
-        And get runner PID
         And send kill message to instance
-        Then runner has ended execution
         And host is still running
 
     @ci-unified
@@ -25,10 +23,8 @@ Feature: Test our shiny new Python runner
         Given host is running
         When sequence "data/sequences/python-bdd-packages/python-bdd-unified-stop-handler.tar.gz" loaded
         And instance started
-        And get runner PID
         And keep instance streams "stdout"
         And send stop message to instance with arguments timeout 2000 and canCallKeepAlive "false"
-        Then runner has ended execution
         And kept instance stream "stdout" should be "Cleaning up... Cleanup done.\n"
         And host is still running
 

@@ -26,18 +26,10 @@ RUN apt-get update \
         gosu \
         tini \
         ca-certificates \
-        curl \
-        gnupg \
-    && mkdir -p /etc/apt/keyrings \
-    && curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key \
-        | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg \
-    && echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_${NODE_MAJOR}.x nodistro main" \
-        > /etc/apt/sources.list.d/nodesource.list \
-    && apt-get update \
-    && apt-get install -y --no-install-recommends nodejs \
-    && npm install -g --no-audit --no-fund yarn \
-    && apt-get purge -y --auto-remove gnupg \
+        unzip \
     && rm -rf /var/lib/apt/lists/*
+
+FROM node:22-bookworm-slim AS node-runtime
 
 FROM target AS builder
 
@@ -47,11 +39,33 @@ COPY ./dist/docker-runner ./dist
 
 FROM target
 
+ARG CHECKPOINT_RUNTIME_DEPENDENCIES=false
+COPY runtime-dependencies/ /opt/transform-hub/runtime-dependencies/
+COPY scripts/checkpoint/verify-runtime-dependencies.js /usr/local/bin/verify-runtime-dependencies.js
+COPY --from=node-runtime /usr/local /usr/local
+
 COPY --from=builder /app/dist ${HUB_DIR}
+COPY packages/runner/package.json /tmp/scramjet-runner-install/package.json
+COPY packages/runner/yarn.lock /tmp/scramjet-runner-install/yarn.lock
 
 WORKDIR ${HUB_DIR}/runner
 
-RUN yarn install --ignore-engines --frozen-lockfile --production --silent \
+RUN if [ "${CHECKPOINT_RUNTIME_DEPENDENCIES}" = "true" ]; then \
+        node /usr/local/bin/verify-runtime-dependencies.js "${HUB_DIR}/runtime-dependencies" --runner \
+            --runner-package-json /tmp/scramjet-runner-install/package.json \
+            --runner-lockfile /tmp/scramjet-runner-install/yarn.lock \
+        && \
+        unzip -q ${HUB_DIR}/runtime-dependencies/bun/bun-linux-x64.zip -d /usr/local/lib \
+        && ln -sf /usr/local/lib/bun-linux-x64/bun /usr/local/bin/bun \
+        && tar -xzf ${HUB_DIR}/runtime-dependencies/yarn/yarn.tar.gz -C /usr/local/lib \
+        && ln -sf /usr/local/lib/yarn-v1.22.22/bin/yarn /usr/local/bin/yarn \
+        && ln -sf /usr/local/lib/yarn-v1.22.22/bin/yarn /usr/local/bin/yarnpkg \
+        && yarn --cwd /tmp/scramjet-runner-install install --offline --ignore-engines --frozen-lockfile --production --silent \
+            --cache-folder ${HUB_DIR}/runtime-dependencies/yarn/cache \
+            --modules-folder ${HUB_DIR}/node_modules; \
+    else rm -f /usr/local/bin/yarn /usr/local/bin/yarnpkg \
+        && npm install -g --no-audit --no-fund yarn \
+        && yarn install --ignore-engines --frozen-lockfile --production --silent; fi \
     && yarn cache clean \
     && chmod +x ./bin/start-runner.js
 

@@ -53,13 +53,16 @@ echo "${VERSER2_WHEEL_SHA256}  ${TMP_DIR}/${VERSER2_WHEEL}" | sha256sum --check 
 
 PIP_ARGS=(
     -r "${PACKAGE_DIR}/requirements.txt"
-    "${TMP_DIR}/${VERSER2_WHEEL}"
+    --find-links "${TMP_DIR}"
     --target "${PACKAGE_DIR}/${TARGET}"
     --upgrade
 )
 
-if [[ "${INCLUDE_DEV}" == "1" ]]; then
-    PIP_ARGS+=( -r "${PACKAGE_DIR}/requirements-dev.txt" )
-fi
-
 python3 -m pip install "${PIP_ARGS[@]}"
+
+if [[ "${INCLUDE_DEV}" == "1" ]]; then
+    python3 -m pip install \
+        --target "${PACKAGE_DIR}/${TARGET}" \
+        --upgrade \
+        -r "${PACKAGE_DIR}/requirements-dev.txt"
+fi

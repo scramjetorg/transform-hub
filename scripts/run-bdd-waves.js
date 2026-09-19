@@ -540,6 +540,9 @@ async function runParallelWaves({ chunkName, chunkNames, passthrough }) {
                 SCRAMJET_BDD_FEATURE_PATHS: JSON.stringify(chunk.features),
                 SCRAMJET_BDD_EXPECTED_COMPONENTS: JSON.stringify(CHUNK_COMPONENTS[chunk.name] || { container: true, processes: [] })
             };
+            for (const name of ["BDD_DOCKER_TELEMETRY_SAMPLE_INTERVAL_MS", "BDD_CHUNK_MEMORY_SHORT"]) {
+                if (process.env[name] !== undefined) childEnv[name] = process.env[name];
+            }
             const startedAt = Date.now();
             return spawnOwnedChild({
                 command: process.execPath,

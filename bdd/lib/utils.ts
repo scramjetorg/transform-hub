@@ -36,6 +36,10 @@ export function getSiCommand(options: { useBddConfig?: boolean } = {}) {
         throw Error("Both SCRAMJET_SPAWN_JS and SCRAMJET_SPAWN_TS env set");
     }
 
+    if (process.env.SCRAMJET_TARBALL_BDD_ROOT && (process.env.SCRAMJET_SPAWN_JS || process.env.SCRAMJET_SPAWN_TS)) {
+        throw Error("Tarball BDD must use the installed CLI, not a source CLI override");
+    }
+
     const verifiedCommand = selectedSiCommand();
 
     if (verifiedCommand && (process.env.SCRAMJET_SPAWN_JS || process.env.SCRAMJET_SPAWN_TS)) {

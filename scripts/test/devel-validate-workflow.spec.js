@@ -51,9 +51,10 @@ test("devel workflow is fast-gates-only without builds, package tests, Bun, or B
 	t.true(source.includes("npm run check:security-workflow"));
 	t.true(source.includes("npm run lint"));
 	t.true(source.includes("npm run typecheck"));
-	t.true(source.includes("npm run release:align:check -- --release-version=\"$(node -p \"require('./package.json').version\")\""));
+	t.true(source.includes("node scripts/release-align.js check-development --development-version=\"$(node -p \"require('./package.json').version\")\""));
 	t.true(source.includes("npm run check:runtime-invariants"));
-	t.true(source.includes("npm run check:licenses"));
+	t.false(source.includes("npm run check:licenses"));
+	t.false(source.includes("--release-version=\"$(node -p \"require('./package.json').version\")\""));
 	t.false(source.includes("npm run build:packages"));
 	t.false(source.includes("npm run test:packages-no-concurrent"));
 	t.false(source.includes("oven-sh/setup-bun@"));
@@ -66,6 +67,22 @@ test("devel workflow is fast-gates-only without builds, package tests, Bun, or B
 	t.false(source.includes("download-artifact"));
 	t.false(source.includes("actions/cache"));
 	t.false(source.includes("docker push"));
+});
+
+test("trusted devel pushes validate the release version against an explicitly fetched main", (t) => {
+	const source = workflowSource();
+	const setup = source.indexOf("uses: ./.github/actions/setup-workspace");
+	const version = source.indexOf("name: Devel / release version");
+	const security = source.indexOf("name: Repository security policy");
+	t.true(version > setup, "release version validation must use the installed workspace");
+	t.true(security > version, "release version validation must precede the remaining fast gates");
+	t.true(source.includes("git fetch --no-tags origin main:refs/remotes/origin/main"));
+	t.true(source.includes("git show refs/remotes/origin/main:package.json"));
+	t.true(source.includes("require(\"semver\")"));
+	t.true(source.includes("canonicalDevel"));
+	t.true(source.includes("semver.gt(stableDevel, mainVersion)"));
+	t.false(source.includes("open-release-prs"));
+	t.false(source.includes("pulls?state=open"));
 });
 
 test("devel workflow omits PR/merge-queue-only eligibility checks", (t) => {

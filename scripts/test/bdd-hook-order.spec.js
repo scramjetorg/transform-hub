@@ -148,6 +148,12 @@ test("Cucumber After hook ordering: step-def After runs before memory-hooks Afte
     t.true(result.stderr.includes("scenario="), "timing output must identify the scenario");
 });
 
+test("failure lifecycle trace loads after steps and before timing boundary", t => {
+    const source = fs.readFileSync(path.resolve(__dirname, "../../bdd/cucumber.js"), "utf8");
+    t.true(source.indexOf('"--require step-definitions/**/*.ts"') < source.indexOf('"--require support/failure-lifecycle-trace.ts"'));
+    t.true(source.indexOf('"--require support/failure-lifecycle-trace.ts"') < source.indexOf('"--require support/timing-boundary.ts"'));
+});
+
 test("timing boundary is initialized for no-step and failing-Before scenarios", async t => {
     const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "bdd-timing-boundary-"));
     const bddRoot = path.resolve(__dirname, "../../bdd");

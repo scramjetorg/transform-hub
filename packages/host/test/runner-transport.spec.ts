@@ -368,6 +368,91 @@ test("Verser2RunnerTransport rejects unsuccessful route lease responses", async 
     t.true(failedBody.destroyed);
 });
 
+test("Verser2RunnerTransport includes a bounded unsuccessful response body excerpt", async t => {
+    const { downstreams, upstreams } = streams();
+    const failedBody = new PassThrough();
+    const diagnostic = "python bootstrap failed: " + "x".repeat(5000);
+    const broker: Verser2RunnerBroker = {
+        getRoutes: () => [{ targetId: "runner.guest.inst-1", domain: "runner.inst-1.scramjet.internal" }],
+        waitForRoute: async () => undefined,
+        request: async request => {
+            const body = request.path === "/stdout" ? failedBody : new PassThrough();
+            if (request.path === "/stdout") queueMicrotask(() => body.end(diagnostic));
+            return { statusCode: request.path === "/stdout" ? 503 : 200, body };
+        }
+    };
+    const transport = new Verser2RunnerTransport({ broker, upstreams });
+    const error = await t.throwsAsync(transport.connect({ instanceId: "inst-1", streams: downstreams }));
+
+    t.true(error!.message.includes("body excerpt:"));
+    t.true(error!.message.includes("python bootstrap failed:"));
+    t.true(error!.message.length < 4300);
+    t.true(failedBody.destroyed);
+});
+
+test("Verser2RunnerTransport retains a body excerpt that arrives shortly after the response", async t => {
+    const { downstreams, upstreams } = streams();
+    const failedBody = new PassThrough();
+    const broker: Verser2RunnerBroker = {
+        getRoutes: () => [{ targetId: "runner.guest.inst-1", domain: "runner.inst-1.scramjet.internal" }],
+        waitForRoute: async () => undefined,
+        request: async request => {
+            const body = request.path === "/stdout" ? failedBody : new PassThrough();
+            if (request.path === "/stdout") {
+                setTimeout(() => body.end("delayed bootstrap failure"), 10);
+            }
+            return { statusCode: request.path === "/stdout" ? 503 : 200, body };
+        }
+    };
+    const transport = new Verser2RunnerTransport({ broker, upstreams });
+    const error = await t.throwsAsync(transport.connect({ instanceId: "inst-1", streams: downstreams }));
+
+    t.true(error!.message.includes("body excerpt: \"delayed bootstrap failure\""));
+    t.true(failedBody.destroyed);
+});
+
+test("Verser2RunnerTransport fails promptly for an unsuccessful response body that never ends", async t => {
+    const { downstreams, upstreams } = streams();
+    const failedBody = new PassThrough();
+    const broker: Verser2RunnerBroker = {
+        getRoutes: () => [{ targetId: "runner.guest.inst-1", domain: "runner.inst-1.scramjet.internal" }],
+        waitForRoute: async () => undefined,
+        request: async request => {
+            const body = request.path === "/stdout" ? failedBody : new PassThrough();
+            if (request.path === "/stdout") {
+                body.write("short non-ending bootstrap failure");
+            }
+            return { statusCode: request.path === "/stdout" ? 503 : 200, body };
+        }
+    };
+    const transport = new Verser2RunnerTransport({ broker, upstreams });
+    const startedAt = Date.now();
+    const error = await t.throwsAsync(transport.connect({ instanceId: "inst-1", streams: downstreams }));
+
+    t.true(Date.now() - startedAt < 1000);
+    t.true(error!.message.includes("body excerpt: \"short non-ending bootstrap failure\""));
+    t.true(failedBody.destroyed);
+});
+
+test("Verser2RunnerTransport preserves unsuccessful response status error when the body is empty", async t => {
+    const { downstreams, upstreams } = streams();
+    const failedBody = new PassThrough();
+    const broker: Verser2RunnerBroker = {
+        getRoutes: () => [{ targetId: "runner.guest.inst-1", domain: "runner.inst-1.scramjet.internal" }],
+        waitForRoute: async () => undefined,
+        request: async request => {
+            const body = request.path === "/stdout" ? failedBody : new PassThrough();
+            if (request.path === "/stdout") queueMicrotask(() => body.end());
+            return { statusCode: request.path === "/stdout" ? 503 : 200, body };
+        }
+    };
+    const transport = new Verser2RunnerTransport({ broker, upstreams });
+    const error = await t.throwsAsync(transport.connect({ instanceId: "inst-1", streams: downstreams }));
+
+    t.is(error!.message, "Runner route /stdout returned unsuccessful status 503");
+    t.true(failedBody.destroyed);
+});
+
 test("Verser2RunnerTransport tears down partially opened leases when connect fails", async t => {
     const { downstreams, upstreams } = streams();
     const openedBodies: PassThrough[] = [];

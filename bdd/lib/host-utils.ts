@@ -7,8 +7,8 @@ import { StringDecoder } from "string_decoder";
 import { memoryRegistry } from "../lib/memory-registry";
 import { resolvePublishedBin } from "./published-artifacts";
 import { publishedSourceEntry } from "./published-modules";
+import type { HostExitEvent } from "./lifecycle-trace";
 const { getOwnership } = require("./ownership.js");
-const { describeSthBinResolution, resolveSthBin } = require("../../scripts/lib/sth-bin.js");
 
 /**
  * Select the STH CLI executable command for a locally owned Hub.
@@ -19,20 +19,14 @@ const { describeSthBinResolution, resolveSthBin } = require("../../scripts/lib/s
  * `node`.  SCRAMJET_SPAWN_TS keeps the explicit source-launcher dev toggle.
  */
 function resolveHostExecutableCommand(): string[] {
-    if (process.env.SCRAMJET_SPAWN_TS && process.env.SCRAMJET_RELEASE_PRERELEASE_BDD_RECORD) {
-        // Resolve first so a verified prerelease run rejects the source override
+    if (process.env.SCRAMJET_SPAWN_TS && (process.env.SCRAMJET_RELEASE_PRERELEASE_BDD_RECORD || process.env.SCRAMJET_TARBALL_BDD_ROOT)) {
+        // Resolve first so published-artifact modes reject the source override
         // before a child process can be spawned.
         resolvePublishedBin("@scramjet/sth", "scramjet-transform-hub");
     }
     if (process.env.SCRAMJET_SPAWN_TS) return ["/usr/bin/env", "npx", "tsx", publishedSourceEntry("@scramjet/sth", "bin", "hub.ts")];
 
-    const resolved = resolveSthBin();
-
-    if (process.env.SCRAMJET_TEST_LOG) {
-        console.error(`[host-utils] ${describeSthBinResolution(resolved)}`);
-    }
-
-    return [resolved.binPath];
+    return [resolvePublishedBin("@scramjet/sth", "scramjet-transform-hub")];
 }
 
 const hostExecutableCommand = resolveHostExecutableCommand();
@@ -50,6 +44,38 @@ const MAX_OUTPUT_BYTES = Number.isFinite(configuredMaxOutputBytes) && configured
     ? configuredMaxOutputBytes
     : 1024 * 1024;
 const ownership = getOwnership(process.env);
+export interface HostLifecycleObserver {
+    recordHostStdout?(value: string): void;
+    recordHostStderr?(value: string): void;
+    recordHostExit?(event: HostExitEvent): void;
+}
+
+const lifecycleObservers = new Set<HostLifecycleObserver>();
+export function subscribeHostLifecycleObserver(observer: HostLifecycleObserver): () => void {
+    lifecycleObservers.add(observer);
+    return () => lifecycleObservers.delete(observer);
+}
+
+function publishHostOutput(kind: "stdout" | "stderr", value: string): void {
+    for (const observer of lifecycleObservers) {
+        if (kind === "stdout") observer.recordHostStdout?.(value);
+        else observer.recordHostStderr?.(value);
+    }
+}
+
+function publishHostExit(event: HostExitEvent): void {
+    for (const observer of lifecycleObservers) observer.recordHostExit?.(event);
+}
+
+function candidateImageArgs(): string[] {
+    const raw = process.env.SCRAMJET_BDD_CANDIDATE_IMAGE_MAP;
+    if (!raw) return [];
+    let map: Record<string, string>;
+    try { map = JSON.parse(raw); } catch { throw new Error("Candidate image map is not valid JSON."); }
+    const roles = ["runner-node", "pre-runner", "runner-python", "runner-bun"];
+    if (roles.some(role => typeof map[role] !== "string" || !/^.+@sha256:[a-f0-9]{64}$/i.test(map[role]))) throw new Error("Candidate image map is incomplete or not digest pinned.");
+    return [`--runner-image=${map["runner-node"]}`, `--prerunner-image=${map["pre-runner"]}`, `--runner-py-image=${map["runner-python"]}`, `--runner-bun-image=${map["runner-bun"]}`];
+}
 
 export class HostUtils {
     private static cleanupHandlersInstalled = false;
@@ -361,10 +387,14 @@ export class HostUtils {
                 this.captureOutput(data.toString());
             };
             const stdoutListener = (data: Buffer) => {
-                this.stdoutTail = (this.stdoutTail + data.toString()).slice(-MAX_OUTPUT_BYTES);
+                const value = data.toString();
+                this.stdoutTail = (this.stdoutTail + value).slice(-MAX_OUTPUT_BYTES);
+                publishHostOutput("stdout", value);
             };
             const stderrListener = (data: Buffer) => {
-                this.stderrTail = (this.stderrTail + data.toString()).slice(-MAX_OUTPUT_BYTES);
+                const value = data.toString();
+                this.stderrTail = (this.stderrTail + value).slice(-MAX_OUTPUT_BYTES);
+                publishHostOutput("stderr", value);
             };
 
             let decodedData = "";
@@ -410,6 +440,7 @@ export class HostUtils {
                 this.exitCode = code;
                 this.exitSignal = signal;
                 this.exitFinishedAt = Date.now();
+                publishHostExit({ code, signal });
 
                 // Skip startup-failure assertion when the Hub is being
                 // deliberately stopped (stopHost or scenario-lifecycle
@@ -434,13 +465,21 @@ export class HostUtils {
     }
 
     setArgs(command: string[], extraArgs: string[], noDefault: NoDefault = []) {
+        const allArgs = [...command, ...extraArgs];
+        if (allArgs.some(arg => arg === "--no-log-forward-runner" || arg.startsWith("--no-log-forward-runner="))) {
+            throw new Error("BDD-managed Hosts require --log-forward-runner.");
+        }
         if (!noDefault.includes("port") && !extraArgs.includes("-P") && !extraArgs.includes("--port") && !command.includes("--port") && process.env.LOCAL_HOST_PORT)
             command.push("-P", process.env.LOCAL_HOST_PORT);
         if (!noDefault.includes("instances-server-port") && !extraArgs.includes("--instances-server-port") && process.env.LOCAL_HOST_INSTANCES_SERVER_PORT)
             command.push("--instances-server-port", process.env.LOCAL_HOST_INSTANCES_SERVER_PORT);
         if (!noDefault.includes("cpm-url") && !extraArgs.includes("-C") && !command.includes("--cpm-url") && process.env.CPM_URL)
             command.push("-C", process.env.CPM_URL);
-        if (!noDefault.includes("runtime-adapter") && !extraArgs.includes("--runtime-adapter") && process.env.RUNTIME_ADAPTER)
+        const hasRuntimeAdapter = [...command, ...extraArgs].some((arg, index, args) =>
+            arg === "--runtime-adapter" || arg.startsWith("--runtime-adapter=") || arg === "-a" ||
+            (args[index - 1] === "-a" && index > 0)
+        );
+        if (!noDefault.includes("runtime-adapter") && !hasRuntimeAdapter && process.env.RUNTIME_ADAPTER)
             command.push(`--runtime-adapter=${process.env.RUNTIME_ADAPTER}`);
         // Only an explicitly owned BDD run may receive the shortened lifecycle
         // window. A config path is also used by non-BDD callers and must not
@@ -449,13 +488,17 @@ export class HostUtils {
         if (!noDefault.includes("instance-lifetime-extension-delay") && !extraArgs.includes("--instance-lifetime-extension-delay") && (process.env.RUNTIME_ADAPTER || bddRun))
             command.push(`--instance-lifetime-extension-delay=${bddRun ? 1000 : 100}`);
         if (extraArgs.length) command.push(...extraArgs);
+        if (!command.includes("--log-forward-runner")) command.push("--log-forward-runner");
 
-        if (process.env.RUNNER_IMGS_TAG) {
+        const candidateArgs = candidateImageArgs();
+        if (candidateArgs.length) command.push(...candidateArgs);
+        else if (process.env.RUNNER_IMGS_TAG) {
             // Keep the Python runner image flag aligned with the image built from packages/runner-python/Dockerfile.
             command.push(
                 `--runner-image=scramjetorg/runner:${process.env.RUNNER_IMGS_TAG}`,
                 `--prerunner-image=scramjetorg/pre-runner:${process.env.RUNNER_IMGS_TAG}`,
-                `--runner-py-image=scramjetorg/runner-py:${process.env.RUNNER_IMGS_TAG}`
+                `--runner-py-image=scramjetorg/runner-py:${process.env.RUNNER_IMGS_TAG}`,
+                `--runner-bun-image=scramjetorg/runner-bun:${process.env.RUNNER_IMGS_TAG}`
             );
         }
 

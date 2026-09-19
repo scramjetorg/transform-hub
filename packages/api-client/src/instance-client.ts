@@ -13,6 +13,7 @@ export class InstanceClient {
     private _id: string;
     private instanceURL: string;
     private host: ClientProvider;
+    readonly processId?: number;
 
     public get id(): string {
         return this._id;
@@ -29,11 +30,11 @@ export class InstanceClient {
      * @param {Clienthost} host Host client.
      * @returns {InstanceClient} Instance client.
      */
-    static from(id: string, host: ClientProvider): InstanceClient {
-        return new this(id, host);
+    static from(id: string, host: ClientProvider, startMetadata?: Pick<STHRestAPI.StartSequenceResponse, "processId">): InstanceClient {
+        return new this(id, host, startMetadata);
     }
 
-    private constructor(id: string, host: ClientProvider) {
+    private constructor(id: string, host: ClientProvider, startMetadata?: Pick<STHRestAPI.StartSequenceResponse, "processId">) {
         this.host = host;
 
         if (!id) {
@@ -42,6 +43,7 @@ export class InstanceClient {
 
         this._id = id;
         this.instanceURL = `instance/${this._id}`;
+        this.processId = startMetadata?.processId;
     }
 
     /**

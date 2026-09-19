@@ -13,11 +13,29 @@ import {
     DockerVolume,
     IDockerHelper
 } from "./types";
-import { isDefined, readStreamedJSON } from "@scramjet/utility";
+import { isDefined } from "@scramjet/utility";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { sequencePackageJSONDecoder, detectLanguage, selectRunnerImageForEngines } from "@scramjet/adapters-common";
 
 const PACKAGE_DIR = "/package";
+const MAX_PRERUNNER_OUTPUT = 16 * 1024;
+const MAX_PULL_ERROR_MESSAGE = 16 * 1024;
+
+function getBoundedErrorMessage(error: unknown): string {
+    const message = error instanceof Error ? error.message : String(error);
+
+    return message.slice(0, MAX_PULL_ERROR_MESSAGE);
+}
+
+async function readBoundedStream(stream: Readable, limit = MAX_PRERUNNER_OUTPUT): Promise<string> {
+    let output = "";
+    for await (const chunk of stream) {
+        if (output.length < limit) {
+            output += chunk.toString().slice(0, limit - output.length);
+        }
+    }
+    return output;
+}
 
 /**
  * Adapter for preparing Sequence to be run in Docker container.
@@ -48,7 +66,17 @@ class DockerSequenceAdapter implements ISequenceAdapter {
     async init(): Promise<void> {
         this.logger.trace("Initializing");
 
-        await this.fetch(this.dockerConfig.prerunner.image);
+        try {
+            await this.fetch(this.dockerConfig.prerunner.image);
+        } catch (error) {
+            this.logger.error("Pre-runner image pull failed", {
+                stage: "pre-runner-image-pull",
+                image: this.dockerConfig.prerunner.image,
+                error: getBoundedErrorMessage(error)
+            });
+
+            throw new SequenceAdapterError("DOCKER_ERROR");
+        }
 
         this.logger.info("Docker adapter initialized with options", {
             "py runner image": this.dockerConfig.runnerImages.python3,
@@ -107,7 +135,7 @@ class DockerSequenceAdapter implements ISequenceAdapter {
 
             this.logger.debug("Identify started", volume, this.dockerConfig.prerunner?.maxMem || 0);
 
-            const ret = await this.parsePackage(streams, wait, volume);
+            const ret = await this.parsePackage(streams, wait, volume, this.dockerConfig.prerunner?.image || "");
 
             if (!ret.id) {
                 return undefined;
@@ -185,9 +213,24 @@ class DockerSequenceAdapter implements ISequenceAdapter {
 
             stream.pipe(streams.stdin);
 
-            const config = await this.parsePackage(streams, wait, volumeId);
+            const config = await this.parsePackage(streams, wait, volumeId, this.dockerConfig.prerunner.image || "");
 
-            await this.fetch(config.container.image);
+            try {
+                await this.fetch(config.container.image);
+            } catch (err: any) {
+                this.logger.error("Runner image fetch failed", {
+                    stage: "runner-image-fetch",
+                    image: config.container.image,
+                    volume: volumeId,
+                    error: err?.message || String(err)
+                });
+                throw new SequenceAdapterError("DOCKER_ERROR", {
+                    stage: "runner-image-fetch",
+                    image: config.container.image,
+                    volume: volumeId,
+                    error: err?.message || String(err)
+                });
+            }
 
             return config;
         } catch (err: any) {
@@ -227,11 +270,41 @@ class DockerSequenceAdapter implements ISequenceAdapter {
     private async parsePackage(
         streams: DockerAdapterStreams,
         wait: Function,
-        volumeId: DockerVolume
+        volumeId: DockerVolume,
+        image: string
     ): Promise<DockerSequenceConfig> {
         const parseStart = new Date();
 
-        const [preRunnerResult] = (await Promise.all([readStreamedJSON(streams.stdout as Readable), wait])) as any;
+        const [stdout, stderr, exitResult] = await Promise.all([
+            readBoundedStream(streams.stdout as Readable),
+            readBoundedStream(streams.stderr as Readable),
+            wait()
+        ]);
+
+        const diagnostics = {
+            stage: "pre-runner",
+            image,
+            volume: volumeId,
+            status: exitResult?.statusCode,
+            stdout,
+            stderr
+        };
+
+        if (exitResult?.statusCode !== 0) {
+            this.logger.error("PreRunner exited with a non-zero status", diagnostics);
+            throw new SequenceAdapterError("PRERUNNER_ERROR", diagnostics);
+        }
+
+        let preRunnerResult: any;
+        try {
+            preRunnerResult = JSON.parse(stdout);
+        } catch (err) {
+            this.logger.error("PreRunner returned invalid JSON", diagnostics);
+            throw new SequenceAdapterError("PRERUNNER_ERROR", {
+                ...diagnostics,
+                error: err instanceof Error ? err.message : String(err)
+            });
+        }
 
         const parseSecs = (new Date().getTime() - parseStart.getTime()) / 1000;
 
@@ -245,7 +318,7 @@ class DockerSequenceAdapter implements ISequenceAdapter {
         if (preRunnerResult && preRunnerResult.error) {
             this.logger.error("PreRunner failed", preRunnerResult.error);
 
-            throw new SequenceAdapterError("PRERUNNER_ERROR", preRunnerResult.error);
+            throw new SequenceAdapterError("PRERUNNER_ERROR", { ...diagnostics, error: preRunnerResult.error });
         }
 
         const validPackageJson = await sequencePackageJSONDecoder.decodeToPromise(preRunnerResult);
@@ -271,6 +344,8 @@ class DockerSequenceAdapter implements ISequenceAdapter {
             keywords: validPackageJson.keywords,
             args: validPackageJson.args,
             repository: validPackageJson.repository,
+            exposePath: validPackageJson.exposePath,
+            exposeHost: validPackageJson.exposeHost,
             language: detectLanguage(validPackageJson)
         };
     }

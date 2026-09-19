@@ -492,7 +492,11 @@ export class HostAPIV1Handler {
 
             this.host.auditor.auditInstanceStart(runner.id, req as AuditedRequest, runner.limits);
 
-            return { opStatus: ReasonPhrases.OK, id: runner.id };
+            return {
+                opStatus: ReasonPhrases.OK,
+                id: runner.id,
+                ...(typeof runner.processId === "number" && Number.isFinite(runner.processId) && runner.processId > 0 ? { processId: runner.processId } : {})
+            };
         } catch (e) {
             if (!(e instanceof HostError)) {
                 return { opStatus: ReasonPhrases.INTERNAL_SERVER_ERROR, error: (e as any)?.message || "Unknown Error" };

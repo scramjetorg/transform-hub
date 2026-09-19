@@ -62,7 +62,9 @@ jobs:
           test "$SCRAMJET_GHCR_SCOPED_PUBLISHER" = "true"
           test -n "$GITHUB_TOKEN"
           node scripts/checkpoint/plan.js --dry-run --branch "$BRANCH" --source-sha "$source_sha" --current-sha "$current_sha" --output "$RUNNER_TEMP/checkpoint-plan"
+          node scripts/checkpoint/prefetch.js --output "$RUNNER_TEMP/runtime-dependencies"
+          test -s "$RUNNER_TEMP/runtime-dependencies/manifest.v1.json"
           printf '%s' "$GITHUB_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
           trap 'docker logout ghcr.io' EXIT
-          node scripts/checkpoint/publish.js --plan "$RUNNER_TEMP/checkpoint-plan/checkpoint-plan.v1.json" --branch "$BRANCH" --source-sha "$source_sha" --current-sha "$current_sha" --npm-cache "$HOME/.npm"
+          node scripts/checkpoint/publish.js --plan "$RUNNER_TEMP/checkpoint-plan/checkpoint-plan.v1.json" --branch "$BRANCH" --source-sha "$source_sha" --current-sha "$current_sha" --npm-cache "$HOME/.npm" --runtime-dependencies "$RUNNER_TEMP/runtime-dependencies"
           rm -rf node_modules

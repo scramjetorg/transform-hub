@@ -19,6 +19,9 @@
 - Runtime invariant check: `npm run check:runtime-invariants`.
 - Dev hub: `npm run start:dev`; built hub: `npm run start` after building `dist/`.
 
+## Before pushing
+- Before pushing, lint, the applicable TypeScript typecheck, and the smallest relevant supported test command must pass. This is a pre-push requirement, not a prerequisite for committing.
+
 ## Monorepo wiring
 - Workspaces are explicit `packages/*` listed entries plus `bdd/`; custom workspace groups in `package.json` include `packages`, `release`, `runners`, and `bdd`.
 - `scripts/run-script.js` runs a package script across workspaces; it defaults to 16 concurrent jobs (override with `-j <jobs>`). It runs every selected package after failures, then exits nonzero with aggregated failures; use `--fail-fast` or `SCRAMJET_RUN_SCRIPT_FAIL_FAST=1` to stop scheduling after the first failure. Other useful flags: `-w <group>`, `-s <package path|name>`, `-d <package>`, `-e <command>`.

@@ -132,6 +132,10 @@ class ProcessInstanceAdapter implements ILifeCycleAdapterMain, ILifeCycleAdapter
         this.processPID = parseInt(system.processPID, 10);
     }
 
+    getRunnerProcessId(): number | undefined {
+        return Number.isFinite(this.processPID) && this.processPID > 0 ? this.processPID : undefined;
+    }
+
     async run(config: InstanceConfig, instancesServerPort: number, instanceId: string, sequenceInfo: SequenceInfo, payload: RunnerConnectInfo): Promise<ExitCode> {
         await this.dispatch(config, instancesServerPort, instanceId, sequenceInfo, payload);
         return this.waitUntilExit(config, instanceId, sequenceInfo);

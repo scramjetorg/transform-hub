@@ -110,6 +110,96 @@ test("setArgs does not inject default -P when LOCAL_HOST_PORT is unset", (t) => 
 	t.false(command.includes("-P"), "-P must not appear when env port is unset");
 });
 
+test("setArgs explicitly enables runner log forwarding", t => {
+    const command = makeSetArgs([], []);
+    t.true(command.includes("--log-forward-runner"));
+});
+
+test("setArgs rejects disabling runner log forwarding", t => {
+    t.throws(() => makeSetArgs(["--no-log-forward-runner"], []), { message: /require --log-forward-runner/ });
+});
+
+// ---------------------------------------------------------------------------
+// Runtime adapter default injection
+// ---------------------------------------------------------------------------
+
+function makeRuntimeAdapterSetArgs(extraArgs, noDefault = []) {
+	const saved = process.env.RUNTIME_ADAPTER;
+	process.env.RUNTIME_ADAPTER = "docker";
+	try {
+		return makeSetArgs(extraArgs, noDefault);
+	} finally {
+		if (saved === undefined) delete process.env.RUNTIME_ADAPTER;
+		else process.env.RUNTIME_ADAPTER = saved;
+	}
+}
+
+test("setArgs injects default Docker runtime adapter when no adapter is given", (t) => {
+	const command = makeRuntimeAdapterSetArgs([]);
+	t.true(command.includes("--runtime-adapter=docker"));
+});
+
+test("setArgs preserves equals-form runtime adapter", (t) => {
+	const command = makeRuntimeAdapterSetArgs(["--runtime-adapter=process"]);
+	t.true(command.includes("--runtime-adapter=process"));
+	t.false(command.includes("--runtime-adapter=docker"));
+});
+
+test("setArgs preserves separated long-form runtime adapter", (t) => {
+	const command = makeRuntimeAdapterSetArgs(["--runtime-adapter", "process"]);
+	const adapterIndex = command.indexOf("--runtime-adapter");
+	t.deepEqual(command.slice(adapterIndex, adapterIndex + 2), ["--runtime-adapter", "process"]);
+	t.false(command.includes("--runtime-adapter=docker"));
+});
+
+test("setArgs preserves short-form runtime adapter", (t) => {
+	const command = makeRuntimeAdapterSetArgs(["-a", "process"]);
+	const adapterIndex = command.indexOf("-a");
+	t.deepEqual(command.slice(adapterIndex, adapterIndex + 2), ["-a", "process"]);
+	t.false(command.includes("--runtime-adapter=docker"));
+});
+
+test("setArgs does not inject runtime adapter when it is in noDefault", (t) => {
+	const command = makeRuntimeAdapterSetArgs([], ["runtime-adapter"]);
+	t.false(command.some((arg) => arg.startsWith("--runtime-adapter")));
+});
+
+test("setArgs resolves the verified candidate image map to explicit runner flags", t => {
+    const saved = process.env.SCRAMJET_BDD_CANDIDATE_IMAGE_MAP;
+    process.env.SCRAMJET_BDD_CANDIDATE_IMAGE_MAP = JSON.stringify({
+        "runner-node": "ghcr.io/scramjetorg/transform-hub/runner@sha256:" + "1".repeat(64),
+        "pre-runner": "ghcr.io/scramjetorg/transform-hub/pre-runner@sha256:" + "2".repeat(64),
+        "runner-python": "ghcr.io/scramjetorg/transform-hub/runner-py@sha256:" + "3".repeat(64),
+        "runner-bun": "ghcr.io/scramjetorg/transform-hub/runner-bun@sha256:" + "4".repeat(64)
+    });
+    try {
+        const command = makeSetArgs([], []);
+        t.true(command.includes("--runner-image=ghcr.io/scramjetorg/transform-hub/runner@sha256:" + "1".repeat(64)));
+        t.true(command.includes("--prerunner-image=ghcr.io/scramjetorg/transform-hub/pre-runner@sha256:" + "2".repeat(64)));
+        t.true(command.includes("--runner-py-image=ghcr.io/scramjetorg/transform-hub/runner-py@sha256:" + "3".repeat(64)));
+        t.true(command.includes("--runner-bun-image=ghcr.io/scramjetorg/transform-hub/runner-bun@sha256:" + "4".repeat(64)));
+    } finally { if (saved === undefined) delete process.env.SCRAMJET_BDD_CANDIDATE_IMAGE_MAP; else process.env.SCRAMJET_BDD_CANDIDATE_IMAGE_MAP = saved; }
+});
+
+test("setArgs applies the full SHA runner image closure", t => {
+    const saved = process.env.RUNNER_IMGS_TAG;
+    const savedCandidate = process.env.SCRAMJET_BDD_CANDIDATE_IMAGE_MAP;
+    process.env.RUNNER_IMGS_TAG = "a".repeat(40);
+    delete process.env.SCRAMJET_BDD_CANDIDATE_IMAGE_MAP;
+    try {
+        const command = makeSetArgs([], []);
+        for (const [flag, image] of [
+            ["--runner-image", "scramjetorg/runner"],
+            ["--prerunner-image", "scramjetorg/pre-runner"],
+            ["--runner-py-image", "scramjetorg/runner-py"],
+            ["--runner-bun-image", "scramjetorg/runner-bun"],
+        ]) t.true(command.includes(`${flag}=${image}:${process.env.RUNNER_IMGS_TAG}`));
+    } finally {
+        if (saved === undefined) delete process.env.RUNNER_IMGS_TAG; else process.env.RUNNER_IMGS_TAG = saved;
+        if (savedCandidate === undefined) delete process.env.SCRAMJET_BDD_CANDIDATE_IMAGE_MAP; else process.env.SCRAMJET_BDD_CANDIDATE_IMAGE_MAP = savedCandidate;
+    }
+});
+
 test("setArgs applies the 1s lifetime extension only for BDD-generated configuration", t => {
     const savedRun = process.env.SCRAMJET_BDD_RUN_ID;
     const savedAdapter = process.env.RUNTIME_ADAPTER;

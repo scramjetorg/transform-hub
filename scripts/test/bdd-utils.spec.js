@@ -24,7 +24,7 @@ test("BDD CLI defaults to the built artifact and preserves explicit source mode"
     try {
         delete process.env.SCRAMJET_SPAWN_JS;
         delete process.env.SCRAMJET_SPAWN_TS;
-        t.deepEqual(getSiCommand({ useBddConfig: false }), ["node", "../dist/cli/bin"]);
+        t.deepEqual(getSiCommand({ useBddConfig: false }), [fs.realpathSync(path.join(process.cwd(), "dist/cli/bin/index.js"))]);
 
         process.env.SCRAMJET_SPAWN_TS = "1";
         const sourceCommand = getSiCommand({ useBddConfig: false });
@@ -35,6 +35,42 @@ test("BDD CLI defaults to the built artifact and preserves explicit source mode"
         else process.env.SCRAMJET_SPAWN_JS = previousJs;
         if (previousTs === undefined) delete process.env.SCRAMJET_SPAWN_TS;
         else process.env.SCRAMJET_SPAWN_TS = previousTs;
+    }
+});
+
+test("tarball BDD selects the installed CLI without a prerelease CLI descriptor and rejects source overrides", t => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "bdd-utils-tarball-"));
+    const hostDir = path.join(root, "node_modules", "@scramjet", "host");
+    const cliDir = path.join(root, "node_modules", "@scramjet", "cli");
+    const cliBin = path.join(cliDir, "bin", "si.js");
+    fs.mkdirSync(hostDir, { recursive: true });
+    fs.mkdirSync(path.dirname(cliBin), { recursive: true });
+    fs.writeFileSync(path.join(hostDir, "package.json"), JSON.stringify({ name: "@scramjet/host", version: "1.0.0" }));
+    fs.writeFileSync(path.join(cliDir, "package.json"), JSON.stringify({ name: "@scramjet/cli", version: "1.0.0", bin: { si: "./bin/si.js" } }));
+    fs.writeFileSync(cliBin, "#!/usr/bin/env node\n");
+
+    const previousRoot = process.env.SCRAMJET_TARBALL_BDD_ROOT;
+    const previousJs = process.env.SCRAMJET_SPAWN_JS;
+    const previousTs = process.env.SCRAMJET_SPAWN_TS;
+    try {
+        process.env.SCRAMJET_TARBALL_BDD_ROOT = root;
+        delete process.env.SCRAMJET_SPAWN_JS;
+        delete process.env.SCRAMJET_SPAWN_TS;
+        t.deepEqual(getSiCommand({ useBddConfig: false }), [fs.realpathSync(cliBin)]);
+
+        for (const variable of ["SCRAMJET_SPAWN_JS", "SCRAMJET_SPAWN_TS"]) {
+            process.env[variable] = "1";
+            t.throws(() => getSiCommand({ useBddConfig: false }), { message: /installed CLI.*source CLI override/ });
+            delete process.env[variable];
+        }
+    } finally {
+        if (previousRoot === undefined) delete process.env.SCRAMJET_TARBALL_BDD_ROOT;
+        else process.env.SCRAMJET_TARBALL_BDD_ROOT = previousRoot;
+        if (previousJs === undefined) delete process.env.SCRAMJET_SPAWN_JS;
+        else process.env.SCRAMJET_SPAWN_JS = previousJs;
+        if (previousTs === undefined) delete process.env.SCRAMJET_SPAWN_TS;
+        else process.env.SCRAMJET_SPAWN_TS = previousTs;
+        fs.rmSync(root, { recursive: true, force: true });
     }
 });
 
@@ -60,7 +96,7 @@ test("profile lifecycle commands fail closed for verified prerelease and normal 
         t.regex(error.message, /verified stderr/);
     }
 
-    const normalCommand = ["node", "../dist/cli/bin"];
+    const normalCommand = [fs.realpathSync(path.join(process.cwd(), "dist/cli/bin/index.js"))];
     const result = await runProfileCommand(["list"], {
         command: normalCommand,
         runner: async (command, args) => {
