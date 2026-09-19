@@ -1,4 +1,5 @@
 import test from "ava";
+import configPackageJson from "../package.json";
 import {
     development,
     imageConfig,
@@ -43,10 +44,11 @@ test("development returns false when both PRODUCTION and DEVELOPMENT are set", t
 // ---------------------------------------------------------------------------
 
 test("imageConfig has expected image tags", t => {
-    t.is(imageConfig.prerunner, "scramjetorg/pre-runner:2.1.0");
-    t.is(imageConfig.runner.node, "scramjetorg/runner:2.1.0");
-    t.is(imageConfig.runner.python3, "scramjetorg/runner-py:2.1.0");
-    t.is(imageConfig.runner.bun, "scramjetorg/runner-bun:2.1.0");
+    const expectedTag = configPackageJson.version;
+    t.is(imageConfig.prerunner, `scramjetorg/pre-runner:${expectedTag}`);
+    t.is(imageConfig.runner.node, `scramjetorg/runner:${expectedTag}`);
+    t.is(imageConfig.runner.python3, `scramjetorg/runner-py:${expectedTag}`);
+    t.is(imageConfig.runner.bun, `scramjetorg/runner-bun:${expectedTag}`);
 });
 
 // ---------------------------------------------------------------------------
