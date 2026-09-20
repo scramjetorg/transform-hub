@@ -1,19 +1,10 @@
 "use strict";
 
-const { resolve } = require("node:path");
-const { releasePrereleaseBddContext } = require("../../scripts/release-prerelease-bdd.js");
-
-const RECORD_ENV = "SCRAMJET_RELEASE_PRERELEASE_BDD_RECORD";
-const INSTALL_ENV = "SCRAMJET_RELEASE_PRERELEASE_BDD_INSTALL_DIR";
-
-function context(options = {}) {
-    const environment = options.environment || process.env;
-    return releasePrereleaseBddContext({
-        workspaceRoot: options.workspaceRoot || resolve(__dirname, "../.."),
-        recordPath: environment[RECORD_ENV],
-        installDir: environment[INSTALL_ENV],
-    });
-}
+// Release PR prerelease consumption was removed. BDD uses the checked-out
+// workspace and never activates a separate publication/install context.
+const RECORD_ENV = "";
+const INSTALL_ENV = "";
+function context() { return null; }
 
 function expectedHostVersion(rootVersion, options = {}) {
     const verified = context(options);

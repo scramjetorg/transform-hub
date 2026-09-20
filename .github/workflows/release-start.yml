@@ -1,0 +1,49 @@
+name: Start stable release
+
+on:
+  workflow_dispatch:
+    branches: [devel]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  start:
+    permissions:
+      contents: write
+      pull-requests: write
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci --ignore-scripts
+      - name: Create aligned release branch and PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF_NAME" = devel
+          devel_version="$(node -p "require('./package.json').version")"
+          stable_version="$(node scripts/release-flow.js release-version "$devel_version")"
+          branch="release/$stable_version"
+          git switch -c "$branch"
+          npm run release:align:dry-run -- --release-version="$stable_version"
+          npm run release:align:apply -- --release-version="$stable_version"
+          npm run release:align:check -- --release-version="$stable_version"
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "release: prepare $stable_version"
+          git push --set-upstream origin "$branch"
+          gh pr create --base main --head "$branch" --title "Release $stable_version" --body "Release boundary for $stable_version. Maintainers may update this branch before merge."

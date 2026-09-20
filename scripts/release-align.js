@@ -57,6 +57,7 @@ const ROOT_DIR = process.env.SCRAMJET_RELEASE_ROOT
 	: path.resolve(__dirname, "..");
 
 const STABLE_SEMVER = /^(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)$/;
+const DEVELOPMENT_SEMVER = /^(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)-devel$/;
 
 /**
  * Validate an explicitly requested stable release version.
@@ -69,6 +70,14 @@ function resolveReleaseVersion(value) {
 	}
 	if (!STABLE_SEMVER.test(value)) {
 		throw new Error(`Release version must be a stable SemVer version, received ${JSON.stringify(value)}.`);
+	}
+	return value;
+}
+
+function resolveDevelopmentVersion(value) {
+	if (value === undefined) throw new Error("A --development-version=X.Y.Z-devel option is required.");
+	if (!DEVELOPMENT_SEMVER.test(value)) {
+		throw new Error(`Development version must be X.Y.Z-devel, received ${JSON.stringify(value)}.`);
 	}
 	return value;
 }
@@ -320,7 +329,9 @@ function planRuntimeMetadata(releaseVersion) {
  *   - errors: string[] (drift / validation failures)
  */
 function computeChangePlan(options = {}) {
-	const releaseVersion = resolveReleaseVersion(options.releaseVersion);
+	const releaseVersion = options.developmentVersion
+		? resolveDevelopmentVersion(options.developmentVersion)
+		: resolveReleaseVersion(options.releaseVersion);
 	const errors = [];
 	const plan = {
 		rootVersion: { current: null, expected: releaseVersion, changed: false },
@@ -518,7 +529,7 @@ function computeChangePlan(options = {}) {
 
 	// --- Image config ---
 	const imageConfigPath = path.resolve(ROOT_DIR, IMAGE_CONFIG_PATH);
-	if (fs.existsSync(imageConfigPath)) {
+	if (fs.existsSync(imageConfigPath) && !releaseVersion.endsWith("-devel")) {
 		const imgContent = fs.readFileSync(imageConfigPath, "utf8");
 		const { content: updatedContent, changed } = updateImageTags(imgContent, releaseVersion);
 		plan.imageConfig.changed = changed;
@@ -531,7 +542,7 @@ function computeChangePlan(options = {}) {
 		}
 		plan.imageConfig.currentContent = imgContent;
 		plan.imageConfig.updatedContent = updatedContent;
-	} else {
+	} else if (!releaseVersion.endsWith("-devel")) {
 		errors.push(`Image config not found at ${IMAGE_CONFIG_PATH}`);
 	}
 
@@ -1045,6 +1056,8 @@ function usage() {
   node scripts/release-align.js check --release-version=X.Y.Z
   node scripts/release-align.js dry-run --release-version=X.Y.Z
   node scripts/release-align.js apply --release-version=X.Y.Z
+  node scripts/release-align.js check-development --development-version=X.Y.Z-devel
+  node scripts/release-align.js apply-development --development-version=X.Y.Z-devel
   node scripts/release-align.js apply-licenses
 
 Modes:
@@ -1062,29 +1075,33 @@ Options:
 function parseCliArguments(args) {
 	const [mode, ...options] = args;
 	let releaseVersion;
+	let developmentVersion;
 	const versionedMode = ["check", "dry-run", "apply"].includes(mode);
+	const developmentMode = ["check-development", "dry-run-development", "apply-development"].includes(mode);
 
-	if (!mode || !["check", "dry-run", "apply", "apply-licenses"].includes(mode)) {
+	if (!mode || !["check", "dry-run", "apply", "apply-licenses", "check-development", "dry-run-development", "apply-development"].includes(mode)) {
 		throw new Error(`Error: invalid mode "${mode}"`);
 	}
 
 	for (const option of options) {
-		if (!option.startsWith("--release-version=")) {
+		if (!option.startsWith("--release-version=") && !option.startsWith("--development-version=")) {
 			throw new Error(`Error: invalid option "${option}"`);
 		}
-		if (releaseVersion !== undefined) {
+		if (releaseVersion !== undefined || developmentVersion !== undefined) {
 			throw new Error("Error: --release-version may be specified only once.");
 		}
-		releaseVersion = resolveReleaseVersion(option.slice("--release-version=".length));
+		if (option.startsWith("--development-version=")) developmentVersion = resolveDevelopmentVersion(option.slice("--development-version=".length));
+		else releaseVersion = resolveReleaseVersion(option.slice("--release-version=".length));
 	}
 	if (versionedMode && releaseVersion === undefined) {
 		throw new Error(`Error: ${mode} requires --release-version=X.Y.Z.`);
 	}
-	if (!versionedMode && releaseVersion !== undefined) {
+	if (developmentMode && developmentVersion === undefined) throw new Error(`Error: ${mode} requires --development-version=X.Y.Z-devel.`);
+	if (!versionedMode && !developmentMode && (releaseVersion !== undefined || developmentVersion !== undefined)) {
 		throw new Error("Error: apply-licenses is version-independent and does not accept --release-version.");
 	}
 
-	return { mode, releaseVersion };
+	return developmentMode ? { mode, developmentVersion } : { mode, releaseVersion };
 }
 
 function main() {
@@ -1101,20 +1118,20 @@ function main() {
 		console.error(error.message);
 		usage();
 	}
-	const { mode, releaseVersion } = parsed;
+	const { mode, releaseVersion, developmentVersion } = parsed;
 
-	if (mode === "check") {
-		const result = check({ releaseVersion });
+	if (mode === "check" || mode === "check-development") {
+		const result = check(mode === "check-development" ? { developmentVersion } : { releaseVersion });
 		for (const line of result.reportLines) {
 			console.log(line);
 		}
 		if (!result.ok) {
 			process.exit(1);
 		}
-	} else if (mode === "dry-run") {
-		dryRun({ releaseVersion });
-	} else if (mode === "apply") {
-		const result = applyChanges({ releaseVersion });
+	} else if (mode === "dry-run" || mode === "dry-run-development") {
+		dryRun(mode === "dry-run-development" ? { developmentVersion } : { releaseVersion });
+	} else if (mode === "apply" || mode === "apply-development") {
+		const result = applyChanges(mode === "apply-development" ? { developmentVersion } : { releaseVersion });
 		for (const line of result.reportLines) {
 			console.log(line);
 		}
@@ -1150,4 +1167,4 @@ if (require.main === module) {
 	main();
 }
 
-module.exports = { check, dryRun, applyChanges, applyLicenses, computeChangePlan, discoverLicensePackages, parseCliArguments, resolveReleaseVersion };
+module.exports = { check, dryRun, applyChanges, applyLicenses, computeChangePlan, discoverLicensePackages, parseCliArguments, resolveReleaseVersion, resolveDevelopmentVersion };

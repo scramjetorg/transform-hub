@@ -12,6 +12,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.ref || github.ref_name || 'schedule' }}
+  cancel-in-progress: true
+
 jobs:
   security-policy:
     name: Security / repository policy

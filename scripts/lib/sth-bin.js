@@ -5,15 +5,13 @@
  *
  * Shared resolver for the installed STH CLI executable (`scramjet-transform-hub`).
  *
- * The BDD Host and the release-prerelease activation/validation flow both need
+ * The BDD Host and local workspace validation both need
  * to run the STH CLI, and both must resolve it through `node_modules/.bin`
  * rather than a hardcoded `dist/sth/bin/hub.js` path:
  *
  *   - workspace installs expose the `@scramjet/sth` package bin through npm's
  *     `node_modules/.bin/scramjet-transform-hub` symlink (source entrypoint),
- *   - registry/GitHub-Packages prerelease installs repoint the *same* canonical
- *     `node_modules/.bin/scramjet-transform-hub` link into the verified
- *     installed package (see release-prerelease-bdd.js activation).
+ *   - local package installs expose the same canonical bin link.
  *
  * The selected bin is executed directly — its shebang picks the interpreter —
  * and must never be passed to `node` explicitly.

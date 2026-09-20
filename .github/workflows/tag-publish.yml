@@ -1,0 +1,64 @@
+name: Publish stable tag
+
+on:
+  push:
+    tags: ["v*.*.*"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ format('tag-{0}', github.ref_name) }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ github.sha }}
+      - uses: ./.github/actions/setup-workspace
+        with:
+          cache-mode: restore-only
+      - name: Validate tag and main target
+        run: |
+          set -euo pipefail
+          version="${GITHUB_REF_NAME#v}"
+          test "$(node -p "require('./package.json').version")" = "$version"
+          git fetch origin main
+          test "$(git rev-parse origin/main)" = "$GITHUB_SHA"
+          npm run release:align:check -- --release-version="$version"
+          npm run lint
+          npm run typecheck
+          npm run check:runtime-invariants
+          npm run build:packages
+  publish:
+    needs: [validate]
+    runs-on: ubuntu-24.04
+    environment: production
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ github.sha }}
+      - uses: ./.github/actions/setup-workspace
+        with:
+          cache-mode: read-write
+      - name: Build release packages
+        run: FLAT_PACKAGES=true MAKE_PUBLIC=true NO_INSTALL=true node scripts/build-all.js -w release --ts-config tsconfig.build.json
+      - name: Prepare and publish npm release
+        env:
+          MAIN_RELEASE_PUBLISH_ENABLED: "true"
+          NPM_CONFIG_PROVENANCE: "true"
+        run: |
+          set -euo pipefail
+          version="${GITHUB_REF_NAME#v}"
+          node scripts/release-main.js prepare --packages-dir dist --source-sha "$GITHUB_SHA" --node "$(node --version)" --npm "$(node node_modules/npm/bin/npm-cli.js --version)" --output "$RUNNER_TEMP/main-release.v1.json"
+          node scripts/release-main.js publish --release "$RUNNER_TEMP/main-release.v1.json" --packages-dir dist --output "$RUNNER_TEMP/main-release-publication.v1.json"
