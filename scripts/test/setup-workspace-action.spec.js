@@ -293,23 +293,7 @@ test("setup helper installs and verifies the pinned npm version", (t) => {
 	t.true(run.includes('test "$(npm --version)" = "11.19.0"'));
 });
 
-test("checkpoint restore runs before any npm cache restore when a checkpoint branch is requested", (t) => {
-	const steps = parseSteps(loadLines());
-	t.truthy(steps, "steps must exist");
-
-	const checkpoint = steps.find((s) => {
-		const name = stepName(s);
-		return name && name.includes("Restore verified dependency checkpoint");
-	});
-	t.truthy(checkpoint, "there must be a checkpoint restore step");
-	t.true(stepIf(checkpoint).includes("inputs.checkpoint-branch != ''"), "checkpoint restore must be gated on checkpoint-branch");
-
-	const cacheRestore = steps.find((s) => stepName(s) === "Restore npm tarball cache");
-	t.truthy(cacheRestore, "there must be an npm cache restore step");
-	t.true(steps.indexOf(checkpoint) < steps.indexOf(cacheRestore), "checkpoint restore must run before npm cache restore");
-});
-
-test("npm cache restore uses the pinned actions/cache/restore action for non-off modes without a checkpoint", (t) => {
+test("npm cache restore uses the pinned actions/cache/restore action for non-off modes", (t) => {
 	const steps = parseSteps(loadLines());
 	t.truthy(steps, "steps must exist");
 
@@ -319,7 +303,6 @@ test("npm cache restore uses the pinned actions/cache/restore action for non-off
 
 	const ifCond = stepIf(restore);
 	t.true(ifCond.includes("inputs.cache-mode != 'off'"), "restore must run for modes other than off");
-	t.true(ifCond.includes("env.CHECKPOINT_NPM_CACHE == ''"), "restore must be skipped when a verified checkpoint supplies the cache");
 
 	const withVals = stepWith(restore);
 	t.is(withVals.path, "${{ steps.npm-cache.outputs.cache-dir }}", "restore must target only the npm cache directory");
@@ -327,7 +310,7 @@ test("npm cache restore uses the pinned actions/cache/restore action for non-off
 	t.false("restore-keys" in withVals, "restore must not use broad prefix keys");
 });
 
-test("install step prefers the verified checkpoint cache, then a restored npm cache, then clean npm ci", (t) => {
+test("install step uses a restored npm cache when available, otherwise clean npm ci", (t) => {
 	const steps = parseSteps(loadLines());
 	t.truthy(steps, "steps must exist");
 
@@ -335,13 +318,11 @@ test("install step prefers the verified checkpoint cache, then a restored npm ca
 	t.truthy(install, "there must be an Install step");
 
 	const run = stepRun(install);
-	t.true(run.includes('if [ -n "${CHECKPOINT_NPM_CACHE:-}" ]'), "checkpoint cache must be the preferred npm ci source");
-	t.true(run.includes("npm ci --cache \"$CHECKPOINT_NPM_CACHE\""), "checkpoint cache must be used when supplied");
 	t.true(run.includes("steps.npm-cache-restore.outputs.cache-hit"), "restored npm cache hit must select the npm cache directory");
 	t.true(run.includes("npm ci"), "install step must run 'npm ci'");
 });
 
-test("npm cache save runs only for read-write after install without an exact hit or checkpoint", (t) => {
+test("npm cache save runs only for read-write after install without an exact hit", (t) => {
 	const steps = parseSteps(loadLines());
 	t.truthy(steps, "steps must exist");
 
@@ -352,7 +333,6 @@ test("npm cache save runs only for read-write after install without an exact hit
 	const ifCond = stepIf(save);
 	t.true(ifCond.includes("inputs.cache-mode == 'read-write'"), "save must run only for read-write mode");
 	t.true(ifCond.includes("steps.npm-cache-restore.outputs.cache-hit != 'true'"), "save must be skipped on an exact cache hit");
-	t.true(ifCond.includes("env.CHECKPOINT_NPM_CACHE == ''"), "save must be skipped when a verified checkpoint supplies the cache");
 
 	const withVals = stepWith(save);
 	t.is(withVals.path, "${{ steps.npm-cache.outputs.cache-dir }}", "save must target only the npm cache directory");

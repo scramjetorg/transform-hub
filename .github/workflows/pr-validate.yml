@@ -51,7 +51,6 @@ jobs:
           # PR/merge-group source jobs only restore a validated npm cache; they
           # never write caches from untrusted or release-PR code.
           cache-mode: restore-only
-          checkpoint-branch: ${{ github.event.pull_request.base.ref || github.event.merge_group.base_ref || '' }}
 
       - name: Mergeability and merge-queue eligibility
         shell: bash
@@ -115,7 +114,6 @@ jobs:
           # PR outputs remain disposable: restore-only cache, no build artifact
           # or node_modules handoff crosses jobs.
           cache-mode: restore-only
-          checkpoint-branch: ${{ github.event.pull_request.base.ref || github.event.merge_group.base_ref || '' }}
 
       # PR outputs remain disposable: no build artifact or cache crosses jobs.
       - name: Build disposable BDD inputs
@@ -152,7 +150,6 @@ jobs:
           # PR outputs remain disposable: restore-only cache, no build artifact
           # or node_modules handoff crosses jobs.
           cache-mode: restore-only
-          checkpoint-branch: ${{ github.event.pull_request.base.ref || github.event.merge_group.base_ref || '' }}
 
       - name: Build disposable BDD inputs
         run: npm run build:packages
@@ -188,7 +185,6 @@ jobs:
           # PR outputs remain disposable: restore-only cache, no build artifact
           # or node_modules handoff crosses jobs.
           cache-mode: restore-only
-          checkpoint-branch: ${{ github.event.pull_request.base.ref || github.event.merge_group.base_ref || '' }}
 
       # PR outputs remain disposable: build durable BDD inputs in this isolated job.
       - name: Build disposable BDD inputs
@@ -222,7 +218,6 @@ jobs:
           # PR outputs remain disposable: restore-only cache, no build artifact
           # or node_modules handoff crosses jobs.
           cache-mode: restore-only
-          checkpoint-branch: ${{ github.event.pull_request.base.ref || github.event.merge_group.base_ref || '' }}
 
       - name: Build disposable BDD inputs
         run: npm run build:packages
@@ -308,10 +303,7 @@ jobs:
 
       - uses: ./.github/actions/setup-workspace
         with:
-          # The credentialed publication job disables Actions caching entirely:
-          # it restores nothing from a reusable cache before publishing and
-          # writes nothing back from release code.
-          cache-mode: off
+          cache-mode: read-write
 
       - name: Release PR / build publishable packages
         run: FLAT_PACKAGES=true MAKE_PUBLIC=true NO_INSTALL=true node scripts/build-all.js -w release --ts-config tsconfig.build.json
@@ -405,7 +397,8 @@ jobs:
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
         with:
           node-version: "22"
-          package-manager-cache: false
+          cache: npm
+          cache-dependency-path: package-lock.json
 
       - name: Install pinned npm
         run: |

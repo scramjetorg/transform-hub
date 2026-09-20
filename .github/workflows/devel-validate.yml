@@ -38,7 +38,6 @@ jobs:
         with:
           # Devel fast gates are trusted push code: read-write npm tarball cache.
           cache-mode: read-write
-          checkpoint-branch: devel
 
       - name: Repository security policy
         run: npm run check:security-workflow

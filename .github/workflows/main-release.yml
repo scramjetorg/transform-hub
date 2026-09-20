@@ -43,8 +43,6 @@ jobs:
     outputs:
       identity: ${{ steps.release_identity.outputs.identity }}
       identity-digest: ${{ steps.release_identity.outputs.identity-digest }}
-      publication-evidence: ${{ steps.publish.outputs.publication-evidence }}
-      publication-verified: ${{ steps.publish.outputs.publication-verified }}
     permissions:
       contents: read
       id-token: write
@@ -59,8 +57,8 @@ jobs:
 
       - uses: ./.github/actions/setup-workspace
         with:
-          # Production publisher job holds publish credentials: cache stays off.
-          cache-mode: off
+          # Production publisher uses the npm tarball cache after a successful install.
+          cache-mode: read-write
 
       - name: Release / verify aligned package boundary
         run: npm run release:align:check -- --release-version="$(node -p "require('./package.json').version")"
@@ -98,43 +96,3 @@ jobs:
           test -z "${NODE_AUTH_TOKEN:-}"
           node scripts/release-main.js publish --release "$RUNNER_TEMP/main-release.v1.json" --packages-dir dist --output "$RUNNER_TEMP/main-release-publication.v1.json"
           node -e 'const release = require(process.env.RUNNER_TEMP + "/main-release.v1.json"); const publication = require(process.env.RUNNER_TEMP + "/main-release-publication.v1.json"); require("./scripts/release-main.js").verifyPublication(publication, release);'
-          echo "publication-evidence=$(base64 -w 0 "$RUNNER_TEMP/main-release-publication.v1.json")" >> "$GITHUB_OUTPUT"
-          echo "publication-verified=true" >> "$GITHUB_OUTPUT"
-
-  main-checkpoint-promotion:
-    name: Release / checkpoint promotion
-    if: ${{ needs.production-publication.outputs.publication-verified == 'true' && needs.production-publication.outputs.publication-evidence != '' && github.repository == 'scramjetorg/transform-hub' && github.ref == 'refs/heads/main' }}
-    needs: [production-publication]
-    permissions:
-      contents: read
-      packages: write
-    runs-on: ubuntu-24.04
-    timeout-minutes: 20
-    concurrency:
-      group: checkpoint-pointer-main
-      cancel-in-progress: false
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with:
-          persist-credentials: false
-          ref: ${{ github.sha }}
-
-      - uses: ./.github/actions/setup-workspace
-        with:
-          # Checkpoint promotion job holds GHCR publish credentials: cache stays off.
-          cache-mode: off
-
-      - name: Release / build, publish, verify, and promote checkpoint
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-          SCRAMJET_GHCR_SCOPED_PUBLISHER: ${{ vars.SCRAMJET_GHCR_SCOPED_PUBLISHER }}
-        run: |
-          current_sha="$(git ls-remote origin refs/heads/main | cut -f1)"
-          source_sha="$(git rev-parse HEAD)"
-          test -n "$current_sha"
-          test "$SCRAMJET_GHCR_SCOPED_PUBLISHER" = "true"
-          test -n "$GITHUB_TOKEN"
-          node scripts/checkpoint/plan.js --dry-run --branch main --source-sha "$source_sha" --current-sha "$current_sha" --output "$RUNNER_TEMP/checkpoint-promotion"
-          printf '%s' "$GITHUB_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
-          trap 'docker logout ghcr.io' EXIT
-          node scripts/checkpoint/publish.js --plan "$RUNNER_TEMP/checkpoint-promotion/checkpoint-plan.v1.json" --branch main --source-sha "$source_sha" --current-sha "$current_sha" --npm-cache "$HOME/.npm"

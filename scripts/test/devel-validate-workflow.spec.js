@@ -39,7 +39,6 @@ test("devel fast-gates job checks out before Node/npm setup", (t) => {
 	t.true(block.includes("ref: ${{ github.sha }}"));
 	t.is((source.match(/cache-mode: read-write/g) || []).length, 1, "devel fast gates are trusted push code and use the read-write npm cache");
 	t.false(source.includes("cache: \"false\""), "the legacy boolean cache input must not be used");
-	t.is((source.match(/checkpoint-branch: devel/g) || []).length, 1);
 });
 
 test("devel workflow is fast-gates-only without builds, package tests, Bun, or BDD", (t) => {
@@ -60,8 +59,6 @@ test("devel workflow is fast-gates-only without builds, package tests, Bun, or B
 	t.false(source.includes("test:bdd"));
 	t.false(source.includes("needs: [package-build]"));
 	t.false(source.includes("package-build:"));
-	t.false(source.includes("checkpoint-promotion:"));
-	t.false(source.includes("checkpoint-pointer-devel"));
 	t.false(source.includes("upload-artifact"));
 	t.false(source.includes("download-artifact"));
 	t.false(source.includes("actions/cache"));

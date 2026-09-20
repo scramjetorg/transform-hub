@@ -33,8 +33,6 @@ test("base PR workflow is read-only, cancellable, and uses a fresh restore-only 
 	t.true(source.includes("cache-mode: restore-only"));
 	t.false(source.includes("cache: \"false\""));
 	t.true(source.includes("github.event.pull_request.head.sha"));
-	t.is((source.match(/checkpoint-branch: \$\{\{ github\.event\.pull_request\.base\.ref \|\| github\.event\.merge_group\.base_ref \|\| '' \}\}/g) || []).length, 5);
-	t.false(source.includes("SCRAMJET_PR_CHECKPOINT_REFERENCE"));
 	t.true(source.includes("organization-required security workflow"));
 	t.false(source.includes("pull_request_target"));
 	t.is((source.match(/^ {6}packages: write$/gm) || []).length, 1, "only the guarded release publication job may grant packages: write");
@@ -143,7 +141,7 @@ test("validation, BDD, and release jobs are isolated with no artifact or node_mo
 	t.is((source.match(/uses: actions\/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1/g) || []).length, 7);
 	t.is((source.match(/uses: \.\/\.github\/actions\/setup-workspace/g) || []).length, 6);
 	t.is((source.match(/cache-mode: restore-only/g) || []).length, 5);
-	t.is((source.match(/cache-mode: off/g) || []).length, 1);
+	t.is((source.match(/cache-mode: read-write/g) || []).length, 1);
 	t.is((source.match(/persist-credentials: false/g) || []).length, 7);
 	t.is((source.match(/needs: \[package-validation\]/g) || []).length, 4);
 	t.false(source.includes("upload-artifact"));
@@ -151,7 +149,7 @@ test("validation, BDD, and release jobs are isolated with no artifact or node_mo
 	t.false(source.includes("actions/cache"));
 });
 
-test("ordinary PR source jobs restore the npm cache but the credentialed publication job disables caching", (t) => {
+test("ordinary PR source jobs restore the npm cache and the publication job uses read-write caching", (t) => {
 	const source = workflowSource();
 	const publicationStart = source.indexOf("  prerelease-publication:\n");
 	const publicationEnd = source.indexOf("  prerelease-bdd:\n");
@@ -164,22 +162,19 @@ test("ordinary PR source jobs restore the npm cache but the credentialed publica
 	t.is((validationAndBdd.match(/cache-mode: restore-only/g) || []).length, 5, "package validation and all four BDD lanes must use restore-only");
 	t.false(validationAndBdd.includes("cache-mode: off"), "ordinary PR source jobs must not disable the cache restore");
 
-	// prerelease-publication carries packages: write and NODE_AUTH_TOKEN, so it
-	// must not restore a reusable cache before publishing or save one from
-	// release code; it is the single cache-mode: off caller.
+	// prerelease-publication installs dependencies before building and publishing,
+	// so it uses the same npm tarball cache mechanism.
 	t.true(publication.includes("packages: write"));
 	t.true(publication.includes("NODE_AUTH_TOKEN: ${{ github.token }}"));
-	t.is((publication.match(/cache-mode: off/g) || []).length, 1, "the credentialed publication job must use cache-mode: off");
-	t.false(publication.includes("cache-mode: restore-only"), "the credentialed publication job must not restore a reusable cache");
+	t.is((publication.match(/cache-mode: read-write/g) || []).length, 1, "the publication job must use cache-mode: read-write");
+	t.false(publication.includes("cache-mode: off"), "the publication job must not disable caching");
 });
 
 test("Node 22/npm-only setup helper configures dependencies after caller checkout", (t) => {
 	const source = setupActionSource();
 	t.regex(source, /actions\/setup-node@[a-f0-9]{40}/);
 	t.true(source.includes('node-version: "22"'));
-	t.true(source.includes("scripts/checkpoint/consume.js"));
 	t.true(source.includes("npm ci"));
-	t.true(source.includes("npm ci --cache \"$CHECKPOINT_NPM_CACHE\""));
 	t.false(source.includes("actions/checkout@"));
 	t.false(source.includes("inputs.ref"));
 	t.false(source.includes("yarn"));
@@ -198,7 +193,7 @@ test("PR and merge-group workflow keeps fork-safe read-only permissions and stal
 	t.is((source.match(/persist-credentials: false/g) || []).length, 7);
 	t.is((source.match(/uses: \.\/\.github\/actions\/setup-workspace/g) || []).length, 6);
 	t.is((source.match(/cache-mode: restore-only/g) || []).length, 5);
-	t.is((source.match(/cache-mode: off/g) || []).length, 1);
+	t.is((source.match(/cache-mode: read-write/g) || []).length, 1);
 	t.false(source.includes("pull_request_target"));
 	t.false(source.includes("id-token: write"));
 	t.false(source.includes("${{ secrets."), "no PAT or npm token secret expression may be introduced");
@@ -429,14 +424,15 @@ test("release PR BDD installs root dependencies after pinning npm and before tru
 	t.true(source.includes("Install root dependencies"), "the root dependency install step must be named");
 });
 
-test("release PR BDD preserves raw setup-node without package-manager cache and skips the redundant second root install", (t) => {
+test("release PR BDD caches npm with raw setup-node and skips the redundant second root install", (t) => {
 	const source = workflowSource();
 	const bddStart = source.indexOf("  prerelease-bdd:\n");
 	const bdd = source.slice(bddStart);
 
 	t.true(bdd.includes("uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020"), "prerelease BDD must use the raw pinned setup-node");
 	t.true(bdd.includes('node-version: "22"'));
-	t.true(bdd.includes("package-manager-cache: false"), "raw setup-node must disable the package-manager cache");
+	t.true(bdd.includes("cache: npm"), "raw setup-node must enable the npm cache");
+	t.true(bdd.includes("cache-dependency-path: package-lock.json"), "raw setup-node must key the cache from the root lockfile");
 	t.false(bdd.includes("uses: ./.github/actions/setup-workspace"), "prerelease BDD must not use the workspace composite helper");
 	t.is((source.match(/npm ci --ignore-scripts/g) || []).length, 1, "the single root npm ci after pinning npm must not be duplicated after prepare");
 	const prepare = bdd.indexOf("release-prerelease-bdd.js prepare");

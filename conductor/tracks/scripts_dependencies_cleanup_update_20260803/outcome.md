@@ -22,7 +22,6 @@ Completed cleanup and dependency-maintenance track covering obsolete script remo
 ## Deferred and Operational Follow-ups
 
 - npm 11.19.0 bundled development-only advisories remain deferred pending a compatible upstream npm release.
-- GHCR checkpoint publication remains fail-closed until `SCRAMJET_GHCR_SCOPED_PUBLISHER` and scoped package-write access are configured.
 - nyc-to-c8 and legacy helper-script removal are optional follow-up tracks, not remaining production work.
 
 ## Important Revisions

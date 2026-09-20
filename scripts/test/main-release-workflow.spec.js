@@ -8,10 +8,10 @@ const { checkWorkflowSource } = require("../check-workflow-policy.js");
 
 const workflowPath = resolve(__dirname, "..", "..", ".github", "workflows", "main-release.yml");
 
-test("main release keeps npm caching read-write only for trusted validation and off for credentialed jobs", (t) => {
+test("main release enables read-write npm caching for both jobs", (t) => {
 	const source = readFileSync(workflowPath, "utf8");
-	t.is((source.match(/cache-mode: read-write/g) || []).length, 1, "trusted boundary validation uses the read-write npm cache");
-	t.is((source.match(/cache-mode: off/g) || []).length, 2, "npm publisher and checkpoint promotion jobs with publish credentials keep the cache off");
+	t.is((source.match(/cache-mode: read-write/g) || []).length, 2, "both main jobs use the read-write npm cache");
+	t.is((source.match(/cache-mode: off/g) || []).length, 0, "no npm-installing main job disables the cache");
 	t.false(source.includes("cache: \"false\""), "the legacy boolean cache input must not be used");
 
 	const validationSource = source.slice(0, source.indexOf("  production-publication:"));
@@ -19,10 +19,8 @@ test("main release keeps npm caching read-write only for trusted validation and 
 	t.true(validationWith.includes("cache-mode: read-write"), "boundary validation setup must request the read-write cache");
 
 	const publicationSource = source.slice(source.indexOf("  production-publication:"));
-	t.true(publicationSource.includes("cache-mode: off"), "production publisher setup must keep the cache off");
+	t.true(publicationSource.includes("cache-mode: read-write"), "production publisher setup must request the read-write cache");
 
-	const promotionSource = source.slice(source.indexOf("main-checkpoint-promotion:"));
-	t.true(promotionSource.includes("cache-mode: off"), "checkpoint promotion setup must keep the cache off");
 });
 
 test("main release is protected, pinned, non-cancellable, and grants OIDC only to publication", (t) => {
@@ -31,7 +29,7 @@ test("main release is protected, pinned, non-cancellable, and grants OIDC only t
 	t.true(source.includes("branches: [main]"));
 	t.true(source.includes("group: main-production-release"));
 	t.true(source.includes("cancel-in-progress: false"));
-	t.is((source.match(/github\.repository == 'scramjetorg\/transform-hub'/g) || []).length, 3);
+	t.is((source.match(/github\.repository == 'scramjetorg\/transform-hub'/g) || []).length, 2);
 	t.is((source.match(/^  production-publication:$/gm) || []).length, 1);
 	t.true(source.includes("environment: production"));
 	t.is((source.match(/id-token: write/g) || []).length, 1);
@@ -45,7 +43,7 @@ test("main release is protected, pinned, non-cancellable, and grants OIDC only t
 	t.false(source.includes("secrets.NODE_AUTH_TOKEN"));
 });
 
-test("main release retains its immutable manifest before ordered waves and gates checkpoint promotion on complete evidence", (t) => {
+test("main release retains its immutable manifest before ordered waves", (t) => {
 	const source = readFileSync(workflowPath, "utf8");
 	t.is((source.match(/npm run release:align:check -- --release-version=/g) || []).length, 2);
 	t.true(source.includes("$(node -p \"require('./package.json').version\")"));
@@ -59,20 +57,8 @@ test("main release retains its immutable manifest before ordered waves and gates
 	t.true(source.includes("release-main.js publish --release"));
 	t.true(source.includes("main-release-publication.v1.json"));
 	t.true(source.includes("verifyPublication(publication, release)"));
-	t.true(source.includes("publication-evidence"));
-	t.true(source.includes("publication-evidence=$(base64 -w 0"));
-	t.true(source.includes("publication-verified"));
-	t.true(source.includes("main-checkpoint-promotion:"));
-	t.true(source.includes("needs.production-publication.outputs.publication-verified == 'true'"));
-	t.true(source.includes("needs.production-publication.outputs.publication-evidence != ''"));
-	t.true(source.includes("group: checkpoint-pointer-main"));
-	t.true(source.includes("git ls-remote origin refs/heads/main"));
-	t.true(source.includes("--dry-run --branch main"));
-	t.true(source.includes("scripts/checkpoint/publish.js"));
-	t.true(source.includes("packages: write"));
-	t.true(source.includes("docker login ghcr.io"));
-	const promotionSource = source.slice(source.indexOf("main-checkpoint-promotion:"));
-	t.true(promotionSource.includes("packages: write"));
+	t.false(source.includes("packages: write"));
+	t.false(source.includes("docker login ghcr.io"));
 	t.false(source.includes("pull_request_target"));
 	t.false(source.includes("secrets."));
 });
