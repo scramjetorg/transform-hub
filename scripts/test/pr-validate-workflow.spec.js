@@ -7,6 +7,7 @@ const { checkWorkflowSource } = require("../check-workflow-policy.js");
 test("PR workflow is read-only, branch-keyed, cancellable, and has no release publication path", (t) => {
     const source = readFileSync(resolve(__dirname, "../../.github/workflows/pr-validate.yml"), "utf8");
     t.deepEqual(checkWorkflowSource(source, ".github/workflows/pr-validate.yml"), []);
+    t.true(source.includes("group: pr-validation-${{ github.event_name == 'pull_request' && github.event.pull_request.head.ref || github.ref_name }}"));
     t.true(source.includes("github.event.pull_request.head.ref || github.ref_name"));
     t.true(source.includes("cancel-in-progress: true"));
     t.true(source.includes("Verify devel PR is up to date"));
