@@ -37,6 +37,7 @@ test("integration BDD jobs depend on full validation and use isolated restore-on
         const block = source.slice(start, next < 0 ? undefined : start + 1 + next);
         t.true(start >= 0, `${name} exists`);
         t.true(block.includes("needs: [validation]"));
+        t.true(block.includes("if: ${{ always() && needs.validation.result == 'success' }}"));
         t.true(block.includes("permissions:\n      contents: read"));
         t.true(block.includes("timeout-minutes: 60"));
         t.true(block.includes("cache-mode: restore-only"));
