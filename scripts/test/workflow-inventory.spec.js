@@ -17,12 +17,15 @@ test("active workflow inventory contains only the release-flow policy", (t) => {
     }
 });
 
-test("PR workflow owns full non-Docker validation and release admission", (t) => {
+test("PR workflow owns full validation, integration BDD, and release admission", (t) => {
     const source = readFileSync(resolve(workflowsDir, "pr-validate.yml"), "utf8");
     t.true(source.includes("CI / full validation"));
     t.true(source.includes("Verify release PR admission"));
     t.true(source.includes("release:align:check"));
-    t.false(source.includes("BDD"));
-    t.false(source.includes("docker"));
+    t.true(source.includes("bdd-core-node:"));
+    t.true(source.includes("bdd-core-services:"));
+    t.true(source.includes("bdd-extended-hub-topic:"));
+    t.true(source.includes("bdd-extended-runtime:"));
+    t.false(source.includes("docker/build-push-action"));
     t.false(source.includes("prerelease"));
 });
