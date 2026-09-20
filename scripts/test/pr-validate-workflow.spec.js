@@ -18,3 +18,12 @@ test("PR workflow is read-only, branch-keyed, cancellable, and non-Docker", (t) 
     t.false(source.includes("id-token: write"));
     t.false(source.includes("packages: write"));
 });
+
+test("package tests and builds provision the pinned Bun runtime first", (t) => {
+    const source = readFileSync(resolve(__dirname, "../../.github/workflows/pr-validate.yml"), "utf8");
+    const bun = "oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6";
+    t.is((source.match(new RegExp(bun, "g")) || []).length, 1);
+    t.true(source.includes('bun-version: "1"'));
+    t.true(source.indexOf(bun) < source.indexOf("npm run test:packages:ci"));
+    t.true(source.indexOf(bun) < source.indexOf("npm run build:packages"));
+});

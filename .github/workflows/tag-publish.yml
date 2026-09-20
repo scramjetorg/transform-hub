@@ -23,6 +23,10 @@ jobs:
       - uses: ./.github/actions/setup-workspace
         with:
           cache-mode: restore-only
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6
+        with:
+          bun-version: "1"
       - name: Validate tag and main target
         run: |
           set -euo pipefail
@@ -51,6 +55,10 @@ jobs:
       - uses: ./.github/actions/setup-workspace
         with:
           cache-mode: read-write
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6
+        with:
+          bun-version: "1"
       - name: Build release packages
         run: FLAT_PACKAGES=true MAKE_PUBLIC=true NO_INSTALL=true node scripts/build-all.js -w release --ts-config tsconfig.build.json
       - name: Prepare and publish npm release
