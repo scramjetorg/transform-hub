@@ -225,6 +225,20 @@ test("release-version is required for alignment commands and validates explicit 
 	});
 });
 
+test("development alignment accepts and preserves the X.Y.Z-devel suffix", (t) => {
+	const fix = createFixture(t, {
+		version: "1.2.3-devel",
+		included: ["@scramjet/sth", "@scramjet/host"],
+	});
+	setupLicenses(fix);
+	const checkResult = runAlign(fix.root, "check-development", ["--development-version=1.2.3-devel"]);
+	t.is(checkResult.status, 0);
+	const applyResult = runAlign(fix.root, "apply-development", ["--development-version=1.3.0-devel"]);
+	t.is(applyResult.status, 0);
+	t.is(readManifest(fix.rootPkg).version, "1.3.0-devel");
+	t.is(readManifest(fix.packages.get("@scramjet/host").manifestPath).version, "1.3.0-devel");
+});
+
 test("release-version override checks and dry-runs without writing", (t) => {
 	const fix = createFixture(t, {
 		version: "2.0.0",

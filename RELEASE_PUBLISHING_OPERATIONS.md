@@ -2,7 +2,7 @@
 
 This is an **operator runbook**, not evidence that any external setting below exists. Repository code cannot create npm trusted-publisher registrations, GitHub environments, organization rulesets, or npm package access controls.
 
-This runbook covers production npm publishing. It is separate from GitHub Packages prereleases and dependency checkpoints; see [CHECKPOINTS.md](CHECKPOINTS.md) for checkpoint identity and clean-install fallback rules, and [CI_RELEASE_OPERATIONS.md](CI_RELEASE_OPERATIONS.md) for the environment-approved, automatic-GitHub-token GitHub Packages prerelease path.
+This runbook covers production npm publishing. It is separate from GitHub Packages prereleases; see [CI_RELEASE_OPERATIONS.md](CI_RELEASE_OPERATIONS.md) for the environment-approved, automatic-GitHub-token GitHub Packages prerelease path.
 
 ## Current workflow status
 
@@ -104,5 +104,3 @@ With an environment, GitHub uses the environment form of `sub`, not the ref form
 3. npm versions are immutable. Query every attempted `@scramjet/*@version` and reuse only a package whose published identity and final package checksum match the recorded manifest. Never unpublish/re-publish to force a retry.
 4. For a partial release, retain the protected commit and repair only the operator/configuration fault after verifying all published packages. If the package boundary, lockfile, contents, or source SHA differ, create a new reviewed release version.
 5. For OIDC, environment, ruleset, or npm registration issues, disable the production job/environment, correct the remote setting under change control, then retry. Treat unexpected publication or credential exposure as a security incident and follow [SECURITY.md](SECURITY.md).
-
-Checkpoint failure is never a reason to bypass release controls: follow the clean-install and immutable-identity requirements in [CHECKPOINTS.md](CHECKPOINTS.md).

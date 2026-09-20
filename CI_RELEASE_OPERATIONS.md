@@ -4,8 +4,7 @@ This is the repository-level operating map for the active CI and release
 paths. It does not assert that GitHub, npm, GHCR, or organization controls are
 configured. Production npm operator actions remain in
 [RELEASE_PUBLISHING_OPERATIONS.md](RELEASE_PUBLISHING_OPERATIONS.md); security
-enforcement limits remain in [SECURITY.md](SECURITY.md); checkpoint identity and
-digest requirements remain in [CHECKPOINTS.md](CHECKPOINTS.md).
+enforcement limits remain in [SECURITY.md](SECURITY.md).
 
 ## Active workflow and trigger inventory
 
@@ -20,9 +19,9 @@ is retained.
 | `security-check.yml` | PR, merge queue, pushes to trusted branches, weekly schedule | `Security / repository policy` | Redacted history scanning and repository policy defense in depth. |
 | `devel-validate.yml` | Push to `devel` | `Devel / fast gates` | Same-repository devel fast-gates-only validation: lockfile reproducibility, setup-workspace, security workflow policy, lint, typecheck, release alignment, runtime invariants, and license validation. No package build, package tests, Bun setup, or BDD runs. |
 | `devel-bdd-image.yml` | Same-repository push to `devel` | `Devel / publish BDD Node image` | Publishes the `Dockerfile.bdd-bun` image to GHCR under the exact devel source-SHA tag with BuildKit provenance/SBOM and a GitHub artifact attestation for the pushed digest. |
-| `checkpoint-bootstrap.yml` | Manual trusted-branch selection (`main`, `devel`, or `feat/manager-oss`) | `Checkpoint / trusted publication` | Trusted immutable checkpoint publication and pointer promotion; it fails closed when GHCR publication configuration is absent. |
+| `release-candidate.yml` | Same-repository `release/**` pull requests to `main` | `Release / candidate validation and draft` | Validates release candidates and maintains the draft release record. |
 | `release-pr-automation.yml` | Successful same-repository `Devel validation` push | `Release PR / automation` | Creates or updates the managed `devel` to `main` PR. Merging remains an explicit manual operation after required checks; automation never requests auto-merge or an admin bypass. |
-| `main-release.yml` | Push to `main` | `Release / boundary validation`, `Release / npm publish`, `Release / checkpoint promotion` | Protected production npm release and publication-gated checkpoint decision. |
+| `main-release.yml` | Push to `main` | `Release / boundary validation`, `Release / npm publish` | Protected production npm release. |
 
 ### Audit outcome and intentional overlap
 
@@ -38,13 +37,8 @@ explicit manual operation after required checks pass, and merging triggers the
 protected `main` production release.
 `security-check.yml` intentionally overlaps all paths because it is
 defense-in-depth and must remain independently visible. No deleted workflow has
-a remaining caller. Automatic Devel checkpoint promotion is disabled: the former
-`devel-checkpoint-promotion.yml` workflow was removed and Devel validation is
-fast-gates-only, so a devel push can no longer trigger checkpoint publication or
-pointer promotion. Devel checkpoint publication remains available only as an
-explicit manual operation through `checkpoint-bootstrap.yml`. Docker Hub image
-publication is **deferred to a follow-up track** and is not an active workflow or
-release handoff.
+a remaining caller. Docker Hub image publication is **deferred to a follow-up
+track** and is not an active workflow or release handoff.
 
 ### Concurrency semantics
 
@@ -58,15 +52,13 @@ serializes live GitHub Packages publication across release PRs with its own
 
 ## Handoffs, identities, and artifacts
 
-- PR, merge-queue, and release-PR outputs are disposable: no cache write,
-  artifact, image, package, credential, or promotion capability crosses from
-  untrusted or release code. Ordinary PR source jobs (package validation and
-  both BDD lanes) pass `cache-mode: restore-only` to setup-workspace so they
-  may restore a previously validated npm cache but never write one. The
-  credentialed `prerelease-publication` job passes `cache-mode: off`: it
-  restores nothing from a reusable cache before publishing and writes nothing
-  back from release code. No build artifact or `node_modules` is handed off
-  between jobs.
+- PR, merge-queue, and release-PR outputs are disposable: no build artifact,
+  image, package, credential, or promotion capability crosses between jobs.
+  Ordinary PR source jobs (package validation and both BDD lanes) pass
+  `cache-mode: restore-only` to setup-workspace. The credentialed
+  `prerelease-publication` job uses `cache-mode: read-write`; all npm caches
+  contain only package tarballs, never `node_modules`. No build artifact or
+  `node_modules` is handed off between jobs.
 - Release-PR prerelease publication emits a canonical manifest/checksum through
   trusted same-workflow job outputs. The BDD job accepts exact package versions,
   validated npm SRI/SHA-256 metadata where available, a generated install lock,
@@ -108,13 +100,6 @@ serializes live GitHub Packages publication across release PRs with its own
   when their published release identity and final package checksum match exactly.
   A partial publication must never be resolved by republishing an immutable npm
   version.
-- Checkpoint planning is dry-run, but trusted checkpoint publication and
-  promotion are live, digest-first paths that fail closed when required GHCR
-  configuration is absent. Consume only immutable `@sha256` image references
-  after identity/statement/label verification; a missing or mismatched
-  checkpoint uses clean `npm ci`.
-  [CHECKPOINTS.md](CHECKPOINTS.md) is authoritative for checkpoint labels,
-  pointers, retention, and live guarded GHCR publication and pointer promotion.
 - Do not upload release manifests, secrets, scanner findings, `node_modules`, or
   mutable Docker image archives as a handoff. Persist auditable release evidence
   in the GitHub run and trusted registry metadata instead.
@@ -124,17 +109,15 @@ serializes live GitHub Packages publication across release PRs with its own
 All maintained paths use GitHub-hosted Node 22 and npm. Local composite setup
 requires caller checkout of an explicit SHA, sets `persist-credentials: false`,
 and performs clean `npm ci`; no path uses Yarn. Ordinary PR source jobs pass
-`cache-mode: restore-only` and never claim cache writes; the credentialed
-`prerelease-publication` job passes `cache-mode: off` and uses no Actions
-cache. Only trusted push/release/scheduled callers may enable dependency
-caching. Release
+`cache-mode: restore-only`; trusted push and release jobs use
+`cache-mode: read-write`. All caches contain npm tarballs only. Release
 administrators own npm
 trusted-publisher registration, the protected `production` environment, and
 production recovery. CI security administrators own action pin review,
 workflow-policy maintenance, and required-workflow/ruleset administration.
 Package maintainers own release-boundary changes and version alignment review.
 
-For failed production publication, approval, OIDC, checksum, or checkpoint
+For failed production publication, approval, OIDC, or checksum
 decisions: stop, preserve the run URL/source SHA/identity/package status, correct
 the remote control under change management, and retry only after exact immutable
 identity verification. Follow the detailed recovery procedures in

@@ -17,6 +17,5 @@
 - **Stale production residuals:** root/CLI tar 6, Manager MinIO 7, Dockerode 4/UUID 8, and pico-s3/file-type plus socks/ip-address chains were remediated in Phase 6; current production audit is clean.
 - **Stale development residuals:** nyc/Babel findings and the Manager typecheck blocker are no longer current.
 - **Optional or out-of-scope cleanup:** removing `scripts/_/pack-sequence` or `scripts/_/upload-sequence`, relocating `@types/js-yaml`, and migrating nyc to c8 require a separately approved track. `scripts/packsequence.js` remains required by the BDD fixture package.
-- **Operational checkpoint publication:** the unset `SCRAMJET_GHCR_SCOPED_PUBLISHER` variable is an external fail-closed prerequisite, not implementation debt or an archival blocker.
 
 Final Oracle assessment: `APPROVE archival`; no production-required deferred item remains.

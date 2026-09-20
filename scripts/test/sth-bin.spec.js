@@ -2,7 +2,7 @@
  * @file scripts/test/sth-bin.spec.js
  *
  * Focused tests for the shared STH CLI resolver (scripts/lib/sth-bin.js) that
- * the BDD Host and the release-prerelease flow use to locate the installed
+ * the BDD Host and local workspace validation use to locate the installed
  * `scramjet-transform-hub` executable through node_modules/.bin.
  *
  * The selected bin must be executed directly (its shebang picks the
@@ -84,18 +84,18 @@ test("findNodeModulesRoot walks up to the nearest .bin directory", (t) => {
 	t.is(findNodeModulesRoot(empty), null);
 });
 
-test("a prerelease-style bin link resolves with source=installed-package", (t) => {
+test("an installed-package bin link resolves with source=installed-package", (t) => {
 	const root = mkdtempSync(join(tmpdir(), "sth-bin-installed-"));
 	t.teardown(() => rmSync(root, { force: true, recursive: true }));
 
 	// Simulate a verified prerelease install layout: install dir sibling of
 	// the workspace root, package bin reachable through a relative .bin link.
-	const installDir = join(root, ".release-prerelease-bdd", "node_modules", "@scramjetorg", "sth");
+	const installDir = join(root, ".workspace-install", "node_modules", "@scramjetorg", "sth");
 	const binDir = join(root, "node_modules", ".bin");
 	mkdirSync(join(installDir, "bin"), { recursive: true });
 	mkdirSync(binDir, { recursive: true });
 	writeFileSync(join(installDir, "bin", "hub.js"), "#!/usr/bin/env node\nprocess.stdout.write(\"installed sth\");\n", { mode: 0o755 });
-	symlinkSync(join("..", "..", ".release-prerelease-bdd", "node_modules", "@scramjetorg", "sth", "bin", "hub.js"), join(binDir, STH_BIN_NAME), "file");
+	symlinkSync(join("..", "..", ".workspace-install", "node_modules", "@scramjetorg", "sth", "bin", "hub.js"), join(binDir, STH_BIN_NAME), "file");
 
 	const resolved = resolveSthBin({ cwd: root });
 	t.is(resolved.source, "installed-package");

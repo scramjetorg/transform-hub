@@ -19,7 +19,7 @@ jobs:
           key: untrusted
       - uses: actions/upload-artifact@0123456789012345678901234567890123456789
         with:
-          name: checkpoint-input
+          name: untrusted-input
           path: dist
       - run: docker push ghcr.io/scramjetorg/transform-hub/ci-deps:untrusted
       - run: npm publish

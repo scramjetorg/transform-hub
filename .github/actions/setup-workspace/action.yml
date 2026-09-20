@@ -10,10 +10,6 @@ description: >
   Only trusted callers (push, release, or scheduled workflows) should use
   read-write to mitigate supply-chain risk from cache poisoning.
   restore-only may only restore a previously validated cache and never saves.
-  A verified dependency checkpoint remains the preferred source:
-  when it supplies `CHECKPOINT_NPM_CACHE`, Actions-cache restore/save is
-  skipped and the verified checkpoint cache is used for `npm ci`.
-
   Callers must perform credential-safe checkout first. node_modules is never
   cached or handed off across jobs.
 
@@ -27,11 +23,6 @@ inputs:
       evaluated the cache-poisoning risk.
     required: false
     default: "off"
-  checkpoint-branch:
-    description: Trusted checkpoint branch to verify before installing dependencies.
-    required: false
-    default: ""
-
 runs:
   using: composite
   steps:
@@ -78,14 +69,9 @@ runs:
         # platform, toolchain, and exact root lockfile.
         printf 'epoch=%s\n' "$(( $(date +%s) / 86400 ))" >> "$GITHUB_OUTPUT"
 
-    - name: Restore verified dependency checkpoint
-      if: ${{ inputs.checkpoint-branch != '' }}
-      shell: bash
-      run: node scripts/checkpoint/consume.js --branch "${{ inputs.checkpoint-branch }}"
-
     - name: Restore npm tarball cache
       id: npm-cache-restore
-      if: ${{ inputs.cache-mode != 'off' && env.CHECKPOINT_NPM_CACHE == '' }}
+      if: ${{ inputs.cache-mode != 'off' }}
       uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
       with:
         path: ${{ steps.npm-cache.outputs.cache-dir }}
@@ -94,16 +80,14 @@ runs:
     - name: Install dependencies
       shell: bash
       run: |
-        if [ -n "${CHECKPOINT_NPM_CACHE:-}" ]; then
-          npm ci --cache "$CHECKPOINT_NPM_CACHE"
-        elif [ "${{ steps.npm-cache-restore.outputs.cache-hit }}" = "true" ]; then
+        if [ "${{ steps.npm-cache-restore.outputs.cache-hit }}" = "true" ]; then
           npm ci --cache "${{ steps.npm-cache.outputs.cache-dir }}"
         else
           npm ci
         fi
 
     - name: Save npm tarball cache
-      if: ${{ inputs.cache-mode == 'read-write' && steps.npm-cache-restore.outputs.cache-hit != 'true' && env.CHECKPOINT_NPM_CACHE == '' }}
+      if: ${{ inputs.cache-mode == 'read-write' && steps.npm-cache-restore.outputs.cache-hit != 'true' }}
       uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
       with:
         path: ${{ steps.npm-cache.outputs.cache-dir }}
