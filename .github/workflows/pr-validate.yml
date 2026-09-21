@@ -68,7 +68,11 @@ jobs:
         run: npm run typecheck
       - name: Runtime invariants
         run: npm run check:runtime-invariants
-      - name: License validation
+      - name: Development alignment and license validation
+        if: ${{ (github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'devel') || (github.event_name == 'merge_group' && github.event.merge_group.base_ref == 'devel') }}
+        run: node scripts/release-align.js check-development --development-version="$(node -p "require('./package.json').version")"
+      - name: Stable license validation
+        if: ${{ !((github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'devel') || (github.event_name == 'merge_group' && github.event.merge_group.base_ref == 'devel')) }}
         run: npm run check:licenses
       - name: Setup Bun
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6

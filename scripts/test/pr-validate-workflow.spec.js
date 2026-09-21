@@ -64,3 +64,15 @@ test("package tests and builds provision the pinned Bun runtime first", (t) => {
     t.true(source.indexOf(bun) < source.indexOf("npm run test:packages:ci"));
     t.true(source.indexOf(bun) < source.indexOf("npm run build:packages"));
 });
+
+test("license validation routes by validation target", (t) => {
+    const source = readFileSync(resolve(__dirname, "../../.github/workflows/pr-validate.yml"), "utf8");
+    const develTarget = "(github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'devel') || (github.event_name == 'merge_group' && github.event.merge_group.base_ref == 'devel')";
+    const developmentCondition = "if: ${{ " + develTarget + " }}";
+    const stableCondition = "if: ${{ !(" + develTarget + ") }}";
+    const developmentCommand = `run: node scripts/release-align.js check-development --development-version="$(node -p "require('./package.json').version")"`;
+
+    t.true(source.includes("name: Development alignment and license validation\n        " + developmentCondition + "\n        " + developmentCommand));
+    t.true(source.includes("name: Stable license validation\n        " + stableCondition + "\n        run: npm run check:licenses"));
+    t.true(source.includes("github.event.merge_group.base_ref == 'devel'"));
+});
