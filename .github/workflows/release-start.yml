@@ -40,6 +40,7 @@ jobs:
           git switch -c "$branch"
           npm run release:align:dry-run -- --release-version="$stable_version"
           npm run release:align:apply -- --release-version="$stable_version"
+          npm run build:lockfile
           npm run release:align:check -- --release-version="$stable_version"
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com

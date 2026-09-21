@@ -82,6 +82,36 @@ test("CSI immediate kill sends KILL and cancels lifetime extension", async t => 
     t.deepEqual(calls, [[RunnerMessageCode.KILL, {}]]);
 });
 
+test("PING dispatcher establishment is committed before PONG is written", async t => {
+    const order: string[] = [];
+    const controller = createController({
+        args: [],
+        appConfig: {},
+        sequence: {},
+        info: {},
+        logger: { debug: () => undefined, info: () => undefined },
+        emit: (event: string) => {
+            if (event === "ping") order.push("ping");
+        },
+        _instanceAdapter: {
+            setRunner: async () => order.push("dispatcher")
+        },
+        controlDataStream: {
+            whenWrote: async () => order.push("pong")
+        }
+    });
+
+    await controller.handleHandshake([
+        RunnerMessageCode.PING,
+        {
+            created: Date.now(),
+            payload: { args: [], appConfig: {}, system: {} }
+        }
+    ] as any);
+
+    t.deepEqual(order, ["dispatcher", "pong"]);
+});
+
 test("stop timeout racing with terminal completion does not send a late KILL", async t => {
     const calls: unknown[][] = [];
     const controller = createController({

@@ -25,7 +25,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          count="$(gh pr list --repo "$GITHUB_REPOSITORY" --base main --state open --json headRefName,headRepository --jq --arg repository "$GITHUB_REPOSITORY" '[.[] | select(.headRefName | startswith("release/")) | select(.headRepository.fullName == $repository)] | length')"
+          count="$(gh pr list --repo "$GITHUB_REPOSITORY" --base main --state open --json headRefName,headRepository --jq "[.[] | select(.headRefName | startswith(\"release/\")) | select(.headRepository.fullName == \"$GITHUB_REPOSITORY\")] | length")"
           test "$count" = 0 || { echo "A release PR is open; devel is frozen." >&2; exit 1; }
 
   validation:
@@ -54,10 +54,15 @@ jobs:
           test "$version" = "${branch#release/}"
           git merge-base --is-ancestor origin/main HEAD
           git merge-base --is-ancestor origin/devel HEAD
-          npm run release:align:check -- --release-version="$version"
       - uses: ./.github/actions/setup-workspace
         with:
           cache-mode: restore-only
+      - name: Verify release PR alignment
+        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main' && startsWith(github.event.pull_request.head.ref, 'release/') && github.event.pull_request.head.repo.full_name == github.repository }}
+        run: |
+          set -euo pipefail
+          version="$(node -p "require('./package.json').version")"
+          npm run release:align:check -- --release-version="$version"
       - name: Lockfile
         run: npm run check:lockfile
       - name: Security policy
@@ -68,7 +73,11 @@ jobs:
         run: npm run typecheck
       - name: Runtime invariants
         run: npm run check:runtime-invariants
-      - name: License validation
+      - name: Development alignment and license validation
+        if: ${{ (github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'devel') || (github.event_name == 'merge_group' && github.event.merge_group.base_ref == 'devel') }}
+        run: node scripts/release-align.js check-development --development-version="$(node -p "require('./package.json').version")"
+      - name: Stable license validation
+        if: ${{ !((github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'devel') || (github.event_name == 'merge_group' && github.event.merge_group.base_ref == 'devel')) }}
         run: npm run check:licenses
       - name: Setup Bun
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6

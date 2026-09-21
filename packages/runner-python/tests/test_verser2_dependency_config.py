@@ -20,6 +20,7 @@ REPO_ROOT = SCRIPTS.parent.parent.parent
 
 CONFIG_FILE = SCRIPTS / "verser2-config.sh"
 INSTALL_DEPS = SCRIPTS / "install-deps.sh"
+REQUIREMENTS = SCRIPTS.parent / "requirements.txt"
 DOCKERFILE = REPO_ROOT / "packages" / "runner-python" / "Dockerfile"
 
 # Expected variable names that must be defined in the config file
@@ -123,6 +124,12 @@ class TestVerser2Config:
             f"VERSER2_WHEEL_SHA256 '{sha}' should be a 64-char hex string"
         )
 
+    def test_cffi_requirements_cover_cp311_and_cp312_wheels(self) -> None:
+        content = REQUIREMENTS.read_text("utf-8")
+        cffi_block = content.split("cryptography==", 1)[0]
+        assert "34e261f78cb6ceaaa36f42f2613f4380d94d9c759a9c73c769ee6e0247364632" in cffi_block
+        assert "c1453022f490d2459a11819d83ad1d586e9ff65a12ac3e705ffebd46d3685dcf" in cffi_block
+
 
 class TestInstallDepsSourcesConfig:
     """Validates that install-deps.sh sources the shared config."""
@@ -147,6 +154,19 @@ class TestInstallDepsSourcesConfig:
             "install-deps.sh should not define VERSER2_VERSION inline; "
             "source verser2-config.sh instead"
         )
+
+    def test_install_deps_resolves_verified_wheel_through_hashed_requirements(self) -> None:
+        content = INSTALL_DEPS.read_text("utf-8")
+        pip_args_construction = content.split("PIP_ARGS=(", 1)[1].split("python3 -m pip install", 1)[0]
+        assert '--find-links "${TMP_DIR}"' in pip_args_construction
+        assert '"${TMP_DIR}/${VERSER2_WHEEL}"' not in pip_args_construction
+
+    def test_install_deps_separates_unpinned_developer_requirements(self) -> None:
+        content = INSTALL_DEPS.read_text("utf-8")
+        runtime_install, dev_install = content.split('if [[ "${INCLUDE_DEV}" == "1" ]]', 1)
+        assert "requirements-dev.txt" not in runtime_install
+        assert "python3 -m pip install" in dev_install
+        assert 'requirements-dev.txt' in dev_install
 
 
 class TestDockerfileUsesConfig:

@@ -82,6 +82,18 @@ export function translateChildClose(
 }
 
 /**
+ * Hard teardown is reserved for cancellation/disconnection outcomes. A child
+ * that exits with an ordinary nonzero code still gets a graceful transport
+ * drain so terminal output and routed responses can reach the host.
+ */
+export function requiresHardChildTeardown(translated: TranslatedChildClose): boolean {
+    return translated.sequenceError?.signal != null ||
+        translated.exitCode === RunnerExitCode.KILLED ||
+        translated.exitCode === RunnerExitCode.STOPPED ||
+        translated.exitCode === RunnerExitCode.DISCONNECTED;
+}
+
+/**
  * Write a terminal lifecycle monitoring frame using the existing
  * `MessageUtils.writeMessageOnStream` wire format (`JSON.stringify([code,
  * payload]) + "\r\n"`). Scoped here to keep the executor slice additive and
@@ -97,7 +109,6 @@ export function writeTerminalLifecycleFrame(
     if (!monitoring.writable) return false;
 
     const payload = {
-        exitCode: translated.exitCode,
         ...(translated.sequenceError ? { sequenceError: translated.sequenceError } : {})
     };
     const line = JSON.stringify([translated.messageCode, payload]) + "\r\n";

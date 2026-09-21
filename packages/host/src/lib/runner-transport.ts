@@ -31,6 +31,9 @@ type Verser2RunnerBrokerResponse = {
     headers?: Record<string, string | string[] | number | undefined>;
 };
 
+const MAX_UNSUCCESSFUL_ROUTE_BODY_BYTES = 4096;
+const UNSUCCESSFUL_ROUTE_BODY_READ_TIMEOUT_MS = 100;
+
 export type Verser2RunnerBroker = {
     getRoutes(): Verser2RunnerRoute[];
     waitForRoute(domain: string, timeoutMs?: number): Promise<void>;
@@ -261,7 +264,7 @@ export class Verser2RunnerTransport implements RunnerTransport {
 
         this.assertCurrentGeneration(generation);
 
-        this.assertSuccessfulRouteResponse(response, path);
+        await this.assertSuccessfulRouteResponse(response, path);
 
         response.body.resume();
         this.responseBodies.push(response.body);
@@ -299,7 +302,7 @@ export class Verser2RunnerTransport implements RunnerTransport {
 
         this.assertCurrentGeneration(generation);
 
-        this.assertSuccessfulRouteResponse(response, path);
+        await this.assertSuccessfulRouteResponse(response, path);
 
         response.body.pipe(target, { end: false });
         this.responseBodies.push(response.body);
@@ -334,13 +337,64 @@ export class Verser2RunnerTransport implements RunnerTransport {
         body.once("error", error => replace(error));
     }
 
-    private assertSuccessfulRouteResponse(response: Verser2RunnerBrokerResponse, path: string): void {
+    private async assertSuccessfulRouteResponse(response: Verser2RunnerBrokerResponse, path: string): Promise<void> {
         if (response.statusCode === undefined || (response.statusCode >= 200 && response.statusCode < 300)) {
             return;
         }
 
-        response.body.destroy();
-        throw new Error(`Runner route ${path} returned unsuccessful status ${response.statusCode}`);
+        let excerpt = "";
+        try {
+            excerpt = await this.readUnsuccessfulRouteBodyExcerpt(response.body);
+        }
+        finally {
+            response.body.destroy();
+        }
+        const diagnostic = excerpt ? `; body excerpt: ${JSON.stringify(excerpt)}` : "";
+        throw new Error(`Runner route ${path} returned unsuccessful status ${response.statusCode}${diagnostic}`);
+    }
+
+    private readUnsuccessfulRouteBodyExcerpt(body: Readable): Promise<string> {
+        return new Promise(resolve => {
+            const chunks: Buffer[] = [];
+            let size = 0;
+            let settled = false;
+            let timeout: ReturnType<typeof setTimeout>;
+
+            const finish = () => {
+                if (settled) return;
+                settled = true;
+                clearTimeout(timeout);
+                body.removeListener("data", onData);
+                body.removeListener("end", onEnd);
+                body.removeListener("close", onEnd);
+                body.removeListener("error", onEnd);
+                resolve(Buffer.concat(chunks).toString("utf8"));
+            };
+            const onData = (chunk: Buffer | string) => {
+                const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+                const remaining = MAX_UNSUCCESSFUL_ROUTE_BODY_BYTES - size;
+                if (remaining <= 0) {
+                    finish();
+                    body.destroy();
+                    return;
+                }
+
+                const excerpt = buffer.subarray(0, remaining);
+                chunks.push(excerpt);
+                size += excerpt.length;
+                if (size >= MAX_UNSUCCESSFUL_ROUTE_BODY_BYTES) {
+                    finish();
+                }
+            };
+            const onEnd = () => finish();
+
+            body.on("data", onData);
+            body.once("end", onEnd);
+            body.once("close", onEnd);
+            body.once("error", onEnd);
+            timeout = setTimeout(finish, UNSUCCESSFUL_ROUTE_BODY_READ_TIMEOUT_MS);
+            if (body.readableEnded) finish();
+        });
     }
 
     private throwIfSetupFailed(): void {

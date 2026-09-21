@@ -23,6 +23,36 @@ test("PR workflow is read-only, branch-keyed, cancellable, and has no release pu
     t.false(source.includes("packages: write"));
 });
 
+test("devel freeze query counts only canonical release PRs without unsupported gh flags", (t) => {
+    const source = readFileSync(resolve(__dirname, "../../.github/workflows/pr-validate.yml"), "utf8");
+    const freezeCheck = source.slice(source.indexOf("Reject devel changes"), source.indexOf("\n\n  validation:"));
+
+    t.true(freezeCheck.includes('select(.headRefName | startswith(\\"release/\\"))'));
+    t.true(freezeCheck.includes('select(.headRepository.fullName == \\"$GITHUB_REPOSITORY\\")'));
+    t.false(freezeCheck.includes("--arg"));
+});
+
+test("validation performs dependency-free admission before setup and alignment after setup", (t) => {
+    const source = readFileSync(resolve(__dirname, "../../.github/workflows/pr-validate.yml"), "utf8");
+    const validation = source.slice(source.indexOf("  validation:\n"), source.indexOf("\n\n  bdd-core-node:"));
+    const releaseAdmission = validation.indexOf("name: Verify release PR admission");
+    const workspaceSetup = validation.indexOf("uses: ./.github/actions/setup-workspace");
+    const releaseAlignment = validation.indexOf("name: Verify release PR alignment");
+    const releaseAlignCheck = validation.indexOf("npm run release:align:check");
+    const lockfile = validation.indexOf("name: Lockfile");
+    const admission = validation.slice(releaseAdmission, workspaceSetup);
+
+    t.true(releaseAdmission >= 0);
+    t.true(workspaceSetup > releaseAdmission);
+    t.true(releaseAlignment > workspaceSetup);
+    t.true(releaseAlignCheck > releaseAlignment);
+    t.true(releaseAlignment < lockfile);
+    t.true(admission.includes("merge-base --is-ancestor origin/main HEAD"));
+    t.true(admission.includes("merge-base --is-ancestor origin/devel HEAD"));
+    t.false(admission.includes("release:align:check"));
+    t.true(validation.includes('version="$(node -p "require(\'./package.json\').version")"'));
+});
+
 test("integration BDD jobs depend on full validation and use isolated restore-only workspaces", (t) => {
     const source = readFileSync(resolve(__dirname, "../../.github/workflows/pr-validate.yml"), "utf8");
     const jobs = {
@@ -54,4 +84,16 @@ test("package tests and builds provision the pinned Bun runtime first", (t) => {
     t.true(source.includes('bun-version: "1"'));
     t.true(source.indexOf(bun) < source.indexOf("npm run test:packages:ci"));
     t.true(source.indexOf(bun) < source.indexOf("npm run build:packages"));
+});
+
+test("license validation routes by validation target", (t) => {
+    const source = readFileSync(resolve(__dirname, "../../.github/workflows/pr-validate.yml"), "utf8");
+    const develTarget = "(github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'devel') || (github.event_name == 'merge_group' && github.event.merge_group.base_ref == 'devel')";
+    const developmentCondition = "if: ${{ " + develTarget + " }}";
+    const stableCondition = "if: ${{ !(" + develTarget + ") }}";
+    const developmentCommand = `run: node scripts/release-align.js check-development --development-version="$(node -p "require('./package.json').version")"`;
+
+    t.true(source.includes("name: Development alignment and license validation\n        " + developmentCondition + "\n        " + developmentCommand));
+    t.true(source.includes("name: Stable license validation\n        " + stableCondition + "\n        run: npm run check:licenses"));
+    t.true(source.includes("github.event.merge_group.base_ref == 'devel'"));
 });
