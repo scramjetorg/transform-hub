@@ -18,7 +18,8 @@ function releaseVersionFromDevelopment(value) {
 }
 
 function developmentVersionFromStable(value) {
-    return `${stableVersion(value)}-devel`;
+    const [major, minor, patch] = stableVersion(value).split(".").map(Number);
+    return `${major}.${minor}.${patch + 1}-devel`;
 }
 
 function releaseBranch(value) {
