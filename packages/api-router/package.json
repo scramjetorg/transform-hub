@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/api-router",
-  "version": "2.1.1-devel",
+  "version": "2.1.1",
   "description": "Schema-aware API route declaration, manifest, and client contract package for Scramjet Transform Hub.",
   "main": "./src/index.ts",
   "bin": {
@@ -16,9 +16,9 @@
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "MIT",
   "dependencies": {
-    "@scramjet/api-types": "^2.1.1-devel",
-    "@scramjet/config": "^2.1.1-devel",
-    "@scramjet/runtime-types": "^2.1.1-devel",
+    "@scramjet/api-types": "^2.1.1",
+    "@scramjet/config": "^2.1.1",
+    "@scramjet/runtime-types": "^2.1.1",
     "zod": "^3.25.67"
   },
   "devDependencies": {
