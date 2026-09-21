@@ -45,5 +45,5 @@ jobs:
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add -A
           git commit -m "release: prepare $stable_version"
-          git push --set-upstream origin "$branch"
+          git -c http.https://github.com/.extraheader="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w 0)" push --set-upstream origin "$branch"
           gh pr create --base main --head "$branch" --title "Release $stable_version" --body "Release boundary for $stable_version. Maintainers may update this branch before merge."
