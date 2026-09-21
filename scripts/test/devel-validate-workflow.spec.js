@@ -10,6 +10,7 @@ test("devel workflow validates development alignment with repository-wide cancel
     t.true(source.includes("group: ${{ github.ref_name }}"));
     t.true(source.includes("cancel-in-progress: true"));
     t.true(source.includes("node scripts/release-align.js check-development --development-version=\"$(node -p \"require('./package.json').version\")\""));
+    t.false(source.includes("npm run check:licenses"));
     t.false(source.includes("release:align:check -- --development-version"));
     t.false(source.includes("BDD"));
     t.false(source.includes("docker"));
