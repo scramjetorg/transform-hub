@@ -6,13 +6,14 @@ import { dirname, resolve } from "path";
 import { Readable, Writable } from "stream";
 
 import { AppConfig, LogLevel } from "@scramjet/runtime-types";
-import { RunnerExitCode, RunnerMessageCode, selectRuntimeKind } from "@scramjet/symbols";
+import { CommunicationChannel as CC, RunnerExitCode, RunnerMessageCode, selectRuntimeKind } from "@scramjet/symbols";
 
 import { RunnerConnectInfo, RuntimeProcessHandles, SequenceInfo } from "@scramjet/runtime-types";
 
 import { selectExecutor } from "../executor/select";
 import { forwardChildStdio } from "../executor/stream-forwarder";
-import { translateChildClose, writeTerminalLifecycleFrame } from "../executor/exit-translation";
+import { requiresHardChildTeardown, translateChildClose, writeTerminalLifecycleFrame } from "../executor/exit-translation";
+import { waitForChildClose, waitForChildCloseAndConnection } from "../executor/child-close";
 import { resolveRunnerNodeEntry } from "../executor/runner-node-launcher";
 import { resolveRunnerBunEntry } from "../executor/runner-bun-launcher";
 import { observeChildLifecycleFrames } from "../executor/lifecycle-observer";
@@ -220,23 +221,68 @@ function observeRpcExpose(stream: Readable, transport: RunnerVerser2Transport): 
     });
 }
 
+type ChildTermination = { code: number | null; signal: NodeJS.Signals | null; error?: Error };
+
+function formatReadinessFailure(kind: string, termination: ChildTermination | undefined, stderrTail: string, error: unknown): Error {
+    const details = termination
+        ? `code=${termination.code ?? "null"} signal=${termination.signal ?? "null"}`
+        : `code=unknown signal=unknown`;
+    const message = error instanceof Error ? error.message : String(error);
+    return new Error(`Runtime readiness failed executor=${kind} ${details} stderr=${JSON.stringify(stderrTail)}: ${message}`);
+}
+
+async function waitForRuntimeChannels(
+    transport: RunnerVerser2Transport,
+    child: RuntimeProcessHandles["child"],
+    kind: string,
+    stderrTail: () => string
+): Promise<void> {
+    let termination: ChildTermination | undefined;
+    let rejectTermination!: (error: Error) => void;
+    const childEnded = new Promise<never>((_, reject) => { rejectTermination = reject; });
+
+    const onError = (error: Error) => {
+        if (!termination) {
+            termination = { code: null, signal: null, error };
+            rejectTermination(formatReadinessFailure(kind, termination, stderrTail(), error));
+        }
+    };
+    const onClose = (code: number | null, signal: NodeJS.Signals | null) => {
+        termination = { code, signal, error: termination?.error };
+        rejectTermination(formatReadinessFailure(kind, termination, stderrTail(), termination.error ?? new Error("child closed before channel readiness")));
+    };
+
+    child.once("error", onError);
+    child.once("close", onClose);
+
+    try {
+        await Promise.race([
+            Promise.all([transport.waitForLocalChannel(CC.IN), transport.waitForLocalChannel(CC.OUT), transport.waitForLocalChannel(CC.LOG)]).then(() => undefined),
+            childEnded
+        ]);
+    } catch (error) {
+        throw formatReadinessFailure(kind, termination, stderrTail(), error);
+    }
+}
+
 async function main(): Promise<void> {
     const hostClient = new RunnerVerser2Transport({
         config: runnerTransportConfig,
         instanceId: instanceId!
     });
 
-    await hostClient.init();
+    await hostClient.init({ connectGuest: false });
     const resolvedInstancesServerHost = hostClient.localChannelHost;
     const resolvedInstancesServerPort = hostClient.localChannelPort;
 
     const bootConfigPath = writeBootConfig(resolvedInstancesServerHost, resolvedInstancesServerPort);
 
     let handles: RuntimeProcessHandles;
+    let executor: ReturnType<typeof selectExecutor>;
 
     try {
         const engines = connectInfo.config?.engines || (parsedRunnerConnectInfo.appConfig?.engines as Record<string, string> | undefined) || {};
-        const executor = selectExecutor({ engines });
+        executor = selectExecutor({ engines });
         const childEnv: NodeJS.ProcessEnv = {};
 
         // Forward target domains for hubClient() / spaceClient() direct v2 routing.
@@ -280,53 +326,45 @@ async function main(): Promise<void> {
         process.exit(RunnerExitCode.SEQUENCE_FAILED_DURING_EXECUTION);
     }
 
-    // host stdin -> child stdin (fd0). Use end:true so EOF on host stdin is
-    // forwarded to the sequence; the parent process owns the pipe lifetime.
-    if (handles.child.stdin) {
-        hostClient.stdinStream.on("error", () => undefined);
-        hostClient.stdinStream.pipe(handles.child.stdin);
-    }
-
-    // child stdout/stderr -> host stdout/stderr (raw, end:false)
-    forwardChildStdio(handles.child, {
-        hostStdout: hostClient.stdoutStream,
-        hostStderr: hostClient.stderrStream
+    let childStderrTail = "";
+    handles.child.stderr?.on("data", (chunk: Buffer) => {
+        childStderrTail = appendTail(childStderrTail, chunk);
     });
 
-    // host control -> child fd4 (raw)
-    pipeRaw(hostClient.controlStream, handles.control);
-
-    // Track whether the child already emitted a terminal lifecycle frame
-    // (SEQUENCE_COMPLETED / SEQUENCE_STOPPED). The observer is non-
-    // destructive; bytes still flow to host monitoring unchanged.
+    // Install terminal handling before any awaited runtime readiness work. A
+    // Node/Bun child can exit immediately after spawn, before connectGuest()
+    // resolves; registering this listener later would leave the outer runner
+    // waiting forever for a close event it already missed.
     const lifecycle = observeChildLifecycleFrames(handles.monitoring);
+    const childClose = waitForChildClose(handles.child);
 
     if (hostClient instanceof RunnerVerser2Transport) {
         observeRpcExpose(handles.monitoring, hostClient);
     }
 
-    // child fd5 -> host monitoring (raw)
     pipeRaw(handles.monitoring, hostClient.monitorStream);
-    let childStderrTail = "";
-
-    handles.child.stderr?.on("data", (chunk: Buffer) => {
-        childStderrTail = appendTail(childStderrTail, chunk);
-    });
-
     handles.child.once("error", (err: Error) => {
         console.error("runner-node child errored:", err instanceof Error ? err.message : err);
     });
 
-    handles.child.once("close", (code: number | null, signal: NodeJS.Signals | null) => {
+    const connectionAttempt = (async () => {
+        if (executor.kind === "python3") {
+            await waitForRuntimeChannels(hostClient, handles.child, executor.kind, () => childStderrTail);
+        }
+        await hostClient.connectGuest();
+    })();
+
+    const finalization = waitForChildCloseAndConnection(childClose, connectionAttempt).then(({ close }) => {
+        const { code, signal } = close;
         const translated = translateChildClose(code, signal);
 
         if (translated.exitCode !== RunnerExitCode.SUCCESS) {
             console.error(
-                `STH runtime error phase=runner-runtime adapter=${process.env.RUNTIME_ADAPTER || "unknown"} runtime=node instanceId=${instanceId} exitCode=${translated.exitCode}`,
+                `STH runtime error phase=runner-runtime adapter=${process.env.RUNTIME_ADAPTER || "unknown"} runtime=${executor.kind} instanceId=${instanceId} exitCode=${translated.exitCode}`,
                 {
                     phase: "runner-runtime",
                     adapter: process.env.RUNTIME_ADAPTER || "unknown",
-                    runtime: "node",
+                    runtime: executor.kind,
                     instanceId,
                     exitCode: translated.exitCode,
                     childExitCode: code,
@@ -346,14 +384,43 @@ async function main(): Promise<void> {
 
         tryRemove(bootConfigPath);
 
-        hostClient
-            .disconnect(translated.exitCode !== RunnerExitCode.SUCCESS)
+        return hostClient
+            .disconnect(requiresHardChildTeardown(translated))
             .catch(() => undefined)
             .finally(() => {
                 process.exitCode = translated.exitCode;
                 process.exit();
             });
     });
+
+    try {
+        await connectionAttempt;
+    } catch (error) {
+        console.error(error instanceof Error ? error.message : error);
+        try { handles.child.kill(); } catch { /* best effort */ }
+        // The close coordinator owns cleanup and exit. Waiting for the child
+        // close preserves its translated outcome and prevents duplicate
+        // terminal frames/disconnects when startup fails concurrently.
+        await finalization;
+        return;
+    }
+
+    // host stdin -> child stdin (fd0). Use end:true so EOF on host stdin is
+    // forwarded to the sequence; the parent process owns the pipe lifetime.
+    if (handles.child.stdin) {
+        hostClient.stdinStream.on("error", () => undefined);
+        hostClient.stdinStream.pipe(handles.child.stdin);
+    }
+
+    // child stdout/stderr -> host stdout/stderr (raw, end:false)
+    forwardChildStdio(handles.child, {
+        hostStdout: hostClient.stdoutStream,
+        hostStderr: hostClient.stderrStream
+    });
+
+    // host control -> child fd4 (raw)
+    pipeRaw(hostClient.controlStream, handles.control);
+
 }
 
 main().catch((err) => {
