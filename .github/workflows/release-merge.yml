@@ -45,6 +45,7 @@ jobs:
           git fetch origin devel
           devel_sha="$(git rev-parse origin/devel)"
           node scripts/release-align.js apply-development --development-version="$(node scripts/release-flow.js development-version "$version")"
+          npm run build:lockfile
           node scripts/release-align.js check-development --development-version="$(node scripts/release-flow.js development-version "$version")"
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com

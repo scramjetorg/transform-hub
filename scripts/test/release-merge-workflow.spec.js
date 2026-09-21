@@ -11,7 +11,14 @@ test("main merge reconstructs devel and only release branches may create tags", 
 
     t.deepEqual(checkWorkflowSource(source, ".github/workflows/release-merge.yml"), []);
     t.true(source.includes("node scripts/release-align.js apply-development --development-version=\"$(node scripts/release-flow.js development-version \"$version\")\""));
+    t.true(source.includes("npm run build:lockfile"));
     t.true(source.includes("node scripts/release-align.js check-development --development-version=\"$(node scripts/release-flow.js development-version \"$version\")\""));
+    t.true(
+        source.indexOf("node scripts/release-align.js apply-development") < source.indexOf("npm run build:lockfile") &&
+            source.indexOf("npm run build:lockfile") < source.indexOf("node scripts/release-align.js check-development") &&
+            source.indexOf("npm run build:lockfile") < source.indexOf("git add -A"),
+        "lockfile rebuild follows development reconstruction before alignment check and staging",
+    );
     t.true(source.includes("development-version \"$version\""), "reconstruction uses the deterministic next-patch helper");
     t.true(source.includes("persist-credentials: false"));
     t.false(source.includes("GITHUB_TOKEN: ${{ github.token }}"));
