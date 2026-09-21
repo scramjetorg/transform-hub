@@ -1,2 +1,21 @@
-pyee==13.0.1
-scramjet-framework-py
+cffi==2.1.1 \\
+    --hash=sha256:34e261f78cb6ceaaa36f42f2613f4380d94d9c759a9c73c769ee6e0247364632 \\
+    --hash=sha256:c1453022f490d2459a11819d83ad1d586e9ff65a12ac3e705ffebd46d3685dcf
+cryptography==49.0.0 \\
+    --hash=sha256:0e959b578856a3924bc0cbb710fc12c387b9412a951389f3ca61704a9e25f325
+h2==4.4.1 \\
+    --hash=sha256:0e25f1462b23c9cb82d9eb02e28bc706dac2a68cb457c6a0d74d63c8a2a5d0e6
+hpack==4.2.0 \\
+    --hash=sha256:858ac0b02280fa582b5080d68db0899c62a80375e0e5413a74970c5e518b6986
+hyperframe==6.1.0 \\
+    --hash=sha256:b03380493a519fce58ea5af42e4a42317bf9bd425596f7a0835ffce80f1a42e5
+pyee==13.0.1 \\
+    --hash=sha256:af2f8fede4171ef667dfded53f96e2ed0d6e6bd7ee3bb46437f77e3b57689228
+pycparser==3.0 \\
+    --hash=sha256:b727414169a36b7d524c1c3e31839a521725078d7b2ff038656844266160a992
+scramjet-framework-py==0.10.1 \\
+    --hash=sha256:ff50a2144dac63c0f2aafbd7c7ad293e3e9f4ac4aa60fc2a44f1d0efff2691d5
+typing-extensions==4.16.0 \\
+    --hash=sha256:481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8
+verser2-guest-python==0.4.2 \\
+    --hash=sha256:da5ab6efd2ef572a864b8f6766f043fcbe25af3d10a5f5ba0c3878e82e84eef0

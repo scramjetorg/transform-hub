@@ -3,6 +3,7 @@
 set -e
 
 RUNNER_USER="${RUNNER_USER:-runner}"
+export PYTHONPATH="/opt/runner-python:/opt/runner-python/src:/package/__pypackages__:${PYTHONPATH:-}"
 
 if [ "$1" == "start-runner" ]; then
 	shift

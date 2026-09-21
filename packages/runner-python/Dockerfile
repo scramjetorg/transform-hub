@@ -10,7 +10,7 @@
 # runner JS tree at ./dist/docker-runner/ (same input the outer
 # packages/runner/Dockerfile consumes).
 
-FROM python:3.9-slim-bullseye AS target
+FROM python:3.11-slim-bookworm AS target
 
 ENV PACKAGE_DIR=/package \
     HUB_DIR=/opt/transform-hub \
@@ -88,23 +88,28 @@ COPY packages/runner-python/requirements.txt ${RUNNER_PY_DIR}/requirements.txt
 RUN set -eux \
     && . /tmp/verser2-config.sh \
     && TMP_DIR="$(mktemp -d)" \
-    && python3 -c "
-import sys
-from pathlib import Path
-from urllib.request import urlopen
-url, dst = sys.argv[1], Path(sys.argv[2])
-dst.write_bytes(urlopen(url).read())
+    && python3 -c "\
+import sys; \
+from pathlib import Path; \
+from urllib.request import urlopen; \
+url, dst = sys.argv[1], Path(sys.argv[2]); \
+dst.write_bytes(urlopen(url).read()) \
 " "${VERSER2_WHEEL_URL}" "${TMP_DIR}/${VERSER2_WHEEL}" \
     && echo "${VERSER2_WHEEL_SHA256}  ${TMP_DIR}/${VERSER2_WHEEL}" \
         | sha256sum --check --status \
     && pip install --no-cache-dir \
         -r ${RUNNER_PY_DIR}/requirements.txt \
-        "${TMP_DIR}/${VERSER2_WHEEL}" \
+        --find-links "${TMP_DIR}" \
     && rm -rf "${TMP_DIR}" /tmp/verser2-config.sh
 
 COPY packages/runner-python/runner_python ${RUNNER_PY_DIR}/runner_python
 COPY packages/runner-python/src          ${RUNNER_PY_DIR}/src
 COPY packages/runner-python/pyproject.toml ${RUNNER_PY_DIR}/pyproject.toml
+
+# Verify the launcher is present in the final stage, rather than only in a
+# build artifact.  The outer runner's readiness check depends on this import.
+RUN test -f ${RUNNER_PY_DIR}/runner_python/__main__.py \
+    && python3 -c "import runner_python"
 
 RUN chown -R ${RUNNER_USER}:${RUNNER_GROUP} ${RUNNER_PY_DIR}
 
