@@ -29,3 +29,4 @@ jobs:
       - run: npm run typecheck
       - run: node scripts/release-align.js check-development --development-version="$(node -p "require('./package.json').version")"
       - run: npm run check:runtime-invariants
+      - run: npm run check:licenses
