@@ -54,10 +54,15 @@ jobs:
           test "$version" = "${branch#release/}"
           git merge-base --is-ancestor origin/main HEAD
           git merge-base --is-ancestor origin/devel HEAD
-          npm run release:align:check -- --release-version="$version"
       - uses: ./.github/actions/setup-workspace
         with:
           cache-mode: restore-only
+      - name: Verify release PR alignment
+        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main' && startsWith(github.event.pull_request.head.ref, 'release/') && github.event.pull_request.head.repo.full_name == github.repository }}
+        run: |
+          set -euo pipefail
+          version="$(node -p "require('./package.json').version")"
+          npm run release:align:check -- --release-version="$version"
       - name: Lockfile
         run: npm run check:lockfile
       - name: Security policy

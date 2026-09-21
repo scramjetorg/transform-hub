@@ -32,6 +32,27 @@ test("devel freeze query counts only canonical release PRs without unsupported g
     t.false(freezeCheck.includes("--arg"));
 });
 
+test("validation performs dependency-free admission before setup and alignment after setup", (t) => {
+    const source = readFileSync(resolve(__dirname, "../../.github/workflows/pr-validate.yml"), "utf8");
+    const validation = source.slice(source.indexOf("  validation:\n"), source.indexOf("\n\n  bdd-core-node:"));
+    const releaseAdmission = validation.indexOf("name: Verify release PR admission");
+    const workspaceSetup = validation.indexOf("uses: ./.github/actions/setup-workspace");
+    const releaseAlignment = validation.indexOf("name: Verify release PR alignment");
+    const releaseAlignCheck = validation.indexOf("npm run release:align:check");
+    const lockfile = validation.indexOf("name: Lockfile");
+    const admission = validation.slice(releaseAdmission, workspaceSetup);
+
+    t.true(releaseAdmission >= 0);
+    t.true(workspaceSetup > releaseAdmission);
+    t.true(releaseAlignment > workspaceSetup);
+    t.true(releaseAlignCheck > releaseAlignment);
+    t.true(releaseAlignment < lockfile);
+    t.true(admission.includes("merge-base --is-ancestor origin/main HEAD"));
+    t.true(admission.includes("merge-base --is-ancestor origin/devel HEAD"));
+    t.false(admission.includes("release:align:check"));
+    t.true(validation.includes('version="$(node -p "require(\'./package.json\').version")"'));
+});
+
 test("integration BDD jobs depend on full validation and use isolated restore-only workspaces", (t) => {
     const source = readFileSync(resolve(__dirname, "../../.github/workflows/pr-validate.yml"), "utf8");
     const jobs = {
