@@ -12,11 +12,16 @@ test("main merge reconstructs devel and only release branches may create tags", 
     t.deepEqual(checkWorkflowSource(source, ".github/workflows/release-merge.yml"), []);
     t.true(source.includes("node scripts/release-align.js apply-development --development-version=\"$(node scripts/release-flow.js development-version \"$version\")\""));
     t.true(source.includes("node scripts/release-align.js check-development --development-version=\"$(node scripts/release-flow.js development-version \"$version\")\""));
+    t.true(source.includes("persist-credentials: false"));
+    t.false(source.includes("GITHUB_TOKEN: ${{ github.token }}"));
+    t.is((source.match(/git -c http\.https:\/\/github\.com\/.extraheader=/g) || []).length, 2);
+    t.true(source.includes("GH_TOKEN: ${{ github.token }}"));
+    t.true(source.includes("printf 'x-access-token:%s' \"$GH_TOKEN\" | base64 -w 0"));
     t.true(source.includes("if [[ \"$head_ref\" == release/* ]]; then"));
     t.true(source.includes("reconstructing devel without publishing"));
     t.true(source.includes("git/ref/tags/v$version"));
     t.true(source.includes("already exists; skipping tag creation"));
-    t.true(source.includes("git push origin \"v$version\""));
+    t.true(source.includes("push origin \"v$version\""));
     t.false(source.includes("release:align:apply -- --development-version"));
     t.false(source.includes("release:align:check -- --development-version"));
 });
