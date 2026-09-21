@@ -25,7 +25,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          count="$(gh pr list --repo "$GITHUB_REPOSITORY" --base main --state open --json headRefName,headRepository --jq --arg repository "$GITHUB_REPOSITORY" '[.[] | select(.headRefName | startswith("release/")) | select(.headRepository.fullName == $repository)] | length')"
+          count="$(gh pr list --repo "$GITHUB_REPOSITORY" --base main --state open --json headRefName,headRepository --jq "[.[] | select(.headRefName | startswith(\"release/\")) | select(.headRepository.fullName == \"$GITHUB_REPOSITORY\")] | length")"
           test "$count" = 0 || { echo "A release PR is open; devel is frozen." >&2; exit 1; }
 
   validation:

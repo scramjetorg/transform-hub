@@ -23,6 +23,15 @@ test("PR workflow is read-only, branch-keyed, cancellable, and has no release pu
     t.false(source.includes("packages: write"));
 });
 
+test("devel freeze query counts only canonical release PRs without unsupported gh flags", (t) => {
+    const source = readFileSync(resolve(__dirname, "../../.github/workflows/pr-validate.yml"), "utf8");
+    const freezeCheck = source.slice(source.indexOf("Reject devel changes"), source.indexOf("\n\n  validation:"));
+
+    t.true(freezeCheck.includes('select(.headRefName | startswith(\\"release/\\"))'));
+    t.true(freezeCheck.includes('select(.headRepository.fullName == \\"$GITHUB_REPOSITORY\\")'));
+    t.false(freezeCheck.includes("--arg"));
+});
+
 test("integration BDD jobs depend on full validation and use isolated restore-only workspaces", (t) => {
     const source = readFileSync(resolve(__dirname, "../../.github/workflows/pr-validate.yml"), "utf8");
     const jobs = {
