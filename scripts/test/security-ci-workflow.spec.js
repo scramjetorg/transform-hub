@@ -30,6 +30,7 @@ test("security workflow covers untrusted, merge-queue, push, and history paths",
 
 test("security workflow is a read-only, no-promotion defense-in-depth check", (t) => {
 	const source = workflowSource();
+	t.true(source.includes("group: security-policy-${{ github.event_name == 'pull_request' && github.event.pull_request.head.ref || github.ref_name || 'schedule' }}"));
 	t.true(source.includes("name: Security / repository policy"));
 	t.true(source.includes("contents: read"));
 	t.false(source.includes("pull_request_target"));
