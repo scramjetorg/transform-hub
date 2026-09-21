@@ -1,4 +1,5 @@
 import test from "ava";
+import rootPackage from "../../../package.json";
 import {
     development,
     imageConfig,
@@ -13,6 +14,28 @@ import {
     managerDefaultConfig,
     getDefaultManagerConfig,
 } from "../src";
+
+const imageVersionForReleaseVersion = (version: string): string => {
+    const match = /^(\d+)\.(\d+)\.(\d+)(-devel)?$/.exec(version);
+    if (!match) {
+        throw new Error(`Unsupported release lifecycle version: ${version}`);
+    }
+
+    const [, major, minor, patch, channel] = match;
+    return channel ? `${major}.${minor}.${Number(patch) - 1}` : version;
+};
+
+const expectedImageConfig = (version: string) => {
+    const imageVersion = imageVersionForReleaseVersion(version);
+    return {
+        prerunner: `scramjetorg/pre-runner:${imageVersion}`,
+        runner: {
+            node: `scramjetorg/runner:${imageVersion}`,
+            python3: `scramjetorg/runner-py:${imageVersion}`,
+            bun: `scramjetorg/runner-bun:${imageVersion}`
+        }
+    };
+};
 
 // ---------------------------------------------------------------------------
 // env.ts — development() helper
@@ -42,11 +65,16 @@ test("development returns false when both PRODUCTION and DEVELOPMENT are set", t
 // image-config.ts
 // ---------------------------------------------------------------------------
 
-test("imageConfig has expected image tags", t => {
-    t.is(imageConfig.prerunner, "scramjetorg/pre-runner:2.1.0");
-    t.is(imageConfig.runner.node, "scramjetorg/runner:2.1.0");
-    t.is(imageConfig.runner.python3, "scramjetorg/runner-py:2.1.0");
-    t.is(imageConfig.runner.bun, "scramjetorg/runner-bun:2.1.0");
+test("release image version preserves stable release versions", t => {
+    t.is(imageVersionForReleaseVersion("2.1.1"), "2.1.1");
+});
+
+test("release image version maps devel versions to the prior stable version", t => {
+    t.is(imageVersionForReleaseVersion("2.1.2-devel"), "2.1.1");
+});
+
+test("imageConfig matches the root package release lifecycle version", t => {
+    t.deepEqual(imageConfig, expectedImageConfig(rootPackage.version));
 });
 
 // ---------------------------------------------------------------------------
