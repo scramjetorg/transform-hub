@@ -56,6 +56,14 @@ export class ManagerAPIV2Handler {
                     { id: "space.v2.version" }
                 ),
                 config: routeBinding.handler<typeof routes.config>(() => ({ config: manager.publicConfig }), { id: "space.v2.config" }),
+                logLevel: routeBinding.handler<typeof routes.logLevel>(({ body }) => {
+                    manager.setLogLevel(body.logLevel);
+
+                    return {
+                        operation: { id: manager.id, status: "completed" },
+                        result: { logLevel: body.logLevel }
+                    };
+                }, { id: "space.v2.log-level" }),
                 trust: routeBinding.handler<typeof routes.trust>(() => getManagerVerser2TrustExport(manager.config), { id: "space.v2.verser2.trust" }),
                 load: routeBinding.handler<typeof routes.load>(
                     async (): Promise<RestAPI2.LoadResponse<RestAPI2.Space>> => {

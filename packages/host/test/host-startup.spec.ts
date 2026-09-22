@@ -57,3 +57,18 @@ test("a late end from the old controller cannot remove its stable-ID replacement
     t.is(store.get(replacement.id), replacement);
     t.is(restartAttempts, 0);
 });
+
+test("live Hub log-level changes do not alter required startup runner defaults", t => {
+    const host = Object.create(Host.prototype) as any;
+    Object.assign(host, {
+        config: { logLevel: "INFO", log: { forwardRunner: true } },
+        logger: { logLevel: "INFO" }
+    });
+    const sequence = { id: "sequence", config: { exposePath: "/configured" } } as any;
+    const startupConfig = { id: "sequence", instanceId: "required-instance", logLevel: "WARN" } as any;
+
+    host.setLogLevel("DEBUG");
+
+    t.is(host.buildStartupRunnerConfig(sequence, startupConfig).logLevel, "WARN");
+    t.is(host.buildStartupRunnerConfig(sequence, { id: "sequence" }).logLevel, "INFO");
+});

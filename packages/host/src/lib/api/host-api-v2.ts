@@ -70,6 +70,15 @@ export class HostAPIV2Handler {
             config: (): RestAPI2.ConfigResponse<RestAPI2.Hub> => ({
                 config: host.publicConfig
             }),
+            logLevel: routeBinding.handler<typeof routes.logLevel>(({ body }) => {
+                const id = String((host as any).config?.host?.id || "hub");
+                host.setLogLevel(body.logLevel);
+
+                return {
+                    operation: { id, status: "completed" },
+                    result: { logLevel: body.logLevel }
+                };
+            }, { id: "hub.v2.log-level" }),
             health: async (): Promise<RestAPI2.HealthCheckInfo<RestAPI2.Hub>> => {
                 const scope = { id: String((host as any).config?.host?.id || "hub"), status: "ok" };
                 const sequenceStorage = (host as any).config?.sequencesRoot;

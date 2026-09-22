@@ -10,11 +10,15 @@ import { RouteRecorder } from "@scramjet/api-server/test/lib/route-recorder";
 const logger = new ObjLogger("api-v2-hotwire-test");
 
 function createHostStub(): any {
+    let logLevel = "INFO";
+
     return {
         apiBase: "/api/v1",
         instanceBase: "/api/v1/instance",
         heartBeatInterval: 1000,
         logger,
+        setLogLevel(level: string) { logLevel = level; },
+        getTestLogLevel: () => logLevel,
         auditor: {},
         service: "sth",
         apiVersion: "v1",
@@ -51,6 +55,7 @@ test("HostAPIHandler registers the v2 Host API route surface separately", t => {
     t.true(recorder.has("get", "/api/v2/version"));
     t.true(recorder.has("get", "/api/v2/config"));
     t.true(recorder.has("get", "/api/v2/status"));
+    t.true(recorder.has("op", "/api/v2/log-level", "patch"));
 });
 
 test("HostAPIHandler registers Host-owned v2 Hub routes as local mounted paths", t => {
@@ -94,6 +99,19 @@ test("HostAPIHandler v2 read handlers return v2 Hub data", async t => {
     t.deepEqual(await (recorder.require("get", "/api/v2/config").handler as Function)({}), { config: host.publicConfig });
     t.deepEqual(await (recorder.require("get", "/api/v2/status").handler as Function)({}), { status: "ok", details: { status: "ok" } });
     t.deepEqual(await (recorder.require("get", "/api/v2/load").handler as Function)({}), { load: 1 });
+});
+
+test("Host v2 log-level route updates only the Host logger", async t => {
+    const recorder = new RouteRecorder();
+    const host = createHostStub();
+
+    new HostAPIHandler(recorder.asApiExpose(), host, "1.2.3", "test-build").attach();
+
+    t.deepEqual(await (recorder.require("op", "/api/v2/log-level", "patch").handler as Function)({ body: { logLevel: "DEBUG" } }), {
+        operation: { id: "hub", status: "completed" },
+        result: { logLevel: "DEBUG" }
+    });
+    t.is(host.getTestLogLevel(), "DEBUG");
 });
 
 test("HostAPIHandler local v2 Hub handlers return RestAPI2 envelopes", async t => {

@@ -10,6 +10,8 @@ import { InstanceStatus, RunnerMessageCode } from "@scramjet/symbols";
 import { registerHttpRoutes } from "@scramjet/api-router";
 
 function createManagerStub(recorder: RouteRecorder) {
+    let logLevel = "INFO";
+
     return {
         id: "manager-hotwire",
         router: recorder.asApiRoute(),
@@ -42,6 +44,8 @@ function createManagerStub(recorder: RouteRecorder) {
         auditor: { setFlowing: async (_flowing: boolean) => undefined, output: new PassThrough() },
         apiS3Middleware: { clearIndex: async () => undefined, index: { sequences: [{ id: "seq-1", _filename: "seq.tar.gz", packageSize: 123 }] }, router: { lookup: () => undefined } },
         logger: new ObjLogger("manager-api-v2-hotwire-test"),
+        setLogLevel(level: string) { logLevel = level; },
+        getTestLogLevel: () => logLevel,
         handleSthRegistration: async () => "sth-1",
         validateQueries: () => true,
         getList: () => ({ hosts: [{ id: "sth-1" }] }),
@@ -212,6 +216,7 @@ test("ManagerAPIHandler registers the v2 Manager API route surface separately", 
 
     t.true(recorder.has("get", "/api/v2/version"));
     t.true(recorder.has("get", "/api/v2/config"));
+    t.true(recorder.has("op", "/api/v2/log-level", "patch"));
     t.true(recorder.has("get", "/api/v2/verser2/trust"));
     t.true(recorder.has("get", "/api/v2/load"));
     t.true(recorder.has("get", "/api/v2/health"));
@@ -234,6 +239,19 @@ test("ManagerAPIHandler registers the v2 Manager API route surface separately", 
     t.true(recorder.has("op", "/api/v2/storage", "delete"));
     t.true(recorder.has("use", "/api/v2/hubs/:hubId"));
     t.true(recorder.has("use", "/api/v2/hubs/:hubId/*"));
+});
+
+test("Manager v2 log-level route updates only the Manager logger", async t => {
+    const recorder = new RouteRecorder();
+    const manager = createManagerStub(recorder);
+
+    await new ManagerAPIHandler(manager as any).attach();
+
+    t.deepEqual(await (recorder.require("op", "/api/v2/log-level", "patch").handler as Function)({ body: { logLevel: "DEBUG" } }), {
+        operation: { id: "manager-hotwire", status: "completed" },
+        result: { logLevel: "DEBUG" }
+    });
+    t.is(manager.getTestLogLevel(), "DEBUG");
 });
 
 test("ManagerAPIHandler v2 storage objects proxy rewrites to the legacy storage router", async t => {

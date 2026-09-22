@@ -32,6 +32,14 @@ export class MultiManagerAPIV2Handler {
                 id: multiManager.id,
                 spacesCount: multiManager.managersStore.size,
             }), { id: "root.v2.info" }),
+            logLevel: routeBinding.handler<typeof routes.logLevel>(({ body }) => {
+                multiManager.setLogLevel(body.logLevel);
+
+                return {
+                    operation: { id: multiManager.id, status: "completed" },
+                    result: { logLevel: body.logLevel }
+                };
+            }, { id: "root.v2.log-level" }),
             load: routeBinding.handler<typeof routes.load>(async (): Promise<RestAPI2.LoadResponse<RestAPI2.Root>> => {
                 const load = await multiManager.loadCheck.getLoadCheck() as { load?: number };
 

@@ -168,7 +168,7 @@ export class InstanceAPIV2 {
         }
 
         if (patch.logLevel !== undefined) {
-            await this.csi.set({ logLevel: patch.logLevel as unknown as LogLevel });
+            await this.csi.setLogLevel(patch.logLevel as unknown as LogLevel);
             parameters.logLevel = patch.logLevel;
         } else if (patch.parameters) {
             await this.csi.set(patch.parameters as any);
