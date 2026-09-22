@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/utility",
-  "version": "2.1.2-devel",
+  "version": "2.1.2",
   "description": "This package is part of Scramjet Transform Hub. The package holds utility functions used in places around Scramjet Transform Hub.",
   "author": "Scramjet <open-source@scramjet.org>",
   "homepage": "https://github.com/scramjetorg/transform-hub#readme",
@@ -47,8 +47,8 @@
   },
   "devDependencies": {
     "@ava/typescript": "^7.0.0",
-    "@scramjet/runtime-types": "^2.1.2-devel",
-    "@scramjet/types": "^2.1.2-devel",
+    "@scramjet/runtime-types": "^2.1.2",
+    "@scramjet/types": "^2.1.2",
     "ava": "^8.0.0",
     "typed-emitter": "^1.4.0"
   },
