@@ -34,6 +34,7 @@ Routes can be resolved to a child `hub` via:
 | `trust` | `GET` | `/api/v2/spaces/:spaceId/verser2/trust` | request | `response`: `TrustExport` |
 | `load` | `GET` | `/api/v2/spaces/:spaceId/load` | request | `response`: `LoadResponse` |
 | `health` | `GET` | `/api/v2/spaces/:spaceId/health` | request | `response`: `healthCheckInfo(Space)` |
+| `logLevel` | `PATCH` | `/api/v2/spaces/:spaceId/log-level` | request | `body`: `LogLevelPatch`, `response`: `opResponse(LogLevelResponse)` |
 | `list` | `GET` | `/api/v2/spaces/:spaceId/list` | request | `query`: `page`, `response`: `listResponse(Hub)` |
 | `hubs` | `GET` | `/api/v2/spaces/:spaceId/hubs` | request | `query`: `page`, `response`: `listResponse(Hub)` |
 | `instances` | `GET` | `/api/v2/spaces/:spaceId/instances` | request | `query`: `page`, `response`: `listResponse(Instance)` |
@@ -102,6 +103,14 @@ Routes can be resolved to a child `hub` via:
 - **Path (full)**: `/api/v2/spaces/:spaceId/health`
 - **Path (node-local)**: `/health`
 - **Schemas**: `response`: `healthCheckInfo(Space)`
+
+#### `logLevel`
+
+- **Operation ID**: `PATCH /api/v2/spaces/:spaceId/log-level`
+- **Method**: `PATCH`
+- **Path (full)**: `/api/v2/spaces/:spaceId/log-level`
+- **Path (node-local)**: `/log-level`
+- **Schemas**: `body`: `LogLevelPatch`, `response`: `opResponse(LogLevelResponse)`
 
 #### `list`
 

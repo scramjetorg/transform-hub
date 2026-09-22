@@ -37,7 +37,7 @@ async function validateDirectory(value: unknown): Promise<string> {
   return path.resolve(value);
 }
 
-const application: SequenceApplication<unknown, SourceEntrySummary> = async function (
+const application: SequenceApplication<unknown, SourceEntrySummary, any[], any, SourceConfig> = async function (
   this: SequenceAppContext<SourceConfig>,
   _input: unknown
 ) {
