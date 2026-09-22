@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/runtime-types",
-  "version": "2.1.2",
+  "version": "2.1.3-devel",
   "description": "Generic low-level runtime-neutral types for Scramjet Transform Hub. Owns BaseAppContext, runtime-neutral utility/logger/storage interfaces, error types, function/stream primitives, and runner config contracts — without API client dependencies.",
   "main": "./src/index.ts",
   "scripts": {
