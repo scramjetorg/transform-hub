@@ -14,7 +14,7 @@ concurrency:
 jobs:
   reconstruct-and-tag:
     permissions:
-      contents: write
+      contents: read
       pull-requests: read
     if: ${{ github.repository == 'scramjetorg/transform-hub' }}
     runs-on: ubuntu-24.04
@@ -29,9 +29,22 @@ jobs:
           cache: npm
           cache-dependency-path: package-lock.json
       - run: npm ci --ignore-scripts
+      - name: Mint release app token
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1
+        with:
+          client-id: ${{ vars.RELEASE_APP_CLIENT_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: transform-hub
+          permission-contents: write
+      - name: Configure git authentication
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: gh auth setup-git
       - name: Reconstruct devel and create the stable tag
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           set -euo pipefail
           head_ref="$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/pulls" --jq '[.[] | select(.merged_at != null and .base.ref == "main")][0].head.ref')"
@@ -51,12 +64,12 @@ jobs:
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add -A
           git commit -m "chore: reconstruct devel after $version release"
-          git -c http.https://github.com/.extraheader="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w 0)" push origin "HEAD:refs/heads/devel" --force-with-lease=devel:"$devel_sha"
+          git push origin "HEAD:refs/heads/devel" --force-with-lease=devel:"$devel_sha"
           if [[ "$head_ref" == release/* ]]; then
             if gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/v$version" >/dev/null 2>&1; then
               echo "Remote tag v$version already exists; skipping tag creation and publication trigger."
             else
               git tag -a "v$version" -m "Release v$version" "$GITHUB_SHA"
-              git -c http.https://github.com/.extraheader="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w 0)" push origin "v$version"
+              git push origin "v$version"
             fi
           fi
