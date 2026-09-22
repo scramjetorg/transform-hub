@@ -31,6 +31,7 @@ Routes can be resolved to a child `space` via:
 | `ingressIdentity` | `GET` | `/api/v2/ingress/identity` | request | `response`: `IngressIdentity` |
 | `version` | `GET` | `/api/v2/version` | request | `response`: `version` |
 | `info` | `GET` | `/api/v2/info` | request | `response`: `info` |
+| `logLevel` | `PATCH` | `/api/v2/log-level` | request | `body`: `LogLevelPatch`, `response`: `opResponse(LogLevelResponse)` |
 | `load` | `GET` | `/api/v2/load` | request | `response`: `LoadResponse` |
 | `spaces` | `GET` | `/api/v2/spaces` | request | `query`: `page`, `response`: `listResponse(Space)` |
 | `health` | `GET` | `/api/v2/health` | request | `response`: `healthCheckInfo(Root)` |
@@ -62,6 +63,14 @@ Routes can be resolved to a child `space` via:
 - **Path (full)**: `/api/v2/info`
 - **Path (node-local)**: `/info`
 - **Schemas**: `response`: `info`
+
+#### `logLevel`
+
+- **Operation ID**: `PATCH /api/v2/log-level`
+- **Method**: `PATCH`
+- **Path (full)**: `/api/v2/log-level`
+- **Path (node-local)**: `/log-level`
+- **Schemas**: `body`: `LogLevelPatch`, `response`: `opResponse(LogLevelResponse)`
 
 #### `load`
 
