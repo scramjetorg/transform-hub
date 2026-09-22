@@ -1,5 +1,12 @@
 import test from "ava";
-import { IngressIdentity, RestAPI2Routes, Root, getRestAPI2Route, healthCheckInfo } from "../src";
+import { IngressIdentity, InstanceParametersPatch, RestAPI2Routes, Root, StartSequencePayload, getRestAPI2Route, healthCheckInfo } from "../src";
+
+test("start sequence appConfig and canonical instance logLevel schemas", t => {
+    t.true(StartSequencePayload.safeParse({ appConfig: { logForward: false, nested: { value: 1 } } }).success);
+    t.true(InstanceParametersPatch.safeParse({ logLevel: "DEBUG" }).success);
+    t.false(InstanceParametersPatch.safeParse({ logLevel: "debug" }).success);
+    t.false(InstanceParametersPatch.safeParse({ logLevel: "VERBOSE" }).success);
+});
 
 test("ingress identity schema accepts only public ingress identity fields", t => {
     t.true(IngressIdentity.safeParse({ level: "platform", serviceId: "platform-a", routeDomain: "platform.example" }).success);

@@ -203,7 +203,7 @@ export namespace RestAPI2 {
     export type SendSequenceResponse = { sequence: Sequence };
     export type DeleteSequencePayload = { force?: boolean; deleteInstances?: boolean };
     export type DeleteSequenceResponse = { sequenceId: string; deleted: boolean };
-    export type StartSequencePayload = { args?: unknown[]; config?: unknown };
+    export type StartSequencePayload = { args?: unknown[]; config?: unknown; appConfig?: import("@scramjet/runtime-types").AppConfig };
     export type StartSequenceResponse = { instance: Instance };
     export type SequencePayload = IdParams<"seq">;
     export type SequenceResponse = { sequence: Sequence };
@@ -221,7 +221,7 @@ export namespace RestAPI2 {
     export type SendEventResponse = { delivered: boolean };
     export type DeleteInstancePayload = { mode: "stop" | "kill"; timeout?: number; reason?: string };
     export type DeleteInstanceResponse = { instanceId: string; mode: "stop" | "kill"; accepted: boolean };
-    export type InstanceParametersPatch = { monitoringRate?: number; logLevel?: string; parameters?: Record<string, unknown> };
+    export type InstanceParametersPatch = { monitoringRate?: number; logLevel?: "ERROR" | "WARN" | "INFO" | "DEBUG" | "FATAL" | "TRACE"; parameters?: Record<string, unknown> };
     export type InstanceParametersResponse = { instance: Instance; parameters: Record<string, unknown> };
 
     export type TopicCreatePayload = { topic: Topic };

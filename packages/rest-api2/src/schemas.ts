@@ -239,7 +239,8 @@ export const DeleteSequenceResponse = z.object({
 
 export const StartSequencePayload = z.object({
     args: z.array(z.unknown()).optional(),
-    config: z.unknown().optional()
+    config: z.unknown().optional(),
+    appConfig: z.record(z.string(), z.unknown()).optional()
 });
 
 export const StartSequenceResponse = z.object({
@@ -268,7 +269,7 @@ export const DeleteInstanceResponse = z.object({
 
 export const InstanceParametersPatch = z.object({
     monitoringRate: z.number().min(0).optional(),
-    logLevel: z.string().optional(),
+    logLevel: z.enum(["ERROR", "WARN", "INFO", "DEBUG", "FATAL", "TRACE"]).optional(),
     parameters: z.record(z.string(), z.unknown()).optional()
 });
 
