@@ -8,7 +8,7 @@ const workflowsDir = resolve(__dirname, "..", "..", ".github", "workflows");
 
 test("active workflow inventory contains only the release-flow policy", (t) => {
     const workflows = readdirSync(workflowsDir).filter((name) => name.endsWith(".yml")).sort();
-    t.deepEqual(workflows, ["devel-validate.yml", "pr-validate.yml", "release-merge.yml", "release-start.yml", "security-check.yml", "tag-publish.yml"]);
+    t.deepEqual(workflows, ["devel-validate.yml", "main-release.yml", "pr-validate.yml", "release-merge.yml", "release-start.yml", "security-check.yml"]);
     for (const workflow of workflows) {
         const source = readFileSync(resolve(workflowsDir, workflow), "utf8");
         t.false(/node-version:\s*['"]?18(?:\.x)?['"]?/i.test(source));
