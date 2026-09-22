@@ -65,3 +65,17 @@ def test_sequence_logger_is_not_published_to_log_channel_when_disabled() -> None
     enabled_logger = _configure_logging(enabled_writer, "INFO", True)
     enabled_logger.info("forwarded")
     assert len(enabled_writer.writes) == 1
+
+
+def test_sequence_logger_forwarding_uses_both_launch_time_flags() -> None:
+    for forward_runner_logs in (None, True, False):
+        for log_forward in (None, True, False):
+            writer = _Writer()
+            logger = _configure_logging(
+                writer,
+                "INFO",
+                True if forward_runner_logs is None else forward_runner_logs,
+                {} if log_forward is None else {"logForward": log_forward},
+            )
+            logger.info("record")
+            assert bool(writer.writes) is (forward_runner_logs is not False and log_forward is not False)

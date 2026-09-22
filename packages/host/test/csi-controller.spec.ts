@@ -6,6 +6,79 @@ import { DataStream } from "scramjet";
 import { PassThrough } from "stream";
 import { ReadableStream, WritableStream } from "@scramjet/runtime-types";
 import { EncodedSerializedControlMessage, EncodedSerializedMonitoringMessage } from "@scramjet/api-types";
+import { ObjLogger } from "@scramjet/obj-logger";
+import { CommonLogsPipe } from "../src/lib/common-logs-pipe";
+
+function createLogLifecycleCsi(appConfig: Record<string, unknown> = {}) {
+    const communication = {
+        sendControlMessage: async () => undefined,
+        addMonitoringHandler: () => undefined
+    };
+    const csi = new CSIController(
+        {
+            id: `log-lifecycle-${appConfig.logForward === false ? "disabled" : "enabled"}`,
+            sequenceInfo: { id: "seq-log", name: "seq-log", config: {}, location: "local" },
+            payload: { system: {}, appConfig, args: [], limits: {} }
+        } as any,
+        communication as any,
+        {
+            runtimeAdapter: "process",
+            docker: { runner: { maxMem: 128 } },
+            timings: { instanceLifetimeExtensionDelay: 0 },
+            host: { apiBase: "/api/v1" }
+        } as any,
+        {} as any,
+        "process",
+        {} as any,
+        { getAllItems: async () => ({}) } as any
+    );
+
+    return csi;
+}
+
+function collectLogMarker(csi: CSIController, marker: string, aggregate?: ObjLogger): Promise<{ csi: number; aggregate: number }> {
+    return new Promise(resolve => {
+        let csiCount = 0;
+        let aggregateCount = 0;
+        const onData = (entry: { msg?: string }) => {
+            if (entry.msg === marker) csiCount++;
+        };
+        const onAggregateData = (entry: { msg?: string }) => {
+            if (entry.msg === marker) aggregateCount++;
+        };
+
+        csi.logger.outputLogStream.on("data", onData);
+        aggregate?.outputLogStream.on("data", onAggregateData);
+        (csi.getLogStream() as any).write(`${JSON.stringify({ level: "INFO", msg: marker })}\n`);
+        setImmediate(() => {
+            csi.logger.outputLogStream.off("data", onData);
+            aggregate?.outputLogStream.off("data", onAggregateData);
+            resolve({ csi: csiCount, aggregate: aggregateCount });
+        });
+    });
+}
+
+test("CSI owns one runner log source across API router recreation", async t => {
+    const csi = createLogLifecycleCsi();
+    const aggregateLogger = new ObjLogger("phase1-host-aggregate", {}, "TRACE");
+    const aggregatePipe = new CommonLogsPipe();
+    aggregateLogger.pipe(aggregatePipe.getIn(), { stringified: true });
+    csi.logger.pipe(aggregateLogger, { end: false });
+
+    (csi as any).createInstanceAPIRouter();
+    (csi as any).createInstanceAPIRouter();
+
+    t.deepEqual(await collectLogMarker(csi, "phase1-csi-log-source-once", aggregateLogger), { csi: 1, aggregate: 1 });
+});
+
+test("CSI logForward false does not register the runner log source", async t => {
+    const csi = createLogLifecycleCsi({ logForward: false });
+
+    (csi as any).createInstanceAPIRouter();
+    (csi as any).createInstanceAPIRouter();
+
+    t.deepEqual(await collectLogMarker(csi, "phase1-csi-log-source-disabled"), { csi: 0, aggregate: 0 });
+});
 
 function getCommunicationHandler() {
     const comm = new CommunicationHandler();

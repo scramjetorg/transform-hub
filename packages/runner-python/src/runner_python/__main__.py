@@ -241,12 +241,14 @@ def _write_boot_error(message: str) -> None:
 
 
 def _configure_logging(
-    log_writer: asyncio.StreamWriter, level_name: str, forward_runner_logs: bool = True
+    log_writer: asyncio.StreamWriter,
+    level_name: str,
+    forward_runner_logs: bool = True,
+    app_config: dict[str, Any] | None = None,
 ) -> logging.Logger:
     level = getattr(logging, level_name.upper(), logging.INFO)
-    handler: logging.Handler = (
-        JsonLogHandler(log_writer) if forward_runner_logs else logging.NullHandler()
-    )
+    should_forward = forward_runner_logs is not False and (app_config or {}).get("logForward") is not False
+    handler: logging.Handler = JsonLogHandler(log_writer) if should_forward else logging.StreamHandler(sys.stderr)
     runtime_logger = logging.getLogger("runner_python.runtime")
     runtime_logger.handlers.clear()
     runtime_logger.addHandler(handler)
@@ -486,7 +488,7 @@ async def main() -> int:
             return 2
 
         runtime_logger = _configure_logging(
-            log_writer, boot_config.logLevel, boot_config.forwardRunnerLogs
+            log_writer, boot_config.logLevel, boot_config.forwardRunnerLogs, boot_config.appConfig
         )
         control_logger = logging.getLogger("runner_python.control")
         control_logger.handlers = runtime_logger.handlers.copy()

@@ -1365,9 +1365,15 @@ export class Host implements IHost, IComponent {
         this.logger.info("Start sequence", sequence.id, sequence.config.name);
 
         try {
+            const v2Config = (requestConfig as unknown as { config?: unknown }).config;
+            const requestedAppConfig = requestConfig.appConfig ||
+                (v2Config && typeof v2Config === "object" && "appConfig" in v2Config
+                    ? (v2Config as { appConfig?: typeof requestConfig.appConfig }).appConfig
+                    : undefined);
             const config = {
                 ...sequence.config,
                 ...requestConfig,
+                appConfig: requestedAppConfig || {},
                 forwardRunnerLogs: this.config.log?.forwardRunner !== false
             };
 

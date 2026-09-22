@@ -10,6 +10,14 @@ test("runner log forwarding can be disabled", t => {
     t.false(shouldForwardRunnerLogs({ forwardRunnerLogs: false }));
 });
 
+test("app config and legacy forwarding flags use AND semantics", t => {
+    for (const forwardRunnerLogs of [undefined, true, false]) {
+        for (const logForward of [undefined, true, false]) {
+            t.is(shouldForwardRunnerLogs({ forwardRunnerLogs, appConfig: { logForward } }), forwardRunnerLogs !== false && logForward !== false);
+        }
+    }
+});
+
 test("outer runner boot contract copies absent, true, and false values", t => {
     t.deepEqual(copyRunnerLogForwarding({}, {}), {});
     t.deepEqual(copyRunnerLogForwarding({}, { forwardRunnerLogs: true }), { forwardRunnerLogs: true });

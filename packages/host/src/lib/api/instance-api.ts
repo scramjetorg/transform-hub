@@ -38,10 +38,6 @@ export class InstanceAPI {
         router.upstream("/stderr", stdio[2]);
         router.downstream("/stdin", stdio[0], { end: true });
 
-        const logStream = this.csi.getLogStream();
-
-        this.logger.addSerializedLoggerSource(logStream);
-
         const logHistory = new ReReadable({ objectMode: true, length: 10_000 });
 
         logHistory.tail(0).resume(); // resume stream

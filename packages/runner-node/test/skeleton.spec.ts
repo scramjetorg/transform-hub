@@ -30,6 +30,17 @@ test("runner-node log forwarding defaults to enabled and honors the boot contrac
     t.true(shouldForwardRunnerLogs({}));
     t.true(shouldForwardRunnerLogs({ forwardRunnerLogs: true }));
     t.false(shouldForwardRunnerLogs({ forwardRunnerLogs: false }));
+    for (const forwardRunnerLogs of [undefined, true, false]) {
+        for (const logForward of [undefined, true, false]) {
+            t.is(
+                shouldForwardRunnerLogs({
+                    forwardRunnerLogs,
+                    appConfig: logForward === undefined ? {} : { logForward }
+                }),
+                forwardRunnerLogs !== false && logForward !== false
+            );
+        }
+    }
     t.deepEqual(validateBootConfig({ sequencePath: "/x", instanceId: "i-1", forwardRunnerLogs: false }), {
         sequencePath: "/x", instanceId: "i-1", forwardRunnerLogs: false
     });
