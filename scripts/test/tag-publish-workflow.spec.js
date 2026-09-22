@@ -6,8 +6,8 @@ const { resolve } = require("node:path");
 const { checkWorkflowSource } = require("../check-workflow-policy.js");
 
 test("tag publication validates and builds with pinned Bun in both package jobs", (t) => {
-    const source = readFileSync(resolve(__dirname, "../../.github/workflows/tag-publish.yml"), "utf8");
-    t.deepEqual(checkWorkflowSource(source, ".github/workflows/tag-publish.yml"), []);
+    const source = readFileSync(resolve(__dirname, "../../.github/workflows/main-release.yml"), "utf8");
+    t.deepEqual(checkWorkflowSource(source, ".github/workflows/main-release.yml"), []);
     const bun = "oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6";
     t.is((source.match(new RegExp(bun, "g")) || []).length, 2);
     t.is((source.match(/bun-version: "1"/g) || []).length, 2);
