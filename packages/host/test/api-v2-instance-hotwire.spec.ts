@@ -70,6 +70,7 @@ function createCsiStub(calls: any[] = []): any {
         awaitEvent: async (name: string) => ({ awaited: name }),
         emitEvent: async (payload: unknown) => calls.push({ event: payload }),
         set: async (payload: unknown) => calls.push({ set: payload }),
+        setLogLevel: async (logLevel: string) => calls.push({ set: { logLevel } }),
         stop: async (payload: unknown) => calls.push({ stop: payload }),
         kill: async (payload: unknown) => calls.push({ kill: payload }),
         forwardRpcRequest: async (...args: unknown[]) => {

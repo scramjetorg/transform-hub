@@ -125,6 +125,76 @@ async def test_set_updates_sequence_logger_when_control_context_wraps_runtime_co
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("level_name", "level_number"),
+    [
+        ("FATAL", logging.FATAL),
+        ("ERROR", logging.ERROR),
+        ("WARN", logging.WARNING),
+        ("INFO", logging.INFO),
+        ("DEBUG", logging.DEBUG),
+        ("TRACE", 5),
+    ],
+)
+async def test_set_updates_all_runtime_loggers_for_canonical_levels(
+    level_name: str, level_number: int
+) -> None:
+    app_context = make_app_context()
+    sequence_logger = logging.getLogger(f"test.sequence.{level_name}")
+    application_logger = logging.getLogger(f"runner_python.application.{level_name}")
+    control_logger = logging.getLogger(f"runner_python.control.test.{level_name}")
+    for app_logger in (
+        app_context.logger,
+        sequence_logger,
+        application_logger,
+        control_logger,
+    ):
+        app_logger.setLevel(logging.INFO)
+    app_context._sequence_logger = sequence_logger
+
+    await control_loop(
+        ScriptedControlDecoder([encode_control_line(SET, {"logLevel": level_name})]),
+        app_context,
+        RecordingTerminator(),
+    )
+
+    assert all(
+        app_logger.getEffectiveLevel() == level_number
+        for app_logger in (
+            app_context.logger,
+            sequence_logger,
+            application_logger,
+            control_logger,
+        )
+    )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("log_level", ["fatal", " DEBUG", "DEBUG ", "NOTICE", 10, None])
+async def test_set_ignores_noncanonical_log_levels_without_changing_levels(
+    log_level: Any,
+) -> None:
+    app_context = make_app_context()
+    sequence_logger = logging.getLogger("test.invalid.sequence")
+    app_context._sequence_logger = sequence_logger
+    runtime_logger = logging.getLogger("runner_python.runtime")
+    control_logger = logging.getLogger("runner_python.control")
+    loggers = (app_context.logger, sequence_logger, runtime_logger, control_logger)
+    for app_logger in loggers:
+        app_logger.setLevel(logging.ERROR)
+
+    await control_loop(
+        ScriptedControlDecoder([encode_control_line(SET, {"logLevel": log_level})]),
+        app_context,
+        RecordingTerminator(),
+    )
+
+    assert [app_logger.getEffectiveLevel() for app_logger in loggers] == [
+        logging.ERROR
+    ] * len(loggers)
+
+
+@pytest.mark.asyncio
 async def test_kill_raises_hard_kill_signal_immediately() -> None:
     app_context = make_app_context()
 

@@ -184,6 +184,9 @@ export namespace RestAPI2 {
     export type SequencesQuery = ListQuery<Sequence>;
     export type LogFilters = { level?: string; from?: number; to?: number };
     export type LogFilter = LogFilters;
+    export type LogLevel = "ERROR" | "WARN" | "INFO" | "DEBUG" | "FATAL" | "TRACE";
+    export type LogLevelPatch = { logLevel: LogLevel };
+    export type LogLevelResponse = { logLevel: LogLevel };
     export type TopicParams = IdParams<"topic">;
     export type TopicInformation = Topic;
 
@@ -221,7 +224,7 @@ export namespace RestAPI2 {
     export type SendEventResponse = { delivered: boolean };
     export type DeleteInstancePayload = { mode: "stop" | "kill"; timeout?: number; reason?: string };
     export type DeleteInstanceResponse = { instanceId: string; mode: "stop" | "kill"; accepted: boolean };
-    export type InstanceParametersPatch = { monitoringRate?: number; logLevel?: "ERROR" | "WARN" | "INFO" | "DEBUG" | "FATAL" | "TRACE"; parameters?: Record<string, unknown> };
+    export type InstanceParametersPatch = { monitoringRate?: number; logLevel?: LogLevel; parameters?: Record<string, unknown> };
     export type InstanceParametersResponse = { instance: Instance; parameters: Record<string, unknown> };
 
     export type TopicCreatePayload = { topic: Topic };

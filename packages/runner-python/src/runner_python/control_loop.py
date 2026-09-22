@@ -10,6 +10,16 @@ from runner_python.utils import maybe_await
 
 logger = logging.getLogger(__name__)
 
+_LOG_LEVELS = {
+    "FATAL": logging.FATAL,
+    "ERROR": logging.ERROR,
+    "WARN": logging.WARNING,
+    "INFO": logging.INFO,
+    "DEBUG": logging.DEBUG,
+    "TRACE": 5,
+}
+logging.addLevelName(_LOG_LEVELS["TRACE"], "TRACE")
+
 STOP = 4001
 KILL = 4002
 SET = 4005
@@ -73,6 +83,27 @@ def _replace_app_config(app_context: Any, app_config: dict[str, Any]) -> None:
         setattr(app_context, "_app_config", getattr(app_context, "config"))
 
 
+def _active_loggers(app_context: Any) -> Iterable[logging.Logger]:
+    seen: set[int] = set()
+
+    def add(candidate: Any) -> Iterable[logging.Logger]:
+        if isinstance(candidate, logging.Logger) and id(candidate) not in seen:
+            seen.add(id(candidate))
+            yield candidate
+
+    yield from add(getattr(app_context, "logger", None))
+    yield from add(getattr(app_context, "_sequence_logger", None))
+
+    # The live runtime uses this namespace for its control, runtime, sequence,
+    # and application loggers. Include already-created descendants so SET also
+    # reaches module loggers that have selected an explicit level.
+    for name, candidate in logging.Logger.manager.loggerDict.items():
+        if not name.startswith("runner_python"):
+            continue
+        if isinstance(candidate, logging.Logger):
+            yield from add(candidate)
+
+
 def _apply_set(app_context: Any, payload: Any) -> None:
     if not isinstance(payload, dict):
         logger.warning(
@@ -96,14 +127,9 @@ def _apply_set(app_context: Any, payload: Any) -> None:
         _replace_app_config(app_context, app_config)
 
     log_level = payload.get("logLevel")
-    if isinstance(log_level, str):
-        for app_logger in (
-            getattr(app_context, "logger", None),
-            getattr(app_context, "_sequence_logger", None),
-        ):
-            set_level = getattr(app_logger, "setLevel", None)
-            if callable(set_level):
-                set_level(log_level)
+    if isinstance(log_level, str) and log_level in _LOG_LEVELS:
+        for app_logger in _active_loggers(app_context):
+            app_logger.setLevel(_LOG_LEVELS[log_level])
 
 
 async def _dispatch_stop(app_context: Any, terminator: Any, payload: Any) -> None:

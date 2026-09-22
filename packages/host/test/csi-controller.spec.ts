@@ -155,6 +155,33 @@ test("CSI immediate kill sends KILL and cancels lifetime extension", async t => 
     t.deepEqual(calls, [[RunnerMessageCode.KILL, {}]]);
 });
 
+test("CSI setLogLevel sends SET before updating the CSI logger", async t => {
+    const calls: unknown[][] = [];
+    const controller = createController({
+        logger: { logLevel: "INFO" },
+        communicationHandler: {
+            sendControlMessage: async (...args: unknown[]) => calls.push(args)
+        }
+    });
+
+    await controller.setLogLevel("DEBUG");
+
+    t.deepEqual(calls, [[RunnerMessageCode.SET, { logLevel: "DEBUG" }]]);
+    t.is(controller.logger.logLevel, "DEBUG");
+});
+
+test("CSI setLogLevel leaves the logger unchanged when SET fails", async t => {
+    const controller = createController({
+        logger: { logLevel: "INFO" },
+        communicationHandler: {
+            sendControlMessage: async () => { throw new Error("runner unavailable"); }
+        }
+    });
+
+    await t.throwsAsync(() => controller.setLogLevel("DEBUG"), { message: "runner unavailable" });
+    t.is(controller.logger.logLevel, "INFO");
+});
+
 test("PING dispatcher establishment is committed before PONG is written", async t => {
     const order: string[] = [];
     const controller = createController({

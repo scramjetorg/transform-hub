@@ -255,6 +255,14 @@ export const InstanceResponse = z.object({
     instance: Instance
 });
 
+export const LogLevelPatch = z.object({
+    logLevel: z.enum(["ERROR", "WARN", "INFO", "DEBUG", "FATAL", "TRACE"])
+});
+
+export const LogLevelResponse = z.object({
+    logLevel: z.enum(["ERROR", "WARN", "INFO", "DEBUG", "FATAL", "TRACE"])
+});
+
 export const DeleteInstancePayload = z.object({
     mode: z.union([z.literal("stop"), z.literal("kill")]),
     timeout: z.number().int().min(0).optional(),

@@ -534,9 +534,13 @@ export class Host implements IHost, IComponent {
             instanceName: sequenceConfig.instanceName,
             sequenceName: sequenceConfig.sequenceName,
             exposePath: sequenceConfig.exposePath || sequence.config.exposePath,
-            logLevel: this.logger.logLevel,
+            logLevel: sequenceConfig.logLevel || this.config.logLevel,
             forwardRunnerLogs: this.config.log?.forwardRunner !== false
         };
+    }
+
+    setLogLevel(logLevel: LogLevel): void {
+        this.logger.logLevel = logLevel;
     }
 
     private async resolveStartupSequence(sequenceConfig: StartSequenceDTO): Promise<SequenceInfo | undefined> {
