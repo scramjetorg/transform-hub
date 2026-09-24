@@ -7,5 +7,8 @@ import { After } from "@cucumber/cucumber";
 import { beginCleanupTiming } from "./memory-hooks";
 
 After(function (this: any) {
+    if (process.env.SCRAMJET_BDD_MEMLAB === "1") {
+        (globalThis as any).__scramjetBddMemlabCapture?.("target");
+    }
     beginCleanupTiming(this);
 });

@@ -285,7 +285,7 @@ export interface ChunkMetrics {
         owner: string;
     };
     parentHeap: {
-        /** heapUsed + external + arrayBuffers after GC, first scenario Before. */
+        /** heapUsed + arrayBuffers after GC, first scenario Before; external is diagnostic-only. */
         baselineBytes: number | null;
         /** Highest per-scenario post-GC measurement. */
         peakBytes: number | null;
@@ -333,10 +333,10 @@ class MemoryRegistry {
 
     // ---- Chunk-level metrics (Phase 10) ----
 
-    /** First per-scenario post-GC parent-heap measurement (set by first Before hook). */
+    /** First per-scenario post-GC parent memory measurement (heapUsed + arrayBuffers). */
     private chunkHeapBaseline: number | null = null;
 
-    /** Highest per-scenario post-GC parent-heap measurement. */
+    /** Highest per-scenario post-GC parent memory measurement (heapUsed + arrayBuffers). */
     private chunkHeapPeak: number | null = null;
 
     /** Number of per-scenario heap samples recorded. */
@@ -530,14 +530,13 @@ class MemoryRegistry {
     // -----------------------------------------------------------------------
 
     /**
-     * Record a parent-Cucumber-process heap sample for chunk-level tracking.
+     * Record a parent-Cucumber-process retained-memory sample for chunk-level tracking.
      *
      * Called from memory-hooks.ts Before/After hooks on each scenario.
      * The first call establishes the baseline; subsequent calls update the
      * running peak.
      *
-     * @param bytes  `heapUsed + external + arrayBuffers` after GC (units match
-     *               `measureMemoryUsage()`).
+     * @param bytes  `heapUsed + arrayBuffers` after GC; external is diagnostic-only.
      */
     recordChunkHeapSample(bytes: number): void {
         this.chunkHeapSampleCount++;
@@ -678,6 +677,26 @@ class MemoryRegistry {
         for (let i = 0; i < 20; i++) {
             await new Promise<void>((resolve) => setImmediate(resolve));
         }
+    }
+
+    /**
+     * Release retained stderr tails for completed processes whose exit was
+     * expected.  Lifecycle telemetry remains available for chunk summaries;
+     * unexpected-exit diagnostics are intentionally untouched.
+     *
+     * @returns The number of non-empty stderr tails released.
+     */
+    releaseExpectedExitPayloads(): number {
+        let released = 0;
+
+        for (const tracked of this.completedProcesses.values()) {
+            if (tracked.expectExit && tracked.stderrTail) {
+                tracked.stderrTail = undefined;
+                released++;
+            }
+        }
+
+        return released;
     }
 
     // -----------------------------------------------------------------------
@@ -903,7 +922,7 @@ class MemoryRegistry {
      *
      * Reads the final RSS of each still-tracked process (sync) and assembles
      * the structured summary.  The caller should set `parentHeap.finalBytes`
-     * afterwards from a fresh post-GC measurement.
+     * afterwards from a fresh post-GC heapUsed + arrayBuffers measurement.
      *
      * @returns  Populated ChunkMetrics object.
      */
@@ -1001,12 +1020,12 @@ class MemoryRegistry {
     /**
      * Print an actionable chunk-level memory summary to stderr.
      *
-     * Calls `computeChunkSummary()` internally, injects the final parent-heap
+     * Calls `computeChunkSummary()` internally, injects the final parent retained-memory
      * measurement, and writes the formatted report.  This is purely
      * informational – no threshold enforcement.
      *
-     * @param finalHeapBytes  Final post-GC parent-heap measurement from the
-     *                        AfterAll hook (or null if unavailable).
+     * @param finalHeapBytes  Final post-GC parent heapUsed + arrayBuffers measurement
+     *                        from the AfterAll hook (or null if unavailable).
      */
     printChunkSummary(finalHeapBytes: number | null): void {
         const metrics = this.computeChunkSummary();
@@ -1025,8 +1044,8 @@ class MemoryRegistry {
         if (metrics.ownership) lines.push(`  Ownership:    ${metrics.ownership.owner} (run=${metrics.ownership.runId} chunk=${metrics.ownership.chunkId})`);
         lines.push("[memory-registry] chunk memory summary:");
 
-        // ---- Parent heap ----
-        lines.push("  Parent Cucumber heap:");
+        // ---- Parent retained memory ----
+        lines.push("  Parent Cucumber retained memory (heapUsed + arrayBuffers):");
         lines.push(`    Baseline:   ${fmt(metrics.parentHeap.baselineBytes)}`);
         lines.push(`    Peak:       ${fmt(metrics.parentHeap.peakBytes)}`);
         lines.push(`    Final:      ${fmt(metrics.parentHeap.finalBytes)}`);

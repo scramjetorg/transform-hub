@@ -79,15 +79,16 @@ test("Docker BDD runner gets cucumber-js from the root npm install", (t) => {
 	t.false(dockerRunner.includes("yarn"));
 });
 
-test("Docker BDD runner builds and preflights its Node 22 and Bun image", (t) => {
+test("Docker BDD runner builds and preflights its Node 22, Bun, and Python 3.14 image", (t) => {
 	const dockerRunner = fs.readFileSync(path.resolve(__dirname, "..", "run-bdd-docker.js"), "utf8");
 	const dockerfile = fs.readFileSync(path.resolve(__dirname, "../../docker/Dockerfile.bdd-bun"), "utf8");
 
 	t.true(dockerRunner.includes('const DEFAULT_BDD_NODE_IMAGE = "transform-hub-bdd-bun:dev"'));
 	t.true(dockerRunner.includes('["build", "--file", path.join(repoRoot, "docker", "Dockerfile.bdd-bun")'));
-	t.true(dockerRunner.includes('const runtimePreflight = ["node --version", "npm --version", "bun --version"].join(" && ")'));
+	t.true(dockerRunner.includes("python3 --version 2>&1 | grep -E '^Python 3\\\\.14\\\\.'"), "preflight must require Python 3.14");
 	t.true(dockerRunner.includes("`${runtimePreflight} && ${fixturePacking}"), "preflight runs inside the BDD container before fixtures");
-	t.true(dockerfile.includes("FROM node:22-bookworm-slim"));
+	t.true(dockerfile.includes("FROM python:3.14-slim-bookworm"));
+	t.true(dockerfile.includes("node_22.x"));
 	t.true(dockerfile.includes("/usr/local/bin/bun"));
 });
 
@@ -235,8 +236,8 @@ test("run-bdd-docker.js injects NODE_OPTIONS when memory guard is enabled", (t) 
 		"should reference NODE_OPTIONS in docker run args"
 	);
 	t.true(
-		src.includes("bddNodeOptions()"),
-		"should call bddNodeOptions() for NODE_OPTIONS value"
+		src.includes("bddNodeOptions({ maxOldSpaceSize: BDD_MEMORY_GUARD_MAX_OLD_SPACE_SIZE })"),
+		"should cap guarded Docker NODE_OPTIONS for the shared container budget"
 	);
 });
 

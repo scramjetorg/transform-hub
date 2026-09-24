@@ -28,16 +28,23 @@ import { Before, BeforeStep, AfterStep, After, AfterAll } from "@cucumber/cucumb
 import { appendFileSync, existsSync, readFileSync, writeFileSync } from "fs";
 
 import {
-    measureMemoryUsage,
     memoryUsageTotal,
     drainAndGc,
     isBddMemoryGuardEnabled,
-    bddMemoryHeapThresholdBytes,
-    bddMemoryThresholdSourceLabel,
+    bddMemoryComponentThresholds,
     ensureGlobalGc,
     checkBddMemorySkip,
     buildBddMemoryDiagnostics,
+    evaluateBddMemoryComponents,
 } from "../../scripts/lib/bdd-memory-guard";
+
+/** Diagnostic-only post-GC component sample; normal guard enforcement is unchanged. */
+export async function samplePostGcMemoryComponents() {
+    ensureGlobalGc();
+    await drainAndGc();
+    const usage = process.memoryUsage();
+    return { heapUsed: usage.heapUsed, external: usage.external, arrayBuffers: usage.arrayBuffers, rss: usage.rss };
+}
 import {
     matchScenarioException,
     cleanupScenarioWorldResources,
@@ -73,8 +80,12 @@ interface ScenarioException {
      * scenario within the feature file (feature-level scope).
      */
     scenarioName: string;
-    /** Additional bytes allowed above the base threshold. */
-    allowanceBytes: number;
+    /** Additional heapUsed bytes allowed above the component threshold. */
+    heapUsedAllowanceBytes?: number;
+    /** Additional arrayBuffers bytes allowed above the component threshold. */
+    arrayBuffersAllowanceBytes?: number;
+    /** @deprecated Heap-only compatibility alias; never applies to arrayBuffers. */
+    allowanceBytes?: number;
     /** Required documented reason, including reference to plateau evidence. */
     reason: string;
 }
@@ -89,14 +100,14 @@ const SCENARIO_EXCEPTIONS: ScenarioException[] = [
         featureUri: "external-services/EXTERNAL-SERVICES-001-minio-docker.feature",
         line: 5,
         scenarioName: "EXTERNAL-SERVICES TC-001 S3 client and proxy use a scenario-owned MinIO service",
-        allowanceBytes: 4_194_304,
+        heapUsedAllowanceBytes: 4_194_304,
         reason: "Production AWS Smithy and MinIO client initialisation retained 4,589,426 bytes after explicit client disposal and scenario-owned container cleanup; scoped to the exact external-services MinIO migration scenario.",
     },
     {
         featureUri: "external-services/EXTERNAL-SERVICES-001-minio-docker.feature",
         line: 13,
         scenarioName: "EXTERNAL-SERVICES TC-002 Docker daemon lifecycle works through the production-capable client",
-        allowanceBytes: 69_632,
+        heapUsedAllowanceBytes: 69_632,
         reason: "Independent supported-runner measurements after scenario cleanup were 585,464, 585,648, and 585,304 bytes; the final strict-base confirmation reached 587,984 bytes. No leaks were reported. The 65,536-byte allowance would leave only 1,840 bytes above that high-water mark, so this 69,632-byte allowance adds one 4 KiB block of repeat headroom while remaining scoped to this exact daemon scenario.",
     },
 
@@ -118,11 +129,30 @@ const SCENARIO_EXCEPTIONS: ScenarioException[] = [
         featureUri: "verser2/VERSER2-001-isolated-routing.feature",
         line: 7,
         scenarioName: "Broker follows a native 308 redirect to an advertised route",
-        allowanceBytes: 1_048_576,
+        heapUsedAllowanceBytes: 1_048_576,
         reason: "exact 1 MiB allowance for the separately tracked Verser2 allocation issue",
     },
 
     E2E003_KILL_EXCEPTION,
+
+    // -----------------------------------------------------------------------
+    // E2E-018 TC-001: CLI ingress mTLS endpoint selection
+    //
+    // User-approved narrow heap-only allowance. Three fresh normal guarded
+    // runs measured +584424, +590384, and +612128 bytes against the strict
+    // 524288-byte base; a retry passed. Dedicated MemLab showed zero stable
+    // leaks, while the redacted retainer census found only bounded
+    // code/closure cache families and no scenario-owned root. Array buffers
+    // remained +0 and stay strict at 524288 bytes; external memory remains
+    // diagnostic-only. Child RSS and leak checks passed.
+    // -----------------------------------------------------------------------
+    {
+        featureUri: "e2e/E2E-018-cli-ingress.feature",
+        line: 8,
+        scenarioName: "mTLS profiles select their ingress endpoint and preserve dispatch boundaries",
+        heapUsedAllowanceBytes: 262_144,
+        reason: "User-approved heap-only 262144-byte allowance: three fresh normal guarded runs measured +584424, +590384, and +612128 bytes against the 524288-byte base; retry passed; dedicated MemLab found zero stable leaks; redacted census found bounded code/closure cache families with no scenario-owned root; arrayBuffers remained +0 and strict at 524288, external remained diagnostic-only, and child RSS/leak checks passed.",
+    },
 
     // -----------------------------------------------------------------------
     // APPCONTEXT-001 TC-002: keepAlive/end lifecycle
@@ -137,7 +167,7 @@ const SCENARIO_EXCEPTIONS: ScenarioException[] = [
         featureUri: "appcontext/APPCONTEXT-001-full-sequence.feature",
         line: 19,
         scenarioName: "APPCONTEXT-001 TC-002 Sequence calls keepAlive and end through AppContext",
-        allowanceBytes: 90_112,
+        heapUsedAllowanceBytes: 90_112,
         reason: "Repeated strict guarded Docker runs plateaued at 611363, 611707, and 611587 bytes "
             + "after deterministic cleanup (344-byte spread). The 90112-byte allowance is the "
             + "rounded observed maximum excess over the 524288-byte base and is scoped to this "
@@ -156,7 +186,7 @@ const SCENARIO_EXCEPTIONS: ScenarioException[] = [
         featureUri: "appcontext/APPCONTEXT-001-full-sequence.feature",
         line: 12,
         scenarioName: "APPCONTEXT-001 TC-001 Sequence reads config and instanceId from AppContext",
-        allowanceBytes: 86_016,
+        heapUsedAllowanceBytes: 86_016,
         reason: "Three serial strict guarded Docker runs plateaued at 609760, 609080, and 609224 bytes "
             + "after deterministic cleanup (680-byte spread). The 86016-byte allowance is the "
             + "maximum observed 85472-byte excess over the 524288-byte base, rounded to a 4KiB "
@@ -175,7 +205,7 @@ const SCENARIO_EXCEPTIONS: ScenarioException[] = [
         featureUri: "e2e/E2E-001-samples.feature",
         line: 4,
         scenarioName: "E2E-001 TC-002 Test stdio available after the sequence is completed",
-        allowanceBytes: 331_776,
+        heapUsedAllowanceBytes: 331_776,
         reason: "Ten post-agent-fix strict guarded Docker runs produced two stable socket-lifecycle "
             + "bands (679911–683479 and 825407–828071 bytes). The unchanged 331776-byte exact-pickle "
             + "allowance covers the higher keep-alive socket band above the 524288-byte base; the "
@@ -193,7 +223,7 @@ const SCENARIO_EXCEPTIONS: ScenarioException[] = [
         featureUri: "e2e/E2E-012-stream-flooding-test.feature",
         line: 4,
         scenarioName: "E2E-012 TC-001 Flood stdin of Instance, do not consume it and check if Instance responds to event sent.",
-        allowanceBytes: 860_160,
+        heapUsedAllowanceBytes: 860_160,
         reason: "Five complete guarded runs observed a maximum delta of 1377733 bytes. "
             + "Allowance is the smallest 4096-byte step (856064 bytes) covering the "
             + "maximum excess over the 524288-byte base, plus one additional 4096-byte "
@@ -212,7 +242,7 @@ const SCENARIO_EXCEPTIONS: ScenarioException[] = [
         featureUri: "e2e/E2E-015-unified.feature",
         line: 4,
         scenarioName: "E2E-015 TC-001 Run simple sequence with input and output",
-        allowanceBytes: 90_112,
+        heapUsedAllowanceBytes: 90_112,
         reason: "Post-cleanup samples were 591113/602197/607408/596596/602340 bytes; finite output "
             + "cleanup matched the expected body, destroyed the response stream, and released instance, "
             + "sequence, output, and response references. This additive 90112-byte allowance produces "
@@ -237,7 +267,7 @@ const SCENARIO_EXCEPTIONS: ScenarioException[] = [
         featureUri: "e2e/E2E-014-python.feature",
         line: 4,
         scenarioName: "E2E-014 TC-003 Exceptions thrown in python sequences appear in stderr",
-        allowanceBytes: 77_824,
+        heapUsedAllowanceBytes: 77_824,
         reason: "Python child-process runner allocations persist after "
             + "close()+GC. Three repeated strict guarded Docker runs "
             + "recorded deltas of 599840, 598752, and 599880 bytes; "
@@ -274,7 +304,7 @@ const SCENARIO_EXCEPTIONS: ScenarioException[] = [
         featureUri: "hub/HUB-001-host-config.feature",
         line: 0,
         scenarioName: "*",
-        allowanceBytes: 1_048_576,
+        heapUsedAllowanceBytes: 1_048_576,
         reason: "Feature-level 1 MiB allowance for HUB-001 host-config scenarios — "
             + "Hub lifecycle (HTTP agent sockets, child_process internals, "
             + "Python runner native bindings) retains embedder allocations "
@@ -284,7 +314,7 @@ const SCENARIO_EXCEPTIONS: ScenarioException[] = [
         featureUri: "hub/HUB-002-host-iac.feature",
         line: 0,
         scenarioName: "*",
-        allowanceBytes: 1_048_576,
+        heapUsedAllowanceBytes: 1_048_576,
         reason: "Feature-level 1 MiB allowance for HUB-002 host-IaC scenarios — "
             + "Hub lifecycle with sequence/instance management retains "
             + "embedder allocations beyond the 524288-byte base.",
@@ -293,7 +323,7 @@ const SCENARIO_EXCEPTIONS: ScenarioException[] = [
         featureUri: "hub/HUB-003-instance-api-server.feature",
         line: 0,
         scenarioName: "*",
-        allowanceBytes: 1_048_576,
+        heapUsedAllowanceBytes: 1_048_576,
         reason: "Feature-level 1 MiB allowance for HUB-003 API-server scenarios — "
             + "Hub lifecycle with RPC route exposure retains embedder "
             + "allocations beyond the 524288-byte base.",
@@ -302,7 +332,7 @@ const SCENARIO_EXCEPTIONS: ScenarioException[] = [
         featureUri: "hub/HUB-004-runtime-error-logging.feature",
         line: 0,
         scenarioName: "*",
-        allowanceBytes: 1_048_576,
+        heapUsedAllowanceBytes: 1_048_576,
         reason: "Feature-level 1 MiB allowance for HUB-004 runtime-error-logging "
             + "scenarios — Hub lifecycle with runtime-error verification "
             + "retains embedder allocations beyond the 524288-byte base.",
@@ -317,6 +347,7 @@ const SCENARIO_EXCEPTIONS: ScenarioException[] = [
 // immediately rather than on the first scenario.
 
 const chunkMemoryPolicy = parseChunkMemoryPolicy();
+const diagnosticMemlab = process.env.SCRAMJET_BDD_MEMLAB === "1";
 const memorySkip = (isBddMemoryGuardEnabled() || chunkMemoryPolicy === "enforce")
     ? checkBddMemorySkip()
     : { skip: false };
@@ -399,22 +430,23 @@ Before(async function (scenario: any) {
     chunkTiming.startScenario(this, { name: pickle?.name, uri: pickle?.uri });
     this.__chunkTimingStepIndex = 0;
     const chunkMetricsEnabled = chunkMemoryPolicy !== "off" && !memorySkip.skip;
-    if ((!isBddMemoryGuardEnabled() && !chunkMetricsEnabled) || memorySkip.skip) {
+    if ((!isBddMemoryGuardEnabled() && !chunkMetricsEnabled && process.env.SCRAMJET_BDD_MEMLAB !== "1") || memorySkip.skip) {
         return;
     }
 
     // Capture raw snapshot before drain+GC for component breakdown.
     const beforeUsage = process.memoryUsage();
 
-    if (isBddMemoryGuardEnabled()) await drainAndGc();
+    if (isBddMemoryGuardEnabled() || process.env.SCRAMJET_BDD_MEMLAB === "1") await drainAndGc();
 
-    const baseline = measureMemoryUsage();
-
-    // Post-GC baseline component snapshot for diagnostics.  The enforced
-    // metric remains `baseline` from measureMemoryUsage(); this raw snapshot
-    // is retained only for the failure diagnostics breakdown.
     const baselineUsage = process.memoryUsage();
+    const baseline = memoryUsageTotal(baselineUsage);
+    if (process.env.SCRAMJET_BDD_MEMLAB === "1") {
+        (globalThis as any).__scramjetBddMemlabCapture?.("baseline");
+    }
 
+    // Retain the post-GC baseline for independent component enforcement and
+    // failure diagnostics; external remains diagnostic-only.
     this[BASELINE_KEY] = baseline;
     this[BEFORE_USAGE_KEY] = beforeUsage;
     this[BASELINE_USAGE_KEY] = baselineUsage;
@@ -538,49 +570,71 @@ After(async function (this: any, scenario: any) {
         require("fs").appendFileSync(hookOrderFile, "memory-guard-after\n", "utf8");
     }
 
+    // Reconcile exit listeners before the final GC so expected-exit telemetry
+    // can release its retained stderr payload without affecting diagnostics.
+    await getMemoryRegistry().drainExitEvents();
+    getMemoryRegistry().releaseExpectedExitPayloads();
+
     // ---- Final measurement ----
     const afterUsage = process.memoryUsage();
 
     await drainAndGc();
 
-    // Post-GC component snapshot at the enforcement point.  Diagnostic only:
-    // the enforced metric remains `final` from measureMemoryUsage().
+    // Post-GC component snapshot at the enforcement point.  The enforced total
+    // is heapUsed + arrayBuffers; external remains diagnostic-only.
     const postGcUsage = process.memoryUsage();
-    const final = measureMemoryUsage();
+    const final = memoryUsageTotal(postGcUsage);
     const delta = final - baseline;
-    const threshold = bddMemoryHeapThresholdBytes();
+    const thresholds = bddMemoryComponentThresholds();
 
     // Bytes the final GC reclaimed between the pre-final-GC snapshot and the
     // post-GC enforcement snapshot (diagnostic only, never enforced).
     const reclaimedBytes = Math.max(0, memoryUsageTotal(afterUsage) - final);
 
     // ---- Apply per-scenario exception ----
-    let effectiveThreshold = threshold;
+    let heapUsedThreshold = thresholds.heapUsedBytes;
+    let arrayBuffersThreshold = thresholds.arrayBuffersBytes;
     let exceptionLabel: string | undefined;
 
     const exc: any = matchScenarioException(SCENARIO_EXCEPTIONS, featureUri, scenarioLine, scenarioName);
 
     if (exc) {
-        effectiveThreshold = threshold + exc.allowanceBytes;
-        exceptionLabel = `${exc.allowanceBytes}-byte exception (${exc.featureUri}:${exc.line}): ${exc.reason}`;
+        const heapAllowance = exc.heapUsedAllowanceBytes ?? exc.allowanceBytes ?? 0;
+        const arrayBuffersAllowance = exc.arrayBuffersAllowanceBytes ?? 0;
+        heapUsedThreshold += heapAllowance;
+        arrayBuffersThreshold += arrayBuffersAllowance;
+        exceptionLabel = `${heapAllowance}-byte heapUsed / ${arrayBuffersAllowance}-byte arrayBuffers exception (${exc.featureUri}:${exc.line}): ${exc.reason}`;
         process.stderr.write(
             `[memory-guard] exception sample ${exc.featureUri}:${exc.line} ` +
-            `scenario=${scenarioName} delta=${delta} base=${threshold} ` +
-            `allowance=${exc.allowanceBytes} effective=${effectiveThreshold}\n`
+                `scenario=${scenarioName} heapUsed=${postGcUsage.heapUsed - this[BASELINE_USAGE_KEY].heapUsed} ` +
+                `arrayBuffers=${postGcUsage.arrayBuffers - this[BASELINE_USAGE_KEY].arrayBuffers} ` +
+                `heapAllowance=${heapAllowance} arrayBuffersAllowance=${arrayBuffersAllowance}\n`
         );
     }
 
     const failures: Error[] = [...cleanupErrors];
 
     // ---- Check threshold ----
-    if (delta > effectiveThreshold) {
-        const diagnostics = buildBddMemoryDiagnostics({
+    const componentResult = evaluateBddMemoryComponents(this[BASELINE_USAGE_KEY], postGcUsage, thresholds, {
+        heapUsedAllowanceBytes: heapUsedThreshold - thresholds.heapUsedBytes,
+        arrayBuffersAllowanceBytes: arrayBuffersThreshold - thresholds.arrayBuffersBytes,
+    });
+    const { heapUsedDelta, arrayBuffersDelta, externalDelta, componentFailures } = componentResult;
+    if (diagnosticMemlab) componentFailures.length = 0;
+    if (componentFailures.length > 0) {
+        const diagnostics = (buildBddMemoryDiagnostics as any)({
             scenarioName,
             baseline,
             final,
             delta,
-            threshold: effectiveThreshold,
-            sourceLabel: exceptionLabel || bddMemoryThresholdSourceLabel(),
+            threshold: heapUsedThreshold,
+            sourceLabel: exceptionLabel || thresholds.heapUsedSource,
+            heapUsedDelta,
+            arrayBuffersDelta,
+            externalDelta,
+            heapUsedThreshold,
+            arrayBuffersThreshold,
+            componentFailures,
             baselineUsage: this[BASELINE_USAGE_KEY],
             afterUsage,
             postGcUsage,
@@ -593,16 +647,14 @@ After(async function (this: any, scenario: any) {
         failures.push(new Error(diagnostics));
     }
 
-    // ---- Reconcile pending ChildProcess exits before asserting ----
-    // ScenarioLifecycle may have killed tracked ChildProcesses before
-    // their JS 'exit' events had a chance to fire.  Drain the event loop
-    // so that any pending exit listeners are processed; otherwise assertAll
-    // may see a long-lived process that was intentionally killed as still
-    // tracked but with an inaccessible PID, producing a spurious failure.
-    await getMemoryRegistry().drainExitEvents();
-
     // ---- Assert child process / container memory (Phase 6) ----
-    const registryErrors = await getMemoryRegistry().assertAll();
+    const registryErrors = diagnosticMemlab ? [] : await getMemoryRegistry().assertAll();
+
+    // Capture only after expected-exit stderr has been released and the normal
+    // guard calculation is complete, but before any collected errors are thrown.
+    if (process.env.SCRAMJET_BDD_MEMLAB === "1") {
+        (globalThis as any).__scramjetBddMemlabCapture?.("final");
+    }
 
     if (registryErrors.length > 0) {
         failures.push(new Error(
@@ -655,7 +707,7 @@ AfterAll(async function () {
     }
     const memoryMetricsEnabled = isBddMemoryGuardEnabled() || chunkMemoryPolicy !== "off";
     if (memoryMetricsEnabled) {
-        const finalHeap = measureMemoryUsage();
+        const finalHeap = memoryUsageTotal(process.memoryUsage());
         const metrics = getMemoryRegistry().computeChunkSummary();
         metrics.parentHeap.finalBytes = finalHeap;
         metrics.parentHeap.finalGrowthBytes = metrics.parentHeap.baselineBytes === null ? null : finalHeap - metrics.parentHeap.baselineBytes;

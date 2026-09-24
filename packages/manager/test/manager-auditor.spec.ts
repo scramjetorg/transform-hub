@@ -190,3 +190,54 @@ test("ManagerAuditor: onUpdate with flowing iterates store", async (t) => {
 
     t.true(getAuditCalled);
 });
+
+test("ManagerAuditor: stop clears heartbeat and prevents later heartbeat writes", async (t) => {
+    const auditor = new ManagerAuditor(mockConnectionStore(), "manager-stop");
+    let writes = 0;
+    const originalWrite = auditor.selfAuditStream.write.bind(auditor.selfAuditStream);
+    auditor.selfAuditStream.write = ((chunk: any, encoding?: any, callback?: any) => { writes++; return originalWrite(chunk, encoding, callback); }) as any;
+    const timer = (auditor as any).heartbeatTimer;
+
+    t.truthy(timer);
+    t.deepEqual(auditor.stop(), []);
+    t.is((auditor as any).heartbeatTimer, undefined);
+    auditor.hubConnectionChange("late", true);
+    await new Promise(resolve => setImmediate(resolve));
+    t.is(writes, 0);
+    t.deepEqual(auditor.stop(), []);
+});
+
+test("ManagerAuditor: stop detaches controller streams and ends self audit input", async (t) => {
+    const auditStream = new Readable({ read: () => {} });
+    let disconnected = 0;
+    const controller = mockController("sth-stop", auditStream);
+    controller.disconnectAuditStream = () => { disconnected++; };
+    const auditor = new ManagerAuditor(mockConnectionStore([controller]), "manager-stop");
+    await auditor.setFlowing(true);
+
+    t.true(auditor.ms.streams.includes(auditStream as any));
+    t.deepEqual(auditor.stop(), []);
+    t.is(disconnected, 1);
+    t.false(auditor.ms.streams.includes(auditStream as any));
+    t.true(auditor.selfAuditStream.writableEnded);
+});
+
+test("ManagerAuditor: stopped in-flight update disconnects late audit stream without mux retention", async (t) => {
+    let resolveAudit!: (stream: Readable) => void;
+    let disconnectCalls = 0;
+    const auditStream = new Readable({ read: () => {} });
+    const controller = mockController("sth-race");
+    controller.getAuditStream = () => new Promise(resolve => { resolveAudit = resolve; });
+    controller.disconnectAuditStream = () => { disconnectCalls++; };
+    const auditor = new ManagerAuditor(mockConnectionStore([controller]), "manager-race");
+
+    const update = auditor.setFlowing(true);
+    await new Promise(resolve => setImmediate(resolve));
+    auditor.stop();
+    const callsAtStop = disconnectCalls;
+    resolveAudit(auditStream);
+    await update;
+
+    t.true(disconnectCalls > callsAtStop);
+    t.false(auditor.ms.streams.includes(auditStream as any));
+});

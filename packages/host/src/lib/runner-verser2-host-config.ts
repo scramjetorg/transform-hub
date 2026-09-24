@@ -2,9 +2,23 @@ import { STHRunnerVerser2HostConfig } from "@scramjet/api-types";
 import { VerserHostOptions, VerserHostTlsOptions } from "@signicode/verser2-host";
 import { mkdir, readFile, stat, writeFile } from "fs/promises";
 import { existsSync } from "fs";
+import { createPrivateKey, createPublicKey, webcrypto } from "crypto";
 import { isIP } from "net";
 import { join } from "path";
-import { generate } from "selfsigned";
+import {
+    AuthorityKeyIdentifierExtension,
+    BasicConstraintsExtension,
+    ExtendedKeyUsage,
+    ExtendedKeyUsageExtension,
+    GeneralName,
+    KeyUsagesExtension,
+    PublicKey,
+    SubjectAlternativeNameExtension,
+    SubjectKeyIdentifierExtension,
+    X509Certificate,
+    X509CertificateGenerator,
+    KeyUsageFlags
+} from "@peculiar/x509";
 
 const GENERATED_CA_CERT_FILE = "ca.pem";
 const GENERATED_CA_KEY_FILE = "ca-key.pem";
@@ -21,6 +35,14 @@ function hasConfiguredHostIdentity(config: STHRunnerVerser2HostConfig): boolean 
     const tls = config.host.tls;
 
     return Boolean(tls.certFile && tls.keyFile || tls.pfxFile);
+}
+
+function assertCompleteConfiguredHostIdentity(config: STHRunnerVerser2HostConfig): void {
+    const tls = config.host.tls;
+
+    if (Boolean(tls.certFile) !== Boolean(tls.keyFile)) {
+        throw new Error("STH-local runner verser2 Host TLS certFile and keyFile must be provided together");
+    }
 }
 
 function generatedIdentityFiles(identityDir: string) {
@@ -74,37 +96,93 @@ async function existingGeneratedFiles(files: ReturnType<typeof generatedIdentity
     return Object.values(files).filter(file => existsSync(file));
 }
 
+function pem(type: string, data: ArrayBuffer): string {
+    const encoded = Buffer.from(data).toString("base64");
+    return `-----BEGIN ${type}-----\n${encoded.match(/.{1,64}/g)!.join("\n")}\n-----END ${type}-----\n`;
+}
+
+async function generateKeyPair(): Promise<CryptoKeyPair> {
+    return webcrypto.subtle.generateKey({ name: "RSASSA-PKCS1-v1_5", modulusLength: 2048, publicExponent: new Uint8Array([1, 0, 1]), hash: "SHA-256" }, true, ["sign", "verify"]) as Promise<CryptoKeyPair>;
+}
+
 async function generateIdentityFiles(config: STHRunnerVerser2HostConfig, files: ReturnType<typeof generatedIdentityFiles>): Promise<void> {
     const now = new Date();
     const notAfterDate = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000);
-    const ca = await generate([{ name: "commonName", value: "Scramjet STH Local Runner CA" }], {
-        algorithm: "sha256",
-        keySize: 2048,
-        notBeforeDate: now,
-        notAfterDate,
+    const caKeys = await generateKeyPair();
+    const caPublicKey = await PublicKey.create(caKeys.publicKey, webcrypto as unknown as Crypto);
+    const ca = await X509CertificateGenerator.createSelfSigned({
+        name: "CN=Scramjet STH Local Runner CA",
+        keys: caKeys,
+        notBefore: now,
+        notAfter: notAfterDate,
+        signingAlgorithm: { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
         extensions: [
-            { name: "basicConstraints", cA: true, pathLenConstraint: 0, critical: true },
-            { name: "keyUsage", keyCertSign: true, cRLSign: true, critical: true }
+            new BasicConstraintsExtension(true, 0, true),
+            new KeyUsagesExtension(KeyUsageFlags.keyCertSign | KeyUsageFlags.cRLSign, true),
+            await SubjectKeyIdentifierExtension.create(caPublicKey, false, webcrypto as unknown as Crypto)
         ]
-    });
-    const server = await generate([{ name: "commonName", value: getServerCommonName(config) }], {
-        algorithm: "sha256",
-        keySize: 2048,
-        notBeforeDate: now,
-        notAfterDate,
-        ca: { key: ca.private, cert: ca.cert },
-        extensions: [
-            { name: "basicConstraints", cA: false, critical: true },
-            { name: "keyUsage", digitalSignature: true, keyEncipherment: true, critical: true },
-            { name: "extKeyUsage", serverAuth: true },
-            { name: "subjectAltName", altNames: getServerAltNames(config) }
-        ]
-    });
+    }, webcrypto as unknown as Crypto);
 
-    await writeFile(files.caFile, ca.cert, { mode: 0o644 });
-    await writeFile(files.caKeyFile, ca.private, { mode: 0o600 });
-    await writeFile(files.certFile, server.cert, { mode: 0o644 });
-    await writeFile(files.keyFile, server.private, { mode: 0o600 });
+    const serverKeys = await generateKeyPair();
+    const serverPublicKey = await PublicKey.create(serverKeys.publicKey, webcrypto as unknown as Crypto);
+    const server = await X509CertificateGenerator.create({
+        issuer: ca.subject,
+        subject: `CN=${getServerCommonName(config)}`,
+        publicKey: serverPublicKey,
+        signingKey: caKeys.privateKey,
+        notBefore: now,
+        notAfter: notAfterDate,
+        signingAlgorithm: { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
+        extensions: [
+            new BasicConstraintsExtension(false, undefined, true),
+            new KeyUsagesExtension(KeyUsageFlags.digitalSignature | KeyUsageFlags.keyEncipherment, true),
+            new ExtendedKeyUsageExtension([ExtendedKeyUsage.serverAuth]),
+            new SubjectAlternativeNameExtension(getServerAltNames(config).map(name => name.type === 7 ? new GeneralName("ip", name.ip) : new GeneralName("dns", name.value))),
+            await SubjectKeyIdentifierExtension.create(serverPublicKey, false, webcrypto as unknown as Crypto),
+            await AuthorityKeyIdentifierExtension.create(ca, false, webcrypto as unknown as Crypto)
+        ]
+    }, webcrypto as unknown as Crypto);
+
+    await writeFile(files.caFile, ca.toString("pem"), { mode: 0o644 });
+    await writeFile(files.caKeyFile, pem("PRIVATE KEY", await webcrypto.subtle.exportKey("pkcs8", caKeys.privateKey)), { mode: 0o600 });
+    await writeFile(files.certFile, server.toString("pem"), { mode: 0o644 });
+    await writeFile(files.keyFile, pem("PRIVATE KEY", await webcrypto.subtle.exportKey("pkcs8", serverKeys.privateKey)), { mode: 0o600 });
+}
+
+function samePublicKey(cert: X509Certificate, privatePem: string): boolean {
+    const privateKey = createPrivateKey(privatePem);
+    const publicKey = createPublicKey(privateKey).export({ type: "spki", format: "der" });
+    return Buffer.from(publicKey).equals(Buffer.from(cert.publicKey.rawData));
+}
+
+async function validGeneratedIdentity(config: STHRunnerVerser2HostConfig, files: ReturnType<typeof generatedIdentityFiles>): Promise<boolean> {
+    try {
+        const [caPem, caKeyPem, serverPem, serverKeyPem] = await Promise.all(Object.values(files).map(file => readFile(file, "utf8")));
+        const ca = new X509Certificate(caPem);
+        const server = new X509Certificate(serverPem);
+        const caBasic = ca.getExtension(BasicConstraintsExtension);
+        const serverBasic = server.getExtension(BasicConstraintsExtension);
+        const caUsage = ca.getExtension(KeyUsagesExtension);
+        const serverUsage = server.getExtension(KeyUsagesExtension);
+        const serverEku = server.getExtension(ExtendedKeyUsageExtension);
+        const caSki = ca.getExtension(SubjectKeyIdentifierExtension);
+        const serverSki = server.getExtension(SubjectKeyIdentifierExtension);
+        const serverAki = server.getExtension(AuthorityKeyIdentifierExtension);
+        const san = server.getExtension(SubjectAlternativeNameExtension);
+        const expectedSan = getServerAltNames(config).map(name => name.type === 7 ? { type: "ip", value: name.ip } : { type: "dns", value: name.value });
+        const actualSan = san?.names.toJSON();
+        return caBasic?.ca === true && caBasic.pathLength === 0 && serverBasic?.ca === false &&
+            caUsage?.usages === (KeyUsageFlags.keyCertSign | KeyUsageFlags.cRLSign) &&
+            serverUsage?.usages === (KeyUsageFlags.digitalSignature | KeyUsageFlags.keyEncipherment) &&
+            serverEku?.usages.includes(ExtendedKeyUsage.serverAuth) === true &&
+            caSki !== null && serverSki !== null && serverAki?.keyId === caSki?.keyId &&
+            JSON.stringify(actualSan) === JSON.stringify(expectedSan) &&
+            ca.notBefore <= new Date() && ca.notAfter > new Date() && server.notBefore <= new Date() && server.notAfter > new Date() &&
+            server.issuer === ca.subject && await ca.isSelfSigned(webcrypto as unknown as Crypto) && await server.verify({ publicKey: ca.publicKey }, webcrypto as unknown as Crypto) &&
+            samePublicKey(ca, caKeyPem) && samePublicKey(server, serverKeyPem);
+    } catch {
+        return false;
+    }
 }
 
 export type GeneratedSthRunnerVerser2HostIdentity = {
@@ -125,8 +203,17 @@ export async function ensureGeneratedSthRunnerVerser2HostIdentity(config: STHRun
         throw new Error(`Incomplete STH-local runner verser2 Host identity in ${config.identityDir}`);
     }
 
+    if (existing.length) {
+        await assertPrivateFileMode(files.caKeyFile);
+        await assertPrivateFileMode(files.keyFile);
+    }
+
     if (!existing.length) {
         await generateIdentityFiles(config, files);
+    } else {
+        if (!(await validGeneratedIdentity(config, files))) {
+            await generateIdentityFiles(config, files);
+        }
     }
 
     await assertPrivateFileMode(files.caKeyFile);
@@ -252,6 +339,8 @@ function createSthRunnerVerser2HostTlsOptions(config: STHRunnerVerser2HostConfig
 }
 
 export async function resolveSthRunnerVerser2HostConfig(config: STHRunnerVerser2HostConfig): Promise<STHRunnerVerser2HostConfig> {
+    assertCompleteConfiguredHostIdentity(config);
+
     if (hasConfiguredHostIdentity(config)) {
         return loadConfiguredRunnerHostCa(config);
     }
