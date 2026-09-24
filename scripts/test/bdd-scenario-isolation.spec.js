@@ -49,15 +49,23 @@ function scenarioIsolationHooksWithStubs({ dockerError, minioError } = {}) {
         assertMinioPrerequisite: 0,
         requireDockerDiagnostics: 0,
         requireMinioDiagnostics: 0,
+        createVerser2TlsCredentials: 0,
+        fixtureSetup: 0,
+        fixtureExerciseRoutes: 0,
+        fixtureCleanup: 0,
     };
 
     const modulePath = require.resolve("../../bdd/support/scenario-isolation.ts");
     const supportModulePath = require.resolve("../../bdd/lib/scenario-isolation.ts");
+    const publishedModulesPath = require.resolve("../../bdd/lib/published-modules.ts");
+    const fixtureModulePath = require.resolve("../../bdd/lib/runner-verser2-transport-fixture.ts");
     const cucumberPath = require.resolve("@cucumber/cucumber");
 
     const restore = {
         modulePath: require.cache[modulePath],
         supportModulePath: require.cache[supportModulePath],
+        publishedModulesPath: require.cache[publishedModulesPath],
+        fixtureModulePath: require.cache[fixtureModulePath],
         cucumberPath: require.cache[cucumberPath],
     };
 
@@ -86,8 +94,56 @@ function scenarioIsolationHooksWithStubs({ dockerError, minioError } = {}) {
                     calls.assertMinioPrerequisite += 1;
                     if (minioError) throw minioError;
                 },
-                createScenarioIsolation: () => ({ requireDockerDiagnostics: () => { calls.requireDockerDiagnostics += 1; }, requireMinioDiagnostics: () => { calls.requireMinioDiagnostics += 1; } })
+                createScenarioIsolation: () => (calls.isolation = {
+                    requireDockerDiagnostics: () => { calls.requireDockerDiagnostics += 1; },
+                    requireMinioDiagnostics: () => { calls.requireMinioDiagnostics += 1; },
+                    createVerser2TlsCredentials: () => {
+                        calls.createVerser2TlsCredentials += 1;
+                        return calls.tlsCredentials;
+                    },
+                })
             }
+        };
+        require.cache[publishedModulesPath] = {
+            id: publishedModulesPath,
+            filename: publishedModulesPath,
+            loaded: true,
+            exports: {
+                publishedModule(specifier) {
+                    calls.publishedModule = specifier;
+                    return {};
+                }
+            }
+        };
+        require.cache[fixtureModulePath] = {
+            id: fixtureModulePath,
+            filename: fixtureModulePath,
+            loaded: true,
+            exports: {
+                createRunnerVerser2TransportFixture(credentials, identifiers) {
+                    calls.fixture = { credentials, identifiers };
+                    return {
+                        async setup() {
+                            calls.fixtureSetup += 1;
+                        },
+                        async exerciseRoutes() {
+                            calls.fixtureExerciseRoutes += 1;
+                        },
+                        async cleanup() {
+                            calls.fixtureCleanup += 1;
+                            calls.fixtureCleanupResult = {
+                                closeErrorCount: 0,
+                                openSockets: 0,
+                                rpcClosed: true,
+                                brokerClosed: true,
+                                transportClosed: true,
+                                hostClosed: true,
+                            };
+                            return calls.fixtureCleanupResult;
+                        },
+                    };
+                },
+            },
         };
 
         require(modulePath);
@@ -97,6 +153,16 @@ function scenarioIsolationHooksWithStubs({ dockerError, minioError } = {}) {
             require.cache[supportModulePath] = restore.supportModulePath;
         } else {
             delete require.cache[supportModulePath];
+        }
+        if (restore.publishedModulesPath) {
+            require.cache[publishedModulesPath] = restore.publishedModulesPath;
+        } else {
+            delete require.cache[publishedModulesPath];
+        }
+        if (restore.fixtureModulePath) {
+            require.cache[fixtureModulePath] = restore.fixtureModulePath;
+        } else {
+            delete require.cache[fixtureModulePath];
         }
         if (restore.cucumberPath) {
             require.cache[cucumberPath] = restore.cucumberPath;
@@ -143,6 +209,36 @@ test("scenario isolation creates an owner-scoped HOME, profile, config, artifact
     t.is(lifecycle.cleaned, 1);
     t.false(fs.existsSync(isolation.root));
     fs.rmSync(artifactRoot, { recursive: true, force: true });
+});
+
+test("runner Verser2 lifecycle warm-up is registered only for its tagged scenario", async t => {
+    const tlsCredentials = { certFile: "cert.pem", keyFile: "key.pem" };
+    const { hookRegistrations, calls } = scenarioIsolationHooksWithStubs();
+    calls.tlsCredentials = tlsCredentials;
+    const scenarioSetup = hookRegistrations.find(([hook]) => typeof hook === "function");
+    const warmup = hookRegistrations.find(([options]) => options?.tags === "@warm-runner-verser2-lifecycle");
+
+    t.truthy(scenarioSetup, "scenario isolation must be installed before runner Verser2 warm-up");
+    t.truthy(warmup, "runner Verser2 warm-up must be a tagged Before hook");
+    const world = { scenarioLifecycle: {} };
+    scenarioSetup[0].call(world);
+    await warmup[1].call(world);
+    t.is(calls.createVerser2TlsCredentials, 1);
+    t.is(calls.fixtureSetup, 1);
+    t.is(calls.fixtureExerciseRoutes, 1);
+    t.is(calls.fixtureCleanup, 1);
+    t.deepEqual(calls.fixtureCleanupResult, {
+        closeErrorCount: 0,
+        openSockets: 0,
+        rpcClosed: true,
+        brokerClosed: true,
+        transportClosed: true,
+        hostClosed: true,
+    });
+    t.deepEqual(calls.fixture.credentials, tlsCredentials);
+    t.regex(calls.fixture.identifiers.instanceId, /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
+    t.regex(calls.fixture.identifiers.hostId, /^warm-runner-/);
+    t.regex(calls.fixture.identifiers.brokerId, /^warm-broker-/);
 });
 
 test("scenario mTLS control ingress is local, references files rather than credentials, and removes its PKI", async t => {

@@ -217,7 +217,7 @@ Given("an isolated production Manager control ingress with a routed Hub guest", 
         routedDomains: ["bdd.routed.hub.test"],
         listener: (_request: unknown, response: { end: (body: string) => void }) => response.end(JSON.stringify({ servedBy: "routed-hub" }))
     });
-    manager.apiSthConnectionStore.add({ id: "bdd-routed-hub", isConnectionActive: true, routeDomain: "bdd.routed.hub.test" } as any);
+    manager.apiSthConnectionStore.add({ id: "bdd-routed-hub", isConnectionActive: true, routeDomain: "bdd.routed.hub.test", disconnectAuditStream: () => {} } as any);
     const current = state(this);
     current.tls = tls;
     current.close.push(async () => {

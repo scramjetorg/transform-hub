@@ -178,3 +178,4 @@ timing-log.ndjson
 /.worktrees/
 /.slim/worktrees/
 /.slim/worktrees.json
+/.slim/deepwork/

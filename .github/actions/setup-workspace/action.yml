@@ -26,6 +26,10 @@ inputs:
 runs:
   using: composite
   steps:
+    - uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c
+      with:
+        python-version: "3.14"
+
     - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
       with:
         node-version: "22"
@@ -50,6 +54,11 @@ runs:
     - name: Verify Node.js version and npm availability
       shell: bash
       run: |
+        PYTHON_VERSION=$(python -c "import platform; print(platform.python_version())")
+        case "$PYTHON_VERSION" in
+          3.14.*) ;;
+          *) echo "Python version is $PYTHON_VERSION, expected 3.14.x"; exit 1 ;;
+        esac
         MAJOR=$(node -e "process.stdout.write(process.version.slice(1).split('.')[0])")
         if [ "$MAJOR" -ne 22 ]; then
           echo "Node.js major version is $MAJOR, expected 22"

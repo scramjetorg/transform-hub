@@ -47,6 +47,7 @@
 
 const {
     isBddMemoryGuardEnabled,
+    bddMemoryComponentThresholds,
     bddMemoryHeapThresholdBytes,
     bddMemoryThresholdSourceLabel,
     bddMemorySkipCheck,
@@ -108,15 +109,26 @@ function checkBddMemorySkip() {
 /**
  * Compute the guarded metric total from a raw process.memoryUsage() snapshot.
  *
- * Mirrors measureMemoryUsage() (heapUsed + external + arrayBuffers) so a raw
- * snapshot's components can be compared against the enforced total without a
- * second measurement.
+ * Returns the independent parent components that participate in enforcement.
+ * External memory is deliberately diagnostic-only.
  *
  * @param {object} [raw]  Raw process.memoryUsage() snapshot.
- * @returns {number}  Combined bytes.
+ * @returns {number}  heapUsed + arrayBuffers bytes.
  */
 function memoryUsageTotal(raw) {
-    return (raw?.heapUsed || 0) + (raw?.external || 0) + (raw?.arrayBuffers || 0);
+    return (raw?.heapUsed || 0) + (raw?.arrayBuffers || 0);
+}
+
+function evaluateBddMemoryComponents(baselineUsage, finalUsage, { heapUsedBytes, arrayBuffersBytes }, { heapUsedAllowanceBytes = 0, arrayBuffersAllowanceBytes = 0 } = {}) {
+    const heapUsedDelta = (finalUsage?.heapUsed || 0) - (baselineUsage?.heapUsed || 0);
+    const arrayBuffersDelta = (finalUsage?.arrayBuffers || 0) - (baselineUsage?.arrayBuffers || 0);
+    const externalDelta = (finalUsage?.external || 0) - (baselineUsage?.external || 0);
+    const heapUsedThreshold = heapUsedBytes + heapUsedAllowanceBytes;
+    const arrayBuffersThreshold = arrayBuffersBytes + arrayBuffersAllowanceBytes;
+    const componentFailures = [];
+    if (heapUsedDelta > heapUsedThreshold) componentFailures.push(`heapUsed delta ${heapUsedDelta} exceeds ${heapUsedThreshold}`);
+    if (arrayBuffersDelta > arrayBuffersThreshold) componentFailures.push(`arrayBuffers delta ${arrayBuffersDelta} exceeds ${arrayBuffersThreshold}`);
+    return { heapUsedDelta, arrayBuffersDelta, externalDelta, heapUsedThreshold, arrayBuffersThreshold, componentFailures };
 }
 
 /**
@@ -178,6 +190,12 @@ function formatComponentSnapshot(usage) {
  * @param {number}  [opts.reclaimedBytes]  Bytes reclaimed by the final GC (diagnostic).
  * @param {number}  [opts.rssBaseline]     Baseline RSS (diagnostic only).
  * @param {number}  [opts.rssFinal]        Final RSS (diagnostic only).
+ * @param {number}  [opts.heapUsedDelta]   Post-GC heapUsed delta.
+ * @param {number}  [opts.arrayBuffersDelta] Post-GC arrayBuffers delta.
+ * @param {number}  [opts.externalDelta]   Post-GC external delta (diagnostic only).
+ * @param {number}  [opts.heapUsedThreshold] HeapUsed threshold.
+ * @param {number}  [opts.arrayBuffersThreshold] ArrayBuffers threshold.
+ * @param {string[]} [opts.componentFailures] Independent component failures.
  * @param {string}  [opts.skipContext]     Skip/exception context description.
  * @param {Array<Error>} [opts.cleanupErrors] Errors from cleanup callbacks.
  * @returns {string}  Multi-line diagnostics string.
@@ -187,6 +205,8 @@ function buildBddMemoryDiagnostics(opts) {
         scenarioName, baseline, final, delta, threshold, sourceLabel,
         beforeUsage, afterUsage, baselineUsage, postGcUsage, reclaimedBytes,
         rssBaseline, rssFinal, skipContext, cleanupErrors,
+        heapUsedDelta, arrayBuffersDelta, externalDelta,
+        heapUsedThreshold, arrayBuffersThreshold, componentFailures,
     } = opts || {};
 
     const lines = [];
@@ -194,6 +214,12 @@ function buildBddMemoryDiagnostics(opts) {
     lines.push(`BDD memory guard: scenario "${scenarioName}" ` + `used ${delta} bytes ` + `(threshold: ${threshold} bytes, source: ${sourceLabel}).`);
 
     lines.push(`  before (total): ${baseline}  after (total): ${final}`);
+
+    if (componentFailures) {
+        lines.push(`  component thresholds: heapUsed=${heapUsedThreshold} arrayBuffers=${arrayBuffersThreshold}`);
+        lines.push(`  post-GC deltas: heapUsed=${heapUsedDelta} arrayBuffers=${arrayBuffersDelta} external=${externalDelta} (external diagnostic only)`);
+        for (const failure of componentFailures) lines.push(`  component failure: ${failure}`);
+    }
 
     const hasPostGcSnapshots = baselineUsage || postGcUsage;
 
@@ -274,6 +300,7 @@ module.exports = {
     // Re-exported from bdd-options
     isBddMemoryGuardEnabled,
     bddMemoryHeapThresholdBytes,
+    bddMemoryComponentThresholds,
     bddMemoryThresholdSourceLabel,
     ENV,
 
@@ -281,6 +308,7 @@ module.exports = {
     ensureGlobalGc,
     checkBddMemorySkip,
     memoryUsageTotal,
+    evaluateBddMemoryComponents,
     formatComponentBreakdown,
     formatComponentSnapshot,
     buildBddMemoryDiagnostics,

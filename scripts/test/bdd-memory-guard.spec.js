@@ -12,6 +12,8 @@
 "use strict";
 
 const test = require("ava").default;
+const fs = require("node:fs");
+const path = require("node:path");
 
 const {
     isBddMemoryGuardEnabled,
@@ -19,6 +21,7 @@ const {
     ensureGlobalGc,
     checkBddMemorySkip,
     memoryUsageTotal,
+    evaluateBddMemoryComponents,
     formatComponentBreakdown,
     formatComponentSnapshot,
     buildBddMemoryDiagnostics,
@@ -193,9 +196,25 @@ test("formatComponentBreakdown handles zero/missing values", (t) => {
 // ---------------------------------------------------------------------------
 
 test("memoryUsageTotal computes the enforced metric from a raw snapshot", (t) => {
-    t.is(memoryUsageTotal({ heapUsed: 100, external: 20, arrayBuffers: 5 }), 125);
+    t.is(memoryUsageTotal({ heapUsed: 100, external: 20, arrayBuffers: 5 }), 105);
     t.is(memoryUsageTotal({ heapUsed: 0 }), 0);
     t.is(memoryUsageTotal(undefined), 0);
+});
+
+test("split parent guard reports heapUsed-only failure", t => {
+    const result = evaluateBddMemoryComponents({ heapUsed: 0, arrayBuffers: 0 }, { heapUsed: 600000, arrayBuffers: 1, external: 1 }, { heapUsedBytes: 524288, arrayBuffersBytes: 524288 });
+    t.deepEqual(result.componentFailures, ["heapUsed delta 600000 exceeds 524288"]);
+});
+
+test("split parent guard reports arrayBuffers-only failure", t => {
+    const result = evaluateBddMemoryComponents({ heapUsed: 0, arrayBuffers: 0 }, { heapUsed: 1, arrayBuffers: 600000 }, { heapUsedBytes: 524288, arrayBuffersBytes: 524288 });
+    t.deepEqual(result.componentFailures, ["arrayBuffers delta 600000 exceeds 524288"]);
+});
+
+test("external-only growth is diagnostic and does not fail parent guard", t => {
+    const result = evaluateBddMemoryComponents({ heapUsed: 0, arrayBuffers: 0, external: 0 }, { heapUsed: 1, arrayBuffers: 1, external: 10_000_000 }, { heapUsedBytes: 524288, arrayBuffersBytes: 524288 });
+    t.is(result.externalDelta, 10_000_000);
+    t.deepEqual(result.componentFailures, []);
 });
 
 test("formatComponentSnapshot renders one line per component", (t) => {
@@ -399,7 +418,7 @@ const {
 const { E2E003_KILL_EXCEPTION } = require("../lib/bdd-cli-exceptions.js");
 
 test("E2E-003 allowance matches only the exact approved URI, line, and scenario", (t) => {
-    t.is(E2E003_KILL_EXCEPTION.allowanceBytes, 225280);
+    t.is(E2E003_KILL_EXCEPTION.heapUsedAllowanceBytes, 225280);
     t.is(matchScenarioException(
         [E2E003_KILL_EXCEPTION],
         "features/e2e/E2E-003-kill.feature",
@@ -426,10 +445,38 @@ test("E2E-003 allowance matches only the exact approved URI, line, and scenario"
     ));
 });
 
+test("E2E-018 CLI ingress allowance is exact, heap-only, and evidence-backed", (t) => {
+    const source = fs.readFileSync(path.join(__dirname, "../../bdd/support/memory-hooks.ts"), "utf8");
+    const start = source.indexOf('featureUri: "e2e/E2E-018-cli-ingress.feature"');
+    const end = source.indexOf("\n    },", start);
+    const block = source.slice(start, end);
+    const exception = {
+        featureUri: "e2e/E2E-018-cli-ingress.feature",
+        line: 8,
+        scenarioName: "mTLS profiles select their ingress endpoint and preserve dispatch boundaries",
+        heapUsedAllowanceBytes: 262_144,
+        reason: block,
+    };
+
+    t.true(start >= 0);
+    t.is(end > start, true);
+    t.regex(block, /line: 8/);
+    t.regex(block, /heapUsedAllowanceBytes: 262_144/);
+    t.regex(block, /User-approved/);
+    t.regex(block, /584424.*590384.*612128/);
+    t.regex(block, /arrayBuffers.*strict.*524288/);
+    t.false(block.includes("arrayBuffersAllowanceBytes"));
+    t.is(matchScenarioException([exception], "features/e2e/E2E-018-cli-ingress.feature", 8, exception.scenarioName), exception);
+    t.is(524_288 + exception.heapUsedAllowanceBytes, 786_432);
+    t.falsy(matchScenarioException([exception], "features/e2e/E2E-018-cli-ingress.feature", 7, exception.scenarioName));
+    t.falsy(matchScenarioException([exception], "features/e2e/E2E-018-cli-ingress.feature", 8, "other scenario"));
+    t.falsy(matchScenarioException([exception], "features/e2e/E2E-017-other.feature", 8, exception.scenarioName));
+});
+
 test("Manager allowance matches only the approved Manager feature scopes", (t) => {
     t.is(MANAGER_SCENARIO_EXCEPTIONS.length, 3);
     for (const exception of MANAGER_SCENARIO_EXCEPTIONS) {
-        t.is(exception.allowanceBytes, 2 * 1024 * 1024);
+        t.is(exception.heapUsedAllowanceBytes, 2 * 1024 * 1024);
         t.true(exception.reason.includes("User-approved"));
         t.true(exception.reason.includes("multi-process Manager/MultiManager/Hub topology"));
         t.is(exception.line, 0);

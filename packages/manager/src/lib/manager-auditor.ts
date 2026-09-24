@@ -17,6 +17,7 @@ export class ManagerAuditor {
     selfAuditStream = new StringStream();
     managerId: string;
     private heartbeatTimer?: NodeJS.Timeout;
+    private stopped = false;
 
     flowing = false;
 
@@ -25,6 +26,7 @@ export class ManagerAuditor {
     }
 
     private writeHeartBeatMessage() {
+        if (this.stopped) return;
         this.selfAuditStream.write(
             `${JSON.stringify({
                 opCode: OpRecordCode.MANAGER_HEARTBEAT,
@@ -35,6 +37,7 @@ export class ManagerAuditor {
     }
 
     public hubConnectionChange(sthId: string, status: boolean) {
+        if (this.stopped) return;
         this.selfAuditStream.write(
             `${JSON.stringify({
                 opCode: status ? OpRecordCode.HUB_CONNECTED : OpRecordCode.HUB_DISCONNECTED,
@@ -58,17 +61,25 @@ export class ManagerAuditor {
     }
 
     async setFlowing(flowing: boolean) {
+        if (this.stopped) return;
         this.flowing = flowing;
         await this.onUpdate();
+        if (this.stopped) this.flowing = false;
     }
 
     async onUpdate() {
+        if (this.stopped) return;
         if (this.flowing) {
             for (const sthController of this.sthConnectionStore.list()) {
+                if (this.stopped) return;
                 const hostAudit = await sthController.getAuditStream().catch((err: Error) => {
                     this.logger.error("Can't get audit stream", err);
                 });
 
+                if (this.stopped) {
+                    try { sthController.disconnectAuditStream(); } catch { /* best effort after shutdown */ }
+                    return;
+                }
                 if (hostAudit && this.ms.streams.indexOf(hostAudit) === -1) {
                     this.logger.info("Adding audit stream", sthController.id);
                     this.ms.add(hostAudit);
@@ -80,6 +91,7 @@ export class ManagerAuditor {
     }
 
     heartbeatStart() {
+        if (this.stopped) return;
         this.heartbeatTimer = setInterval(() => {
             this.writeHeartBeatMessage();
         }, this.heartbeatInterval);
@@ -87,7 +99,13 @@ export class ManagerAuditor {
     }
 
     async attachSTH(sthController: STHController) {
-        this.ms.add(await sthController.getAuditStream());
+        if (this.stopped) return;
+        const stream = await sthController.getAuditStream();
+        if (this.stopped) {
+            try { sthController.disconnectAuditStream(); } catch { /* best effort after shutdown */ }
+            return;
+        }
+        this.ms.add(stream);
         await this.onUpdate();
     }
 
@@ -95,12 +113,31 @@ export class ManagerAuditor {
         this.ms.remove(stream);
     }
 
-    disconnectSTHAuditStreams() {
+    disconnectSTHAuditStreams(): Error[] {
+        const errors: Error[] = [];
         this.sthConnectionStore.list().forEach((sthController: any) => {
-            if (sthController.auditStream) {
-                this.ms.remove(sthController.auditStream);
+            try {
+                if (sthController.auditStream) this.ms.remove(sthController.auditStream);
                 sthController.disconnectAuditStream();
+            } catch (error) {
+                errors.push(error instanceof Error ? error : new Error(String(error)));
             }
         });
+        return errors;
+    }
+
+    stop(): Error[] {
+        if (this.stopped) return [];
+        this.stopped = true;
+        this.flowing = false;
+        const errors: Error[] = [];
+        if (this.heartbeatTimer) {
+            clearInterval(this.heartbeatTimer);
+            this.heartbeatTimer = undefined;
+        }
+        errors.push(...this.disconnectSTHAuditStreams());
+        try { this.ms.remove(this.selfAuditStream); } catch (error) { errors.push(error instanceof Error ? error : new Error(String(error))); }
+        try { this.selfAuditStream.end(); } catch (error) { errors.push(error instanceof Error ? error : new Error(String(error))); }
+        return errors;
     }
 }
