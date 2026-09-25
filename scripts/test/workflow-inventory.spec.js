@@ -8,7 +8,7 @@ const workflowsDir = resolve(__dirname, "..", "..", ".github", "workflows");
 
 test("active workflow inventory contains only the release-flow policy", (t) => {
     const workflows = readdirSync(workflowsDir).filter((name) => name.endsWith(".yml")).sort();
-    t.deepEqual(workflows, ["devel-validate.yml", "main-release.yml", "pr-validate.yml", "release-merge.yml", "release-start.yml", "security-check.yml"]);
+    t.deepEqual(workflows, ["devel-validate.yml", "main-release.yml", "pr-validate.yml", "release-candidate.yml", "release-merge.yml", "release-start.yml", "security-check.yml"]);
     for (const workflow of workflows) {
         const source = readFileSync(resolve(workflowsDir, workflow), "utf8");
         t.false(/node-version:\s*['"]?18(?:\.x)?['"]?/i.test(source));
@@ -28,4 +28,14 @@ test("PR workflow owns full validation, integration BDD, and release admission",
     t.true(source.includes("bdd-extended-runtime:"));
     t.false(source.includes("docker/build-push-action"));
     t.false(source.includes("prerelease"));
+});
+
+test("release candidate is same-repository guarded and checks out the PR head", (t) => {
+    const source = readFileSync(resolve(workflowsDir, "release-candidate.yml"), "utf8");
+    t.true(source.includes("github.event.pull_request.head.repo.full_name == github.repository"));
+    t.true(source.includes("startsWith(github.event.pull_request.head.ref, 'release/')"));
+    t.true(source.includes("ref: ${{ github.event.pull_request.head.sha }}"));
+    t.true(source.includes("      contents: write"));
+    t.true(source.includes("verify-bundle"));
+    t.true(source.includes("SHA256SUMS"));
 });

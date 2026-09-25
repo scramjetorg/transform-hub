@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/api-types",
-  "version": "2.1.3-devel",
+  "version": "2.2.0-devel",
   "description": "API/user-facing type contracts for Scramjet Transform Hub. Owns REST DTOs, APIExpose, client interface stubs, and strict API-specific AppContext aliases built on @scramjet/runtime-types without importing @scramjet/rest-api2 or @scramjet/types.",
   "main": "./src/index.ts",
   "scripts": {
@@ -11,8 +11,8 @@
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "MIT",
   "dependencies": {
-    "@scramjet/runtime-types": "^2.1.3-devel",
-    "@scramjet/symbols": "^2.1.3-devel"
+    "@scramjet/runtime-types": "^2.2.0-devel",
+    "@scramjet/symbols": "^2.2.0-devel"
   },
   "devDependencies": {
     "@types/node": "^22.15.0",

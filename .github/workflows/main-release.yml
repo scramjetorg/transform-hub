@@ -1,50 +1,20 @@
 name: Publish stable tag
-
 on:
   push:
     tags: ["v*.*.*"]
-
 permissions:
   contents: read
-
 concurrency:
   group: ${{ format('tag-{0}', github.ref_name) }}
   cancel-in-progress: true
-
 jobs:
-  validate:
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with:
-          fetch-depth: 0
-          persist-credentials: false
-          ref: ${{ github.sha }}
-      - uses: ./.github/actions/setup-workspace
-        with:
-          cache-mode: restore-only
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6
-        with:
-          bun-version: "1"
-      - name: Validate tag and main target
-        run: |
-          set -euo pipefail
-          version="${GITHUB_REF_NAME#v}"
-          test "$(node -p "require('./package.json').version")" = "$version"
-          git fetch origin main
-          test "$(git rev-parse origin/main)" = "$GITHUB_SHA"
-          npm run release:align:check -- --release-version="$version"
-          npm run lint
-          npm run typecheck
-          npm run check:runtime-invariants
-          npm run build:packages
   publish:
-    needs: [validate]
+    if: ${{ github.repository == 'scramjetorg/transform-hub' }}
     runs-on: ubuntu-24.04
     environment: production
     permissions:
-      contents: read
+      contents: write
+      pull-requests: read
       id-token: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -52,21 +22,42 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
           ref: ${{ github.sha }}
-      - uses: ./.github/actions/setup-workspace
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
         with:
-          cache-mode: read-write
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6
-        with:
-          bun-version: "1"
-      - name: Build release packages
-        run: FLAT_PACKAGES=true MAKE_PUBLIC=true NO_INSTALL=true node scripts/build-all.js -w release --ts-config tsconfig.build.json
-      - name: Prepare and publish npm release
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci --ignore-scripts
+      - name: Validate main tag and publish the immutable bundle
         env:
           MAIN_RELEASE_PUBLISH_ENABLED: "true"
           NPM_CONFIG_PROVENANCE: "true"
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           version="${GITHUB_REF_NAME#v}"
-          node scripts/release-main.js prepare --packages-dir dist --source-sha "$GITHUB_SHA" --node "$(node --version)" --npm "$(node node_modules/npm/bin/npm-cli.js --version)" --output "$RUNNER_TEMP/main-release.v1.json"
-          node scripts/release-main.js publish --release "$RUNNER_TEMP/main-release.v1.json" --packages-dir dist --output "$RUNNER_TEMP/main-release-publication.v1.json"
+          test "$(node -p "require('./package.json').version")" = "$version"
+          git fetch origin main
+          test "$(git rev-parse origin/main)" = "$GITHUB_SHA"
+          release_id="$(gh api "repos/$GITHUB_REPOSITORY/releases" --paginate --jq ".[] | select(.draft == true and .tag_name == \"v$version\") | .id" | head -n 1)"
+          test -n "$release_id"
+          candidate="$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/pulls" --jq '[.[] | select(.merged_at != null and .base.ref == "main" and .head.repo.full_name == env.GITHUB_REPOSITORY)][0]')"
+          candidate_head="$(jq -r '.head.sha' <<<"$candidate")"
+          test -n "$candidate_head" -a "$candidate_head" != null
+          git fetch origin "$candidate_head"
+          candidate_tree="$(git rev-parse "$candidate_head^{tree}")"
+          main_tree="$(git rev-parse "$GITHUB_SHA^{tree}")"
+          test "$candidate_tree" = "$main_tree"
+          rm -rf "$RUNNER_TEMP/release-draft" "$RUNNER_TEMP/release-bundle" && mkdir -p "$RUNNER_TEMP/release-draft"
+          gh api "repos/$GITHUB_REPOSITORY/releases/$release_id/assets" --paginate --slurp | jq 'add' > "$RUNNER_TEMP/release-assets.json"
+          manifest_url="$(jq -r '.[] | select(.name == "manifest.json") | .url' "$RUNNER_TEMP/release-assets.json")"
+          test -n "$manifest_url" -a "$manifest_url" != null
+          curl --fail --location --header "Authorization: Bearer $GH_TOKEN" --header 'Accept: application/octet-stream' "$manifest_url" -o "$RUNNER_TEMP/release-draft/manifest.json"
+          node scripts/release-main.js verify-draft --bundle "$RUNNER_TEMP/release-draft" --assets-json "$RUNNER_TEMP/release-assets.json" --expected-version "$version" --expected-branch "release/$version" --expected-candidate-head "$candidate_head" --expected-candidate-tree "$candidate_tree" --expected-main-tree "$main_tree"
+          gh api --method PATCH "repos/$GITHUB_REPOSITORY/releases/$release_id" -F draft=false >/dev/null
+          mkdir -p "$RUNNER_TEMP/release-bundle/tarballs"
+          gh api "repos/$GITHUB_REPOSITORY/releases/$release_id/assets" --paginate --slurp | jq 'add' > "$RUNNER_TEMP/release-assets-public.json"
+          gh api "repos/$GITHUB_REPOSITORY/releases/$release_id/assets" --paginate --jq '.[] | [.name, .url] | @tsv' | while IFS=$'\t' read -r asset url; do case "$asset" in ""|*/*|*\\*|*..*) exit 1;; esac; curl --fail --location --header "Authorization: Bearer $GH_TOKEN" --header 'Accept: application/octet-stream' "$url" -o "$RUNNER_TEMP/release-bundle/$asset"; done
+          mv "$RUNNER_TEMP/release-bundle"/*.tgz "$RUNNER_TEMP/release-bundle/tarballs/"
+          node scripts/release-main.js verify-bundle --bundle "$RUNNER_TEMP/release-bundle" --assets-json "$RUNNER_TEMP/release-assets-public.json" --expected-version "$version" --expected-branch "release/$version" --expected-candidate-head "$candidate_head" --expected-candidate-tree "$candidate_tree" --expected-main-tree "$main_tree"
+          node scripts/release-main.js publish --bundle "$RUNNER_TEMP/release-bundle" --tarballs-dir "$RUNNER_TEMP/release-bundle/tarballs"

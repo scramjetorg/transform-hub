@@ -5,14 +5,21 @@ const { readFileSync } = require("node:fs");
 const { resolve } = require("node:path");
 const { checkWorkflowSource } = require("../check-workflow-policy.js");
 
-test("tag publication validates and builds with pinned Bun in both package jobs", (t) => {
+test("tag publication consumes and verifies the immutable candidate bundle", (t) => {
     const source = readFileSync(resolve(__dirname, "../../.github/workflows/main-release.yml"), "utf8");
     t.deepEqual(checkWorkflowSource(source, ".github/workflows/main-release.yml"), []);
-    const bun = "oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6";
-    t.is((source.match(new RegExp(bun, "g")) || []).length, 2);
-    t.is((source.match(/bun-version: "1"/g) || []).length, 2);
-    const validate = source.indexOf("  validate:");
-    const publish = source.indexOf("  publish:");
-    t.true(source.indexOf(bun, validate) < source.indexOf("npm run build:packages", validate));
-    t.true(source.indexOf(bun, publish) < source.indexOf("Build release packages", publish));
+    t.true(source.includes("releases\" --paginate"));
+    t.true(source.includes("commits/$GITHUB_SHA/pulls"));
+    t.true(source.includes("expected-candidate-tree"));
+    t.true(source.includes("expected-main-tree"));
+    t.true(source.includes("--assets-json"));
+    t.true(source.includes("draft=false"));
+    t.true(source.includes("release-assets-public.json"));
+    t.true(source.indexOf("release-assets-public.json") > source.indexOf("draft=false"));
+    t.true(source.includes("verify-bundle"));
+    t.true(source.includes("--tarballs-dir"));
+    t.false(source.includes("build:packages"));
+    t.false(source.includes("npm pack"));
+    t.false(source.includes("waitForRegistryVisibility"));
+    t.false(source.includes("build-all.js"));
 });

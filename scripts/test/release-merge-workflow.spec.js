@@ -21,8 +21,10 @@ test("main merge reconstructs devel and only release branches may create tags", 
     );
     t.true(source.includes("development-version \"$version\""), "reconstruction uses the deterministic next-patch helper");
     t.true(source.includes("persist-credentials: false"));
-    t.true(source.includes("      contents: read\n      pull-requests: read"));
-    t.false(source.includes("      contents: write\n      pull-requests: read"));
+    t.true(source.includes("pull-requests: read"));
+    t.true(source.includes("releases\" --paginate"));
+    t.true(source.includes("verify-bundle"));
+    t.true(source.includes("candidate_tree"));
     t.true(source.includes("actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1"));
     t.true(source.includes("id: app-token"));
     t.true(source.includes("client-id: ${{ vars.RELEASE_APP_CLIENT_ID }}"));

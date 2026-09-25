@@ -1,23 +1,19 @@
 name: Complete stable release
-
 on:
   push:
     branches: [main]
-
 permissions:
   contents: read
-
 concurrency:
   group: ${{ github.ref_name }}
   cancel-in-progress: true
-
 jobs:
   reconstruct-and-tag:
-    permissions:
-      contents: read
-      pull-requests: read
     if: ${{ github.repository == 'scramjetorg/transform-hub' }}
     runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      pull-requests: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -42,16 +38,29 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: gh auth setup-git
-      - name: Reconstruct devel and create the stable tag
+      - name: Validate draft, reconstruct devel, and create stable tag
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           set -euo pipefail
-          head_ref="$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/pulls" --jq '[.[] | select(.merged_at != null and .base.ref == "main")][0].head.ref')"
+          head_ref="$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/pulls" --jq '[.[] | select(.merged_at != null and .base.ref == "main" and .head.repo.full_name == env.GITHUB_REPOSITORY)][0].head.ref')"
           test -n "$head_ref" -a "$head_ref" != "null"
           version="$(node -p "require('./package.json').version")"
           if [[ "$head_ref" == release/* ]]; then
             test "$(node scripts/release-flow.js release-branch "$version")" = "$head_ref"
+            candidate="$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/pulls" --jq '[.[] | select(.merged_at != null and .base.ref == "main" and .head.repo.full_name == env.GITHUB_REPOSITORY)][0]')"
+            candidate_head="$(jq -r '.head.sha' <<<"$candidate")"
+            git fetch origin "$candidate_head"
+            candidate_tree="$(git rev-parse "$candidate_head^{tree}")"
+            main_tree="$(git rev-parse "$GITHUB_SHA^{tree}")"
+            test "$candidate_tree" = "$main_tree"
+            release_id="$(gh api "repos/$GITHUB_REPOSITORY/releases" --paginate --jq ".[] | select(.draft == true and .tag_name == \"v$version\") | .id" | head -n 1)"
+            test -n "$release_id"
+            rm -rf "$RUNNER_TEMP/release-bundle" && mkdir -p "$RUNNER_TEMP/release-bundle/tarballs"
+            gh api "repos/$GITHUB_REPOSITORY/releases/$release_id/assets" --paginate --slurp | jq 'add' > "$RUNNER_TEMP/release-assets.json"
+            gh api "repos/$GITHUB_REPOSITORY/releases/$release_id/assets" --paginate --jq '.[] | [.name, .url] | @tsv' | while IFS=$'\t' read -r asset url; do case "$asset" in ""|*/*|*\\*|*..*) exit 1;; esac; curl --fail --location --header "Authorization: Bearer $GH_TOKEN" --header 'Accept: application/octet-stream' "$url" -o "$RUNNER_TEMP/release-bundle/$asset"; done
+            mv "$RUNNER_TEMP/release-bundle"/*.tgz "$RUNNER_TEMP/release-bundle/tarballs/"
+            node scripts/release-main.js verify-bundle --bundle "$RUNNER_TEMP/release-bundle" --assets-json "$RUNNER_TEMP/release-assets.json" --expected-version "$version" --expected-branch "release/$version" --expected-candidate-head "$candidate_head" --expected-candidate-tree "$candidate_tree" --expected-main-tree "$main_tree"
           else
             echo "Non-release main merge ($head_ref): reconstructing devel without publishing."
           fi
