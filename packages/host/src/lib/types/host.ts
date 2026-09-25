@@ -1,4 +1,4 @@
-import { IObjectLogger } from "@scramjet/runtime-types";
+import { IObjectLogger, LogLevel } from "@scramjet/runtime-types";
 import { StartInstanceReturnType } from "@scramjet/runtime-types";
 import { STHRestAPI } from "@scramjet/api-types";
 import { OpResponse } from "./from-types";
@@ -17,6 +17,7 @@ type SequenceId = string;
 
 export interface IHost {
     logger: IObjectLogger;
+    setLogLevel(logLevel: LogLevel): void;
 
     service: string;
     apiBase: string;

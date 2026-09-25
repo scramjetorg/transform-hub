@@ -10,6 +10,7 @@ test("typed route sets build the existing handlerless router factories", t => {
         load: routeBinding.contractOnly(),
         version: routeBinding.contractOnly(),
         config: routeBinding.contractOnly(),
+        logLevel: routeBinding.contractOnly(),
         health: routeBinding.contractOnly(),
         status: routeBinding.contractOnly(),
         sequences: routeBinding.contractOnly(),
@@ -43,6 +44,19 @@ test("RestAPI2RouteTree exposes final public Root Space Hub Instance concepts", 
     t.is(RestAPI2RouteTree.root.children.space.resolver, "space");
     t.is(RestAPI2RouteTree.space.children.hub.resolver, "hub");
     t.is(RestAPI2RouteTree.hub.children.instance.resolver, "instance");
+});
+
+test("live log-level PATCH routes exist only on root space and Hub", t => {
+    const root = RestAPI2RouteSets.root.routes();
+    const space = RestAPI2RouteSets.space.routes();
+    const hub = RestAPI2RouteSets.hub.hubRoutes();
+    const instance = RestAPI2RouteSets.instance.routes();
+
+    t.is(root.logLevel.method, "patch");
+    t.is(space.logLevel.method, "patch");
+    t.is(hub.logLevel.method, "patch");
+    t.is(instance.patchInstance.path, "/");
+    t.false("logLevel" in instance);
 });
 
 test("ingress identity is a handlerless contract at every ingress router level", t => {

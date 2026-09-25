@@ -48,6 +48,7 @@ The following sub-routers are mounted under this node:
 | `config` | `GET` | `/api/v2/spaces/:spaceId/hubs/:hubId/config` | request | `response`: `ConfigResponse` |
 | `health` | `GET` | `/api/v2/spaces/:spaceId/hubs/:hubId/health` | request | `response`: `healthCheckInfo(Hub)` |
 | `status` | `GET` | `/api/v2/spaces/:spaceId/hubs/:hubId/status` | request | `response`: `StatusResponse` |
+| `logLevel` | `PATCH` | `/api/v2/spaces/:spaceId/hubs/:hubId/log-level` | request | `body`: `LogLevelPatch`, `response`: `opResponse(LogLevelResponse)` |
 | `sequences` | `GET` | `/api/v2/spaces/:spaceId/hubs/:hubId/sequences` | request | `response`: `listResponse(Sequence)` |
 | `instances` | `GET` | `/api/v2/spaces/:spaceId/hubs/:hubId/instances` | request | `response`: `listResponse(Instance)` |
 | `entities` | `GET` | `/api/v2/spaces/:spaceId/hubs/:hubId/entities` | request | `response`: `listResponse(Entity)` |
@@ -108,6 +109,14 @@ The following sub-routers are mounted under this node:
 - **Path (full)**: `/api/v2/spaces/:spaceId/hubs/:hubId/status`
 - **Path (node-local)**: `/status`
 - **Schemas**: `response`: `StatusResponse`
+
+#### `logLevel`
+
+- **Operation ID**: `PATCH /api/v2/spaces/:spaceId/hubs/:hubId/log-level`
+- **Method**: `PATCH`
+- **Path (full)**: `/api/v2/spaces/:spaceId/hubs/:hubId/log-level`
+- **Path (node-local)**: `/log-level`
+- **Schemas**: `body`: `LogLevelPatch`, `response`: `opResponse(LogLevelResponse)`
 
 #### `sequences`
 

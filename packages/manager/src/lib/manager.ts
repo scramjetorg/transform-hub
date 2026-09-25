@@ -275,6 +275,10 @@ export class Manager implements IComponent {
         return this.commonLogsPipe;
     }
 
+    setLogLevel(logLevel: LogLevel): void {
+        this.logger.logLevel = logLevel;
+    }
+
     public get apiLoadCheck(): LoadCheck {
         return this.loadCheck;
     }

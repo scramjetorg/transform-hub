@@ -10,6 +10,7 @@ import {
     InstanceLimits,
     InstanceStats,
     IObjectLogger,
+    LogLevel,
     PassThroughStreamsConfig,
     ReadableStream,
     SequenceInfo,
@@ -257,6 +258,13 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
 
         this.upStreams = [new PassThrough(), new PassThrough(), new PassThrough(), new PassThrough(), new PassThrough(), new PassThrough(), new PassThrough(), new PassThrough()];
 
+        // Register the stable runner log channel once, independently of API
+        // router creation. Reconnects recreate the routers, but not this CSI
+        // channel, so registration cannot duplicate log records.
+        if (this.appConfig.logForward !== false) {
+            this.logger.addSerializedLoggerSource(this.upStreams[CC.LOG]);
+        }
+
         this.api = new InstanceAPI(this, this.logger, this.localEmitter);
         this.apiV2 = new InstanceAPIV2(this, this.logger, this.localEmitter, replacePathVersion(this.sthConfig.host.apiBase, "v2"));
     }
@@ -291,6 +299,11 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
 
     async set(payload: SetMessageData) {
         await this.communicationHandler.sendControlMessage(RunnerMessageCode.SET, payload);
+    }
+
+    async setLogLevel(logLevel: LogLevel): Promise<void> {
+        await this.communicationHandler.sendControlMessage(RunnerMessageCode.SET, { logLevel });
+        this.logger.logLevel = logLevel;
     }
 
     async start(): Promise<void> {

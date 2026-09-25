@@ -9,7 +9,8 @@ import { HostAPIV1Handler } from "../src/lib/api/host-api-v1";
 import { InstanceAPIV2 } from "../src/lib/api/instance-api-v2";
 import { CSIController } from "../src/lib/csi-controller";
 import { RouteRecorder } from "@scramjet/api-server/test/lib/route-recorder";
-import { registerHttpRoutes, RouteValidationError } from "@scramjet/api-router";
+import { registerHttpRoutes, RouteValidationError, validateRouteRequest } from "@scramjet/api-router";
+import { RestAPI2RouteSets } from "../../rest-api2/src/routes";
 
 const logger = new ObjLogger("api-v2-instance-hotwire-test");
 
@@ -69,6 +70,7 @@ function createCsiStub(calls: any[] = []): any {
         awaitEvent: async (name: string) => ({ awaited: name }),
         emitEvent: async (payload: unknown) => calls.push({ event: payload }),
         set: async (payload: unknown) => calls.push({ set: payload }),
+        setLogLevel: async (logLevel: string) => calls.push({ set: { logLevel } }),
         stop: async (payload: unknown) => calls.push({ stop: payload }),
         kill: async (payload: unknown) => calls.push({ kill: payload }),
         forwardRpcRequest: async (...args: unknown[]) => {
@@ -247,11 +249,22 @@ test("InstanceAPIV2 local handlers adapt CSI behavior", async t => {
         result: { instance: { id: "inst-1" }, parameters: { value: 1 } }
     });
     t.deepEqual(await (recorder.require("op", "/", "patch").handler as Function)({
-        body: { logLevel: "debug" }
+        body: { logLevel: "DEBUG" }
     }), {
         operation: { id: "inst-1", status: "completed" },
-        result: { instance: { id: "inst-1" }, parameters: { logLevel: "debug" } }
+        result: { instance: { id: "inst-1" }, parameters: { logLevel: "DEBUG" } }
     });
+    const callsBeforeLowercaseLogLevel = calls.length;
+    const patchRoute = recorder.require("op", "/", "patch");
+    const patchContract = RestAPI2RouteSets.instance.routes().patchInstance;
+    t.throws(
+        () => {
+            const request = validateRouteRequest(patchContract.schemas!, { body: { logLevel: "debug" } as any });
+            return (patchRoute.handler as Function)(request);
+        },
+        { instanceOf: RouteValidationError, message: "Invalid route body" }
+    );
+    t.is(calls.length, callsBeforeLowercaseLogLevel);
     await t.throwsAsync(
         () => (recorder.require("op", "/", "delete").handler as Function)({ body: { mode: "restart" } }),
         { instanceOf: RouteValidationError, message: "Invalid route body" }
@@ -300,7 +313,7 @@ test("InstanceAPIV2 local handlers adapt CSI behavior", async t => {
     t.deepEqual(calls, [
         { kill: { removeImmediately: true } },
         { set: { value: 1 } },
-        { set: { logLevel: "debug" } },
+        { set: { logLevel: "DEBUG" } },
         { event: { eventName: "custom", source: "api", message: { value: 1 } } }
     ]);
 });
