@@ -20,8 +20,8 @@ REPO_ROOT = SCRIPTS.parent.parent.parent
 
 CONFIG_FILE = SCRIPTS / "verser2-config.sh"
 INSTALL_DEPS = SCRIPTS / "install-deps.sh"
-REQUIREMENTS = SCRIPTS.parent / "requirements.txt"
 DOCKERFILE = REPO_ROOT / "packages" / "runner-python" / "Dockerfile"
+REQUIREMENTS = REPO_ROOT / "packages" / "runner-python" / "requirements.txt"
 
 # Expected variable names that must be defined in the config file
 REQUIRED_VARS = (
@@ -124,11 +124,12 @@ class TestVerser2Config:
             f"VERSER2_WHEEL_SHA256 '{sha}' should be a 64-char hex string"
         )
 
-    def test_cffi_requirements_cover_cp311_and_cp312_wheels(self) -> None:
+    def test_cffi_requirements_cover_cp311_cp312_and_cp314_wheels(self) -> None:
         content = REQUIREMENTS.read_text("utf-8")
         cffi_block = content.split("cryptography==", 1)[0]
         assert "34e261f78cb6ceaaa36f42f2613f4380d94d9c759a9c73c769ee6e0247364632" in cffi_block
         assert "c1453022f490d2459a11819d83ad1d586e9ff65a12ac3e705ffebd46d3685dcf" in cffi_block
+        assert "b0431303acaea1089ad4b3e9ce4e6518193def1118d4073ca848635ee4ea2e96" in cffi_block
 
 
 class TestInstallDepsSourcesConfig:

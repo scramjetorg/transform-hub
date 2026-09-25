@@ -1175,12 +1175,33 @@ export class Manager implements IComponent {
 
     async stop() {
         this.logger.info("Stopping manager...");
-        this.routeChangeUnsubscribe?.();
+        const cleanupErrors: Error[] = [];
+        const recordError = (stage: string, error: unknown) => {
+            const message = error instanceof Error ? error.message : String(error);
+            cleanupErrors.push(new Error(`${stage}: ${message}`));
+        };
+
+        const unsubscribe = this.routeChangeUnsubscribe;
         this.routeChangeUnsubscribe = undefined;
-        await this.controlIngressBroker?.close("Manager stopped");
-        this.controlIngressBroker = undefined;
-        await stopManagerControlIngress(this.controlIngressHost);
-        this.controlIngressHost = undefined;
+        try { unsubscribe?.(); } catch (error) { recordError("route unsubscribe", error); }
+
+        try {
+            cleanupErrors.push(...this.auditor.stop().map(error => new Error(`auditor stop: ${error.message}`)));
+        } catch (error) { recordError("auditor stop", error); }
+
+        const broker = this.controlIngressBroker;
+        try { await broker?.close("Manager stopped"); } catch (error) { recordError("broker close", error); }
+        finally { this.controlIngressBroker = undefined; }
+
+        const ingress = this.controlIngressHost;
+        try { await stopManagerControlIngress(ingress); } catch (error) { recordError("control ingress stop", error); }
+        finally { this.controlIngressHost = undefined; }
+
+        if (cleanupErrors.length) {
+            const error = new Error("Manager cleanup failed");
+            (error as Error & { cleanupErrors: Error[] }).cleanupErrors = cleanupErrors;
+            throw error;
+        }
         this.logger.info("Manager stopped successfully.");
     }
 }

@@ -37,6 +37,7 @@ const { teardownFloodSource } = require("../../lib/flood-teardown.js");
 const { waitForInstanceDetachment } = require("../../lib/instance-detachment.js");
 const { resolveFixturePackagePath } = require("../../lib/fixture-package-path.js");
 const { expectedHostVersion } = require("../../lib/release-prerelease-context.js");
+import { assertPythonExceptionOnStderr, PYTHON_EXCEPTION_MARKER } from "../../lib/python-exception-stderr";
 
 function resolveSequencePackage(packageName: string): string {
     const configuredDirs = (process.env.PACKAGES_DIR || "")
@@ -108,6 +109,9 @@ let streams: { [key: string]: Promise<string | undefined> } = {};
 let streamContains: { [key: string]: Promise<Readable> } = {};
 let runnerEnded: Promise<void> = Promise.resolve();
 let signalRunnerEnded: () => void = () => undefined;
+const includesLongRunningScenarios = ["1", "true"].includes(String(process.env.BDD_INCLUDE_LONG_RUNNING).toLowerCase());
+const needsSuiteHost = process.env.SCRAMJET_BDD_CHUNK_ID !== "hub-runtime" || includesLongRunningScenarios;
+let suiteHostStarted = false;
 
 const version = resolveRootPackageVersion();
 const hostUtils = new HostUtils();
@@ -249,7 +253,12 @@ const killAllRunners = async () => {
 };
 
 BeforeAll({ timeout: 20e3 }, async () => {
-    if (process.env.NO_HOST) {
+    // The default hub-runtime selection contains only @starts-host scenarios.
+    // Starting the shared suite Hub as well leaves two Hubs alive while each
+    // scenario starts its requested Hub, exceeding the Docker BDD budget.
+    // Its @slow CLI scenario needs the shared Hub, so retain it when that
+    // opt-in profile is selected.
+    if (process.env.NO_HOST || !needsSuiteHost) {
         return;
     }
 
@@ -341,6 +350,7 @@ BeforeAll({ timeout: 20e3 }, async () => {
             (signal) => hostClient.getLoadCheck({ signal }),
             "Shared HostClient transport did not become ready before the scenario baseline"
         );
+        suiteHostStarted = true;
     } finally {
         if (dynamicVerser2ConfigPath) await unlink(dynamicVerser2ConfigPath).catch(() => undefined);
         await controlIngressReservation?.release();
@@ -358,7 +368,7 @@ BeforeAll({ timeout: 20e3 }, async () => {
 
 AfterAll(async () => {
     try {
-        if (!process.env.NO_HOST) {
+        if (suiteHostStarted) {
             try {
                 await hostUtils.stopHost();
             } catch {
@@ -1084,6 +1094,17 @@ Then("kept instance stream {string} should be {string}", async (streamName, _exp
     const expected = JSON.parse(`"${_expected}"`);
 
     assert.equal(await streams[streamName], expected);
+});
+
+Then("Python exception should appear on stderr", async function(this: CustomWorld) {
+    const instance = this.resources.instance;
+    assert.ok(instance, "No active instance client set");
+    try {
+        const diagnostic = await assertPythonExceptionOnStderr(await instance.getStream("stderr"), PYTHON_EXCEPTION_MARKER);
+        assert.strictEqual(diagnostic.markerFound, true);
+    } finally {
+        this.resources.instance = undefined;
+    }
 });
 
 // ? When I get version

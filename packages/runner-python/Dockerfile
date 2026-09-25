@@ -10,7 +10,7 @@
 # runner JS tree at ./dist/docker-runner/ (same input the outer
 # packages/runner/Dockerfile consumes).
 
-FROM python:3.11-slim-bookworm AS target
+FROM python:3.14-slim-bookworm AS target
 
 ENV PACKAGE_DIR=/package \
     HUB_DIR=/opt/transform-hub \

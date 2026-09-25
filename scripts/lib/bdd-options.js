@@ -63,6 +63,10 @@ const ENV = Object.freeze({
     BDD_MEMORY_GUARD: "SCRAMJET_BDD_MEMORY_GUARD",
     MEMORY_HEAP_THRESHOLD: "SCRAMJET_MEMORY_HEAP_THRESHOLD_BYTES",
     BDD_MEMORY_HEAP_THRESHOLD: "SCRAMJET_BDD_MEMORY_THRESHOLD_BYTES",
+    MEMORY_HEAP_USED_THRESHOLD: "SCRAMJET_MEMORY_HEAP_USED_THRESHOLD_BYTES",
+    BDD_HEAP_USED_THRESHOLD: "SCRAMJET_BDD_HEAP_USED_THRESHOLD_BYTES",
+    MEMORY_ARRAY_BUFFERS_THRESHOLD: "SCRAMJET_MEMORY_ARRAY_BUFFERS_THRESHOLD_BYTES",
+    BDD_ARRAY_BUFFERS_THRESHOLD: "SCRAMJET_BDD_ARRAY_BUFFERS_THRESHOLD_BYTES",
     MEMORY_SKIP: "SCRAMJET_MEMORY_SKIP",
     MEMORY_SKIP_REASON: "SCRAMJET_MEMORY_SKIP_REASON",
     // Child process / Docker memory checks (Phase 6)
@@ -97,6 +101,8 @@ const DEFAULTS = Object.freeze({
      * or SCRAMJET_BDD_MEMORY_THRESHOLD_BYTES.
      */
     MEMORY_HEAP_THRESHOLD_BYTES: 524288,
+    BDD_HEAP_USED_THRESHOLD_BYTES: 524288,
+    BDD_ARRAY_BUFFERS_THRESHOLD_BYTES: 524288,
     /**
      * Default child process RSS threshold in bytes.
      * 209715200 bytes = 200 MiB.  Override via
@@ -205,14 +211,15 @@ function bddMaxOldSpaceSize() {
  * **supported** BDD path under the <2G memory guard.  Direct mode is for
  * diagnostic or local runs without host memory constraints.
  *
+ * @param {{ maxOldSpaceSize?: number }} [options] Per-runner heap cap.
  * @returns {string}  NODE_OPTIONS string suitable for the child process env.
  */
-function bddNodeOptions() {
+function bddNodeOptions({ maxOldSpaceSize = bddMaxOldSpaceSize() } = {}) {
     // Start from BDD_NODE_OPTIONS if set, otherwise empty.
     const base = process.env[ENV.BDD_NODE_OPTIONS] ?? "";
 
     // 1. Heap limit
-    let opts = replaceNodeOption(base, `--max-old-space-size=${bddMaxOldSpaceSize()}`);
+    let opts = replaceNodeOption(base, `--max-old-space-size=${maxOldSpaceSize}`);
 
     // 2. Fetch mode – avoid undici WASM OOM under <2G.
     //    Default: add --no-experimental-fetch (opt out via SCRAMJET_AVA_FETCH=1).
@@ -285,43 +292,45 @@ function isBddMemoryGuardEnabled() {
  * @throws {Error}  If an env var is set to a non-numeric, zero, or negative value.
  */
 function bddMemoryHeapThresholdBytes() {
-    const bddThreshold = process.env[ENV.BDD_MEMORY_HEAP_THRESHOLD];
+    return bddMemoryComponentThresholds().heapUsedBytes;
+}
 
-    if (bddThreshold !== undefined) {
-        const n = Number(bddThreshold);
+const deprecatedThresholdWarnings = new Set();
 
-        if (!Number.isFinite(n) || n <= 0) {
-            throw new Error(`${ENV.BDD_MEMORY_HEAP_THRESHOLD} must be a positive number, ` + `got ${JSON.stringify(bddThreshold)}.`);
+function parseThreshold(raw, name) {
+    const n = Number(raw);
+    if (!Number.isFinite(n) || n <= 0) throw new Error(`${name} must be a positive number, got ${JSON.stringify(raw)}.`);
+    return n;
+}
+
+function bddMemoryComponentThresholds() {
+    const deprecated = process.env[ENV.BDD_MEMORY_HEAP_THRESHOLD] !== undefined
+        ? [ENV.BDD_MEMORY_HEAP_THRESHOLD, process.env[ENV.BDD_MEMORY_HEAP_THRESHOLD]]
+        : process.env[ENV.MEMORY_HEAP_THRESHOLD] !== undefined
+            ? [ENV.MEMORY_HEAP_THRESHOLD, process.env[ENV.MEMORY_HEAP_THRESHOLD]]
+            : null;
+
+    for (const name of [ENV.BDD_MEMORY_HEAP_THRESHOLD, ENV.MEMORY_HEAP_THRESHOLD]) {
+        if (process.env[name] !== undefined && !deprecatedThresholdWarnings.has(name)) {
+            console.warn(`[bdd-memory-guard] ${name} is deprecated; use ${ENV.BDD_HEAP_USED_THRESHOLD} and ${ENV.BDD_ARRAY_BUFFERS_THRESHOLD}.`);
+            deprecatedThresholdWarnings.add(name);
         }
-
-        return n;
     }
 
-    const commonThreshold = process.env[ENV.MEMORY_HEAP_THRESHOLD];
+    const resolve = (component, commonComponent, defaultValue) => {
+        if (process.env[component] !== undefined) return { value: parseThreshold(process.env[component], component), source: component };
+        if (process.env[commonComponent] !== undefined) return { value: parseThreshold(process.env[commonComponent], commonComponent), source: commonComponent };
+        if (deprecated) return { value: parseThreshold(deprecated[1], deprecated[0]), source: `${deprecated[0]} (deprecated alias)` };
+        return { value: defaultValue, source: "env default" };
+    };
 
-    if (commonThreshold !== undefined) {
-        const n = Number(commonThreshold);
-
-        if (!Number.isFinite(n) || n <= 0) {
-            throw new Error(`${ENV.MEMORY_HEAP_THRESHOLD} must be a positive number, ` + `got ${JSON.stringify(commonThreshold)}.`);
-        }
-
-        return n;
-    }
-
-    return DEFAULTS.MEMORY_HEAP_THRESHOLD_BYTES;
+    const heapUsed = resolve(ENV.BDD_HEAP_USED_THRESHOLD, ENV.MEMORY_HEAP_USED_THRESHOLD, DEFAULTS.BDD_HEAP_USED_THRESHOLD_BYTES);
+    const arrayBuffers = resolve(ENV.BDD_ARRAY_BUFFERS_THRESHOLD, ENV.MEMORY_ARRAY_BUFFERS_THRESHOLD, DEFAULTS.BDD_ARRAY_BUFFERS_THRESHOLD_BYTES);
+    return { heapUsedBytes: heapUsed.value, arrayBuffersBytes: arrayBuffers.value, heapUsedSource: heapUsed.source, arrayBuffersSource: arrayBuffers.source };
 }
 
 function bddMemoryThresholdSourceLabel() {
-    if (process.env[ENV.BDD_MEMORY_HEAP_THRESHOLD] !== undefined) {
-        return ENV.BDD_MEMORY_HEAP_THRESHOLD;
-    }
-
-    if (process.env[ENV.MEMORY_HEAP_THRESHOLD] !== undefined) {
-        return ENV.MEMORY_HEAP_THRESHOLD;
-    }
-
-    return "env default";
+    return bddMemoryComponentThresholds().heapUsedSource;
 }
 
 /**
@@ -475,6 +484,7 @@ module.exports = {
     bddNodeArgs,
     isBddMemoryGuardEnabled,
     bddMemoryHeapThresholdBytes,
+    bddMemoryComponentThresholds,
     bddMemoryThresholdSourceLabel,
     bddMemorySkipCheck,
     bddProcessRssThresholdBytes,

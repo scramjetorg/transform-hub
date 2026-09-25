@@ -54,6 +54,32 @@ test("chunk policy evaluates PASS, WOULD_FAIL, and missing telemetry", t => {
     t.true(formatChunkMemoryDiagnostics(missing).includes("INSUFFICIENT_TELEMETRY"));
 });
 
+test("enforced chunk parent accounting ignores external-only growth", t => {
+    const externalOnly = evaluateChunkMemoryMetrics(metrics({
+        parentHeap: {
+            baselineBytes: 1000,
+            peakBytes: 1000,
+            finalBytes: 1000,
+            finalGrowthBytes: 0,
+            peakGrowthBytes: 0,
+            externalBaselineBytes: 100,
+            externalFinalBytes: DEFAULTS.parentFinalGrowthBytes * 10,
+            sampleCount: 1,
+        },
+    }), { policy: "enforce", componentExpectations: { container: true, processes: ["hub"] } });
+    t.is(externalOnly.status, "PASS");
+
+    const heapGrowth = evaluateChunkMemoryMetrics(metrics({
+        parentHeap: { baselineBytes: 1000, peakBytes: 1000, finalBytes: 1000 + DEFAULTS.parentFinalGrowthBytes + 1, finalGrowthBytes: DEFAULTS.parentFinalGrowthBytes + 1, peakGrowthBytes: 0, sampleCount: 1 },
+    }), { policy: "enforce", componentExpectations: { container: true, processes: ["hub"] } });
+    t.is(heapGrowth.status, "WOULD_FAIL");
+
+    const arrayBufferGrowth = evaluateChunkMemoryMetrics(metrics({
+        parentHeap: { baselineBytes: 1000, peakBytes: 1000, finalBytes: 1000 + DEFAULTS.parentFinalGrowthBytes + 1, finalGrowthBytes: DEFAULTS.parentFinalGrowthBytes + 1, peakGrowthBytes: 0, sampleCount: 1 },
+    }), { policy: "enforce", componentExpectations: { container: true, processes: ["hub"] } });
+    t.is(arrayBufferGrowth.status, "WOULD_FAIL");
+});
+
 test("chunk admission rejects parent peak growth and reports ownership", t => {
     const result = evaluateChunkMemoryMetrics(metrics({
         ownership: { owner: "run-a/chunk-a", chunkId: "chunk-a" },

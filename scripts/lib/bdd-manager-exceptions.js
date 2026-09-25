@@ -10,21 +10,21 @@ const MANAGER_SCENARIO_EXCEPTIONS = Object.freeze([
         featureUri: "manager/MANAGER-002-aggregation-repro.feature",
         line: 0,
         scenarioName: "*",
-        allowanceBytes: MANAGER_PARENT_ALLOWANCE_BYTES,
+        heapUsedAllowanceBytes: MANAGER_PARENT_ALLOWANCE_BYTES,
         reason: MANAGER_APPROVAL_REASON
     }),
     Object.freeze({
         featureUri: "manager/MANAGER-003-full-api-verser2-forwarding.feature",
         line: 0,
         scenarioName: "*",
-        allowanceBytes: MANAGER_PARENT_ALLOWANCE_BYTES,
+        heapUsedAllowanceBytes: MANAGER_PARENT_ALLOWANCE_BYTES,
         reason: MANAGER_APPROVAL_REASON
     }),
     Object.freeze({
         featureUri: "manager/MANAGER-004-topic-forwarding.feature",
         line: 0,
         scenarioName: "*",
-        allowanceBytes: MANAGER_PARENT_ALLOWANCE_BYTES,
+        heapUsedAllowanceBytes: MANAGER_PARENT_ALLOWANCE_BYTES,
         reason: MANAGER_APPROVAL_REASON
     })
 ]);

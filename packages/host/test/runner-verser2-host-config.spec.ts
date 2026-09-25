@@ -3,6 +3,18 @@ import { STHRunnerVerser2HostConfig } from "@scramjet/types";
 import { mkdtemp, readFile, rm, stat, writeFile } from "fs/promises";
 import { tmpdir } from "os";
 import { join } from "path";
+import { execFileSync } from "child_process";
+import {
+    AuthorityKeyIdentifierExtension,
+    BasicConstraintsExtension,
+    ExtendedKeyUsage,
+    ExtendedKeyUsageExtension,
+    KeyUsagesExtension,
+    SubjectAlternativeNameExtension,
+    SubjectKeyIdentifierExtension,
+    X509Certificate,
+    KeyUsageFlags
+} from "@peculiar/x509";
 import {
     deriveSthRunnerVerser2HostIdentity,
     createSthRunnerVerser2HostOptions,
@@ -329,6 +341,38 @@ test("resolveSthRunnerVerser2HostConfig loads configured STH-local CA file for r
     }
 });
 
+test("resolveSthRunnerVerser2HostConfig rejects a cert-only TLS identity before generating one", async t => {
+    const identityDir = await tempIdentityDir();
+    const config = baseConfig();
+
+    config.identityDir = identityDir;
+    config.host.tls = { certFile: "/certs/sth-runner.crt", mtlsRequired: false };
+
+    try {
+        await t.throwsAsync(() => resolveSthRunnerVerser2HostConfig(config), {
+            message: "STH-local runner verser2 Host TLS certFile and keyFile must be provided together"
+        });
+    } finally {
+        await rm(identityDir, { recursive: true, force: true });
+    }
+});
+
+test("resolveSthRunnerVerser2HostConfig rejects a key-only TLS identity before generating one", async t => {
+    const identityDir = await tempIdentityDir();
+    const config = baseConfig();
+
+    config.identityDir = identityDir;
+    config.host.tls = { keyFile: "/certs/sth-runner.key", mtlsRequired: false };
+
+    try {
+        await t.throwsAsync(() => resolveSthRunnerVerser2HostConfig(config), {
+            message: "STH-local runner verser2 Host TLS certFile and keyFile must be provided together"
+        });
+    } finally {
+        await rm(identityDir, { recursive: true, force: true });
+    }
+});
+
 test("resolveSthRunnerVerser2HostConfig generates and persists STH-local CA and server identity", async t => {
     const identityDir = await tempIdentityDir();
     const config = baseConfig();
@@ -346,6 +390,19 @@ test("resolveSthRunnerVerser2HostConfig generates and persists STH-local CA and 
         t.true(resolved.ca!.includes("BEGIN CERTIFICATE"));
         t.true((await readFile(join(identityDir, "ca-key.pem"), "utf8")).includes("BEGIN PRIVATE KEY"));
         t.true((await readFile(join(identityDir, "server-key.pem"), "utf8")).includes("BEGIN PRIVATE KEY"));
+
+        const ca = new X509Certificate(await readFile(join(identityDir, "ca.pem"), "utf8"));
+        const server = new X509Certificate(await readFile(join(identityDir, "server.pem"), "utf8"));
+        t.truthy(ca.getExtension(SubjectKeyIdentifierExtension));
+        t.truthy(server.getExtension(SubjectKeyIdentifierExtension));
+        t.is(server.getExtension(AuthorityKeyIdentifierExtension)!.keyId, ca.getExtension(SubjectKeyIdentifierExtension)!.keyId);
+        t.true(ca.getExtension(BasicConstraintsExtension)!.ca);
+        t.is(ca.getExtension(KeyUsagesExtension)!.usages, KeyUsageFlags.keyCertSign | KeyUsageFlags.cRLSign);
+        t.false(server.getExtension(BasicConstraintsExtension)!.ca);
+        t.is(server.getExtension(KeyUsagesExtension)!.usages, KeyUsageFlags.digitalSignature | KeyUsageFlags.keyEncipherment);
+        t.true(server.getExtension(ExtendedKeyUsageExtension)!.usages.includes(ExtendedKeyUsage.serverAuth));
+        t.deepEqual(server.getExtension(SubjectAlternativeNameExtension)!.names.toJSON(), [{ type: "ip", value: "127.0.0.1" }]);
+        execFileSync("openssl", ["verify", "-x509_strict", "-purpose", "sslserver", "-verify_ip", "127.0.0.1", "-CAfile", join(identityDir, "ca.pem"), join(identityDir, "server.pem")]);
 
         if (process.platform !== "win32") {
             t.is((await stat(join(identityDir, "ca-key.pem"))).mode & 0o777, 0o600);

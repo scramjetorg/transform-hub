@@ -4,7 +4,7 @@ Feature: Control-plane admission and enrollment
   ingresses through externally connected mTLS brokers and use published CSR
   enrollment command artifacts.
 
-  @manager-ingress
+  @manager-ingress @host-control-ingress-memory-warmup
   Scenario: Host control ingress admits an allowlisted certificate and rejects another trusted certificate
     Given an isolated real Host control ingress with an allowed client fingerprint
     When an external allowed mTLS broker requests the Host control route
@@ -18,7 +18,7 @@ Feature: Control-plane admission and enrollment
     Then the Manager control route responds with its v2 identity
     And an external rejected mTLS broker cannot connect to the Manager control ingress
 
-  @manager-ingress
+  @manager-ingress @manager-control-ingress-memory-warmup
   Scenario: An external mTLS broker reaches a Hub-owned route through a production Manager
     Given an isolated production Manager control ingress with a routed Hub guest
     When an external allowed mTLS broker requests the routed Hub version
@@ -33,6 +33,14 @@ Feature: Control-plane admission and enrollment
   Scenario: A production Manager control ingress and Hub runner listener use separate ports
     Given an isolated production Manager control ingress and Hub runner listener
     Then the Manager ingress and Hub runner listener bind without a port collision
+
+  @harness-selftest @control-plane-cycle-diagnostic
+  Scenario: Control-plane host cycle diagnostic isolates first-use mTLS allocation
+    Given control-plane cycle diagnostic kind "host"
+
+  @harness-selftest @control-plane-cycle-diagnostic
+  Scenario: Control-plane Manager cycle diagnostic isolates ManagerAuditor retention
+    Given control-plane cycle diagnostic kind "manager"
 
   @csr-enrollment
   Scenario: CSR enrollment command artifacts generate, approve, and redeem a Hub certificate

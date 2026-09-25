@@ -1,13 +1,43 @@
-FROM node:22-bookworm-slim
+FROM python:3.14-slim-bookworm
 
-ENV BUN_INSTALL=/opt/bun
+ENV BUN_INSTALL=/opt/bun \
+    RUNNER_PYTHON_VENV=/opt/runner-python-venv
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends ca-certificates curl procps unzip python3 \
+    && apt-get install -y --no-install-recommends ca-certificates curl gnupg procps unzip \
+    && mkdir -p /etc/apt/keyrings \
+    && curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key \
+        | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg \
+    && echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main" \
+        > /etc/apt/sources.list.d/nodesource.list \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends nodejs \
     && curl -fsSL https://bun.sh/install | bash \
     && chmod -R a+rX /opt/bun \
     && ln -s /opt/bun/bin/bun /usr/local/bin/bun \
     && ln -s /opt/bun/bin/bunx /usr/local/bin/bunx \
+    && apt-get purge -y --auto-remove gnupg \
     && rm -rf /var/lib/apt/lists/*
 
-ENV PATH="/opt/bun/bin:${PATH}"
+COPY packages/runner-python/requirements.txt /tmp/runner-python/requirements.txt
+COPY packages/runner-python/scripts/verser2-config.sh /tmp/runner-python/verser2-config.sh
+
+RUN set -eux \
+    && . /tmp/runner-python/verser2-config.sh \
+    && TMP_DIR="$(mktemp -d)" \
+    && python3 -c "\
+import sys; \
+from pathlib import Path; \
+from urllib.request import urlopen; \
+url, dst = sys.argv[1], Path(sys.argv[2]); \
+dst.write_bytes(urlopen(url).read()) \
+" "${VERSER2_WHEEL_URL}" "${TMP_DIR}/${VERSER2_WHEEL}" \
+    && echo "${VERSER2_WHEEL_SHA256}  ${TMP_DIR}/${VERSER2_WHEEL}" \
+        | sha256sum --check --status \
+    && python3 -m venv "${RUNNER_PYTHON_VENV}" \
+    && "${RUNNER_PYTHON_VENV}/bin/pip" install --no-cache-dir \
+        -r /tmp/runner-python/requirements.txt \
+        --find-links "${TMP_DIR}" \
+    && rm -rf "${TMP_DIR}" /tmp/runner-python
+
+ENV PATH="${RUNNER_PYTHON_VENV}/bin:/opt/bun/bin:${PATH}"

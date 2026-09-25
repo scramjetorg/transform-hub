@@ -49,6 +49,7 @@ export class CustomWorld implements IWorld {
         floodSourceClosedPromise?: Promise<unknown>;
         floodAbortController?: AbortController;
         floodCorrelationId?: string;
+        controlPlaneCycleDiagnostic?: { diagnosticOnly: boolean; memoryGuardSkipped: boolean; skipReasonPresent: boolean; cycles: unknown[] };
     } = {
             instanceList: {},
             multiHosts: {},

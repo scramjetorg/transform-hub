@@ -10,6 +10,7 @@ const ACTION_PATH = resolve(
 );
 
 const SETUP_NODE_SHA = "820762786026740c76f36085b0efc47a31fe5020";
+const SETUP_PYTHON_SHA = "e797f83bcb11b83ae66e0230d6156d7c80228e7c";
 const CACHE_RESTORE_SHA = "55cc8345863c7cc4c66a329aec7e433d2d1c52a9";
 const CACHE_SAVE_SHA = "55cc8345863c7cc4c66a329aec7e433d2d1c52a9";
 const CACHE_KEY_PREFIX = "npm-${{ steps.npm-cache.outputs.epoch }}-${{ runner.os }}-${{ runner.arch }}-node22-npm11.19.0-${{ hashFiles('package-lock.json') }}";
@@ -162,6 +163,14 @@ test("action file exists", (t) => {
 	t.true(existsSync(ACTION_PATH), `action.yml not found at ${ACTION_PATH}`);
 });
 
+test("setup-python step uses the pinned action and Python 3.14", (t) => {
+	const steps = parseSteps(loadLines());
+	const sp = steps.find((s) => (stepUses(s) || "").startsWith("actions/setup-python@"));
+	t.truthy(sp, "setup-python step must exist");
+	t.is(stepUses(sp), `actions/setup-python@${SETUP_PYTHON_SHA}`);
+	t.is(stepWith(sp)["python-version"], "3.14");
+});
+
 test("top-level metadata is present", (t) => {
 	const lines = loadLines();
 	t.true(lines.some((l) => /^name:\s*/.test(l)), "must have name");
@@ -246,7 +255,7 @@ test("cache mode is validated against explicit values before any install", (t) =
 	t.true(steps.indexOf(validate) < installIndex, "mode validation must run before the dependency install");
 });
 
-test("verify step checks Node major version and npm availability", (t) => {
+test("verify step checks Python 3.14, Node major version, and npm availability", (t) => {
 	const steps = parseSteps(loadLines());
 	t.truthy(steps, "steps must exist");
 
@@ -259,6 +268,7 @@ test("verify step checks Node major version and npm availability", (t) => {
 	const run = stepRun(verify);
 	t.truthy(run, "verify step must have a run script");
 	t.true(run.includes("MAJOR="), "verify step must capture major version");
+	t.true(run.includes("3.14."), "verify step must require Python 3.14");
 	t.true(run.includes("npm --version"), "verify step must check npm availability");
 	t.true(run.includes("exit 1"), "verify step must fail on mismatch");
 });
