@@ -28,18 +28,22 @@ jobs:
           cache: npm
           cache-dependency-path: package-lock.json
       - run: npm ci --ignore-scripts
-      - name: Validate main tag and publish the immutable bundle
-        env:
-          MAIN_RELEASE_PUBLISH_ENABLED: "true"
-          NPM_CONFIG_PROVENANCE: "true"
-          GH_TOKEN: ${{ github.token }}
+      - name: Validate tag points to main
         run: |
           set -euo pipefail
           version="${GITHUB_REF_NAME#v}"
+          test -n "$version"
           test "$(node -p "require('./package.json').version")" = "$version"
           git fetch origin main
           test "$(git rev-parse origin/main)" = "$GITHUB_SHA"
-          release_id="$(gh api "repos/$GITHUB_REPOSITORY/releases" --paginate --jq ".[] | select(.draft == true and .tag_name == \"v$version\") | .id" | head -n 1)"
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+      - name: Resolve and verify draft identity
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          test -n "${VERSION:-}"
+          release_id="$(gh api "repos/$GITHUB_REPOSITORY/releases" --paginate --jq ".[] | select(.draft == true and .tag_name == \"v$VERSION\") | .id" | head -n 1)"
           test -n "$release_id"
           candidate="$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/pulls" --jq '[.[] | select(.merged_at != null and .base.ref == "main" and .head.repo.full_name == env.GITHUB_REPOSITORY)][0]')"
           candidate_head="$(jq -r '.head.sha' <<<"$candidate")"
@@ -48,16 +52,46 @@ jobs:
           candidate_tree="$(git rev-parse "$candidate_head^{tree}")"
           main_tree="$(git rev-parse "$GITHUB_SHA^{tree}")"
           test "$candidate_tree" = "$main_tree"
-          rm -rf "$RUNNER_TEMP/release-draft" "$RUNNER_TEMP/release-bundle" && mkdir -p "$RUNNER_TEMP/release-draft"
+          rm -rf "$RUNNER_TEMP/release-draft" && mkdir -p "$RUNNER_TEMP/release-draft"
           gh api "repos/$GITHUB_REPOSITORY/releases/$release_id/assets" --paginate --slurp | jq 'add' > "$RUNNER_TEMP/release-assets.json"
           manifest_url="$(jq -r '.[] | select(.name == "manifest.json") | .url' "$RUNNER_TEMP/release-assets.json")"
           test -n "$manifest_url" -a "$manifest_url" != null
           curl --fail --location --header "Authorization: Bearer $GH_TOKEN" --header 'Accept: application/octet-stream' "$manifest_url" -o "$RUNNER_TEMP/release-draft/manifest.json"
-          node scripts/release-main.js verify-draft --bundle "$RUNNER_TEMP/release-draft" --assets-json "$RUNNER_TEMP/release-assets.json" --expected-version "$version" --expected-branch "release/$version" --expected-candidate-head "$candidate_head" --expected-candidate-tree "$candidate_tree" --expected-main-tree "$main_tree"
-          gh api --method PATCH "repos/$GITHUB_REPOSITORY/releases/$release_id" -F draft=false >/dev/null
-          mkdir -p "$RUNNER_TEMP/release-bundle/tarballs"
-          gh api "repos/$GITHUB_REPOSITORY/releases/$release_id/assets" --paginate --slurp | jq 'add' > "$RUNNER_TEMP/release-assets-public.json"
-          gh api "repos/$GITHUB_REPOSITORY/releases/$release_id/assets" --paginate --jq '.[] | [.name, .url] | @tsv' | while IFS=$'\t' read -r asset url; do case "$asset" in ""|*/*|*\\*|*..*) exit 1;; esac; curl --fail --location --header "Authorization: Bearer $GH_TOKEN" --header 'Accept: application/octet-stream' "$url" -o "$RUNNER_TEMP/release-bundle/$asset"; done
+          node scripts/release-main.js verify-draft --bundle "$RUNNER_TEMP/release-draft" --assets-json "$RUNNER_TEMP/release-assets.json" --expected-version "$VERSION" --expected-branch "release/$VERSION" --expected-candidate-head "$candidate_head" --expected-candidate-tree "$candidate_tree" --expected-main-tree "$main_tree"
+          echo "RELEASE_ID=$release_id" >> "$GITHUB_ENV"
+          echo "CANDIDATE_HEAD=$candidate_head" >> "$GITHUB_ENV"
+          echo "CANDIDATE_TREE=$candidate_tree" >> "$GITHUB_ENV"
+          echo "MAIN_TREE=$main_tree" >> "$GITHUB_ENV"
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          test -n "${RELEASE_ID:-}"
+          gh api --method PATCH "repos/$GITHUB_REPOSITORY/releases/$RELEASE_ID" -F draft=false >/dev/null
+      - name: Download public release assets into clean directory
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          test -n "${RELEASE_ID:-}"
+          rm -rf "$RUNNER_TEMP/release-bundle" && mkdir -p "$RUNNER_TEMP/release-bundle/tarballs"
+          gh api "repos/$GITHUB_REPOSITORY/releases/$RELEASE_ID/assets" --paginate --slurp | jq 'add' > "$RUNNER_TEMP/release-assets-public.json"
+          gh api "repos/$GITHUB_REPOSITORY/releases/$RELEASE_ID/assets" --paginate --jq '.[] | [.name, .url] | @tsv' | while IFS=$'\t' read -r asset url; do case "$asset" in ""|*/*|*\\*|*..*) exit 1;; esac; curl --fail --location --header "Authorization: Bearer $GH_TOKEN" --header 'Accept: application/octet-stream' "$url" -o "$RUNNER_TEMP/release-bundle/$asset"; done
           mv "$RUNNER_TEMP/release-bundle"/*.tgz "$RUNNER_TEMP/release-bundle/tarballs/"
-          node scripts/release-main.js verify-bundle --bundle "$RUNNER_TEMP/release-bundle" --assets-json "$RUNNER_TEMP/release-assets-public.json" --expected-version "$version" --expected-branch "release/$version" --expected-candidate-head "$candidate_head" --expected-candidate-tree "$candidate_tree" --expected-main-tree "$main_tree"
+      - name: Fully verify downloaded release assets
+        run: |
+          set -euo pipefail
+          test -n "${VERSION:-}"
+          test -n "${CANDIDATE_HEAD:-}"
+          test -n "${CANDIDATE_TREE:-}"
+          test -n "${MAIN_TREE:-}"
+          node scripts/release-main.js verify-bundle --bundle "$RUNNER_TEMP/release-bundle" --assets-json "$RUNNER_TEMP/release-assets-public.json" --expected-version "$VERSION" --expected-branch "release/$VERSION" --expected-candidate-head "$CANDIDATE_HEAD" --expected-candidate-tree "$CANDIDATE_TREE" --expected-main-tree "$MAIN_TREE"
+      - name: Publish verified npm tarballs
+        env:
+          MAIN_RELEASE_PUBLISH_ENABLED: "true"
+          NPM_CONFIG_PROVENANCE: "true"
+        run: |
+          set -euo pipefail
+          test -n "${VERSION:-}"
           node scripts/release-main.js publish --bundle "$RUNNER_TEMP/release-bundle" --tarballs-dir "$RUNNER_TEMP/release-bundle/tarballs"
