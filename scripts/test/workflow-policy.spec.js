@@ -2,6 +2,7 @@
 
 const test = require("ava").default;
 const { spawnSync } = require("node:child_process");
+const { readFileSync } = require("node:fs");
 const { resolve } = require("node:path");
 
 const checker = require("../check-workflow-policy.js");
@@ -47,6 +48,11 @@ for (const [fixture, code] of [
 
 test("accepts guarded-release-pr-publish as a valid release PR publisher with job-level guard", (t) => {
 	t.deepEqual(checkFixture("guarded-release-pr-publish.yml"), []);
+});
+
+test("accepts only the guarded same-repository release candidate draft publisher", (t) => {
+    const workflow = resolve(__dirname, "..", "..", ".github", "workflows", "release-candidate.yml");
+    t.deepEqual(checker.checkWorkflowSource(readFileSync(workflow, "utf8"), workflow), []);
 });
 
 test("CLI documents explicit scope and deferred external validation", (t) => {

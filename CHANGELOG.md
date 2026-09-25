@@ -2,6 +2,11 @@
 
 This is the changelog for Scramjet Transform Hub. It holds only notable commits, others are grouped without commit info.
 
+## [2.2.0] - Unreleased
+
+### Changed
+- Release candidates now produce one immutable, checksum-verified GitHub release bundle; the tag workflow publishes those exact tarballs without rebuilding or substituting artifacts.
+
 ## [2.1.0] - 2026-09-07
 
 ### Features

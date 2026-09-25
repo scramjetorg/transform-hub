@@ -1,0 +1,93 @@
+name: Release candidate bundle
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: release-candidate-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  candidate:
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository && startsWith(github.event.pull_request.head.ref, 'release/') && github.event.pull_request.base.ref == 'main' }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: ./.github/actions/setup-workspace
+        with:
+          cache-mode: restore-only
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6
+        with:
+          bun-version: "1"
+      - name: Mint release app token
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1
+        with:
+          client-id: ${{ vars.RELEASE_APP_CLIENT_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: transform-hub
+          permission-contents: write
+      - name: Validate release PR version and alignment
+        run: |
+          set -euo pipefail
+          version="${GITHUB_HEAD_REF#release/}"
+          test -n "$version"
+          test "$(node -p "require('./package.json').version")" = "$version"
+          npm run release:align:check -- --release-version="$version"
+          npm run lint
+          npm run typecheck
+          npm run check:runtime-invariants
+      - name: Build production dist once
+        run: |
+          set -euo pipefail
+          FLAT_PACKAGES=true MAKE_PUBLIC=true NO_INSTALL=true node scripts/build-all.js -w release --ts-config tsconfig.build.json
+      - name: Create and locally verify release bundle
+        run: |
+          set -euo pipefail
+          version="${GITHUB_HEAD_REF#release/}"
+          test -n "$version"
+          mkdir -p "$RUNNER_TEMP/release-bundle"
+          node scripts/release-main.js bundle --packages-dir dist --output-dir "$RUNNER_TEMP/release-bundle" --version "$version" --branch "$GITHUB_HEAD_REF" --head-sha "${{ github.event.pull_request.head.sha }}" --tree-sha "$(git rev-parse '${{ github.event.pull_request.head.sha }}^{tree}')" --source-sha "${{ github.event.pull_request.head.sha }}" --node "$(node --version)" --npm "$(node node_modules/npm/bin/npm-cli.js --version)"
+          node scripts/release-main.js verify-bundle --bundle "$RUNNER_TEMP/release-bundle"
+      - name: Create or replace the draft GitHub release
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          set -euo pipefail
+          version="${GITHUB_HEAD_REF#release/}"
+          test -n "$version"
+          release_id="$(gh api "repos/$GITHUB_REPOSITORY/releases" --paginate --jq ".[] | select(.draft == true and .tag_name == \"v$version\") | .id" | head -n 1 || true)"
+          if [[ -n "$release_id" ]]; then gh api --method PATCH "repos/$GITHUB_REPOSITORY/releases/$release_id" -f target_commitish="${{ github.event.pull_request.head.sha }}" -f name="v$version" -F draft=true >/dev/null; else gh api --method POST "repos/$GITHUB_REPOSITORY/releases" -f tag_name="v$version" -f target_commitish="${{ github.event.pull_request.head.sha }}" -f name="v$version" -F draft=true >/dev/null; fi
+          release_id="$(gh api "repos/$GITHUB_REPOSITORY/releases" --paginate --jq ".[] | select(.draft == true and .tag_name == \"v$version\") | .id" | head -n 1)"
+          test -n "$release_id"
+          echo "RELEASE_ID=$release_id" >> "$GITHUB_ENV"
+      - name: Replace draft release assets
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          set -euo pipefail
+          test -n "${RELEASE_ID:-}"
+          gh api "repos/$GITHUB_REPOSITORY/releases/$RELEASE_ID/assets" --paginate --jq '.[].id' | while read -r asset_id; do gh api --method DELETE "repos/$GITHUB_REPOSITORY/releases/assets/$asset_id" >/dev/null; done
+      - name: Upload draft release assets
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          set -euo pipefail
+          version="${GITHUB_HEAD_REF#release/}"
+          test -n "$version"
+          test -n "${RELEASE_ID:-}"
+          gh release upload "v$version" "$RUNNER_TEMP/release-bundle/manifest.json" "$RUNNER_TEMP/release-bundle/SHA256SUMS" "$RUNNER_TEMP/release-bundle/tarballs"/*.tgz --clobber
