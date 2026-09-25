@@ -15,14 +15,29 @@ import {
     getDefaultManagerConfig,
 } from "../src";
 
+const STABLE_SEMVER = /^\d+\.\d+\.\d+$/;
+const DEVELOPMENT_SEMVER = /^\d+\.\d+\.\d+-devel$/;
+
+const configuredImageVersions = (): string[] => [
+    imageConfig.prerunner,
+    imageConfig.runner.node,
+    imageConfig.runner.python3,
+    imageConfig.runner.bun,
+].map(image => image.split(":").pop() || "");
+
 const imageVersionForReleaseVersion = (version: string): string => {
-    const match = /^(\d+)\.(\d+)\.(\d+)(-devel)?$/.exec(version);
-    if (!match) {
+    if (STABLE_SEMVER.test(version)) {
+        return version;
+    }
+    if (!DEVELOPMENT_SEMVER.test(version)) {
         throw new Error(`Unsupported release lifecycle version: ${version}`);
     }
 
-    const [, major, minor, patch, channel] = match;
-    return channel ? `${major}.${minor}.${Number(patch) - 1}` : version;
+    const configuredVersions = configuredImageVersions();
+    if (!configuredVersions.every(imageVersion => STABLE_SEMVER.test(imageVersion)) || new Set(configuredVersions).size !== 1) {
+        throw new Error("Development image tags must be one consistent stable SemVer version");
+    }
+    return configuredVersions[0];
 };
 
 const expectedImageConfig = (version: string) => {
@@ -69,8 +84,10 @@ test("release image version preserves stable release versions", t => {
     t.is(imageVersionForReleaseVersion("2.1.1"), "2.1.1");
 });
 
-test("release image version maps devel versions to the prior stable version", t => {
-    t.is(imageVersionForReleaseVersion("2.1.2-devel"), "2.1.1");
+test("release image version keeps development tags at one configured stable version", t => {
+    const imageVersion = imageVersionForReleaseVersion("2.2.0-devel");
+    t.regex(imageVersion, STABLE_SEMVER);
+    t.deepEqual(new Set(configuredImageVersions()), new Set([imageVersion]));
 });
 
 test("imageConfig matches the root package release lifecycle version", t => {
