@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/adapter-process",
-  "version": "2.2.0-devel",
+  "version": "2.2.0",
   "description": "This package is part of Scramjet Transform Hub. This module holds the process adapters utilized by Scramjet Transform Hub",
   "main": "./src/index.ts",
   "scripts": {
@@ -14,20 +14,20 @@
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "MIT",
   "dependencies": {
-    "@scramjet/adapters-common": "2.2.0-devel",
-    "@scramjet/api-types": "^2.2.0-devel",
-    "@scramjet/model": "^2.2.0-devel",
-    "@scramjet/obj-logger": "^2.2.0-devel",
-    "@scramjet/runner": "^2.2.0-devel",
-    "@scramjet/utility": "^2.2.0-devel",
+    "@scramjet/adapters-common": "2.2.0",
+    "@scramjet/api-types": "^2.2.0",
+    "@scramjet/model": "^2.2.0",
+    "@scramjet/obj-logger": "^2.2.0",
+    "@scramjet/runner": "^2.2.0",
+    "@scramjet/utility": "^2.2.0",
     "scramjet": "^4.37.0",
     "tar": "^7.5.21"
   },
   "devDependencies": {
     "@ava/typescript": "^7.0.0",
-    "@scramjet/config": "^2.2.0-devel",
-    "@scramjet/runtime-types": "^2.2.0-devel",
-    "@scramjet/types": "^2.2.0-devel",
+    "@scramjet/config": "^2.2.0",
+    "@scramjet/runtime-types": "^2.2.0",
+    "@scramjet/types": "^2.2.0",
     "@types/node": "^22.15.0",
     "ava": "^8.0.0",
     "ts-node": "^10.9.1",

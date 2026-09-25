@@ -23,6 +23,10 @@ test("tag publication consumes and verifies the immutable candidate bundle", (t)
     t.true(source.includes("Download public release assets into clean directory"));
     t.true(source.includes("Fully verify downloaded release assets"));
     t.true(source.includes("Publish verified npm tarballs"));
+    t.true(source.includes("name: Install pinned npm"));
+    t.true(source.includes("npm install --global --ignore-scripts npm@11.19.0"));
+    t.true(source.includes('test "$(npm --version)" = "11.19.0"'));
+    t.true(source.indexOf("name: Install pinned npm") < source.indexOf("npm ci --ignore-scripts"));
     t.false(source.includes("build:packages"));
     t.false(source.includes("npm pack"));
     t.false(source.includes("waitForRegistryVisibility"));

@@ -21,6 +21,10 @@ test("main merge reconstructs devel and only release branches may create tags", 
     );
     t.true(source.includes("development-version \"$VERSION\""), "reconstruction uses the deterministic next-patch helper");
     t.true(source.includes("persist-credentials: false"));
+    t.true(source.includes("name: Install pinned npm"));
+    t.true(source.includes("npm install --global --ignore-scripts npm@11.19.0"));
+    t.true(source.includes('test "$(npm --version)" = "11.19.0"'));
+    t.true(source.indexOf("name: Install pinned npm") < source.indexOf("npm ci --ignore-scripts"));
     t.true(source.includes("pull-requests: read"));
     t.true(source.includes("releases\" --paginate"));
     t.true(source.includes("verify-bundle"));
