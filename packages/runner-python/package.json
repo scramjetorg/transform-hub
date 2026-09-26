@@ -8,10 +8,18 @@
     "prepack": "npm run build",
     "install:deps": "bash scripts/install-deps.sh --dev --target __pypackages__",
     "test:artifact": "node scripts/assert-dist-artifact.js",
+    "test:pack": "node scripts/assert-pack-artifact.js",
     "test": "PYTHONPATH=__pypackages__:src:$PYTHONPATH python3 -m pytest",
     "clean": "rm -rf __pypackages__ dist"
   },
   "files": [
+    "runner_python",
+    "src/runner_python",
+    "pyproject.toml",
+    "requirements.txt",
+    "__pypackages__"
+  ],
+  "assets": [
     "runner_python",
     "src/runner_python",
     "pyproject.toml",

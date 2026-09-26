@@ -91,7 +91,7 @@ jobs:
   bdd-core-node:
     name: CI / core Node BDD
     needs: [validation]
-    if: ${{ always() && needs.validation.result == 'success' }}
+    if: ${{ always() && needs.validation.result == 'success' && !(github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main' && startsWith(github.event.pull_request.head.ref, 'release/') && github.event.pull_request.head.repo.full_name == github.repository) }}
     permissions:
       contents: read
     runs-on: ubuntu-24.04
@@ -115,7 +115,7 @@ jobs:
   bdd-core-services:
     name: CI / core service BDD
     needs: [validation]
-    if: ${{ always() && needs.validation.result == 'success' }}
+    if: ${{ always() && needs.validation.result == 'success' && !(github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main' && startsWith(github.event.pull_request.head.ref, 'release/') && github.event.pull_request.head.repo.full_name == github.repository) }}
     permissions:
       contents: read
     runs-on: ubuntu-24.04
@@ -139,7 +139,7 @@ jobs:
   bdd-extended-hub-topic:
     name: CI / extended hub and topic BDD
     needs: [validation]
-    if: ${{ always() && needs.validation.result == 'success' }}
+    if: ${{ always() && needs.validation.result == 'success' && !(github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main' && startsWith(github.event.pull_request.head.ref, 'release/') && github.event.pull_request.head.repo.full_name == github.repository) }}
     permissions:
       contents: read
     runs-on: ubuntu-24.04
@@ -162,7 +162,7 @@ jobs:
   bdd-extended-runtime:
     name: CI / extended runtime BDD
     needs: [validation]
-    if: ${{ always() && needs.validation.result == 'success' }}
+    if: ${{ always() && needs.validation.result == 'success' && !(github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main' && startsWith(github.event.pull_request.head.ref, 'release/') && github.event.pull_request.head.repo.full_name == github.repository) }}
     permissions:
       contents: read
     runs-on: ubuntu-24.04

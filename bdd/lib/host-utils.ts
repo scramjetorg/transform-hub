@@ -19,6 +19,9 @@ const { describeSthBinResolution, resolveSthBin } = require("../../scripts/lib/s
  * `node`.  SCRAMJET_SPAWN_TS keeps the explicit source-launcher dev toggle.
  */
 function resolveHostExecutableCommand(): string[] {
+    if (process.env.SCRAMJET_TARBALL_BDD_ROOT) {
+        return [resolvePublishedBin("@scramjet/sth", "scramjet-transform-hub")];
+    }
     if (process.env.SCRAMJET_SPAWN_TS && process.env.SCRAMJET_RELEASE_PRERELEASE_BDD_RECORD) {
         // Resolve first so a verified prerelease run rejects the source override
         // before a child process can be spawned.

@@ -14,10 +14,10 @@ removed; `security-check.yml` is retained.
 
 | Workflow | Trigger | Stable check/job names | Purpose |
 | --- | --- | --- | --- |
-| `pr-validate.yml` | Pull requests to `main`, `devel`, or `release/**`; merge queue | CI validation jobs | Fork-safe read-only package, BDD, and admission validation. |
+| `pr-validate.yml` | Pull requests to `main`, `devel`, or `release/**`; merge queue | CI validation jobs | Fork-safe read-only package, BDD, and admission validation. Canonical trusted `release/**` PRs to `main` keep validation but defer their four rebuilding BDD jobs to downloaded draft-release partitions. |
 | `security-check.yml` | PR, merge queue, pushes to trusted branches, weekly schedule | `Security / repository policy` | Redacted history scanning and repository policy defense in depth. |
 | `devel-validate.yml` | Push to `devel` | `Devel / fast gates` | Same-repository devel fast-gates-only validation: lockfile reproducibility, setup-workspace, security workflow policy, lint, typecheck, release alignment, runtime invariants, and license validation. No package build, package tests, Bun setup, or BDD runs. |
-| `release-candidate.yml` | Same-repository `release/**` pull requests to `main` | `Release / candidate validation and draft` | Validates release candidates, builds production dist once, and maintains the immutable draft release bundle. |
+| `release-candidate.yml` | Same-repository `release/**` pull requests to `main` | `Release / candidate validation and draft` | Validates release candidates, builds production dist once, maintains the immutable draft release bundle, then requires four BDD partitions against assets downloaded by numeric draft-release ID. |
 | `release-merge.yml` | Push to `main` | `Complete stable release` | Resolves and verifies the merged release PR's draft bundle, reconstructs `devel`, and creates the tag only after binding checks. |
 | `release-start.yml` | Manual dispatch on `devel` | `Start stable release` | Aligns the first `2.2.0-devel` baseline into `release/2.2.0` and opens the release PR. |
 | `main-release.yml` | Push of `v*.*.*` tag | `Publish stable tag` | Publishes the already-verified GitHub tarballs to npm using protected OIDC; it never rebuilds or repacks. |
@@ -51,7 +51,10 @@ may be cancelled into a partially published npm operation.
   extra, missing, duplicate, unsafe, or changed assets fail closed.
 - The candidate workflow builds production dist once, records the release
   identity and package checksums, and replaces the draft asset set for the
-  release PR. The merge workflow validates the draft version, branch, candidate
+  release PR. Its four BDD matrix partitions download that draft by numeric
+  release ID, reject asset-list/checksum/candidate-identity mismatches, and
+  install first-party packages only from downloaded tarballs without a package
+  build or workspace/source fallback. The merge workflow validates the draft version, branch, candidate
   PR head/tree, and resulting main tree before creating the stable tag.
 - The tag workflow validates that binding before making the draft public, then
   downloads every public asset into a clean directory and verifies checksums and

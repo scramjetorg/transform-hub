@@ -16,6 +16,8 @@ concurrency:
 jobs:
   candidate:
     if: ${{ github.event.pull_request.head.repo.full_name == github.repository && startsWith(github.event.pull_request.head.ref, 'release/') && github.event.pull_request.base.ref == 'main' }}
+    outputs:
+      release_id: ${{ steps.draft-output.outputs.release_id }}
     runs-on: ubuntu-24.04
     permissions:
       contents: read
@@ -52,14 +54,11 @@ jobs:
           npm run typecheck
           npm run check:runtime-invariants
       - name: Build production dist once
-        run: |
-          set -euo pipefail
-          FLAT_PACKAGES=true MAKE_PUBLIC=true NO_INSTALL=true node scripts/build-all.js -w release --ts-config tsconfig.build.json
+        run: FLAT_PACKAGES=true MAKE_PUBLIC=true NO_INSTALL=true node scripts/build-all.js -w release --ts-config tsconfig.build.json
       - name: Create and locally verify release bundle
         run: |
           set -euo pipefail
           version="${GITHUB_HEAD_REF#release/}"
-          test -n "$version"
           mkdir -p "$RUNNER_TEMP/release-bundle"
           node scripts/release-main.js bundle --packages-dir dist --output-dir "$RUNNER_TEMP/release-bundle" --version "$version" --branch "$GITHUB_HEAD_REF" --head-sha "${{ github.event.pull_request.head.sha }}" --tree-sha "$(git rev-parse '${{ github.event.pull_request.head.sha }}^{tree}')" --source-sha "${{ github.event.pull_request.head.sha }}" --node "$(node --version)" --npm "$(node node_modules/npm/bin/npm-cli.js --version)"
           node scripts/release-main.js verify-bundle --bundle "$RUNNER_TEMP/release-bundle"
@@ -69,7 +68,6 @@ jobs:
         run: |
           set -euo pipefail
           version="${GITHUB_HEAD_REF#release/}"
-          test -n "$version"
           releases="$(gh api --method GET "repos/$GITHUB_REPOSITORY/releases" --paginate --slurp)"
           release_id="$(jq -r --arg tag "v$version" 'add | map(select(.draft == true and .tag_name == $tag)) | first | .id // empty' <<< "$releases")"
           if [[ -z "$release_id" ]]; then
@@ -79,25 +77,75 @@ jobs:
           release_json="$(gh api --method PATCH "repos/$GITHUB_REPOSITORY/releases/$release_id" -f tag_name="v$version" -f target_commitish="${{ github.event.pull_request.head.sha }}" -f name="v$version" -F draft=true)"
           release_id="$(jq -er '.id' <<< "$release_json")"
           echo "RELEASE_ID=$release_id" >> "$GITHUB_ENV"
+      - name: Export draft release ID
+        id: draft-output
+        run: echo "release_id=$RELEASE_ID" >> "$GITHUB_OUTPUT"
       - name: Replace draft release assets
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           set -euo pipefail
-          test -n "${RELEASE_ID:-}"
           gh api "repos/$GITHUB_REPOSITORY/releases/$RELEASE_ID/assets" --paginate --jq '.[].id' | while read -r asset_id; do gh api --method DELETE "repos/$GITHUB_REPOSITORY/releases/assets/$asset_id" >/dev/null; done
       - name: Upload draft release assets
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           set -euo pipefail
-          version="${GITHUB_HEAD_REF#release/}"
-          test -n "$version"
-          test -n "${RELEASE_ID:-}"
           upload_url="$(gh api --method GET "repos/$GITHUB_REPOSITORY/releases/$RELEASE_ID" --jq '.upload_url')"
           upload_url="${upload_url%%\{*}"
-          test -n "$upload_url"
           for asset in "$RUNNER_TEMP/release-bundle/manifest.json" "$RUNNER_TEMP/release-bundle/SHA256SUMS" "$RUNNER_TEMP/release-bundle/tarballs"/*.tgz; do
             name="$(basename "$asset")"
             curl --fail --silent --show-error --request POST --header "Authorization: Bearer $GH_TOKEN" --header "Content-Type: application/octet-stream" --data-binary "@$asset" "${upload_url}?name=$name" >/dev/null
           done
+
+  release-bdd:
+    name: Release / downloaded-tarball BDD (${{ matrix.partition }})
+    needs: [candidate]
+    if: ${{ needs.candidate.result == 'success' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        partition: [node, services, hub-topic, runtime]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: ./.github/actions/setup-workspace
+        with:
+          cache-mode: restore-only
+      - name: Download and verify draft assets by numeric release ID
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          version="${GITHUB_HEAD_REF#release/}"
+          tree="$(git rev-parse '${{ github.event.pull_request.head.sha }}^{tree}')"
+          node scripts/release-tarball-bdd.js download --repository "$GITHUB_REPOSITORY" --release-id '${{ needs.candidate.outputs.release_id }}' --output "$RUNNER_TEMP/release-bdd-assets" --expected-version "$version" --expected-branch "$GITHUB_HEAD_REF" --expected-head '${{ github.event.pull_request.head.sha }}' --expected-tree "$tree"
+          node scripts/release-tarball-bdd.js prepare --bundle-dir "$RUNNER_TEMP/release-bdd-assets" --output-root "$RUNNER_TEMP/release-bdd-root"
+      - name: Run downloaded-tarball BDD partition
+        env:
+          SCRAMJET_TARBALL_BDD_ROOT: ${{ runner.temp }}/release-bdd-root
+        run: |
+          set -euo pipefail
+          case "${{ matrix.partition }}" in
+            node) npm run test:bdd-ci-node ;;
+            services) npm run test:bdd-ci-python && npm run test:bdd-ci-api-node && npm run test:bdd-ci-verser2 ;;
+            hub-topic) npm run test:bdd-ci-hub && BDD_DOCKER_MEMORY=2g npm run test:bdd-ci-api-topic ;;
+            runtime) BDD_DOCKER_MEMORY=2g BDD_INCLUDE_LONG_RUNNING=1 RUNTIME_ADAPTER=process npm run test:bdd-ci-node && npm run test:unified-py && node scripts/run-bdd-docker.js -- --format=pretty -t @ci-unified ;;
+            *) exit 2 ;;
+          esac
+
+  release-bdd-required:
+    name: Release / downloaded-tarball BDD required
+    needs: [release-bdd]
+    if: ${{ always() }}
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Require all four downloaded-tarball BDD partitions
+        run: test "${{ needs.release-bdd.result }}" = success
