@@ -26,6 +26,34 @@ test("tarball BDD preparation requires first-party file tarball specs", (t) => {
     });
 });
 
+function createAssetBundle(t, layout) {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), `tarball-bdd-${layout}-`));
+    t.teardown(() => fs.rmSync(root, { recursive: true, force: true }));
+    const tarballs = Array.from({ length: 37 }, (_, i) => `package-${i}.tgz`);
+    fs.writeFileSync(path.join(root, "manifest.json"), JSON.stringify({ tarballs: tarballs.map((name, i) => ({ name, package: `@scramjet/package-${i}`, sha256: `sha256:${"a".repeat(64)}` })) }));
+    fs.writeFileSync(path.join(root, "SHA256SUMS"), "");
+    const target = layout === "canonical" ? fs.mkdirSync(path.join(root, "tarballs")) || path.join(root, "tarballs") : root;
+    for (const name of tarballs) fs.writeFileSync(path.join(target, name), "tarball");
+    return root;
+}
+
+test("assertRoot accepts flat downloaded and canonical nested release bundles", (t) => {
+    t.is(script.assertRoot(createAssetBundle(t, "flat")).tarballs.length, 37);
+    t.is(script.assertRoot(createAssetBundle(t, "canonical")).tarballs.length, 37);
+});
+
+for (const [label, mutate] of [
+    ["an extra canonical tarball", (root) => fs.writeFileSync(path.join(root, "tarballs", "extra.tgz"), "extra")],
+    ["a missing canonical tarball", (root) => fs.rmSync(path.join(root, "tarballs", "package-0.tgz"))],
+    ["a mixed flat and canonical layout", (root) => fs.writeFileSync(path.join(root, "package-0.tgz"), "duplicate")]
+]) {
+    test(`assertRoot rejects ${label}`, (t) => {
+        const root = createAssetBundle(t, "canonical");
+        mutate(root);
+        t.throws(() => script.assertRoot(root), { message: /exactly match the manifest/ });
+    });
+}
+
 test("downloaded release assets must be exactly manifest plus checksums and 37 tarballs", (t) => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), "tarball-bdd-assets-"));
     t.teardown(() => fs.rmSync(root, { recursive: true, force: true }));

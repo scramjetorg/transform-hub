@@ -88,6 +88,7 @@ test("Docker BDD runner builds and preflights its Node 22, Bun, and Python 3.14 
 	t.true(dockerRunner.includes("python3 --version 2>&1 | grep -E '^Python 3\\\\.14\\\\.'"), "preflight must require Python 3.14");
 	t.true(dockerRunner.includes("`${runtimePreflight} && ${fixturePacking}"), "preflight runs inside the BDD container before fixtures");
 	t.true(dockerfile.includes("FROM python:3.14-slim-bookworm"));
+	t.true(dockerfile.includes("ca-certificates curl git gnupg procps unzip"), "BDD image must include git for long-running Bun fixtures");
 	t.true(dockerfile.includes("node_22.x"));
 	t.true(dockerfile.includes("/usr/local/bin/bun"));
 });

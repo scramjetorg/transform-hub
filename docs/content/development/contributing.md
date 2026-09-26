@@ -242,5 +242,7 @@ CI workflow expectations:
 1. `npm ci` for clean dependency install
 2. `npm run build:packages` for TypeScript compilation
 3. `npm run test:packages:ci` for the j2 package-test profile
-4. Selected BDD smoke tests via `test:bdd-ci-*` scripts
+4. The release-candidate workflow validates the downloaded draft tarballs with the complete eligible BDD suite, using `BDD_INCLUDE_LONG_RUNNING=1 node scripts/run-bdd-modes.js --mode=all --schedule=serial -- --fail-fast` under `SCRAMJET_TARBALL_BDD_ROOT`; it must not substitute narrow `test:bdd-ci-*` partitions
 5. `npm run lint:quick` for lint on changed files
+
+The release-candidate workflow downloads and verifies draft assets by numeric release ID, prepares an immutable tarball root, and then runs the complete eligible BDD suite serially from that root. The PR validation workflow may retain its existing selected BDD skips; those are not substitutes for release-candidate tarball coverage.

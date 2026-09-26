@@ -10,15 +10,28 @@ const RECORD_FORMAT = "transform-hub-release-tarball-bdd-v1";
 const ROOT_ENV = "SCRAMJET_TARBALL_BDD_ROOT";
 const NPM_INSTALL_ARGS = ["install", "--ignore-scripts", "--no-audit", "--no-fund", "--install-links", "--package-lock=false"];
 
-function assertRoot(root) {
+function readBundle(root) {
     const resolved = resolve(root);
     if (!existsSync(join(resolved, "manifest.json")) || !existsSync(join(resolved, "SHA256SUMS"))) throw new Error("Tarball BDD input must contain manifest.json and SHA256SUMS");
     const manifest = JSON.parse(readFileSync(join(resolved, "manifest.json"), "utf8"));
     if (!Array.isArray(manifest.tarballs) || manifest.tarballs.length !== INCLUDED_PACKAGES.size) throw new Error("Tarball BDD input must contain exactly the 37 release tarballs");
+    for (const item of manifest.tarballs) assertAssetName(item.name);
     const expected = new Set(["manifest.json", "SHA256SUMS", ...manifest.tarballs.map((item) => item.name)]);
-    const actual = new Set(readdirSync(resolved));
-    if (actual.size !== expected.size || [...actual].some((name) => !expected.has(name))) throw new Error("Downloaded release assets do not exactly match the manifest");
-    return manifest;
+    const entries = readdirSync(resolved, { withFileTypes: true });
+    const actual = new Set(entries.map((entry) => entry.name));
+    const nested = actual.has("tarballs");
+    if (nested) {
+        if (actual.size !== 3 || !actual.has("manifest.json") || !actual.has("SHA256SUMS") || !entries.find((entry) => entry.name === "tarballs" && entry.isDirectory())) throw new Error("Downloaded release assets do not exactly match the manifest");
+        const tarballEntries = readdirSync(join(resolved, "tarballs"), { withFileTypes: true });
+        if (tarballEntries.length !== manifest.tarballs.length || tarballEntries.some((entry) => !entry.isFile()) || tarballEntries.some((entry) => !manifest.tarballs.some((item) => item.name === entry.name))) throw new Error("Downloaded release assets do not exactly match the manifest");
+        return { manifest, tarballPath: (name) => join(resolved, "tarballs", name) };
+    }
+    if (actual.size !== expected.size || entries.some((entry) => !entry.isFile()) || [...actual].some((name) => !expected.has(name))) throw new Error("Downloaded release assets do not exactly match the manifest");
+    return { manifest, tarballPath: (name) => join(resolved, name) };
+}
+
+function assertRoot(root) {
+    return readBundle(root).manifest;
 }
 
 function assertAssetName(name) {
@@ -35,12 +48,12 @@ async function githubRequest(url, { token, accept = "application/vnd.github+json
 }
 
 async function verifyDownloadedBundle(root, expected = {}) {
-    const source = resolve(root); const manifest = assertRoot(source);
+    const source = resolve(root); const { manifest, tarballPath } = readBundle(source);
     const staging = mkdtempSync(join(tmpdir(), "release-tarball-verify-"));
     try {
         mkdirSync(join(staging, "tarballs"));
         copyFileSync(join(source, "manifest.json"), join(staging, "manifest.json")); copyFileSync(join(source, "SHA256SUMS"), join(staging, "SHA256SUMS"));
-        for (const item of manifest.tarballs) copyFileSync(join(source, item.name), join(staging, "tarballs", item.name));
+        for (const item of manifest.tarballs) copyFileSync(tarballPath(item.name), join(staging, "tarballs", item.name));
         await verifyBundle({ bundle: manifest, bundleDir: staging, ...expected });
     } finally { rmSync(staging, { recursive: true, force: true }); }
     return manifest;
@@ -89,11 +102,11 @@ function tarballDependencies(tarballs) {
 
 async function prepareTarballRoot({ bundleDir, outputDir, npm = process.env.npm_execpath || "npm", runner = execFileSync } = {}) {
     if (!bundleDir || !outputDir) throw new Error("bundleDir and outputDir are required");
-    const source = resolve(bundleDir); const root = resolve(outputDir); const manifest = await verifyDownloadedBundle(source); mkdirSync(root, { recursive: true }); const tarballs = join(root, "tarballs"); mkdirSync(tarballs, { recursive: true });
+    const source = resolve(bundleDir); const root = resolve(outputDir); const manifest = await verifyDownloadedBundle(source); const { tarballPath } = readBundle(source); mkdirSync(root, { recursive: true }); const tarballs = join(root, "tarballs"); mkdirSync(tarballs, { recursive: true });
     copyFileSync(join(source, "manifest.json"), join(root, "manifest.json"));
     copyFileSync(join(source, "SHA256SUMS"), join(root, "SHA256SUMS"));
     const packageNames = new Set(manifest.tarballs.map((item) => item.package));
-    for (const item of manifest.tarballs) copyFileSync(join(source, item.name), join(tarballs, item.name));
+    for (const item of manifest.tarballs) copyFileSync(tarballPath(item.name), join(tarballs, item.name));
     const dependencies = tarballDependencies(manifest.tarballs);
     writeFileSync(join(root, "package.json"), `${JSON.stringify({ name: "scramjet-release-tarball-bdd", private: true, version: "0.0.0", dependencies }, null, 2)}\n`);
     const inspect = (item) => { const json = JSON.parse(execFileSync("tar", ["-xOf", join(tarballs, item.name), "package/package.json"], { encoding: "utf8" })); assertNoUnsafeDependencies(json, packageNames); };

@@ -286,6 +286,7 @@ export class CPMConnector extends TypedEmitter<Events> {
 
         const generation = ++this.communicationGeneration;
         this.logger.info(`Hub ${this.config.id} connected to ${this.cpmId}`);
+        this.watchCommunicationResponse(duplex.output, generation);
 
         StringStream.from(duplex.input as Readable)
             .on("error", (e: Error) => {
@@ -388,6 +389,21 @@ export class CPMConnector extends TypedEmitter<Events> {
                     reject(new HostError("ERR_PLATFORM_REQUEST_ERROR"));
                 })
             );
+        });
+    }
+
+    /**
+     * A Manager restart can abort the long-lived /platform response before the
+     * DuplexStream observes its close.  Consume that response error and let the
+     * normal reconnect supervisor establish the replacement communication stream.
+     */
+    private watchCommunicationResponse(response: NodeJS.EventEmitter, generation: number) {
+        response.on("error", (error: Error) => {
+            if (this.isAbandoned) return;
+            this.logger.warn("Platform response error", error.message);
+            void this.handleConnectionClose(1006, generation).catch((reconnectError) => {
+                this.logger.error("Reconnection error", reconnectError);
+            });
         });
     }
 

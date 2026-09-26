@@ -261,7 +261,7 @@ export const instanceCommand: CommandDescriptor = cmd("instance", (b) => {
                                 .alias("invoke")
                                 .argument("<id>", "Instance id or '-' for the last one started or selected")
                                 .argument("<eventName>", "The event name")
-                                .argument("[payload]", "Pass a JSON data to the Instance")
+                                .argument({ name: "payload", description: "Pass a JSON data to the Instance", variadic: true })
                                 .desc("Send event with eventName and a JSON formatted event payload")
                                 .action(async (id: string, eventName: string, message: string) => {
                                     const native = getNativeCapabilities();

@@ -4,7 +4,7 @@ ENV BUN_INSTALL=/opt/bun \
     RUNNER_PYTHON_VENV=/opt/runner-python-venv
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends ca-certificates curl gnupg procps unzip \
+    && apt-get install -y --no-install-recommends ca-certificates curl git gnupg procps unzip \
     && mkdir -p /etc/apt/keyrings \
     && curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key \
         | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg \

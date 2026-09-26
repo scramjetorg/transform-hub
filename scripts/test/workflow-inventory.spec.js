@@ -59,11 +59,11 @@ test("release candidate is same-repository guarded and checks out the PR head", 
     t.true(source.includes("Build production dist once"));
 });
 
-test("candidate verifies the draft with the producer token before sequential tarball BDD", (t) => {
+test("candidate verifies the draft with the producer token before the complete serial tarball BDD suite", (t) => {
     const source = readFileSync(resolve(workflowsDir, "release-candidate.yml"), "utf8");
     const candidate = source.slice(source.indexOf("  candidate:\n"));
     const download = candidate.slice(candidate.indexOf("Download and verify draft assets"));
-    const bdd = candidate.slice(candidate.indexOf("Run downloaded-tarball BDD partitions"));
+    const bdd = candidate.slice(candidate.indexOf("Run complete downloaded-tarball BDD suite"));
     t.true(download.includes("GH_TOKEN: ${{ steps.app-token.outputs.token }}"));
     t.true(download.includes("--repository \"$GITHUB_REPOSITORY\""));
     t.true(download.includes("--release-id \"$RELEASE_ID\""));
@@ -75,16 +75,10 @@ test("candidate verifies the draft with the producer token before sequential tar
     t.true(download.includes("--bundle-dir \"$RUNNER_TEMP/release-bdd-assets\""));
     t.true(download.includes("--output-root \"$RUNNER_TEMP/release-bdd-root\""));
     t.true(bdd.includes("SCRAMJET_TARBALL_BDD_ROOT"));
-    for (const command of [
-        "npm run test:bdd-ci-node",
-        "npm run test:bdd-ci-python",
-        "npm run test:bdd-ci-api-node",
-        "npm run test:bdd-ci-verser2",
-        "npm run test:bdd-ci-hub",
-        "npm run test:bdd-ci-api-topic",
-        "npm run test:unified-py",
-        "node scripts/run-bdd-docker.js -- --format=pretty -t @ci-unified"
-    ]) t.true(bdd.includes(command), `candidate runs ${command}`);
+    t.true(bdd.includes("BDD_INCLUDE_LONG_RUNNING=1 node scripts/run-bdd-modes.js --mode=all --schedule=serial -- --fail-fast"));
+    t.false(bdd.includes("test:bdd-ci-"));
+    t.false(bdd.includes("run-bdd-docker.js"));
+    t.false(bdd.includes("test:unified-"));
     t.false(candidate.includes("needs:"));
     t.false(candidate.includes("matrix:"));
     t.false(candidate.includes("npm run build:packages"));

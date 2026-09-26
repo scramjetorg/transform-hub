@@ -103,17 +103,9 @@ jobs:
           tree="$(git rev-parse '${{ github.event.pull_request.head.sha }}^{tree}')"
           node scripts/release-tarball-bdd.js download --repository "$GITHUB_REPOSITORY" --release-id "$RELEASE_ID" --output "$RUNNER_TEMP/release-bdd-assets" --expected-version "$version" --expected-branch "$GITHUB_HEAD_REF" --expected-head '${{ github.event.pull_request.head.sha }}' --expected-tree "$tree"
           node scripts/release-tarball-bdd.js prepare --bundle-dir "$RUNNER_TEMP/release-bdd-assets" --output-root "$RUNNER_TEMP/release-bdd-root"
-      - name: Run downloaded-tarball BDD partitions
+      - name: Run complete downloaded-tarball BDD suite
         env:
           SCRAMJET_TARBALL_BDD_ROOT: ${{ runner.temp }}/release-bdd-root
         run: |
           set -euo pipefail
-          npm run test:bdd-ci-node
-          npm run test:bdd-ci-python
-          npm run test:bdd-ci-api-node
-          npm run test:bdd-ci-verser2
-          npm run test:bdd-ci-hub
-          BDD_DOCKER_MEMORY=2g npm run test:bdd-ci-api-topic
-          BDD_DOCKER_MEMORY=2g BDD_INCLUDE_LONG_RUNNING=1 RUNTIME_ADAPTER=process npm run test:bdd-ci-node
-          npm run test:unified-py
-          node scripts/run-bdd-docker.js -- --format=pretty -t @ci-unified
+          BDD_INCLUDE_LONG_RUNNING=1 node scripts/run-bdd-modes.js --mode=all --schedule=serial -- --fail-fast

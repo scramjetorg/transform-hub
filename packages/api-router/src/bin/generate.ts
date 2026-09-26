@@ -26,8 +26,8 @@ async function main(argv: string[]) {
     }
 
     const [{ generateOpenApi }, { loadManifestFromSchemaModule }] = await Promise.all([
-        importModule("../../dist/openapi.js"),
-        importModule("../../dist/schema-mode.js")
+        importModule("../openapi.js"),
+        importModule("../schema-mode.js")
     ]);
     const module = await import(resolve(input));
     const document = generateOpenApi(loadManifestFromSchemaModule(module));
