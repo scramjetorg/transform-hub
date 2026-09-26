@@ -95,3 +95,12 @@ test("published artifact resolver has strict tarball root and CLI completion pat
     t.true(hostUtils.includes('process.env.SCRAMJET_TARBALL_BDD_ROOT'));
     t.true(hostUtils.includes('resolvePublishedBin("@scramjet/sth", "scramjet-transform-hub")'));
 });
+
+test("CLI completion fixtures use the published artifact resolver instead of repository dist", (t) => {
+    const source = fs.readFileSync(path.join(__dirname, "..", "..", "bdd", "step-definitions", "e2e", "cli-ingress.ts"), "utf8");
+    t.true(source.includes("resolveBddCliArtifact"));
+    t.true(source.includes("cliArtifact.packageDir"));
+    t.true(source.includes("cliArtifact.nodeModulesDir"));
+    t.true(source.includes("cliArtifact.binRelativePath"));
+    t.false(source.includes('join(process.cwd(), "..", "dist", "cli")'));
+});

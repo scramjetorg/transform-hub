@@ -8,6 +8,7 @@ import { createV2HttpDispatcher } from "@scramjet/api-server";
 import { Router } from "@scramjet/api-router";
 import { CustomWorld } from "../world";
 import { cleanupCliIngress, ingressState, invoke, startCli, startMtlsIngresses, type CliResult, type IngressName, type IngressState, type ProfileName } from "../../lib/cli-ingress-fixture";
+import { resolveBddCliArtifact } from "../../lib/published-artifacts";
 
 function profile(
     endpoint: string,
@@ -251,11 +252,11 @@ When("two real CLI completion commands run against isolated session storage", as
     const isolation = this.scenarioIsolation;
     assert.ok(isolation, "ScenarioIsolation must be installed before invoking the CLI");
     const completionRoot = isolation.createArtifactDirectory("completion-cli");
-    const builtCliDir = join(process.cwd(), "..", "dist", "cli");
-    symlinkSync(builtCliDir, join(completionRoot, "cli"), "dir");
-    symlinkSync(join(process.cwd(), "..", "dist", "node_modules"), join(completionRoot, "node_modules"), "dir");
-    symlinkSync(join(builtCliDir, "scripts"), join(completionRoot, "scripts"), "dir");
-    const completionCli = ["node", "--preserve-symlinks", "--preserve-symlinks-main", join(completionRoot, "cli", "bin")];
+    const cliArtifact = resolveBddCliArtifact();
+    symlinkSync(cliArtifact.packageDir, join(completionRoot, "cli"), "dir");
+    symlinkSync(cliArtifact.nodeModulesDir, join(completionRoot, "node_modules"), "dir");
+    symlinkSync(cliArtifact.scriptsDir, join(completionRoot, "scripts"), "dir");
+    const completionCli = ["node", "--preserve-symlinks", "--preserve-symlinks-main", join(completionRoot, "cli", cliArtifact.binRelativePath)];
     const first = await invoke(this, ["completion"], {}, completionCli);
     const second = await invoke(this, ["completion"], {}, completionCli);
     ingressState(this).completionResults = [first, second];
