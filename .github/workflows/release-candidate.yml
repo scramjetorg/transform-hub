@@ -15,10 +15,10 @@ concurrency:
 
 jobs:
   candidate:
+    name: Release / candidate bundle and tarball BDD
     if: ${{ github.event.pull_request.head.repo.full_name == github.repository && startsWith(github.event.pull_request.head.ref, 'release/') && github.event.pull_request.base.ref == 'main' }}
-    outputs:
-      release_id: ${{ steps.draft-output.outputs.release_id }}
     runs-on: ubuntu-24.04
+    timeout-minutes: 240
     permissions:
       contents: read
       pull-requests: read
@@ -77,9 +77,6 @@ jobs:
           release_json="$(gh api --method PATCH "repos/$GITHUB_REPOSITORY/releases/$release_id" -f tag_name="v$version" -f target_commitish="${{ github.event.pull_request.head.sha }}" -f name="v$version" -F draft=true)"
           release_id="$(jq -er '.id' <<< "$release_json")"
           echo "RELEASE_ID=$release_id" >> "$GITHUB_ENV"
-      - name: Export draft release ID
-        id: draft-output
-        run: echo "release_id=$RELEASE_ID" >> "$GITHUB_OUTPUT"
       - name: Replace draft release assets
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
@@ -97,64 +94,26 @@ jobs:
             name="$(basename "$asset")"
             curl --fail --silent --show-error --request POST --header "Authorization: Bearer $GH_TOKEN" --header "Content-Type: application/octet-stream" --data-binary "@$asset" "${upload_url}?name=$name" >/dev/null
           done
-
-  release-bdd:
-    name: Release / downloaded-tarball BDD (${{ matrix.partition }})
-    needs: [candidate]
-    if: ${{ needs.candidate.result == 'success' }}
-    strategy:
-      fail-fast: false
-      matrix:
-        partition: [node, services, hub-topic, runtime]
-    runs-on: ubuntu-24.04
-    timeout-minutes: 60
-    permissions:
-      contents: read
-      pull-requests: read
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          persist-credentials: false
-      - uses: ./.github/actions/setup-workspace
-        with:
-          cache-mode: restore-only
-      - name: Mint release app token for draft asset reads
-        id: bdd-app-token
-        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1
-        with:
-          client-id: ${{ vars.RELEASE_APP_CLIENT_ID }}
-          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
-          owner: ${{ github.repository_owner }}
-          repositories: transform-hub
-          permission-contents: write
       - name: Download and verify draft assets by numeric release ID
         env:
-          GH_TOKEN: ${{ steps.bdd-app-token.outputs.token }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           set -euo pipefail
           version="${GITHUB_HEAD_REF#release/}"
           tree="$(git rev-parse '${{ github.event.pull_request.head.sha }}^{tree}')"
-          node scripts/release-tarball-bdd.js download --repository "$GITHUB_REPOSITORY" --release-id '${{ needs.candidate.outputs.release_id }}' --output "$RUNNER_TEMP/release-bdd-assets" --expected-version "$version" --expected-branch "$GITHUB_HEAD_REF" --expected-head '${{ github.event.pull_request.head.sha }}' --expected-tree "$tree"
+          node scripts/release-tarball-bdd.js download --repository "$GITHUB_REPOSITORY" --release-id "$RELEASE_ID" --output "$RUNNER_TEMP/release-bdd-assets" --expected-version "$version" --expected-branch "$GITHUB_HEAD_REF" --expected-head '${{ github.event.pull_request.head.sha }}' --expected-tree "$tree"
           node scripts/release-tarball-bdd.js prepare --bundle-dir "$RUNNER_TEMP/release-bdd-assets" --output-root "$RUNNER_TEMP/release-bdd-root"
-      - name: Run downloaded-tarball BDD partition
+      - name: Run downloaded-tarball BDD partitions
         env:
           SCRAMJET_TARBALL_BDD_ROOT: ${{ runner.temp }}/release-bdd-root
         run: |
           set -euo pipefail
-          case "${{ matrix.partition }}" in
-            node) npm run test:bdd-ci-node ;;
-            services) npm run test:bdd-ci-python && npm run test:bdd-ci-api-node && npm run test:bdd-ci-verser2 ;;
-            hub-topic) npm run test:bdd-ci-hub && BDD_DOCKER_MEMORY=2g npm run test:bdd-ci-api-topic ;;
-            runtime) BDD_DOCKER_MEMORY=2g BDD_INCLUDE_LONG_RUNNING=1 RUNTIME_ADAPTER=process npm run test:bdd-ci-node && npm run test:unified-py && node scripts/run-bdd-docker.js -- --format=pretty -t @ci-unified ;;
-            *) exit 2 ;;
-          esac
-
-  release-bdd-required:
-    name: Release / downloaded-tarball BDD required
-    needs: [release-bdd]
-    if: ${{ always() }}
-    runs-on: ubuntu-24.04
-    steps:
-      - name: Require all four downloaded-tarball BDD partitions
-        run: test "${{ needs.release-bdd.result }}" = success
+          npm run test:bdd-ci-node
+          npm run test:bdd-ci-python
+          npm run test:bdd-ci-api-node
+          npm run test:bdd-ci-verser2
+          npm run test:bdd-ci-hub
+          BDD_DOCKER_MEMORY=2g npm run test:bdd-ci-api-topic
+          BDD_DOCKER_MEMORY=2g BDD_INCLUDE_LONG_RUNNING=1 RUNTIME_ADAPTER=process npm run test:bdd-ci-node
+          npm run test:unified-py
+          node scripts/run-bdd-docker.js -- --format=pretty -t @ci-unified

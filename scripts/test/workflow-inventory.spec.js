@@ -38,7 +38,7 @@ test("release candidate is same-repository guarded and checks out the PR head", 
     t.true(source.includes("      contents: read"));
     t.true(source.includes("actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1"));
     t.true(source.includes("permission-contents: write"));
-    t.is((source.match(/GH_TOKEN: \$\{\{ steps\.app-token\.outputs\.token \}\}/g) || []).length, 3);
+    t.is((source.match(/GH_TOKEN: \$\{\{ steps\.app-token\.outputs\.token \}\}/g) || []).length, 4);
     t.true(source.includes("verify-bundle"));
     t.true(source.includes("SHA256SUMS"));
     t.true(source.includes("Validate release PR version and alignment"));
@@ -51,38 +51,42 @@ test("release candidate is same-repository guarded and checks out the PR head", 
     t.true(source.includes("upload_url=\"$(gh api --method GET"));
     t.false(source.includes("gh release upload"));
     t.true(source.includes("Upload draft release assets"));
-    t.true(source.includes("release-bdd:"));
-    t.true(source.includes("partition: [node, services, hub-topic, runtime]"));
-    t.true(source.includes("--release-id '${{ needs.candidate.outputs.release_id }}'"));
-    t.true(source.includes("--expected-tree"));
-    t.true(source.includes("SCRAMJET_TARBALL_BDD_ROOT"));
-    t.true(source.includes("release-bdd-required:"));
+    t.true(source.includes("name: Release / candidate bundle and tarball BDD"));
+    t.true(source.includes("timeout-minutes: 240"));
+    t.false(source.includes("release-bdd:"));
+    t.false(source.includes("release-bdd-required:"));
+    t.false(source.includes("draft-output"));
     t.true(source.includes("Build production dist once"));
 });
 
-test("release candidate BDD partitions consume only the verified draft tarball root", (t) => {
+test("candidate verifies the draft with the producer token before sequential tarball BDD", (t) => {
     const source = readFileSync(resolve(workflowsDir, "release-candidate.yml"), "utf8");
-    const bdd = source.slice(source.indexOf("  release-bdd:\n"), source.indexOf("\n\n  release-bdd-required:"));
-    t.true(bdd.includes("needs: [candidate]"));
-    t.true(bdd.includes("id: bdd-app-token"));
-    t.true(bdd.includes("actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1"));
-    t.true(bdd.includes("permission-contents: write"));
-    t.true(bdd.includes("GH_TOKEN: ${{ steps.bdd-app-token.outputs.token }}"));
-    t.false(bdd.includes("GH_TOKEN: ${{ github.token }}"));
-    t.true(bdd.includes("--repository \"$GITHUB_REPOSITORY\""));
-    t.true(bdd.includes("--release-id '${{ needs.candidate.outputs.release_id }}'"));
-    t.true(bdd.includes("--output \"$RUNNER_TEMP/release-bdd-assets\""));
-    t.true(bdd.includes("--expected-version"));
-    t.true(bdd.includes("--expected-branch"));
-    t.true(bdd.includes("--expected-head"));
-    t.true(bdd.includes("--expected-tree"));
-    t.true(bdd.includes("--bundle-dir \"$RUNNER_TEMP/release-bdd-assets\""));
-    t.true(bdd.includes("--output-root \"$RUNNER_TEMP/release-bdd-root\""));
+    const candidate = source.slice(source.indexOf("  candidate:\n"));
+    const download = candidate.slice(candidate.indexOf("Download and verify draft assets"));
+    const bdd = candidate.slice(candidate.indexOf("Run downloaded-tarball BDD partitions"));
+    t.true(download.includes("GH_TOKEN: ${{ steps.app-token.outputs.token }}"));
+    t.true(download.includes("--repository \"$GITHUB_REPOSITORY\""));
+    t.true(download.includes("--release-id \"$RELEASE_ID\""));
+    t.true(download.includes("--output \"$RUNNER_TEMP/release-bdd-assets\""));
+    t.true(download.includes("--expected-version"));
+    t.true(download.includes("--expected-branch"));
+    t.true(download.includes("--expected-head"));
+    t.true(download.includes("--expected-tree"));
+    t.true(download.includes("--bundle-dir \"$RUNNER_TEMP/release-bdd-assets\""));
+    t.true(download.includes("--output-root \"$RUNNER_TEMP/release-bdd-root\""));
     t.true(bdd.includes("SCRAMJET_TARBALL_BDD_ROOT"));
-    t.false(bdd.includes("npm run build:packages"));
-    t.false(bdd.includes("git checkout"));
-    t.true(bdd.includes("node scripts/run-bdd-docker.js -- --format=pretty -t @ci-unified"));
-    t.false(bdd.includes("npm run test:unified-js"));
-    t.true(source.includes("needs: [release-bdd]"));
-    t.true(source.includes('test "${{ needs.release-bdd.result }}" = success'));
+    for (const command of [
+        "npm run test:bdd-ci-node",
+        "npm run test:bdd-ci-python",
+        "npm run test:bdd-ci-api-node",
+        "npm run test:bdd-ci-verser2",
+        "npm run test:bdd-ci-hub",
+        "npm run test:bdd-ci-api-topic",
+        "npm run test:unified-py",
+        "node scripts/run-bdd-docker.js -- --format=pretty -t @ci-unified"
+    ]) t.true(bdd.includes(command), `candidate runs ${command}`);
+    t.false(candidate.includes("needs:"));
+    t.false(candidate.includes("matrix:"));
+    t.false(candidate.includes("npm run build:packages"));
+    t.false(candidate.includes("npm run test:unified-js"));
 });
