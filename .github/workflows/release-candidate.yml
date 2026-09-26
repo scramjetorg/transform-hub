@@ -72,11 +72,11 @@ jobs:
           test -n "$version"
           releases="$(gh api --method GET "repos/$GITHUB_REPOSITORY/releases" --paginate --slurp)"
           release_id="$(jq -r --arg tag "v$version" 'add | map(select(.draft == true and .tag_name == $tag)) | first | .id // empty' <<< "$releases")"
-          if [[ -n "$release_id" ]]; then
-            release_json="$(gh api --method PATCH "repos/$GITHUB_REPOSITORY/releases/$release_id" -f target_commitish="${{ github.event.pull_request.head.sha }}" -f name="v$version" -F draft=true)"
-          else
+          if [[ -z "$release_id" ]]; then
             release_json="$(gh api --method POST "repos/$GITHUB_REPOSITORY/releases" -f tag_name="v$version" -f target_commitish="${{ github.event.pull_request.head.sha }}" -f name="v$version" -F draft=true)"
+            release_id="$(jq -er '.id' <<< "$release_json")"
           fi
+          release_json="$(gh api --method PATCH "repos/$GITHUB_REPOSITORY/releases/$release_id" -f tag_name="v$version" -f target_commitish="${{ github.event.pull_request.head.sha }}" -f name="v$version" -F draft=true)"
           release_id="$(jq -er '.id' <<< "$release_json")"
           echo "RELEASE_ID=$release_id" >> "$GITHUB_ENV"
       - name: Replace draft release assets
@@ -94,4 +94,10 @@ jobs:
           version="${GITHUB_HEAD_REF#release/}"
           test -n "$version"
           test -n "${RELEASE_ID:-}"
-          gh release upload "v$version" "$RUNNER_TEMP/release-bundle/manifest.json" "$RUNNER_TEMP/release-bundle/SHA256SUMS" "$RUNNER_TEMP/release-bundle/tarballs"/*.tgz --clobber
+          upload_url="$(gh api --method GET "repos/$GITHUB_REPOSITORY/releases/$RELEASE_ID" --jq '.upload_url')"
+          upload_url="${upload_url%%\{*}"
+          test -n "$upload_url"
+          for asset in "$RUNNER_TEMP/release-bundle/manifest.json" "$RUNNER_TEMP/release-bundle/SHA256SUMS" "$RUNNER_TEMP/release-bundle/tarballs"/*.tgz; do
+            name="$(basename "$asset")"
+            curl --fail --silent --show-error --request POST --header "Authorization: Bearer $GH_TOKEN" --header "Content-Type: application/octet-stream" --data-binary "@$asset" "${upload_url}?name=$name" >/dev/null
+          done

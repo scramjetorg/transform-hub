@@ -47,5 +47,8 @@ test("release candidate is same-repository guarded and checks out the PR head", 
     t.true(source.includes("release_json=\"$(gh api --method"));
     t.true(source.includes("jq -er '.id'"));
     t.false(source.includes("releases\" --paginate --jq"));
+    t.true(source.includes("-f tag_name=\"v$version\""));
+    t.true(source.includes("upload_url=\"$(gh api --method GET"));
+    t.false(source.includes("gh release upload"));
     t.true(source.includes("Upload draft release assets"));
 });
