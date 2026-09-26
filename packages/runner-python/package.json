@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/runner-python",
-  "version": "2.2.0",
+  "version": "2.2.1-devel",
   "description": "Python runtime wrapper for packages/runner — python3 runner_python process launcher.",
   "scripts": {
     "build": "bash scripts/build-dist.sh && node scripts/assert-dist-artifact.js",
