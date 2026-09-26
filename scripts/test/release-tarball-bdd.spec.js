@@ -10,11 +10,20 @@ const script = require("../release-tarball-bdd.js");
 test("tarball BDD preparation exposes the immutable-root contract", (t) => {
     const source = fs.readFileSync(path.join(__dirname, "..", "release-tarball-bdd.js"), "utf8");
     t.is(script.ROOT_ENV, "SCRAMJET_TARBALL_BDD_ROOT");
+    t.deepEqual(script.NPM_INSTALL_ARGS, ["install", "--ignore-scripts", "--no-audit", "--no-fund", "--install-links", "--package-lock=false"]);
     t.true(source.includes("verifyBundle"));
-    t.true(source.includes('"--offline"'));
     t.true(source.includes('"--install-links"'));
-    t.true(source.includes("file:tarballs/"));
     t.true(source.includes("relative(modules, dir)"));
+});
+
+test("tarball BDD preparation requires first-party file tarball specs", (t) => {
+    t.deepEqual(script.tarballDependencies([
+        { package: "@scramjet/first", name: "scramjet-first-1.0.0.tgz" },
+        { package: "@scramjet/second", name: "scramjet-second-1.0.0.tgz" }
+    ]), {
+        "@scramjet/first": "file:tarballs/scramjet-first-1.0.0.tgz",
+        "@scramjet/second": "file:tarballs/scramjet-second-1.0.0.tgz"
+    });
 });
 
 test("downloaded release assets must be exactly manifest plus checksums and 37 tarballs", (t) => {

@@ -8,6 +8,7 @@ const { INCLUDED_PACKAGES } = require("./lib/release-boundary.js");
 
 const RECORD_FORMAT = "transform-hub-release-tarball-bdd-v1";
 const ROOT_ENV = "SCRAMJET_TARBALL_BDD_ROOT";
+const NPM_INSTALL_ARGS = ["install", "--ignore-scripts", "--no-audit", "--no-fund", "--install-links", "--package-lock=false"];
 
 function assertRoot(root) {
     const resolved = resolve(root);
@@ -82,6 +83,9 @@ function firstPartySpec(value) { return typeof value === "string" && (value.star
 function assertNoUnsafeDependencies(packageJson, names) {
     for (const section of ["dependencies", "optionalDependencies", "peerDependencies"]) for (const [name, spec] of Object.entries(packageJson[section] || {})) if (names.has(name) && firstPartySpec(spec)) throw new Error(`Release tarball contains a non-registry-safe first-party dependency: ${name}@${spec}`);
 }
+function tarballDependencies(tarballs) {
+    return Object.fromEntries(tarballs.map((item) => [item.package, `file:tarballs/${item.name}`]));
+}
 
 async function prepareTarballRoot({ bundleDir, outputDir, npm = process.env.npm_execpath || "npm", runner = execFileSync } = {}) {
     if (!bundleDir || !outputDir) throw new Error("bundleDir and outputDir are required");
@@ -89,12 +93,12 @@ async function prepareTarballRoot({ bundleDir, outputDir, npm = process.env.npm_
     copyFileSync(join(source, "manifest.json"), join(root, "manifest.json"));
     copyFileSync(join(source, "SHA256SUMS"), join(root, "SHA256SUMS"));
     const packageNames = new Set(manifest.tarballs.map((item) => item.package));
-    const dependencies = {};
-    for (const item of manifest.tarballs) { copyFileSync(join(source, item.name), join(tarballs, item.name)); dependencies[item.package] = `file:tarballs/${item.name}`; }
+    for (const item of manifest.tarballs) copyFileSync(join(source, item.name), join(tarballs, item.name));
+    const dependencies = tarballDependencies(manifest.tarballs);
     writeFileSync(join(root, "package.json"), `${JSON.stringify({ name: "scramjet-release-tarball-bdd", private: true, version: "0.0.0", dependencies }, null, 2)}\n`);
     const inspect = (item) => { const json = JSON.parse(execFileSync("tar", ["-xOf", join(tarballs, item.name), "package/package.json"], { encoding: "utf8" })); assertNoUnsafeDependencies(json, packageNames); };
     manifest.tarballs.forEach(inspect);
-    runner(npm, ["install", "--ignore-scripts", "--offline", "--no-audit", "--no-fund", "--install-links", "--package-lock=false"], { cwd: root, stdio: "inherit" });
+    runner(npm, NPM_INSTALL_ARGS, { cwd: root, stdio: "inherit" });
     const modules = realpathSync(join(root, "node_modules"));
     for (const name of packageNames) { const dir = realpathSync(join(modules, name)); if (!relative(modules, dir) || relative(modules, dir).startsWith("..")) throw new Error(`Installed release package escapes node_modules: ${name}`); }
     const record = {
@@ -118,4 +122,4 @@ if (require.main === module) {
     promise.then((result) => process.stdout.write(`${JSON.stringify(result)}\n`)).catch((error) => { process.stderr.write(`${error.stack || error}\n`); process.exitCode = 1; });
 }
 
-module.exports = { RECORD_FORMAT, ROOT_ENV, assertRoot, verifyDownloadedBundle, downloadDraftRelease, prepareTarballRoot };
+module.exports = { RECORD_FORMAT, ROOT_ENV, NPM_INSTALL_ARGS, assertRoot, verifyDownloadedBundle, downloadDraftRelease, tarballDependencies, prepareTarballRoot };
