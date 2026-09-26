@@ -70,10 +70,14 @@ jobs:
           set -euo pipefail
           version="${GITHUB_HEAD_REF#release/}"
           test -n "$version"
-          release_id="$(gh api "repos/$GITHUB_REPOSITORY/releases" --paginate --jq ".[] | select(.draft == true and .tag_name == \"v$version\") | .id" | head -n 1 || true)"
-          if [[ -n "$release_id" ]]; then gh api --method PATCH "repos/$GITHUB_REPOSITORY/releases/$release_id" -f target_commitish="${{ github.event.pull_request.head.sha }}" -f name="v$version" -F draft=true >/dev/null; else gh api --method POST "repos/$GITHUB_REPOSITORY/releases" -f tag_name="v$version" -f target_commitish="${{ github.event.pull_request.head.sha }}" -f name="v$version" -F draft=true >/dev/null; fi
-          release_id="$(gh api "repos/$GITHUB_REPOSITORY/releases" --paginate --jq ".[] | select(.draft == true and .tag_name == \"v$version\") | .id" | head -n 1)"
-          test -n "$release_id"
+          releases="$(gh api --method GET "repos/$GITHUB_REPOSITORY/releases" --paginate --slurp)"
+          release_id="$(jq -r --arg tag "v$version" 'add | map(select(.draft == true and .tag_name == $tag)) | first | .id // empty' <<< "$releases")"
+          if [[ -n "$release_id" ]]; then
+            release_json="$(gh api --method PATCH "repos/$GITHUB_REPOSITORY/releases/$release_id" -f target_commitish="${{ github.event.pull_request.head.sha }}" -f name="v$version" -F draft=true)"
+          else
+            release_json="$(gh api --method POST "repos/$GITHUB_REPOSITORY/releases" -f tag_name="v$version" -f target_commitish="${{ github.event.pull_request.head.sha }}" -f name="v$version" -F draft=true)"
+          fi
+          release_id="$(jq -er '.id' <<< "$release_json")"
           echo "RELEASE_ID=$release_id" >> "$GITHUB_ENV"
       - name: Replace draft release assets
         env:

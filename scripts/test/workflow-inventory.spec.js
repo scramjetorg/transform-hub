@@ -44,5 +44,8 @@ test("release candidate is same-repository guarded and checks out the PR head", 
     t.true(source.includes("Validate release PR version and alignment"));
     t.true(source.includes("Build production dist once"));
     t.true(source.includes("Create and locally verify release bundle"));
+    t.true(source.includes("release_json=\"$(gh api --method"));
+    t.true(source.includes("jq -er '.id'"));
+    t.false(source.includes("releases\" --paginate --jq"));
     t.true(source.includes("Upload draft release assets"));
 });
