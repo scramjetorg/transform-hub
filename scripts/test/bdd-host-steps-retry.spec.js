@@ -48,6 +48,19 @@ test("production start-host path probes readiness after spawn", (t) => {
     t.true(probeOffset < source.indexOf("finally", spawnOffset), "owned ports must remain reserved until readiness");
 });
 
+test("scenario-scoped hub configuration host probes readiness after spawn and retries existing clients", t => {
+    const source = fs.readFileSync(path.join(__dirname, "../../bdd/support/hub-configuration-host.ts"), "utf8");
+    const spawnOffset = source.indexOf("await host.spawnHost(");
+    const spawnedProbeOffset = source.indexOf("await retryLoadCheck(", spawnOffset);
+    const existingClientOffset = source.indexOf("if (this.resources.hostClient)");
+    const existingProbeOffset = source.indexOf("await retryLoadCheck(", existingClientOffset);
+
+    t.true(spawnOffset >= 0);
+    t.true(spawnedProbeOffset > spawnOffset, "spawned host must be readiness-probed before requests");
+    t.true(existingProbeOffset > existingClientOffset, "existing client path must use bounded readiness retry");
+    t.true(source.includes('getLoadCheck({ signal })'));
+});
+
 test("scenario-owned E2E-003 client is prepared before wave/chunk scenarios", (t) => {
     const source = fs.readFileSync(
         path.join(__dirname, "../../bdd/step-definitions/e2e/host-steps.ts"),

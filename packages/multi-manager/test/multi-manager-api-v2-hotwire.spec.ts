@@ -7,6 +7,8 @@ import { ManagersStore } from "../src/lib/manager-store";
 import { RouteRecorder } from "@scramjet/api-server/test/lib/route-recorder";
 
 function createMultiManagerStub(recorder: RouteRecorder) {
+    let logLevel = "INFO";
+
     return {
         apiServer: recorder.asApiExpose(),
         apiBase: "/api/v1",
@@ -25,6 +27,8 @@ function createMultiManagerStub(recorder: RouteRecorder) {
             details: { healthy: true }
         }),
         logger: new ObjLogger("multi-manager-api-v2-hotwire-test"),
+        setLogLevel(level: string) { logLevel = level; },
+        getTestLogLevel: () => logLevel,
         loadCheck: { getLoadCheck: async () => ({ load: 1 }) },
         service: "@scramjet/multi-manager",
         apiVersion: "v1",
@@ -45,6 +49,7 @@ test("MultiManagerAPIHandler registers the v2 MultiManager API route surface sep
 
     t.true(recorder.has("get", "/api/v2/version"));
     t.true(recorder.has("get", "/api/v2/info"));
+    t.true(recorder.has("op", "/api/v2/log-level", "patch"));
     t.true(recorder.has("get", "/api/v2/load"));
     t.true(recorder.has("get", "/api/v2/spaces"));
     t.true(recorder.has("get", "/api/v2/health"));
@@ -52,6 +57,19 @@ test("MultiManagerAPIHandler registers the v2 MultiManager API route surface sep
     t.true(recorder.has("upstream", "/api/v2/audit"));
     t.true(recorder.has("use", "/api/v2/spaces/:spaceId"));
     t.true(recorder.has("use", "/api/v2/spaces/:spaceId/*"));
+});
+
+test("MultiManager v2 log-level route updates only the MultiManager logger", async t => {
+    const recorder = new RouteRecorder();
+    const multiManager = createMultiManagerStub(recorder);
+
+    new MultiManagerAPIHandler(multiManager as any).attach();
+
+    t.deepEqual(await (recorder.require("op", "/api/v2/log-level", "patch").handler as Function)({ body: { logLevel: "DEBUG" } }), {
+        operation: { id: "mm-hotwire", status: "completed" },
+        result: { logLevel: "DEBUG" }
+    });
+    t.is(multiManager.getTestLogLevel(), "DEBUG");
 });
 
 test("MultiManagerAPIHandler v2 read handlers return MultiManager data", async t => {

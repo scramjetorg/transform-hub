@@ -4,6 +4,7 @@ Feature: Real CLI ingress profiles
   a Verser2 control ingress. These journeys keep profile, certificate, port,
   and process state local to their ScenarioIsolation owner.
 
+  @cli-ingress-memory-warmup
   Scenario: mTLS profiles select their ingress endpoint and preserve dispatch boundaries
     Given real CLI mTLS profiles for platform, Space, and Hub ingress
     When the real CLI uses the persisted platform profile for raw and named version requests

@@ -99,7 +99,7 @@ test.serial("instance lifecycle and event commands use native v2 routes", async 
     await execute(["kill", "inst-1"]);
     await execute(["stop", "inst-1", "123"]);
     await execute(["restart", "inst-1"]);
-    await execute(["event", "emit", "inst-1", "ready", "{\"ok\":true}"]);
+    await execute(["event", "emit", "inst-1", "ready", "test", "message"]);
     await execute(["event", "on", "inst-1", "ready"]);
     await execute(["event", "on", "inst-1", "ready", "--next"]);
 
@@ -116,7 +116,7 @@ test.serial("instance lifecycle and event commands use native v2 routes", async 
     ]);
     t.deepEqual(JSON.parse(Buffer.concat(business[0].body).toString()), { mode: "kill" });
     t.deepEqual(JSON.parse(Buffer.concat(business[1].body).toString()), { mode: "stop", timeout: 123 });
-    t.deepEqual(JSON.parse(Buffer.concat(business[5].body).toString()), { name: "ready", data: "{\"ok\":true}" });
+    t.deepEqual(JSON.parse(Buffer.concat(business[5].body).toString()), { name: "ready", data: "test message" });
 });
 
 test.serial("unsupported native instance operations reject rather than falling back to v1", async t => {

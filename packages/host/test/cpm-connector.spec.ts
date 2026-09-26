@@ -105,6 +105,24 @@ test("repeated Manager restarts coalesce close events and each start a fresh cyc
     t.false(connector.isReconnecting, "the next Manager restart starts a fresh cycle");
 });
 
+test("platform response errors start the reconnect supervisor instead of terminating the Hub", async t => {
+    const connector = Object.create(CPMConnector.prototype) as CPMConnector & Record<string, any>;
+    const response = new EventEmitter();
+    const closes: Array<[number, number]> = [];
+
+    Object.assign(connector, {
+        isAbandoned: false,
+        logger: { warn: () => {}, error: () => {} },
+        handleConnectionClose: async (status: number, generation: number) => closes.push([status, generation])
+    });
+
+    (connector as any).watchCommunicationResponse(response, 3);
+    response.emit("error", new Error("Manager response closed"));
+    await new Promise(resolve => setImmediate(resolve));
+
+    t.deepEqual(closes, [[1006, 3]]);
+});
+
 test("stale close and error events from an old stream cannot disconnect its replacement", async t => {
     const { connector, getAttempts } = makeReconnectConnector(0);
 

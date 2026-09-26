@@ -69,6 +69,23 @@ describe("runner-bun boot config", () => {
         });
     });
 
+    test("preserves log forwarding inputs for node delegation", () => {
+        for (const forwardRunnerLogs of [undefined, true, false]) {
+            for (const logForward of [undefined, true, false]) {
+                const config = validateBootConfig({
+                    sequencePath: "/tmp/seq.ts",
+                    instanceId: "inst",
+                    instancesServerPort: 9000,
+                    instancesServerHost: "127.0.0.1",
+                    appConfig: logForward === undefined ? {} : { logForward },
+                    ...(forwardRunnerLogs === undefined ? {} : { forwardRunnerLogs }),
+                });
+                expect(config.appConfig).toEqual(logForward === undefined ? {} : { logForward });
+                expect(config.forwardRunnerLogs).toBe(forwardRunnerLogs);
+            }
+        }
+    });
+
     test("preserves verser2 runtime config for Bun-native helpers and node delegation", () => {
         expect(validateBootConfig({
             sequencePath: "/tmp/seq.ts",

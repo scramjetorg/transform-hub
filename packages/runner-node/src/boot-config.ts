@@ -62,8 +62,9 @@ export interface RunnerNodeBootConfig {
 }
 
 /** Missing configuration preserves the historical enabled behavior. */
-export function shouldForwardRunnerLogs(config: Pick<RunnerNodeBootConfig, "forwardRunnerLogs">): boolean {
-    return config.forwardRunnerLogs !== false;
+export function shouldForwardRunnerLogs(config: Pick<RunnerNodeBootConfig, "forwardRunnerLogs" | "appConfig">): boolean {
+    const logForward = config.appConfig && typeof config.appConfig === "object" ? (config.appConfig as { logForward?: unknown }).logForward : undefined;
+    return config.forwardRunnerLogs !== false && logForward !== false;
 }
 
 /**

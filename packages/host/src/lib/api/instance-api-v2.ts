@@ -2,7 +2,7 @@ import { bindRoutes, RouterDefinition, routeBinding } from "@scramjet/api-router
 import { summarizeHealth } from "@scramjet/load-check";
 import { HostError } from "@scramjet/model";
 import { RestAPI2, RestAPI2RouteSets } from "@scramjet/rest-api2";
-import { IObjectLogger } from "@scramjet/runtime-types";
+import { IObjectLogger, LogLevel } from "@scramjet/runtime-types";
 import type { APIRoute } from "@scramjet/api-types";
 import EventEmitter from "events";
 import { IncomingHttpHeaders } from "http";
@@ -168,7 +168,7 @@ export class InstanceAPIV2 {
         }
 
         if (patch.logLevel !== undefined) {
-            await this.csi.set({ logLevel: patch.logLevel as any });
+            await this.csi.setLogLevel(patch.logLevel as unknown as LogLevel);
             parameters.logLevel = patch.logLevel;
         } else if (patch.parameters) {
             await this.csi.set(patch.parameters as any);

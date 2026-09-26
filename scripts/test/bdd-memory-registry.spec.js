@@ -626,6 +626,63 @@ test("MemoryRegistry retains completed expected-exit telemetry for component adm
     t.true(entry?.baselineRss !== null);
 });
 
+test("MemoryRegistry releases expected-exit stderr payloads once without changing lifecycle summary", async (t) => {
+    const child = spawn(process.execPath, ["-e", "process.stderr.write('expected-exit-sentinel'); setTimeout(() => process.exit(0), 20)"]);
+    const registry = new MemoryRegistry();
+    registry.trackChildProcess(child, "expected-exit", true);
+    await new Promise(resolve => child.once("exit", resolve));
+    await new Promise(resolve => setImmediate(resolve));
+
+    const before = registry.computeChunkSummary().processes.find(processEntry => processEntry.label === "expected-exit");
+    t.is(registry.completedProcesses.get(child.pid)?.stderrTail, "expected-exit-sentinel");
+
+    t.is(registry.releaseExpectedExitPayloads(), 1);
+    t.is(registry.releaseExpectedExitPayloads(), 0);
+    t.is(registry.completedProcesses.get(child.pid)?.stderrTail, undefined);
+
+    const after = registry.computeChunkSummary().processes.find(processEntry => processEntry.label === "expected-exit");
+    t.deepEqual(after && before && {
+        baselineRss: after.baselineRss,
+        readyBaselineRss: after.readyBaselineRss,
+        peakRss: after.peakRss,
+        finalRss: after.finalRss,
+        deltaFromBaseline: after.deltaFromBaseline,
+        deltaFromReady: after.deltaFromReady,
+        finalGrowthBytes: after.finalGrowthBytes,
+        peakGrowthBytes: after.peakGrowthBytes,
+        expectExit: after.expectExit,
+        lifecycle: after.lifecycle,
+        exitCode: after.exitCode,
+        exitSignal: after.exitSignal,
+    }, before && {
+        baselineRss: before.baselineRss,
+        readyBaselineRss: before.readyBaselineRss,
+        peakRss: before.peakRss,
+        finalRss: before.finalRss,
+        deltaFromBaseline: before.deltaFromBaseline,
+        deltaFromReady: before.deltaFromReady,
+        finalGrowthBytes: before.finalGrowthBytes,
+        peakGrowthBytes: before.peakGrowthBytes,
+        expectExit: before.expectExit,
+        lifecycle: before.lifecycle,
+        exitCode: before.exitCode,
+        exitSignal: before.exitSignal,
+    });
+});
+
+test("MemoryRegistry preserves unexpected-exit stderr payloads for diagnostics", async (t) => {
+    const child = spawn(process.execPath, ["-e", "process.stderr.write('unexpected-exit-sentinel'); setTimeout(() => process.exit(1), 20)"]);
+    const registry = new MemoryRegistry();
+    registry.trackChildProcess(child, "unexpected-exit");
+    await new Promise(resolve => child.once("exit", resolve));
+    await new Promise(resolve => setImmediate(resolve));
+
+    t.is(registry.releaseExpectedExitPayloads(), 0);
+    t.is(registry.completedProcesses.get(child.pid)?.stderrTail, "unexpected-exit-sentinel");
+    const errors = await registry.assertAll();
+    t.true(errors.some(error => error.includes("unexpected-exit-sentinel")));
+});
+
 test("MemoryRegistry.computeChunkSummary handles missing /proc data gracefully", (t) => {
 	const registry = new MemoryRegistry();
 
@@ -695,7 +752,7 @@ test("MemoryRegistry.printChunkSummary produces expected output format", (t) => 
 
 		const output = chunks.join("");
 		t.true(output.includes("chunk memory summary"), "should have summary header");
-		t.true(output.includes("Parent Cucumber heap:"), "should have parent heap section");
+		t.true(output.includes("Parent Cucumber retained memory (heapUsed + arrayBuffers):"), "should have parent retained-memory section");
 		t.true(output.includes("100000"), "should contain baseline bytes");
 		t.true(output.includes("200000"), "should contain peak bytes");
 		t.true(output.includes("150000"), "should contain final bytes");

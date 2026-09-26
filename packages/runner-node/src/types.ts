@@ -4,7 +4,7 @@ import type { Writable } from "stream";
 import type { ObjLogger } from "@scramjet/obj-logger";
 import { AppConfig, AppError } from "@scramjet/runtime-types";
 import type { APIExpose } from "@scramjet/api-types";
-import type { EventMessageData, StopSequenceMessageData, StorageUpdateMessageData, SequenceInfo } from "@scramjet/runtime-types";
+import type { EventMessageData, SetMessageData, StopSequenceMessageData, StorageUpdateMessageData, SequenceInfo } from "@scramjet/runtime-types";
 
 import type { RunnerNodeBootConfig } from "./boot-config";
 import type { RunnerNodeFdStreams } from "./fd-streams";
@@ -49,6 +49,7 @@ export interface ControlDispatch {
     onStop(data: StopSequenceMessageData): Promise<void>;
     onKill(): Promise<void>;
     onEvent(data: EventMessageData): void;
+    onSet(data: SetMessageData): void;
     onStorage(data: { values: Record<string, string> }): void;
     onStorageUpdate(data: StorageUpdateMessageData): void;
 }

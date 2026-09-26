@@ -67,7 +67,7 @@ test("integration BDD jobs depend on full validation and use isolated restore-on
         const block = source.slice(start, next < 0 ? undefined : start + 1 + next);
         t.true(start >= 0, `${name} exists`);
         t.true(block.includes("needs: [validation]"));
-        t.true(block.includes("if: ${{ always() && needs.validation.result == 'success' }}"));
+        t.true(block.includes("if: ${{ always() && needs.validation.result == 'success' && !("));
         t.true(block.includes("permissions:\n      contents: read"));
         t.true(block.includes("timeout-minutes: 60"));
         t.true(block.includes("cache-mode: restore-only"));
@@ -75,6 +75,15 @@ test("integration BDD jobs depend on full validation and use isolated restore-on
         for (const command of commands) t.true(block.includes(command), `${name} runs ${command}`);
         t.false(block.includes("concurrency:"));
     }
+});
+
+test("canonical trusted release PRs defer only the four workspace-rebuilding BDD jobs", (t) => {
+    const source = readFileSync(resolve(__dirname, "../../.github/workflows/pr-validate.yml"), "utf8");
+    const releaseGuard = "github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main' && startsWith(github.event.pull_request.head.ref, 'release/') && github.event.pull_request.head.repo.full_name == github.repository";
+    t.is(source.split(`&& !(${releaseGuard})`).length - 1, 4);
+    t.true(source.includes("needs: [validation]"));
+    t.true(source.includes("npm run test:packages:ci"));
+    t.true(source.includes("npm run build:packages"));
 });
 
 test("package tests and builds provision the pinned Bun runtime first", (t) => {

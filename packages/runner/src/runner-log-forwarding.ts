@@ -1,5 +1,6 @@
 export type RunnerLogForwardingConfig = {
     forwardRunnerLogs?: boolean;
+    appConfig?: unknown;
 };
 
 /** Copy the optional forwarding setting into the private child boot contract. */
@@ -10,5 +11,6 @@ export function copyRunnerLogForwarding<T extends RunnerLogForwardingConfig>(tar
 
 /** Missing configuration preserves the historical enabled behavior. */
 export function shouldForwardRunnerLogs(config: RunnerLogForwardingConfig): boolean {
-    return config.forwardRunnerLogs !== false;
+    const logForward = config.appConfig && typeof config.appConfig === "object" ? (config.appConfig as { logForward?: unknown }).logForward : undefined;
+    return config.forwardRunnerLogs !== false && logForward !== false;
 }

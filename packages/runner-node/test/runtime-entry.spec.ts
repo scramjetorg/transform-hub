@@ -10,6 +10,7 @@ import {
     loadSequenceModule,
     resolveSequenceFunctions,
     wireControlStream,
+    applySetLogLevel,
     SequenceLocalContext,
 } from "../src/bin/runner-node";
 import { RunnerNodeBootConfig } from "../src/boot-config";
@@ -114,6 +115,7 @@ test("wireControlStream: dispatches STOP frame parsed from CRLF JSON", async t =
         onStop: async data => { stops.push(data); },
         onKill: async () => undefined,
         onEvent: () => undefined,
+        onSet: () => undefined,
         onStorage: () => undefined,
         onStorageUpdate: () => undefined,
     });
@@ -132,6 +134,7 @@ test("wireControlStream: dispatches EVENT frames", async t => {
         onStop: async () => undefined,
         onKill: async () => undefined,
         onEvent: data => events.push(data),
+        onSet: () => undefined,
         onStorage: () => undefined,
         onStorageUpdate: () => undefined,
     });
@@ -143,6 +146,38 @@ test("wireControlStream: dispatches EVENT frames", async t => {
     await new Promise(res => setImmediate(res));
 
     t.deepEqual(events, [{ eventName: "ping", message: { x: 1 } }]);
+});
+
+test("wireControlStream: dispatches SET frames", async t => {
+    const controlIn = new PassThrough();
+    const settings: unknown[] = [];
+
+    wireControlStream(controlIn, {
+        onStop: async () => undefined,
+        onKill: async () => undefined,
+        onEvent: () => undefined,
+        onSet: data => settings.push(data),
+        onStorage: () => undefined,
+        onStorageUpdate: () => undefined,
+    });
+
+    controlIn.write(JSON.stringify([RunnerMessageCode.SET, { logLevel: "WARN" }]) + "\r\n");
+    await new Promise(res => setImmediate(res));
+
+    t.deepEqual(settings, [{ logLevel: "WARN" }]);
+});
+
+test("SET logLevel updates the shared logger only for canonical levels", t => {
+    const logger = new ObjLogger("test", {}, "INFO");
+
+    applySetLogLevel(logger, { logLevel: "DEBUG" });
+    t.is(logger.logLevel, "DEBUG");
+
+    applySetLogLevel(logger, { logLevel: "debug" as never });
+    t.is(logger.logLevel, "DEBUG");
+
+    applySetLogLevel(logger, {});
+    t.is(logger.logLevel, "DEBUG");
 });
 
 test("bootstrap exposes an awaitable override-friendly entry signature", t => {

@@ -73,8 +73,8 @@ test("live Compose smoke: file-loaded autostart, readiness, and exposed route", 
         // private @scramjet packages from the public registry.
         await fsp.cp(path.join(root, "dist"), path.join(imageContext, "dist"), { recursive: true, verbatimSymlinks: true });
         await fsp.writeFile(dockerfile, [
-            "FROM node:22-bookworm-slim",
-            "RUN apt-get update && apt-get install -y python3 && rm -rf /var/lib/apt/lists/* /usr/share/doc/*",
+            "FROM python:3.14-slim-bookworm",
+            "RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates curl gnupg && mkdir -p /etc/apt/keyrings && curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg && echo \"deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main\" > /etc/apt/sources.list.d/nodesource.list && apt-get update && apt-get install -y --no-install-recommends nodejs && apt-get purge -y --auto-remove gnupg && rm -rf /var/lib/apt/lists/* /usr/share/doc/*",
             "WORKDIR /app",
             "COPY dist ./dist",
             "ENV NODE_PATH=/app/dist/node_modules",

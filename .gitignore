@@ -173,3 +173,9 @@ timing-log.ndjson
 # Docs
 .nojekyll
 .env
+
+# Local worktrees
+/.worktrees/
+/.slim/worktrees/
+/.slim/worktrees.json
+/.slim/deepwork/

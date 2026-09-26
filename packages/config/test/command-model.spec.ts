@@ -27,6 +27,16 @@ test("command model rejects surplus positional arguments", t => {
     t.throws(() => parse(["run", "--input", "file", "value", "extra"]), { message: /Unexpected positional/ });
 });
 
+test("command model collects a variadic positional argument", t => {
+    const root = cmd("tool", command => command.children(cmd("emit", emit => {
+        emit.argument({ name: "event", required: true });
+        emit.argument({ name: "payload", variadic: true });
+    })));
+
+    const context = parseCommandContext(resolveCommandPath(["tool", "emit", "test-event", "test", "message"], root));
+    t.deepEqual(context.args, ["test-event", "test message"]);
+});
+
 test("command model rejects missing required options", t => {
     t.throws(() => parse(["run", "value"]), { message: /Missing required option.*input/ });
 });

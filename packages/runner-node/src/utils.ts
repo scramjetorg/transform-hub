@@ -1,8 +1,8 @@
 import { closeSync, constants as fsConstants, openSync, writeSync } from "fs";
 import { PassThrough, Readable, Writable } from "stream";
 
-import type { ObjLogger } from "@scramjet/obj-logger";
-import type { EncodedControlMessage, EncodedMonitoringMessage, EventMessageData, StopSequenceMessageData, StorageUpdateMessageData } from "@scramjet/runtime-types";
+import { ObjLogger } from "@scramjet/obj-logger";
+import type { EncodedControlMessage, EncodedMonitoringMessage, EventMessageData, LogLevel, SetMessageData, StopSequenceMessageData, StorageUpdateMessageData } from "@scramjet/runtime-types";
 import { RunnerMessageCode, CommunicationChannel as CC } from "@scramjet/symbols";
 
 import { MessageUtils } from "./message-utils";
@@ -103,6 +103,14 @@ export function writeMonitoring(monitor: Writable, msg: EncodedMonitoringMessage
     MessageUtils.writeMessageOnStream(msg, monitor);
 }
 
+export function applySetLogLevel(logger: ObjLogger, data: SetMessageData): void {
+    const logLevel = (data as { logLevel?: unknown }).logLevel;
+
+    if (typeof logLevel === "string" && ObjLogger.levels.includes(logLevel as LogLevel)) {
+        logger.logLevel = logLevel as LogLevel;
+    }
+}
+
 export function wireControlStream(controlIn: Readable, dispatch: ControlDispatch, logger?: ObjLogger): void {
     let buffer = "";
 
@@ -140,6 +148,9 @@ export function wireControlStream(controlIn: Readable, dispatch: ControlDispatch
                     break;
                 case RunnerMessageCode.EVENT:
                     dispatch.onEvent(data as EventMessageData);
+                    break;
+                case RunnerMessageCode.SET:
+                    dispatch.onSet(data as SetMessageData);
                     break;
                 case RunnerMessageCode.STORAGE:
                     dispatch.onStorage(data as { values: Record<string, string> });

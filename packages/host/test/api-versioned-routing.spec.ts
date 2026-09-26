@@ -150,6 +150,7 @@ test("Host-owned Hub v2 routes are mounted locally and reachable through verser2
         "/config",
         "/health",
         "/status",
+        "/log-level",
         "/sequences",
         "/instances",
         "/entities",

@@ -8,6 +8,7 @@
 "use strict";
 
 const test = require("ava").default;
+const { spawnSync } = require("node:child_process");
 
 const {
 	ENV,
@@ -22,6 +23,7 @@ const {
 	bddNodeArgs,
 	isBddMemoryGuardEnabled,
 	bddMemoryHeapThresholdBytes,
+	bddMemoryComponentThresholds,
 	bddMemorySkipCheck,
 	bddProcessRssThresholdBytes,
 	bddDockerWorkingSetThresholdBytes,
@@ -211,6 +213,12 @@ test("bddNodeOptions includes --max-old-space-size with default value", (t) => {
 		if (savedMo !== undefined) process.env[ENV.MAX_OLD_SPACE] = savedMo;
 		if (savedFetch !== undefined) process.env[ENV.FETCH] = savedFetch;
 	}
+});
+
+test("bddNodeOptions accepts a runner-specific heap cap", (t) => {
+	const opts = bddNodeOptions({ maxOldSpaceSize: 512 });
+
+	t.true(opts.includes("--max-old-space-size=512"));
 });
 
 test("bddNodeOptions adds --no-experimental-fetch by default (avoids WASM OOM)", (t) => {
@@ -877,4 +885,27 @@ test("buildDockerWorkingSetDiagnostics shows zero delta", (t) => {
 	});
 
 	t.true(msg.includes("delta 0 bytes"), "should show zero delta");
+});
+
+test("BDD component thresholds honor component precedence and warn on deprecated alias", (t) => {
+	const names = [ENV.BDD_HEAP_USED_THRESHOLD, ENV.BDD_ARRAY_BUFFERS_THRESHOLD, ENV.MEMORY_HEAP_USED_THRESHOLD, ENV.MEMORY_ARRAY_BUFFERS_THRESHOLD, ENV.BDD_MEMORY_HEAP_THRESHOLD, ENV.MEMORY_HEAP_THRESHOLD];
+	const saved = Object.fromEntries(names.map(name => [name, process.env[name]]));
+	const warnings = [];
+	const originalWarn = console.warn;
+	for (const name of names) delete process.env[name];
+	process.env[ENV.MEMORY_HEAP_THRESHOLD] = "1000";
+	process.env[ENV.BDD_HEAP_USED_THRESHOLD] = "2000";
+	process.env[ENV.MEMORY_ARRAY_BUFFERS_THRESHOLD] = "3000";
+	console.warn = message => warnings.push(message);
+	try {
+		const result = bddMemoryComponentThresholds();
+		t.deepEqual({ heap: result.heapUsedBytes, arrays: result.arrayBuffersBytes }, { heap: 2000, arrays: 3000 });
+		t.true(warnings.some(message => message.includes("deprecated")) || spawnSync(process.execPath, ["-e", `require(${JSON.stringify(require.resolve("../lib/bdd-options.js"))}).bddMemoryComponentThresholds()`], { encoding: "utf8", env: { ...process.env, [ENV.BDD_HEAP_USED_THRESHOLD]: undefined, [ENV.BDD_ARRAY_BUFFERS_THRESHOLD]: undefined, [ENV.MEMORY_HEAP_USED_THRESHOLD]: undefined, [ENV.MEMORY_ARRAY_BUFFERS_THRESHOLD]: undefined, [ENV.BDD_MEMORY_HEAP_THRESHOLD]: "1000" } }).stderr.includes("deprecated"));
+	} finally {
+		console.warn = originalWarn;
+		for (const name of names) {
+			if (saved[name] === undefined) delete process.env[name];
+			else process.env[name] = saved[name];
+		}
+	}
 });

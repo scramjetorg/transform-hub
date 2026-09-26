@@ -14,7 +14,8 @@ export async function getCommandDescriptors(): Promise<CommandDescriptor[]> {
         { initCommand },
         { storeCommand },
         { utilCommand },
-        { apiCommand }
+        { apiCommand },
+        { logCommand }
     ] = await Promise.all([
         import("./config"),
         import("./scope"),
@@ -26,9 +27,10 @@ export async function getCommandDescriptors(): Promise<CommandDescriptor[]> {
         import("./init"),
         import("./store"),
         import("./util"),
-        import("./api")
+        import("./api"),
+        import("./log")
     ]);
-    const descriptors = [configCommand, scopeCommand, spaceCommand, hubCommand, sequenceCommand, instanceCommand, topicCommand, initCommand, storeCommand, utilCommand, apiCommand];
+    const descriptors = [configCommand, scopeCommand, spaceCommand, hubCommand, sequenceCommand, instanceCommand, topicCommand, initCommand, storeCommand, utilCommand, apiCommand, logCommand];
 
     descriptors.push((await import("./completion")).completionCommand);
     if (isDevelopment()) descriptors.push((await import("./developerTools")).developerToolsCommand);

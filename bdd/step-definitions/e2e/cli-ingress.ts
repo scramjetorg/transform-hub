@@ -1,54 +1,14 @@
 import { After, Given, Then, When } from "@cucumber/cucumber";
 import { strict as assert } from "assert";
-import { spawn, type ChildProcessWithoutNullStreams } from "child_process";
 import { createServer, type Server } from "http";
 import { existsSync, readFileSync, symlinkSync, writeFileSync } from "fs";
 import { join } from "path";
 import { createVerserHost } from "@signicode/verser2-host";
 import { createV2HttpDispatcher } from "@scramjet/api-server";
 import { Router } from "@scramjet/api-router";
-import { publishedModule } from "../../lib/published-modules";
-import { getSiCommand } from "../../lib/utils";
-import type { MtlsControlIngress } from "../../lib/scenario-isolation";
 import { CustomWorld } from "../world";
-
-const { createVerser2HostOptions } = publishedModule<{ createVerser2HostOptions: any }>("@scramjet/multi-manager");
-const { startManagerControlIngress, stopManagerControlIngress } = publishedModule<{ startManagerControlIngress: any; stopManagerControlIngress: any }>("@scramjet/manager");
-const { startHostControlIngress, stopHostControlIngress } = publishedModule<{ startHostControlIngress: any; stopHostControlIngress: any }>("@scramjet/host");
-
-type CliResult = { code: number | null; output: string };
-type IngressName = "platform" | "space" | "hub" | "nonmtls";
-type ProfileName = IngressName | "rejected" | "missing" | "native";
-type IngressState = {
-    requests: Record<IngressName, number>;
-    profiles: Partial<Record<ProfileName, string>>;
-    close: Array<() => Promise<void>>;
-    result?: CliResult;
-    completionResults?: CliResult[];
-    nativeRequests: Array<{ path: string; body: string }>;
-    nativeActiveRequests: number;
-    nativeWaitStarted: boolean;
-    legacyRequests: number;
-    sessionFile?: string;
-};
-
-const CLI_TIMEOUT_MS = 30000;
-const cli = getSiCommand({ useBddConfig: false });
-
-function ingressState(world: CustomWorld): IngressState {
-    if (!world.resources.cliIngress) {
-        world.resources.cliIngress = {
-            requests: { platform: 0, space: 0, hub: 0, nonmtls: 0 },
-            profiles: {},
-            close: [],
-            nativeRequests: [],
-            nativeActiveRequests: 0,
-            nativeWaitStarted: false,
-            legacyRequests: 0
-        } as IngressState;
-    }
-    return world.resources.cliIngress as IngressState;
-}
+import { cleanupCliIngress, ingressState, invoke, startCli, startMtlsIngresses, type CliResult, type IngressName, type IngressState, type ProfileName } from "../../lib/cli-ingress-fixture";
+import { resolveBddCliArtifact } from "../../lib/published-artifacts";
 
 function profile(
     endpoint: string,
@@ -85,49 +45,6 @@ function versionRouter(name: IngressName, state: IngressState, identity: { level
     return router;
 }
 
-function startCli(world: CustomWorld, args: string[], overrides: NodeJS.ProcessEnv = {}, command = cli) {
-    const isolation = world.scenarioIsolation;
-    assert.ok(isolation, "ScenarioIsolation must be installed before invoking the CLI");
-    const child = spawn("/usr/bin/env", [...command, ...args], {
-        cwd: process.cwd(),
-        env: isolation.environment({ NODE_OPTIONS: "--max-old-space-size=512", ...overrides })
-    });
-    world.scenarioLifecycle.ownChild(child, `cli ingress: ${args.join(" ")}`, { group: true });
-    world.scenarioLifecycle.expect(child);
-    return { child, result: collectCliResult(child, args) };
-}
-
-async function invoke(world: CustomWorld, args: string[], overrides: NodeJS.ProcessEnv = {}, command = cli): Promise<CliResult> {
-    return await startCli(world, args, overrides, command).result;
-}
-
-async function collectCliResult(child: ChildProcessWithoutNullStreams, args: string[]): Promise<CliResult> {
-    let output = "";
-    child.stdout.on("data", chunk => { output += chunk.toString(); });
-    child.stderr.on("data", chunk => { output += chunk.toString(); });
-    return await new Promise<CliResult>((resolve, reject) => {
-        let finished = false;
-        const finish = (callback: () => void) => {
-            if (finished) return;
-            finished = true;
-            clearTimeout(timeout);
-            callback();
-        };
-        const timeout = setTimeout(() => {
-            child.kill("SIGTERM");
-            setTimeout(() => child.kill("SIGKILL"), 1000).unref();
-            finish(() => reject(new Error(`Real CLI timed out after ${CLI_TIMEOUT_MS}ms: ${args.join(" ")}\n${output}`)));
-        }, CLI_TIMEOUT_MS);
-        child.once("error", error => finish(() => reject(new Error(`Real CLI could not start: ${error.message}`))));
-        child.once("close", code => finish(() => resolve({ code, output })));
-    });
-}
-
-function mtlsTls(material: MtlsControlIngress, rejected = false) {
-    const client = rejected ? material.rejectedClient : material.allowedClient;
-    return { caFile: client.caFile, certFile: client.certFile, keyFile: client.keyFile };
-}
-
 function requireProfile(world: CustomWorld, name: ProfileName): string {
     const profilePath = ingressState(world).profiles[name];
     assert.ok(profilePath, `${name} profile was not created`);
@@ -152,6 +69,15 @@ function waitFor(condition: () => boolean, description: string, timeoutMs = 5000
         }, 20);
     });
 }
+
+After(async function(this: CustomWorld) {
+    if (!this.resources.cliIngress) return;
+    try {
+        await cleanupCliIngress(this);
+    } finally {
+        delete this.resources.cliIngress;
+    }
+});
 
 async function collectRequestBody(request: NodeJS.ReadableStream): Promise<string> {
     const chunks: Buffer[] = [];
@@ -215,90 +141,6 @@ async function startNativeFixture(world: CustomWorld): Promise<void> {
 function closeServer(server: Server): Promise<void> {
     return new Promise((resolve, reject) => server.close(error => error ? reject(error) : resolve()));
 }
-
-async function startMtlsIngresses(world: CustomWorld): Promise<void> {
-    const isolation = world.scenarioIsolation;
-    assert.ok(isolation, "ScenarioIsolation must be installed before creating ingress fixtures");
-    const state = ingressState(world);
-    const tls = await isolation.createMtlsControlIngress();
-    const managerPort = await isolation.reservePort();
-    const hubPort = await isolation.reservePort();
-    const identity = (level: "platform" | "space" | "hub", serviceId: string, routeDomain: string) => ({ level, serviceId, routeDomain });
-
-    const platformConfig: any = {
-        enabled: true,
-        identityDir: tls.identityDir,
-        host: tls.server,
-        registration: { allowedClientFingerprints: [tls.allowedFingerprint] },
-        localBroker: { peerId: "bdd.platform.broker", routeDomain: "bdd.platform.test" },
-        localGuest: { peerId: "bdd.platform.guest", routeDomain: "bdd.platform.test" },
-        guest: { peerId: "bdd.platform.guest", routeDomain: "bdd.platform.test" }
-    };
-    const platformHost = createVerserHost(createVerser2HostOptions(platformConfig));
-    await platformHost.start();
-    const platformGuest = await platformHost.attachLocalGuest({
-        guestId: platformConfig.guest.peerId,
-        routedDomains: [platformConfig.guest.routeDomain],
-        listener: createV2HttpDispatcher(versionRouter("platform", state, identity("platform", "platform", "bdd.platform.test"), "/spaces/space-a/version")).listener as any
-    });
-    state.close.push(async () => {
-        await platformGuest.close("bdd cleanup").catch(() => undefined);
-        await platformHost.close().catch(() => undefined);
-    });
-
-    const managerConfig: any = {
-        enabled: true,
-        host: { ...tls.server, bindPort: managerPort, publicUrl: `https://localhost:${managerPort}`, identityDir: tls.identityDir },
-        guest: { peerId: "bdd.space.guest", routeDomain: "bdd.space.test" }
-    };
-    const managerHost = await startManagerControlIngress(
-        managerConfig,
-        versionRouter("space", state, identity("space", "space-a", "bdd.space.test"), "/hubs/hub-a/version"),
-        undefined,
-        [tls.allowedFingerprint]
-    );
-    state.close.push(() => stopManagerControlIngress(managerHost).catch(() => undefined));
-
-    const hubConfig: any = {
-        enabled: true,
-        identityDir: tls.identityDir,
-        host: { ...tls.server, bindPort: hubPort, publicUrl: `https://localhost:${hubPort}` },
-        caFile: tls.allowedClient.caFile,
-        registration: { allowedClientFingerprints: [tls.allowedFingerprint] },
-        localBroker: { peerId: "bdd.hub.broker", routeDomain: "bdd.hub.test" },
-        localGuest: { peerId: "bdd.hub.guest", routeDomain: "bdd.hub.test" },
-        guest: { peerId: "bdd.hub.guest", routeDomain: "bdd.hub.test" }
-    };
-    const hubHost = await startHostControlIngress(
-        hubConfig,
-        versionRouter("hub", state, identity("hub", "hub-a", "bdd.hub.test")),
-        "hub-a"
-    );
-    state.close.push(() => stopHostControlIngress(hubHost).catch(() => undefined));
-
-    state.profiles.platform = isolation.writeProfile("platform", profile(tls.publicUrl, identity("platform", "platform", "bdd.platform.test"), mtlsTls(tls), { spaceId: "space-a" }), "platform");
-    state.profiles.space = isolation.writeProfile("space", profile(`https://localhost:${managerPort}`, identity("space", "space-a", "bdd.space.test"), mtlsTls(tls), { hubId: "hub-a" }), "platform");
-    state.profiles.hub = isolation.writeProfile("hub", profile(`https://localhost:${hubPort}`, identity("hub", "hub-a", "bdd.hub.test"), mtlsTls(tls)), "platform");
-    state.profiles.rejected = isolation.writeProfile("rejected", profile(`https://localhost:${managerPort}`, identity("space", "space-a", "bdd.space.test"), mtlsTls(tls, true)), "platform");
-
-    const missing = profile(`https://localhost:${hubPort}`, identity("hub", "hub-a", "bdd.hub.test"), {
-        caFile: tls.allowedClient.caFile,
-        certFile: tls.allowedClient.certFile,
-        keyFile: `${isolation.artifactsDir}/missing-client-key.pem`
-    });
-    state.profiles.missing = isolation.writeProfile("missing", missing, "platform");
-}
-
-After(async function(this: CustomWorld) {
-    const state = this.resources.cliIngress as IngressState | undefined;
-    if (!state) return;
-    const errors: Error[] = [];
-    for (const close of state.close.reverse()) {
-        await close().catch(error => errors.push(error instanceof Error ? error : new Error(String(error))));
-    }
-    delete this.resources.cliIngress;
-    if (errors.length) throw new Error(`CLI ingress cleanup failed: ${errors.map(error => error.message).join("; ")}`);
-});
 
 Given("real CLI mTLS profiles for platform, Space, and Hub ingress", async function(this: CustomWorld) {
     await startMtlsIngresses(this);
@@ -410,11 +252,11 @@ When("two real CLI completion commands run against isolated session storage", as
     const isolation = this.scenarioIsolation;
     assert.ok(isolation, "ScenarioIsolation must be installed before invoking the CLI");
     const completionRoot = isolation.createArtifactDirectory("completion-cli");
-    const builtCliDir = join(process.cwd(), "..", "dist", "cli");
-    symlinkSync(builtCliDir, join(completionRoot, "cli"), "dir");
-    symlinkSync(join(process.cwd(), "..", "dist", "node_modules"), join(completionRoot, "node_modules"), "dir");
-    symlinkSync(join(builtCliDir, "scripts"), join(completionRoot, "scripts"), "dir");
-    const completionCli = ["node", "--preserve-symlinks", "--preserve-symlinks-main", join(completionRoot, "cli", "bin")];
+    const cliArtifact = resolveBddCliArtifact();
+    symlinkSync(cliArtifact.packageDir, join(completionRoot, "cli"), "dir");
+    symlinkSync(cliArtifact.nodeModulesDir, join(completionRoot, "node_modules"), "dir");
+    symlinkSync(cliArtifact.scriptsDir, join(completionRoot, "scripts"), "dir");
+    const completionCli = ["node", "--preserve-symlinks", "--preserve-symlinks-main", join(completionRoot, "cli", cliArtifact.binRelativePath)];
     const first = await invoke(this, ["completion"], {}, completionCli);
     const second = await invoke(this, ["completion"], {}, completionCli);
     ingressState(this).completionResults = [first, second];

@@ -1,23 +1,19 @@
 name: Complete stable release
-
 on:
   push:
     branches: [main]
-
 permissions:
   contents: read
-
 concurrency:
   group: ${{ github.ref_name }}
   cancel-in-progress: true
-
 jobs:
   reconstruct-and-tag:
-    permissions:
-      contents: read
-      pull-requests: read
     if: ${{ github.repository == 'scramjetorg/transform-hub' }}
     runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      pull-requests: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -28,6 +24,11 @@ jobs:
           node-version: "22"
           cache: npm
           cache-dependency-path: package-lock.json
+      - name: Install pinned npm
+        run: |
+          set -euo pipefail
+          npm install --global --ignore-scripts npm@11.19.0
+          test "$(npm --version)" = "11.19.0"
       - run: npm ci --ignore-scripts
       - name: Mint release app token
         id: app-token
@@ -41,35 +42,83 @@ jobs:
       - name: Configure git authentication
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
-        run: gh auth setup-git
-      - name: Reconstruct devel and create the stable tag
+        run: |
+          set -euo pipefail
+          gh auth setup-git
+      - name: Resolve merged PR and release identity
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           set -euo pipefail
-          head_ref="$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/pulls" --jq '[.[] | select(.merged_at != null and .base.ref == "main")][0].head.ref')"
+          head_ref="$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/pulls" --jq '[.[] | select(.merged_at != null and .base.ref == "main" and .head.repo.full_name == env.GITHUB_REPOSITORY)][0].head.ref')"
           test -n "$head_ref" -a "$head_ref" != "null"
           version="$(node -p "require('./package.json').version")"
+          test -n "$version"
+          echo "HEAD_REF=$head_ref" >> "$GITHUB_ENV"
+          echo "VERSION=$version" >> "$GITHUB_ENV"
           if [[ "$head_ref" == release/* ]]; then
             test "$(node scripts/release-flow.js release-branch "$version")" = "$head_ref"
+            candidate="$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/pulls" --jq '[.[] | select(.merged_at != null and .base.ref == "main" and .head.repo.full_name == env.GITHUB_REPOSITORY)][0]')"
+            candidate_head="$(jq -r '.head.sha' <<<"$candidate")"
+            test -n "$candidate_head" -a "$candidate_head" != "null"
+            git fetch origin "$candidate_head"
+            candidate_tree="$(git rev-parse "$candidate_head^{tree}")"
+            main_tree="$(git rev-parse "$GITHUB_SHA^{tree}")"
+            test "$candidate_tree" = "$main_tree"
+            release_id="$(gh api "repos/$GITHUB_REPOSITORY/releases" --paginate --jq ".[] | select(.draft == true and .tag_name == \"v$version\") | .id" | head -n 1)"
+            test -n "$release_id"
+            echo "CANDIDATE_HEAD=$candidate_head" >> "$GITHUB_ENV"
+            echo "CANDIDATE_TREE=$candidate_tree" >> "$GITHUB_ENV"
+            echo "MAIN_TREE=$main_tree" >> "$GITHUB_ENV"
+            echo "RELEASE_ID=$release_id" >> "$GITHUB_ENV"
           else
             echo "Non-release main merge ($head_ref): reconstructing devel without publishing."
           fi
+      - name: Verify release draft assets and tree binding
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          set -euo pipefail
+          test -n "${HEAD_REF:-}"
+          if [[ "$HEAD_REF" != release/* ]]; then exit 0; fi
+          test -n "${VERSION:-}"
+          test -n "${CANDIDATE_HEAD:-}"
+          test -n "${CANDIDATE_TREE:-}"
+          test -n "${MAIN_TREE:-}"
+          test -n "${RELEASE_ID:-}"
+          rm -rf "$RUNNER_TEMP/release-bundle" && mkdir -p "$RUNNER_TEMP/release-bundle/tarballs"
+          gh api "repos/$GITHUB_REPOSITORY/releases/$RELEASE_ID/assets" --paginate --slurp | jq 'add' > "$RUNNER_TEMP/release-assets.json"
+          gh api "repos/$GITHUB_REPOSITORY/releases/$RELEASE_ID/assets" --paginate --jq '.[] | [.name, .url] | @tsv' | while IFS=$'\t' read -r asset url; do case "$asset" in ""|*/*|*\\*|*..*) exit 1;; esac; curl --fail --location --header "Authorization: Bearer $GH_TOKEN" --header 'Accept: application/octet-stream' "$url" -o "$RUNNER_TEMP/release-bundle/$asset"; done
+          mv "$RUNNER_TEMP/release-bundle"/*.tgz "$RUNNER_TEMP/release-bundle/tarballs/"
+          node scripts/release-main.js verify-bundle --bundle "$RUNNER_TEMP/release-bundle" --assets-json "$RUNNER_TEMP/release-assets.json" --expected-version "$VERSION" --expected-branch "release/$VERSION" --expected-candidate-head "$CANDIDATE_HEAD" --expected-candidate-tree "$CANDIDATE_TREE" --expected-main-tree "$MAIN_TREE"
+      - name: Reconstruct devel
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          set -euo pipefail
+          test -n "${VERSION:-}"
           git fetch origin devel
           devel_sha="$(git rev-parse origin/devel)"
-          node scripts/release-align.js apply-development --development-version="$(node scripts/release-flow.js development-version "$version")"
+          node scripts/release-align.js apply-development --development-version="$(node scripts/release-flow.js development-version "$VERSION")"
           npm run build:lockfile
-          node scripts/release-align.js check-development --development-version="$(node scripts/release-flow.js development-version "$version")"
+          node scripts/release-align.js check-development --development-version="$(node scripts/release-flow.js development-version "$VERSION")"
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add -A
-          git commit -m "chore: reconstruct devel after $version release"
+          git commit -m "chore: reconstruct devel after $VERSION release"
           git push origin "HEAD:refs/heads/devel" --force-with-lease=devel:"$devel_sha"
-          if [[ "$head_ref" == release/* ]]; then
-            if gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/v$version" >/dev/null 2>&1; then
-              echo "Remote tag v$version already exists; skipping tag creation and publication trigger."
+      - name: Create or skip stable tag
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          set -euo pipefail
+          test -n "${HEAD_REF:-}"
+          test -n "${VERSION:-}"
+          if [[ "$HEAD_REF" == release/* ]]; then
+            if gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/v$VERSION" >/dev/null 2>&1; then
+              echo "Remote tag v$VERSION already exists; skipping tag creation and publication trigger."
             else
-              git tag -a "v$version" -m "Release v$version" "$GITHUB_SHA"
-              git push origin "v$version"
+              git tag -a "v$VERSION" -m "Release v$VERSION" "$GITHUB_SHA"
+              git push origin "v$VERSION"
             fi
           fi

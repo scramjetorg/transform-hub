@@ -647,6 +647,7 @@ Given("an STH hub {string} is connected to the aggregation Manager", {
     const apiPort = await freeport();
     const instancesPort = await freeport();
     const runnerHostPort = await freeport();
+    const controlIngressPort = await freeport();
     const tempDir = this.resources.aggTempDir as string;
     const runHubName = `${hubName}-${this.resources.aggManagerId}`;
     const managerId = this.resources.aggManagerId as string;
@@ -662,6 +663,13 @@ Given("an STH hub {string} is connected to the aggregation Manager", {
     const startupConfigAbsolute = resolve(cwd, `${FIXTURE_ROOT}/startup/${hubName}.json`);
     writeFileSync(configPath, JSON.stringify({
         verser2: {
+            controlIngress: {
+                host: {
+                    bindHost: "127.0.0.1",
+                    bindPort: controlIngressPort,
+                    publicUrl: `https://127.0.0.1:${controlIngressPort}`,
+                },
+            },
             runnerHost: {
                 enabled: true,
                 identityDir: `${hubDir}/verser2-runner-host`,

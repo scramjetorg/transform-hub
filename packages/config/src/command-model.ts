@@ -43,6 +43,8 @@ export interface ArgumentDescriptor {
     name: string;
     description?: string;
     required?: boolean;
+    /** Collect all remaining positional tokens as one argument value. */
+    variadic?: boolean;
     default?: unknown;
     choices?: readonly string[];
     parse?: (value: string) => unknown;
@@ -206,9 +208,10 @@ export function parseCommandContext(resolve: ResolveResult, globalOptions?: Opti
     const args: unknown[] = [];
     const argDefs = resolve.command.arguments || [];
 
+    let consumedPositionals = 0;
     for (let i = 0; i < argDefs.length; i++) {
         const argDef = argDefs[i];
-        const value = positionalTokens[i];
+        const value = argDef.variadic ? positionalTokens.slice(i).join(" ") || undefined : positionalTokens[i];
 
         if (value !== undefined) {
             let coerced: unknown;
@@ -226,9 +229,10 @@ export function parseCommandContext(resolve: ResolveResult, globalOptions?: Opti
         } else {
             usageError(`Missing required argument "${argDef.name}" for command "${resolve.command.name}"`);
         }
+        consumedPositionals = argDef.variadic ? positionalTokens.length : i + 1;
     }
 
-    if (positionalTokens.length > argDefs.length) {
+    if (positionalTokens.length > consumedPositionals) {
         usageError(`Unexpected positional argument for command "${resolve.command.name}"`);
     }
 

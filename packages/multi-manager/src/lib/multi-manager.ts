@@ -6,6 +6,7 @@ import { IDProvider } from "@scramjet/model";
 import { MonitoringServer } from "@scramjet/monitoring-server";
 import { ObjLogger, prettyPrint } from "@scramjet/obj-logger";
 import { RestAPI2 } from "@scramjet/rest-api2";
+import { LogLevel } from "@scramjet/runtime-types";
 import { FreePortsFinder, merge, promiseTimeout, readJsonFile } from "@scramjet/utility";
 import { createVerserHost, VerserHost, VerserLocalBrokerHandle, VerserLocalGuestHandle } from "@signicode/verser2-host";
 import findPackage from "find-package-json";
@@ -162,6 +163,10 @@ export class MultiManager {
 
     public get apiCommonLogsPipe(): CommonLogsPipe {
         return this.commonLogsPipe;
+    }
+
+    setLogLevel(logLevel: LogLevel): void {
+        this.logger.logLevel = logLevel;
     }
 
     public get service(): string {

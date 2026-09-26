@@ -27,6 +27,7 @@ export type NativeCapabilities = {
     managerJson<T>(method: string, path: string, body?: unknown, headers?: Record<string, string>, query?: Record<string, unknown>, spaceId?: string): Promise<T>;
     rootJson<T>(method: string, path: string, body?: unknown, headers?: Record<string, string>): Promise<T>;
     spaceJson<T>(method: string, path: string, body?: unknown, headers?: Record<string, string>, spaceId?: string): Promise<T>;
+    targetJson<T>(method: string, path: string, body: unknown | undefined, owner: Owner, spaceId?: string, hubId?: string): Promise<T>;
     upload<T>(method: string, path: string, body: Readable, contentType?: string, headers?: Record<string, string>, owner?: "hub" | "manager"): Promise<T>;
     stream(path: string, owner?: "hub" | "manager"): Promise<Readable>;
     rootStream(path: string): Promise<Readable>;
@@ -46,30 +47,29 @@ function encoded(value: string) {
 function selectedSpace(profile: any, explicitSpaceId?: string) {
     return explicitSpaceId || sessionConfig.lastSpaceId || profile.target?.spaceId;
 }
-function pathFor(profile: any, path: string, owner: Owner, explicitSpaceId?: string) {
+function pathFor(profile: any, path: string, owner: Owner, explicitSpaceId?: string, explicitHubId?: string) {
     if (!path.startsWith("/api/v2/")) throw new ApiCommandError("USAGE", 1, "Named v2 path must be absolute");
     const suffix = path.slice("/api/v2".length);
     const target = profile.target;
+    const spaceId = selectedSpace(profile, explicitSpaceId);
     if (profile.ingress.level === "hub") {
         if (owner !== "hub") throw new CapabilityUnavailableError(`${owner === "space" ? "Manager" : "Root"} operation`);
-        if (target) throw new ApiCommandError("TARGET", 54, "Direct Hub ingress has no descendant target");
+        if (target || explicitSpaceId || explicitHubId) throw new ApiCommandError("TARGET", 54, "Direct Hub ingress has no descendant target");
         return path;
     }
     if (owner === "root") return path;
-    const spaceId = selectedSpace(profile, explicitSpaceId);
+    if (profile.ingress.level === "space" && spaceId && spaceId !== profile.ingress.expectedId) {
+        throw new ApiCommandError("TARGET", 54, "Selected Space contradicts the fixed space ingress");
+    }
     if (owner === "space") {
         if (profile.ingress.level === "space") {
-            // A space ingress is fixed to its authenticated Manager.  Do not
-            // silently ignore an explicit or remembered selection for another
-            // Manager, as that would make the displayed target misleading.
-            if (spaceId && spaceId !== profile.ingress.expectedId) throw new ApiCommandError("TARGET", 54, "Selected Space contradicts the fixed space ingress");
             return path;
         }
         if (!spaceId) throw new ApiCommandError("TARGET", 54, "Space-owned commands require a Space target");
         return `/api/v2/spaces/${encoded(spaceId)}${suffix}`;
     }
     // An explicit interactive selection is authoritative for all Hub-owned leaves.
-    const hubId = owner === "hub" ? sessionConfig.lastHubId || target?.hubId : undefined;
+    const hubId = owner === "hub" ? explicitHubId || sessionConfig.lastHubId || target?.hubId : undefined;
     if (owner === "hub" && !hubId) throw new ApiCommandError("TARGET", 54, "Hub-owned commands require a Hub target");
     if (profile.ingress.level === "space") return `/api/v2/hubs/${encoded(hubId)}${suffix}`;
     if (!spaceId) throw new ApiCommandError("TARGET", 54, "Hub-owned commands require a Space target");
@@ -174,13 +174,13 @@ function splitPathQuery(path: string): { path: string; query?: Record<string, st
     }
     return { path: path.slice(0, index), query };
 }
-async function call<T>(method: string, requestedPath: string, body?: readonly Buffer[] | Readable, headers: Record<string, string> = {}, streaming = false, owner: Owner = "hub", explicitSpaceId?: string, query?: Record<string, unknown>): Promise<T | Readable> {
+async function call<T>(method: string, requestedPath: string, body?: readonly Buffer[] | Readable, headers: Record<string, string> = {}, streaming = false, owner: Owner = "hub", explicitSpaceId?: string, query?: Record<string, unknown>, explicitHubId?: string, raw = false): Promise<T | Readable> {
     const profile = selectedProfile();
     if (!profile) throw new CapabilityUnavailableError("Named v2 command");
     const requested = splitPathQuery(requestedPath);
-    const path = pathFor(profile, requested.path, owner, explicitSpaceId);
+    const path = pathFor(profile, requested.path, owner, explicitSpaceId, explicitHubId);
     const manifest = manifestFor(profile);
-    const contract = contractFor(manifest, method, path);
+    const contract = raw ? undefined : contractFor(manifest, method, path);
     const controller = new AbortController();
     let session: Awaited<ReturnType<typeof createVerifiedVerser2Session>> | undefined;
     let handedOff = false;
@@ -192,7 +192,16 @@ async function call<T>(method: string, requestedPath: string, body?: readonly Bu
     try {
         session = await createVerifiedVerser2Session(profile, controller.signal, profile.timeoutMs, dependencies.createTransport(profile, controller.signal));
         const client = createRestAPI2Client({ manifest, transport: session.client });
-        const response = await client.request<any>({ operationId: contract.route.id as any, params: contract.params, query: query || requested.query, headers, body, timeoutMs: profile.timeoutMs, signal: controller.signal });
+        const response = await (raw ? session.client.request(({
+            route: { method: method.toLowerCase(), fullPath: path, kind: "upstream" } as any,
+            query: query || requested.query,
+            headers,
+            body,
+            timeoutMs: profile.timeoutMs,
+            signal: controller.signal
+        } as any)) : client.request<any>((contract
+            ? { operationId: contract.route.id as any, params: contract.params, query: query || requested.query, headers, body, timeoutMs: profile.timeoutMs, signal: controller.signal }
+            : {} as any)));
         if (response.status < 200 || response.status >= 300) {
             await session.close();
             throw new ApiCommandError(response.status < 500 ? "API_4XX" : "API_5XX", response.status < 500 ? 70 : 71, `API returned ${response.status}`, typeof response.body === "string" ? response.body : undefined);
@@ -265,6 +274,8 @@ export function getNativeCapabilities(): NativeCapabilities | undefined {
             call(method, path, body === undefined ? undefined : [Buffer.from(JSON.stringify(body))], body === undefined ? headers : { "content-type": "application/json", ...headers }, false, "root") as Promise<any>,
         spaceJson: (method, path, body, headers = {}, spaceId) =>
             call(method, path, body === undefined ? undefined : [Buffer.from(JSON.stringify(body))], body === undefined ? headers : { "content-type": "application/json", ...headers }, false, "space", spaceId) as Promise<any>,
+        targetJson: (method, path, body, owner, spaceId, hubId) =>
+            call(method, path, body === undefined ? undefined : [Buffer.from(JSON.stringify(body))], body === undefined ? {} : { "content-type": "application/json" }, false, owner, spaceId, undefined, hubId, true) as Promise<any>,
         upload: (method, path, body, contentType = "application/octet-stream", headers = {}, owner = "hub") =>
             call(method, path, body, { "content-type": contentType, ...headers }, false, owner === "manager" ? "space" : owner) as Promise<any>,
         stream: (path, owner = "hub") => call("GET", path, undefined, {}, true, owner === "manager" ? "space" : owner) as Promise<Readable>,

@@ -1,7 +1,7 @@
 # CI and release operations
 
 This is the repository-level operating map for the active CI and release
-paths. It does not assert that GitHub, npm, GHCR, or organization controls are
+paths. It does not assert that GitHub, npm, or organization controls are
 configured. Production npm operator actions remain in
 [RELEASE_PUBLISHING_OPERATIONS.md](RELEASE_PUBLISHING_OPERATIONS.md); security
 enforcement limits remain in [SECURITY.md](SECURITY.md).
@@ -9,100 +9,62 @@ enforcement limits remain in [SECURITY.md](SECURITY.md).
 ## Active workflow and trigger inventory
 
 The final workflow-file audit found exactly these seven active workflow files.
-Legacy Node 18/Yarn reusable workflows, the legacy Docker Hub publisher, and the
-former standalone `release-pr-validate.yml` were removed; `security-check.yml`
-is retained.
+Legacy Node 18/Yarn reusable workflows and the legacy Docker Hub publisher were
+removed; `security-check.yml` is retained.
 
 | Workflow | Trigger | Stable check/job names | Purpose |
 | --- | --- | --- | --- |
-| `pr-validate.yml` | PRs to `main`, `devel`, or `release/**`; merge queue | `CI / package validation`, `CI / core BDD`, `CI / extended BDD`, `Release PR / prerelease publication`, `Release PR / prerelease BDD` | The single fork-safe, read-only validation workflow for every PR and merge-queue run. `CI / package validation` owns lockfile reproducibility, fast gates, Bun setup, serial AVA package tests, and the package build in one checkout/install; `CI / core BDD` and `CI / extended BDD` run the Docker BDD lanes after package validation. The same file also carries the trusted same-repository `devel`→`main` release chain: `Release PR / prerelease publication` (needs both BDD lanes, awaits `github-packages-prerelease` approval) and `Release PR / prerelease BDD` (needs publication, stays unattended and read-only). |
+| `pr-validate.yml` | Pull requests to `main`, `devel`, or `release/**`; merge queue | CI validation jobs | Fork-safe read-only package, BDD, and admission validation. Canonical trusted `release/**` PRs to `main` keep validation but defer their four rebuilding BDD jobs to downloaded draft-release partitions. |
 | `security-check.yml` | PR, merge queue, pushes to trusted branches, weekly schedule | `Security / repository policy` | Redacted history scanning and repository policy defense in depth. |
 | `devel-validate.yml` | Push to `devel` | `Devel / fast gates` | Same-repository devel fast-gates-only validation: lockfile reproducibility, setup-workspace, security workflow policy, lint, typecheck, release alignment, runtime invariants, and license validation. No package build, package tests, Bun setup, or BDD runs. |
-| `devel-bdd-image.yml` | Same-repository push to `devel` | `Devel / publish BDD Node image` | Publishes the `Dockerfile.bdd-bun` image to GHCR under the exact devel source-SHA tag with BuildKit provenance/SBOM and a GitHub artifact attestation for the pushed digest. |
-| `release-candidate.yml` | Same-repository `release/**` pull requests to `main` | `Release / candidate validation and draft` | Validates release candidates and maintains the draft release record. |
-| `release-pr-automation.yml` | Successful same-repository `Devel validation` push | `Release PR / automation` | Creates or updates the managed `devel` to `main` PR. Merging remains an explicit manual operation after required checks; automation never requests auto-merge or an admin bypass. |
-| `main-release.yml` | Push to `main` | `Release / boundary validation`, `Release / npm publish` | Protected production npm release. |
+| `release-candidate.yml` | Same-repository `release/**` pull requests to `main` | `Release / candidate validation and draft` | Validates release candidates, builds production dist once, maintains the immutable draft release bundle, then downloads and verifies that draft with the producer's release-app token and runs four sequential tarball BDD partitions in the same job. |
+| `release-merge.yml` | Push to `main` | `Complete stable release` | Resolves and verifies the merged release PR's draft bundle, reconstructs `devel`, and creates the tag only after binding checks. |
+| `release-start.yml` | Manual dispatch on `devel` | `Start stable release` | Aligns the first `2.2.0-devel` baseline into `release/2.2.0` and opens the release PR. |
+| `main-release.yml` | Push of `v*.*.*` tag | `Publish stable tag` | Publishes the already-verified GitHub tarballs to npm using protected OIDC; it never rebuilds or repacks. |
 
 ### Audit outcome and intentional overlap
 
-`pr-validate.yml` is the single PR and release-PR validation path. It owns
-normal PR and merge-queue validation (including `release/**` PRs) and, under the
-same-repository `devel`→`main` guard, the narrower trusted prerelease/release
-chain: `prerelease-publication` natively needs both BDD lanes, and
-`prerelease-bdd` natively needs publication. No generic package or AVA
-validation is duplicated by the release jobs; the shared
-`CI / package validation` job covers every run. The managed `devel`→`main` PR
-is created/updated by `release-pr-automation.yml`; merging that PR remains an
-explicit manual operation after required checks pass, and merging triggers the
-protected `main` production release.
-`security-check.yml` intentionally overlaps all paths because it is
-defense-in-depth and must remain independently visible. No deleted workflow has
-a remaining caller. Docker Hub image publication is **deferred to a follow-up
-track** and is not an active workflow or release handoff.
+The release handoff is deliberately linear: `release-start.yml` creates the
+release branch and PR; the guarded `release-candidate.yml` builds dist once and
+maintains a draft containing exactly `manifest.json`, `SHA256SUMS`, and 37
+tarballs; `release-merge.yml` resolves the merged same-repository PR and verifies
+the draft's version, branch, candidate head/tree, and main tree before tagging;
+`main-release.yml` validates the draft manifest before making it public, then
+downloads every asset into a clean directory, performs full embedded-identity
+and checksum verification, and publishes only those tarballs.
 
 ### Concurrency semantics
 
-Ordinary PR and merge-queue runs cancel their stale predecessors for fast
-iteration. An eligible same-repository `devel`→`main` release run uses a
-distinct concurrency group (`release-pr-<number>`) and disables cancellation, so
-a newer release-PR run waits for the active run instead of cancelling a
-publication partway through. The `prerelease-publication` job additionally
-serializes live GitHub Packages publication across release PRs with its own
-`release-prerelease-publication` group and `cancel-in-progress: false`.
+Ordinary pull-request and merge-queue runs may cancel stale predecessors. The
+same-repository candidate run serializes work per release PR and replaces the
+draft assets for that release version, so an updated release head cannot leave
+older assets in place. The merge workflow uses its `main` push concurrency group;
+the tag workflow uses its tag-specific concurrency group. Neither release handoff
+may be cancelled into a partially published npm operation.
 
 ## Handoffs, identities, and artifacts
 
-- PR, merge-queue, and release-PR outputs are disposable: no build artifact,
-  image, package, credential, or promotion capability crosses between jobs.
-  Ordinary PR source jobs (package validation and both BDD lanes) pass
-  `cache-mode: restore-only` to setup-workspace. The credentialed
-  `prerelease-publication` job uses `cache-mode: read-write`; all npm caches
-  contain only package tarballs, never `node_modules`. No build artifact or
-  `node_modules` is handed off between jobs.
-- Release-PR prerelease publication emits a canonical manifest/checksum through
-  trusted same-workflow job outputs. The BDD job accepts exact package versions,
-  validated npm SRI/SHA-256 metadata where available, a generated install lock,
-  and verified image digests only. It does not consume ranges, dist-tags, or
-  workflow artifacts. Source/public identities remain `@scramjet/*`; the
-  prerelease manifest maps every included source package to its repository-owned
-  GitHub Packages identity `@scramjetorg/<unscoped-name>`. Its staged manifests,
-  first-party dependency declarations, compiled JavaScript, and declarations are
-  rewritten only for that prerelease package graph. Public npm release manifests
-  and `@scramjet/*` production publication are unchanged.
-- The `prerelease-publication` job is bound to the `github-packages-prerelease`
-  environment and awaits environment approval before publishing anything. The
-  environment carries **no secrets**; it holds only the
-  `SCRAMJET_RELEASE_PRERELEASE_PUBLISH=true` and
-  `SCRAMJET_GH_PACKAGES_PRERELEASE_PUBLISHER=github-packages` configuration
-  variables that gate live publication and is restricted to `refs/pull/*/merge`.
-  The `prerelease-bdd` job is deliberately **not** bound to the environment: it
-  only consumes verified prereleases and must never block on approval.
-- Prerelease npm authentication uses the automatic GitHub token only
-  (`${{ github.token }}`, equivalent to `GITHUB_TOKEN`), never a PAT or npm
-  token secret. The publication job authenticates with its `packages: write`
-  scope and the BDD job with its `packages: read` scope, so least privilege is
-  preserved by the job permissions rather than by token selection. Both jobs
-  route only `@scramjetorg` to `https://npm.pkg.github.com`; unscoped and
-  external dependencies retain npm's default registry routing. BDD aliases its
-  source `@scramjet/*` imports only after exact mapped-package lock, tarball,
-  integrity, and installed-package identity verification.
-- A trusted `devel` push publishes `ghcr.io/scramjetorg/transform-hub/bdd-node`
-  under `devel-<full-source-sha>`, then creates a GitHub artifact attestation for
-  the pushed digest. Release-PR BDD resolves that tag once with its read-only
-  automatic token, verifies its attestation against the repository, exact devel
-  source SHA/ref, signer workflow, SLSA provenance predicate, and GitHub-hosted
-  runner policy, then converts the verified digest to a `@sha256` image reference.
-  A tag repointed to an unrelated digest fails before BDD starts. The repository
-  variable `SCRAMJET_RELEASE_PRERELEASE_BDD=true` remains the explicit enablement
-  gate; no operator-managed image digest/JSON variable exists.
-- Production `main` publication creates an immutable release identity containing
-  source/package/toolchain information. Existing npm versions may be reused only
-  when their published release identity and final package checksum match exactly.
-  A partial publication must never be resolved by republishing an immutable npm
-  version.
-- Do not upload release manifests, secrets, scanner findings, `node_modules`, or
-  mutable Docker image archives as a handoff. Persist auditable release evidence
-  in the GitHub run and trusted registry metadata instead.
+- Ordinary CI outputs are disposable. No build directory, credential, or mutable
+  package artifact is handed between unrelated jobs.
+- The sole durable release handoff is the draft GitHub Release. Its asset set is
+  exactly `manifest.json`, `SHA256SUMS`, and the 37 recorded package tarballs;
+  extra, missing, duplicate, unsafe, or changed assets fail closed.
+- The candidate workflow builds production dist once, records the release
+  identity and package checksums, and replaces the draft asset set for the
+  release PR. The same candidate job then uses its existing release-app token
+  only for the numeric release-ID download, rejects asset-list/checksum/candidate-identity
+  mismatches, prepares one tarball root, and runs the four BDD partitions
+  sequentially without a package build or workspace/source fallback. The merge
+  workflow validates the draft version, branch, candidate PR head/tree, and
+  resulting main tree before creating the stable tag.
+- The tag workflow validates that binding before making the draft public, then
+  downloads every public asset into a clean directory and verifies checksums and
+  embedded package identity before npm publication. It publishes those exact
+  tarballs in release-wave order, waiting 10 seconds only between waves.
+  Existing npm versions are reused only when name, version, identity digest, and
+  final package checksum match exactly; mismatches fail closed.
+- Do not upload secrets, scanner findings, `node_modules`, or unrelated files as
+  release assets. The manifest is the canonical source/package/toolchain record.
 
 ## Setup, ownership, and recovery
 
@@ -128,11 +90,11 @@ or scanner bypass, follow [SECURITY.md](SECURITY.md).
 ## Remote-only validation and prerequisites
 
 The repository cannot prove GitHub required workflows/rulesets, protected
-environment approvals (including the `github-packages-prerelease` approval on
-`Release PR / prerelease publication` and the `production` environment), npm
-trusted publishers/OIDC, GHCR scoped publishers,
-registry retention, Docker Hub credentials, Actionlint, or Zizmor. Operators
-must validate those controls in their respective services before enabling live
-publication. Docker Hub image release design, credential scope, and
-published-npm-package image construction remain explicitly deferred; do not
-restore the removed legacy Docker Hub publisher as a workaround.
+production-environment approvals, npm trusted publishers/OIDC configuration,
+tag protection, registry retention, Actionlint, or Zizmor. Operators must
+validate those controls in their respective services before enabling live
+publication. The production environment must permit only the trusted tag release
+workflow and require approval before OIDC issuance. The `main` ruleset must
+require the release candidate and merge checks, and tag protection must prevent
+unreviewed tag creation or movement. These remote controls complement the
+workflow's explicit tag-to-main SHA and release-bundle binding checks.

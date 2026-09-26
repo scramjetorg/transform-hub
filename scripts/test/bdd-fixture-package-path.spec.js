@@ -22,6 +22,13 @@ test("resolves generated Python archive references from Docker fixture directori
         resolveFixturePackagePath("data/sequences/python-bdd-packages/python-bdd-unified-simple.tar.gz", { packagesDir }),
         archive
     );
+
+    const topicProducer = path.join(packagesDir, "python-bdd-topic-producer.tar.gz");
+    fs.writeFileSync(topicProducer, "fixture");
+    t.is(
+        resolveFixturePackagePath("data/sequences/python-bdd-packages/python-bdd-topic-producer.tar.gz", { packagesDir }),
+        topicProducer
+    );
 });
 
 test("preserves direct fixture paths and unresolved non-generated references", (t) => {

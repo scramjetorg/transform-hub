@@ -148,6 +148,28 @@ function hasReleasePrGuard(source) {
     );
 }
 
+function hasReleaseCandidateGuard(source) {
+    if (source.includes("||") || source.includes("!")) return false;
+    return (
+        source.includes("github.event.pull_request.head.repo.full_name == github.repository") &&
+        /startsWith\(github\.event\.pull_request\.head\.ref\s*,\s*['"]release\//.test(source) &&
+        /github\.event\.pull_request\.base\.ref\s*==\s*['"]main['"]/.test(source)
+    );
+}
+
+function isReleaseCandidateWorkflow(source, jobs, line) {
+    const job = jobs.find((entry) => line >= entry.startLine && line < entry.endLine);
+    return Boolean(
+        job &&
+            job.ifCondition &&
+            hasReleaseCandidateGuard(job.ifCondition) &&
+            source.includes("release-main.js bundle") &&
+            source.includes("SHA256SUMS") &&
+            source.includes("draft=true") &&
+            source.includes("gh release upload")
+    );
+}
+
 function isGuardedJob(jobs, line) {
     const job = jobs.find((j) => line >= j.startLine && line < j.endLine);
     return !!job && !!job.ifCondition && hasReleasePrGuard(job.ifCondition);
@@ -185,13 +207,13 @@ function checkWorkflowSource(source, file) {
             if (entry.key === "id-token") {
                 errors.push(makeError(file, entry.line, "PR_OIDC_PERMISSION", "pull_request workflows must not grant id-token: write."));
             } else if (entry.key === "packages") {
-                const owningJob = jobs.find(
-                    (job) => entry.line >= job.startLine && entry.line < job.endLine
-                );
+                const owningJob = jobs.find((job) => entry.line >= job.startLine && entry.line < job.endLine);
                 const hasJobGuard = owningJob && owningJob.ifCondition && hasReleasePrGuard(owningJob.ifCondition);
                 if (!hasJobGuard) {
                     errors.push(makeError(file, entry.line, "PR_PUBLISH_PERMISSION", "pull_request publishing requires the explicit same-repository devel-to-main release guard."));
                 }
+            } else if (entry.key === "contents" && isReleaseCandidateWorkflow(source, jobs, entry.line)) {
+                continue;
             } else if (entry.key !== "packages") {
                 errors.push(makeError(file, entry.line, "PR_WRITE_PERMISSION", `pull_request workflows must not grant ${entry.key}: write.`));
             }

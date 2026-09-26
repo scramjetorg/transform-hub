@@ -31,6 +31,7 @@ const { checkBddMemorySkip } = require("./lib/bdd-memory-guard.js");
 const { parseChunkMemoryPolicy, parseExpectedComponents, validateEnforcePrerequisites } = require("./lib/bdd-chunk-memory-policy.js");
 const { parseMemoryLimit, evaluateChunkMemoryMetrics, formatChunkMemoryDiagnostics } = require("./lib/bdd-chunk-memory-policy.js");
 const { requestDockerStats } = require("./lib/docker-memory.js");
+const { validateDiagnosticCapacity, validateDiagnosticMemoryGuard } = require("./lib/bdd-memlab.js");
 
 const { reportLeakedProcesses, cleanupTempDirs } = require("./lib/bdd-cleanup.js");
 const { dockerOutcomeDiagnostics } = require("./lib/bdd-outcome-diagnostics.js");
@@ -46,6 +47,16 @@ const BDD_DOCKER_CPUS = cpuLimit();
 const BDD_TIMEOUT_MS = timeoutMs();
 const BDD_GRACE_MS = graceMs();
 const CHUNK_MEMORY_POLICY = parseChunkMemoryPolicy();
+const memlabEnabled = process.env.SCRAMJET_BDD_MEMLAB === "1";
+if (memlabEnabled) {
+    validateDiagnosticMemoryGuard(process.env);
+    validateDiagnosticCapacity(process.env);
+}
+if (memlabEnabled && (!process.env.SCRAMJET_BDD_MEMLAB_ARTIFACT_HOST_DIR || !path.isAbsolute(process.env.SCRAMJET_BDD_MEMLAB_ARTIFACT_HOST_DIR))) {
+    throw new Error("SCRAMJET_BDD_MEMLAB_ARTIFACT_HOST_DIR must be an absolute host artifact directory");
+}
+// Cucumber's eagerly loaded step definitions require a 512 MiB old-space cap.
+const BDD_MEMORY_GUARD_MAX_OLD_SPACE_SIZE = 512;
 
 validateEnforcePrerequisites({
     policy: CHUNK_MEMORY_POLICY,
@@ -56,6 +67,8 @@ validateEnforcePrerequisites({
 const TIMEOUT_EXIT_CODE = 124;
 const MISSING_DEPENDENCY_EXIT_CODE = 127;
 const repoRoot = path.resolve(__dirname, "..");
+const tarballRoot = process.env.SCRAMJET_TARBALL_BDD_ROOT ? path.resolve(process.env.SCRAMJET_TARBALL_BDD_ROOT) : null;
+const tarballRootMode = Boolean(tarballRoot);
 
 const separatorIndex = process.argv.indexOf("--");
 const runnerArgs = separatorIndex === -1 ? process.argv.slice(2) : process.argv.slice(2, separatorIndex);
@@ -66,6 +79,10 @@ const failPrereq = (message) => {
     process.stderr.write(`[run-bdd-docker] ${message}\n`);
     process.exit(MISSING_DEPENDENCY_EXIT_CODE);
 };
+
+if (tarballRootMode && (!fs.existsSync(tarballRoot) || !fs.existsSync(path.join(tarballRoot, "release-tarball-bdd-record.json")))) {
+    failPrereq("SCRAMJET_TARBALL_BDD_ROOT must point to a prepared release tarball BDD root");
+}
 
 const dockerVersionProbe = spawnSync("docker", ["--version"], { stdio: ["ignore", "ignore", "ignore"] });
 
@@ -116,6 +133,13 @@ const ownership = createOwnership(process.env, { artifactRoot: "/work-tmp" });
 const hostOwnershipRoot = path.join(require("node:os").tmpdir(), "scramjet-bdd-runs", encodePart(ownership.runId), "chunks", encodePart(ownership.chunkId));
 fs.mkdirSync(hostOwnershipRoot, { recursive: true });
 const tmpDir = fs.mkdtempSync(path.join(hostOwnershipRoot, "runner-"));
+const bddHarnessDir = path.join(hostOwnershipRoot, "bdd");
+const bddNodeModulesDir = path.join(hostOwnershipRoot, "bdd-node_modules");
+if (tarballRootMode) {
+    fs.cpSync(path.join(repoRoot, "bdd"), bddHarnessDir, { recursive: true });
+    fs.mkdirSync(bddNodeModulesDir);
+    fs.symlinkSync("/work/node_modules/@scramjet", path.join(bddNodeModulesDir, "@scramjet"), "dir");
+}
 const containerName = `bdd-runner-${ownership.runId}-${ownership.chunkId}-${crypto.randomBytes(3).toString("hex")}`;
 
 const shellEscape = (arg) => `'${String(arg).replace(/'/g, "'\\''")}'`;
@@ -132,6 +156,10 @@ const collectEnvForwardArgs = () => {
         if (typeof value !== "string") {
             continue;
         }
+
+        // The checkout's ../packages path is never a valid tarball-mode input.
+        // The inner command supplies only runner-prepared writable fixture paths.
+        if (tarballRootMode && (name === "PACKAGES_DIR" || name === "SCRAMJET_SPAWN_JS" || name === "SCRAMJET_SPAWN_TS" || name === "NODE_PATH" || name === "SCRAMJET_TARBALL_BDD_ROOT")) continue;
 
         const allowed = ENV_ALLOWLIST_EXACT.has(name) || ENV_ALLOWLIST_PREFIXES.some((prefix) => name.startsWith(prefix));
 
@@ -160,14 +188,19 @@ dockerRunArgs.push(
     `${process.getuid()}:${process.getgid()}`,
     "--group-add",
     dockerGid,
-    "-v",
-    `${repoRoot}:/work`,
+    ...(tarballRootMode ? [
+        "-v", `${tarballRoot}:/work:ro`,
+        "-v", `${repoRoot}:/repo:ro`,
+        "-v", `${bddHarnessDir}:/repo/bdd`,
+        "-v", `${bddNodeModulesDir}:/repo/bdd/node_modules:ro`,
+    ] : ["-v", `${repoRoot}:/work`]),
     "-v",
     "/var/run/docker.sock:/var/run/docker.sock",
     "-v",
     `${tmpDir}:/work-tmp`,
+    ...(memlabEnabled ? ["-v", `${process.env.SCRAMJET_BDD_MEMLAB_ARTIFACT_HOST_DIR}:/work-memlab`] : []),
     "-w",
-    "/work",
+    tarballRootMode ? "/repo" : "/work",
     "-e",
     "HOME=/work-tmp",
     "-e",
@@ -193,6 +226,9 @@ dockerRunArgs.push(
         .flat()
 );
 dockerRunArgs.push(...collectEnvForwardArgs());
+if (tarballRootMode) {
+    dockerRunArgs.push("-e", "SCRAMJET_TARBALL_BDD_ROOT=/work", "-e", "SCRAMJET_SPAWN_JS=", "-e", "SCRAMJET_SPAWN_TS=", "-e", "NODE_PATH=");
+}
 dockerRunArgs.push("-e", "BDD_CHUNK_MEMORY_REPORT_FILE=/work-tmp/chunk-memory.json");
 dockerRunArgs.push("-e", "BDD_CHUNK_MEMORY_READY_FILE=/work-tmp/chunk-ready.json");
 dockerRunArgs.push("-e", "BDD_CHUNK_TIMING_REPORT_FILE=/work-tmp/chunk-timing.json");
@@ -204,7 +240,11 @@ dockerRunArgs.push("-e", "SCRAMJET_BDD_CHUNK_TIMING=1");
 // forwarded by collectEnvForwardArgs()) and adds --expose-gc when the guard
 // is active.
 if (isBddMemoryGuardEnabled()) {
-    dockerRunArgs.push("-e", `NODE_OPTIONS=${bddNodeOptions()}`);
+    dockerRunArgs.push("-e", `NODE_OPTIONS=${bddNodeOptions({ maxOldSpaceSize: BDD_MEMORY_GUARD_MAX_OLD_SPACE_SIZE })}`);
+}
+if (memlabEnabled) {
+    dockerRunArgs.push("-e", `NODE_OPTIONS=${`${bddNodeOptions({ maxOldSpaceSize: BDD_MEMORY_GUARD_MAX_OLD_SPACE_SIZE })} --require=/work/scripts/lib/bdd-memlab-preload.cjs --expose-gc`.trim()}`);
+    dockerRunArgs.push("-e", "SCRAMJET_BDD_MEMLAB_ARTIFACT_DIR=/work-memlab");
 }
 
 const escapedPassthrough = passthroughArgs.map(shellEscape).join(" ");
@@ -214,13 +254,15 @@ const fixturePacking = [
     "OUT_DIR=/work-tmp/bdd-packages node scripts/pack-bdd-fixtures.js",
     "OUT_DIR=/work-tmp/python-bdd-packages node scripts/pack-python-bdd-fixtures.js"
 ].join(" && ");
-const runtimePreflight = ["node --version", "npm --version", "bun --version"].join(" && ");
+const runtimePreflight = ["node --version", "npm --version", "bun --version", "python3 --version 2>&1 | grep -E '^Python 3\\.14\\.'"].join(" && ");
 const packageDirs =
     "PACKAGES_DIR=/work-tmp/appcontext-packages/:/work-tmp/python-bdd-packages/:/work-tmp/bdd-packages/ SCRAMJET_BDD_SIMPLE_STDIO_ARCHIVE=/work-tmp/simple-stdio.tar.gz";
+const bddPrefix = tarballRootMode ? "cd /repo && " : "";
+const preparedCommand = `${runtimePreflight} && ${fixturePacking}`;
 const innerCommand =
     escapedPassthrough.length > 0
-        ? `${runtimePreflight} && ${fixturePacking} && ${packageDirs} PATH=/work/node_modules/.bin:$PATH npm --prefix ./bdd run test:bdd -- ${escapedPassthrough}`
-        : `${runtimePreflight} && ${fixturePacking} && ${packageDirs} PATH=/work/node_modules/.bin:$PATH npm --prefix ./bdd run test:bdd`;
+        ? `${bddPrefix}${preparedCommand} && ${packageDirs} PATH=/work/node_modules/.bin:$PATH npm --prefix ./bdd run test:bdd -- ${escapedPassthrough}`
+        : `${bddPrefix}${preparedCommand} && ${packageDirs} PATH=/work/node_modules/.bin:$PATH npm --prefix ./bdd run test:bdd`;
 
 dockerRunArgs.push(BDD_NODE_IMAGE, "sh", "-c", innerCommand);
 

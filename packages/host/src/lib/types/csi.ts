@@ -4,6 +4,7 @@ import {
     WritableStream,
     EventMessageData,
     SetMessageData,
+    LogLevel,
     StopSequenceMessageData,
     InstanceStats,
     DownstreamStreamsConfig,
@@ -85,6 +86,7 @@ export interface ICSI extends TypedEmitter<CSIEvents> {
 
     /** POST “/_set” */
     set(payload: SetMessageData): Promise<void>;
+    setLogLevel(logLevel: LogLevel): Promise<void>;
 
     /** POST “/_stop” */
     stop(opts: StopSequenceMessageData): Promise<void>;

@@ -25,6 +25,7 @@ import type { RunSequenceHostClient } from "../run-sequence";
 import type { BootstrapOverrides, ResolvedSequenceFunctions } from "../types";
 import {
     getMemoryUsage,
+    applySetLogLevel,
     legacyExitFilePath,
     loadSequenceModule,
     makeOutputDiscard,
@@ -36,7 +37,7 @@ import {
     writeProcessExitFile
 } from "../utils";
 
-export { buildAppContext, buildSequenceContext, legacyExitFilePath, loadSequenceModule, resolveSequenceFunctions, wireControlStream, writeLegacyExitFileSecure };
+export { applySetLogLevel, buildAppContext, buildSequenceContext, legacyExitFilePath, loadSequenceModule, resolveSequenceFunctions, wireControlStream, writeLegacyExitFileSecure };
 
 export type { BootstrapOverrides, ControlDispatch, SequenceLocalContext } from "../types";
 
@@ -348,6 +349,7 @@ export async function bootstrap(overrides: BootstrapOverrides = {}): Promise<num
                 resolveKilled();
             },
             onEvent: (data) => emitter.emit(data.eventName, data.message),
+            onSet: (data) => applySetLogLevel(logger, data),
             onStorage: (data) => {
                 for (const [key, value] of Object.entries(data.values)) {
                     context.localStorage.handleBroadcastUpdate({ key, value });
