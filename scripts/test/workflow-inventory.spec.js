@@ -64,6 +64,11 @@ test("release candidate BDD partitions consume only the verified draft tarball r
     const source = readFileSync(resolve(workflowsDir, "release-candidate.yml"), "utf8");
     const bdd = source.slice(source.indexOf("  release-bdd:\n"), source.indexOf("\n\n  release-bdd-required:"));
     t.true(bdd.includes("needs: [candidate]"));
+    t.true(bdd.includes("id: bdd-app-token"));
+    t.true(bdd.includes("actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1"));
+    t.true(bdd.includes("permission-contents: write"));
+    t.true(bdd.includes("GH_TOKEN: ${{ steps.bdd-app-token.outputs.token }}"));
+    t.false(bdd.includes("GH_TOKEN: ${{ github.token }}"));
     t.true(bdd.includes("--repository \"$GITHUB_REPOSITORY\""));
     t.true(bdd.includes("--release-id '${{ needs.candidate.outputs.release_id }}'"));
     t.true(bdd.includes("--output \"$RUNNER_TEMP/release-bdd-assets\""));
