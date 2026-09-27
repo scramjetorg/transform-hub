@@ -42,7 +42,6 @@ export function getRunnerTransportEnv(
     const trustBundle = buildRunnerTrustBundle(sthConfig);
 
     if (
-        !sthConfig.verser2.enabled ||
         !runnerHost?.enabled ||
         !runnerHost.host.publicUrl.trim() ||
         !trustBundle

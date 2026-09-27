@@ -126,7 +126,7 @@ test("defaultConfig has base STH fields", t => {
     t.is(defaultConfig.logLevel, "TRACE");
     t.false(defaultConfig.logColors);
     t.is(defaultConfig.runtimeAdapter, "detect");
-    t.true(defaultConfig.verser2.enabled);
+    t.false(defaultConfig.verser2.enabled);
     t.is(defaultConfig.verser2.hostUrl, "https://127.0.0.1:2443");
     t.is(defaultConfig.verser2.runnerHost?.host.bindPort, 2445);
     t.is(defaultConfig.verser2.runnerHost?.host.publicUrl, "https://127.0.0.1:2445");

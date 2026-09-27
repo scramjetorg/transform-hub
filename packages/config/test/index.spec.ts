@@ -97,6 +97,16 @@ test("masks secret descriptor paths", t => {
     t.deepEqual(masked, { secret: "********", public: "ok" });
 });
 
+test("public STH config masks runner and control-ingress credentials", t => {
+    const config = new ConfigService().getConfig();
+    config.verser2.runnerHost!.registration.token = "runner-secret";
+    config.verser2.controlIngress!.host.tls.passphrase = "passphrase-secret";
+    config.verser2.controlIngress!.registration.token = "ingress-secret";
+
+    const publicConfig = ConfigService.getConfigInfo(config) as any;
+    t.notRegex(JSON.stringify(publicConfig), /runner-secret|passphrase-secret|ingress-secret/);
+});
+
 test("parses cli options without exposing parser types", t => {
     const registry = createOptionRegistry()
         .option({ name: "enabled", type: "boolean" })

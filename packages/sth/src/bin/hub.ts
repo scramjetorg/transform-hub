@@ -11,14 +11,16 @@ import {
     sthOutboundVerser2Options,
     z,
     ConfigService,
-    getRuntimeAdapterOption
+    getRuntimeAdapterOption,
+    decodeVerser2ConnectionBundle
 } from "@scramjet/config";
 import { DeepPartial, StorageAdapterType } from "@scramjet/runtime-types";
 import { STHCommandOptions, STHConfiguration } from "@scramjet/api-types";
-import { dirname, resolve } from "path";
+import { dirname, resolve, join } from "path";
+import { mkdirSync, writeFileSync } from "fs";
 import { HostError } from "@scramjet/model";
 import { inspect } from "util";
-import { getValidStorageAdapters, Host } from "@scramjet/host";
+import { getValidStorageAdapters, Host, validateSthRunnerPortCollisions } from "@scramjet/host";
 import { FileBuilder, processCommanderRunnerEnvs } from "@scramjet/utility";
 import { constants } from "os";
 import { augmentOptions, registerRuntimeAdapterOption } from "@scramjet/adapters";
@@ -91,6 +93,12 @@ const commonOptions: ConfigOptionDescriptor[] = [
     ...sthOutboundVerser2Options
 ];
 
+function validatePort(value: unknown, name: string): void {
+    if (value === undefined || value === null) return;
+    const port = typeof value === "number" ? value : Number.NaN;
+    if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error(`${name} must be an integer between 1 and 65535`);
+}
+
 const createBaseRegistry = () => {
     const registry = createOptionRegistry();
 
@@ -145,6 +153,31 @@ const options = parseCliOptions({ argv: process.argv, options: finalRegistry.get
 (async () => {
     const configService = new ConfigService();
     const resolveFile = (path: string) => path && resolve(process.cwd(), path);
+    const configContents = options.config ? FileBuilder(options.config).read() as DeepPartial<STHConfiguration> & { manager?: { connectionBundle?: unknown } } : undefined;
+
+    // `manager.connectionBundle` is the semantic managed-Sth input. Keep the
+    // transport details out of operator-facing config and materialise only the
+    // public CA locally. Mixing it with transport fields is ambiguous.
+    if (configContents?.manager?.connectionBundle) {
+        if (configContents.verser2 && Object.keys(configContents.verser2 as Record<string, unknown>).length) {
+            throw new Error("manager.connectionBundle cannot be combined with explicit verser2 transport fields");
+        }
+        const bundle = decodeVerser2ConnectionBundle(configContents.manager.connectionBundle);
+        const identityDir = resolve(process.cwd(), configService.getConfig().verser2.runnerHost?.identityDir || ".scramjet");
+        mkdirSync(identityDir, { recursive: true, mode: 0o700 });
+        const caFile = join(identityDir, `manager-ca-${bundle.trust.sha256Fingerprint}.pem`);
+        writeFileSync(caFile, bundle.trust.caPem, { mode: 0o644 });
+        const credentials = bundle.credentials && "certFile" in bundle.credentials
+            ? { certFile: bundle.credentials.certFile, keyFile: bundle.credentials.keyFile }
+            : bundle.credentials && "pfxFile" in bundle.credentials ? { pfxFile: bundle.credentials.pfxFile } : {};
+        configService.update({ verser2: {
+            enabled: true,
+            hostUrl: bundle.publicEndpoint.url,
+            broker: { peerId: bundle.brokerId, targetDomain: bundle.ingress.routeDomain },
+            guest: { peerId: `${bundle.profileName}.guest`, routeDomain: bundle.ingress.routeDomain },
+            tls: { caFile, ...credentials }
+        } });
+    }
     const verser2 = loadConfig<{ verser2: STHConfiguration["verser2"] }>({
         schema: z.object({ verser2: sthOutboundVerser2ConfigSchema }).passthrough() as z.ZodType<{ verser2: STHConfiguration["verser2"] }>,
         defaults: { verser2: configService.getConfig().verser2 },
@@ -154,17 +187,25 @@ const options = parseCliOptions({ argv: process.argv, options: finalRegistry.get
         options: sthOutboundVerser2Options
     }).config.verser2;
 
+    // Validate the two independently configured ingress forms before the
+    // shorthand apiPort is materialised into controlIngress.
+    if (verser2.apiPort !== undefined && configContents?.verser2?.controlIngress?.enabled) {
+        validateSthRunnerPortCollisions(verser2.apiPort, undefined, configContents.verser2.controlIngress as any);
+    }
+
+    validatePort(verser2.apiPort, "verser2-api-port");
+
     if (options.config) {
         const configFile = FileBuilder(options.config);
 
         if (!(configFile.exists() && configFile.isReadable())) throw new Error("Unable to read config file");
-        const configContents = configFile.read() as DeepPartial<STHConfiguration>;
+        const fileContents = configFile.read() as DeepPartial<STHConfiguration>;
 
-        if (configContents.startupConfig && !options.startupConfig && typeof configContents.startupConfig === "string") {
-            (configContents as any).startupConfig = resolve(dirname(resolve(process.cwd(), options.config)), configContents.startupConfig);
+        if (fileContents.startupConfig && !options.startupConfig && typeof fileContents.startupConfig === "string") {
+            (fileContents as any).startupConfig = resolve(dirname(resolve(process.cwd(), options.config)), fileContents.startupConfig);
         }
 
-        configService.update(configContents);
+        configService.update(fileContents);
     }
     if (options.runnerEnvs) {
         configService.update({ runnerEnvs: processCommanderRunnerEnvs(options.runnerEnvs) });
@@ -215,7 +256,8 @@ const options = parseCliOptions({ argv: process.argv, options: finalRegistry.get
             port: options.port,
             hostname: options.hostname,
             id: options.id,
-            federationControl: options.federationControl
+            federationControl: options.federationControl,
+            legacyApiEnabled: options.port !== undefined || configContents?.host?.port !== undefined
         },
         runtimeAdapter: getRuntimeAdapterOption(options),
         localStorageAdapter: options.localStorageAdapter as StorageAdapterType,
@@ -268,7 +310,26 @@ const options = parseCliOptions({ argv: process.argv, options: finalRegistry.get
             pass: options.couchdbPass
         },
         strictPlatformConnection: options.strictPlatformConnection,
-        verser2
+        verser2: {
+            ...verser2,
+            ...(!verser2.apiPort && !configContents?.verser2?.controlIngress ? {
+                controlIngress: { ...verser2.controlIngress, enabled: false }
+            } : {}),
+            ...(verser2.apiPort ? {
+                controlIngress: {
+                    ...(verser2.controlIngress || {}),
+                    enabled: true,
+                    generatedApiPort: true,
+                    host: {
+                        ...(verser2.controlIngress?.host || {}),
+                        bindHost: "127.0.0.1",
+                        bindPort: verser2.apiPort,
+                        publicUrl: `https://127.0.0.1:${verser2.apiPort}`,
+                        tls: { ...(verser2.controlIngress?.host?.tls || {}), mtlsRequired: true }
+                    }
+                }
+            } : {})
+        }
     });
 
     await configService.selectRuntimeAdapter();

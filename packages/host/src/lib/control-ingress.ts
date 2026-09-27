@@ -4,11 +4,37 @@ import { RouterDefinition } from "@scramjet/api-router";
 import { createVerserHost, VerserHost, VerserHostOptions } from "@signicode/verser2-host";
 import { deriveSthRunnerVerser2HostIdentity, resolveSthRunnerVerser2HostConfig } from "./runner-verser2-host-config";
 
-export type HostControlIngressConfig = STHRunnerVerser2HostConfig & { guest: { peerId: string; routeDomain: string } };
+export type HostControlIngressConfig = STHRunnerVerser2HostConfig & { generatedApiPort?: boolean; guest: { peerId: string; routeDomain: string } };
 type ControlHost = Pick<VerserHost, "start" | "attachLocalGuest"> & { stop?: () => Promise<void>; close?: () => Promise<void> };
 
 const DEFAULT_CONTROL_INGRESS_PORT = 2444;
 const LEGACY_RUNNER_CONTROL_INGRESS_PORT = 2446;
+
+export function validateSthRunnerPortCollisions(
+    apiPort: number | undefined,
+    runnerHost: STHRunnerVerser2HostConfig | undefined,
+    controlIngress: HostControlIngressConfig | undefined
+): void {
+    if (runnerHost?.enabled && apiPort === runnerHost.host.bindPort) {
+        throw new Error(`verser2-api-port ${apiPort} conflicts with the enabled runner Host listener`);
+    }
+
+    if (apiPort !== undefined && controlIngress?.enabled && !controlIngress.generatedApiPort && apiPort === controlIngress.host.bindPort) {
+        throw new Error(`verser2-api-port ${apiPort} conflicts with the explicitly enabled control ingress`);
+    }
+
+    if (!runnerHost?.enabled || !controlIngress?.enabled || runnerHost.host.bindPort !== controlIngress.host.bindPort) return;
+
+    // Keep the explicit legacy 2444 topology compatible; startup relocates its
+    // default control ingress to 2446 before opening either listener.
+    if (
+        runnerHost.host.bindPort === DEFAULT_CONTROL_INGRESS_PORT &&
+        controlIngress.host.bindHost === "127.0.0.1" &&
+        controlIngress.host.publicUrl === "https://127.0.0.1:2444"
+    ) return;
+
+    throw new Error(`runner Host listener port ${runnerHost.host.bindPort} conflicts with the enabled control ingress`);
+}
 
 /**
  * Keeps the documented default topology conflict-free for existing Hub
@@ -22,6 +48,7 @@ export function resolveLegacyRunnerControlIngressConflict(
     controlIngress: HostControlIngressConfig | undefined
 ): HostControlIngressConfig | undefined {
     if (
+        controlIngress?.generatedApiPort ||
         !runnerHost?.enabled ||
         !controlIngress?.enabled ||
         runnerHost.host.bindPort !== DEFAULT_CONTROL_INGRESS_PORT ||

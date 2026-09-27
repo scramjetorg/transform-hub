@@ -71,6 +71,8 @@ export type HostConfig = {
     instancesServerPort: number;
     infoFilePath: string;
     federationControl: boolean;
+    /** Explicit legacy HTTP/v1 listener opt-in (the CLI --port switch). */
+    legacyApiEnabled?: boolean;
 };
 
 // ---------------------------------------------------------------------------
@@ -173,9 +175,13 @@ export type ManagerVerser2Config = {
 
 export type STHOutboundVerser2Config = {
     enabled: boolean;
+    /** Optional loopback-only native v2 API ingress port. */
+    apiPort?: number;
     hostUrl: string;
     runnerHost?: STHRunnerVerser2HostConfig;
     controlIngress?: STHRunnerVerser2HostConfig & {
+        /** Internal marker for the generated --verser2-api-port ingress. */
+        generatedApiPort?: boolean;
         guest: { peerId: string; routeDomain: string };
     };
     broker: {

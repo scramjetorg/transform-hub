@@ -69,7 +69,7 @@ import { Verser2RunnerBroker } from "./runner-transport";
 import { attachSthLocalRunnerVerser2Peers, getRunnerVerser2HostUpstreamParams } from "./runner-verser2-host-peers";
 import { registerNativeSth } from "./native-verser2-registration";
 import { PlatformControlSession } from "./platform-control-session";
-import { resolveLegacyRunnerControlIngressConflict, startHostControlIngress, stopHostControlIngress } from "./control-ingress";
+import { resolveLegacyRunnerControlIngressConflict, startHostControlIngress, stopHostControlIngress, validateSthRunnerPortCollisions } from "./control-ingress";
 
 import { getStorageAdapter } from "./local-storage/utils";
 import { readStartupConfig } from "./startup-config";
@@ -255,6 +255,17 @@ export class Host implements IHost, IComponent {
      */
     constructor(apiServer: APIExpose, sthConfig: STHConfiguration) {
         this.config = sthConfig;
+        // Library callers historically used host.port directly (not the CLI),
+        // so preserve that explicit compatibility signal while the stock
+        // configuration remains native-only.
+        this.config.host.legacyApiEnabled ||= this.config.host.port !== 8000;
+        if (this.config.host.legacyApiEnabled && this.config.verser2.controlIngress &&
+            this.config.verser2.runnerHost?.host.bindPort === 2444 &&
+            this.config.verser2.controlIngress.host.bindPort === 2444) {
+            // Preserve the pre-native library topology for callers that
+            // explicitly selected the legacy runner port.
+            this.config.verser2.controlIngress.enabled = true;
+        }
         this.publicConfig = ConfigService.getConfigInfo(sthConfig);
         this.sequenceStore = new SequenceStore();
         this.localStorage = getStorageAdapter(sthConfig);
@@ -271,7 +282,7 @@ export class Host implements IHost, IComponent {
 
         prettyLog.pipe(process.stdout);
 
-        if (isDevelopment) this.logger.info("config", this.config);
+        if (isDevelopment) this.logger.info("config", this.publicConfig);
 
         this.logger.info("Node version:", process.version);
         this.logger.info(`Local Storage Adapter: ${sthConfig.localStorageAdapter}`);
@@ -857,7 +868,18 @@ export class Host implements IHost, IComponent {
             });
         });
 
-        await this.startListening();
+        validateSthRunnerPortCollisions(
+            this.config.verser2.apiPort,
+            this.config.verser2.runnerHost,
+            this.config.verser2.controlIngress
+        );
+
+        // The native bootstrap deliberately does not expose the legacy HTTP/v1
+        // server. It is enabled only by the explicit CLI --port compatibility
+        // switch (or by callers setting legacyApiEnabled themselves).
+        if (this.config.host.legacyApiEnabled) {
+            await this.startListening();
+        }
         const controlIngress = resolveLegacyRunnerControlIngressConflict(
             this.config.verser2.runnerHost,
             this.config.verser2.controlIngress
@@ -1623,6 +1645,10 @@ export class Host implements IHost, IComponent {
         this.logger.trace("Stopping API server");
 
         await new Promise<void>((res, _rej) => {
+            if (!this.config.host.legacyApiEnabled && !this.api.server.listening) {
+                res();
+                return;
+            }
             this.api.server
                 .once("close", () => {
                     this.logger.info("API server stopped");

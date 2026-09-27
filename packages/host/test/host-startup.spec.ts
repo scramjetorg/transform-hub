@@ -2,6 +2,7 @@ import test from "ava";
 import { InstanceStatus } from "@scramjet/symbols";
 import { Host } from "../src/lib/host";
 import { InstancesStore } from "../src/lib/instance-store";
+import { CSIDispatcher } from "../src/lib/csi-dispatcher";
 
 test("required restart cleanup removes the canonical instance, name, and RPC route first", t => {
     const store = new InstancesStore();
@@ -71,4 +72,12 @@ test("live Hub log-level changes do not alter required startup runner defaults",
 
     t.is(host.buildStartupRunnerConfig(sequence, startupConfig).logLevel, "WARN");
     t.is(host.buildStartupRunnerConfig(sequence, { id: "sequence" }).logLevel, "INFO");
+});
+
+test("local runner dispatch transport does not depend on outbound verser2", t => {
+    const dispatcher = Object.create(CSIDispatcher.prototype) as any;
+    dispatcher.STHConfig = { verser2: { enabled: false, runnerHost: { enabled: true } } };
+    dispatcher.runnerBrokerProvider = () => ({}) as any;
+
+    t.true(dispatcher.usesSthLocalRunnerVerser2Transport());
 });

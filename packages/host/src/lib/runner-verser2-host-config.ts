@@ -24,6 +24,8 @@ const GENERATED_CA_CERT_FILE = "ca.pem";
 const GENERATED_CA_KEY_FILE = "ca-key.pem";
 const GENERATED_SERVER_CERT_FILE = "server.pem";
 const GENERATED_SERVER_KEY_FILE = "server-key.pem";
+const GENERATED_CLIENT_CERT_FILE = "client.pem";
+const GENERATED_CLIENT_KEY_FILE = "client-key.pem";
 const AUTO_RUNNER_BROKER_PEER_ID = "auto";
 const UNSAFE_DEFAULT_RUNNER_BROKER_PEER_ID = "sth.default.runner.broker";
 
@@ -52,6 +54,10 @@ function generatedIdentityFiles(identityDir: string) {
         certFile: join(identityDir, GENERATED_SERVER_CERT_FILE),
         keyFile: join(identityDir, GENERATED_SERVER_KEY_FILE)
     };
+}
+
+function generatedClientIdentityFiles(identityDir: string) {
+    return { certFile: join(identityDir, GENERATED_CLIENT_CERT_FILE), keyFile: join(identityDir, GENERATED_CLIENT_KEY_FILE) };
 }
 
 async function assertPrivateFileMode(file: string): Promise<void> {
@@ -147,6 +153,29 @@ async function generateIdentityFiles(config: STHRunnerVerser2HostConfig, files: 
     await writeFile(files.caKeyFile, pem("PRIVATE KEY", await webcrypto.subtle.exportKey("pkcs8", caKeys.privateKey)), { mode: 0o600 });
     await writeFile(files.certFile, server.toString("pem"), { mode: 0o644 });
     await writeFile(files.keyFile, pem("PRIVATE KEY", await webcrypto.subtle.exportKey("pkcs8", serverKeys.privateKey)), { mode: 0o600 });
+
+    // Keep the local API client identity separate from the server identity.
+    // It is intentionally generated from the same private CA, but is never
+    // substituted for the server certificate by the ingress itself.
+    const clientFiles = generatedClientIdentityFiles(config.identityDir);
+    const clientKeys = await generateKeyPair();
+    const clientPublicKey = await PublicKey.create(clientKeys.publicKey, webcrypto as unknown as Crypto);
+    const client = await X509CertificateGenerator.create({
+        issuer: ca.subject,
+        subject: "CN=Scramjet STH Local API Client",
+        publicKey: clientPublicKey,
+        signingKey: caKeys.privateKey,
+        notBefore: now,
+        notAfter: notAfterDate,
+        signingAlgorithm: { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
+        extensions: [
+            new BasicConstraintsExtension(false, undefined, true),
+            new KeyUsagesExtension(KeyUsageFlags.digitalSignature, true),
+            new ExtendedKeyUsageExtension([ExtendedKeyUsage.clientAuth])
+        ]
+    }, webcrypto as unknown as Crypto);
+    await writeFile(clientFiles.certFile, client.toString("pem"), { mode: 0o644 });
+    await writeFile(clientFiles.keyFile, pem("PRIVATE KEY", await webcrypto.subtle.exportKey("pkcs8", clientKeys.privateKey)), { mode: 0o600 });
 }
 
 function samePublicKey(cert: X509Certificate, privatePem: string): boolean {
@@ -190,6 +219,8 @@ export type GeneratedSthRunnerVerser2HostIdentity = {
     caFile: string;
     certFile: string;
     keyFile: string;
+    clientCertFile: string;
+    clientKeyFile: string;
 };
 
 export async function ensureGeneratedSthRunnerVerser2HostIdentity(config: STHRunnerVerser2HostConfig): Promise<GeneratedSthRunnerVerser2HostIdentity> {
@@ -218,12 +249,19 @@ export async function ensureGeneratedSthRunnerVerser2HostIdentity(config: STHRun
 
     await assertPrivateFileMode(files.caKeyFile);
     await assertPrivateFileMode(files.keyFile);
+    const clientFiles = generatedClientIdentityFiles(config.identityDir);
+    if (!existsSync(clientFiles.certFile) || !existsSync(clientFiles.keyFile)) {
+        await generateIdentityFiles(config, files);
+    }
+    await assertPrivateFileMode(clientFiles.keyFile);
 
     return {
         ca: await readFile(files.caFile, "utf8"),
         caFile: files.caFile,
         certFile: files.certFile,
         keyFile: files.keyFile
+        , clientCertFile: clientFiles.certFile
+        , clientKeyFile: clientFiles.keyFile
     };
 }
 

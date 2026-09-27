@@ -43,7 +43,8 @@ export const defaultConfig: STHConfiguration = {
         instancesServerPort: 8001,
         hostname: "::",
         port: 8000,
-        federationControl: false
+        federationControl: false,
+        legacyApiEnabled: false
     },
     instanceRequirements: {
         cpuLoad: 10,
@@ -72,7 +73,7 @@ export const defaultConfig: STHConfiguration = {
     exitWithLastInstance: false,
     strictPlatformConnection: false,
     verser2: {
-        enabled: true,
+        enabled: false,
         hostUrl: "https://127.0.0.1:2443",
         runnerHost: {
             enabled: true,
@@ -93,7 +94,7 @@ export const defaultConfig: STHConfiguration = {
             }
         },
         controlIngress: {
-            enabled: true,
+            enabled: false,
             identityDir: join(homedir(), ".scramjet", "verser2-host-control-ingress"),
             host: {
                 bindHost: "127.0.0.1",

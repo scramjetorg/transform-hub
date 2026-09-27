@@ -83,6 +83,7 @@ export const managerVerser2ConfigSchema = z.object({
 
 export const sthOutboundVerser2ConfigSchema = z.object({
     enabled: z.boolean(),
+    apiPort: z.number().int().min(1).max(65535).optional(),
     hostUrl: z.string(),
     runnerHost: z.object({
         enabled: z.boolean(),
@@ -189,6 +190,7 @@ export const managerVerser2Options: ConfigOptionDescriptor[] = [
 
 export const sthOutboundVerser2Options: ConfigOptionDescriptor[] = [
     { name: "verser2Enabled", flag: "verser2-enabled", path: sthPath("enabled"), env: "SCRAMJET_VERSER2_ENABLED", type: "boolean", description: "Enable outbound STH verser2 transport" },
+    { name: "verser2ApiPort", flag: "verser2-api-port", path: sthPath("apiPort"), env: "SCRAMJET_VERSER2_API_PORT", type: "number", description: "Loopback-only native v2 API ingress port (1-65535)" },
     { name: "verser2HostUrl", flag: "verser2-host-url", path: sthPath("hostUrl"), env: "SCRAMJET_VERSER2_HOST_URL", flagAliases: ["cpm-verser2-url"], type: "string", description: "Manager/MultiManager verser2 Host URL" },
     { name: "verser2RunnerHostEnabled", flag: "verser2-runner-host-enabled", path: sthPath("runnerHost.enabled"), env: "SCRAMJET_VERSER2_RUNNER_HOST_ENABLED", type: "boolean", description: "Enable the STH-local verser2 Host for runners" },
     { name: "verser2RunnerHostIdentityDir", flag: "verser2-runner-host-identity-dir", path: sthPath("runnerHost.identityDir"), env: "SCRAMJET_VERSER2_RUNNER_HOST_IDENTITY_DIR", type: "string", description: "Directory for generated STH-local runner Host CA and server identity" },

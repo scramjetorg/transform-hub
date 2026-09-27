@@ -6,7 +6,7 @@ import { tmpdir } from "os";
 import { join } from "path";
 import { Router } from "@scramjet/api-router";
 import { createV2HttpDispatcher } from "@scramjet/api-server";
-import { createHostControlIngressOptions, resolveLegacyRunnerControlIngressConflict, startHostControlIngress, stopHostControlIngress } from "../src/lib/control-ingress";
+import { createHostControlIngressOptions, resolveLegacyRunnerControlIngressConflict, startHostControlIngress, stopHostControlIngress, validateSthRunnerPortCollisions } from "../src/lib/control-ingress";
 import { HostAPIV2Handler } from "../src/lib/api/host-api-v2";
 
 const config = () => ({ enabled: true, identityDir: mkdtempSync(join(tmpdir(), "host-control-")), host: { bindHost: "127.0.0.1", bindPort: 0, publicUrl: "https://localhost:2444", tls: { mtlsRequired: true } }, registration: { allowedClientFingerprints: [] }, localBroker: { peerId: "host.control.broker" }, guest: { peerId: "host.control.guest", routeDomain: "host.control.test" } });
@@ -50,6 +50,46 @@ test("legacy runner port relocates only the default mTLS control ingress", t => 
         ...ingress,
         host: { ...ingress.host, bindHost: "0.0.0.0" }
     } as any)!.host.bindPort, 2444);
+});
+
+test("generated shorthand control ingress keeps its configured port", t => {
+    const ingress = config();
+    ingress.host.bindPort = 2444;
+    ingress.host.publicUrl = "https://127.0.0.1:2444";
+    const runnerHost = {
+        ...ingress,
+        host: { ...ingress.host, bindPort: 2444, publicUrl: "https://127.0.0.1:2444", tls: { mtlsRequired: false } }
+    };
+    const generatedIngress = { ...ingress, generatedApiPort: true };
+
+    const resolved = resolveLegacyRunnerControlIngressConflict(runnerHost as any, generatedIngress as any);
+
+    t.is(resolved!.host.bindPort, 2444);
+    t.is(resolved!.host.publicUrl, "https://127.0.0.1:2444");
+});
+
+test("port validation rejects native api and runner listener collisions before startup", t => {
+    const runnerHost = { ...config(), host: { ...config().host, bindPort: 2445 } };
+    t.throws(() => validateSthRunnerPortCollisions(2445, runnerHost as any, undefined), { message: /verser2-api-port 2445/ });
+});
+
+test("port validation rejects native api and explicit control ingress collisions", t => {
+    const ingress = { ...config(), host: { ...config().host, bindPort: 2451, publicUrl: "https://127.0.0.1:2451" } };
+    t.throws(() => validateSthRunnerPortCollisions(2451, undefined, ingress as any), { message: /explicitly enabled control ingress/ });
+});
+
+test("port validation rejects non-legacy runner and control ingress collisions", t => {
+    const runnerHost = { ...config(), host: { ...config().host, bindPort: 2450 } };
+    const ingress = { ...config(), host: { ...config().host, bindPort: 2450, publicUrl: "https://127.0.0.1:2450" } };
+    t.throws(() => validateSthRunnerPortCollisions(undefined, runnerHost as any, ingress as any), { message: /conflicts with the enabled control ingress/ });
+});
+
+test("port validation preserves explicit legacy 2444 compatibility", t => {
+    const ingress = config();
+    ingress.host.bindPort = 2444;
+    ingress.host.publicUrl = "https://127.0.0.1:2444";
+    const runnerHost = { ...ingress, host: { ...ingress.host, bindPort: 2444 } };
+    t.notThrows(() => validateSthRunnerPortCollisions(undefined, runnerHost as any, ingress as any));
 });
 
 test("Host control ingress attaches its v2-only guest and stops", async t => {
