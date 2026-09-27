@@ -1,4 +1,4 @@
-# Phase 5 — Hardening
+# Phase 6 — Hardening
 
 ## Goal
 

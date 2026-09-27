@@ -1,4 +1,4 @@
-# Phase 6 — Fixes and coverage
+# Phase 7 — Fixes and coverage
 
 ## Goal
 
@@ -11,7 +11,7 @@ Close phase findings and establish final evidence for the native-first contract 
 ## Tasks
 
 - [ ] Address bounded validation/review findings without expanding product scope.
-- [ ] Rerun the Phase 3 complete native Compose journey and targeted local/Kubernetes documentation-boundary checks. Kubernetes remains explicitly non-live-cluster-verified unless the deferred test-environment decision is reactivated.
+- [ ] Rerun the Phase 3 complete native Compose journey, Phase 4 route-map walkthroughs, and targeted local/Kubernetes documentation-boundary checks. Kubernetes remains explicitly non-live-cluster-verified unless the deferred test-environment decision is reactivated.
 - [ ] Run final repository validation and record any unavailable environment-dependent evidence precisely.
 
 ## Acceptance criteria

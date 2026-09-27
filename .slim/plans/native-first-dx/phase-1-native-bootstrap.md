@@ -9,6 +9,7 @@ Make native onboarding the default STH/MM/`si` configuration path while retainin
 - `packages/config/src/{verser2-profile.ts,verser2-config.ts,**/*bundle*}`, `packages/cli/src/{lib/commands/{api.ts,config.ts},lib/config/**,bin/**}`, `packages/sth/src/bin/hub.ts`
 - `packages/host/src/lib/{host.ts,runner-verser2-host-peers.ts}`, `packages/multi-manager/src/{config/**,lib/{multi-manager.ts,verser2-trust-export.ts}}`
 - Matching focused package tests plus `bdd/features/e2e/E2E-018-cli-ingress.feature`, `bdd/features/e2e/E2E-019-*.feature`, and their step definitions
+- `examples/native-onboarding-poc/run.ts` and its maintainer-only `README.md` when native profile, bundle, routing, diagnostic, or CLI contracts change
 
 ## Tasks
 
@@ -18,6 +19,7 @@ Make native onboarding the default STH/MM/`si` configuration path while retainin
 - [ ] Add bounded diagnostics for endpoint reachability, CA handling, route uniqueness/readiness, ingress identity, selected target, and port roles.
 - [ ] Make default quickstart/profile activation native; retain explicit HTTP/v1 profile selection for compatibility.
 - [ ] Add a real native full-path BDD scenario: `si → MultiManager :2443 → embedded Manager → STH`, with request evidence that excludes HTTP fallback.
+- [ ] Maintain the retained maintainer-only diagnostic example when native profile, bundle, routing, diagnostic, or CLI contracts change; keep it manual/non-CI and transient rather than turning it into supported onboarding.
 
 ## Acceptance criteria
 
@@ -35,3 +37,4 @@ Make native onboarding the default STH/MM/`si` configuration path while retainin
 ## Non-goals
 
 - HTTP/CPM removal, CA auto-download, Kubernetes provisioning, HA, and unrelated CLI redesign.
+- Publishing the diagnostic example as onboarding documentation, a template, a sidebar entry, or a root npm script.

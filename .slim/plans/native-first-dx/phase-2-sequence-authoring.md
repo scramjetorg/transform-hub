@@ -15,6 +15,7 @@ Give new sequence authors deterministic Node, Python, and Bun project starts tha
 - [ ] Add `si` scaffold/init and validation helpers that select one runtime and validate entrypoint, engine, package contents, dependency expectations, and ignored required files.
 - [ ] Reuse `si sequence pack` and `si sequence deploy`; do not add a competing deployment abstraction.
 - [ ] Prove one pack/deploy/run observation for each template through the native path appropriate to its runtime.
+- Do not modify or adopt `examples/native-onboarding-poc/`; it is a Phase 0/Phase 1 maintainer-only diagnostic, not a sequence template or authoring surface.
 
 ## Acceptance criteria
 

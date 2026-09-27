@@ -50,3 +50,34 @@ Make a fresh Verser2-native workflow the obvious, low-configuration path for loc
 3. Whether Phase 0 is wanted, and its observable success criteria.
 4. Whether Cleanup/DX, Hardening, or Fixes/coverage should be skipped (the default is to include all).
 5. Whether legacy HTTP/CPM remains a supported compatibility contract and the desired deprecation stance.
+
+## Revision research — developer guidance
+
+The planned guides solve content gaps but do not yet solve how a developer chooses the right next guide. Current root, package, CLI, sequence, and Manager entry points independently start with direct HTTP `8000` or legacy CPM flows. The landing page/sidebar is a flat inventory, while the strongest native profile guidance is secondary to HTTP setup.
+
+### Proposed applied phase: guided developer journeys
+
+Insert a phase before documentation delivery that defines and implements a task- and role-oriented guidance layer. It directs a developer from a single native first-sequence journey toward runtime/deployment, operations, security, troubleshooting, or explicitly labelled compatibility pages. It changes docs navigation, entrypoint content, and cross-links only; it does not change runtime behaviour.
+
+Candidate deliverables:
+
+1. A “Choose your path” gateway linked from the root README, docs overview, relevant package READMEs, CLI entry point, and first sidebar section.
+2. A canonical native first-sequence tutorial: sequence-project installation → trusted bundle/profile → MultiManager/Manager → STH registration → Hello World deploy/input/stdout → next steps.
+3. Role-based next-step panels for a sequence developer, Hub operator, platform administrator, security operator, runtime/deployment operator, compatibility user, and troubleshooter.
+4. A guide-to-guide contract: each entry identifies prerequisite, intended outcome, next step, and compatibility boundary; compatibility links visibly return to the recommended native path.
+5. Generated sidebar ordering that prioritizes start-here, first sequence, profiles, authoring, deployment, operations, security, troubleshooting, compatibility, then reference.
+
+### Candidate acceptance criteria
+
+- A reader beginning from root README, CLI, STH, or MultiManager documentation reaches the native first-sequence path without first learning HTTP/v1, CPM, or adapter internals.
+- A sequence developer, Hub operator, platform administrator, security operator, runtime operator, compatibility user, and troubleshooter each reach a task-specific destination in no more than two documented handoffs.
+- The first-sequence journey introduces one trusted bundle/profile and a minimal Node sequence before advanced AppContext, topics, API, runtime, adapter, or certificate details.
+- Compatibility pages state when they apply, their port/support limits, and a link back to the native journey.
+- Links, sidebars, README entrypoints, and chosen walkthroughs prove the guidance layer routes rather than merely lists pages.
+
+### Evidence
+
+- `README.md`, `docs-source/readmes/root.md`, `transform-hub/getting-started.md`, `sequences/setup-and-run.md`, and `cli/usage.md` all currently lead with HTTP `8000`/`apiUrl`.
+- `docs-source/intro/overview.md` and generated sidebar ordering provide no task/role gateway.
+- `manager/connecting-hubs.md` is v1-era/incomplete and CPM-first; Compose documentation cannot presently support Manager-level native `si` routing.
+- Current content has contradictions that must be corrected before it can be used as a guided first journey, including stale class-based sequence examples and dependency-installation claims.

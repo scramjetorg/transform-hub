@@ -15,6 +15,8 @@ Make the current Verser2-native workflow the default and clearest way to use STH
 - Add native configuration output and diagnostics for endpoint, trust, route, identity, target selection, and public/private port roles.
 - Add repository-owned Node, Python, and Bun sequence scaffolds and validation that feed the existing sequence pack/deploy/run path.
 - Rewrite source documentation for local processes, Docker Compose, and Kubernetes; all must use the same native onboarding contract and explicitly distinguish published, private-network, loopback, and compatibility ports.
+- Ship mandatory native installation, local CA-only TLS, production TLS plus optional mTLS, trusted bundle/profile, compatibility/migration, and deployment-recipe guide outcomes with full examples.
+- Direct developers through task- and role-oriented journeys from every major entrypoint, with a native first-sequence path, explicit next steps, and labelled compatibility detours.
 - Correct stale help, Docker metadata, examples, and generated-documentation drift that obscure the current transport.
 
 ## Non-goals
@@ -30,7 +32,12 @@ Make the current Verser2-native workflow the default and clearest way to use STH
 - Rollout: native-first behaviour changes now, with explicit compatibility configuration retained.
 - Bundle distribution: deployments support both a trusted admin-distributed bundle file and a deterministic copy-paste configuration form generated from that trusted bundle. Neither flow obtains a CA from the remote endpoint.
 - Documentation coverage: local processes, Docker Compose, and Kubernetes all receive a current-topology guide. Compose is the complete deployed end-to-end proof topology; local and Kubernetes are validated to their documented boundaries.
+- Documentation delivery: the six guide outcomes are mandatory. README sections remain concise and link to canonical guides instead of repeating them.
+- Installation delivery: publish a next-release guide for a sequence-project repository that installs tools through `package.json` and uses `npx`; container installation is not a canonical path.
+- mTLS examples: STH and `si` use separate client identities.
+- Guidance delivery: all seven audiences reach a named destination within two documented handoffs. The guided developer journeys phase follows detailed documentation and Phase 0 tests one author and one non-author journey.
 - Phase 0 is required.
+- The Phase 0 PoC retains `examples/native-onboarding-poc/` as a maintainer-only, maintained-but-transient diagnostic. It is not supported onboarding, a template, user-facing guidance, a sidebar/root-script surface, or a published/linkable example. Phase 1 maintains it when native profile/bundle/routing/diagnostic/CLI contracts change; Phases 2 and 3 explicitly exclude it.
 - Cleanup/DX, Hardening, and Fixes/coverage are all required.
 - Compatibility stance: HTTP/v1 and CPM remain supported but are excluded from the recommended path and labelled compatibility everywhere changed by this plan.
 
@@ -46,6 +53,9 @@ Make the current Verser2-native workflow the default and clearest way to use STH
 
 - A clean developer can complete the documented local process journey from a trusted bundle through native `si` profile activation, Space/Hub selection, Node sequence deployment, instance start, and one observed result without entering an HTTP URL, CPM ID/URL, broker ID, route domain, or CA path manually.
 - The same onboarding contract is documented for local processes, Compose, and Kubernetes, and their port matrix accurately marks only MultiManager `2443` as client-facing for the recommended path.
+- A sequence-project repository can use next-release dependencies in `package.json` and `npx` to complete the first native deployment without global or container installation.
+- The six required guide outcomes provide complete CA-only TLS and optional mTLS examples, distinguish server TLS, client mTLS, and fingerprint authorization, and state PKI boundaries without exposing private material.
+- From root README, docs overview, CLI, STH, or MultiManager documentation, each of the seven confirmed audiences reaches one named primary destination within two explicit handoffs; the first-sequence route requires no HTTP/v1, CPM, or adapter-internals learning.
 - Native `si` has no HTTP fallback; it emits actionable, secret-safe and distinguishable failures for invalid CA, missing/duplicate route, wrong ingress identity, and unreachable endpoint.
 - Fresh STH configuration uses native Manager/Space terminology and connects upstream without requiring legacy CPM fields; existing explicit CPM configuration retains its prior behaviour.
 - Repository-owned Node, Python, and Bun scaffolds each package successfully and complete their claimed deploy/run path through the existing protocol.
@@ -57,11 +67,18 @@ Make the current Verser2-native workflow the default and clearest way to use STH
 - Verser2 TLS identity, route validation, and secret-redaction contracts remain mandatory.
 - The bundle producer is a deployment administrator with access to the trusted CA and platform identity; distributing its sensitive values is an operational responsibility, not a network bootstrap feature.
 - The plan relies on the existing `si sequence deploy` protocol rather than replacing it.
-- Kubernetes documentation needs a real cluster/configuration boundary identified during implementation; it is not licensed to add cluster provisioning.
+- Kubernetes is validated only by static configuration/network documentation until the user approves a test environment; it is not licensed to add cluster provisioning or live-cluster claims.
 
 ## Deferred decision
 
 - **Kubernetes live-cluster evidence** — State: deferred; Kind: constraint. The plan documents Kubernetes configuration and network boundaries but does not claim a live-cluster proof. The user will set up a test environment or approve a transient GitHub Actions cluster first. Revisit before Phase 3 verification or any release claim that Kubernetes was end-to-end tested. Decision history: 2026-09-22, user explicitly deferred live Kubernetes testing.
+
+## Phase 0 rescoping outcome — 2026-09-27
+
+- The disposable native journey met the root/Space identity, trusted local artifact/copy-paste, `2443`-only client-facing topology, no-`si`-traffic-to-`8000`/`11000`, Node deploy/stdin, and `Hello Alice?` criteria. The author route and labels were clear to the user.
+- Invalid-CA and missing-route profiles both produced secret-safe generic `CONNECTION` exit 58. Distinct `TRUST` 51 and `ROUTE` 55 diagnostics are not validated and remain a Phase 1 correction.
+- Phase 1 retains that planned diagnostic correction while preserving the proven native topology unchanged. No live Kubernetes validation was performed; the existing limitation remains unchanged.
+- Evidence command: `npx tsx examples/native-onboarding-poc/run.ts run` — exit 0, `completed-with-findings`; retained-example validation is manual/non-CI only. It requires built `dist/`, Linux `openssl`/`strace`, and fixed free ports. Generated material stays in `/tmp`, must not be deployed, and the example proves current topology only; it manually enters current transport fields/PoC credentials and is not trusted-bundle UX or production mTLS identity separation.
 
 ## Verification budget
 
@@ -70,15 +87,29 @@ Make the current Verser2-native workflow the default and clearest way to use STH
 | Native bootstrap/control path | MVP 1 | focused config/CLI/host/MM tests, `npm run build:packages`, a real `si → MM → STH` BDD scenario, explicit no-HTTP request evidence |
 | Three sequence workflows | MVP 2 | scaffold/packing tests and one supported deploy/run proof per runtime |
 | Documentation/topology accuracy | MVP 3 | docs source generation/check, help snapshots/assertions, documented Compose proof |
+| Developer guidance | Guided journeys | route-map assertions, generated sidebar/README checks, author and non-author walkthroughs |
 | Compatibility preservation | Cleanup/coverage | focused legacy CLI/config tests and migration assertions |
 | Final state | Fixes/coverage | `npm run lint`, `npm run build:packages`, `npm run test:packages`, scoped BDD commands |
 
 Memory-guard coverage is not planned unless the implementation changes runner, BDD harness, or retained-stream behaviour; any later exception must be recorded with its reason.
 
-## Delivery and commits
+## Delivery Mode
 
-- Mode: current branch (user confirmed).
-- Phase commit policy: one focused commit after each completed phase's validation, review/remediation, and reconciliation. Only that phase's owned, changed paths are staged.
+- Mode: current branch
+- User decision: confirmed before planning
+
+## Phase Commit Policy
+
+- Default: one focused commit after each completed phase's validation, review/remediation, and reconciliation
+- Scope: only the phase's owned and changed paths; unrelated pre-existing or concurrent changes stay uncommitted
+- Override: an explicit user instruction or applicable repository policy may postpone or disable the default
+
+## Git Execution Policy
+
+- Routine mode: unattended routine execution
+- Planning-handoff answer source: user selected “Unattended routine execution (Recommended)” during approved native-first-dx plan handoff on 2026-09-26
+- Repo-policy source: missing (built-in default: unattended routine execution)
+- Precedence: current-session explicit direction and runtime safety/tool permissions > recorded answer > repo instructions > built-in default
 
 ## Git Execution Policy
 
@@ -98,6 +129,7 @@ Memory-guard coverage is not planned unless the implementation changes runner, B
 2. [Phase 1 — native bootstrap and configuration](phase-1-native-bootstrap.md)
 3. [Phase 2 — sequence authoring](phase-2-sequence-authoring.md)
 4. [Phase 3 — documentation and examples](phase-3-documentation.md)
-5. [Phase 4 — Cleanup/DX](phase-4-cleanup-dx.md)
-6. [Phase 5 — Hardening](phase-5-hardening.md)
-7. [Phase 6 — Fixes and coverage](phase-6-fixes-coverage.md)
+5. [Phase 4 — guided developer journeys](phase-4-guided-developer-journeys.md)
+6. [Phase 5 — Cleanup/DX](phase-5-cleanup-dx.md)
+7. [Phase 6 — Hardening](phase-6-hardening.md)
+8. [Phase 7 — Fixes and coverage](phase-7-fixes-coverage.md)
