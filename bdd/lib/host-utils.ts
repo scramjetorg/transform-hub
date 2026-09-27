@@ -213,6 +213,18 @@ export class HostUtils {
         });
         await HostUtils.disposeChildIO(host);
         this.output = "";
+        this.outputWaiters.clear();
+        this.stdoutTail = "";
+        this.stderrTail = "";
+    }
+
+    /** Release listeners and retained output after suite-owned Hub teardown. */
+    dispose() {
+        this.outputWaiters.clear();
+        this.output = "";
+        this.stdoutTail = "";
+        this.stderrTail = "";
+        this.host = undefined;
     }
 
     /**
@@ -282,6 +294,7 @@ export class HostUtils {
         const streams = [child.stdout, child.stderr].filter(Boolean) as NodeJS.ReadableStream[];
         for (const stream of streams) stream.removeAllListeners();
         child.removeAllListeners("error");
+        child.removeAllListeners("exit");
         for (const stream of streams) {
             const closed = (stream as any).destroyed
                 ? Promise.resolve()
@@ -452,6 +465,11 @@ export class HostUtils {
         if (!noDefault.includes("instance-lifetime-extension-delay") && !extraArgs.includes("--instance-lifetime-extension-delay") && (process.env.RUNTIME_ADAPTER || bddRun))
             command.push(`--instance-lifetime-extension-delay=${bddRun ? 1000 : 100}`);
         if (extraArgs.length) command.push(...extraArgs);
+
+        if (process.env.SCRAMJET_BDD_NATIVE_CONTROL_PLANE === "1" && process.env.SCRAMJET_BDD_NATIVE_HUB_CONFIG && !extraArgs.includes("--config"))
+            command.push("--config", process.env.SCRAMJET_BDD_NATIVE_HUB_CONFIG);
+        if (process.env.SCRAMJET_BDD_NATIVE_CONTROL_PLANE === "1" && process.env.SCRAMJET_BDD_NATIVE_HUB_ID && !extraArgs.includes("--id"))
+            command.push("--id", process.env.SCRAMJET_BDD_NATIVE_HUB_ID);
 
         if (process.env.RUNNER_IMGS_TAG) {
             // Keep the Python runner image flag aligned with the image built from packages/runner-python/Dockerfile.

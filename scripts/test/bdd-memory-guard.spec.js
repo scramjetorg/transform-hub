@@ -473,6 +473,67 @@ test("E2E-018 CLI ingress allowance is exact, heap-only, and evidence-backed", (
     t.falsy(matchScenarioException([exception], "features/e2e/E2E-017-other.feature", 8, exception.scenarioName));
 });
 
+test("APPCONTEXT-002 hosted Python allowance is exact, 768KiB heap-only, and evidence-backed", (t) => {
+    const source = fs.readFileSync(path.join(__dirname, "../../bdd/support/memory-hooks.ts"), "utf8");
+    const start = source.indexOf('featureUri: "appcontext/APPCONTEXT-002-hosted-runtimes.feature"');
+    const end = source.indexOf("\n    },", start);
+    const block = source.slice(start, end);
+    const exception = {
+        featureUri: "appcontext/APPCONTEXT-002-hosted-runtimes.feature",
+        line: 9,
+        scenarioName: "APPCONTEXT-002 TC-001 Hosted Python covers channels and routing",
+        heapUsedAllowanceBytes: 262_144,
+        reason: block,
+    };
+
+    t.true(start >= 0);
+    t.is(end > start, true);
+    t.regex(block, /line: 9/);
+    t.regex(block, /heapUsedAllowanceBytes: 262_144/);
+    t.regex(block, /User-approved 768KiB/);
+    t.regex(block, /~710KiB/);
+    t.regex(block, /no leaked processes/);
+    t.regex(block, /no stable MemLab\/retainer owner/);
+    t.false(block.includes("arrayBuffersAllowanceBytes"));
+
+    t.is(matchScenarioException([exception], "features/appcontext/APPCONTEXT-002-hosted-runtimes.feature", 9, exception.scenarioName), exception);
+    t.is(524_288 + exception.heapUsedAllowanceBytes, 786_432);
+    t.falsy(matchScenarioException([exception], "features/appcontext/APPCONTEXT-002-hosted-runtimes.feature", 8, exception.scenarioName));
+    t.falsy(matchScenarioException([exception], "features/appcontext/APPCONTEXT-002-hosted-runtimes.feature", 9, "other scenario"));
+    t.falsy(matchScenarioException([exception], "features/appcontext/APPCONTEXT-001-full-sequence.feature", 9, exception.scenarioName));
+});
+
+test("APPCONTEXT-002 hosted Bun allowance is exact, 768KiB heap-only, and evidence-backed", (t) => {
+    const source = fs.readFileSync(path.join(__dirname, "../../bdd/support/memory-hooks.ts"), "utf8");
+    const start = source.indexOf('featureUri: "appcontext/APPCONTEXT-002-hosted-runtimes.feature"', source.indexOf("APPCONTEXT-002 TC-002"));
+    const end = source.indexOf("\n    },", start);
+    const block = source.slice(start, end);
+    const exception = {
+        featureUri: "appcontext/APPCONTEXT-002-hosted-runtimes.feature",
+        line: 27,
+        scenarioName: "APPCONTEXT-002 TC-002 Hosted Bun delegates through host channels",
+        heapUsedAllowanceBytes: 262_144,
+        reason: block,
+    };
+
+    t.true(start >= 0);
+    t.is(end > start, true);
+    t.regex(block, /line: 27/);
+    t.regex(block, /heapUsedAllowanceBytes: 262_144/);
+    t.regex(block, /user-approved/i);
+    t.regex(block, /~719KiB/);
+    t.regex(block, /no leaked processes/);
+    t.regex(block, /targeted cleanup ineffective/);
+    t.regex(block, /MemLab.*no stable owner/);
+    t.false(block.includes("arrayBuffersAllowanceBytes"));
+
+    t.is(matchScenarioException([exception], "features/appcontext/APPCONTEXT-002-hosted-runtimes.feature", 27, exception.scenarioName), exception);
+    t.is(524_288 + exception.heapUsedAllowanceBytes, 786_432);
+    t.falsy(matchScenarioException([exception], "features/appcontext/APPCONTEXT-002-hosted-runtimes.feature", 26, exception.scenarioName));
+    t.falsy(matchScenarioException([exception], "features/appcontext/APPCONTEXT-002-hosted-runtimes.feature", 27, "other scenario"));
+    t.falsy(matchScenarioException([exception], "features/appcontext/APPCONTEXT-001-full-sequence.feature", 27, exception.scenarioName));
+});
+
 test("Manager allowance matches only the approved Manager feature scopes", (t) => {
     t.is(MANAGER_SCENARIO_EXCEPTIONS.length, 3);
     for (const exception of MANAGER_SCENARIO_EXCEPTIONS) {

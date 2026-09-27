@@ -21,7 +21,8 @@ test("sequencePack applies .siignore minimatch rules", async t => {
     const { root, source, extracted, archive } = packWorkspace();
 
     t.teardown(() => rmSync(root, { recursive: true, force: true }));
-    writeFileSync(join(source, "package.json"), JSON.stringify({ name: "sequence" }));
+    writeFileSync(join(source, "package.json"), JSON.stringify({ name: "sequence", main: "index.js", engines: { node: ">=18" } }));
+    writeFileSync(join(source, "index.js"), "module.exports = async () => {};\n");
     writeFileSync(join(source, "included.txt"), "included");
     writeFileSync(join(source, "ignored.tmp"), "ignored");
     writeFileSync(join(source, ".siignore"), "*.tmp\n");
@@ -37,7 +38,7 @@ test("sequencePack produces a gzip-compressed archive", async t => {
     const { root, source, extracted, archive } = packWorkspace();
 
     t.teardown(() => rmSync(root, { recursive: true, force: true }));
-    writeFileSync(join(source, "package.json"), JSON.stringify({ name: "sequence" }));
+    writeFileSync(join(source, "package.json"), JSON.stringify({ name: "sequence", main: "index.js", engines: { node: ">=18" } }));
     writeFileSync(join(source, "index.js"), "module.exports = async () => {};\n");
 
     await sequencePack(source, { output: createWriteStream(archive) });
@@ -54,7 +55,7 @@ test("sequencePack includes nested directory paths", async t => {
     const { root, source, extracted, archive } = packWorkspace();
 
     t.teardown(() => rmSync(root, { recursive: true, force: true }));
-    writeFileSync(join(source, "package.json"), JSON.stringify({ name: "sequence" }));
+    writeFileSync(join(source, "package.json"), JSON.stringify({ name: "sequence", main: "index.js", engines: { node: ">=18" } }));
     writeFileSync(join(source, "index.js"), "module.exports = async () => {};\n");
     mkdirSync(join(source, "lib"));
     writeFileSync(join(source, "lib", "helper.js"), "exports.helper = true;\n");
@@ -70,7 +71,8 @@ test("sequencePack filter and nested paths combine", async t => {
     const { root, source, extracted, archive } = packWorkspace();
 
     t.teardown(() => rmSync(root, { recursive: true, force: true }));
-    writeFileSync(join(source, "package.json"), JSON.stringify({ name: "sequence" }));
+    writeFileSync(join(source, "package.json"), JSON.stringify({ name: "sequence", main: "index.js", engines: { node: ">=18" } }));
+    writeFileSync(join(source, "index.js"), "module.exports = async () => {};\n");
     mkdirSync(join(source, "src"));
     writeFileSync(join(source, "src", "keep.js"), "module.exports = 1;\n");
     writeFileSync(join(source, "src", "drop.tmp"), "ignored");

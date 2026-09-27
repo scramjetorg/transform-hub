@@ -194,6 +194,32 @@ const SCENARIO_EXCEPTIONS: ScenarioException[] = [
     },
 
     // -----------------------------------------------------------------------
+    // APPCONTEXT-002 TC-001: hosted Python channels and routing
+    //
+    // User-approved heap-only allowance for the observed hosted-runtime
+    // retention. The effective heap threshold is 768 KiB over the strict
+    // 512 KiB base; arrayBuffers remain at the strict component threshold.
+    // -----------------------------------------------------------------------
+    {
+        featureUri: "appcontext/APPCONTEXT-002-hosted-runtimes.feature",
+        line: 9,
+        scenarioName: "APPCONTEXT-002 TC-001 Hosted Python covers channels and routing",
+        heapUsedAllowanceBytes: 262_144,
+        reason: "User-approved 768KiB heap threshold: observed ~710KiB retention after cleanup; no leaked processes; no stable MemLab/retainer owner was identified. Heap-only allowance is scoped to this exact feature URI, line, and scenario name.",
+    },
+
+    // -----------------------------------------------------------------------
+    // APPCONTEXT-002 TC-002: hosted Bun channels and routing
+    // -----------------------------------------------------------------------
+    {
+        featureUri: "appcontext/APPCONTEXT-002-hosted-runtimes.feature",
+        line: 27,
+        scenarioName: "APPCONTEXT-002 TC-002 Hosted Bun delegates through host channels",
+        heapUsedAllowanceBytes: 262_144,
+        reason: "Explicitly user-approved heap-only 262144-byte allowance after observed ~719KiB retention; no leaked processes, targeted cleanup ineffective, and MemLab found no stable owner. Scoped to this exact feature URI, line, and scenario name.",
+    },
+
+    // -----------------------------------------------------------------------
     // E2E-001 TC-002: completed-sequence stdio (CLI-heavy scenario)
     //
     // Ten post-agent-fix strict guarded runs form two reproducible socket

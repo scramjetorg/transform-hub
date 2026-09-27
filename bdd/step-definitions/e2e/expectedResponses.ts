@@ -4,6 +4,9 @@ export const expectedResponses: { [key:string]: any} = {
     "hulk-nl": "{\"name\":\"Hulk\"}\n",
     "python-topics":  "consumer got: producer got: topic test input\n",
     "args-on-output": "Hello\n123\n456\n789\n",
+    "native-template-node": "native-template-node: [\"phase2\"]\n",
+    "native-template-python": "native-template-python: [\"phase2\"]\n",
+    "native-template-bun": "native-template-bun: [\"phase2\"]\n",
     "checksum": "67533b48eb8a6df4bc6a64a45feb543c",
     "pets" :
         `Bonnie\n` +

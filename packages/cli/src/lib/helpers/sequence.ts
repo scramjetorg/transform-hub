@@ -2,8 +2,8 @@
 import { STHRestAPI } from "@scramjet/api-types";
 import { InstanceLimits } from "@scramjet/runtime-types";
 import { AppConfig } from "@scramjet/runtime-types";
-import { constants, createReadStream, createWriteStream, PathLike } from "fs";
-import { readdir, access, lstat } from "fs/promises";
+import { constants, createWriteStream, PathLike } from "fs";
+import { readdir, access, lstat, readFile } from "fs/promises";
 import { InstanceClient, SequenceClient } from "@scramjet/api-client";
 import { getPackagePath, getSequenceId, sessionConfig } from "../config";
 import { FileBuilder, defer, promiseTimeout } from "@scramjet/utility";
@@ -12,10 +12,10 @@ import { displayMessage } from "../output";
 import { c } from "tar";
 import { Writable } from "stream";
 import { resolve } from "path";
-import { StringStream } from "scramjet";
 import { filter as mmfilter } from "minimatch";
 import * as fs from "fs";
 import { EOL } from "os";
+import { validateSequencePackage } from "./sequence-package-validation";
 
 const { F_OK, R_OK } = constants;
 
@@ -38,12 +38,11 @@ const getIgnoreFunction = async (file: PathLike) => {
         return () => true;
     }
 
-    const rules: ReturnType<MMFilter>[] = await StringStream.from(createReadStream(file))
-        .lines()
-        .filter((line: string) => line.substr(0, line.indexOf("#")).trim() === "")
-        .parse((line: string) => mmfilter(line))
-        .catch(() => undefined)
-        .toArray();
+    const rules: ReturnType<MMFilter>[] = (await readFile(file, "utf8"))
+        .split(/\r?\n/)
+        .map(line => line.slice(0, line.indexOf("#") >= 0 ? line.indexOf("#") : line.length).trim())
+        .filter(Boolean)
+        .map(line => mmfilter(line));
     const fakeArr: string[] = [];
 
     return (f: string) => !rules.find((x) => x(f, 0, fakeArr));
@@ -58,13 +57,9 @@ const getIgnoreFunction = async (file: PathLike) => {
  */
 export const sequencePack = async (directory: string, { output }: { output: Writable }) => {
     const cwd = resolve(process.cwd(), directory);
+    await validateSequencePackage(directory);
     const packageLocation = resolve(cwd, "package.json");
-
-    // TODO: error handling?
-    // TODO: check package contents?
-    await access(packageLocation, F_OK | R_OK).catch(() => {
-        return Promise.reject(new Error(`${packageLocation} not found.`));
-    });
+    await access(packageLocation, F_OK | R_OK);
 
     const ignoreLocation = resolve(cwd, ".siignore");
     const filter = await getIgnoreFunction(ignoreLocation);

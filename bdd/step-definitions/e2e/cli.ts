@@ -40,10 +40,19 @@ const bddTempPaths: Record<string, string> = {
     __BDD_TMP_SIMPLE_STDIO__: path.join(bddTempDir, "simple-stdio.tar.gz"),
 };
 
+const scaffoldPaths: Record<string, string> = {};
+
+const scaffoldFiles: Record<string, string[]> = {
+    node: ["index.js", "package.json", ".siignore"],
+    python: ["main.py", "package.json", ".siignore"],
+    bun: ["index.js", "package.json", ".siignore"],
+};
+
 const resolveBddTempPaths = (args: string): string[] =>
     args.split(" ").map((arg) => {
         // Resolve temporary paths (e.g. __BDD_TMP_SIMPLE_STDIO__).
         if (bddTempPaths[arg]) return bddTempPaths[arg];
+        if (scaffoldPaths[arg]) return scaffoldPaths[arg];
 
         return resolveFixturePackagePath(arg);
     });
@@ -653,6 +662,37 @@ When(
         await spawnSiInit("/usr/bin/env", templateType, workingDirectory);
     }
 );
+
+When("I scaffold the owned {string} sequence", { timeout: 30000 }, async function(
+    this: CustomWorld,
+    language: string
+) {
+    assert.ok(Object.prototype.hasOwnProperty.call(scaffoldFiles, language), `Unsupported owned scaffold: ${language}`);
+    const target = fs.mkdtempSync(path.join(bddTempDir, `scaffold-${language}-`));
+    const token = `__BDD_SCAFFOLD_${language.toUpperCase()}__`;
+    const archiveToken = `${token}_ARCHIVE`;
+    scaffoldPaths[token] = target;
+    scaffoldPaths[archiveToken] = path.join(bddTempDir, `scaffold-${language}.tar.gz`);
+    this.cliResources.templateDirectory = target;
+
+    const stdio = await getStreamsFromSpawn("/usr/bin/env", [
+        ...siForScenario(),
+        "scaffold",
+        "sequence",
+        language,
+        "--path",
+        target,
+    ]);
+    assert.equal(stdio[2], 0, `Owned ${language} scaffold failed: ${stdio[1]}`);
+});
+
+Then("the owned {string} scaffold is created", function(this: CustomWorld, language: string) {
+    const target = this.cliResources.templateDirectory;
+    assert.ok(target, "The owned scaffold directory was not recorded");
+    for (const file of scaffoldFiles[language] || []) {
+        assert.ok(fs.existsSync(path.join(target, file)), `Owned ${language} scaffold is missing ${file}`);
+    }
+});
 
 Then(/^I confirm template (.*) is created$/, async function (
     this: CustomWorld,

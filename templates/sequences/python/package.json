@@ -1,0 +1,9 @@
+{
+  "name": "native-template-python",
+  "version": "1.0.0",
+  "main": "main.py",
+  "engines": {
+    "python3": ">=3.9"
+  },
+  "dependencies": {}
+}

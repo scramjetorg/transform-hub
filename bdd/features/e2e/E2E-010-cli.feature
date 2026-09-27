@@ -142,15 +142,50 @@ Feature: CLI tests
             | instanceId                           |
             | Supervisor-Instance-0000-11111111111 |
 
-    @ci-api @cli @test-si-init @external-dependency
-    Scenario: E2E-010 TC-019 Test Init template sequence
-        When I execute CLI command si init <templateType>
-        Then I confirm template <templateType> is created
-        Examples:
-            | templateType |
-            | ts           |
-            | js           |
-            | py           |
+    @ci-instance-node @native-template-node @cli @slow
+    Scenario: E2E-010 TC-019 Test owned Node scaffold through native deploy and run
+        Given host is running
+        When I scaffold the owned "node" sequence
+        Then the owned "node" scaffold is created
+        When I execute CLI with "seq pack __BDD_SCAFFOLD_NODE__ -o __BDD_SCAFFOLD_NODE_ARCHIVE__"
+        When I execute CLI with "config set log --format json"
+        When I execute CLI with "seq deploy __BDD_SCAFFOLD_NODE__"
+        When I capture the deployed instance identity
+        When I execute CLI with "config set log --format pretty"
+        When I execute CLI with "inst output -" without waiting for the end
+        When I wait for the instance to be running before sending input
+        When I execute CLI with "inst input - data/native-template-input.txt --end"
+        Then I confirm data named "native-template-node" will be received
+
+    @ci-instance-python @native-template-python @cli @slow
+    Scenario: E2E-010 TC-019 Test owned Python scaffold through native deploy and run
+        Given host is running
+        When I scaffold the owned "python" sequence
+        Then the owned "python" scaffold is created
+        When I execute CLI with "seq pack __BDD_SCAFFOLD_PYTHON__ -o __BDD_SCAFFOLD_PYTHON_ARCHIVE__"
+        When I execute CLI with "config set log --format json"
+        When I execute CLI with "seq deploy __BDD_SCAFFOLD_PYTHON__"
+        When I capture the deployed instance identity
+        When I execute CLI with "config set log --format pretty"
+        When I execute CLI with "inst output -" without waiting for the end
+        When I wait for the instance to be running before sending input
+        When I execute CLI with "inst input - data/native-template-input.txt --end"
+        Then I confirm data named "native-template-python" will be received
+
+    @ci-instance-node @native-template-bun @requires-bun @cli @slow
+    Scenario: E2E-010 TC-019 Test owned Bun scaffold through native deploy and run
+        Given host is running
+        When I scaffold the owned "bun" sequence
+        Then the owned "bun" scaffold is created
+        When I execute CLI with "seq pack __BDD_SCAFFOLD_BUN__ -o __BDD_SCAFFOLD_BUN_ARCHIVE__"
+        When I execute CLI with "config set log --format json"
+        When I execute CLI with "seq deploy __BDD_SCAFFOLD_BUN__"
+        When I capture the deployed instance identity
+        When I execute CLI with "config set log --format pretty"
+        When I execute CLI with "inst output -" without waiting for the end
+        When I wait for the instance to be running before sending input
+        When I execute CLI with "inst input - data/native-template-input.txt --end"
+        Then I confirm data named "native-template-bun" will be received
 
     @ci-api @cli @slow
     Scenario: E2E-010 TC-020 Test Start sequence with startup-config

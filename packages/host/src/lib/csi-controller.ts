@@ -184,9 +184,11 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
     private endEmitted = false;
     private readinessResolver?: () => void;
     private readinessRejecter?: (error: Error) => void;
+    private readinessPromise?: Promise<void>;
     private readinessTimer?: NodeJS.Timeout;
     private readinessState: "pending" | "ready" | "errored" = "pending";
     private readinessFailure?: Promise<void>;
+    private readinessError?: Error;
     private terminalTransition?: Promise<void>;
     finalizingPromise?: CancellablePromise;
 
@@ -330,21 +332,48 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
     waitForReady(timeout: number): Promise<void> {
         if (this.readinessState === "ready") return Promise.resolve();
         if (this.readinessState === "errored") {
-            return (this.readinessFailure || Promise.resolve()).then(() => {
-                throw new Error("Runner initialization rejected");
-            });
+            return this.readinessPromise || Promise.reject(this.readinessError || new Error("Runner initialization rejected"));
         }
-        return new Promise<void>((resolve, reject) => {
+        if (this.readinessPromise) return this.readinessPromise;
+
+        this.readinessPromise = new Promise<void>((resolve, reject) => {
             this.readinessResolver = resolve;
             this.readinessRejecter = reject;
-            this.readinessTimer = setTimeout(() => {
-                const error = new Error(`Instance readiness timed out after ${timeout}ms`);
-                this.readinessState = "errored";
-                this.readinessFailure = this.failReadiness(error);
-                this.readinessFailure.then(() => reject(error), reject);
-            }, timeout);
+            this.readinessTimer = setTimeout(() => this.rejectReadiness(new Error(`Instance readiness timed out after ${timeout}ms`)), timeout);
             this.readinessTimer.unref();
         });
+
+        return this.readinessPromise;
+    }
+
+    private clearReadinessWaiters() {
+        if (this.readinessTimer) {
+            clearTimeout(this.readinessTimer);
+            this.readinessTimer = undefined;
+        }
+        this.readinessResolver = undefined;
+        this.readinessRejecter = undefined;
+    }
+
+    private resolveReadiness() {
+        if (this.readinessState !== "pending") return;
+
+        this.readinessState = "ready";
+        const resolve = this.readinessResolver;
+        this.clearReadinessWaiters();
+        resolve?.();
+    }
+
+    private rejectReadiness(error: Error) {
+        if (this.readinessState !== "pending") return;
+
+        this.readinessState = "errored";
+        this.readinessError = error;
+        const reject = this.readinessRejecter;
+        this.clearReadinessWaiters();
+        this.readinessFailure ||= this.failReadiness(error);
+
+        this.readinessFailure.then(() => reject?.(error), failure => reject?.(failure));
     }
 
     private async failReadiness(error: Error): Promise<void> {
@@ -395,21 +424,13 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
         }
 
         if (readiness.state === "ready") {
-            this.readinessState = "ready";
-            if (this.readinessTimer) clearTimeout(this.readinessTimer);
-            this.readinessResolver?.();
+            this.resolveReadiness();
         }
 
         if (readiness.state === "errored") {
             this.logger.error("Runner initialization rejected", readiness.diagnostic);
-            this.readinessState = "errored";
-            if (this.readinessTimer) clearTimeout(this.readinessTimer);
             const error = new Error(readiness.diagnostic?.message || "Runner initialization rejected");
-            this.readinessFailure = this.failReadiness(error);
-            this.readinessFailure.then(
-                () => this.readinessRejecter?.(error),
-                (failure) => this.readinessRejecter?.(failure)
-            );
+            this.rejectReadiness(error);
         }
     }
 
@@ -550,6 +571,27 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
         return message;
     }
 
+    private handlePangMessage(pangData: { provides?: string; requires?: string; outputEncoding?: BufferEncoding; contentType?: string }) {
+        this.provides ||= this.outputTopic || pangData.provides;
+        this.requires ||= this.inputTopic || pangData.requires;
+
+        if (this.requires) {
+            this.apiInputEnabled = false;
+        }
+
+        this.outputEncoding = pangData.outputEncoding || "utf-8";
+        // Legacy runners do not send READY. Their first PANG is the
+        // compatibility lifecycle signal; subsequent PANG frames remain
+        // metadata only once readiness has been established.
+        if (this.readinessState === "pending") this.resolveReadiness();
+
+        this.emit("pang", {
+            provides: this.provides,
+            requires: this.requires,
+            contentType: pangData.contentType
+        });
+    }
+
     async cleanup() {
         await this.instanceAdapter.cleanup();
 
@@ -685,23 +727,7 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
         });
 
         this.communicationHandler.addMonitoringHandler(RunnerMessageCode.PANG, async (message) => {
-            const pangData = message[1];
-
-            this.provides ||= this.outputTopic || pangData.provides;
-            this.requires ||= this.inputTopic || pangData.requires;
-
-            if (this.requires) {
-                this.apiInputEnabled = false;
-            }
-
-            this.outputEncoding = pangData.outputEncoding || "utf-8";
-            //this.upStreams[CC.OUT].setDefaultEncoding(pangData.outputEncoding || "utf-8");
-
-            this.emit("pang", {
-                provides: this.provides,
-                requires: this.requires,
-                contentType: pangData.contentType
-            });
+            this.handlePangMessage(message[1]);
         });
 
         this.communicationHandler.addMonitoringHandler(RunnerMessageCode.MONITORING, async (message) => this.handleMonitoringMessage(message), true);
@@ -881,11 +907,11 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
         try {
             this.hookupStreams(streams);
             this.createInstanceAPIRouter();
-
-            await once(this, "pang");
+            await this.waitForReady(this.sthConfig.timings.startupTimeout || 30_000);
             this.initResolver?.res();
         } catch (e: any) {
             this.initResolver?.rej(e);
+            throw e;
         }
     }
 

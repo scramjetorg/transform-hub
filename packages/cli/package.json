@@ -52,6 +52,10 @@
     {
       "src": "scripts/completion",
       "dest": "scripts/completion"
+    },
+    {
+      "src": "../../templates/sequences",
+      "dest": "templates/sequences"
     }
   ],
   "ava": {
@@ -76,6 +80,7 @@
     "!test/**",
     "!tests/**",
     "scripts/completion",
+    "templates/sequences",
     "!**/*.map",
     "!**/*.tsbuildinfo"
   ],

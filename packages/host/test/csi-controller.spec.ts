@@ -117,6 +117,7 @@ function createController(overrides: Record<string, unknown> = {}): any {
         _instanceAdapter: {
             remove: async () => undefined
         },
+        readinessState: "pending",
         _endOfSequence: new Promise(() => undefined),
         ...overrides
     });
@@ -756,4 +757,63 @@ test("late READY after readiness failure cannot register an RPC route", t => {
     (controller as any).handleReadinessMessage({ state: "ready", exposePath: "/late" });
 
     t.deepEqual(exposed, []);
+});
+
+test("READY is the lifecycle gate and does not require PANG", async t => {
+    const controller = createController({
+        sthConfig: { timings: { startupTimeout: 100 } },
+        hookupStreams: () => undefined,
+        createInstanceAPIRouter: () => undefined
+    });
+
+    const connected = controller.handleInstanceConnect([] as any);
+    await new Promise<void>(resolve => setImmediate(resolve));
+    (controller as any).handleReadinessMessage({ state: "ready" });
+
+    await connected;
+    t.is(controller.readinessState, "ready");
+});
+
+test("first PANG is the legacy readiness fallback", async t => {
+    const controller = createController();
+    const ready = controller.waitForReady(100);
+
+    (controller as any).handlePangMessage({ provides: "output", contentType: "text/plain" });
+    await ready;
+    t.is(controller.readinessState, "ready");
+});
+
+test("concurrent readiness waits share one promise and settle together", async t => {
+    const controller = createController();
+    const first = controller.waitForReady(100);
+    const second = controller.waitForReady(1);
+
+    t.is(first, second);
+    (controller as any).handleReadinessMessage({ state: "ready" });
+    await Promise.all([first, second]);
+    t.is(controller.readinessState, "ready");
+});
+
+test("readiness failure kills once, clears waiters, and ignores late READY", async t => {
+    let kills = 0;
+    const exposed: string[] = [];
+    const controller = createController({
+        kill: async () => { kills++; controller.endEmitted = true; },
+        hostProxy: { onRPCExpose: (path: string) => exposed.push(path), onRPCExposeRevoked: () => undefined }
+    });
+    const first = controller.waitForReady(100);
+    const second = controller.waitForReady(100);
+
+    (controller as any).rejectReadiness(new Error("runner rejected"));
+    await Promise.all([
+        t.throwsAsync(first, { message: "runner rejected" }),
+        t.throwsAsync(second, { message: "runner rejected" })
+    ]);
+    (controller as any).handleReadinessMessage({ state: "ready", exposePath: "/late" });
+
+    t.is(kills, 1);
+    t.deepEqual(exposed, []);
+    t.is((controller as any).readinessTimer, undefined);
+    t.is((controller as any).readinessResolver, undefined);
+    t.is((controller as any).readinessRejecter, undefined);
 });

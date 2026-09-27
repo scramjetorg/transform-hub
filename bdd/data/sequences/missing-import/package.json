@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "description": "BDD fixture: fails during module load because a dependency is missing.",
   "main": "index.js",
+  "engines": {
+    "node": ">=16"
+  },
   "license": "ISC",
   "author": "Scramjet <open-source@scramjet.org>",
   "repository": {

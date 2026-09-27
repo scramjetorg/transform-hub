@@ -112,6 +112,27 @@ jobs:
           BDD_INCLUDE_LONG_RUNNING: "1"
         run: npm run test:bdd-ci-node
 
+  bdd-core-bun:
+    name: CI / core Bun BDD
+    needs: [validation]
+    if: ${{ always() && needs.validation.result == 'success' && !(github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main' && startsWith(github.event.pull_request.head.ref, 'release/') && github.event.pull_request.head.repo.full_name == github.repository) }}
+    permissions:
+      contents: read
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha || github.sha }}
+      - uses: ./.github/actions/setup-workspace
+        with:
+          cache-mode: restore-only
+      - name: Build BDD inputs
+        run: npm run build:packages
+      - name: Run core Bun BDD
+        run: npm run test:bdd-ci-bun
+
   bdd-core-services:
     name: CI / core service BDD
     needs: [validation]

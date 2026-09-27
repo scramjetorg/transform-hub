@@ -1,0 +1,9 @@
+{
+  "name": "native-template-bun",
+  "version": "1.0.0",
+  "main": "index.js",
+  "engines": {
+    "bun": ">=1"
+  },
+  "dependencies": {}
+}

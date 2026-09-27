@@ -38,6 +38,7 @@ const { waitForInstanceDetachment } = require("../../lib/instance-detachment.js"
 const { resolveFixturePackagePath } = require("../../lib/fixture-package-path.js");
 const { expectedHostVersion } = require("../../lib/release-prerelease-context.js");
 import { assertPythonExceptionOnStderr, PYTHON_EXCEPTION_MARKER } from "../../lib/python-exception-stderr";
+import { startNativeControlPlane, type NativeControlPlane } from "../../lib/native-control-plane-fixture";
 
 function resolveSequencePackage(packageName: string): string {
     const configuredDirs = (process.env.PACKAGES_DIR || "")
@@ -112,6 +113,7 @@ let signalRunnerEnded: () => void = () => undefined;
 const includesLongRunningScenarios = ["1", "true"].includes(String(process.env.BDD_INCLUDE_LONG_RUNNING).toLowerCase());
 const needsSuiteHost = process.env.SCRAMJET_BDD_CHUNK_ID !== "hub-runtime" || includesLongRunningScenarios;
 let suiteHostStarted = false;
+let nativeControlPlane: NativeControlPlane | undefined;
 
 const version = resolveRootPackageVersion();
 const hostUtils = new HostUtils();
@@ -262,6 +264,12 @@ BeforeAll({ timeout: 20e3 }, async () => {
         return;
     }
 
+    if (process.env.SCRAMJET_BDD_NATIVE_CONTROL_PLANE === "1") {
+        nativeControlPlane = await startNativeControlPlane();
+        process.env.SCRAMJET_BDD_NATIVE_HUB_CONFIG = nativeControlPlane.configPath;
+        process.env.SCRAMJET_BDD_NATIVE_HUB_ID = nativeControlPlane.hubId;
+    }
+
     let apiUrl = process.env.SCRAMJET_HOST_BASE_URL;
     let apiReservation: any;
     let instancesReservation: any;
@@ -334,8 +342,11 @@ BeforeAll({ timeout: 20e3 }, async () => {
         controlIngressReservation = await allocateOwnedPort(ownership);
         const controlIngressPort = controlIngressReservation.port;
         dynamicVerser2ConfigPath = `data/.hub-verser2-${process.pid}-${Date.now()}.json`;
+        const nativeConfig = process.env.SCRAMJET_BDD_NATIVE_HUB_CONFIG ? JSON.parse(await fs.promises.readFile(process.env.SCRAMJET_BDD_NATIVE_HUB_CONFIG, "utf8")) : {};
         await writeFile(dynamicVerser2ConfigPath, JSON.stringify({
+            ...nativeConfig,
             verser2: {
+                ...nativeConfig.verser2,
                 controlIngress: {
                     host: {
                         bindPort: controlIngressPort,
@@ -350,6 +361,7 @@ BeforeAll({ timeout: 20e3 }, async () => {
             (signal) => hostClient.getLoadCheck({ signal }),
             "Shared HostClient transport did not become ready before the scenario baseline"
         );
+        await nativeControlPlane?.assertRegistered();
         suiteHostStarted = true;
     } finally {
         if (dynamicVerser2ConfigPath) await unlink(dynamicVerser2ConfigPath).catch(() => undefined);
@@ -380,6 +392,11 @@ AfterAll(async () => {
         hostClient = undefined as unknown as HostClient;
         scenarioHostClient?.dispose();
         scenarioHostClient = undefined;
+        hostUtils.dispose();
+        if (nativeControlPlane) await nativeControlPlane.stop();
+        nativeControlPlane = undefined;
+        delete process.env.SCRAMJET_BDD_NATIVE_HUB_CONFIG;
+        delete process.env.SCRAMJET_BDD_NATIVE_HUB_ID;
     }
     cleanupBddConfig();
 });
@@ -528,8 +545,11 @@ const startHost = async () => {
         controlIngressReservation = await allocateOwnedPort(ownership);
         const controlIngressPort = controlIngressReservation.port;
         dynamicVerser2ConfigPath = `data/.hub-verser2-${process.pid}-${Date.now()}.json`;
+        const nativeConfig = process.env.SCRAMJET_BDD_NATIVE_HUB_CONFIG ? JSON.parse(await fs.promises.readFile(process.env.SCRAMJET_BDD_NATIVE_HUB_CONFIG, "utf8")) : {};
         await writeFile(dynamicVerser2ConfigPath, JSON.stringify({
+            ...nativeConfig,
             verser2: {
+                ...nativeConfig.verser2,
                 controlIngress: {
                     host: {
                         bindPort: controlIngressPort,
