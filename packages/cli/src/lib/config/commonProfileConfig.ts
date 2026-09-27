@@ -26,12 +26,12 @@ export const validateProfileKeysSize = (config: Object) => {
         displayMessage("Invalid number of keys in configuration");
         return false;
     }
-    if (!profileKeys.every((key: any) => configKeys.includes(key)) || configKeys.some(key => key !== "verser2" && key !== "verser2Draft" && !profileKeys.includes(key))) {
+    if (!profileKeys.every((key: any) => configKeys.includes(key)) || configKeys.some(key => key !== "verser2" && key !== "verser2Draft" && key !== "transportMode" && !profileKeys.includes(key))) {
         displayMessage("Missing keys in configuration");
         return false;
     }
     for (const key in config) {
-        if (key !== "verser2" && key !== "verser2Draft" && !(key in profileConfigDefault &&
+        if (key !== "verser2" && key !== "verser2Draft" && key !== "transportMode" && !(key in profileConfigDefault &&
             typeof config[key as keyof Object] === typeof profileConfigDefault[key as keyof ProfileConfigEntity]))
             return false;
     }
@@ -74,6 +74,7 @@ export const validateProfileEntry = (key: string, value: any,): boolean | null =
             if (value === profileConfigDefault.token) return true;
             return isJWT(value);
         }
+        case "transportMode": return value === "native" || value === "legacy-http";
         case "verser2": return validateOutboundVerser2Profile(value);
         case "verser2Draft": return validateVerser2Draft(value);
         default:

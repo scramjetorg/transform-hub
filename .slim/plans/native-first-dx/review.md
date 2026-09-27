@@ -13,3 +13,7 @@ The Phase 0 PoC proved the native root/Space journey, trusted local onboarding f
 ## 2026-09-27 — Retained diagnostic example amendment
 
 Per user direction, the PoC diagnostic is retained at `examples/native-onboarding-poc/` with a maintainer-only README. It is maintained-but-transient, manually/non-CI validated, and never a supported onboarding surface, template, user-facing guide, sidebar, root npm script, or published/linkable example. Phase 0 owns the initial relocation and disposal of generated runtime state and the plan-local copy; Phase 1 maintains it for native profile/bundle/routing/diagnostic/CLI contract changes; Phases 2 and 3 exclude it. The example requires built `dist/`, Linux `openssl`/`strace`, and fixed free ports; generated material remains in `/tmp` and must not be deployed. It proves current topology only, manually enters current transport fields/PoC credentials, and is not trusted-bundle UX or production mTLS identity separation.
+
+## 2026-09-27 — Mandatory test-speed constraint
+
+Per the user's new mandatory requirement, every single test must target 1–2 seconds and complete within a hard maximum of 5 seconds, including the Phase 1 native full-path BDD scenario and all final test evidence. Failures must raise direct, bounded exceptions with actionable diagnostics. Existing 20/30-second waits are unacceptable and must be replaced with immediate or short bounded failure diagnostics. This constraint is active acceptance and verification criteria for the plan; noncompliant evidence cannot satisfy completion.

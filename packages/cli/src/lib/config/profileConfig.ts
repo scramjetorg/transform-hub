@@ -36,7 +36,7 @@ export default class ProfileConfig extends ConfigFileDefault<ProfileConfigEntity
     }
 
     set(config: any): boolean {
-        const { log: currentLog, ...currentConfig } = super.get();
+        const { log: currentLog, ...currentConfig } = this.configuration;
         const { log: newLog, ...newConfig } = config;
         const overlap = { ...currentConfig, ...newConfig, log: { ...currentLog, ...newLog } };
 

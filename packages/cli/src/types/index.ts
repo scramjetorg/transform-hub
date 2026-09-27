@@ -36,6 +36,8 @@ export interface ProfileConfigEntity {
     }
     verser2?: Verser2ProfileConfig;
     verser2Draft?: Verser2ProfileDraft;
+    /** Explicit transport choice for newly-created profiles. Omitted is legacy compatibility. */
+    transportMode?: "native" | "legacy-http";
 }
 
 export type Verser2IngressLevel = SharedVerser2IngressLevel;

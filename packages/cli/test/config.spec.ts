@@ -80,6 +80,21 @@ test("mutable -c config path receives config mutations", t => {
     fs.rmSync(directory, { recursive: true, force: true });
 });
 
+test("invalid profile files can be restored without crashing during construction", t => {
+    const directory = fs.mkdtempSync(path.join(os.tmpdir(), "scramjet-cli-invalid-profile-test-"));
+    const configPath = path.join(directory, "config.json");
+    const defaults = new ProfileConfig(defaultConfigProfileFile).getDefault();
+    fs.writeFileSync(configPath, JSON.stringify({ ...defaults, verser2: {} }, null, 2));
+
+    const profile = new ProfileConfig(configPath);
+    t.false(profile.isValid());
+    t.true(profile.restoreDefault());
+    t.true(profile.isValid());
+    t.deepEqual(profile.get(), defaults);
+
+    fs.rmSync(directory, { recursive: true, force: true });
+});
+
 test("--config-path remains read-only", t => {
     const manager = ProfileManager.getInstance();
     const directory = fs.mkdtempSync(path.join(os.tmpdir(), "scramjet-cli-readonly-test-"));

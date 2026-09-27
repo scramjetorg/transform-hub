@@ -380,6 +380,33 @@ test("Verser2ManagerSthBrokerTransport preserves streaming request and response 
     t.is(await responseText, "response body");
 });
 
+test("Verser2ManagerSthBrokerTransport forwards per-request lease acquisition timeout", async t => {
+    const broker = new FakeBroker();
+    const transport = new Verser2ManagerSthBrokerTransport(broker);
+    const domain = "sth.sth-1.scramjet.internal";
+    broker.setRoutes([{ targetId: "sth:sth-1:guest", domain }]);
+
+    await transport.request({ domain, method: "GET", path: "/", leaseAcquireTimeoutMs: 2000 });
+
+    t.is((broker.requests[0] as unknown as { leaseAcquireTimeoutMs?: number }).leaseAcquireTimeoutMs, 2000);
+});
+
+test("Verser2ManagerSthBrokerTransport bounds a held lease acquisition", async t => {
+    const broker = new FakeBroker();
+    const transport = new Verser2ManagerSthBrokerTransport(broker);
+    const domain = "sth.sth-1.scramjet.internal";
+    broker.holdRequests = true;
+    broker.setRoutes([{ targetId: "sth:sth-1:guest", domain }]);
+
+    const started = Date.now();
+    const request = transport.request({ domain, method: "GET", path: "/", leaseAcquireTimeoutMs: 25 });
+    const error = await t.throwsAsync(request, { instanceOf: Verser2RouteUnavailableError });
+    broker.releaseHeldRequest?.();
+
+    t.regex(error!.message, /Lease acquisition timed out/);
+    t.true(Date.now() - started < 2000);
+});
+
 test("Verser2ManagerSthBrokerTransport propagates request stream errors to broker body", async t => {
     const broker = new FakeBroker();
     const transport = new Verser2ManagerSthBrokerTransport(broker);

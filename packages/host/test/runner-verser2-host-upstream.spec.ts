@@ -102,11 +102,15 @@ test("getRunnerVerser2HostUpstreamParams returns null when runnerHost disabled",
         runnerHost: { ...baseVerser2Config.runnerHost!, enabled: false }
     };
 
-    t.is(getRunnerVerser2HostUpstreamParams(config, true), null);
+    t.is(getRunnerVerser2HostUpstreamParams(config), null);
 });
 
-test("getRunnerVerser2HostUpstreamParams returns null when CPM is not configured", t => {
-    t.is(getRunnerVerser2HostUpstreamParams(baseVerser2Config, false), null);
+test("getRunnerVerser2HostUpstreamParams enables a complete native upstream without CPM", t => {
+    t.truthy(getRunnerVerser2HostUpstreamParams(baseVerser2Config));
+});
+
+test("getRunnerVerser2HostUpstreamParams returns null when native upstream is disabled", t => {
+    t.is(getRunnerVerser2HostUpstreamParams({ ...baseVerser2Config, enabled: false }), null);
 });
 
 test("getRunnerVerser2HostUpstreamParams rejects partial PEM identity", t => {

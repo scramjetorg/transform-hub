@@ -27,6 +27,8 @@ export type ManagerSthRoutedRequest = {
     headers?: Record<string, string>;
     body?: readonly Buffer[] | Readable;
     signal?: AbortSignal;
+    /** Maximum time to wait for a federated lease for this request. */
+    leaseAcquireTimeoutMs?: number;
 };
 
 export type RouteChangeEvent = {
@@ -136,14 +138,32 @@ export class Verser2ManagerSthBrokerTransport implements ManagerSthBrokerTranspo
         request.signal?.addEventListener("abort", abortBody, { once: true });
 
         try {
-            return await this.broker.request({
+            const brokerRequest = {
                 targetId: route.targetId,
                 routeDomain: route.domain,
                 method: request.method,
                 path: request.path,
                 headers: request.headers,
                 body: request.body
-            });
+            } as VerserBrokerRequest & { leaseAcquireTimeoutMs?: number };
+            if (request.leaseAcquireTimeoutMs !== undefined) {
+                brokerRequest.leaseAcquireTimeoutMs = request.leaseAcquireTimeoutMs;
+            }
+
+            let timeout: NodeJS.Timeout | undefined;
+            try {
+                const response = await Promise.race([
+                    this.broker.request(brokerRequest),
+                    request.leaseAcquireTimeoutMs === undefined
+                        ? new Promise<never>(() => undefined)
+                        : new Promise<never>((_, reject) => {
+                            timeout = setTimeout(() => reject(new Error(`Lease acquisition timed out after ${request.leaseAcquireTimeoutMs}ms`)), request.leaseAcquireTimeoutMs);
+                        })
+                ]);
+                return response;
+            } finally {
+                if (timeout) clearTimeout(timeout);
+            }
         } catch (error) {
             const message = error instanceof Error ? error.message : String(error);
 

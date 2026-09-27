@@ -6,7 +6,7 @@ import os from "os";
 import path from "path";
 import { PassThrough, Readable } from "stream";
 import { executeCommand, parseCommandContext, resolveCommandPath } from "@scramjet/config";
-import { apiCommand, ApiCommandError, setApiDependencies } from "../src/lib/commands/api";
+import { apiCommand, ApiCommandError, effectiveApiTimeout, setApiDependencies } from "../src/lib/commands/api";
 import { RoutedBrokerCancelledError, RoutedBrokerDuplicateRouteError, RoutedBrokerRedirectError, RoutedBrokerRequestError, RoutedBrokerResponseLimitError, RoutedBrokerRouteUnavailableError, RoutedBrokerTimeoutError } from "@scramjet/api-router";
 
 const profile = (directory: string, level: "platform" | "space" | "hub" = "platform") => {
@@ -55,6 +55,11 @@ test.serial("request timeout aborts pending broker dispatch and closes once", as
     state.broker.request = async (request: any) => request.path === "/api/v2/ingress/identity" ? response(200, JSON.stringify({ level: "platform", serviceId: "platform-id", routeDomain: "route.test" })) : await new Promise(() => {});
     const error = await t.throwsAsync(() => run(["get", "/items", "--timeout", "1"]), { instanceOf: ApiCommandError }) as ApiCommandError;
     t.is(error.code, "TIMEOUT"); t.is(state.closes, 1);
+});
+
+test.serial("raw API timeout is capped at the native maximum", async t => {
+    t.is(effectiveApiTimeout(9000, 1500), 5000);
+    t.is(effectiveApiTimeout(undefined, 1500), 1500);
 });
 
 test.serial("response body timeout after headers destroys the stalled body and closes once", async t => {

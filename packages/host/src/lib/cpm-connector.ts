@@ -18,6 +18,7 @@ import { networkInterfaces } from "os";
 import { HostError } from "@scramjet/model";
 import { Verser2ClientTlsConfig } from "@scramjet/api-types";
 import { getManagerGuestMinWaitingStreams } from "./cpm-connector-leases";
+import { PlatformControlSession } from "./platform-control-session";
 
 type STHInformation = {
     id?: string;
@@ -170,6 +171,7 @@ export class CPMConnector extends TypedEmitter<Events> {
     verser2Broker?: VerserBroker;
 
     verser2Guest?: VerserNodeGuest;
+    private platformSession: PlatformControlSession;
 
     /**
      * Reference for method called in interval and sending load check data to the Manager.
@@ -194,6 +196,9 @@ export class CPMConnector extends TypedEmitter<Events> {
         this.config = config;
 
         this.logger = new ObjLogger(this);
+        this.platformSession = new PlatformControlSession(this.logger);
+        this.platformSession.on("communicationReady", () => this.emit("communicationReady"));
+        this.platformSession.on("event", event => this.emit("event", event));
 
         const tls = createVerser2ClientTlsOptions(this.config.verser2.tls);
 
@@ -222,6 +227,7 @@ export class CPMConnector extends TypedEmitter<Events> {
      */
     setLoadCheck(loadCheck: LoadCheck) {
         this.loadCheck = loadCheck;
+        this.platformSession.setLoadCheck(loadCheck);
     }
 
     /**
@@ -266,6 +272,7 @@ export class CPMConnector extends TypedEmitter<Events> {
     }
 
     handleCommunicationRequestEnd() {
+        this.platformSession?.close();
         this.communicationStream?.end();
 
         if (this.loadInterval) {
@@ -277,6 +284,14 @@ export class CPMConnector extends TypedEmitter<Events> {
     }
 
     async handleCommunicationRequest(duplex: DuplexStream, _headers: http.IncomingHttpHeaders) {
+        return this.platformSession.handleCommunicationRequest(duplex, (status: number) => void this.handleConnectionClose(status));
+        /*
+         * The legacy implementation below is retained in this source file while
+         * the connector's reconnect supervisor remains CPM-specific. The duplex
+         * protocol itself is implemented by PlatformControlSession above.
+         */
+        /* istanbul ignore next */
+        if (false) {
         if (this.communicationStream) {
             this.logger.warn("Already connected to Manager", this.communicationStream);
             return {
@@ -341,15 +356,15 @@ export class CPMConnector extends TypedEmitter<Events> {
             });
 
         this.communicationStream = new StringStream().JSONStringify();
-        this.communicationStream.pipe(duplex.output);
+        this.communicationStream!.pipe(duplex.output);
 
         await this.setLoadCheckMessageSender();
 
-        this.communicationStream.on("pause", () => {
+        this.communicationStream!.on("pause", () => {
             this.logger.warn("Communication stream paused");
         });
 
-        await this.communicationStream.whenWrote([CPMMessageCode.NETWORK_INFO, await this.getNetworkInfo()]);
+        await this.communicationStream!.whenWrote([CPMMessageCode.NETWORK_INFO, await this.getNetworkInfo()]);
 
         this.emit("communicationReady");
 
@@ -390,6 +405,7 @@ export class CPMConnector extends TypedEmitter<Events> {
                 })
             );
         });
+        }
     }
 
     /**
@@ -663,15 +679,23 @@ export class CPMConnector extends TypedEmitter<Events> {
     }
 
     async sendEvent(event: SpaceEventMessageData): Promise<void> {
+        return this.platformSession.sendEvent(event);
+        /* istanbul ignore next */
+        if (false) {
         await this.communicationStream?.whenWrote([CPMMessageCode.EVENT, event]);
         this.logger.debug("Sent event", event);
+        }
     }
 
     async sendLoad() {
+        return this.platformSession.sendLoad();
+        /* istanbul ignore next */
+        if (false) {
         try {
             await this.communicationStream?.whenWrote([CPMMessageCode.LOAD, await this.getLoad()]);
         } catch {
             this.logger.error("Error sending loadcheck");
+        }
         }
     }
 
@@ -679,11 +703,15 @@ export class CPMConnector extends TypedEmitter<Events> {
      * Sets up a method sending load check data and to be called with interval
      */
     async setLoadCheckMessageSender() {
+        return this.platformSession.setLoadCheckMessageSender();
+        /* istanbul ignore next */
+        if (false) {
         await this.sendLoad();
 
         this.loadInterval = setInterval(async () => {
             await this.sendLoad();
         }, 10000);
+        }
     }
 
     /**
@@ -692,6 +720,9 @@ export class CPMConnector extends TypedEmitter<Events> {
      * @returns Promise<LoadCheckStatMessage> Promise resolving to LoadCheckStatMessage object.
      */
     async getLoad(): Promise<LoadCheckStatMessage> {
+        return this.platformSession.getLoad();
+        /* istanbul ignore next */
+        if (false) {
         const load = await this.loadCheck!.getLoadCheck();
 
         return {
@@ -702,6 +733,7 @@ export class CPMConnector extends TypedEmitter<Events> {
             memUsed: load.memUsed,
             fsSize: load.fsSize
         };
+        }
     }
 
     /**
@@ -710,11 +742,15 @@ export class CPMConnector extends TypedEmitter<Events> {
      * @param sequences List of Sequences to send.
      */
     async sendSequencesInfo(sequences: STHRestAPI.GetSequencesResponse): Promise<void> {
+        return this.platformSession.sendSequencesInfo(sequences);
+        /* istanbul ignore next */
+        if (false) {
         this.logger.trace("Sending sequences information, total sequences", sequences.length);
 
         await this.communicationStream!.whenWrote([CPMMessageCode.SEQUENCES, { sequences }]);
 
         this.logger.trace("Sequences information sent");
+        }
     }
 
     /**
@@ -723,11 +759,15 @@ export class CPMConnector extends TypedEmitter<Events> {
      * @param instances List of Instances to send.
      */
     async sendInstancesInfo(instances: Instance[]): Promise<void> {
+        return this.platformSession.sendInstancesInfo(instances);
+        /* istanbul ignore next */
+        if (false) {
         this.logger.trace("Sending instances information");
 
         await this.communicationStream?.whenWrote([CPMMessageCode.INSTANCES, { instances }]);
 
         this.logger.trace("Instances information sent");
+        }
     }
 
     /**
@@ -737,11 +777,15 @@ export class CPMConnector extends TypedEmitter<Events> {
      * @param {SequenceMessageCode} seqStatus Sequence status.
      */
     async sendSequenceInfo(sequenceId: string, seqStatus: SequenceMessageCode, config: STHRestAPI.GetSequenceResponse): Promise<void> {
+        return this.platformSession.sendSequenceInfo(sequenceId, seqStatus, config);
+        /* istanbul ignore next */
+        if (false) {
         this.logger.trace("Send sequence status update", sequenceId, seqStatus);
 
         await this.communicationStream?.whenWrote([CPMMessageCode.SEQUENCE, { id: sequenceId, status: seqStatus, config }]);
 
         this.logger.trace("Sequence status update sent", sequenceId, seqStatus);
+        }
     }
 
     /**
@@ -751,9 +795,13 @@ export class CPMConnector extends TypedEmitter<Events> {
      * @param {SequenceMessageCode} instanceStatus Instance status.
      */
     async sendInstanceInfo(instance: Instance): Promise<void> {
+        return this.platformSession.sendInstanceInfo(instance);
+        /* istanbul ignore next */
+        if (false) {
         this.logger.trace("Send instance status update", instance.status);
 
         await this.communicationStream?.whenWrote([CPMMessageCode.INSTANCE, { instance }]);
+        }
     }
 
     /**
@@ -763,10 +811,17 @@ export class CPMConnector extends TypedEmitter<Events> {
      * @param data Topic information.
      */
     async sendTopicInfo(data: STHTopicEventData) {
+        return this.platformSession.sendTopicInfo(data);
+        /* istanbul ignore next */
+        if (false) {
         await this.communicationStream?.whenWrote([CPMMessageCode.TOPIC, { ...data }]);
+        }
     }
 
     async sendTopicsInfo(topics: Omit<STHTopicEventData, "status">[]) {
+        return this.platformSession.sendTopicsInfo(topics);
+        /* istanbul ignore next */
+        if (false) {
         this.logger.debug("Sending topics information", topics);
 
         topics.forEach(async (topic) => {
@@ -775,6 +830,7 @@ export class CPMConnector extends TypedEmitter<Events> {
         });
 
         this.logger.trace("Topics information sent");
+        }
     }
 
     public makeHttpRequestToCpm(method: string, reqPath: string, headers: http.OutgoingHttpHeaders | Record<string, string> = {}): http.ClientRequest {

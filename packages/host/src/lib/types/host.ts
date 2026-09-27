@@ -12,6 +12,7 @@ import { Readable } from "stream";
 import { Socket } from "net";
 import { IInstanceStore } from "./instance-store";
 import { ISequenceStore } from "./sequence-store";
+import { PlatformControlSession } from "../platform-control-session";
 
 type SequenceId = string;
 
@@ -34,6 +35,7 @@ export interface IHost {
     serviceDiscovery: ServiceDiscovery;
     commonLogsPipe: CommonLogsPipe;
     cpmConnector?: CPMConnector;
+    platformSession?: PlatformControlSession;
     instancesStore: IInstanceStore;
     sequenceStore: ISequenceStore;
 

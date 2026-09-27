@@ -1,10 +1,10 @@
 import { defaultConfigName, profileExists } from "../paths";
 import { envs } from "../../utils/envs";
-import { displayError, displayMessage } from "../output";
+import { displayError } from "../output";
 import { SiConfig } from "./siConfig";
+import ProfileConfig from "./profileConfig";
 import { SessionConfig } from "./sessionConfig";
 import { ProfileManager } from "./profileManager";
-import ProfileConfig from "./profileConfig";
 import ReadOnlyProfileConfig from "./readOnlyProfileConfig";
 import { parseConfigSelection } from "./args";
 
@@ -48,14 +48,7 @@ export const initConfig = () => {
 
     const profileUsed = profileManager.getProfileName();
 
-    if (profileUsed !== defaultConfigName) {
-        displayMessage(`Profile ${profile} contain errors- using default profile instead.`);
-        profileManager.useDefaultProfile();
-        siConfig.setProfile(defaultConfigName);
-    } else {
-        displayMessage("Default Profile contain errors- reseting to base configuration.");
-        (profileManager.getProfileConfig() as ProfileConfig).restoreDefault();
-    }
+    throw new Error(`Selected profile ${profileUsed} is invalid; refusing to fall back to the default profile`);
 };
 
 const getDashDefaultValue = (id: string, def: string) => {

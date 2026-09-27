@@ -54,3 +54,11 @@ Feature: Control-plane admission and enrollment
     Then the CSR enrollment artifact reports a safe usage error
     When the Hub CSR enrollment artifact has an operational failure
     Then the CSR enrollment artifact reports a generic operational error
+
+  @native-bootstrap
+  Scenario: A published native bundle admits a fresh STH through the MultiManager control ingress
+    Given a real published native bootstrap fixture with scenario-owned ports
+    When the native bundle is imported and the fresh STH is queried through the named hub-config route
+    Then native STH registration and the selected space S and hub H target are active
+    And the legacy apiUrl and middlewareApiUrl canaries have received zero requests
+    And cloned native bundles report CA exit 51, route exit 55, and identity exit 56

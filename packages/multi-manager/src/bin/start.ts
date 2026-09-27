@@ -6,6 +6,15 @@ import { MultiManagerCommandOptions } from "../types/multi-manager-types";
 import { MultiManagerConfig, multiManagerCliOptions } from "../config/multi-manager-configuration";
 import * as v8 from "v8";
 
+if (process.argv[2] === "native-bundle") {
+    import("./native-bundle").then(({ runNativeBundle }) => runNativeBundle(process.argv.slice(3)))
+        .then(output => process.stdout.write(`${output}\n`))
+        .catch(error => {
+            process.stderr.write(`${error instanceof Error ? error.message : error}\n`);
+            process.exitCode = 1;
+        });
+} else {
+
 const cliOptions: ConfigOptionDescriptor[] = [
     { name: "config", flag: "config", short: "c", type: "string", description: "Specify path to json configuration file" },
     { name: "colors", flag: "colors", type: "boolean", description: "Disable colors in output", defaultValue: true, negatable: true },
@@ -72,3 +81,4 @@ function startMultiManager(options: MultiManagerCommandOptions) {
 }
 
 startMultiManager(parseCliOptions({ argv: process.argv, options: cliOptions }) as Partial<MultiManagerCommandOptions> as MultiManagerCommandOptions);
+}

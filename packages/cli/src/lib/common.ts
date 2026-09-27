@@ -10,6 +10,7 @@ import { getMiddlewareClient } from "./platform";
 import { isDevelopmentEnv, isProductionEnv } from "../types";
 import { CapabilityUnavailableError } from "./capabilities";
 import { shouldAttachApiClientLogger } from "./api-client-logging";
+import { resolveSelectedTransport } from "./config/transportResolver";
 
 const { F_OK } = constants;
 
@@ -22,7 +23,7 @@ let hostClient: HostClient;
  */
 export const getHostClient = (): HostClient => {
     const profileConfig = profileManager.getProfileConfig();
-    if (profileConfig.get().verser2) throw new CapabilityUnavailableError("This named command");
+    if (resolveSelectedTransport().mode === "native") throw new CapabilityUnavailableError("This named command");
 
     if (hostClient) return hostClient;
 

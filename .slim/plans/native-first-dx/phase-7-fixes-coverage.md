@@ -18,13 +18,14 @@ Close phase findings and establish final evidence for the native-first contract 
 
 - The plan's observable criteria are established or any limitation is explicitly evidenced and accepted before completion.
 - No defect fix introduces a new public port, trust bootstrap, or compatibility removal without user direction.
+- Every final-validation test targets 1–2 seconds and completes within a hard maximum of 5 seconds. Failures raise direct, bounded exceptions with actionable diagnostics; existing 20/30-second waits are unacceptable and must be replaced with immediate or short bounded failure diagnostics.
 
 ## Verification
 
 - `npm run lint`
 - `npm run build:packages`
 - `npm run test:packages`
-- `npm run test:bdd-ci-verser2`, `npm run test:bdd-ci-node`, `npm run test:bdd-ci-python`, `npm run test:bdd-ci-bun`, and documentation checks from Phase 3, plus focused HTTP/CPM compatibility tests first established in Phase 1.
+- `npm run test:bdd-ci-verser2`, `npm run test:bdd-ci-node`, `npm run test:bdd-ci-python`, `npm run test:bdd-ci-bun`, and documentation checks from Phase 3, plus focused HTTP/CPM compatibility tests first established in Phase 1. Final evidence must enforce the 1–2 second target and hard 5-second maximum per test, with direct bounded exceptions instead of 20/30-second waits.
 
 ## Non-goals
 

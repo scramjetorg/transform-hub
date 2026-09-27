@@ -2,6 +2,7 @@ import baseTest from "ava";
 const { createAvaMemoryGuard } = require("../../../scripts/lib/ava-memory-guard");
 const test: typeof baseTest = createAvaMemoryGuard(baseTest);
 import { publicOutboundVerser2Profile, validateOutboundVerser2Draft, validateOutboundVerser2Profile } from "../src";
+import { compileVerser2ConnectionBundle, decodeVerser2ConnectionBundle, encodeVerser2ConnectionBundle, publicVerser2ConnectionBundle, validateVerser2ConnectionBundle } from "../src";
 
 const profile = { endpoint: "https://host:443", brokerId: "broker", ingress: { level: "platform", expectedId: "root", routeDomain: "root" }, target: { spaceId: "space" }, tls: { caFile: "/ca", certFile: "/cert", keyFile: "/key" } };
 
@@ -32,4 +33,45 @@ test("outbound draft validation and masking reject unsafe leaves", t => {
     const masked = publicOutboundVerser2Profile({ ...profile, tls: { ...profile.tls, passphraseReference: "env://SECRET" } });
     t.is(masked.tls?.keyFile, "********");
     t.is(masked.tls?.passphraseReference, "********");
+});
+
+const caPem = `-----BEGIN CERTIFICATE-----
+MIIBeTCCAR+gAwIBAgIUEV374ky1JteQ9K37fQWa//P+vfEwCgYIKoZIzj0EAwIw
+EjEQMA4GA1UEAwwHdGVzdC1jYTAeFw0yNjA3MDMxMzQ3MTRaFw0zNjA2MzAxMzQ3
+MTRaMBIxEDAOBgNVBAMMB3Rlc3QtY2EwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNC
+AARNt/Pmv5GIypjwkVYy5Y3J2k8pv+aa/usj/9yBhrW6JnkRLf+7Mu+F01JVnnBa
+vowGoTcqosUVI1awcrFCqbfIo1MwUTAdBgNVHQ4EFgQUcCfaj/braIlE9DMbzAFk
+dk4b3CYwHwYDVR0jBBgwFoAUcCfaj/braIlE9DMbzAFkdk4b3CYwDwYDVR0TAQH/
+BAUwAwEB/zAKBggqhkjOPQQDAgNIADBFAiEA+Ijw6OFw9+elt+pSRJZzaMC/2oe5
+MV0lraguRyBlLoECIF/btZ6ynYno78l5rKuvi0kbvJyMNzcejcNxel+9LyEd
+-----END CERTIFICATE-----`;
+
+const bundle = {
+    kind: "scramjet.connection-bundle" as const, version: 1 as const, profileName: "local",
+    transport: "verser2" as const, publicEndpoint: { url: "https://manager.example:2443", port: 2443, role: "control" as const },
+    brokerId: "broker", ingress: { level: "platform" as const, expectedId: "root", routeDomain: "root" }, target: { spaceId: "space" },
+    trust: { caPem, sha256Fingerprint: "013C5A40C987685AAF45DCC70FF20980426BEBF3B253627CE0CA5BFE480A472D", expiresAt: "2036-06-30T13:47:14.000Z" },
+    credentials: { certFile: "/cert", keyFile: "/key", passphraseReference: "env://PASS" }
+};
+
+test("connection bundle round trips, compiles without I/O, and redacts trust", t => {
+    t.true(validateVerser2ConnectionBundle(bundle));
+    const decoded = decodeVerser2ConnectionBundle(encodeVerser2ConnectionBundle(bundle));
+    t.deepEqual(decoded, bundle);
+    t.deepEqual(compileVerser2ConnectionBundle(decoded, "/owned/ca.pem"), { endpoint: bundle.publicEndpoint.url, brokerId: "broker", ingress: bundle.ingress, target: bundle.target, tls: { caFile: "/owned/ca.pem", certFile: "/cert", keyFile: "/key", passphraseReference: "env://PASS" } });
+    const publicBundle = publicVerser2ConnectionBundle(bundle) as any;
+    t.is(publicBundle.trust.caPem, "********");
+    t.is(publicBundle.credentials.keyFile, "********");
+    t.throws(() => compileVerser2ConnectionBundle(bundle, "relative.pem"));
+});
+
+test("connection bundle rejects unknown fields and secret payloads", t => {
+    t.false(validateVerser2ConnectionBundle({ ...bundle, extra: true }));
+    t.false(validateVerser2ConnectionBundle({ ...bundle, trust: { ...bundle.trust, caPem: "not-a-certificate" } }));
+    t.false(validateVerser2ConnectionBundle({ ...bundle, credentials: { pfxFile: "data:application/pkcs12;base64,secret" } }));
+    t.false(validateVerser2ConnectionBundle({ ...bundle, credentials: { certFile: "/cert" } }));
+    t.false(validateVerser2ConnectionBundle({ ...bundle, publicEndpoint: { ...bundle.publicEndpoint, url: "http://manager.example:2443" } }));
+    t.false(validateVerser2ConnectionBundle({ ...bundle, publicEndpoint: { ...bundle.publicEndpoint, port: 2444 } }));
+    t.false(validateVerser2ConnectionBundle({ ...bundle, trust: { ...bundle.trust, sha256Fingerprint: "00".repeat(32) } }));
+    t.throws(() => decodeVerser2ConnectionBundle("not-json"));
 });

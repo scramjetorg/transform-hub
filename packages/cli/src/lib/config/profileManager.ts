@@ -38,9 +38,11 @@ export class ProfileManager {
         }
         return ProfileManager.instance;
     }
-    createProfile(name: string) {
+    createProfile(name: string, mode: "native" | "legacy-http" = "native") {
         if (profileExists(name)) throw Error(`Profile ${name} already exist`);
-        new ProfileConfig(profileNameToPath(name)).restoreDefault();
+        const profile = new ProfileConfig(profileNameToPath(name));
+        profile.restoreDefault();
+        profile.set({ transportMode: mode });
     }
     removeProfile(name: string) {
         if (!profileExists(name)) throw Error(`Unknown profile: ${name}`);

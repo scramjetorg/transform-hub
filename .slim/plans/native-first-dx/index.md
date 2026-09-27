@@ -62,6 +62,12 @@ Make the current Verser2-native workflow the default and clearest way to use STH
 - HTTP/v1 and CPM docs/help are clearly marked compatibility, retain working examples, and do not appear in the recommended quickstart.
 - Generated documentation matches its `docs-source` inputs; focused unit/package/BDD validation and the final build/lint evidence pass.
 
+## Mandatory test-speed constraint
+
+- Every single test, including the Phase 1 native full-path BDD scenario and final validation evidence, must target 1–2 seconds and complete within a hard maximum of 5 seconds.
+- A failure must raise a direct, bounded exception with actionable diagnostics; it must not wait through existing 20/30-second timeouts. Existing 20/30-second waits are unacceptable and must be replaced with immediate or short bounded failure diagnostics.
+- This is a mandatory acceptance and verification constraint, not an optimization target. Any evidence that violates it does not satisfy the plan.
+
 ## Dependencies and assumptions
 
 - Verser2 TLS identity, route validation, and secret-redaction contracts remain mandatory.

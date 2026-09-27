@@ -99,7 +99,10 @@ export class HostAPIV1Handler {
 
         this.api.upstream(`${this.apiBase}/log`, () => host.commonLogsPipe.getOut());
         this.api.duplex(`${this.apiBase}/platform`, (duplex: Duplex, headers: IncomingHttpHeaders) => {
-            return host.cpmConnector?.handleCommunicationRequest(duplex as unknown as DuplexStream, headers);
+            const request = host.cpmConnector
+                ? host.cpmConnector.handleCommunicationRequest(duplex as unknown as DuplexStream, headers)
+                : host.platformSession?.handleCommunicationRequest(duplex as unknown as DuplexStream, headers);
+            void request?.catch(error => this.logger.error("Platform route dispatch failed", error));
         });
 
         this.api.use(`${this.apiBase}/cpm`, (req, res) => this.spaceMiddleware(req, res));

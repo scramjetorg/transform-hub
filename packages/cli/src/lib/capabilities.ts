@@ -3,13 +3,14 @@ import { createRestAPI2Client, RestAPI2Routes } from "@scramjet/rest-api2";
 import type { RouteManifest, RouteManifestEntry } from "@scramjet/api-router";
 import { createVerifiedVerser2Session, createVerser2CliTransport, mapApiError } from "./commands/api";
 import { ApiCommandError } from "./apiCommandError";
-import { profileManager, sessionConfig } from "./config";
+import { sessionConfig } from "./config";
 import { validateVerser2Profile } from "./config/verser2Profile";
+import { resolveSelectedTransport } from "./config/transportResolver";
 
 type Scope = "hub" | "space";
 type Owner = "hub" | "space" | "root";
 type Dependencies = { getProfile(): any; createTransport: typeof createVerser2CliTransport };
-const productionDependencies: Dependencies = { getProfile: () => profileManager.getProfileConfig().get().verser2, createTransport: createVerser2CliTransport };
+const productionDependencies: Dependencies = { getProfile: () => resolveSelectedTransport().profile, createTransport: createVerser2CliTransport };
 let dependencies = productionDependencies;
 
 export class CapabilityUnavailableError extends ApiCommandError {

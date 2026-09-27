@@ -67,6 +67,8 @@ import {
 } from "./runner-verser2-host-config";
 import { Verser2RunnerBroker } from "./runner-transport";
 import { attachSthLocalRunnerVerser2Peers, getRunnerVerser2HostUpstreamParams } from "./runner-verser2-host-peers";
+import { registerNativeSth } from "./native-verser2-registration";
+import { PlatformControlSession } from "./platform-control-session";
 import { resolveLegacyRunnerControlIngressConflict, startHostControlIngress, stopHostControlIngress } from "./control-ingress";
 
 import { getStorageAdapter } from "./local-storage/utils";
@@ -154,6 +156,7 @@ export class Host implements IHost, IComponent {
     runnerVerser2UpstreamHealth?: HealthComponent = degradedComponent("hub.upstream", false, { configured: false });
     private runnerVerser2Broker?: Verser2RunnerBroker;
     private runnerVerser2Guest?: { close?: () => Promise<void> };
+    platformSession?: PlatformControlSession;
 
     /**
      * Object to store CSIControllers.
@@ -866,11 +869,7 @@ export class Host implements IHost, IComponent {
         this.controlIngressHost = await startHostControlIngress(controlIngress, this.apiHandler.createV2Router(), this.config.host.id) as VerserHost | undefined;
         await this.startRunnerVerser2Host();
 
-        if (!this.isCPMConfigured()) {
-            if (this.config.strictPlatformConnection) {
-                throw new HostError("PLATFORM_CONNECTION_LOST", "Strict platform connection is set, but no CPM URL or ID provided.");
-            }
-        } else {
+        if (this.isCPMConfigured()) {
             const cpmHostName = this.config.platform?.api || this.config.cpmUrl;
             const cpmId = this.config.platform?.space || `:${this.config.cpmId}`;
             const cpmConnectorConfig: CPMConnectorOptions = {
@@ -1011,12 +1010,37 @@ export class Host implements IHost, IComponent {
             this.runnerVerser2Broker = peers.broker;
             this.runnerVerser2Guest = peers.guest;
 
-            const upstreamParams = getRunnerVerser2HostUpstreamParams(this.config.verser2, !!this.isCPMConfigured());
+            const upstreamParams = getRunnerVerser2HostUpstreamParams(this.config.verser2);
 
             if (upstreamParams) {
                 this.runnerVerser2UpstreamHealth = degradedComponent("hub.upstream", true, { configured: true, url: upstreamParams.url });
                 try {
                     await this.runnerVerser2Host.connectUpstream(upstreamParams);
+                    if (!this.isCPMConfigured()) {
+                        this.platformSession = new PlatformControlSession(this.logger);
+                        this.platformSession.setLoadCheck(this.loadCheck);
+                        this.platformSession.on("event", async event => this.eventBus(event));
+                        this.platformSession.on("communicationReady", () => {
+                            Promise.resolve()
+                                .then(async () => {
+                                    await this.platformSession?.sendSequencesInfo(this.getSequences().map((s: any) => ({ ...s, status: SequenceMessageCode.SEQUENCE_CREATED })));
+                                    await this.platformSession?.sendInstancesInfo(this.getInstances());
+                                    await this.platformSession?.sendTopicsInfo(this.getTopics());
+                                })
+                                .catch((error: Error) => this.logger.error("Error sending native platform inventory snapshot", error.message));
+                        });
+                        const registration = await registerNativeSth(this.runnerVerser2Broker, this.config.verser2, {
+                            id: this.config.host.id,
+                            description: this.config.description,
+                            tags: this.config.tags,
+                            enrollmentToken: this.config.verser2.enrollment.token,
+                            routeDomain: this.config.verser2.guest.routeDomain
+                        });
+                        if (registration.id && registration.id !== this.config.host.id) {
+                            this.config.host.id = registration.id;
+                            this.logger.updateBaseLog({ id: registration.id });
+                        }
+                    }
                     this.runnerVerser2UpstreamHealth = degradedComponent("hub.upstream", false, { configured: true, connected: true, url: upstreamParams.url });
                     this.logger.info("STH-local runner verser2 Host connected to Manager upstream", {
                         upstreamId: upstreamParams.upstreamId,
@@ -1031,7 +1055,9 @@ export class Host implements IHost, IComponent {
                     });
                     this.logger.warn("STH-local runner verser2 Host Manager upstream connection failed", error);
 
-                    if (this.config.strictPlatformConnection) {
+                    if (this.config.strictPlatformConnection || !this.isCPMConfigured()) {
+                        this.platformSession?.close();
+                        this.platformSession = undefined;
                         throw error;
                     }
                 }
@@ -1591,6 +1617,8 @@ export class Host implements IHost, IComponent {
             await this.cpmConnector.disconnect();
             this.cpmConnector = undefined;
         }
+        this.platformSession?.close();
+        this.platformSession = undefined;
 
         this.logger.trace("Stopping API server");
 

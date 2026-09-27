@@ -29,10 +29,11 @@ Make native onboarding the default STH/MM/`si` configuration path while retainin
 - A fresh `si` without a bundle fails with native setup guidance rather than silently calling its HTTP default. A successful import selects the native profile deterministically; an incomplete native profile is a profile error with no HTTP fallback; an explicitly selected compatibility profile retains HTTP/v1 behaviour.
 - The versioned bundle contains public trust/identity data and credential references only—never private keys, PFX content, or passphrases. Import validates the complete artifact before changing an active profile; generated/imported forms yield the same redacted effective profile and target, and overwrite/selection behaviour is deterministic.
 - MVP scope excludes discretionary protocol/security redesign.
+- The native full-path BDD scenario is a single test targeting 1–2 seconds and completing within a hard maximum of 5 seconds. Failures raise a direct, bounded exception with actionable diagnostics; existing 20/30-second waits are unacceptable and are replaced with immediate or short bounded failure diagnostics.
 
 ## Verification
 
-- Named focused workspace tests for changed `config`, `cli`, `sth`, `host`, and `multi-manager` packages; `npm run build:packages`; `npm run test:bdd-ci-verser2`; and the named native full-path BDD scenario.
+- Named focused workspace tests for changed `config`, `cli`, `sth`, `host`, and `multi-manager` packages; `npm run build:packages`; `npm run test:bdd-ci-verser2`; and the named native full-path BDD scenario. Each single test targets 1–2 seconds and has a hard 5-second maximum; failures must produce direct bounded exceptions rather than waiting 20/30 seconds.
 
 ## Non-goals
 

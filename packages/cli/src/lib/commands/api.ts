@@ -4,9 +4,9 @@ import { finished, pipeline } from "stream/promises";
 import { Readable } from "stream";
 import { createVerserBroker, type VerserBroker, type VerserBrokerResponse } from "@signicode/verser2-guest-node";
 import { createVerser2ClientTransport, RoutedBrokerCancelledError, RoutedBrokerDuplicateRouteError, RoutedBrokerRedirectError, RoutedBrokerRequestError, RoutedBrokerResponseLimitError, RoutedBrokerRouteUnavailableError, RoutedBrokerTimeoutError, type ManagedVerser2ClientTransport, type RoutedBrokerResponse, type RoutedBrokerTransport } from "@scramjet/api-router";
-import { profileManager } from "../config";
 import { validateVerser2Bootstrap, validateVerser2Profile } from "../config/verser2Profile";
 import { ApiCommandError } from "../apiCommandError";
+import { MAX_NATIVE_TIMEOUT_MS, resolveSelectedTransport } from "../config/transportResolver";
 
 export { ApiCommandError } from "../apiCommandError";
 
@@ -15,6 +15,7 @@ const DESTRUCTIVE = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 const FORBIDDEN_HEADERS = new Set(["host", "connection", "keep-alive", "transfer-encoding", "upgrade", "content-length"]);
 const JOINABLE_HEADERS = new Set(["accept", "accept-encoding", "cache-control", "pragma", "vary"]);
 const RESPONSE_LIMIT = 1024 * 1024;
+const CLOSE_GRACE_MS = 100;
 
 export type ApiDependencies = {
     getProfile(): any;
@@ -23,10 +24,29 @@ export type ApiDependencies = {
     stdout: NodeJS.WriteStream;
     stderr: NodeJS.WriteStream;
 };
-const productionDependencies: ApiDependencies = { getProfile: () => profileManager.getProfileConfig().get().verser2, createBroker: createVerserBroker, stdin: process.stdin, stdout: process.stdout, stderr: process.stderr };
+const productionDependencies: ApiDependencies = { getProfile: () => resolveSelectedTransport().profile, createBroker: createVerserBroker, stdin: process.stdin, stdout: process.stdout, stderr: process.stderr };
 let dependencies = productionDependencies;
 /** Test seam; production always uses the native broker and process IO. */
 export function setApiDependencies(overrides?: Partial<ApiDependencies>) { dependencies = overrides ? { ...productionDependencies, ...overrides } : productionDependencies; }
+
+async function closeWithGrace(close: () => Promise<void>): Promise<void> {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const cleanup = Promise.resolve().then(close).catch(() => {});
+    await Promise.race([cleanup, new Promise<void>(resolve => { timer = setTimeout(resolve, CLOSE_GRACE_MS); })]);
+    if (timer) clearTimeout(timer);
+}
+export function effectiveApiTimeout(value: unknown, fallback: number): number {
+    const requested = Number(value);
+    return Number.isFinite(requested) && requested > 0 ? Math.min(requested, MAX_NATIVE_TIMEOUT_MS) : fallback;
+}
+async function connectForRoute(connect: () => Promise<unknown>, signal: AbortSignal, timeoutMs: number): Promise<void> {
+    try { await abortable(connect(), signal, timeoutMs); }
+    catch (error) { if (error instanceof ApiCommandError && error.code === "TIMEOUT") throw new ApiCommandError("ROUTE", 55, "Configured route is not ready"); throw error; }
+}
+async function waitForRouteDelay(signal: AbortSignal, timeoutMs: number): Promise<void> {
+    try { await abortable(new Promise<void>(resolve => setTimeout(resolve, 10)), signal, timeoutMs); }
+    catch (error) { if (error instanceof ApiCommandError && error.code === "TIMEOUT") throw new ApiCommandError("ROUTE", 55, "Configured route is not ready"); throw error; }
+}
 
 export function apiPath(value: string): string {
     if (!value.startsWith("/") || value.startsWith("//") || value.includes("://") || value.includes("\\")) throw new ApiCommandError("USAGE", 1, "API path must be absolute");
@@ -113,7 +133,7 @@ export function createVerser2CliTransport(profile: any, signal: AbortSignal): Ro
     const target = (domain: string) => { const matches = routes().filter(route => route.domain === domain); if (matches.length !== 1) throw new ApiCommandError("ROUTE", 55, "Configured route is unavailable or ambiguous"); return matches[0]; };
     return {
         getRoutes: routes, isRouteReady: domain => { try { target(domain); return true; } catch { return false; } },
-        async waitForRoute(domain, timeoutMs) { if (!connected) { await abortable(broker.connect(), signal, timeoutMs); connected = true; } const deadline = Date.now() + (timeoutMs || profile.timeoutMs || 10000); while (!this.isRouteReady?.(domain)) { if (signal.aborted) throw new ApiCommandError("CANCELLED", 60, "Request cancelled"); if (Date.now() >= deadline) throw new ApiCommandError("ROUTE", 55, "Configured route is not ready"); await abortable(new Promise<void>(resolve => setTimeout(resolve, 10)), signal, Math.max(1, deadline - Date.now())); } },
+        async waitForRoute(domain, timeoutMs) { if (!connected) { await connectForRoute(() => broker.connect(), signal, timeoutMs || profile.timeoutMs || 10000); connected = true; } const deadline = Date.now() + (timeoutMs || profile.timeoutMs || 10000); while (!this.isRouteReady?.(domain)) { if (signal.aborted) throw new ApiCommandError("CANCELLED", 60, "Request cancelled"); if (Date.now() >= deadline) throw new ApiCommandError("ROUTE", 55, "Configured route is not ready"); await waitForRouteDelay(signal, Math.max(1, deadline - Date.now())); } },
         async request(request) { const route = target(request.routeDomain); const response = await abortable(broker.request({ targetId: route.targetId, method: request.method, path: appendQuery(request.path, request.query || {}), headers: request.headers, body: request.body as any }), signal, request.timeoutMs); return responseAdapter(response); },
         async close() { if (!closed) { closed = true; await broker.close("cli api complete"); } }
     };
@@ -151,7 +171,7 @@ export async function createVerifiedVerser2Session(profile: any, signal: AbortSi
         }
         return { transport, client, close: () => client.close() };
     } catch (error) {
-        await client.close().catch(() => {});
+        await closeWithGrace(() => client.close());
         throw mapApiError(error);
     }
 }
@@ -222,7 +242,7 @@ export async function executeApi(methodInput: string, endpoint: string, options:
     await confirmation(method, options); const body = prepareBody(options, dependencies.stdin); if ((method === "GET" || method === "HEAD") && body.body) { body.destroy(); throw new ApiCommandError("USAGE", 1, `${method} does not accept a body`); }
     const controller = new AbortController(); const interrupt = () => controller.abort(); process.once("SIGINT", interrupt); let session: Awaited<ReturnType<typeof createVerifiedVerser2Session>> | undefined; let response: ApiBrokerResponse | undefined;
     try {
-        const timeout = Number(options.timeout) || profile.timeoutMs;
+        const timeout = effectiveApiTimeout(options.timeout, profile.timeoutMs || 1500);
         // Raw commands deliberately retain byte-for-byte response semantics,
         // but share the authenticated, verified broker session used by typed
         // commands instead of reproducing identity and close handling.

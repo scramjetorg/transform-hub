@@ -214,12 +214,27 @@ export class STHController extends TypedEmitter<STHControllerEvents> implements 
     private async connectVerser2Streams() {
         this.logger.info("Requesting /platform and /logs over verser2");
 
-        const { incomingMessage: upstream, clientRequest: downstream } = await this.makeSthRequest(
-            "POST",
-            "/api/v1/platform",
-            { "Content-Type": "application/x-ndjson" }
-        );
-        const logRequest = await this.makeSthRequest("GET", "/api/v1/log", { "Content-Type": "application/x-ndjson" })
+        let platformRequest: { incomingMessage: Readable; clientRequest: Writable };
+        try {
+            platformRequest = await this.makeSthRequest(
+                "POST",
+                "/api/v1/platform",
+                { "Content-Type": "application/x-ndjson" },
+                2000
+            );
+        } catch (cause) {
+            const error = new Error("Required STH platform request failed");
+            (error as any).cause = cause;
+            this.logger.error("STH platform bootstrap failed", {
+                id: this.id,
+                path: "/api/v1/platform",
+                message: cause instanceof Error ? cause.message : String(cause)
+            });
+            throw error;
+        }
+
+        const { incomingMessage: upstream, clientRequest: downstream } = platformRequest;
+        const logRequest = await this.makeSthRequest("GET", "/api/v1/log", { "Content-Type": "application/x-ndjson" }, 2000)
             .catch((error: Error) => {
                 this.logger.warn("Log stream request failed", error.message);
 
@@ -410,14 +425,15 @@ export class STHController extends TypedEmitter<STHControllerEvents> implements 
         return clientRequest;
     }
 
-    private async makeSthRequest(method: string, path: string, headers: Record<string, string>): Promise<{ incomingMessage: Readable; clientRequest: Writable }> {
+    private async makeSthRequest(method: string, path: string, headers: Record<string, string>, leaseAcquireTimeoutMs?: number): Promise<{ incomingMessage: Readable; clientRequest: Writable }> {
         const clientRequest = new PassThrough();
         const response = await this.verser2.brokerTransport.request({
             domain: this.verser2.routeDomain,
             method,
             path,
             headers,
-            body: method === "GET" ? undefined : clientRequest
+            body: method === "GET" ? undefined : clientRequest,
+            leaseAcquireTimeoutMs
         });
 
         return {

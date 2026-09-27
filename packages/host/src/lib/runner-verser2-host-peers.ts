@@ -20,10 +20,9 @@ export type RunnerVerser2HostUpstreamParams = {
 };
 
 export function getRunnerVerser2HostUpstreamParams(
-    verser2Config: Pick<STHOutboundVerser2Config, "hostUrl" | "tls" | "runnerHost">,
-    isCpmConfigured: boolean
+    verser2Config: Pick<STHOutboundVerser2Config, "enabled" | "hostUrl" | "tls" | "runnerHost" | "broker" | "guest">
 ): RunnerVerser2HostUpstreamParams | null {
-    if (!verser2Config.runnerHost?.enabled || !isCpmConfigured) {
+    if (!verser2Config.enabled || !verser2Config.hostUrl || !verser2Config.broker.targetDomain || !verser2Config.guest.routeDomain || !verser2Config.runnerHost?.enabled) {
         return null;
     }
 
