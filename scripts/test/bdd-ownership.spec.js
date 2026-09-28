@@ -4,7 +4,7 @@ const test = require("ava").default;
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
-const { createOwnership, getOwnership, ownershipEnv, ensureOwnershipPaths, allocateOwnedPort, acquireRunLock, assertNoForeignBddContainers, encodePart } = require("../../bdd/lib/ownership.js");
+const { createOwnership, getOwnership, ownershipEnv, ensureOwnershipPaths, ensureManagerRunPath, cleanupManagerRunPath, allocateOwnedPort, acquireRunLock, assertNoForeignBddContainers, encodePart } = require("../../bdd/lib/ownership.js");
 const { cleanupTempDirs } = require("../lib/bdd-cleanup.js");
 
 test("ownership is immutable and produces chunk-specific paths and labels", t => {
@@ -52,6 +52,17 @@ test("owned paths are isolated and can be created independently", t => {
     ensureOwnershipPaths(a); ensureOwnershipPaths(b);
     t.true(fs.existsSync(a.logPath)); t.true(fs.existsSync(b.tempPath)); t.not(a.configPath, b.configPath);
     fs.rmSync(root, { recursive: true, force: true });
+});
+
+test("manager artifacts stay below bdd/.work and owned cleanup removes the run path", t => {
+    const ownership = createOwnership({}, { runId: `run-manager-${process.pid}`, chunkId: "chunk-a" });
+    const runPath = ensureManagerRunPath(ownership);
+    fs.writeFileSync(path.join(runPath, "marker"), "owned");
+    t.true(runPath.includes(path.join("bdd", ".work", "manager-runs", ownership.runId, "chunk-a")));
+    const rootEntries = fs.readdirSync(path.resolve(__dirname, "../../bdd"));
+    t.false(rootEntries.some(entry => entry.startsWith("manager-run-")), "manager artifacts must not be written at bdd/ root");
+    cleanupManagerRunPath(ownership);
+    t.false(fs.existsSync(runPath));
 });
 
 test("owned port reservations do not overlap", async t => {

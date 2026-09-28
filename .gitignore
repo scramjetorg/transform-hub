@@ -119,6 +119,7 @@ dist
 
 # bdd
 bdd/.work/
+bdd/manager-run-*/
 bdd/reports/*.html
 bdd/*-test-result.txt
 bdd/data/.hub-verser2-*.json

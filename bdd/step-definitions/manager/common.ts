@@ -8,7 +8,7 @@ import { resolvePublishedBin } from "../../lib/published-artifacts";
 import { publishedSourceEntry } from "../../lib/published-modules";
 
 const { stopProcess: stopProcessWithCleanup } = require("../../../scripts/lib/bdd-cleanup.js");
-const { getOwnership } = require("../../lib/ownership.js");
+const { getOwnership, ensureManagerRunPath } = require("../../lib/ownership.js");
 const ownership = getOwnership(process.env);
 
 async function requestGet(apiBase: string, apiEndpoint: string): Promise<{[key: string]: any}> {
@@ -72,6 +72,7 @@ function spawnProcess(
 
         const cmdProcess = spawn("/usr/bin/env", fullCommand, {
             detached: spawnOptions.detached === true,
+            cwd: ensureManagerRunPath(ownership),
             env: {
                 ...process.env,
                 SCRAMJET_BDD_RUN_ID: ownership.runId,

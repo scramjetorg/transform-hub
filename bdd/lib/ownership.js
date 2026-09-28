@@ -19,6 +19,12 @@ function newId(prefix) {
     return `${prefix}-${crypto.randomBytes(8).toString("hex")}`;
 }
 
+function defaultManagerRunRoot() {
+    const workingDirectory = path.resolve(process.cwd());
+    const bddRoot = path.basename(workingDirectory) === "bdd" ? workingDirectory : path.join(workingDirectory, "bdd");
+    return path.join(bddRoot, ".work", "manager-runs");
+}
+
 function encodePart(value) {
     return Buffer.from(String(value), "utf8").toString("base64url");
 }
@@ -39,6 +45,7 @@ function createOwnership(env = process.env, overrides = {}) {
         configPath: path.join(root, "config.json"),
         tempPath: path.join(root, "tmp"),
         logPath: path.join(root, "logs"),
+        managerRunPath: path.join(path.resolve(overrides.managerRunRoot || env.SCRAMJET_BDD_MANAGER_RUN_ROOT || defaultManagerRunRoot()), runId, chunkId),
         labels: Object.freeze({
             "scramjet.bdd.run-id": runId,
             "scramjet.bdd.chunk-id": chunkId,
@@ -46,6 +53,18 @@ function createOwnership(env = process.env, overrides = {}) {
         }),
     });
     return ownership;
+}
+
+function ensureManagerRunPath(ownership) {
+    fs.mkdirSync(ownership.managerRunPath, { recursive: true, mode: 0o700 });
+    return ownership.managerRunPath;
+}
+
+function cleanupManagerRunPath(ownership) {
+    const runPath = ownership.managerRunPath;
+    fs.rmSync(runPath, { recursive: true, force: true });
+    try { fs.rmdirSync(path.dirname(runPath)); } catch { /* other chunks may still own the run */ }
+    try { fs.rmdirSync(path.dirname(path.dirname(runPath))); } catch { /* preserve non-empty manager-runs */ }
 }
 
 function getOwnership(env = process.env) {
@@ -198,4 +217,4 @@ function assertNoForeignBddContainers(runId, options = {}) {
     return { checked: containers !== null, containers: containers || [], foreign };
 }
 
-module.exports = { createOwnership, getOwnership, ownershipEnv, ensureOwnershipPaths, ownershipTempPrefix, allocateOwnedPort, acquireRunLock, assertNoForeignBddContainers, findLiveBddContainers, safePart, encodePart, isProcessAlive };
+module.exports = { createOwnership, getOwnership, ownershipEnv, ensureOwnershipPaths, ensureManagerRunPath, cleanupManagerRunPath, ownershipTempPrefix, allocateOwnedPort, acquireRunLock, assertNoForeignBddContainers, findLiveBddContainers, safePart, encodePart, isProcessAlive };

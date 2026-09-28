@@ -5,6 +5,7 @@ import { getExecutableCmd, spawnProcess, parseOptions, requestGet, requestPost, 
 import { CustomWorld } from "../world";
 import { MultiManagerClient } from "@scramjet/multi-manager-api-client";
 import { waitForCondition } from "../../lib/utils";
+const { cleanupManagerRunPath, getOwnership } = require("../../lib/ownership.js");
 
 async function startMultiManager(options: {[key: string]: any}, lifecycle: CustomWorld["scenarioLifecycle"]): Promise<ChildProcess> {
     // The startup log is the observable readiness signal; no fixed grace
@@ -13,12 +14,16 @@ async function startMultiManager(options: {[key: string]: any}, lifecycle: Custo
 }
 
 After({ tags: "@cleanupmm" }, async function(this: CustomWorld) {
-    for (const [, instance] of Object.entries(this.resources.multiManagers)) {
-        try {
-            await this.scenarioLifecycle.stop(instance.process!);
-        } finally {
-            disposeClient(instance);
+    try {
+        for (const [, instance] of Object.entries(this.resources.multiManagers)) {
+            try {
+                await this.scenarioLifecycle.stop(instance.process!);
+            } finally {
+                disposeClient(instance);
+            }
         }
+    } finally {
+        cleanupManagerRunPath(getOwnership(process.env));
     }
 });
 

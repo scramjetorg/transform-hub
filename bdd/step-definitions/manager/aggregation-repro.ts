@@ -30,11 +30,12 @@ import { disposeClient } from "./common";
 import { isSuccessfulReadinessResponse, isTransientReadinessStatus } from "../../lib/readiness-contract";
 import { resolvePublishedBin } from "../../lib/published-artifacts";
 import { publishedSourceEntry } from "../../lib/published-modules";
-const { getOwnership, ensureOwnershipPaths } = require("../../lib/ownership.js");
+const { getOwnership, ensureOwnershipPaths, ensureManagerRunPath, cleanupManagerRunPath } = require("../../lib/ownership.js");
 
 const freeport = promisify(require("freeport"));
 const ownership = getOwnership(process.env);
 ensureOwnershipPaths(ownership);
+ensureManagerRunPath(ownership);
 
 const FIXTURE_ROOT = "bdd/fixtures/manager-aggregation";
 
@@ -76,38 +77,42 @@ async function waitForGetFailure(baseUrl: string, endpoint: string, timeoutMs = 
 After({ tags: "@aggregation-repro-cleanup" }, async function (this: CustomWorld) {
     const errors: Error[] = [];
 
-    // Stop owned aggregation processes concurrently with safe error aggregation.
-    const results = await Promise.allSettled(
-        aggregationProcesses(this).map(proc => this.scenarioLifecycle.stop(proc))
-    );
-    for (const result of results) {
-        if (result.status === "rejected") {
-            errors.push(result.reason instanceof Error ? result.reason : new Error(String(result.reason)));
+    try {
+        // Stop owned aggregation processes concurrently with safe error aggregation.
+        const results = await Promise.allSettled(
+            aggregationProcesses(this).map(proc => this.scenarioLifecycle.stop(proc))
+        );
+        for (const result of results) {
+            if (result.status === "rejected") {
+                errors.push(result.reason instanceof Error ? result.reason : new Error(String(result.reason)));
+            }
         }
-    }
 
-    if (this.resources.aggMMProcess) {
-        try {
-            await this.scenarioLifecycle.stop(this.resources.aggMMProcess);
-        } catch (error) {
-            errors.push(error instanceof Error ? error : new Error(String(error)));
+        if (this.resources.aggMMProcess) {
+            try {
+                await this.scenarioLifecycle.stop(this.resources.aggMMProcess);
+            } catch (error) {
+                errors.push(error instanceof Error ? error : new Error(String(error)));
+            }
+            delete this.resources.aggMMProcess;
         }
-        delete this.resources.aggMMProcess;
+
+        const hubs = this.resources.aggHubs as Record<string, { client?: HostClient }> | undefined;
+        for (const hub of Object.values(hubs || {})) disposeClient(hub.client);
+        disposeClient(this.resources.aggManagerClient);
+        disposeClient(this.resources.aggMMClient);
+
+        if (this.resources.aggTempDir) {
+            rmSync(this.resources.aggTempDir, { recursive: true, force: true });
+            delete this.resources.aggTempDir;
+        }
+
+        delete this.resources.aggProcesses;
+        delete this.resources.aggHubs;
+        this.resources.aggReproCleanup = true;
+    } finally {
+        cleanupManagerRunPath(ownership);
     }
-
-    const hubs = this.resources.aggHubs as Record<string, { client?: HostClient }> | undefined;
-    for (const hub of Object.values(hubs || {})) disposeClient(hub.client);
-    disposeClient(this.resources.aggManagerClient);
-    disposeClient(this.resources.aggMMClient);
-
-    if (this.resources.aggTempDir) {
-        rmSync(this.resources.aggTempDir, { recursive: true, force: true });
-        delete this.resources.aggTempDir;
-    }
-
-    delete this.resources.aggProcesses;
-    delete this.resources.aggHubs;
-    this.resources.aggReproCleanup = true;
 
     if (errors.length > 0) {
         const aggregate = new Error(
@@ -151,6 +156,7 @@ function spawnProcess(
         const fullCmd = [...cmd, ...options];
         const proc = spawn("/usr/bin/env", fullCmd, {
             detached: true,
+            cwd: ensureManagerRunPath(ownership),
             env: {
                 ...process.env,
                 SCRAMJET_BDD_RUN_ID: ownership.runId,
