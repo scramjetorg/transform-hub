@@ -1,4 +1,4 @@
-# Phase 4 — Guided developer journeys
+# Phase 5 — Guided developer journeys
 
 ## Goal
 
@@ -14,7 +14,7 @@ Direct each developer from a major entrypoint to the right stable guide without 
 
 ## Dependencies
 
-- Phase 3 provides the canonical installation, profile, TLS/mTLS, sequence, deployment, compatibility, and troubleshooting guides. This phase links to them; it does not rewrite their technical content.
+- Phase 3 provides the canonical installation, profile, TLS/mTLS, sequence, deployment, compatibility, and troubleshooting guides. Phase 4 provides live Kubernetes evidence when a user-provided cluster is available. This phase links to them; it does not rewrite their technical content.
 - Phase 2 owns templates and runtime proof. This phase may link to them but cannot change them.
 
 ## Tasks
@@ -26,7 +26,7 @@ Direct each developer from a major entrypoint to the right stable guide without 
 - [ ] Add approved concise README sequence sections: `si` packages/deploys the shared Hello World fixture and reads stdout; STH points to `hubClient()` use; MultiManager points to `spaceClient()` and RPC. Record intentional no-change rationale for runner, config, adapters-common, legacy re-export, and API-client READMEs unless a changed public surface requires a cross-link.
 - [ ] Add visible compatibility return links that state HTTP/v1, CPM, and direct-Hub applicability plus port/support limits, then return readers to the native route.
 - [ ] Generate a deterministic task-first sidebar order: start here, first sequence, profiles, authoring, deployment, operations, security, troubleshooting, compatibility, then reference.
-- [ ] Preserve static-only Kubernetes guidance and route it only to documented configuration/network prerequisites.
+- [ ] Route Kubernetes guidance to Phase 4's live evidence when available, otherwise to documented configuration/network prerequisites.
 
 ## Acceptance criteria
 
@@ -34,7 +34,7 @@ Direct each developer from a major entrypoint to the right stable guide without 
 - The first-sequence route introduces a trusted bundle/profile and minimal Node sequence before AppContext, topics, APIs, adapters, runtime alternatives, certificate formats, or legacy transport details.
 - README entrypoints stay concise and link to existing `si`, `hubClient()`, and `spaceClient()`/RPC guidance rather than duplicating detailed instructions.
 - Compatibility destinations state applicability, port/support boundary, and a return link; security routes distinguish CA-only TLS, optional mTLS, and fingerprint authorization without remote CA acquisition or shared STH/`si` identities.
-- Kubernetes routing retains the explicit no-live-cluster-validation limitation.
+- Kubernetes routing states the user-provided-cluster evidence boundary and never implies provisioning or HA/RBAC automation.
 
 ## Verification
 
@@ -47,4 +47,4 @@ Direct each developer from a major entrypoint to the right stable guide without 
 
 ## Non-goals
 
-- Runtime, CLI, port, transport, certificate, template, deployment-protocol, or compatibility-support changes; full technical-guide duplication; live Kubernetes validation.
+- Runtime, CLI, port, transport, certificate, template, deployment-protocol, or compatibility-support changes; full technical-guide duplication; cluster provisioning.

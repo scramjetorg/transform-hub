@@ -1,4 +1,4 @@
-# Phase 5 — Cleanup/DX
+# Phase 6 — Cleanup/DX
 
 ## Goal
 

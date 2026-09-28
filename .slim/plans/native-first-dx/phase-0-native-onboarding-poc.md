@@ -24,7 +24,7 @@ Prove and obtain user feedback on the native onboarding contract before permanen
 - [x] Run `plan-update` before beginning Phase 1 to keep, narrow, or rescope MVP work using the observed outcome.
 - [x] Relocate the diagnostic runner to `examples/native-onboarding-poc/`, add its maintainer-only README, and retain the explicit repository asset.
 - [x] Dispose of generated runtime state and the plan-local copy; retain no generated material in the repository.
-- [x] Record that validation of the retained example is manual and non-CI; it is not a supported onboarding surface, template, guide, sidebar entry, or root npm script.
+- [x] Record that Phase 0 validation of the retained example was manual and non-CI; Phase 3 owns its cleanup and promotion into the supported canonical example.
 
 ## Acceptance criteria
 
