@@ -80,6 +80,13 @@ Memory-guard coverage is not planned unless the implementation changes runner, B
 - Mode: current branch (user confirmed).
 - Phase commit policy: one focused commit after each completed phase's validation, review/remediation, and reconciliation. Only that phase's owned, changed paths are staged.
 
+## Git Execution Policy
+
+- Routine mode: confirm each routine transition
+- Planning-handoff answer source: user direction on 2026-09-29 to pause after the rebase; treated as confirm each routine transition.
+- Repo-policy source: missing (built-in default: unattended routine execution)
+- Precedence: current-session explicit direction and runtime safety/tool permissions > recorded answer > repo instructions > built-in default
+
 ## Research record
 
 - `draft.md` contains the non-executable research synthesis and source references.
