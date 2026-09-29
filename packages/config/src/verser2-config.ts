@@ -1,5 +1,5 @@
-import type { ConfigOptionDescriptor } from ".";
 import { z } from "zod";
+import type { ConfigOptionDescriptor } from ".";
 
 const optionalFileSchema = z.string().min(1).optional();
 const timeoutsSchema = z.object({
@@ -12,6 +12,26 @@ const leasesSchema = z.object({
     minimumRunnerWaitingStreams: z.number().int().nonnegative().optional(),
     minimumUpstreamWaitingStreams: z.number().int().nonnegative().optional()
 }).strict();
+const upstreamPoolSchema = z.object({
+    minWaitingStreams: z.number().finite().int().nonnegative(),
+    maxOpenStreams: z.number().finite().int().positive()
+}).strict().superRefine((config, ctx) => {
+    if (config.minWaitingStreams > config.maxOpenStreams) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["minWaitingStreams"],
+            message: "minWaitingStreams must be less than or equal to maxOpenStreams"
+        });
+    }
+});
+const csrEnrollmentV2Schema = z.object({
+    enabled: z.boolean(),
+    issuer: z.object({ caFile: z.string().min(1), certFile: z.string().min(1), keyFile: z.string().min(1), passphrase: z.string().min(1).optional() }).strict().optional(),
+    policy: z.object({ allowed: z.array(z.object({ principal: z.enum(["sth", "si"]), role: z.enum(["broker", "guest"]), peerId: z.string().min(1), routedDomains: z.array(z.string().min(1)) }).strict()) }).strict(),
+    issuedStore: z.string().min(1).optional()
+}).strict().superRefine((config, ctx) => {
+    if (config.enabled && !config.issuer) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["issuer"], message: "issuer is required when CSR enrollment is enabled" });
+});
 
 function addIssue(ctx: z.RefinementCtx, path: string[], message: string): void {
     ctx.addIssue({
@@ -77,9 +97,14 @@ export const managerVerser2ConfigSchema = z.object({
         }).strict(),
         guest: z.object({ peerId: z.string().min(1), routeDomain: z.string().min(1) }).strict()
     }).strict().optional(),
+    csrEnrollment: csrEnrollmentV2Schema.optional(),
     timeouts: timeoutsSchema,
     leases: leasesSchema
-}).strict();
+}).strict().superRefine((config, ctx) => {
+    if (config.csrEnrollment?.enabled && config.registration.allowedClientFingerprints.length !== 0) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["registration", "allowedClientFingerprints"], message: "static client fingerprints must be empty when CSR enrollment v2 is enabled" });
+    }
+});
 
 export const sthOutboundVerser2ConfigSchema = z.object({
     enabled: z.boolean(),
@@ -134,7 +159,8 @@ export const sthOutboundVerser2ConfigSchema = z.object({
     }).strict(),
     enrollment: z.object({ token: optionalFileSchema }).strict(),
     timeouts: timeoutsSchema,
-    leases: leasesSchema
+    leases: leasesSchema,
+    upstreamPool: upstreamPoolSchema
 }).strict().superRefine((config, ctx) => {
     const runnerTls = config.runnerHost?.host.tls;
 
@@ -228,5 +254,7 @@ export const sthOutboundVerser2Options: ConfigOptionDescriptor[] = [
     { name: "verser2RequestMs", flag: "verser2-request-ms", path: sthPath("timeouts.requestMs"), env: "SCRAMJET_VERSER2_REQUEST_MS", type: "number", description: "Routed request timeout in milliseconds" },
     { name: "verser2MinimumWaitingLeases", flag: "verser2-minimum-waiting-leases", path: sthPath("leases.minimumWaitingLeases"), env: "SCRAMJET_VERSER2_MINIMUM_WAITING_LEASES", type: "number", description: "Backward-compatible fallback for minimum waiting leases per route" },
     { name: "verser2RunnerMinimumWaitingStreams", flag: "verser2-runner-minimum-waiting-streams", path: sthPath("leases.minimumRunnerWaitingStreams"), env: "SCRAMJET_VERSER2_RUNNER_MINIMUM_WAITING_STREAMS", type: "number", description: "Minimum waiting streams for runner-to-STH verser2 routes" },
-    { name: "verser2UpstreamMinimumWaitingStreams", flag: "verser2-upstream-minimum-waiting-streams", path: sthPath("leases.minimumUpstreamWaitingStreams"), env: "SCRAMJET_VERSER2_UPSTREAM_MINIMUM_WAITING_STREAMS", type: "number", description: "Minimum waiting streams for STH-to-Manager verser2 routes" }
+    { name: "verser2UpstreamMinimumWaitingStreams", flag: "verser2-upstream-minimum-waiting-streams", path: sthPath("leases.minimumUpstreamWaitingStreams"), env: "SCRAMJET_VERSER2_UPSTREAM_MINIMUM_WAITING_STREAMS", type: "number", description: "Minimum waiting streams for STH-to-Manager verser2 routes" },
+    { name: "verser2UpstreamPoolMinWaitingStreams", flag: "verser2-upstream-pool-min-waiting-streams", path: sthPath("upstreamPool.minWaitingStreams"), env: "SCRAMJET_VERSER2_UPSTREAM_POOL_MIN_WAITING_STREAMS", type: "number", description: "Minimum waiting streams for the native STH upstream pool" },
+    { name: "verser2UpstreamPoolMaxOpenStreams", flag: "verser2-upstream-pool-max-open-streams", path: sthPath("upstreamPool.maxOpenStreams"), env: "SCRAMJET_VERSER2_UPSTREAM_POOL_MAX_OPEN_STREAMS", type: "number", description: "Maximum open streams for the native STH upstream pool" }
 ];

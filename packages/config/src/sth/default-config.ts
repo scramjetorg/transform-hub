@@ -125,6 +125,10 @@ export const defaultConfig: STHConfiguration = {
             minimumWaitingLeases: 1,
             minimumRunnerWaitingStreams: 32,
             minimumUpstreamWaitingStreams: 128
+        },
+        upstreamPool: {
+            minWaitingStreams: 64,
+            maxOpenStreams: 256
         }
     },
     timings: {

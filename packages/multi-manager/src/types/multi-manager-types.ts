@@ -1,6 +1,6 @@
 import { ApiVersion, DeepPartial, IdString, LogLevel, Port, UrlPath } from "@scramjet/runtime-types";
 import { LoadCheckRequirements } from "@scramjet/runtime-types";
-import { ManagerConfiguration, ManagerVerser2Config } from "@scramjet/api-types";
+import { CsrEnrollmentV2Config, ManagerConfiguration, ManagerVerser2Config } from "@scramjet/api-types";
 
 export type MultiManagerServerOptions = {
     apiBase: UrlPath
@@ -10,6 +10,8 @@ export type MultiManagerServerOptions = {
 };
 
 export interface MultiManagerOptions extends LoadCheckRequirements {
+    /** Federation realm; child Manager ids are the space ids. */
+    realmId: string;
     /**
      * Log level.
      */
@@ -54,6 +56,7 @@ export interface MultiManagerOptions extends LoadCheckRequirements {
         path: string
     },
     verser2: ManagerVerser2Config
+    csrEnrollment?: CsrEnrollmentV2Config
 }
 
 export type MultiManagerCommandOptions = {
@@ -62,6 +65,7 @@ export type MultiManagerCommandOptions = {
     colors: boolean
     logApiServers?: boolean
     id?: string
+    realmId?: string;
     dumpHeap: number,
     serverApiBase?: string
     serverApiPort?: number

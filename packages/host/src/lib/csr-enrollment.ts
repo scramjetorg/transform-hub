@@ -2,7 +2,8 @@ import { createHash, createPrivateKey, createPublicKey, generateKeyPairSync, ran
 import { execFileSync } from "child_process";
 import { chmodSync, existsSync, lstatSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "fs";
 import { join } from "path";
-import type { CsrEnrollmentRequest } from "@scramjet/runtime-types";
+import type { CsrEnrollmentRegistration, CsrEnrollmentRequest, CsrEnrollmentV2Request } from "@scramjet/runtime-types";
+import { canonicalizeCsrEnrollmentRegistrations, csrEnrollmentRegistrationsToDnsSans, csrEnrollmentClaimDigest, csrEnrollmentClaimUriSan, CSR_ENROLLMENT_V2_PROTOCOL_VERSION, type CsrEnrollmentClaim } from "@scramjet/runtime-types";
 
 const CLIENT_AUTH_OID = "1.3.6.1.5.5.7.3.2";
 
@@ -118,5 +119,53 @@ export function installHubEnrollmentCertificate(identityDir: string, certificate
         usages.some((usage) => usage.includes("serverAuth") || usage.includes("Server Authentication"))
     )
         throw new Error("Enrollment certificate is not clientAuth-only");
+    atomicPrivateWrite(join(identityDir, "client.cert.pem"), certificatePem);
+}
+
+export interface CsrV2IdentityPaths {
+    keyFile: string;
+    csrFile: string;
+    certificateFile: string;
+}
+
+export function createCsrV2Request(identityDir: string, principal: "sth" | "si", registrations: readonly CsrEnrollmentRegistration[], requestId = randomBytes(16).toString("hex"), claim?: CsrEnrollmentClaim): CsrEnrollmentV2Request {
+    const canonical = canonicalizeCsrEnrollmentRegistrations(registrations);
+    const sans = csrEnrollmentRegistrationsToDnsSans(canonical);
+    const claimSans = claim ? [csrEnrollmentClaimUriSan(claim, csrEnrollmentClaimDigest(claim))] : [];
+    if ((principal === "si" && (canonical.length !== 1 || canonical[0].role !== "broker")) || (principal === "sth" && !canonical.some(value => value.role === "broker"))) throw new Error("Invalid csr/v2 principal registration set");
+    secureDirectory(identityDir);
+    const paths: CsrV2IdentityPaths = { keyFile: join(identityDir, "client.key.pem"), csrFile: join(identityDir, "client.csr.pem"), certificateFile: join(identityDir, "client.cert.pem") };
+    if (existsSync(paths.keyFile) || existsSync(paths.csrFile)) throw new Error("Refusing to overwrite existing csr/v2 identity state");
+    const pair = generateKeyPairSync("ec", { namedCurve: "prime256v1", privateKeyEncoding: { type: "pkcs8", format: "pem" }, publicKeyEncoding: { type: "spki", format: "pem" } });
+    atomicPrivateWrite(paths.keyFile, pair.privateKey);
+    try {
+        execFileSync("openssl", ["req", "-new", "-sha256", "-key", paths.keyFile, "-subj", `/CN=${principal}`, "-addext", `subjectAltName=${sans.map(value => `DNS:${value}`).concat(claimSans.map(value => `URI:${value}`)).join(",")}`, "-addext", "extendedKeyUsage=clientAuth", "-out", paths.csrFile], { stdio: "ignore" });
+        chmodSync(paths.csrFile, 0o600);
+    } catch (error) {
+        require("fs").rmSync(paths.keyFile, { force: true });
+        throw new Error(`Unable to generate csr/v2 request: ${error instanceof Error ? error.message : String(error)}`);
+    }
+    return { version: CSR_ENROLLMENT_V2_PROTOCOL_VERSION, requestId, principal, csrPem: readFileSync(paths.csrFile, "utf8"), registrations: canonical, createdAt: new Date().toISOString(), expiresAt: new Date(Date.now() + 15 * 60 * 1000).toISOString(), ...(claim ? { claim } : {}) };
+}
+
+export function installCsrV2Certificate(identityDir: string, certificatePem: string, request: CsrEnrollmentV2Request, trust: HubEnrollmentTrust): void {
+    const canonical = canonicalizeCsrEnrollmentRegistrations(request.registrations);
+    const expectedSans = csrEnrollmentRegistrationsToDnsSans(canonical);
+    secureDirectory(identityDir);
+    const keyFile = join(identityDir, "client.key.pem");
+    if (!existsSync(keyFile) || lstatSync(keyFile).isSymbolicLink()) throw new Error("Private key is missing or unsafe");
+    const certificate = new X509Certificate(certificatePem);
+    const ca = new X509Certificate(trust.managerCaPem);
+    if (createHash("sha256").update(ca.raw).digest("hex") !== trust.managerCaFingerprint256.replace(/:/g, "").toLowerCase()) throw new Error("Manager CA fingerprint mismatch");
+    if (!ca.ca || ca.issuer !== ca.subject || certificate.issuer !== ca.subject || !certificate.checkIssued(ca) || !certificate.verify(ca.publicKey)) throw new Error("Certificate is not issued by the pinned Manager CA");
+    if (certificate.ca || Date.parse(certificate.validFrom) > Date.now() || Date.parse(certificate.validTo) <= Date.now()) throw new Error("Certificate is not currently valid");
+    const key = createPublicKey(createPrivateKey(readFileSync(keyFile, "utf8"))).export({ type: "spki", format: "der" });
+    if (!key.equals(certificate.publicKey.export({ type: "spki", format: "der" }))) throw new Error("Certificate does not match the local private key");
+    const sans = certificate.subjectAltName?.split(", ").filter(value => value.startsWith("DNS:")).map(value => value.slice(4)) ?? [];
+    const uris = certificate.subjectAltName?.split(", ").filter(value => value.startsWith("URI:")).map(value => value.slice(4)) ?? [];
+    if (JSON.stringify(sans) !== JSON.stringify(expectedSans)) throw new Error("Certificate SANs do not match the exact request registration set");
+    if (request.claim && (uris.length !== 1 || uris[0] !== csrEnrollmentClaimUriSan(request.claim, csrEnrollmentClaimDigest(request.claim)))) throw new Error("Certificate URI-SAN does not match the exact claim");
+    const usages = certificate.keyUsage ?? [];
+    if (!usages.some(usage => usage.includes("clientAuth") || usage.includes("Client Authentication") || usage === CLIENT_AUTH_OID) || usages.some(usage => usage.includes("serverAuth") || usage.includes("Server Authentication"))) throw new Error("Certificate is not clientAuth-only");
     atomicPrivateWrite(join(identityDir, "client.cert.pem"), certificatePem);
 }

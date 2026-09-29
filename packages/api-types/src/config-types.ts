@@ -133,6 +133,11 @@ export type Verser2LeaseConfig = {
     minimumUpstreamWaitingStreams?: number;
 };
 
+export type STHVerser2UpstreamPoolConfig = {
+    minWaitingStreams: number;
+    maxOpenStreams: number;
+};
+
 export type ManagerVerser2Config = {
     enabled: boolean;
     host: {
@@ -171,6 +176,14 @@ export type ManagerVerser2Config = {
     };
     timeouts: Verser2TimeoutConfig;
     leases: Verser2LeaseConfig;
+    csrEnrollment?: CsrEnrollmentV2Config;
+};
+
+export type CsrEnrollmentV2Config = {
+    enabled: boolean;
+    issuer?: { caFile: string; certFile: string; keyFile: string; passphrase?: string };
+    policy: { allowed: Array<{ principal: "sth" | "si"; role: "broker" | "guest"; peerId: string; routedDomains: string[] }> };
+    issuedStore?: string;
 };
 
 export type STHOutboundVerser2Config = {
@@ -198,6 +211,7 @@ export type STHOutboundVerser2Config = {
     };
     timeouts: Verser2TimeoutConfig;
     leases: Verser2LeaseConfig;
+    upstreamPool: STHVerser2UpstreamPoolConfig;
 };
 
 // ---------------------------------------------------------------------------

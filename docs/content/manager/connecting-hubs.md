@@ -9,7 +9,7 @@ title: Connecting Hubs to a Manager
 
 # Connecting Hubs to a Manager
 
-> **⚠️ Needs review**: This page documents the v1-era CPM/HTTP registration flow. TLS/mTLS configuration and verser2 enrollment details are incomplete. For production deployments, consult the Manager configuration schema and generated reference for the authoritative up-to-date connection parameters.
+> **Native-first:** New deployments use API/v2 and the native Verser2 control ingress. The CPM/HTTP examples below are retained as compatibility labels only.
 
 A Hub connects to a Manager so the Manager can route lifecycle/API commands, aggregate status, and broker live topic/service-discovery streams. This page covers Hub registration and connection management.
 
@@ -43,7 +43,7 @@ Bearer grants are sent only in the HTTPS `Authorization: Bearer ...` header; nev
 
 See [Controlled CSR enrollment](csr-enrollment.md) for the complete API, configuration, trust, recovery, rotation, and limitation details.
 
-## Legacy automatic registration
+## Legacy automatic registration (compatibility only)
 
 The v1-era CPM registration flow requires both a CPM identifier and the CPM/Manager URL:
 
@@ -53,7 +53,7 @@ sth --cpm-id production-node-1 \
   --verser2-host-url https://manager-host:2443
 ```
 
-The Hub sends a registration request on startup and uses the verser2 host URL for transport connectivity. This remains available for backwards compatibility, but production setups must also configure TLS trust and, where required, client certificates for mTLS.
+The Hub sends a registration request on startup and uses the verser2 host URL for transport connectivity. This remains available for backwards compatibility only. For native onboarding, export a trusted bundle with `multi-manager native-bundle` and import it with `si config native import`; do not configure the unsupported `manager.connectionBundle` key directly.
 
 ## Manual registration
 

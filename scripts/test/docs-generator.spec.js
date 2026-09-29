@@ -265,6 +265,22 @@ test("AppContext guides name the canonical type and intentional runtime limits",
     t.regex(parity, /generic Python REST SDK/);
 });
 
+test("canonical native onboarding package snippets derive their range from the root version", t => {
+    const rootPackage = JSON.parse(fs.readFileSync(path.join(repoRoot, "package.json"), "utf8"));
+    const page = readSourceDoc("examples", "native-onboarding-poc.md");
+    const expectedRange = `^${rootPackage.version}`;
+    const packageSnippet = page.match(/```sh\n([\s\S]*?)```/)?.[1] || "";
+
+    t.true(packageSnippet.includes(`@scramjet/sth@${expectedRange}`));
+    t.true(packageSnippet.includes(`@scramjet/cli@${expectedRange}`));
+    t.true(packageSnippet.includes(`@scramjet/rest-api2@${expectedRange}`));
+    t.notRegex(packageSnippet, /@scramjet\/(?:sth|cli|rest-api2)@\^2\.1\./);
+    t.regex(page, new RegExp(`scramjetorg/runner:${rootPackage.version}`));
+    t.regex(page, new RegExp(`scramjetorg/runner-py:${rootPackage.version}`));
+    t.regex(page, new RegExp(`scramjetorg/runner-bun:${rootPackage.version}`));
+    t.regex(page, /\.rpc\([^)]*contract[^)]*\)\.call\(/);
+});
+
 test("all contract guides have extractable, type-checkable TypeScript and valid Python/Compose snippets", t => {
     const wetPages = [
         "lifecycle-local-validation-service.md", "customer-site-health-control.md", "mcp-bridged-job-status.md",

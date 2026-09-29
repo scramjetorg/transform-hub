@@ -6,6 +6,7 @@ import { ReasonPhrases } from "http-status-codes";
 import { IncomingMessage, ServerResponse } from "http";
 import { z } from "zod";
 import { X509Certificate } from "crypto";
+import { verifiedFederationPrincipal } from "../federation-context";
 
 import { getS3Router } from "../s3-router";
 import { prepareDisconnectDroplist, translateDeleteError, translateDisconnectError, validateDisconnectRequest } from "../utils";
@@ -48,7 +49,7 @@ export class ManagerAPIV1Handler {
                     .filter((value) => value.startsWith("DNS:"))
                     .map((value) => value.slice(4)) || [];
             const peerHubId = dnsSans.length === 1 ? dnsSans[0] : undefined;
-            const id = await manager.handleSthRegistration(payload, fingerprint, peerHubId);
+            const id = await manager.handleSthRegistration(payload, fingerprint, peerHubId, verifiedFederationPrincipal());
 
             return { id, opStatus: ReasonPhrases.ACCEPTED };
         });

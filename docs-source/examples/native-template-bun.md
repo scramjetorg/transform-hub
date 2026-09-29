@@ -6,7 +6,7 @@ title: Native Bun sequence template
 
 # Native Bun sequence template
 
-`templates/sequences/bun` is a dependency-free Bun sequence starter. Its entrypoint is `index.js`, and its example output is `native-template-bun: hello world`.
+`templates/sequences/bun` is a dependency-free Bun sequence starter. Its CommonJS entrypoint is `index.js`, and its example output is `native-template-bun: hello world`.
 
 ## Local verification
 

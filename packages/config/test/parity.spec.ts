@@ -131,6 +131,7 @@ test("defaultConfig has base STH fields", t => {
     t.is(defaultConfig.verser2.runnerHost?.host.bindPort, 2445);
     t.is(defaultConfig.verser2.runnerHost?.host.publicUrl, "https://127.0.0.1:2445");
     t.is(defaultConfig.verser2.controlIngress?.host.bindPort, 2444);
+    t.deepEqual(defaultConfig.verser2.upstreamPool, { minWaitingStreams: 64, maxOpenStreams: 256 });
 });
 
 // ---------------------------------------------------------------------------

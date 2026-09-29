@@ -1037,7 +1037,7 @@ export class Host implements IHost, IComponent {
             if (upstreamParams) {
                 this.runnerVerser2UpstreamHealth = degradedComponent("hub.upstream", true, { configured: true, url: upstreamParams.url });
                 try {
-                    await this.runnerVerser2Host.connectUpstream(upstreamParams);
+                    await this.runnerVerser2Host.connectUpstream(upstreamParams as Parameters<VerserHost["connectUpstream"]>[0]);
                     if (!this.isCPMConfigured()) {
                         this.platformSession = new PlatformControlSession(this.logger);
                         this.platformSession.setLoadCheck(this.loadCheck);

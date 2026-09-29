@@ -4,8 +4,8 @@ import { chmodSync, existsSync, lstatSync, mkdirSync, readFileSync, renameSync, 
 import { dirname, resolve } from "path";
 import { URL } from "url";
 import { cmd, executeCommand, generateHelp, parseCommandContext, resolveCommandPath, type CommandDescriptor } from "@scramjet/config";
-import { createHubCsrEnrollmentRequest, installHubEnrollmentCertificate } from "@scramjet/host";
-import type { CsrEnrollmentCertificateResponse, CsrEnrollmentRequest } from "@scramjet/runtime-types";
+import { createCsrV2Request, createHubCsrEnrollmentRequest, installCsrV2Certificate, installHubEnrollmentCertificate } from "@scramjet/host";
+import type { CsrEnrollmentCertificateResponse, CsrEnrollmentRequest, CsrEnrollmentV2Request } from "@scramjet/runtime-types";
 
 function secureParent(file: string): void {
     const parent = dirname(file);
@@ -98,6 +98,22 @@ function redeem(options: Record<string, unknown>): Promise<void> {
     });
 }
 
+function generateV2(options: Record<string, unknown>): void {
+    const registrations = readJson<any[]>(resolve(String(options.registrations)));
+    const claim = options.claim ? readJson<any>(resolve(String(options.claim))) : undefined;
+    const request = createCsrV2Request(resolve(String(options["identity-dir"])), String(options.principal) as "sth" | "si", registrations, undefined, claim);
+    atomicProtectedJson(resolve(String(options.output)), request);
+    process.stdout.write(`${resolve(String(options.output))}\n`);
+}
+
+function installV2(options: Record<string, unknown>): void {
+    const identityDir = resolve(String(options["identity-dir"]));
+    const request = readJson<CsrEnrollmentV2Request>(resolve(String(options.request)));
+    const caPem = readSecretFile(resolve(String(options["ca-file"])));
+    installCsrV2Certificate(identityDir, readSecretFile(resolve(String(options.certificate)),), request, { managerCaPem: caPem, managerCaFingerprint256: String(options["ca-fingerprint"]) });
+    process.stdout.write(`${identityDir}/client.cert.pem\n`);
+}
+
 const stringOption = (name: string, description: string) => ({ name, flag: name, type: "string" as const, required: true, description });
 
 export function createSthCsrEnrollmentCommand(): CommandDescriptor {
@@ -123,7 +139,23 @@ export function createSthCsrEnrollmentCommand(): CommandDescriptor {
                         .option(stringOption("ca-file", "Pinned Manager CA certificate"))
                         .option(stringOption("ca-fingerprint", "Pinned Manager CA SHA-256 fingerprint"))
                         .action((options) => redeem(options))
-                )
+                ),
+                cmd("v2", command => command.desc("Offline csr/v2 identity tools").children(
+                    cmd("generate", c => c.desc("Generate a local csr/v2 key, CSR, and request")
+                        .option(stringOption("identity-dir", "Local identity directory"))
+                        .option(stringOption("principal", "Identity principal: sth or si"))
+                        .option(stringOption("registrations", "Exact registration set JSON"))
+                        .option({ name: "claim", flag: "claim", type: "string" as const, required: false, description: "Exact managed STH federation claim JSON" })
+                        .option(stringOption("output", "Protected request output file"))
+                        .action(options => generateV2(options))),
+                    cmd("install", c => c.desc("Verify and atomically install a signed csr/v2 certificate")
+                        .option(stringOption("identity-dir", "Local identity directory"))
+                        .option(stringOption("request", "csr/v2 request file"))
+                        .option(stringOption("certificate", "Signed certificate PEM file"))
+                        .option(stringOption("ca-file", "Pinned Manager CA certificate"))
+                        .option(stringOption("ca-fingerprint", "Pinned Manager CA SHA-256 fingerprint"))
+                        .action(options => installV2(options)))
+                ))
             )
             .build()
     );

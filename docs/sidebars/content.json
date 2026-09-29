@@ -280,6 +280,34 @@
     "output": "examples/mcp-bridged-job-status.md"
   },
   {
+    "id": "examples-native-onboarding-poc",
+    "title": "Native-first onboarding: two Sequences and RPC",
+    "slug": "/examples/native-onboarding-poc",
+    "source": "docs-source/examples/native-onboarding-poc.md",
+    "output": "examples/native-onboarding-poc.md"
+  },
+  {
+    "id": "examples-native-template-bun",
+    "title": "Native Bun sequence template",
+    "slug": "/examples/native-template-bun",
+    "source": "docs-source/examples/native-template-bun.md",
+    "output": "examples/native-template-bun.md"
+  },
+  {
+    "id": "examples-native-template-node",
+    "title": "Native Node sequence template",
+    "slug": "/examples/native-template-node",
+    "source": "docs-source/examples/native-template-node.md",
+    "output": "examples/native-template-node.md"
+  },
+  {
+    "id": "examples-native-template-python",
+    "title": "Native Python sequence template",
+    "slug": "/examples/native-template-python",
+    "source": "docs-source/examples/native-template-python.md",
+    "output": "examples/native-template-python.md"
+  },
+  {
     "id": "examples-python-log-processor",
     "title": "Python log processor sequence",
     "slug": "/examples/python-log-processor",

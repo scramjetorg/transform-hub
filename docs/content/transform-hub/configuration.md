@@ -63,11 +63,11 @@ Set these under the `adapter` key in the configuration file or pass them as Hub 
 
 Configure log level with the `--log-level` flag or `SCRAMJET_LOG_LEVEL` environment variable. Supported levels: `debug`, `info`, `warn`, `error`. The default is `info`.
 
-## Verser2 transport
+## Native Verser2 transport (API/v2)
 
 The Hub uses the **verser2** protocol for connectivity to the Manager. Verser2-related configuration covers the connection endpoint, TLS settings, and transport options.
 
-The connection topology is:
+The recommended connection topology is:
 
 ```
 Runner → STH-local verser2 Host → STH → Manager
@@ -82,9 +82,15 @@ Important configuration areas include:
 - runner-local verser2 host settings used by launched runtimes;
 - Manager-side mTLS requirements, configured on the Manager/MultiManager side where supported by the active command surface.
 
+For a remote MultiManager connection, export a semantic trusted bundle with
+`multi-manager native-bundle` and import it with `si config native import`. The
+bundle binds the endpoint, broker/ingress identity, route domain, CA fingerprint,
+and optional client credentials; do not set an unsupported
+`manager.connectionBundle` configuration key directly.
+
 ### Local port topology
 
-Manager and MultiManager primary Verser hosts use port `2443`. Their optional mTLS control ingress uses `2444`; the Hub's local runner Host uses `2445` by default. This allows a local Manager (or MultiManager) and Hub to run together when the control ingress is explicitly enabled. Existing Hub configurations that explicitly set the runner Host bind port or public URL to `2444` remain valid: when paired with the otherwise default Hub control ingress, the Hub automatically moves that ingress to `2446` and keeps mTLS enabled. Only the default changed.
+Manager and MultiManager primary native control ingress uses `2443`. The STH local native API is enabled with `--verser2-api-port` and is loopback-only. The Hub's local runner Host uses `2445` by default. `2444`/`2446` are optional control or direct-Hub compatibility listeners. The HTTP/v1 API on `8000` and the runner listener on `8001` are not client-facing native endpoints.
 
 In production, verser2 connectivity requires TLS. mTLS is configurable for additional mutual authentication. The authoritative option descriptors and environment mappings live in `packages/config/src/verser2-config.ts`, and the effective config schema is emitted under `schemas/`.
 

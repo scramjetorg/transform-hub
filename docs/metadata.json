@@ -1,7 +1,7 @@
 {
   "generatedBy": "scripts/docs.js",
   "generatedAt": "1970-01-01T00:00:00.000Z",
-  "sourceIdentifier": "sha256:aa9bf264a237a3d22e0999abc9db4813255f4a18ce20a48946e81496bfe51124",
+  "sourceIdentifier": "sha256:89dcb47eeeeccec0dac0626e3ee1fc11a2dc1e0a6a662e30314515113d0007bc",
   "outputRoot": {
     "value": "docs",
     "resolvedPath": "docs",
@@ -51,6 +51,10 @@
       "examples/lifecycle-local-validation-service.md",
       "examples/local-object-filter-to-consumer.md",
       "examples/mcp-bridged-job-status.md",
+      "examples/native-onboarding-poc.md",
+      "examples/native-template-bun.md",
+      "examples/native-template-node.md",
+      "examples/native-template-python.md",
       "examples/python-log-processor.md",
       "examples/simple-transform.md",
       "examples/source-side-data-summary.md",

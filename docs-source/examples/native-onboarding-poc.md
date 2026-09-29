@@ -1,0 +1,243 @@
+---
+id: examples-native-onboarding-poc
+slug: /examples/native-onboarding-poc
+title: Native-first onboarding: two Sequences and RPC
+---
+
+# Native-first onboarding: two Sequences and RPC
+
+This is the canonical native-first example. It uses API/v2 contracts and a
+native Verser2 connection; HTTP/v1, CPM, direct-Hub ingress, and ports `8000`
+and `8001` are mentioned only as compatibility or internal labels. The source
+fixture is in `examples/native-onboarding-poc/` in the repository.
+
+## Install the tools
+
+Use npm and npx for JavaScript tooling. Do not install a CLI globally and do
+not use yarn, pnpm, or a container as a substitute for the local authoring
+workflow.
+
+```sh
+mkdir native-demo && cd native-demo
+npm init -y
+npm install --save @scramjet/sth@^2.2.0 @scramjet/cli@^2.2.0 @scramjet/rest-api2@^2.2.0
+npx si --help
+```
+
+The `^2.2.0` range in this example is derived from the repository release
+version. Keep the package versions aligned; do not mix a v2 CLI with an older
+Hub or adapter contract.
+
+## Native topology and port labels
+
+The recommended local path is API/v2 over the loopback native ingress:
+
+```text
+si --(mTLS, native v2)--> 127.0.0.1:2443 MultiManager
+                              | semantic connection bundle
+                              +--> remote Manager --> STH --> Sequence
+```
+
+Only `2443` is client-facing in this topology. The port labels have these
+meanings:
+
+| Label | Role | Status |
+|---|---|---|
+| `2443` | MultiManager/Manager native control ingress | client-facing TLS/mTLS |
+| `2444`/`2446` | optional direct Hub/control ingress | optional compatibility or explicit direct-Hub v2 |
+| `2445` | local runner Host | private/loopback |
+| `--verser2-api-port` | STH local loopback native v2 API ingress | recommended local STH access |
+| `8000` | legacy HTTP/v1 Hub API | compatibility-only |
+| `8001` | legacy instance/runner listener | internal/compatibility-only; never a client target |
+| CPM | v1 registration label | legacy compatibility-only |
+
+Start a local STH with native v2 enabled explicitly. The API port is a
+loopback TLS/mTLS ingress; `--port 8000` is an opt-in legacy HTTP/v1 listener,
+not part of the native path:
+
+```sh
+npx sth --id local-hub --hostname 127.0.0.1 --verser2-api-port 2443 \
+  --runtime-adapter process --sequences-root ./sequence-store
+```
+
+Do not copy old examples that describe “direct Hub” as the default. A direct
+Hub ingress is isolated to that Hub and cannot traverse Manager or
+MultiManager. CPM and `--cpm-url` remain labels for migrations, not new setup.
+
+## Trust bundle and remote MultiManager mTLS
+
+The platform operator supplies a semantic connection bundle. It contains the
+endpoint, broker identity, ingress identity, route domain, CA PEM and its
+SHA-256 fingerprint. A bundle can also carry a client certificate/key (or
+PFX) for mTLS. The CA proves **server trust**; the client identity proves
+**client authentication**; the platform's fingerprint allowlist proves
+**authorization**. These are separate checks.
+
+Save the operator-provided bundle as a secret-managed JSON file; never commit
+it or paste private keys into shell history. Its shape is:
+
+```json
+{
+  "kind": "scramjet.connection-bundle",
+  "version": 1,
+  "profileName": "development-space",
+  "transport": "verser2",
+  "publicEndpoint": { "url": "https://mm.example.test:2443", "port": 2443, "role": "control" },
+  "brokerId": "development-mm",
+  "ingress": { "level": "platform", "expectedId": "development-mm", "routeDomain": "mm.control.example" },
+  "target": { "spaceId": "development", "hubId": "local-hub" },
+  "trust": { "caPem": "<operator CA PEM>", "sha256Fingerprint": "<64 hex characters>", "expiresAt": "<certificate expiry>" },
+  "credentials": { "certFile": "/run/secrets/client.pem", "keyFile": "/run/secrets/client-key.pem" }
+}
+```
+
+Export a bundle from the MultiManager and import that artifact with the native
+configuration command. The export includes the CA trust and, for mTLS, the
+operator-issued client identity; keep the resulting file outside the project:
+
+```sh
+npx multi-manager native-bundle --config ./multimanager.json \
+  --profile-name development-space --space development --hub local-hub \
+  --client-cert-file /run/secrets/client.pem \
+  --client-key-file /run/secrets/client-key.pem --format json \
+  > ./connection-bundle.json
+npx si config native import --bundle "$(base64 -w0 ./connection-bundle.json)"
+npx si api get /api/v2/ingress/identity --output json
+```
+
+Do not replace the semantic bundle with a guessed URL, numeric route, or
+`--cpm-url`. For a CA-only ingress omit `credentials`; for mTLS, the operator
+must issue a client identity and authorize its fingerprint.
+
+## Node tutorial
+
+Create a package with a normal npm manifest and a single entrypoint:
+
+```sh
+mkdir node-sequence && cd node-sequence
+npm init -y
+node -e 'let p=require("./package.json"); p.type="commonjs"; p.main="index.js"; require("fs").writeFileSync("package.json", JSON.stringify(p,null,2)+"\n")'
+cat > index.js <<'EOF'
+module.exports = async function* (input) {
+  for await (const value of input) yield `node: ${value}`;
+};
+EOF
+npx si sequence pack . -o node-sequence.tar.gz
+npx si sequence deploy node-sequence.tar.gz
+```
+
+Send one value through the native instance route and observe `node: Alice`:
+
+```sh
+printf 'Alice\n' | npx si instance stdin <INSTANCE_ID>
+npx si instance stdout <INSTANCE_ID>
+```
+
+## Python tutorial
+
+Python sequences use the hosted Python wrapper and a regular `main.py`; the
+Python process receives the same hosted lifecycle and instance channels. This
+is not a generic Python REST SDK and it does not bypass the Hub:
+
+```sh
+mkdir python-sequence && cd python-sequence
+cat > package.json <<'EOF'
+{"name":"python-sequence","version":"1.0.0","main":"main.py","engines":{"python3":">=3.9"},"dependencies":{}}
+EOF
+cat > main.py <<'EOF'
+async def main(context, input_stream):
+    values = []
+    async for value in input_stream:
+        values.append(str(value))
+    return f"python: {' '.join(values)}"
+EOF
+npx si sequence pack . -o python-sequence.tar.gz
+npx si sequence deploy python-sequence.tar.gz
+```
+
+Use a Process Adapter only where Python and its dependencies are installed.
+For Docker or Kubernetes configure the Python runner image; packaging alone
+does not provision Python.
+
+## Bun tutorial
+
+Bun is a hosted runtime wrapper. It follows the native Hub protocol, while the
+hosted Bun wrapper delegates AppContext behavior to Node; there is no separate
+direct-Bun control-plane mode:
+
+```sh
+mkdir bun-sequence && cd bun-sequence
+cat > package.json <<'EOF'
+{"name":"bun-sequence","version":"1.0.0","main":"index.js","engines":{"bun":">=1"},"dependencies":{}}
+EOF
+cat > index.js <<'EOF'
+module.exports = async function bunSequence(input) {
+  const values = [];
+  for await (const value of input) values.push(value);
+  return `bun: ${values.join(" ")}`;
+};
+EOF
+npx si sequence pack . -o bun-sequence.tar.gz
+npx si sequence deploy bun-sequence.tar.gz
+```
+
+Run local checks with `bun test` when Bun is installed, but keep project and
+CLI installation npm/npx-only. Docker/Kubernetes deployments must configure a
+Bun runner image.
+
+## Two-sequence RPC tutorial
+
+Deploy a `provider` sequence that exposes the `status` RPC contract, then a
+`caller` sequence that receives the provider instance ID as configuration.
+The canonical typed client form is:
+
+```typescript
+import type { HubClient } from "@scramjet/rest-api2";
+
+const contract = {
+  status: {
+    response: (value: unknown): value is { ready: boolean } =>
+      typeof value === "object" && value !== null && "ready" in value,
+  },
+};
+
+export async function callProvider(hubClient: () => HubClient, id: string) {
+  return hubClient().instance(id).rpc(contract).call("status");
+}
+```
+
+`hubClient().instance(id).rpc(contract).call()` is the preferred form where
+the installed `@scramjet/rest-api2` contract supports the typed RPC helper.
+If that helper is not present in an older client, use the equivalent API/v2
+RPC route and upgrade the client; do not silently fall back to v1.
+
+```sh
+npx si sequence deploy provider.tar.gz
+npx si sequence deploy caller.tar.gz --args '["<PROVIDER_INSTANCE_ID>"]'
+npx si instance stdout <CALLER_INSTANCE_ID>
+```
+
+The caller-to-provider path is still routed by the owning Hub and Manager;
+sequences do not open arbitrary network sockets to each other. RPC is a live
+request/response operation, not a durable queue.
+
+## Adapter contracts and promotion boundary
+
+The Process Adapter runs the selected runtime on the Hub host. Docker and
+Kubernetes require the matching runner images; these are the actual defaults
+for release `2.2.0` and must be kept in lockstep with the package version:
+
+```yaml
+docker:
+  runnerImages:
+    node: scramjetorg/runner:2.2.0
+    python3: scramjetorg/runner-py:2.2.0
+    bun: scramjetorg/runner-bun:2.2.0
+  prerunner:
+    image: scramjetorg/pre-runner:2.2.0
+```
+
+This example does not build a Compose topology or claim Kubernetes
+provisioning. Compose proof, cluster networking, image pulls, RBAC, and
+secret mounting are deployment-specific follow-up work; the native contract
+above is the user-facing local onboarding path.

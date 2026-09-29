@@ -48,6 +48,11 @@ export type Verser2LeaseConfig = {
     minimumUpstreamWaitingStreams?: number;
 };
 
+export type STHVerser2UpstreamPoolConfig = {
+    minWaitingStreams: number;
+    maxOpenStreams: number;
+};
+
 export type ManagerVerser2Config = {
     enabled: boolean;
     host: {
@@ -94,4 +99,5 @@ export type STHOutboundVerser2Config = {
     };
     timeouts: Verser2TimeoutConfig;
     leases: Verser2LeaseConfig;
+    upstreamPool: STHVerser2UpstreamPoolConfig;
 };

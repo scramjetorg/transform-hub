@@ -6,6 +6,7 @@ import { ApiCommandError } from "./apiCommandError";
 import { sessionConfig } from "./config";
 import { validateVerser2Profile } from "./config/verser2Profile";
 import { resolveSelectedTransport } from "./config/transportResolver";
+import { diagnostic, elapsed, profileTarget, safePath } from "./diagnostics";
 
 type Scope = "hub" | "space";
 type Owner = "hub" | "space" | "root";
@@ -180,6 +181,8 @@ async function call<T>(method: string, requestedPath: string, body?: readonly Bu
     if (!profile) throw new CapabilityUnavailableError("Named v2 command");
     const requested = splitPathQuery(requestedPath);
     const path = pathFor(profile, requested.path, owner, explicitSpaceId, explicitHubId);
+    const requestStarted = Date.now();
+    diagnostic("request.dispatch", { ...profileTarget(profile), method, path: safePath(path), operation: raw ? "raw" : "named" });
     const manifest = manifestFor(profile);
     const contract = raw ? undefined : contractFor(manifest, method, path);
     const controller = new AbortController();
@@ -203,6 +206,7 @@ async function call<T>(method: string, requestedPath: string, body?: readonly Bu
         } as any)) : client.request<any>((contract
             ? { operationId: contract.route.id as any, params: contract.params, query: query || requested.query, headers, body, timeoutMs: profile.timeoutMs, signal: controller.signal }
             : {} as any)));
+        diagnostic("request.completion", { ...profileTarget(profile), method, path: safePath(path), status: response.status, elapsedMs: elapsed(requestStarted), operation: raw ? "raw" : "named" });
         if (response.status < 200 || response.status >= 300) {
             await session.close();
             throw new ApiCommandError(response.status < 500 ? "API_4XX" : "API_5XX", response.status < 500 ? 70 : 71, `API returned ${response.status}`, typeof response.body === "string" ? response.body : undefined);
@@ -211,6 +215,7 @@ async function call<T>(method: string, requestedPath: string, body?: readonly Bu
             const output = await inspectNamedStream(response.body as Readable, response.headers, controller, profile.timeoutMs) as Readable & { cleanup?: () => Promise<void> };
             let cleanupResult: Promise<void> | undefined;
             let timer: NodeJS.Timeout | undefined;
+            let cancellationLogged = false;
             const cleanup = () => cleanupResult ||= (async () => {
                 if (timer) clearTimeout(timer);
                 await response.cleanup?.();
@@ -220,6 +225,10 @@ async function call<T>(method: string, requestedPath: string, body?: readonly Bu
                 // EventEmitter passes the signal name to SIGINT listeners; it is
                 // not a terminal error and must not replace the mapped one.
                 const terminal = error instanceof ApiCommandError ? error : new ApiCommandError("CANCELLED", 60, "Request cancelled");
+                if (!cancellationLogged) {
+                    cancellationLogged = true;
+                    diagnostic("request.cancellation", { ...profileTarget(profile), method, path: safePath(path), elapsedMs: elapsed(requestStarted), code: terminal.code, operation: raw ? "raw" : "named" });
+                }
                 if (!output.destroyed) output.destroy(terminal);
                 if (!response.body.destroyed) (response.body as unknown as Readable).destroy(terminal);
                 void cleanup();
@@ -240,6 +249,7 @@ async function call<T>(method: string, requestedPath: string, body?: readonly Bu
         if (error) throw error;
         return value as T;
     } catch (error) {
+        diagnostic("request.cancellation", { ...profileTarget(profile), method, path: safePath(path), elapsedMs: elapsed(requestStarted), code: error instanceof ApiCommandError ? error.code : "CONNECTION", operation: raw ? "raw" : "named" });
         if (body instanceof Readable && !body.destroyed) body.destroy(error as Error);
         throw mapApiError(error);
     } finally {

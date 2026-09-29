@@ -66,6 +66,15 @@ test("diagnostic Docker wiring is opt-in and does not alter ordinary mounts", t 
     t.true(source.includes('if (memlabEnabled)'));
 });
 
+test("native Compose wiring passes only the owned host temp root", t => {
+    const source = fs.readFileSync(path.resolve(__dirname, "../run-bdd-docker.js"), "utf8");
+    const fixture = fs.readFileSync(path.resolve(__dirname, "../../bdd/lib/native-compose-fixture.ts"), "utf8");
+    t.true(source.includes('SCRAMJET_BDD_HOST_TMP_DIR=${tmpDir}'));
+    t.true(fixture.includes("relative(\"/work-tmp\", resolve(state))"));
+    t.true(fixture.includes("COMPOSE_STATE_DIR: hostState"));
+    t.true(fixture.includes("!stateRelativePath.startsWith(`..${sep}`)"));
+});
+
 test("dedicated MemLab enforcement is snapshot-only and disables ordinary budgets", t => {
     const runner = fs.readFileSync(path.resolve(__dirname, "../run-bdd-memlab.js"), "utf8");
     const analyzer = fs.readFileSync(path.resolve(__dirname, "../memlab/analyze-bdd-heap.js"), "utf8");

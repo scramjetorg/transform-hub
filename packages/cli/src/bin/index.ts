@@ -10,6 +10,7 @@ import { parseConfigSelection } from "../lib/config/args";
 import { errorHandler } from "../lib/errorHandler";
 import { initPaths } from "../lib/paths";
 import { apiClientLoggingOption, setApiClientLoggingOverride } from "../lib/api-client-logging";
+import { diagnostic, setDiagnosticLogging } from "../lib/diagnostics";
 
 const version = findPackage(__dirname).next().value?.version || "unknown";
 
@@ -36,6 +37,9 @@ function normalizeCommandArgs(args: string[]): string[] {
  * Build the full command tree from descriptors and run it.
  */
 (async () => {
+    const verbose = process.argv.includes("-v") || process.argv.includes("--verbose");
+    setDiagnosticLogging(verbose);
+    diagnostic("cli.startup");
     // https://nodejs.org/api/dns.html#dnssetdefaultresultorderorder
     const { setDefaultResultOrder } = dns as unknown as { setDefaultResultOrder?: (param: string) => void };
 
@@ -45,6 +49,7 @@ function normalizeCommandArgs(args: string[]): string[] {
 
     initPaths();
     initConfig();
+    diagnostic("cli.profile-selection", { profile: profileManager.getProfileName() });
     const commandDescriptors = await getCommandDescriptors();
 
     // Build root command descriptor
@@ -53,6 +58,7 @@ function normalizeCommandArgs(args: string[]): string[] {
             .usage("[command] [options...]")
             .option("-c, --config <path>", "Use configuration from file")
             .option("--config-path <path>", "Use configuration from file")
+            .option("-v, --verbose", "Write diagnostic timing logs to stderr")
             .option("--progress", "Global flag, used to display progress (currently used only in 'si seq send/deploy' command")
             .option(apiClientLoggingOption);
 
@@ -60,8 +66,8 @@ function normalizeCommandArgs(args: string[]): string[] {
         commandDescriptors.forEach((child: CommandDescriptor) => b.addCommand(child));
     });
 
-    // Handle --version before command resolution
-    if (process.argv.includes("--version") || process.argv.includes("-v")) {
+    // Handle --version before command resolution. -v enables diagnostics.
+    if (process.argv.includes("--version")) {
         console.log(`SI version: ${version}`);
         process.exit(0);
     }

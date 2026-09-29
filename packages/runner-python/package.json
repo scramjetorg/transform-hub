@@ -27,7 +27,7 @@
     "__pypackages__"
   ],
   "dependencies": {
-    "@signicode/verser2-guest-python": "0.7.0"
+    "@signicode/verser2-guest-python": "0.9.2"
   },
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "MIT",

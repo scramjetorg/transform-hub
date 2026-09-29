@@ -186,6 +186,13 @@ See `conductor/workflow.md` for details.
 - TypeScript base is strict CommonJS targeting ES2019, with `allowJs`, decorators, declarations, and `noUnusedLocals` enabled.
 - Lint/format tooling uses Biome during the migration track. Do not run legacy ESLint commands unless the active track explicitly re-enables them.
 
+## Native documentation and proof boundaries
+- The canonical native onboarding example is `examples/native-onboarding-poc/` and its source page is `docs-source/examples/native-onboarding-poc.md`. Keep it publishable: no secrets, fixed ports, `strace`, `/tmp`-only diagnostics, or generated runtime residue.
+- Native-first documentation uses API/v2 and the loopback TLS/mTLS STH ingress (`--verser2-api-port`) plus semantic `manager.connectionBundle` configuration for remote MultiManager connections. HTTP/v1, CPM, direct-Hub ingress, `8000`, and `8001` are compatibility/internal labels unless a task explicitly targets legacy behavior.
+- Do not build Compose BDD topology for documentation-only work. Compose and Kubernetes pages may describe prerequisites, network/RBAC boundaries, and proof ownership, but only the explicitly requested live topology test is a supported proof.
+- Docs source is authoritative. Run `npm run docs:generate` followed by `npm run docs:check`; generated `docs/` output is never linked or edited directly. Focused generator coverage is `node scripts/run-ava.js scripts/test/docs-generator.spec.js`.
+- JavaScript authoring examples use npm/npx only. Prefer the root-version-derived package ranges and actual adapter image contracts documented in the canonical native example.
+
 ## Repository Map
 
 A full codemap is available at `codemap.md` in the project root.

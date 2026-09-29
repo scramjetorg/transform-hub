@@ -1,0 +1,18 @@
+{
+  "id": "compose-mm",
+  "realmId": "compose-realm",
+  "manager": "compose-space",
+  "server": { "apiBase": "/api/v1", "apiHost": "0.0.0.0", "apiPort": 11000 },
+  "verser2": {
+    "enabled": true,
+    "host": { "bindHost": "0.0.0.0", "bindPort": 2443, "publicUrl": "https://multimanager:2443", "tls": { "caFile": "/run/scramjet/ca.pem", "certFile": "/run/scramjet/mm.pem", "keyFile": "/run/scramjet/mm.key", "mtlsRequired": true } },
+    "localBroker": { "peerId": "compose-mm.broker", "routeDomain": "compose.scramjet.internal" },
+    "localGuest": { "peerId": "compose-mm.guest", "routeDomain": "compose.scramjet.internal" },
+    "controlIngress": { "enabled": false }
+  },
+  "csrEnrollment": {
+    "enabled": true,
+    "policy": { "allowed": [] },
+    "issuedStore": "/run/scramjet/issued-store"
+  }
+}

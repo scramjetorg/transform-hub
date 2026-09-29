@@ -7,7 +7,6 @@ import type { APIRoute } from "@scramjet/api-types";
 import EventEmitter from "events";
 import { IncomingHttpHeaders } from "http";
 
-import { normalizeRpcForwardPath, stripRpcExposePath } from "../rpc-path";
 import { ICSI } from "../types";
 
 export class InstanceAPIV2 {
@@ -82,8 +81,7 @@ export class InstanceAPIV2 {
         }
 
         const rpcPath = rawReq.url?.startsWith("/rpc") ? rawReq.url.slice("/rpc".length) || "/" : rawReq.url || "/";
-        const apiVersion = this.csi.expose?.path?.startsWith("/api/v1") ? "v1" : undefined;
-        const path = stripRpcExposePath(normalizeRpcForwardPath(rpcPath, this.csi.expose?.path, apiVersion), this.csi.expose?.path);
+        const path = rpcPath.startsWith("/") ? rpcPath : `/${rpcPath}`;
         const handled = await this.csi.forwardRpcRequest(rawReq, rawRes, path);
 
         if (!handled && !rawRes.headersSent) {

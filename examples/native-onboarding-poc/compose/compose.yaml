@@ -1,0 +1,42 @@
+services:
+  multimanager:
+    image: ${MM_COMPOSE_IMAGE:?MM_COMPOSE_IMAGE is required}
+    user: "${COMPOSE_RUNTIME_UID}:${COMPOSE_RUNTIME_GID}"
+    command: ["multi-manager", "--config", "/run/scramjet/mm.json"]
+    volumes:
+      - ${COMPOSE_STATE_DIR:?COMPOSE_STATE_DIR is required}/mm.json:/run/scramjet/mm.json:ro
+      - ${COMPOSE_STATE_DIR:?COMPOSE_STATE_DIR is required}/ca.pem:/run/scramjet/ca.pem:ro
+      - ${COMPOSE_STATE_DIR:?COMPOSE_STATE_DIR is required}/mm.pem:/run/scramjet/mm.pem:ro
+      - ${COMPOSE_STATE_DIR:?COMPOSE_STATE_DIR is required}/mm.key:/run/scramjet/mm.key:ro
+      - ${COMPOSE_STATE_DIR:?COMPOSE_STATE_DIR is required}/issued-store:/run/scramjet/issued-store:ro
+    networks: [native]
+    labels:
+      com.scramjet.native-proof: "true"
+      com.scramjet.native-proof.role: "multimanager"
+
+  sth:
+    image: ${STH_COMPOSE_IMAGE:?STH_COMPOSE_IMAGE is required}
+    user: "${COMPOSE_RUNTIME_UID}:${COMPOSE_RUNTIME_GID}"
+    command: ["scramjet-transform-hub", "--config", "/run/scramjet/sth.json"]
+    environment:
+      HOME: /tmp
+      NODE_EXTRA_CA_CERTS: /run/scramjet/ca.pem
+    volumes:
+      - ${COMPOSE_STATE_DIR:?COMPOSE_STATE_DIR is required}/sth.json:/run/scramjet/sth.json:ro
+      - ${COMPOSE_STATE_DIR:?COMPOSE_STATE_DIR is required}/ca.pem:/run/scramjet/ca.pem:ro
+      - ${COMPOSE_STATE_DIR:?COMPOSE_STATE_DIR is required}/sth-identity:/run/scramjet/sth-identity:ro
+      - ${COMPOSE_STATE_DIR:?COMPOSE_STATE_DIR is required}/sequences:/var/lib/scramjet/sequences
+    networks: [native]
+    depends_on:
+      - multimanager
+    labels:
+      com.scramjet.native-proof: "true"
+      com.scramjet.native-proof.role: "sth"
+
+networks:
+  native:
+    name: ${COMPOSE_PROJECT_NAME:-scramjet-native-compose}-network
+    driver: bridge
+    external: false
+    labels:
+      com.scramjet.native-proof: "true"

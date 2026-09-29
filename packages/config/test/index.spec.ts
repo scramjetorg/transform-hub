@@ -235,7 +235,8 @@ test("verser2 descriptors preserve an explicit legacy runner Host port and mask 
                 tls: {},
                 enrollment: {},
                 timeouts: { routeReadinessMs: 1000, leaseAcquireMs: 1000, requestMs: 1000 },
-                leases: { minimumWaitingLeases: 1 }
+                leases: { minimumWaitingLeases: 1 },
+                upstreamPool: { minWaitingStreams: 64, maxOpenStreams: 256 }
             }
         },
         env: {
@@ -243,6 +244,8 @@ test("verser2 descriptors preserve an explicit legacy runner Host port and mask 
             SCRAMJET_VERSER2_CA: "-----BEGIN CERTIFICATE-----\ninline\n-----END CERTIFICATE-----",
             SCRAMJET_VERSER2_RUNNER_HOST_PUBLIC_URL: "https://sth-local.example:2444",
             SCRAMJET_VERSER2_RUNNER_MINIMUM_WAITING_STREAMS: "40",
+            SCRAMJET_VERSER2_UPSTREAM_POOL_MIN_WAITING_STREAMS: "48",
+            SCRAMJET_VERSER2_UPSTREAM_POOL_MAX_OPEN_STREAMS: "192",
             CPM_SSL_CA_PATH: "/ca/from-alias.pem",
             SCRAMJET_VERSER2_CERT_FILE: "/safe/cert.pem",
             SCRAMJET_VERSER2_KEY_FILE: "/secret/key.pem"
@@ -257,7 +260,8 @@ test("verser2 descriptors preserve an explicit legacy runner Host port and mask 
             verser2BrokerTargetDomain: "manager.a.scramjet.internal",
             verser2GuestPeerId: "sth.a.guest",
             verser2GuestRouteDomain: "sth.a.scramjet.internal",
-            verser2UpstreamMinimumWaitingStreams: 160
+            verser2UpstreamMinimumWaitingStreams: 160,
+            verser2UpstreamPoolMaxOpenStreams: 224
         },
         options: sthOutboundVerser2Options
     });
@@ -272,6 +276,8 @@ test("verser2 descriptors preserve an explicit legacy runner Host port and mask 
     t.is(loaded.config.verser2.tls.keyFile, "/secret/key.pem");
     t.is(loaded.config.verser2.leases.minimumRunnerWaitingStreams, 40);
     t.is(loaded.config.verser2.leases.minimumUpstreamWaitingStreams, 160);
+    t.is(loaded.config.verser2.upstreamPool.minWaitingStreams, 48);
+    t.is(loaded.config.verser2.upstreamPool.maxOpenStreams, 224);
     t.is((loaded.publicConfig as any).verser2.tls.keyFile, "********");
     t.is((loaded.publicConfig as any).verser2.runnerHost.host.tls.keyFile, "********");
     t.is((loaded.publicConfig as any).verser2.tls.ca, "-----BEGIN CERTIFICATE-----\ninline\n-----END CERTIFICATE-----");
@@ -290,7 +296,8 @@ test("verser2 schema requires usable routed config in verser2 mode", t => {
         tls: {},
         enrollment: {},
         timeouts: { routeReadinessMs: 1000, leaseAcquireMs: 1000, requestMs: 1000 },
-        leases: { minimumWaitingLeases: 1 }
+        leases: { minimumWaitingLeases: 1 },
+        upstreamPool: { minWaitingStreams: 64, maxOpenStreams: 256 }
     }));
 
     t.true(error instanceof z.ZodError);
@@ -303,6 +310,29 @@ test("verser2 schema requires usable routed config in verser2 mode", t => {
     ]);
 });
 
+test("verser2 upstream pool schema is strict and enforces bounds and ordering", t => {
+    const base = {
+        enabled: false,
+        hostUrl: "",
+        broker: { peerId: "", targetDomain: "" },
+        guest: { peerId: "", routeDomain: "" },
+        tls: {},
+        enrollment: {},
+        timeouts: { routeReadinessMs: 1000, leaseAcquireMs: 1000, requestMs: 1000 },
+        leases: { minimumWaitingLeases: 1 },
+        upstreamPool: { minWaitingStreams: 64, maxOpenStreams: 256 }
+    };
+
+    const ordering = t.throws(() => sthOutboundVerser2ConfigSchema.parse({ ...base, upstreamPool: { minWaitingStreams: 257, maxOpenStreams: 256 } }));
+    t.true((ordering as z.ZodError).issues.some(issue => issue.path.join(".") === "upstreamPool.minWaitingStreams"));
+    const negative = t.throws(() => sthOutboundVerser2ConfigSchema.parse({ ...base, upstreamPool: { minWaitingStreams: -1, maxOpenStreams: 256 } }));
+    t.true((negative as z.ZodError).issues.some(issue => issue.path.join(".") === "upstreamPool.minWaitingStreams"));
+    const zeroMax = t.throws(() => sthOutboundVerser2ConfigSchema.parse({ ...base, upstreamPool: { minWaitingStreams: 64, maxOpenStreams: 0 } }));
+    t.true((zeroMax as z.ZodError).issues.some(issue => issue.path.join(".") === "upstreamPool.maxOpenStreams"));
+    const extra = t.throws(() => sthOutboundVerser2ConfigSchema.parse({ ...base, upstreamPool: { minWaitingStreams: 64, maxOpenStreams: 256, extra: true } }));
+    t.true((extra as z.ZodError).issues.some(issue => issue.path.join(".") === "upstreamPool"));
+});
+
 test("verser2 schema requires PEM cert and key together", t => {
     const certOnly = t.throws(() => sthOutboundVerser2ConfigSchema.parse({
         enabled: false,
@@ -312,7 +342,8 @@ test("verser2 schema requires PEM cert and key together", t => {
         tls: { certFile: "/safe/cert.pem" },
         enrollment: {},
         timeouts: { routeReadinessMs: 1000, leaseAcquireMs: 1000, requestMs: 1000 },
-        leases: { minimumWaitingLeases: 1 }
+        leases: { minimumWaitingLeases: 1 },
+        upstreamPool: { minWaitingStreams: 64, maxOpenStreams: 256 }
     }));
     const keyOnly = t.throws(() => sthOutboundVerser2ConfigSchema.parse({
         enabled: false,
@@ -322,7 +353,8 @@ test("verser2 schema requires PEM cert and key together", t => {
         tls: { keyFile: "/secret/key.pem" },
         enrollment: {},
         timeouts: { routeReadinessMs: 1000, leaseAcquireMs: 1000, requestMs: 1000 },
-        leases: { minimumWaitingLeases: 1 }
+        leases: { minimumWaitingLeases: 1 },
+        upstreamPool: { minWaitingStreams: 64, maxOpenStreams: 256 }
     }));
 
     t.is((certOnly as z.ZodError).issues[0].path.join("."), "tls.keyFile");

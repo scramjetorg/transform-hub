@@ -9,6 +9,8 @@ export * from "./lib/manager-auditor";
 export * from "./lib/verser2-transport";
 export * from "./lib/route-classifier";
 export * from "./lib/csr-enrollment";
+export * from "./lib/csr-enrollment-v2";
 export * from "./lib/csr-enrollment-cli";
 export * from "./lib/manager-control-ingress";
+export * from "./lib/federation-context";
 export * from "./lib/storage-routers/s3-proxy";

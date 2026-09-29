@@ -1,7 +1,12 @@
 import { ManagerVerser2Config } from "@scramjet/api-types";
 import { VerserHostOptions, VerserHostTlsOptions } from "@signicode/verser2-host";
+import type { VerserRegistrationAuthorizationContext } from "@signicode/verser-common";
 
-function createVerser2HostTlsOptions(config: ManagerVerser2Config): VerserHostTlsOptions {
+export type Verser2RegistrationAuthorizer = (context: VerserRegistrationAuthorizationContext) => { action: "allow" } | { action: "close"; reason: string };
+export type Verser2FederationAuthorizer = (context: any) => { action: "allow"; authorizationContext?: unknown } | { action: "close"; reason: string };
+export type Verser2RouteAuthorizer = (context: { previousAdvertisedDomain: string; nextSelectedDomain: string }) => { decision: "allow" | "deny"; cacheTtlMs: 0 };
+
+function createVerser2HostTlsOptions(config: ManagerVerser2Config, v2Authorizer?: Verser2RegistrationAuthorizer, federationAuthorizer?: Verser2FederationAuthorizer): VerserHostTlsOptions {
     const tls = config.host.tls;
     let identity: VerserHostTlsOptions;
 
@@ -29,7 +34,7 @@ function createVerser2HostTlsOptions(config: ManagerVerser2Config): VerserHostTl
         throw new Error("verser2 Host mTLS requires clientAuthCaFile");
     }
 
-    if (!tls.clientAuthCaFile && !tls.mtlsRequired && config.registration.allowedClientFingerprints.length === 0) {
+    if (!tls.clientAuthCaFile && !tls.mtlsRequired && config.registration.allowedClientFingerprints.length === 0 && !v2Authorizer) {
         return identity;
     }
 
@@ -37,7 +42,9 @@ function createVerser2HostTlsOptions(config: ManagerVerser2Config): VerserHostTl
         ...identity,
         clientAuth: {
             caFile: clientAuthCaFile,
+            ...(federationAuthorizer ? { authorizeFederation: federationAuthorizer } : {}),
             authorizeRegistration: context => {
+                if (v2Authorizer) return v2Authorizer(context);
                 if (context.metadata.local === true) {
                     return { action: "allow" };
                 }
@@ -60,11 +67,12 @@ function createVerser2HostTlsOptions(config: ManagerVerser2Config): VerserHostTl
     };
 }
 
-export function createVerser2HostOptions(config: ManagerVerser2Config): VerserHostOptions {
+export function createVerser2HostOptions(config: ManagerVerser2Config, v2Authorizer?: Verser2RegistrationAuthorizer, federationAuthorizer?: Verser2FederationAuthorizer, routeAuthorizer?: Verser2RouteAuthorizer): VerserHostOptions {
     return {
         hostId: `${config.localBroker.peerId}.host`,
         host: config.host.bindHost,
         port: config.host.bindPort,
-        tls: createVerser2HostTlsOptions(config)
+        tls: createVerser2HostTlsOptions(config, v2Authorizer, federationAuthorizer),
+        ...(routeAuthorizer ? { routeAuthorizer } : {})
     };
 }

@@ -6,6 +6,7 @@ import { ApiCommandError } from "../src/lib/commands/api";
 import { CapabilityUnavailableError, getNativeCapabilities, setCapabilityDependencies } from "../src/lib/capabilities";
 import { sessionConfig } from "../src/lib/config";
 import { displayLogStream, displayStream } from "../src/lib/output";
+import { setDiagnosticLogging } from "../src/lib/diagnostics";
 import { RoutedBrokerCancelledError, RoutedBrokerDuplicateRouteError, RoutedBrokerRedirectError, RoutedBrokerRequestError, RoutedBrokerResponseLimitError, RoutedBrokerRouteUnavailableError, RoutedBrokerTimeoutError } from "@scramjet/api-router";
 
 const profile = { endpoint: "https://broker.test", brokerId: "test", timeoutMs: 50, ingress: { level: "hub", expectedId: "hub", routeDomain: "route" }, tls: { caFile: "/tmp/ca", certFile: "/tmp/cert", keyFile: "/tmp/key" } };
@@ -367,6 +368,7 @@ for (const [name, profileOptions, interrupt, expectedCode, expectedExit] of [
 ] as const) {
     test.serial(`post-handoff named stream ${name} retains its mapped error through display cleanup`, async t => {
         let cleanup = 0; let close = 0; const source = new PassThrough(); const destination = new PassThrough();
+        const stderr = new PassThrough(); let diagnostics = ""; stderr.on("data", chunk => diagnostics += chunk.toString()); setDiagnosticLogging(true, stderr); t.teardown(() => setDiagnosticLogging(false));
         const baselineSigint = process.listenerCount("SIGINT"); const baselineClose = destination.listenerCount("close");
         const transport: any = { waitForRoute: async () => {}, close: async () => { close++; }, request: async (request: any) => request.path === "/api/v2/ingress/identity"
             ? { status: 200, body: Readable.from([JSON.stringify({ level: "hub", serviceId: "hub", routeDomain: "route" })]), cleanup: async () => {} }
@@ -380,6 +382,9 @@ for (const [name, profileOptions, interrupt, expectedCode, expectedExit] of [
         t.is(error.code, expectedCode); t.is(error.exitCode, expectedExit);
         t.true(source.destroyed); t.is(cleanup, 1); t.is(close, 1);
         t.is(process.listenerCount("SIGINT"), baselineSigint); t.is(destination.listenerCount("close"), baselineClose);
+        await new Promise(resolve => setImmediate(resolve));
+        t.is((diagnostics.match(/request\.cancellation/g) || []).length, 1);
+        t.regex(diagnostics, new RegExp(`code.*${expectedCode}`));
     });
 }
 

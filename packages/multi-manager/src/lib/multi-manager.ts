@@ -1,7 +1,7 @@
 import { APIExpose, ManagerConfiguration, MMRestAPI, MonitoringServerConfig, NextCallback, ParsedMessage } from "@scramjet/api-types";
 import { getDefaultManagerConfig as getManagerDefaultConfig } from "@scramjet/config";
 import { createDefaultHealthComponents, LoadCheck, LoadCheckConfig, summarizeHealth } from "@scramjet/load-check";
-import { CommonLogsPipe, createManagerSthLocalBrokerTransport, HealthCheck, Manager } from "@scramjet/manager";
+import { CommonLogsPipe, createManagerSthLocalBrokerTransport, HealthCheck, Manager, withVerifiedFederationPrincipal } from "@scramjet/manager";
 import { IDProvider } from "@scramjet/model";
 import { MonitoringServer } from "@scramjet/monitoring-server";
 import { ObjLogger, prettyPrint } from "@scramjet/obj-logger";
@@ -23,8 +23,10 @@ import { MultiManagerAPIV2Handler } from "./api/multi-manager-api-v2";
 import { ManagersStore } from "./manager-store";
 import { MultiManagerAuditor } from "./mulit-manager-auditor";
 import { createVerser2HostOptions } from "./verser2-host-config";
+import { FederatedControlRoutePolicy } from "./federated-control-route-policy";
 import { resolveManagerVerser2HostConfig } from "./verser2-host-identity";
 import { attachVerser2ServerStreamBoundary, handleVerser2RequestBoundary } from "./verser2-request-boundary";
+import { authorizeCsrEnrollment, certificateSerialNumber, CsrEnrollmentStore } from "./csr-enrollment-v2";
 
 const MANAGER_START_TIMEOUT = 30000;
 
@@ -129,6 +131,7 @@ export class MultiManager {
     verser2Host?: VerserHost;
     /** Isolated mTLS v2 control plane; never carries Manager/STH transport. */
     controlIngressHost?: VerserHost;
+    private csrEnrollmentStore?: CsrEnrollmentStore;
     apiBase: string;
 
     id: string;
@@ -151,6 +154,8 @@ export class MultiManager {
     private controlIngressGuests = new Map<string, VerserLocalGuestHandle>();
     private controlIngressRootGuest?: VerserLocalGuestHandle;
     private stopping = false;
+    private readonly federatedControlRoutes = new FederatedControlRoutePolicy();
+    private managerRouteObservers = new Map<string, () => void>();
 
     /** Missing configuration preserves the historical API-server log consumption. */
     static shouldConsumeApiServerLogs(config: Pick<MultiManagerOptions, "log">): boolean {
@@ -245,7 +250,36 @@ export class MultiManager {
 
         if (!this.verser2Host) {
             Object.assign(this.config.verser2, await resolveManagerVerser2HostConfig(this.config.verser2, "MultiManager"));
-            this.verser2Host = createVerserHost(createVerser2HostOptions(this.config.verser2));
+            const enrollment = this.config.csrEnrollment;
+            if (enrollment?.enabled) {
+                this.csrEnrollmentStore = new CsrEnrollmentStore(enrollment.issuedStore || ".scramjet-csr-v2");
+            }
+            this.verser2Host = createVerserHost(createVerser2HostOptions(this.config.verser2, enrollment?.enabled ? context => {
+                if (context.metadata.local) return { action: "allow" };
+                if (!context.certificate) return { action: "close", reason: "client certificate required" };
+                const record = this.csrEnrollmentStore?.getIssued(context.certificate.fingerprint256.replace(/^sha256:/i, ""), certificateSerialNumber(context.certificate.raw));
+                const registration = { principal: record?.principal || "sth" as const, role: context.role, peerId: context.peerId, routedDomains: context.routedDomains };
+                if (!record || !record.registrations.some(value => JSON.stringify(value) === JSON.stringify(registration))) return { action: "close", reason: "registration is not authorized by the issued record" };
+                const result = authorizeCsrEnrollment({
+                    fingerprint256: context.certificate.fingerprint256.replace(/^sha256:/i, ""),
+                    serialNumber: certificateSerialNumber(context.certificate.raw),
+                    san: context.certificate.dnsNames.concat((context.certificate as any).uriNames || []),
+                    registrations: record.registrations,
+                    role: context.role,
+                    peerId: context.peerId,
+                    routedDomains: context.routedDomains,
+                    local: false,
+                    claim: record.claim,
+                    raw: context.certificate.raw
+                }, enrollment.policy, this.csrEnrollmentStore!);
+                return result.allowed ? { action: "allow" } : { action: "close", reason: result.reason };
+            } : undefined, enrollment?.enabled ? (context: any) => {
+                if (!context.certificate) return { action: "close", reason: "client certificate required" };
+                const record = this.csrEnrollmentStore?.getIssued(context.certificate.fingerprint256.replace(/^sha256:/i, ""), certificateSerialNumber(context.certificate.raw));
+                if (!record?.claim || record.claim.federationHost !== context.hostId) return { action: "close", reason: "federation host is not authorized by the issued claim" };
+                const result = authorizeCsrEnrollment({ fingerprint256: context.certificate.fingerprint256.replace(/^sha256:/i, ""), serialNumber: certificateSerialNumber(context.certificate.raw), san: context.certificate.dnsNames.concat((context.certificate as any).uriNames || []), registrations: record.registrations, claim: record.claim, raw: context.certificate.raw }, enrollment.policy, this.csrEnrollmentStore!);
+                return result.allowed ? { action: "allow", authorizationContext: result.authorizationContext } : { action: "close", reason: result.reason };
+            } : undefined, context => this.federatedControlRoutes.authorize(context)));
         }
 
         this.setRouting();
@@ -333,7 +367,7 @@ export class MultiManager {
                                     ...managerConfig.verser2,
                                     controlIngress: managerConfig.verser2.controlIngress && { ...managerConfig.verser2.controlIngress, embedded: true }
                                 }
-                            }, { logApiServers: this.config.log.apiServers });
+                            }, { logApiServers: this.config.log.apiServers, secureFederationEnrollmentRequired: this.config.csrEnrollment?.enabled === true });
 
                             manager.logger.pipe(this.logger);
 
@@ -396,15 +430,21 @@ export class MultiManager {
 
         await manager.startedPromise;
 
-        const broker = await this.verser2Host.attachLocalBroker({ brokerId: manager.config.verser2.localBroker.peerId });
+        this.federatedControlRoutes.registerManager(manager.config.id, manager.config.verser2.localGuest.routeDomain, manager.config.verser2.localBroker.routeDomain);
+        this.managerRouteObservers.set(manager.config.id, manager.observeSthControlRoute(event => {
+            if (event.routeDomain) this.federatedControlRoutes.registerSth(manager.config.id, event.routeDomain);
+            else this.federatedControlRoutes.removeSth(manager.config.id);
+        }));
+
+        const broker = await this.verser2Host.attachLocalBroker({ brokerId: manager.config.verser2.localBroker.peerId, brokerDomain: manager.config.verser2.localBroker.routeDomain });
 
         manager.setSthBrokerTransport(createManagerSthLocalBrokerTransport(broker));
 
         const guest = await this.verser2Host.attachLocalGuest({
             guestId: manager.config.verser2.localGuest.peerId,
             routedDomains: [manager.config.verser2.localGuest.routeDomain],
-            listener: (req, res) =>
-                logManagerGatewayRequest(
+            listener: (req, res, context) =>
+                withVerifiedFederationPrincipal(context?.federation?.authorizationContext as any, () => logManagerGatewayRequest(
                     this.logger,
                     manager.config.id,
                     req,
@@ -424,7 +464,7 @@ export class MultiManager {
                         this.logger
                     ),
                     MultiManager.shouldConsumeApiServerLogs(this.config)
-                )
+                ))
         });
 
         this.managerVerser2Handles.set(manager.config.id, { broker, guest });
@@ -444,6 +484,9 @@ export class MultiManager {
         }
 
         this.managerVerser2Handles.delete(managerId);
+        this.managerRouteObservers.get(managerId)?.();
+        this.managerRouteObservers.delete(managerId);
+        this.federatedControlRoutes.removeManager(managerId);
         await Promise.allSettled([handles.broker?.close("manager-stop"), handles.guest?.close("manager-stop")]);
         const controlGuest = this.controlIngressGuests.get(managerId);
         this.controlIngressGuests.delete(managerId);
@@ -574,7 +617,7 @@ export class MultiManager {
                 ...managerConfig.verser2,
                 controlIngress: managerConfig.verser2.controlIngress && { ...managerConfig.verser2.controlIngress, embedded: true }
             }
-        }, { logApiServers: this.config.log.apiServers });
+        }, { logApiServers: this.config.log.apiServers, secureFederationEnrollmentRequired: this.config.csrEnrollment?.enabled === true });
 
         manager.logger.pipe(this.logger);
 

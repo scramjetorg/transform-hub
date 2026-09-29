@@ -68,7 +68,7 @@ const defaultLimit = 100;
 const defaultOffset = 0;
 
 type ManagerRequestLogger = Pick<IObjectLogger, "debug" | "error">;
-export type ManagerRuntimeOptions = { logApiServers?: boolean };
+export type ManagerRuntimeOptions = { logApiServers?: boolean; secureFederationEnrollmentRequired?: boolean };
 
 function boundedText(value: unknown, limit = 8192): string | undefined {
     if (value === undefined || value === null) return undefined;
@@ -209,6 +209,19 @@ export function assertAuthorizedRegistrationPeer(
         throw new CeroError("ERR_NOT_CURRENTLY_AVAILABLE");
 }
 
+export function assertVerifiedFederationRegistrationPrincipal(
+    required: boolean,
+    authorizationContext: { principal?: string; claim?: { realm: string; space: string; hub: string; federationHost: string; broker: string; guestRoute: string } } | undefined,
+    managerId: string,
+    hubId: string,
+    controlRoute: string
+): void {
+    if (!required) return;
+    const claim = authorizationContext?.claim;
+    if (!authorizationContext || authorizationContext.principal !== `sth:${claim?.realm || ""}:${claim?.space || ""}:${claim?.hub || ""}` || !claim || claim.space !== managerId || claim.hub !== hubId || claim.guestRoute !== controlRoute)
+        throw new CeroError("ERR_NOT_CURRENTLY_AVAILABLE");
+}
+
 export function maskManagerConfig(config: ManagerConfiguration): ManagerConfiguration {
     const safe = {} as ManagerConfiguration;
 
@@ -235,6 +248,8 @@ export class Manager implements IComponent {
     private csrEnrollmentAuthority?: CsrEnrollmentAuthority;
     private controlIngressHost?: VerserHost;
     private controlIngressBroker?: { close(reason?: string): Promise<void> };
+    private readonly secureFederationEnrollmentRequired: boolean;
+    private readonly sthControlRouteObservers = new Set<(event: { hubId: string; routeDomain?: string }) => void>();
 
     private sthInfoRegister: ISTHInfoRegister = new STHInfoRegister();
     private commonLogsPipe = new CommonLogsPipe();
@@ -285,6 +300,15 @@ export class Manager implements IComponent {
 
     public get csrEnrollment(): CsrEnrollmentAuthority | undefined {
         return this.csrEnrollmentAuthority;
+    }
+
+    observeSthControlRoute(listener: (event: { hubId: string; routeDomain?: string }) => void): () => void {
+        this.sthControlRouteObservers.add(listener);
+        return () => this.sthControlRouteObservers.delete(listener);
+    }
+
+    private notifySthControlRoute(event: { hubId: string; routeDomain?: string }): void {
+        for (const listener of this.sthControlRouteObservers) listener(event);
     }
 
     public get apiHealthCheck(): HealthCheck | undefined {
@@ -379,6 +403,7 @@ export class Manager implements IComponent {
         });
 
         merge(this._config, _config || {});
+        this.secureFederationEnrollmentRequired = runtimeOptions.secureFederationEnrollmentRequired === true;
 
         const enrollment = (this._config as ManagerConfiguration & { csrEnrollment?: any }).csrEnrollment;
         if (enrollment?.enabled === true) {
@@ -481,7 +506,8 @@ export class Manager implements IComponent {
     /** Isolated for startup rollback coverage and to keep ingress broker setup atomic. */
     protected async attachControlIngressBroker(host: VerserHost) {
         return host.attachLocalBroker({
-            brokerId: `${this._config.verser2.controlIngress!.guest.peerId}.broker`
+            brokerId: `${this._config.verser2.controlIngress!.guest.peerId}.broker`,
+            brokerDomain: this._config.verser2.controlIngress!.guest.routeDomain
         });
     }
 
@@ -645,7 +671,7 @@ export class Manager implements IComponent {
         return ps;
     }
 
-    async handleSthRegistration(payload: SthRegistrationPayload, peerCertificateFingerprint256?: string, peerCertificateHubId?: string): Promise<string> {
+    async handleSthRegistration(payload: SthRegistrationPayload, peerCertificateFingerprint256?: string, peerCertificateHubId?: string, authorizationContext?: { principal?: string; claim?: { realm: string; space: string; hub: string; federationHost: string; broker: string; guestRoute: string } }): Promise<string> {
         this.logger.info("STH Api. Incoming verser2 registration.");
 
         if (!this.sthBrokerTransport) {
@@ -665,6 +691,8 @@ export class Manager implements IComponent {
                 peerCertificateHubId,
                 (payload as SthRegistrationPayload & { clientCertificateFingerprint256?: unknown }).clientCertificateFingerprint256
             );
+
+        assertVerifiedFederationRegistrationPrincipal(this.secureFederationEnrollmentRequired, authorizationContext, this.id, id, routeDomain);
 
         if (offeredRouteDomain && offeredRouteDomain !== routeDomain) {
             this.logger.warn("Ignoring untrusted STH route domain", id, offeredRouteDomain, routeDomain);
@@ -708,6 +736,9 @@ export class Manager implements IComponent {
             this.attachSTHEventHandlers(sth);
             this.commonLogsPipe.removeInStream(sth.id);
 
+            // Permit this exact Manager-to-STH control route while init opens
+            // the required platform and log streams.
+            this.notifySthControlRoute({ hubId: sth.id, routeDomain });
             try {
                 await sth.init();
             } catch (error) {
@@ -733,6 +764,9 @@ export class Manager implements IComponent {
             this.clearHubInventory(sth.id);
             this.attachSTHEventHandlers(sth);
 
+            // Permit this exact Manager-to-STH control route while init opens
+            // the required platform and log streams.
+            this.notifySthControlRoute({ hubId: sth.id, routeDomain });
             try {
                 await sth.init();
             } catch (error) {
@@ -752,6 +786,7 @@ export class Manager implements IComponent {
     }
 
     private cleanupHubState(id: string, routeEventType?: string) {
+        this.notifySthControlRoute({ hubId: id });
         this.sthInfoRegister.handleHubDisconnect(id);
         this.clearHubInventory(id);
         this.commonLogsPipe.removeInStream(id);
@@ -761,6 +796,7 @@ export class Manager implements IComponent {
 
     private rollbackFailedSthRegistration(sth: ISTHController, previousSth?: ISTHController, previousSnapshot?: HubStateSnapshot) {
         this.logger.warn("Rolling back failed STH registration", sth.id);
+        this.notifySthControlRoute({ hubId: sth.id });
         sth.logger.unpipe(this.logger);
         sth.dispose();
         this.commonLogsPipe.removeInStream(sth.id);

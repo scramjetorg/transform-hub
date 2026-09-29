@@ -6,7 +6,7 @@ title: Native Python sequence template
 
 # Native Python sequence template
 
-`templates/sequences/python` is a dependency-free Python 3 sequence starter. Its entrypoint is `main.py`, and its example output is `native-template-python: hello world`.
+`templates/sequences/python` is a dependency-free Python 3 sequence starter. Its async entrypoint is `main.py`, and its example output is `native-template-python: hello world`.
 
 ## Local verification
 

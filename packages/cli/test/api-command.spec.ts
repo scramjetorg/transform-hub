@@ -7,6 +7,7 @@ import path from "path";
 import { PassThrough, Readable } from "stream";
 import { executeCommand, parseCommandContext, resolveCommandPath } from "@scramjet/config";
 import { apiCommand, ApiCommandError, effectiveApiTimeout, setApiDependencies } from "../src/lib/commands/api";
+import { setDiagnosticLogging } from "../src/lib/diagnostics";
 import { RoutedBrokerCancelledError, RoutedBrokerDuplicateRouteError, RoutedBrokerRedirectError, RoutedBrokerRequestError, RoutedBrokerResponseLimitError, RoutedBrokerRouteUnavailableError, RoutedBrokerTimeoutError } from "@scramjet/api-router";
 
 const profile = (directory: string, level: "platform" | "space" | "hub" = "platform") => {
@@ -143,6 +144,63 @@ test.serial("raw broker pre-header failures map every canonical routed error", a
         const received = await t.throwsAsync(() => run(["get", "/items"]), { instanceOf: ApiCommandError }) as ApiCommandError;
         t.is(received.code, code); t.is(received.exitCode, exitCode); t.is(state.requests.length, 0);
     }
+});
+
+test.serial("broker connect diagnostic classifies only allowlisted direct and wrapped codes", async t => {
+    const stderr = new PassThrough(); let output = ""; stderr.on("data", chunk => { output += chunk; });
+    const state = setup(t, []);
+    const sentinel = "SECRET_SENTINEL_PRIVATE_VALUE";
+    const wrapped: any = new Error(`message ${sentinel}`);
+    wrapped.cause = Object.assign(new Error(`cause ${sentinel}`), { code: "ECONNRESET", context: sentinel });
+    wrapped.context = sentinel;
+    setDiagnosticLogging(true, stderr as any);
+    state.broker.connect = async () => { throw wrapped; };
+    const received = await t.throwsAsync(() => run(["get", "/items"]), { instanceOf: ApiCommandError }) as ApiCommandError;
+    t.is(received.code, "CONNECTION"); t.is(state.closes, 1);
+    await new Promise<void>(resolve => setImmediate(resolve));
+    t.regex(output, /broker\.connect\.failure/); t.regex(output, /tcp/); t.regex(output, /connection-reset/);
+    t.false(output.includes(sentinel));
+    t.regex(output, /elapsedMs/); t.regex(output, /aborted/);
+    setDiagnosticLogging(false);
+    output = "";
+    const direct = setup(t, []); direct.broker.connect = async () => { throw Object.assign(new Error("offline"), { code: "ECONNREFUSED" }); };
+    setDiagnosticLogging(true, stderr as any);
+    await t.throwsAsync(() => run(["get", "/items"]), { instanceOf: ApiCommandError });
+    await new Promise<void>(resolve => setImmediate(resolve));
+    t.regex(output, /category: 'tcp'/); t.regex(output, /reason: 'connection-refused'/);
+    setDiagnosticLogging(false);
+    output = "";
+    const quiet = setup(t, []); quiet.broker.connect = async () => { throw Object.assign(new Error(sentinel), { code: "ENOTFOUND", context: sentinel }); };
+    await t.throwsAsync(() => run(["get", "/items"]), { instanceOf: ApiCommandError });
+    await new Promise<void>(resolve => setImmediate(resolve));
+    t.is(output, "");
+});
+
+test.serial("broker connect diagnostic treats inherited failure-code properties as unknown", async t => {
+    for (const code of ["__proto__", "constructor"]) {
+        const stderr = new PassThrough(); let output = ""; stderr.on("data", chunk => { output += chunk; });
+        const state = setup(t, []);
+        setDiagnosticLogging(true, stderr as any);
+        state.broker.connect = async () => { throw Object.assign(new Error("connect failed"), { code }); };
+        await t.throwsAsync(() => run(["get", "/items"]), { instanceOf: ApiCommandError });
+        await new Promise<void>(resolve => setImmediate(resolve));
+        t.regex(output, /broker\.connect\.failure/);
+        t.regex(output, /category: 'unknown'/);
+        t.regex(output, /reason: 'unknown'/);
+        t.false(output.includes(code));
+        setDiagnosticLogging(false);
+    }
+});
+
+test.serial("broker connect diagnostic bounds unknown and cyclic causes without exposing arbitrary values", async t => {
+    const stderr = new PassThrough(); let output = ""; stderr.on("data", chunk => { output += chunk; });
+    const state = setup(t, []); const sentinel = "SECRET_CONTEXT_SENTINEL";
+    const error: any = Object.assign(new Error(sentinel), { code: "private-code", context: sentinel }); error.cause = error;
+    setDiagnosticLogging(true, stderr as any); state.broker.connect = async () => { throw error; };
+    await t.throwsAsync(() => run(["get", "/items"]), { instanceOf: ApiCommandError });
+    await new Promise<void>(resolve => setImmediate(resolve));
+    t.regex(output, /category: 'unknown'/); t.regex(output, /reason: 'unknown'/); t.false(output.includes(sentinel)); t.false(output.includes("private-code"));
+    setDiagnosticLogging(false);
 });
 
 test.serial("HTTP-200 failed operation envelopes for sequence, instance, and topic do not write successful output", async t => {

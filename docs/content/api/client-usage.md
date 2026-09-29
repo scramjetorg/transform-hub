@@ -145,6 +145,19 @@ if (!remote?.hubId) throw new Error("remote instance is not available");
 const remoteHealth = await space.hub(remote.hubId).instance(remote.id).health.get();
 ```
 
+For a typed RPC contract, use the native fluent helper when the installed
+client exposes it:
+
+```typescript
+const result = await hubClient().instance(remote.id).rpc("status").call({
+  method: "GET",
+  path: "/status",
+});
+```
+
+The helper is an API/v2 operation over the selected Hub/Manager route. It is
+not available on the legacy v1 client and does not create a durable queue.
+
 The equivalent HTTP route is nested under `/api/v2/spaces/:spaceId/hubs/:hubId`; Manager routing
 selects the connected Hub. A Hub must be connected and authorized before discovery or RPC can
 succeed. `hubClient()` remains the direct current-Hub surface; it does not discover a fleet.

@@ -1,0 +1,13 @@
+{
+  "host": { "id": "compose-sth", "apiHost": "127.0.0.1", "apiPort": 8000 },
+  "runtimeAdapter": "process",
+  "sequencesRoot": "/var/lib/scramjet/sequences",
+  "verser2": {
+    "enabled": true,
+    "hostUrl": "https://multimanager:2443",
+    "broker": { "peerId": "compose-sth.broker", "targetDomain": "manager.compose-space.scramjet.internal" },
+    "guest": { "peerId": "compose-sth.guest", "routeDomain": "sth.compose-sth.scramjet.internal" },
+    "tls": { "caFile": "/run/scramjet/ca.pem", "certFile": "/run/scramjet/sth-identity/client.cert.pem", "keyFile": "/run/scramjet/sth-identity/client.key.pem" },
+    "controlIngress": { "enabled": false }
+  }
+}

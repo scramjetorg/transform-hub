@@ -661,6 +661,33 @@ test("forwardRoutedRequest destroys response on upstream response-body error", a
     t.is(destroyedWith, error);
 });
 
+test("forwardRoutedRequest ends responses without destroy on upstream response-body error", async t => {
+    const { transport, requestCalls, responseBody } = fakeTransport();
+    const { req, res } = fakeReqRes();
+    const destroy = res.destroy;
+    const end = res.end.bind(res);
+    registerAvaMemoryCleanup(t, () => { responseBody.destroy(); req.destroy(); destroy.call(res); });
+
+    res.end = ((...args: any[]) => {
+        res.destroy = destroy;
+        return end(...args);
+    }) as ServerResponse["end"];
+    res.destroy = undefined as unknown as ServerResponse["destroy"];
+
+    await forwardRoutedRequest({
+        transport,
+        domain: "runner.inst-1.scramjet.internal",
+        req,
+        res,
+        path: "/test"
+    });
+
+    responseBody.emit("error", new Error("upstream failed"));
+
+    t.true(requestCalls[0].signal.aborted);
+    t.true(res.writableEnded);
+});
+
 test("forwardRoutedRequest handles transport error with 503 response", async t => {
     const transport: RoutedForwardTransport = {
         waitForRoute: async () => {

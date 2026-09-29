@@ -2,7 +2,7 @@
 
 ## Status
 
-Final plan. This is not authorization to begin implementation until explicitly requested.
+Executing. Phase 8 is active; its final evidence and reconciliation are still pending. This status is not a claim that validation has passed or that the plan is complete.
 
 ## Objective
 
@@ -22,7 +22,8 @@ Make the current Verser2-native workflow the default and clearest way to use STH
 ## Non-goals
 
 - Remove or deprecate HTTP/v1, CPM, direct-Hub ingress, or existing automation in this plan.
-- Redesign Verser2/TLS security, automatically trust or download remote CAs, or weaken identity/route verification. A bounded principal-bound generic enrollment extension is allowed: it must use versioned CSR claims and strict authorization, while rotation, CRL, HSM, HA, RBAC, and remote approval remain out of scope.
+- Redesign Verser2/TLS security, automatically trust or download remote CAs, or weaken identity/route verification.
+- Change the approved offline CSR-signing and exact-binding authorization contract described below.
 - Add a new package manager, a second sequence deployment protocol, HA/failover design, Kubernetes RBAC automation, or a full production-platform reference architecture.
 - Publish STH HTTP, runner, or MultiManager HTTP ports as part of the recommended topology.
 
@@ -37,7 +38,7 @@ Make the current Verser2-native workflow the default and clearest way to use STH
 - mTLS examples: STH and `si` use separate client identities.
 - Guidance delivery: all seven audiences reach a named destination within two documented handoffs. The guided developer journeys phase follows detailed documentation and Phase 0 tests one author and one non-author journey.
 - Phase 0 is required.
-- The Phase 0 PoC evidence and history remain preserved. Phase 1 maintains `examples/native-onboarding-poc/` for native profile/bundle/routing/diagnostic/CLI contract changes; Phase 3 promotes and cleans it into the canonical published user example. Phase 2 does not own the example's implementation.
+- The Phase 0 PoC retains `examples/native-onboarding-poc/` as a maintainer-only, maintained-but-transient diagnostic. It is not supported onboarding, a template, user-facing guidance, a sidebar/root-script surface, or a published/linkable example. Phase 1 maintains it when native profile/bundle/routing/diagnostic/CLI contracts change; Phases 2 and 3 explicitly exclude it.
 - Cleanup/DX, Hardening, and Fixes/coverage are all required.
 - Compatibility stance: HTTP/v1 and CPM remain supported but are excluded from the recommended path and labelled compatibility everywhere changed by this plan.
 
@@ -64,8 +65,8 @@ Make the current Verser2-native workflow the default and clearest way to use STH
 
 ## Mandatory test-speed constraint
 
-- Every operation/readiness test must target 1–2 seconds and complete within a hard maximum of 5 seconds. Compose end-to-end evidence has a 30-second total budget; live Kubernetes end-to-end evidence has a 120-second total budget.
-- Failures must raise direct, bounded exceptions with actionable diagnostics. Use direct resource diagnostics rather than arbitrary sleeps; no existing 20/30-second operation waits may remain.
+- Every single test, including the Phase 1 native full-path BDD scenario and final validation evidence, must target 1–2 seconds and complete within a hard maximum of 5 seconds.
+- A failure must raise a direct, bounded exception with actionable diagnostics; it must not wait through existing 20/30-second timeouts. Existing 20/30-second waits are unacceptable and must be replaced with immediate or short bounded failure diagnostics.
 - This is a mandatory acceptance and verification constraint, not an optimization target. Any evidence that violates it does not satisfy the plan.
 
 ## Dependencies and assumptions
@@ -73,11 +74,11 @@ Make the current Verser2-native workflow the default and clearest way to use STH
 - Verser2 TLS identity, route validation, and secret-redaction contracts remain mandatory.
 - The bundle producer is a deployment administrator with access to the trusted CA and platform identity; distributing its sensitive values is an operational responsibility, not a network bootstrap feature.
 - The plan relies on the existing `si sequence deploy` protocol rather than replacing it.
-- Kubernetes live validation is an approved future phase using a user-provided cluster context; no provisioning, HA, or RBAC automation is licensed. Documentation remains bounded by the existing static contract until that phase completes.
+- Kubernetes is validated only by static configuration/network documentation until the user approves a test environment; it is not licensed to add cluster provisioning or live-cluster claims.
 
-## Kubernetes decision
+## Deferred decision
 
-- **Kubernetes live-cluster evidence** — State: approved future phase; Kind: user-provided-environment gate. Phase 4 may use only a user-provided cluster/context and must not provision infrastructure or automate HA/RBAC. It owns live native Kubernetes proof with a 120-second total e2e budget and 5-second operation/readiness caps. Decision history: 2026-09-22 user deferred live testing; 2026-09-27 user approved a new live-Kubernetes phase before Guided DX with those boundaries.
+- **Kubernetes live-cluster evidence** — State: deferred; Kind: constraint. The plan documents Kubernetes configuration and network boundaries but does not claim a live-cluster proof. The user will set up a test environment or approve a transient GitHub Actions cluster first. Revisit before Phase 3 verification or any release claim that Kubernetes was end-to-end tested. Decision history: 2026-09-22, user explicitly deferred live Kubernetes testing.
 
 ## Phase 0 rescoping outcome — 2026-09-27
 
@@ -99,6 +100,19 @@ Make the current Verser2-native workflow the default and clearest way to use STH
 
 Memory-guard coverage is not planned unless the implementation changes runner, BDD harness, or retained-stream behaviour; any later exception must be recorded with its reason.
 
+## Offline CSR signing and exact-binding security contract
+
+- v1 issuance, configuration, endpoints, and compatibility policy remain unchanged; v1 trust or issuance never authorizes v2.
+- The caller generates and retains its private key locally and submits a CSR. The Manager CLI `v2 sign` command runs offline, validates the CSR and requested claims, signs with the configured signing authority, persists the public issued record, and returns the certificate/public metadata. The signing authority is not placed in MultiManager. There is no v2 redemption endpoint, grant, private redemption listener, or operator approval file.
+- STH certificates are scoped to one exact `(realm, space, hub, federationHost, broker, guestRoute)` binding. `si` has a separate client identity for its authorized broker binding. MultiManager checks the presented raw certificate fingerprint, serial, SAN, authenticated federation callback registration, and exact persisted binding; unknown or mismatched records fail closed. Private keys and signing authority material never enter the registry, MultiManager, bundles, logs, or public responses.
+- One issued `si` identity, certificate/key, and broker ID is reused across concurrent independent sessions. This does not authorize unrelated broker IDs, weaken certificate checks, or impose an arbitrary numeric concurrent-session limit.
+- Guest capacity/limits remain unresolved and require user direction; Phase 8 must not silently select or implement a limit.
+- The recorded 0.9.2 Compose evidence is pre-rebase evidence only. It is not post-rebase validation and must be renewed against the rebased tree before being claimed as final evidence.
+
+## Phase 8 ownership — Fixes and coverage
+
+Phase 8 owns final fixes/coverage and final evidence/reconciliation for this plan, including renewal of the pre-rebase Compose evidence. It does not own a decision on unresolved Guest capacity. Live Kubernetes proof remains governed by the deferred decision above: do not mark it complete or silently defer it as an outcome; retain its unresolved user-environment gate.
+
 ## Delivery Mode
 
 - Mode: current branch
@@ -112,13 +126,6 @@ Memory-guard coverage is not planned unless the implementation changes runner, B
 
 ## Git Execution Policy
 
-- Routine mode: unattended routine execution
-- Planning-handoff answer source: user selected “Unattended routine execution (Recommended)” during approved native-first-dx plan handoff on 2026-09-26
-- Repo-policy source: missing (built-in default: unattended routine execution)
-- Precedence: current-session explicit direction and runtime safety/tool permissions > recorded answer > repo instructions > built-in default
-
-## Git Execution Policy
-
 - Routine mode: confirm each routine transition
 - Planning-handoff answer source: user direction on 2026-09-29 to pause after the rebase; treated as confirm each routine transition.
 - Repo-policy source: missing (built-in default: unattended routine execution)
@@ -128,7 +135,6 @@ Memory-guard coverage is not planned unless the implementation changes runner, B
 
 - `draft.md` contains the non-executable research synthesis and source references.
 - Oracle advisory shaped the onboarding contract and phase envelope on 2026-09-22. Materialized-plan review findings were resolved by defining native profile selection/no-fallback semantics, baseline bundle safety, Phase 0 stop/rescope criteria, Compose/Kubernetes evidence boundaries, per-runtime proof commands, and narrower phase ownership.
-- User/Oracle decision history: Oracle advisory and the 2026-09-22 review established the native contract and initial phase envelope; the user confirmed Phase 0 feedback/rescoping on 2026-09-27 and then confirmed the Phase 1 CLI/config, Phase 3 canonical-example/docs, new live-Kubernetes Phase 4, renumbering, and test-budget amendments recorded in `review.md`.
 
 ## Phase index
 
@@ -136,47 +142,7 @@ Memory-guard coverage is not planned unless the implementation changes runner, B
 2. [Phase 1 — native bootstrap and configuration](phase-1-native-bootstrap.md)
 3. [Phase 2 — sequence authoring](phase-2-sequence-authoring.md)
 4. [Phase 3 — documentation and examples](phase-3-documentation.md)
-5. [Phase 4 — live Kubernetes proof](phase-4-live-kubernetes.md)
-6. [Phase 5 — guided developer journeys](phase-5-guided-developer-journeys.md)
-7. [Phase 6 — Cleanup/DX](phase-6-cleanup-dx.md)
-8. [Phase 7 — Hardening](phase-7-hardening.md)
-9. [Phase 8 — Fixes and coverage](phase-8-fixes-coverage.md)
-
-## Superseded amendment — principal-bound generic enrollment
-
-- User approval: on 2026-09-27 the user approved materializing a bounded generic enrollment extension in the existing native-first plan artifacts only. This is a planning amendment, not authorization to implement product or documentation changes in this handoff.
-- Oracle recommendation: the Oracle review recommended principal-bound, versioned generic enrollment rather than CA-only admission, with MultiManager-owned private redemption and separate `sth`/`si` command facades. The recommendation is recorded here without changing the prior phase history.
-- Phase 1 owns the versioned generic CSR v2 contract, initial `sth` and `si` principal types, strict MultiManager enrollment authorization over role/peer/route claims (never CA trust alone), private MM-owned redemption lifecycle, enrolled bundle credential references, and a unique broker ID. `si identity enroll generate|redeem` is a distinct facade; it is not an alias for profile activation or ordinary connection setup.
-- The extension preserves explicit legacy/v1 compatibility behavior and labels it as compatibility. It never places private keys, CSR private material, passphrases, redemption tokens, or other secret contents in bundles, logs, copy-paste output, or public API responses.
-- Phase 3 owns the canonical single-Compose proof: CA/MM server only initially, published `127.0.0.1:2443`, STH CSR generate → local approve → private redeem → start/register, and independently enrolled `si` CSR → approve → redeem → bundle import → typed RPC. The proof must explicitly clean up files, temporary resources, and processes.
-- The amendment inherited the mandatory operation/readiness maximum of 5 seconds (target 1–2 seconds) and the 30-second total Compose evidence budget. It is retained as history only and is superseded below; its redemption, grant, listener, and operator-approval model is not current. No rotation, CRL, HSM, HA, RBAC, or remote approval is implied.
-
-### Concrete CSR v2 contract
-
-- v1 is unchanged. Existing v1 issuance, configuration, endpoints, and compatibility policy remain supported and are labelled compatibility; a v1 CA/trust decision never authorizes a v2 enrollment.
-- Runtime v2 records are distinct and auditable: `EnrollmentRequest` (version, request ID, principal type, public CSR, and claims), `EnrollmentApproval` (request ID, approver, decision, policy basis, and expiry), `IssuedCertificate` (certificate ID, request ID, public certificate, issuer, and validity), `EnrollmentGrant` (grant ID, request/certificate IDs, principal claims, broker ID, credential references, and redemption expiry), and `IssuedPrincipal` (principal ID, type, claims, certificate ID, broker ID, and issuance status). Private keys and redemption secrets are references held by the owning runtime or private MM store, never record payloads.
-- Every v2 request carries `version: csr/v2` and the closed initial principal types `sth` and `si`. Both require `role`, `peer`, and `route` claims. `sth` claims identify the STH peer/host and its Manager/Space route; `si` claims identify the client peer and its selected Space/Hub route. Claims are canonicalized before authorization, are bound to the issued certificate and grant, and cannot be broadened during redemption.
-- MultiManager authorization precedence is: explicit deny, exact role+peer+route policy, explicitly configured local-development exemption, then legacy compatibility policy. CA trust establishes transport trust only and is never an enrollment authorization. The local exemption is explicit, bounded to the private/local MM enrollment surface, and cannot bypass claim validation, certificate binding, route checks, or the no-public-redemption rule. Legacy policy applies only to unchanged v1/legacy requests and cannot silently fall back from v2.
-- MM configuration names the v2 issuer, allowed principal types/policies, local-exemption switch, private redemption bind/endpoint, grant TTL, and private store. The lifecycle is request → approve/deny → issue certificate and grant → private redeem once → mark grant redeemed and persist the issued principal. Redemption is MM-owned, private-network/loopback-only, bounded by grant expiry and certificate/request binding, and is not the published client endpoint.
-- The public trust artifact contains only the CA chain or trust reference, published endpoint, ingress identity, route/target metadata, broker ID, and enrolled credential references/public certificate metadata. It contains no private key, CSR private material, passphrase, redemption token/secret, or private-store content. Logs, copy-paste output, public API responses, and failure diagnostics obey the same boundary.
-
-### Current enrollment binding policy
-
-- Enrollment is unique per `(realm, space, hub)`: each binding receives its own certificate and private key.
-- One STH certificate authorizes only that binding's federation host, broker, and guest route. Normal multi-Hub certificates are not supported.
-- Fleet certificates are deferred to plan-completion follow-up outcomes because shared keys increase revocation and rotation complexity. Revisit only if an explicit future fleet requirement is approved.
-
-## Current approved amendment — Oracle offline CSR signing
-
-- User decision: on 2026-09-27 the user approved replacing the redemption/grant/listener/operator-approval model above with Oracle's offline CSR signing model. This supersedes only that model; v1 remains unchanged. This is a planning decision, not authorization to implement product or documentation changes in this handoff, and no outcomes artifact is created.
-- STH has one issued certificate whose authorization is the exact broker plus guest registration set it is allowed to register. `si` has one issued certificate for one broker. Neither certificate is a general enrollment grant.
-- The caller locally generates its private key and CSR. The Manager CLI `v2 sign` command runs offline, validates the CSR and its requested registration claims, signs it with the configured signing authority, persists the public issued record, and returns the signed certificate/public metadata. The caller installs the certificate and retains the private key locally; the signing authority is not placed in MultiManager.
-- MultiManager's public `2443` endpoint reads the public issued registry and authorizes connections only after checking the actual presented raw certificate fingerprint, serial, SAN, and Verser registration against the persisted record and its exact broker/guest set. MM has no CA/signing key and performs no v2 signing.
-- v2 has no redemption endpoint, private redemption listener, grant, or operator approval file. v2 approval is the offline Manager CLI validation/signing/persistence operation. There is no v2 enrollment listener or secret-bearing redemption artifact.
-- The v2 record namespace is public-issued and append-only/auditable, keyed by certificate ID and indexed by raw fingerprint, serial, SAN, principal, broker, and exact authorized guest registrations. Security requires canonical CSR claims, exact-set authorization, certificate binding, raw presented-certificate matching, serial/SAN checks, Verser registration checks, expiry/revocation state, and fail-closed unknown/mismatched records. Private keys and signing authority material never enter the registry, MM, bundles, logs, or public responses.
-- The canonical Compose topology publishes only `127.0.0.1:2443`. BDD must remove all issued records, generated keys/CSRs/certificates, registry state, temporary resources, containers, and processes on success and failure.
-
-### Current v2 contract and test matrix
-
-- v1 issuance, configuration, endpoints, and compatibility policy remain unchanged; v1 trust or issuance never authorizes v2.
-- Exact matrix: (1) v1 regression proves unchanged issuance/configuration/endpoints and no v1-to-v2 authorization; (2) CSR/schema tests cover `csr/v2`, closed `sth`/`si` principals, canonical role/peer/route claims, exact STH broker+guest set, single-`si` broker binding, and public-issued record serialization; (3) offline `Manager v2 sign` tests cover local key/CSR input, validation failures, signing, persistence, no CA key/MM access, and caller installation metadata; (4) registry/auth tests cover raw fingerprint, serial, SAN, Verser registration, exact-set equality, expiry/revocation, unknown/mismatch rejection, and fail-closed behavior; (5) namespace/security tests cover public-record indexing/auditability and absence of private keys/signing authority from registry, MM, bundles, logs, and responses; (6) CLI/config tests cover `--verser2-api-port`, no default v1/direct listener, loopback mTLS/v2, explicit legacy `--port`, semantic `manager.connectionBundle`, four-command UX, and separate STH/`si` identities; (7) Compose/BDD tests cover only `2443`, STH sign/install/register, `si` sign/install/connect, typed RPC, no redemption/grant/listener/operator-file paths, no HTTP fallback, and complete state cleanup.
+5. [Phase 4 — guided developer journeys](phase-4-guided-developer-journeys.md)
+6. [Phase 5 — Cleanup/DX](phase-5-cleanup-dx.md)
+7. [Phase 6 — Hardening](phase-6-hardening.md)
+8. [Phase 8 — Fixes and coverage](phase-8-fixes-coverage.md)

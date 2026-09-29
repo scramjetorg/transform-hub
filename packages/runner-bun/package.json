@@ -14,7 +14,7 @@
   "license": "MIT",
   "dependencies": {
     "@scramjet/runner-node": "^2.2.1-devel",
-    "@signicode/verser2-guest-bun": "0.7.0"
+    "@signicode/verser2-guest-bun": "0.9.2"
   },
   "devDependencies": {
     "@scramjet/runtime-types": "^2.2.1-devel",

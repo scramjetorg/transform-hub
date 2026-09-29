@@ -182,10 +182,14 @@ export async function forwardRoutedRequest({
         responseBody.once("end", cleanup);
         res.once("finish", cleanup);
         responseBody.once("error", (error) => {
-            if (!res.writableEnded && !res.writableFinished) {
-                res.destroy(error);
-            }
             abortRequest();
+            if (!res.writableEnded && !res.writableFinished) {
+                if (typeof res.destroy === "function") {
+                    res.destroy(error);
+                } else {
+                    res.end();
+                }
+            }
         });
 
         res.writeHead(response.statusCode, normalizeResponseHeaders(response.headers));

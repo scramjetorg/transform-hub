@@ -159,7 +159,7 @@ test("InstanceAPIV2 v2 RPC route forwards through CSI RPC forwarding", async t =
     t.is(calls.length, 1);
     t.is(calls[0].forwardRpcRequest[0], req);
     t.is(calls[0].forwardRpcRequest[1], res);
-    t.is(calls[0].forwardRpcRequest[2], "/abc");
+    t.is(calls[0].forwardRpcRequest[2], "/test/abc");
 
     calls.length = 0;
 
@@ -172,7 +172,7 @@ test("InstanceAPIV2 v2 RPC route forwards through CSI RPC forwarding", async t =
     t.is(calls.length, 1);
     t.is(calls[0].forwardRpcRequest[0], duplexReq);
     t.is(calls[0].forwardRpcRequest[1], duplexRes);
-    t.is(calls[0].forwardRpcRequest[2], "/def");
+    t.is(calls[0].forwardRpcRequest[2], "/test/def");
 
     calls.length = 0;
 
@@ -213,6 +213,36 @@ test("InstanceAPIV2 raw RPC middleware forwards every HTTP method unchanged", as
     t.is(calls[0].forwardRpcRequest[2], "/custom/action?force=true");
     t.is(calls[0].forwardRpcRequest[0].method, "PATCH");
     t.deepEqual(calls[0].forwardRpcRequest[0].headers, { "x-request-id": "raw-1" });
+});
+
+test("InstanceAPIV2 selected-instance RPC preserves expose path, query, and raw request", async t => {
+    const recorder = new RouteRecorder();
+    const calls: any[] = [];
+    const csi = createCsiStub(calls);
+    csi.expose = { path: "/native.compose.echo" };
+    const api = new InstanceAPIV2(csi, logger);
+    const body = Buffer.from("request body");
+    const req = {
+        url: "/rpc/native.compose.echo?mode=fast",
+        method: "POST",
+        headers: { "content-type": "application/octet-stream", "x-request-id": "rpc-1" },
+        body
+    };
+    const res = createResponseStub();
+
+    api.attachRpcMiddleware(recorder.asApiRoute());
+    await (recorder.require("use", "/rpc").handler as Function)(req, res, () => t.fail());
+
+    t.is(calls.length, 1);
+    t.is(calls[0].forwardRpcRequest[0], req);
+    t.is(calls[0].forwardRpcRequest[1], res);
+    t.is(calls[0].forwardRpcRequest[2], "/native.compose.echo?mode=fast");
+    t.is(calls[0].forwardRpcRequest[0].method, "POST");
+    t.is(calls[0].forwardRpcRequest[0].body, body);
+    t.deepEqual(calls[0].forwardRpcRequest[0].headers, {
+        "content-type": "application/octet-stream",
+        "x-request-id": "rpc-1"
+    });
 });
 
 test("InstanceAPIV2 local handlers adapt CSI behavior", async t => {

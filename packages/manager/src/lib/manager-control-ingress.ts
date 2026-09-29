@@ -5,6 +5,7 @@ import { createVerserHost, VerserHost, VerserHostOptions } from "@signicode/vers
 import { mkdir, stat, writeFile } from "fs/promises";
 import { join } from "path";
 import { generate } from "selfsigned";
+import { withVerifiedFederationPrincipal } from "./federation-context";
 
 type ControlIngress = NonNullable<ManagerVerser2Config["controlIngress"]>;
 type ControlHost = Pick<VerserHost, "start" | "attachLocalGuest"> & { stop?: () => Promise<void>; close?: () => Promise<void> };
@@ -74,7 +75,9 @@ export async function startManagerControlIngress(
     try {
         await host.start();
         const dispatcher = createV2HttpDispatcher(router);
-        await host.attachLocalGuest({ guestId: ingress.guest.peerId, routedDomains: [ingress.guest.routeDomain], listener: (req, res) => dispatcher.listener(req as any, res as any) });
+        await host.attachLocalGuest(({ guestId: ingress.guest.peerId, routedDomains: [ingress.guest.routeDomain], listener: (req: any, res: any, context: any) => {
+            return withVerifiedFederationPrincipal(context?.federation?.authorizationContext, () => dispatcher.listener(req as any, res as any));
+        } } as any));
         return host;
     } catch (error) {
         await stopManagerControlIngress(host);

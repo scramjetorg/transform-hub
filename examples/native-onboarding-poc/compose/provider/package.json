@@ -1,0 +1,6 @@
+{
+  "name": "native-compose-rpc-provider",
+  "version": "1.0.0",
+  "main": "index.js",
+  "exposePath": "/native.compose.echo"
+}

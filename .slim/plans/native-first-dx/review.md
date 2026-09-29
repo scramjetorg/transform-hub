@@ -34,7 +34,7 @@ The concrete design recorded by this amendment is: v1 remains unchanged; v2 has 
 
 The user approved superseding the preceding redemption/grant/listener/operator-approval model with Oracle's offline CSR signing model. The preceding amendment remains history only; this handoff authorizes plan-artifact changes only, creates no outcomes, and does not authorize implementation.
 
-The current decision is: STH receives one certificate authorizing its exact broker plus guest registration set; `si` receives one certificate authorizing one broker. The caller generates its local private key and CSR, then invokes Manager CLI `v2 sign` offline. That command validates the CSR and exact registration claims, signs it with the configured authority, persists the public issued record, and lets the caller install the returned certificate. The signing authority is not present at MM.
+The superseded decision was: STH receives one certificate authorizing its exact broker plus guest registration set; `si` receives one certificate authorizing one broker. The current decision below narrows this to a binding-scoped federation authorization. The caller generates its local private key and CSR, then invokes Manager CLI `v2 sign` offline. That command validates the CSR and exact registration claims, signs it with the configured authority, persists the public issued record, and lets the caller install the returned certificate. The signing authority is not present at MM.
 
 The public MM `2443` path reads the public issued registry and checks the actual presented raw certificate fingerprint, serial, SAN, and Verser registration against the record and exact authorized set. v2 has no CA key at MM, redemption endpoint/listener, grant, or operator approval file. v1 is unchanged. The v2 namespace is public-issued, append-only/auditable, indexed by certificate ID plus raw fingerprint/serial/SAN/principal/broker/guest set; private keys and signing authority material are excluded. Compose publishes only `2443`, and BDD removes all generated keys/CSRs/certificates, registry records, temporary resources, containers, and processes in both success and failure paths.
 
@@ -43,3 +43,47 @@ The exact test matrix is recorded in `index.md` and Phase 1: v1 regression/no cr
 ## 2026-09-28 — User-confirmed enrollment binding policy
 
 The user confirmed that enrollment is unique per `(realm, space, hub)`, with a distinct certificate and private key for each binding. One STH certificate authorizes only that binding's federation host, broker, and guest route; normal multi-Hub certificates are not supported. Fleet certificates are deferred to plan-completion follow-up outcomes because shared keys add revocation and rotation complexity, and are revisited only when an explicit future fleet requirement is raised. Prior amendment history remains preserved, and no `outcomes.md` is created.
+
+## 2026-09-28 — Oracle federation transport and authorization clarification
+
+The confirmed model requires canonical transport names in all CSR claims, issued records, bundles, and diagnostics: `realm`, `space`, `hub`, `federationHost`, `broker`, and `guestRoute`. Uniqueness is enforced on the `(realm, space, hub)` binding and its certificate/key indexes; collisions fail closed. Rotation is binding-scoped and records explicit supersession; revocation or expiry invalidates the old certificate for both the actual federation callback and Manager registration. Fleet/shared-key and normal multi-Hub certificates remain deferred follow-up outcomes.
+
+The STH certificate authorizes the exact binding tuple `(realm, space, hub, federationHost, broker, guestRoute)`, not merely a broker and guest set. Federation callback authorization must inspect the actual presented certificate and authenticated federation principal, and Manager registration must bind to that authenticated principal rather than a claimed route, broker, or callback identity. `si` has a separate client identity and certificate/key for one broker and must not reuse an STH or another `si` broker identity. These requirements supersede any earlier broker/guest-only assertion while leaving v1 compatibility unchanged.
+
+## 2026-09-28 — Verser2 federation-context dependency
+
+The user requested and approved creating [signicode/verser2#72](https://github.com/signicode/verser2/issues/72), “Preserve verified federation authorization context for local Guest dispatch”. It tracks the required backward-compatible Verser2 Host internal API/implementation extension: retain accepted `authorizeFederation` opaque context on an inbound federation session and supply it to directly attached local Guest dispatch, without wire, header, body, configuration, or client API changes.
+
+The user explicitly chose to pause dependent secure federation enrollment work until this dependency is available. This record authorizes no product, documentation, or outcomes changes; unrelated work is unaffected.
+
+## 2026-09-28 — User-confirmed delivery boundary after Verser2 v0.9.0
+
+The user approved the complete Verser2 `0.9.0` family upgrade and its authenticated inbound federation-session context for this plan. Managed STH claims source `realmId` from explicit MultiManager configuration and `spaceId` from the child Manager ID. The certificate binds the STH federation Host and the one STH control route used for authenticated Manager registration; normal dynamic `runner.<instanceId>` routes remain STH-local and are not certificate claims or MultiManager registrations.
+
+The user explicitly chose not to add a route-advertisement authorization dependency or other discretionary hardening. This plan enforces the exact STH control route at federation and Manager-registration boundaries, but does not claim to reject every unused route a modified certificate holder could advertise; that requires a future Verser capability. Binding-scoped rotation uses a configurable overlap window. No outcomes artifact is created.
+
+## 2026-09-28 — User-confirmed federated forwarding policy
+
+The user directed MultiManager to use the existing Verser2 `0.9.0` `routeAuthorizer` to block forwarding/resolution to extra routes. The policy is deliberately narrow and delivery-focused: allow each child Manager's control self-pair and its route to a successfully registered STH control route; deny unregistered STH, `runner.*`, cross-space, and arbitrary federated route pairs. The callback is a forwarding gate only: it leaves route advertisements unchanged, does not inspect API paths, and does not affect STH-local instance transport.
+
+## 2026-09-28 — User-confirmed local diagnostic capture boundary
+
+The user clarified that public CA fingerprints may appear in the opt-in native Compose diagnostic capture because it is stored only under ignored `bdd/.work/native-compose-diagnostics/` and must not be committed. Private keys, certificates/PEM content, CSRs, passphrases, tokens, credentials, and secret-bearing configuration remain redacted and must never be retained.
+
+## 2026-09-29 — Broker sessions and Guest capacity review
+
+The user clarified that brokers generally should not be limited; Guest limits may be considered later and reviewed. The one-broker-registration-per-certificate constraint in host/Manager CSR enrollment is an `si` identity-binding rule, not a cap on concurrent CLI broker sessions. Preserve that single broker binding and exact authorization without adding an arbitrary broker-session cap. Guest capacity/limit behavior remains unresolved: Phase 8 must assess existing defaults and ask the user before changing them, using the question recorded in that phase. No numeric Guest cap or implementation acceptance is presumed.
+
+## 2026-09-29 — Concurrent `si` identity reuse and Compose proof dependency
+
+The user clarified that `si` must reuse one issued client identity/certificate/key and broker ID across concurrent independent HTTP/2 connections. Brokers generally should not have arbitrary concurrent-session limits; this does not authorize multiple unrelated broker IDs or weaker certificate checks. Guest limits and stream caps are a separate unresolved Phase 8 review/question and remain undecided.
+
+The current Verser2 v0.9.1 Host rejects a second live session with the same peer ID before authentication (`@signicode/verser2-host/dist/index.js:3994-4008`). Therefore the concurrent native Compose output/info proof is blocked until the dependency supports secure duplicate authenticated sessions and a focused overlap proof passes. Do not claim live proof passes or use the 128 broker-ID/one-certificate workaround, which violates the SI single-broker CSR rule. No numeric SI session limit is authorized.
+
+## 2026-09-29 — Verser2 0.9.2 overlap proof and bounded cleanup reconciliation
+
+The direct Verser2 family was updated to `0.9.2`, including the duplicate authenticated-session support tracked by [signicode/verser2#79](https://github.com/signicode/verser2/issues/79). The rebuilt MultiManager and STH artifacts and the native Compose fixture then demonstrated independent overlapping output and info CLI sessions using one issued SI certificate/key and `compose-si.broker`. The proof observed `{ "ready": true, "value": "typed-compose" }` without unrelated broker IDs, a broker-session cap, or weaker certificate authorization.
+
+Evidence-driven fixes were confined to the approved native proof envelope: profile import no longer selects a not-yet-created profile; the generated bundle advertises the issued SI broker ID; v2 selected-instance RPC forwarding no longer strips the provider procedure path; the caller contract declares its empty request and therefore uses the documented POST RPC route; and the fixture observes the expected output value rather than requiring the intentionally open output stream to close.
+
+Formal review first found that cleanup could exceed the 30-second Compose budget. The bounded cleanup remediation was re-reviewed, which found that optional final diagnostics could consume the teardown reserve. Oracle clarified the required shared-deadline ordering: normal work and failure diagnostics stop before the reserve, `compose down --timeout 2` gets the first bounded reserve attempt, and client/resource cleanup use the same original deadline. The remediation passed the exact native proof command: 1 scenario, 18 steps, and 4 hooks; 19.482-second scenario duration; 26.838-second total Cucumber duration; and empty owned-resource cleanup. The planned formal-review budget was exhausted after the focused re-review, so no third formal verdict was requested. The Guest-capacity decision remains open in Phase 8.

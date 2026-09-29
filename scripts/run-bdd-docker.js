@@ -234,6 +234,10 @@ dockerRunArgs.push("-e", "BDD_CHUNK_MEMORY_READY_FILE=/work-tmp/chunk-ready.json
 dockerRunArgs.push("-e", "BDD_CHUNK_TIMING_REPORT_FILE=/work-tmp/chunk-timing.json");
 dockerRunArgs.push("-e", "BDD_CHUNK_TIMING_EVENTS_FILE=/work-tmp/chunk-timing.events.jsonl");
 dockerRunArgs.push("-e", "SCRAMJET_BDD_CHUNK_TIMING=1");
+// Compose commands run in the BDD container but create bind mounts through
+// the host Docker daemon.  Pass only the runner-owned temporary root so the
+// fixture can translate its container state path to the daemon's host path.
+dockerRunArgs.push("-e", `SCRAMJET_BDD_HOST_TMP_DIR=${tmpDir}`);
 
 // Inject NODE_OPTIONS with --expose-gc when BDD memory guard is enabled.
 // bddNodeOptions() picks up BDD_NODE_OPTIONS from the parent env (already

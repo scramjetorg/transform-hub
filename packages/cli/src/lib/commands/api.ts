@@ -7,6 +7,7 @@ import { createVerser2ClientTransport, RoutedBrokerCancelledError, RoutedBrokerD
 import { validateVerser2Bootstrap, validateVerser2Profile } from "../config/verser2Profile";
 import { ApiCommandError } from "../apiCommandError";
 import { MAX_NATIVE_TIMEOUT_MS, resolveSelectedTransport } from "../config/transportResolver";
+import { diagnostic, elapsed, profileTarget, safePath } from "../diagnostics";
 
 export { ApiCommandError } from "../apiCommandError";
 
@@ -40,8 +41,34 @@ export function effectiveApiTimeout(value: unknown, fallback: number): number {
     return Number.isFinite(requested) && requested > 0 ? Math.min(requested, MAX_NATIVE_TIMEOUT_MS) : fallback;
 }
 async function connectForRoute(connect: () => Promise<unknown>, signal: AbortSignal, timeoutMs: number): Promise<void> {
+    const started = Date.now();
     try { await abortable(connect(), signal, timeoutMs); }
-    catch (error) { if (error instanceof ApiCommandError && error.code === "TIMEOUT") throw new ApiCommandError("ROUTE", 55, "Configured route is not ready"); throw error; }
+    catch (error) {
+        diagnostic("broker.connect.failure", { ...classifyBrokerConnectFailure(error, signal.aborted), elapsedMs: elapsed(started), aborted: signal.aborted });
+        if (error instanceof ApiCommandError && error.code === "TIMEOUT") throw new ApiCommandError("ROUTE", 55, "Configured route is not ready"); throw error;
+    }
+}
+
+type BrokerFailure = { category: string; reason: string };
+const FAILURE_CODES: Record<string, BrokerFailure> = {
+    ENOTFOUND: { category: "dns", reason: "host-not-found" }, EAI_AGAIN: { category: "dns", reason: "lookup-temporary-failure" },
+    ECONNREFUSED: { category: "tcp", reason: "connection-refused" }, ECONNRESET: { category: "tcp", reason: "connection-reset" }, EHOSTUNREACH: { category: "tcp", reason: "host-unreachable" }, ENETUNREACH: { category: "tcp", reason: "network-unreachable" },
+    "invalid-registration": { category: "session", reason: "invalid-registration" }, "disconnected-target": { category: "session", reason: "disconnected-target" }, "protocol-error": { category: "session", reason: "protocol-error" },
+    ERR_HTTP2_STREAM_CANCEL: { category: "session", reason: "http2-stream-cancelled" }, ERR_HTTP2_GOAWAY_SESSION: { category: "session", reason: "http2-session-goaway" }, ERR_HTTP2_SESSION_ERROR: { category: "session", reason: "http2-session-error" },
+    ERR_TLS_CERT_ALTNAME_INVALID: { category: "tls", reason: "certificate-name-invalid" }, CERT_HAS_EXPIRED: { category: "tls", reason: "certificate-expired" }, DEPTH_ZERO_SELF_SIGNED_CERT: { category: "tls", reason: "self-signed-certificate" }, SELF_SIGNED_CERT_IN_CHAIN: { category: "tls", reason: "self-signed-certificate-chain" }, UNABLE_TO_VERIFY_LEAF_SIGNATURE: { category: "tls", reason: "certificate-verification-failed" }, ERR_TLS_CERT_SIGNATURE_ALGORITHM: { category: "tls", reason: "certificate-signature-invalid" }
+};
+function classifyBrokerConnectFailure(error: unknown, aborted: boolean): BrokerFailure {
+    if (error instanceof ApiCommandError && error.code === "TIMEOUT") return { category: "timeout", reason: "timeout" };
+    if (error instanceof ApiCommandError && error.code === "CANCELLED" || aborted) return { category: "cancelled", reason: "cancelled" };
+    const seen = new Set<object>(); let current: unknown = error;
+    for (let depth = 0; depth < 8 && current && typeof current === "object" && !seen.has(current); depth++) {
+        seen.add(current);
+        let code: unknown; let cause: unknown;
+        try { code = (current as any).code; cause = (current as any).cause; } catch { break; }
+        if (typeof code === "string" && Object.prototype.hasOwnProperty.call(FAILURE_CODES, code)) return FAILURE_CODES[code];
+        current = cause;
+    }
+    return { category: "unknown", reason: "unknown" };
 }
 async function waitForRouteDelay(signal: AbortSignal, timeoutMs: number): Promise<void> {
     try { await abortable(new Promise<void>(resolve => setTimeout(resolve, 10)), signal, timeoutMs); }
@@ -133,8 +160,25 @@ export function createVerser2CliTransport(profile: any, signal: AbortSignal): Ro
     const target = (domain: string) => { const matches = routes().filter(route => route.domain === domain); if (matches.length !== 1) throw new ApiCommandError("ROUTE", 55, "Configured route is unavailable or ambiguous"); return matches[0]; };
     return {
         getRoutes: routes, isRouteReady: domain => { try { target(domain); return true; } catch { return false; } },
-        async waitForRoute(domain, timeoutMs) { if (!connected) { await connectForRoute(() => broker.connect(), signal, timeoutMs || profile.timeoutMs || 10000); connected = true; } const deadline = Date.now() + (timeoutMs || profile.timeoutMs || 10000); while (!this.isRouteReady?.(domain)) { if (signal.aborted) throw new ApiCommandError("CANCELLED", 60, "Request cancelled"); if (Date.now() >= deadline) throw new ApiCommandError("ROUTE", 55, "Configured route is not ready"); await waitForRouteDelay(signal, Math.max(1, deadline - Date.now())); } },
-        async request(request) { const route = target(request.routeDomain); const response = await abortable(broker.request({ targetId: route.targetId, method: request.method, path: appendQuery(request.path, request.query || {}), headers: request.headers, body: request.body as any }), signal, request.timeoutMs); return responseAdapter(response); },
+        async waitForRoute(domain, timeoutMs) {
+            if (!connected) { await connectForRoute(() => broker.connect(), signal, timeoutMs || profile.timeoutMs || 10000); connected = true; }
+            const deadline = Date.now() + (timeoutMs || profile.timeoutMs || 10000);
+            while (!this.isRouteReady?.(domain)) { if (signal.aborted) throw new ApiCommandError("CANCELLED", 60, "Request cancelled"); if (Date.now() >= deadline) throw new ApiCommandError("ROUTE", 55, "Configured route is not ready"); await waitForRouteDelay(signal, Math.max(1, deadline - Date.now())); }
+        },
+        async request(request) {
+            const route = target(request.routeDomain);
+            const path = appendQuery(request.path, request.query || {});
+            const started = Date.now();
+            diagnostic("request.dispatch", { ...profileTarget(profile), target: route.targetId, method: request.method, path: safePath(path) });
+            try {
+                const response = await abortable(broker.request({ targetId: route.targetId, method: request.method, path, headers: request.headers, body: request.body as any }), signal, request.timeoutMs);
+                diagnostic("request.completion", { ...profileTarget(profile), target: route.targetId, method: request.method, path: safePath(path), status: response.statusCode, elapsedMs: elapsed(started) });
+                return responseAdapter(response);
+            } catch (error) {
+                diagnostic("request.cancellation", { ...profileTarget(profile), target: route.targetId, method: request.method, path: safePath(path), elapsedMs: elapsed(started), code: error instanceof ApiCommandError ? error.code : "CONNECTION" });
+                throw error;
+            }
+        },
         async close() { if (!closed) { closed = true; await broker.close("cli api complete"); } }
     };
 }
@@ -155,7 +199,17 @@ export async function createVerifiedVerser2Session(profile: any, signal: AbortSi
     };
     const client = createVerser2ClientTransport({ transport: routedTransport, routeDomain: profile.ingress.routeDomain, routeReadinessMs: timeoutMs, requestTimeoutMs: timeoutMs });
     try {
-        await transport.waitForRoute(profile.ingress.routeDomain, timeoutMs, signal);
+        const routeStarted = Date.now();
+        diagnostic("route.wait.start", { ...profileTarget(profile) });
+        try {
+            await transport.waitForRoute(profile.ingress.routeDomain, timeoutMs, signal);
+            diagnostic("route.wait.ready", { ...profileTarget(profile), elapsedMs: elapsed(routeStarted) });
+        } catch (error) {
+            diagnostic("route.wait.failure", { ...profileTarget(profile), elapsedMs: elapsed(routeStarted), code: error instanceof ApiCommandError ? error.code : "CONNECTION" });
+            throw error;
+        }
+        const identityStarted = Date.now();
+        diagnostic("ingress.identity.start", profileTarget(profile));
         const identity = await transport.request({ routeDomain: profile.ingress.routeDomain, method: "GET", path: "/api/v2/ingress/identity", timeoutMs, signal });
         try {
             const proof = JSON.parse((await collect(identity.body, signal, timeoutMs)).toString());
@@ -168,6 +222,7 @@ export async function createVerifiedVerser2Session(profile: any, signal: AbortSi
             throw new ApiCommandError("IDENTITY", 56, "Ingress identity is malformed or unavailable");
         } finally {
             await identity.cleanup();
+            diagnostic("ingress.identity.completion", { ...profileTarget(profile), elapsedMs: elapsed(identityStarted) });
         }
         return { transport, client, close: () => client.close() };
     } catch (error) {
@@ -238,9 +293,9 @@ function failedOperationError(bytes: Buffer): ApiCommandError | undefined { try 
 export async function executeApi(methodInput: string, endpoint: string, options: Record<string, unknown>) {
     const method = methodInput.toUpperCase(); if (!METHODS.has(method)) throw new ApiCommandError("USAGE", 1, `Unsupported API method: ${methodInput}`);
     let path = apiPath(endpoint); let profile: any; try { profile = dependencies.getProfile(); if (!profile || !validateVerser2Profile(profile)) throw new Error("missing"); } catch (error) { throw profileError(error); }
-    path = validateTarget(profile, options, path); if (options.output !== undefined && !["json", "text", "raw"].includes(String(options.output))) throw new ApiCommandError("USAGE", 1, "--output must be json, text, or raw"); const query = apiPairs(options.query as string[], "=", "query"); const requestedHeaders = apiHeaders(options.header as string[]);
+    path = validateTarget(profile, options, path); const requestStarted = Date.now(); if (options.output !== undefined && !["json", "text", "raw"].includes(String(options.output))) throw new ApiCommandError("USAGE", 1, "--output must be json, text, or raw"); const query = apiPairs(options.query as string[], "=", "query"); const requestedHeaders = apiHeaders(options.header as string[]);
     await confirmation(method, options); const body = prepareBody(options, dependencies.stdin); if ((method === "GET" || method === "HEAD") && body.body) { body.destroy(); throw new ApiCommandError("USAGE", 1, `${method} does not accept a body`); }
-    const controller = new AbortController(); const interrupt = () => controller.abort(); process.once("SIGINT", interrupt); let session: Awaited<ReturnType<typeof createVerifiedVerser2Session>> | undefined; let response: ApiBrokerResponse | undefined;
+    const controller = new AbortController(); const interrupt = () => controller.abort(); process.once("SIGINT", interrupt); let session: Awaited<ReturnType<typeof createVerifiedVerser2Session>> | undefined; let response: ApiBrokerResponse | undefined; let cancellationLogged = false;
     try {
         const timeout = effectiveApiTimeout(options.timeout, profile.timeoutMs || 1500);
         // Raw commands deliberately retain byte-for-byte response semantics,
@@ -255,7 +310,18 @@ export async function executeApi(methodInput: string, endpoint: string, options:
         if (response.status < 200 || response.status >= 300) throw new ApiCommandError(response.status < 500 ? "API_4XX" : "API_5XX", response.status < 500 ? 70 : 71, `API returned ${response.status}${response.statusText ? ` ${response.statusText}` : ""}`, bytes?.toString("utf8"));
         if (bytes) { const operationError = failedOperationError(bytes); if (operationError) throw operationError; }
         if (method === "HEAD") { const headers = response.headerPairs?.map(([key, value]) => `${key}: ${value}`) || Object.entries(response.headers).map(([key, value]) => `${key}: ${value}`); const output = `${response.status}${response.statusText ? ` ${response.statusText}` : ""}\n${headers.join("\n")}\n`; if (options.outputFile) await fsWrite(String(options.outputFile), output); else dependencies.stdout.write(output); }
-        else if (options.stream) await pipeResponse(await streamingBody(response, controller.signal, timeout), options.outputFile ? createWriteStream(String(options.outputFile)) : dependencies.stdout, controller.signal, timeout);
+        else if (options.stream) {
+            try {
+                await pipeResponse(await streamingBody(response, controller.signal, timeout), options.outputFile ? createWriteStream(String(options.outputFile)) : dependencies.stdout, controller.signal, timeout);
+            } catch (error) {
+                const mapped = mapApiError(error);
+                if (!cancellationLogged && (mapped.code === "CANCELLED" || mapped.code === "TIMEOUT")) {
+                    cancellationLogged = true;
+                    diagnostic("request.cancellation", { ...profileTarget(profile), method, path: safePath(path), elapsedMs: elapsed(requestStarted), code: mapped.code, operation: "raw" });
+                }
+                throw mapped;
+            }
+        }
         else { let output: string | Buffer; try { output = options.output === "json" ? `${JSON.stringify(JSON.parse(bytes!.toString()), null, 2)}\n` : options.output === "text" ? bytes!.toString() : bytes!; } catch { throw new ApiCommandError("RESPONSE", 1, "Response is not valid JSON"); } if (options.outputFile) await fsWrite(String(options.outputFile), output); else dependencies.stdout.write(output); }
     } catch (error) { throw mapApiError(error); } finally { process.removeListener("SIGINT", interrupt); body.destroy(); if (response) await response.cleanup().catch(() => {}); await session?.close().catch(() => {}); }
 }

@@ -15,6 +15,7 @@ const defaultMultiManagerConfig: MultiManagerOptions = {
         apiServers: true
     },
     id: "",
+    realmId: "default",
     server: {
         apiBase: "/api",
         apiPort: 11000,
@@ -84,12 +85,17 @@ const defaultMultiManagerConfig: MultiManagerOptions = {
         leases: {
             minimumWaitingLeases: 1
         }
+    },
+    csrEnrollment: {
+        enabled: false,
+        policy: { allowed: [] }
     }
 };
 
 export const multiManagerCliOptions = [
     { name: "colors", path: "logColors", type: "boolean" as const },
     { name: "id", path: "id", type: "string" as const },
+    { name: "realmId", path: "realmId", type: "string" as const },
     { name: "serverApiBase", path: "server.apiBase", type: "string" as const },
     { name: "serverApiPort", path: "server.apiPort", type: "number" as const },
     { name: "serverApiHost", path: "server.apiHost", type: "string" as const },
@@ -108,6 +114,7 @@ const multiManagerConfigSchema = z.object({
     logColors: z.boolean(),
     log: z.object({ apiServers: z.boolean() }).strict(),
     id: z.string(),
+    realmId: z.string(),
     server: z.object({
         apiBase: z.string(),
         apiPort: z.number(),
@@ -138,6 +145,7 @@ const multiManagerConfigSchema = z.object({
         path: z.string().optional()
     }).partial().optional(),
     verser2: managerVerser2ConfigSchema
+    ,csrEnrollment: z.object({ enabled: z.boolean(), issuer: z.object({ caFile: z.string(), certFile: z.string(), keyFile: z.string(), passphrase: z.string().optional() }).strict().optional(), policy: z.object({ allowed: z.array(z.object({ principal: z.enum(["sth", "si"]), role: z.enum(["broker", "guest"]), peerId: z.string(), routedDomains: z.array(z.string()) }).strict()) }).strict(), issuedStore: z.string().optional() }).strict().optional()
 }).strict();
 
 const cliConfig = (options: MultiManagerCommandOptions): Record<string, unknown> => {
@@ -170,9 +178,11 @@ export class MultiManagerConfig extends ReadOnlyConfig<MultiManagerOptions> {
     get logColors() { return this.configuration.logColors; }
     get log() { return this.configuration.log; }
     get id() { return this.configuration.id; }
+    get realmId() { return this.configuration.realmId; }
     get server() { return this.configuration.server; }
     get manager() { return this.configuration.manager; }
     get verser2() { return this.configuration.verser2; }
+    get csrEnrollment() { return this.configuration.csrEnrollment; }
     get loadCheckRequirements(): LoadCheckRequirements {
         const { safeOperationLimit, instanceRequirements, fsPaths } = this.configuration;
 

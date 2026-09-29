@@ -38,24 +38,30 @@ const baseVerser2Config: STHOutboundVerser2Config = {
     },
     leases: {
         minimumWaitingLeases: 0
+    },
+    upstreamPool: {
+        minWaitingStreams: 64,
+        maxOpenStreams: 256
     }
 };
 
 test("getRunnerVerser2HostUpstreamParams returns Manager upstream params when enabled", t => {
-    const result = getRunnerVerser2HostUpstreamParams(baseVerser2Config, true);
+    const result = getRunnerVerser2HostUpstreamParams(baseVerser2Config);
 
     t.deepEqual(result, {
         upstreamId: "manager",
         url: "https://manager.example.test:2443",
-        tls: { caFile: "/etc/verser/manager-ca.pem" }
+        tls: { caFile: "/etc/verser/manager-ca.pem" },
+        upstreamPool: { minWaitingStreams: 64, maxOpenStreams: 256 }
     });
+    t.is(result?.upstreamPool, baseVerser2Config.upstreamPool);
 });
 
 test("getRunnerVerser2HostUpstreamParams maps inline CA trust", t => {
     const result = getRunnerVerser2HostUpstreamParams({
         ...baseVerser2Config,
         tls: { ca: "-----BEGIN CERTIFICATE-----\nmanager-ca\n-----END CERTIFICATE-----" }
-    }, true);
+    });
 
     t.deepEqual(result?.tls, { ca: "-----BEGIN CERTIFICATE-----\nmanager-ca\n-----END CERTIFICATE-----" });
 });
@@ -69,7 +75,7 @@ test("getRunnerVerser2HostUpstreamParams maps PEM client identity", t => {
             keyFile: "/etc/verser/sth-client.key",
             passphrase: "secret"
         }
-    }, true);
+    });
 
     t.deepEqual(result?.tls, {
         caFile: "/etc/verser/manager-ca.pem",
@@ -87,7 +93,7 @@ test("getRunnerVerser2HostUpstreamParams maps PFX client identity", t => {
             pfxFile: "/etc/verser/sth-client.pfx",
             passphrase: "secret"
         }
-    }, true);
+    });
 
     t.deepEqual(result?.tls, {
         caFile: "/etc/verser/manager-ca.pem",
@@ -123,7 +129,7 @@ test("getRunnerVerser2HostUpstreamParams rejects partial PEM identity", t => {
     };
 
     t.throws(
-        () => getRunnerVerser2HostUpstreamParams(config, true),
+        () => getRunnerVerser2HostUpstreamParams(config),
         { message: "Both verser2 TLS certFile and keyFile must be provided together" }
     );
 });

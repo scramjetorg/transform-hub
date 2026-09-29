@@ -55,6 +55,7 @@ const defaultVerser2Config: ManagerVerser2Config = {
  * Default MultiManager configuration.
  */
 export const defaultConfig: MultiManagerOptions = {
+    realmId: "default",
     /**
      * Log level.
      */
@@ -133,6 +134,7 @@ export function createSettings(options: MultiManagerCommandOptions): MultiManage
         logColors: defaultConfig.logColors && options.colors,
         log: defaultConfig.log,
         id: options.id || defaultConfig.id,
+        realmId: options.realmId || defaultConfig.realmId,
         server: {
             apiBase: options?.serverApiBase || defaultConfig.server.apiBase,
             apiPort: options?.serverApiPort || defaultConfig.server.apiPort,
