@@ -1,9 +1,12 @@
 import { X509Certificate } from "crypto";
 import { readFile } from "fs/promises";
+import { existsSync, readFileSync } from "fs";
 import { ManagerConfiguration, ManagerVerser2Config } from "@scramjet/api-types";
 import { encodeVerser2ConnectionBundle, Verser2ConnectionBundle } from "@scramjet/config";
 import { isAbsolute } from "path";
 import { resolveManagerVerser2HostConfig } from "./verser2-host-identity";
+import { csrEnrollmentRecordFilename } from "@scramjet/manager";
+import { csrEnrollmentRegistrationsToDnsSans } from "@scramjet/runtime-types";
 
 export type MultiManagerVerser2TrustExport = {
     ca: string;
@@ -63,6 +66,8 @@ export type NativeBundleOptions = {
     clientKeyFile?: string;
     clientPfxFile?: string;
     passphraseReference?: string;
+    brokerId: string;
+    principal?: "si" | "sth";
 };
 
 function validId(value: string): boolean {
@@ -85,11 +90,43 @@ function selectedManager(config: MultiManagerConfigLike, options: NativeBundleOp
     return manager;
 }
 
-type MultiManagerConfigLike = { id?: string; manager?: string | ManagerConfiguration | ManagerConfiguration[]; verser2: ManagerVerser2Config };
+type MultiManagerConfigLike = { id?: string; manager?: string | ManagerConfiguration | ManagerConfiguration[]; verser2: ManagerVerser2Config; csrEnrollment?: { enabled: boolean; issuedStore?: string; policy: { allowed: Array<{ principal: "si" | "sth"; role: "broker" | "guest"; peerId: string; routedDomains: string[] }> } } };
+
+function verifyRequestedRegistration(config: MultiManagerConfigLike, options: NativeBundleOptions): void {
+    const principal = options.principal || "si";
+    if (!config.csrEnrollment?.enabled) return;
+    const store = config.csrEnrollment.issuedStore || ".scramjet-csr-v2";
+    let evidenced = false;
+    for (const entry of config.csrEnrollment.policy.allowed) {
+        if (entry.principal !== principal || entry.role !== "broker" || entry.peerId !== options.brokerId) continue;
+        const files = existsSync(store) ? require("fs").readdirSync(store) as string[] : [];
+        for (const file of files) {
+            try {
+                const record = JSON.parse(readFileSync(`${store}/${file}`, "utf8"));
+                if (record.version !== "csr/v2" || record.active !== true || record.principal !== principal || !Array.isArray(record.registrations)) continue;
+                const registration = record.registrations.find((value: any) => value.principal === principal && value.role === "broker" && value.peerId === options.brokerId && JSON.stringify(value.routedDomains) === JSON.stringify(entry.routedDomains));
+                if (!registration) continue;
+                const cert = new X509Certificate(record.certificatePem);
+                if (cert.fingerprint256.replace(/:/g, "").toLowerCase() !== String(record.certificateFingerprint256).replace(/:/g, "").toLowerCase()) continue;
+                const sans = cert.subjectAltName?.split(", ").filter(value => value.startsWith("DNS:")).map(value => value.slice(4)) || [];
+                const expectedSans = csrEnrollmentRegistrationsToDnsSans(record.registrations);
+                if (JSON.stringify(sans) !== JSON.stringify(expectedSans)) continue;
+                const filename = csrEnrollmentRecordFilename(cert.fingerprint256, cert.serialNumber);
+                if (file !== filename && file !== `${cert.fingerprint256}-${cert.serialNumber}.json`) continue;
+                evidenced = true;
+                break;
+            } catch { /* malformed or non-certificate records are not evidence */ }
+        }
+        if (evidenced) break;
+    }
+    if (!evidenced) throw new Error(`No active issued CSR/v2 registration binds ${options.principal} broker ${options.brokerId}`);
+}
 
 /** Create the public, importable native connection artifact without reading identity private material. */
 export async function createMultiManagerNativeBundle(config: MultiManagerConfigLike, options: NativeBundleOptions): Promise<Verser2ConnectionBundle> {
     if (!validId(options.profileName)) throw new Error("Invalid profile name");
+    if (!validId(options.brokerId)) throw new Error("Invalid broker ID");
+    if (options.principal !== undefined && options.principal !== "si" && options.principal !== "sth") throw new Error("Invalid principal");
     if (options.space && !validId(options.space) || options.hub && !validId(options.hub)) throw new Error("Invalid target id");
     if (options.hub && !options.space) throw new Error("--hub requires --space");
     if (options.clientPfxFile && (options.clientCertFile || options.clientKeyFile)) throw new Error("PFX credentials cannot be combined with client certificate/key credentials");
@@ -105,6 +142,7 @@ export async function createMultiManagerNativeBundle(config: MultiManagerConfigL
         throw new Error("Cannot create platform bundle without a configured MultiManager service ID");
     }
     const manager = selectedManager(config, options);
+    verifyRequestedRegistration(config, options);
     const resolvedVerser2 = await resolveManagerVerser2HostConfig(config.verser2, "MultiManager");
     const trust = await getMultiManagerVerser2TrustExport(resolvedVerser2, manager);
     const endpoint = new URL(trust.hostUrl);
@@ -116,7 +154,7 @@ export async function createMultiManagerNativeBundle(config: MultiManagerConfigL
         profileName: options.profileName,
         transport: "verser2",
         publicEndpoint: { url: trust.hostUrl, port: Number(endpoint.port || 443), role: "control" },
-        brokerId: resolvedVerser2.localBroker.peerId,
+        brokerId: options.brokerId,
         ingress: { level, expectedId, routeDomain: trust.routeDomains.guest },
         ...(target ? { target } : {}),
         trust: { caPem: trust.ca, sha256Fingerprint: trust.fingerprint256.replace(/:/g, ""), expiresAt: trust.expiresAt },

@@ -11,3 +11,5 @@ export * from "./lib/local-storage/adapters";
 export * from "./lib/csr-enrollment";
 export * from "./lib/control-ingress";
 export * from "./lib/s3-client";
+export { resolveStableHostId } from "./lib/host-id";
+export { createSthRunnerVerser2HostId, createSthRunnerVerser2HostOptions, deriveSthRunnerVerser2HostIdentity } from "./lib/runner-verser2-host-config";

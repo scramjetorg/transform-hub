@@ -693,6 +693,7 @@ export class Manager implements IComponent {
             );
 
         assertVerifiedFederationRegistrationPrincipal(this.secureFederationEnrollmentRequired, authorizationContext, this.id, id, routeDomain);
+        this.logger.info("Native STH federation principal verified");
 
         if (offeredRouteDomain && offeredRouteDomain !== routeDomain) {
             this.logger.warn("Ignoring untrusted STH route domain", id, offeredRouteDomain, routeDomain);
@@ -703,7 +704,13 @@ export class Manager implements IComponent {
             throw new CeroError("ERR_NOT_CURRENTLY_AVAILABLE");
         }
 
-        await this.sthBrokerTransport.waitForRoute(routeDomain, this.config.verser2.timeouts.routeReadinessMs);
+        try {
+            await this.sthBrokerTransport.waitForRoute(routeDomain, this.config.verser2.timeouts.routeReadinessMs);
+            this.logger.info("Native STH control route ready");
+        } catch (error) {
+            this.logger.warn("Native STH control route wait failed");
+            throw error;
+        }
 
         const previousSth = this.sthConnectionStore.getById(id);
         let sth: ISTHController | undefined = previousSth;
@@ -741,7 +748,9 @@ export class Manager implements IComponent {
             this.notifySthControlRoute({ hubId: sth.id, routeDomain });
             try {
                 await sth.init();
+                this.logger.info("Native STH controller initialized");
             } catch (error) {
+                this.logger.warn("Native STH controller initialization failed");
                 this.rollbackFailedSthRegistration(sth, previousSth, snapshot);
                 throw error;
             }
@@ -769,7 +778,9 @@ export class Manager implements IComponent {
             this.notifySthControlRoute({ hubId: sth.id, routeDomain });
             try {
                 await sth.init();
+                this.logger.info("Native STH controller initialized");
             } catch (error) {
+                this.logger.warn("Native STH controller initialization failed");
                 this.rollbackFailedSthRegistration(sth);
                 throw error;
             }

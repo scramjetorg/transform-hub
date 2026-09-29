@@ -60,5 +60,6 @@ Feature: Control-plane admission and enrollment
     Given a real published native bootstrap fixture with scenario-owned ports
     When the native bundle is imported and the fresh STH is queried through the named hub-config route
     Then native STH registration and the selected space S and hub H target are active
+    And the private registration stage chain completes in local process order and the public SI route stays isolated
     And the legacy apiUrl and middlewareApiUrl canaries have received zero requests
     And cloned native bundles report CA exit 51, route exit 55, and identity exit 56

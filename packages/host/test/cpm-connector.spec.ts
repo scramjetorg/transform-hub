@@ -1,10 +1,12 @@
 import test from "ava";
 import { EventEmitter } from "events";
+import { Readable } from "stream";
 
 import { getManagerGuestMinWaitingStreams } from "../src/lib/cpm-connector-leases";
 import { CPMConnector } from "../src/lib/cpm-connector";
 import { Host } from "../src/lib/host";
 import { SequenceMessageCode } from "@scramjet/symbols";
+import { registerNativeSth } from "../src/lib/native-verser2-registration";
 
 test("getManagerGuestMinWaitingStreams leaves room for Manager control streams and API requests", t => {
     t.is(getManagerGuestMinWaitingStreams(1), 128);
@@ -12,6 +14,73 @@ test("getManagerGuestMinWaitingStreams leaves room for Manager control streams a
     t.is(getManagerGuestMinWaitingStreams(256), 256);
     t.is(getManagerGuestMinWaitingStreams(1, 192), 192);
     t.is(getManagerGuestMinWaitingStreams(256, 128), 256);
+});
+
+test("legacy CPM registration uses the v1 compatibility route and accepts the registration result", async t => {
+    const connector = Object.create(CPMConnector.prototype) as CPMConnector & Record<string, any>;
+    const requestCalls: Array<{ method: string; path: string; headers: unknown; body?: string }> = [];
+    const response = new EventEmitter() as any;
+    response.statusCode = 200;
+    response.statusMessage = "OK";
+    let request: any;
+
+    Object.assign(connector, {
+        config: {
+            id: "legacy-sth",
+            description: "legacy",
+            tags: ["compat"],
+            infoFilePath: "/unused",
+            verser2: {
+                broker: { targetDomain: "manager.internal" },
+                guest: { routeDomain: "legacy-sth.internal" },
+                enrollment: { token: undefined }
+            }
+        },
+        info: { id: "legacy-sth" },
+        logger: { updateBaseLog: () => {} },
+        emit: () => {},
+        makeHttpRequestToCpm: (method: string, path: string, headers: unknown) => {
+            requestCalls.push({ method, path, headers });
+            request = new EventEmitter();
+            request.end = (body: string) => {
+                requestCalls[0].body = body;
+                setImmediate(() => {
+                    response.emit("data", Buffer.from('{"id":"legacy-sth"}'));
+                    response.emit("end");
+                });
+            };
+            queueMicrotask(() => request.emit("response", response));
+            return request;
+        }
+    });
+
+    await (connector as any).registerWithManager();
+
+    t.deepEqual(requestCalls.map(({ method, path }) => ({ method, path })), [{ method: "POST", path: "sth" }]);
+    t.deepEqual(JSON.parse(requestCalls[0].body!), {
+        id: "legacy-sth",
+        description: "legacy",
+        tags: ["compat"],
+        routeDomain: "legacy-sth.internal"
+    });
+    t.deepEqual(connector.getCpmRouteMetadata(requestCalls[0].path), {
+        routeDomain: "manager.internal",
+        targetPath: "/api/v1/sth"
+    });
+
+    const nativeRequest: any[] = [];
+    await registerNativeSth({
+        waitForRoute: async () => undefined,
+        getRoutes: () => [{ targetId: "manager", domain: "manager.internal" }],
+        request: async value => {
+            nativeRequest.push(value);
+            return { statusCode: 200, body: Readable.from(['{"id":"native"}']) };
+        }
+    }, {
+        broker: { peerId: "manager", targetDomain: "manager.internal" },
+        timeouts: { routeReadinessMs: 100, leaseAcquireMs: 100, requestMs: 100 }
+    }, { routeDomain: "native-sth.internal" });
+    t.is(nativeRequest[0].path, "/api/v2/_internal/sth/registration");
 });
 
 function makeReconnectConnector(failuresBeforeConnect: number, config: Record<string, unknown> = {}) {

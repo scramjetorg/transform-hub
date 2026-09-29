@@ -12,6 +12,7 @@ import {
     z,
     ConfigService,
     getRuntimeAdapterOption,
+    applyManagerConnectionBundle,
     decodeVerser2ConnectionBundle
 } from "@scramjet/config";
 import { DeepPartial, StorageAdapterType } from "@scramjet/runtime-types";
@@ -20,7 +21,7 @@ import { dirname, resolve, join } from "path";
 import { mkdirSync, writeFileSync } from "fs";
 import { HostError } from "@scramjet/model";
 import { inspect } from "util";
-import { getValidStorageAdapters, Host, validateSthRunnerPortCollisions } from "@scramjet/host";
+import { getValidStorageAdapters, Host, validateSthRunnerPortCollisions, resolveStableHostId, deriveSthRunnerVerser2HostIdentity, createSthRunnerVerser2HostId } from "@scramjet/host";
 import { FileBuilder, processCommanderRunnerEnvs } from "@scramjet/utility";
 import { constants } from "os";
 import { augmentOptions, registerRuntimeAdapterOption } from "@scramjet/adapters";
@@ -152,32 +153,10 @@ const options = parseCliOptions({ argv: process.argv, options: finalRegistry.get
 
 (async () => {
     const configService = new ConfigService();
+    const verser2Defaults = JSON.parse(JSON.stringify(configService.getConfig().verser2));
     const resolveFile = (path: string) => path && resolve(process.cwd(), path);
     const configContents = options.config ? FileBuilder(options.config).read() as DeepPartial<STHConfiguration> & { manager?: { connectionBundle?: unknown } } : undefined;
 
-    // `manager.connectionBundle` is the semantic managed-Sth input. Keep the
-    // transport details out of operator-facing config and materialise only the
-    // public CA locally. Mixing it with transport fields is ambiguous.
-    if (configContents?.manager?.connectionBundle) {
-        if (configContents.verser2 && Object.keys(configContents.verser2 as Record<string, unknown>).length) {
-            throw new Error("manager.connectionBundle cannot be combined with explicit verser2 transport fields");
-        }
-        const bundle = decodeVerser2ConnectionBundle(configContents.manager.connectionBundle);
-        const identityDir = resolve(process.cwd(), configService.getConfig().verser2.runnerHost?.identityDir || ".scramjet");
-        mkdirSync(identityDir, { recursive: true, mode: 0o700 });
-        const caFile = join(identityDir, `manager-ca-${bundle.trust.sha256Fingerprint}.pem`);
-        writeFileSync(caFile, bundle.trust.caPem, { mode: 0o644 });
-        const credentials = bundle.credentials && "certFile" in bundle.credentials
-            ? { certFile: bundle.credentials.certFile, keyFile: bundle.credentials.keyFile }
-            : bundle.credentials && "pfxFile" in bundle.credentials ? { pfxFile: bundle.credentials.pfxFile } : {};
-        configService.update({ verser2: {
-            enabled: true,
-            hostUrl: bundle.publicEndpoint.url,
-            broker: { peerId: bundle.brokerId, targetDomain: bundle.ingress.routeDomain },
-            guest: { peerId: `${bundle.profileName}.guest`, routeDomain: bundle.ingress.routeDomain },
-            tls: { caFile, ...credentials }
-        } });
-    }
     const verser2 = loadConfig<{ verser2: STHConfiguration["verser2"] }>({
         schema: z.object({ verser2: sthOutboundVerser2ConfigSchema }).passthrough() as z.ZodType<{ verser2: STHConfiguration["verser2"] }>,
         defaults: { verser2: configService.getConfig().verser2 },
@@ -334,7 +313,24 @@ const options = parseCliOptions({ argv: process.argv, options: finalRegistry.get
 
     await configService.selectRuntimeAdapter();
 
-    const config = configService.getConfig();
+    let config = configService.getConfig();
+    if (config.manager?.connectionBundle || config.manager?.binding) {
+        const logger = { info: () => undefined, warn: () => undefined, error: () => undefined };
+        const hostId = resolveStableHostId(config.host.id, config.host.infoFilePath || "/tmp/sth-id.json", logger);
+        config.host.id = hostId;
+        const runnerIdentity = deriveSthRunnerVerser2HostIdentity(config.verser2.runnerHost, hostId);
+        const federationHost = createSthRunnerVerser2HostId(runnerIdentity);
+        config = applyManagerConnectionBundle(config, verser2Defaults, federationHost);
+        const bundle = config.manager?.connectionBundle && decodeVerser2ConnectionBundle(config.manager.connectionBundle);
+        if (bundle) {
+            const identityDir = resolve(process.cwd(), config.verser2.runnerHost?.identityDir || ".scramjet");
+            mkdirSync(identityDir, { recursive: true, mode: 0o700 });
+            const caFile = join(identityDir, `manager-ca-${bundle.trust.sha256Fingerprint}.pem`);
+            writeFileSync(caFile, bundle.trust.caPem, { mode: 0o644 });
+            config.verser2.tls.caFile = caFile;
+            configService.update({ verser2: config.verser2 });
+        }
+    }
 
     // before here we actually load the host and we have the config imported elsewhere
     // so the config is changed before compile time, not in runtime.

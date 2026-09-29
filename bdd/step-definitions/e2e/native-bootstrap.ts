@@ -14,5 +14,13 @@ When("the native bundle is imported and the fresh STH is queried through the nam
 Then("native STH registration and the selected space S and hub H target are active", function(this: CustomWorld) {
     assert.equal(result(this).registration, "H"); assert.equal(result(this).selected, "S/H"); assert.match(result(this).hubInfo, /H/);
 });
+Then("the private registration stage chain completes in local process order and the public SI route stays isolated", function(this: CustomWorld) {
+    const proof = result(this);
+    assert.deepEqual(proof.markers.sth, ["Manager route ready", "Private v2 POST sent", "Private v2 response accepted"]);
+    assert.deepEqual(proof.markers.multiManager, ["Native STH federation allowed after issued-record, certificate, claim, registration, and capability checks", "Native STH private capability verified", "Native STH private claim/body verified", "Native STH federation principal verified", "Native STH control route ready", "Native STH controller initialized", "Native STH private registration accepted"]);
+    assert.deepEqual(proof.privateIsolation, { status: 404, unchanged: true });
+    assert.equal(proof.markers.last.sth, "Private v2 response accepted");
+    assert.equal(proof.markers.last.multiManager, "Native STH private registration accepted");
+});
 Then("the legacy apiUrl and middlewareApiUrl canaries have received zero requests", function(this: CustomWorld) { assert.equal(result(this).legacyRequests, 0); });
 Then("cloned native bundles report CA exit 51, route exit 55, and identity exit 56", function(this: CustomWorld) { assert.deepEqual(result(this).negatives, { ca: 51, route: 55, identity: 56 }); });

@@ -1,7 +1,7 @@
 import baseTest from "ava";
 const { createAvaMemoryGuard } = require("../../../scripts/lib/ava-memory-guard");
 const test: typeof baseTest = createAvaMemoryGuard(baseTest);
-import { publicOutboundVerser2Profile, validateOutboundVerser2Draft, validateOutboundVerser2Profile } from "../src";
+import { applyManagerConnectionBundle, publicOutboundVerser2Profile, sthDefaultConfig, validateOutboundVerser2Draft, validateOutboundVerser2Profile } from "../src";
 import { compileVerser2ConnectionBundle, decodeVerser2ConnectionBundle, encodeVerser2ConnectionBundle, publicVerser2ConnectionBundle, validateVerser2ConnectionBundle } from "../src";
 
 const profile = { endpoint: "https://host:443", brokerId: "broker", ingress: { level: "platform", expectedId: "root", routeDomain: "root" }, target: { spaceId: "space" }, tls: { caFile: "/ca", certFile: "/cert", keyFile: "/key" } };
@@ -74,4 +74,33 @@ test("connection bundle rejects unknown fields and secret payloads", t => {
     t.false(validateVerser2ConnectionBundle({ ...bundle, publicEndpoint: { ...bundle.publicEndpoint, port: 2444 } }));
     t.false(validateVerser2ConnectionBundle({ ...bundle, trust: { ...bundle.trust, sha256Fingerprint: "00".repeat(32) } }));
     t.throws(() => decodeVerser2ConnectionBundle("not-json"));
+});
+
+test("semantic Manager binding maps exact upstream fields independently of bundle profile", t => {
+    const config = JSON.parse(JSON.stringify(sthDefaultConfig)) as any;
+    config.manager = { connectionBundle: { ...bundle, profileName: "unrelated-profile" }, binding: { brokerId: "broker", guestPeerId: "bound-guest", guestRouteDomain: "guest.route", federationHost: "runner.host" } };
+    config.verser2.enabled = true;
+    config.verser2.hostUrl = bundle.publicEndpoint.url;
+    config.verser2.broker = { peerId: "broker", targetDomain: "root" };
+    config.verser2.guest = { peerId: "bound-guest", routeDomain: "guest.route" };
+    const result = applyManagerConnectionBundle(config, JSON.parse(JSON.stringify(sthDefaultConfig.verser2)), "runner.host");
+    t.deepEqual(result.verser2.broker, { peerId: "broker", targetDomain: "root" });
+    t.deepEqual(result.verser2.guest, { peerId: "bound-guest", routeDomain: "guest.route" });
+    t.is(result.verser2.hostUrl, bundle.publicEndpoint.url);
+});
+
+test("semantic Manager binding fails closed for missing/mismatched bindings and legacy values", t => {
+    const base = () => {
+        const config = JSON.parse(JSON.stringify(sthDefaultConfig)) as any;
+        config.manager = { connectionBundle: bundle, binding: { brokerId: "broker", guestPeerId: "guest", guestRouteDomain: "guest.route", federationHost: "runner.host" } };
+        return config;
+    };
+    const defaults = JSON.parse(JSON.stringify(sthDefaultConfig.verser2));
+    const bindingOnly = base(); bindingOnly.manager = { binding: bindingOnly.manager.binding };
+    t.throws(() => applyManagerConnectionBundle(bindingOnly, defaults, "runner.host"), { message: /requires manager.connectionBundle/ });
+    t.throws(() => applyManagerConnectionBundle({ ...base(), manager: { connectionBundle: bundle } }, defaults, "runner.host"), { message: /complete manager.binding/ });
+    t.throws(() => applyManagerConnectionBundle(base(), defaults, "different.host"), { message: /federationHost/ });
+    t.throws(() => applyManagerConnectionBundle({ ...base(), cpmId: "legacy" }, defaults, "runner.host"), { message: /CPM\/platform/ });
+    const conflict = base(); conflict.verser2.broker.peerId = "other";
+    t.throws(() => applyManagerConnectionBundle(conflict, defaults, "runner.host"), { message: /Conflicting upstream/ });
 });

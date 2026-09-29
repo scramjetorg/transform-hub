@@ -11,7 +11,8 @@ import { verifiedFederationPrincipal } from "../federation-context";
 import { getS3Router } from "../s3-router";
 import { prepareDisconnectDroplist, translateDeleteError, translateDisconnectError, validateDisconnectRequest } from "../utils";
 import { getManagerVerser2TrustExport } from "../verser2-trust-export";
-import type { Manager, SthRegistrationPayload } from "../manager";
+import type { Manager } from "../manager";
+import { registerSth } from "./sth-registration";
 
 const defaultLimit = 100;
 const defaultOffset = 0;
@@ -39,7 +40,7 @@ export class ManagerAPIV1Handler {
 
         registerHttpRoutes(router, this.createV1CompatibilityRouter());
         router.op("post", `${apiBase}/sth`, async (req: IncomingMessage): Promise<{ id: string; opStatus: string }> => {
-            const payload = (req as IncomingMessage & { body: SthRegistrationPayload }).body || {};
+            const payload = (req as IncomingMessage & { body: unknown }).body || {};
             const peer = (req.socket as IncomingMessage["socket"] & { getPeerCertificate?: (detailed?: boolean) => { raw?: Buffer } } | undefined)?.getPeerCertificate?.(true);
             const peerCertificate = peer?.raw ? new X509Certificate(peer.raw) : undefined;
             const fingerprint = peerCertificate?.fingerprint256;
@@ -49,9 +50,11 @@ export class ManagerAPIV1Handler {
                     .filter((value) => value.startsWith("DNS:"))
                     .map((value) => value.slice(4)) || [];
             const peerHubId = dnsSans.length === 1 ? dnsSans[0] : undefined;
-            const id = await manager.handleSthRegistration(payload, fingerprint, peerHubId, verifiedFederationPrincipal());
-
-            return { id, opStatus: ReasonPhrases.ACCEPTED };
+            return registerSth(manager, payload, {
+                peerCertificateFingerprint256: fingerprint,
+                peerCertificateHubId: peerHubId,
+                authorizationContext: verifiedFederationPrincipal()
+            });
         });
         router.get(`${apiBase}/list`, (req: ParsedMessage): MRestAPI.GetListResponse => {
             let offset = req.query && req.query.offset ? parseInt(req.query.offset, 10) : defaultOffset;

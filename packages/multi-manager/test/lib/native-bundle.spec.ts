@@ -23,12 +23,13 @@ async function fixture() {
 test("native bundle is valid, selected, and contains no server private material", async t => {
     const { dir, config } = await fixture();
     try {
-        const bundle = await createMultiManagerNativeBundle(config, { profileName: "local", space: "space-1", clientCertFile: "/client/cert.pem", clientKeyFile: "/client/key.pem", passphraseReference: "env://CLIENT_PASS" });
+        const bundle = await createMultiManagerNativeBundle(config, { profileName: "local", brokerId: "si-issued-broker", space: "space-1", clientCertFile: "/client/cert.pem", clientKeyFile: "/client/key.pem", passphraseReference: "env://CLIENT_PASS" });
         t.true(validateVerser2ConnectionBundle(bundle));
         t.is(bundle.target?.spaceId, "space-1");
         t.is(bundle.ingress.level, "platform");
         t.is(bundle.ingress.expectedId, "multimanager-1");
         t.is(bundle.ingress.routeDomain, "space-1.internal");
+        t.is(bundle.brokerId, "si-issued-broker");
         t.false(JSON.stringify(bundle).includes("PRIVATE KEY"));
         t.false(JSON.stringify(bundle).includes("server-key"));
     } finally { await rm(dir, { recursive: true, force: true }); }
@@ -37,7 +38,7 @@ test("native bundle is valid, selected, and contains no server private material"
 test("space and hub selection uses the Manager service identity and hub target", async t => {
     const { dir, config } = await fixture();
     try {
-        const bundle = await createMultiManagerNativeBundle(config, { profileName: "local", space: "space-1", hub: "hub-7" });
+        const bundle = await createMultiManagerNativeBundle(config, { profileName: "local", brokerId: "si-1", space: "space-1", hub: "hub-7" });
         t.true(validateVerser2ConnectionBundle(bundle));
         t.is(bundle.ingress.level, "space");
         t.is(bundle.ingress.expectedId, "space-1");
@@ -49,7 +50,7 @@ test("space and hub selection uses the Manager service identity and hub target",
 test("no target uses the configured MultiManager identity for platform ingress", async t => {
     const { dir, config } = await fixture();
     try {
-        const bundle = await createMultiManagerNativeBundle(config, { profileName: "local" });
+        const bundle = await createMultiManagerNativeBundle(config, { profileName: "local", brokerId: "si-1" });
         t.true(validateVerser2ConnectionBundle(bundle));
         t.is(bundle.ingress.level, "platform");
         t.is(bundle.ingress.expectedId, "multimanager-1");
@@ -62,22 +63,34 @@ test("platform bundles reject a missing MultiManager identity", async t => {
     const { dir, config } = await fixture();
     delete (config as { id?: string }).id;
     try {
-        await t.throwsAsync(() => createMultiManagerNativeBundle(config, { profileName: "local" }), {
+        await t.throwsAsync(() => createMultiManagerNativeBundle(config, { profileName: "local", brokerId: "si-1" }), {
             message: "Cannot create platform bundle without a configured MultiManager service ID"
         });
     } finally { await rm(dir, { recursive: true, force: true }); }
 });
 
+test("CSR/v2 export fails closed when requested principal and broker binding lack issued evidence", async t => {
+    const { dir, config } = await fixture();
+    config.csrEnrollment = { enabled: true, issuedStore: join(dir, "issued"), policy: { allowed: [
+        { principal: "sth", role: "broker", peerId: "sth-broker", routedDomains: ["space.example"] },
+        { principal: "si", role: "broker", peerId: "si-broker", routedDomains: ["space.example"] }
+    ] } };
+    try {
+        await t.throwsAsync(() => createMultiManagerNativeBundle(config, { profileName: "local", brokerId: "si-broker", principal: "sth" }), { message: /No active issued CSR\/v2 registration/ });
+        await t.throwsAsync(() => createMultiManagerNativeBundle(config, { profileName: "local", brokerId: "other-si", principal: "si" }), { message: /No active issued CSR\/v2 registration/ });
+    } finally { await rm(dir, { recursive: true, force: true }); }
+});
+
 test("credential references reject secret values and incompatible credentials", async t => {
     const { config } = await fixture();
-    await t.throwsAsync(() => createMultiManagerNativeBundle(config, { profileName: "local", clientPfxFile: "/client/client.pfx", clientCertFile: "/client/cert.pem", clientKeyFile: "/client/key.pem" }), { message: /cannot be combined/ });
-    await t.throwsAsync(() => createMultiManagerNativeBundle(config, { profileName: "local", clientPfxFile: "data:secret" }), { message: /Invalid client PFX/ });
+    await t.throwsAsync(() => createMultiManagerNativeBundle(config, { profileName: "local", brokerId: "si-1", clientPfxFile: "/client/client.pfx", clientCertFile: "/client/cert.pem", clientKeyFile: "/client/key.pem" }), { message: /cannot be combined/ });
+    await t.throwsAsync(() => createMultiManagerNativeBundle(config, { profileName: "local", brokerId: "si-1", clientPfxFile: "data:secret" }), { message: /Invalid client PFX/ });
 });
 
 test("bundle encoding round trips identically", async t => {
     const { dir, config } = await fixture();
     try {
-        const bundle = await createMultiManagerNativeBundle(config, { profileName: "local" });
+        const bundle = await createMultiManagerNativeBundle(config, { profileName: "local", brokerId: "si-1" });
         const json = encodeVerser2ConnectionBundle(bundle);
         const command = Buffer.from(json).toString("base64url");
         t.deepEqual(decodeVerser2ConnectionBundle(Buffer.from(command, "base64url").toString()), decodeVerser2ConnectionBundle(json));

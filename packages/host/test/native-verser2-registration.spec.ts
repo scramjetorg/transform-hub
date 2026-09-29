@@ -3,8 +3,8 @@ import { Readable } from "stream";
 import { registerNativeSth } from "../src/lib/native-verser2-registration";
 
 const config = {
-    broker: { targetDomain: "manager.scramjet.internal" },
-    timeouts: { routeReadinessMs: 1000 }
+    broker: { peerId: "manager", targetDomain: "manager.scramjet.internal" },
+    timeouts: { routeReadinessMs: 1000, leaseAcquireMs: 1000, requestMs: 1000 }
 };
 
 function broker(statusCode = 200, body = '{"id":"sth-registered"}') {
@@ -33,14 +33,31 @@ test("native registration posts the Manager contract over the Verser2 route", as
     });
 
     t.deepEqual(result, { id: "sth-registered" });
-    t.is(transport.requests[0].path, "/api/v1/sth");
+    t.is(transport.requests[0].path, "/api/v2/_internal/sth/registration");
     t.is(transport.requests[0].method, "POST");
     t.is(transport.requests[0].targetId, "manager");
+    t.is(transport.requests[0].routeDomain, config.broker.targetDomain);
+    t.deepEqual(JSON.parse(await collectBody(transport.requests[0].body)), {
+        id: "sth-1",
+        description: "native",
+        tags: ["dev"],
+        enrollmentToken: "token",
+        routeDomain: "sth-1.scramjet.internal"
+    });
 });
 
 test("native registration reports Manager errors", async t => {
+    const transport = broker(503, "unavailable");
     await t.throwsAsync(
-        registerNativeSth(broker(503, "unavailable"), config, { routeDomain: "sth.scramjet.internal" }),
+        registerNativeSth(transport, config, { routeDomain: "sth.scramjet.internal" }),
         { message: "Manager STH registration failed: 503" }
     );
+    t.is(transport.requests.length, 1);
+    t.is(transport.requests[0].path, "/api/v2/_internal/sth/registration");
 });
+
+async function collectBody(body: Readable): Promise<string> {
+    const chunks: Buffer[] = [];
+    for await (const chunk of body) chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+    return Buffer.concat(chunks).toString("utf8");
+}

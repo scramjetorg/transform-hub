@@ -11,11 +11,13 @@ function parse(argv: string[]): { config: string; format: "json" | "command"; op
         values[arg.slice(2)] = argv[++i];
     }
     if (!values.config || !values["profile-name"]) throw new Error("--config and --profile-name are required");
+    if (!values["broker-id"]) throw new Error("--broker-id is required");
+    if (values.principal && values.principal !== "si" && values.principal !== "sth") throw new Error("--principal must be si or sth");
     if (values.format && values.format !== "json" && values.format !== "command") throw new Error("--format must be json or command");
-    const allowed = new Set(["config", "profile-name", "space", "hub", "client-cert-file", "client-key-file", "client-pfx-file", "passphrase-reference", "format"]);
+    const allowed = new Set(["config", "profile-name", "broker-id", "principal", "space", "hub", "client-cert-file", "client-key-file", "client-pfx-file", "passphrase-reference", "format"]);
     for (const key of Object.keys(values)) if (!allowed.has(key)) throw new Error(`Unknown option: --${key}`);
     return { config: values.config, format: (values.format || "json") as "json" | "command", options: {
-        profileName: values["profile-name"], space: values.space, hub: values.hub,
+        profileName: values["profile-name"], brokerId: values["broker-id"], principal: (values.principal || "si") as "si" | "sth", space: values.space, hub: values.hub,
         clientCertFile: values["client-cert-file"], clientKeyFile: values["client-key-file"], clientPfxFile: values["client-pfx-file"], passphraseReference: values["passphrase-reference"]
     } };
 }

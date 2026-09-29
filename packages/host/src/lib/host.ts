@@ -1069,11 +1069,14 @@ export class Host implements IHost, IComponent {
                         url: upstreamParams.url
                     });
                 } catch (error) {
+                    if (error instanceof Error && error.message === "Native STH registration route wait failed") this.logger.warn("Native STH registration failed", { category: "route-wait" });
+                    else if (error instanceof Error && error.message.startsWith("Manager STH registration failed:")) this.logger.warn("Native STH registration failed", { category: "private-v2-response", status: error.message.split(":").pop()?.trim() });
+                    else this.logger.warn("Native STH registration failed", { category: "initialization" });
                     this.runnerVerser2UpstreamHealth = degradedComponent("hub.upstream", true, {
                         configured: true,
                         connected: false,
                         url: upstreamParams.url,
-                        error: error instanceof Error ? error.message : String(error)
+                        error: "Native STH registration failed"
                     });
                     this.logger.warn("STH-local runner verser2 Host Manager upstream connection failed", error);
 
@@ -1645,7 +1648,7 @@ export class Host implements IHost, IComponent {
         this.logger.trace("Stopping API server");
 
         await new Promise<void>((res, _rej) => {
-            if (!this.config.host.legacyApiEnabled && !this.api.server.listening) {
+            if (!this.config.host?.legacyApiEnabled && !this.api.server.listening) {
                 res();
                 return;
             }

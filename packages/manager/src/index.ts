@@ -13,4 +13,5 @@ export * from "./lib/csr-enrollment-v2";
 export * from "./lib/csr-enrollment-cli";
 export * from "./lib/manager-control-ingress";
 export * from "./lib/federation-context";
+export { registerSth, normalizeSthRegistrationPayload } from "./lib/api/sth-registration";
 export * from "./lib/storage-routers/s3-proxy";

@@ -435,6 +435,8 @@ export { ConfigService, defaultConfig as sthDefaultConfig, defaultConfig } from 
 export { toPublicSTHConfig } from "./sth/public-config";
 export { getRuntimeAdapterOption } from "./sth/runtime-adapter-option";
 export { applyManagerTrustBootstrap } from "./sth/manager-trust-bootstrap";
+export { applyManagerConnectionBundle } from "./sth/manager-binding";
+export type { ManagerBinding } from "./sth/manager-binding";
 export type { ManagerTrustBootstrapMaterial, ManagerTrustBootstrapOptions } from "./sth/manager-trust-bootstrap";
 export { managerDefaultConfig } from "./manager/default-config";
 export { ManagerConfigService, managerConfigService, getDefaultManagerConfig } from "./manager/config-service";
