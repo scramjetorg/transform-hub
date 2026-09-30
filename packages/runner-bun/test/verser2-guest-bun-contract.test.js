@@ -1,4 +1,5 @@
 import { EventEmitter } from "events";
+import { createRequire } from "module";
 import { describe, expect, mock, test } from "bun:test";
 
 const isolatedProcess = process.env.SCRAMJET_RUNNER_BUN_CONTRACT_ISOLATED === "1";
@@ -23,8 +24,11 @@ if (!isolatedProcess) {
     });
 } else {
     let capturedNodeHandler;
+    const require = createRequire(import.meta.path);
+    const bunGuestPath = require.resolve("@signicode/verser2-guest-bun");
+    const nodeGuestPath = createRequire(bunGuestPath).resolve("@signicode/verser2-guest-node");
 
-    mock.module("@signicode/verser2-guest-node", () => ({
+    mock.module(nodeGuestPath, () => ({
         createVerserNodeGuest: () => ({
             connected: false,
             attach(handler) {
