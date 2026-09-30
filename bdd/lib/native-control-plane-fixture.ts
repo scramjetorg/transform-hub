@@ -71,12 +71,12 @@ function createPki(dir: string) {
 export async function startNativeControlPlane(): Promise<NativeControlPlane> {
     const ownership = getOwnership(process.env);
     ensureOwnershipPaths(ownership);
-    const suffix = `${ownership.runId}-${ownership.chunkId}`.replace(/[^A-Za-z0-9_.-]/g, "-");
+    const suffix = `${ownership.runId}-${ownership.chunkId}`.replace(/[^A-Za-z0-9_.-]/g, "-").toLowerCase();
     const spaceId = `space-${suffix}`;
     const hubId = `hub-${suffix}`;
-    const managerId = `manager-${suffix}`;
+    const managerId = spaceId;
     const routeDomain = `manager.${spaceId}.control.scramjet.internal`;
-    const hubRouteDomain = `sth.${hubId}.scramjet.internal`;
+    const hubRouteDomain = `sth.${hubId}.${spaceId}.scramjet.internal`;
     const pki = createPki(join(ownership.tempPath, "native-control-plane-pki"));
     const mmReservation = await allocateOwnedPort(ownership);
     const apiReservation = await allocateOwnedPort(ownership);
@@ -101,7 +101,7 @@ export async function startNativeControlPlane(): Promise<NativeControlPlane> {
     writeFileSync(mmConfigPath, JSON.stringify(mmConfig));
     writeFileSync(configPath, JSON.stringify({
         id: hubId, apiBase: "/api/v1", runtimeAdapter: "process", sequencesRoot: join(ownership.tempPath, "sequences"),
-        verser2: { enabled: true, hostUrl: `https://127.0.0.1:${mmPort}`, broker: { peerId: `${hubId}.broker`, targetDomain: routeDomain }, guest: { peerId: `${hubId}.guest`, routeDomain: hubRouteDomain }, tls: { caFile: pki.ca }, controlIngress: { enabled: false } }
+        verser2: { enabled: true, hostUrl: `https://127.0.0.1:${mmPort}`, broker: { peerId: `${hubId}.broker`, targetDomain: routeDomain }, guest: { peerId: `${hubId}.guest`, routeDomain: hubRouteDomain }, tls: { caFile: pki.ca }, runnerHost: { localBroker: { peerId: `sth.${hubId}.${spaceId}.runner.broker` } }, controlIngress: { enabled: false } }
     }));
     const child = spawn(process.execPath, [resolveBddBin("@scramjet/multi-manager", "multi-manager"), "--config", mmConfigPath], { detached: true, stdio: ["ignore", "pipe", "pipe"], env: { ...process.env, NODE_OPTIONS: "--max-old-space-size=512" } });
     memoryRegistry.trackChildProcess(child, `native-control-plane:${ownership.owner}`);
