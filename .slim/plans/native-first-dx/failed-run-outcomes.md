@@ -146,3 +146,8 @@ The `2.2.0` release signals below refer to release commit `abcc477b8`. Each item
 1. **What happens / current code behavior / what's wrong:** The Guest waiting-stream minimum and STH upstream-pool bound could be conflated with a Guest maximum; the actual defaults and presence of an explicit cap remain to be checked.
 2. **What should happen:** The configured limits have their documented, distinct effects on admitted Guest streams and upstream request capacity; no cap is claimed without observing one.
 3. **Initial code points and minimal targeted test(s) to verify:** `packages/config/src/sth/default-config.ts`, `packages/host/src/lib/cpm-connector-leases.ts`; proposed focused defaults-and-boundary assertion for each distinct limit.
+
+### Gitleaks pre-push finding diagnostics
+1. **What happens / current code behavior / what's wrong:** The pre-push hook suppresses Gitleaks output and reports only the blocked ref, not the offending file, line, rule, or commit. Diagnosing a finding requires running the scanner separately, with a risk of printing secret material.
+2. **What should happen:** A blocked push identifies each finding's file, line, rule, and commit without printing the matched value, key, token, or surrounding secret-bearing text; scanner failures remain distinguishable from findings.
+3. **Initial code points and minimal targeted test(s) to verify:** `.githooks/pre-push`, `scripts/security/pre-push.js`, existing `scripts/test/security-hooks.spec.js`; focused failing-scan assertions for safe finding metadata with secret values absent from hook output, plus a scanner-error assertion.
