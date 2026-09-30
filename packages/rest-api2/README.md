@@ -54,7 +54,7 @@ const instHealth = await inst.health.get();
 
 ## Stability
 
-This package is labeled **experimental** in the curated reference. Its type contracts inform both client and server implementations. The package does not include MCP (Model Context Protocol) features.
+This package is labeled **experimental** in the curated reference. Its type contracts inform both client and server implementations. MCP (Model Context Protocol) is an external integration outside this package's client and server contracts.
 
 ## See also
 
@@ -75,7 +75,7 @@ import { /* ... */ } from "@scramjet/rest-api2";
 
 ## Documentation
 
-See the [package docs](../../dist-docs/reference/typescript/rest-api2/README.md) for full documentation.
+See the [package docs](../../docs/reference/typescript/rest-api2/README.md) for full documentation.
 
 ---
 

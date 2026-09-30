@@ -16,7 +16,7 @@ import { /* ... */ } from "@scramjet/types";
 
 ## Documentation
 
-See the [package docs](../../dist-docs/reference/typescript/types-app-context/README.md) for full documentation.
+See the [package docs](../../docs/reference/typescript/types-app-context/README.md) for full documentation.
 
 ---
 

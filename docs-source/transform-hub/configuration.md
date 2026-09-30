@@ -79,15 +79,40 @@ Important configuration areas include:
 - runner-local verser2 host settings used by launched runtimes;
 - Manager-side mTLS requirements, configured on the Manager/MultiManager side where supported by the active command surface.
 
-For a remote MultiManager connection, export a semantic trusted bundle with
-`multi-manager native-bundle` and import it with `si config native import`. The
-bundle binds the endpoint, broker/ingress identity, route domain, CA fingerprint,
-and optional client credentials; do not set an unsupported
-`manager.connectionBundle` configuration key directly.
+Configure the Hub's native upstream connection in the `manager` configuration
+using `manager.connectionBundle` and `manager.binding`. The connection bundle
+is the semantic trusted bundle for the STH identity and trust; it is separate
+from the `si` client's bundle and identity. The binding selects the Hub's
+Manager-facing native identity and consists of:
+
+| `manager.binding` field | Meaning |
+|---|---|
+| `brokerId` | Broker identity; must exactly equal the broker ID in the trusted connection bundle. |
+| `guestPeerId` | Peer identity for the STH guest connection. |
+| `guestRouteDomain` | Route domain for that guest connection. |
+| `federationHost` | Federation host used for the Manager connection. |
+
+Supply the trusted bundle through the deployment's protected configuration or
+secret mechanism; do not put private keys or credentials in public config,
+examples, or logs. Generate/import the operator's separate semantic `si`
+bundle using `multi-manager native-bundle` and `si config native import`.
+That client bundle does not replace the STH's `manager.connectionBundle` or
+`manager.binding`.
+
+The native configuration fails closed when it conflicts with legacy CPM
+settings or competing upstream native overrides. Remove those overlapping
+settings rather than relying on precedence. CPM remains a compatibility path,
+not an alternate way to configure the native STH Manager binding.
 
 ### Local port topology
 
-Manager and MultiManager primary native control ingress uses `2443`. The STH local native API is enabled with `--verser2-api-port` and is loopback-only. The Hub's local runner Host uses `2445` by default. `2444`/`2446` are optional control or direct-Hub compatibility listeners. The HTTP/v1 API on `8000` and the runner listener on `8001` are not client-facing native endpoints.
+Manager and MultiManager primary native control ingress uses `2443`. In the
+native Compose topology, publish only `127.0.0.1:2443:2443` to the client;
+other STH listeners remain private. The STH local native API is enabled with
+`--verser2-api-port` and is loopback-only. The Hub's local runner Host uses
+`2445` by default. `2444`/`2446` are optional control or direct-Hub
+compatibility listeners. The HTTP/v1 API on `8000` and the runner listener on
+`8001` are not client-facing native endpoints.
 
 In production, verser2 connectivity requires TLS. mTLS is configurable for additional mutual authentication. The authoritative option descriptors and environment mappings live in `packages/config/src/verser2-config.ts`, and the effective config schema is emitted under `schemas/`.
 

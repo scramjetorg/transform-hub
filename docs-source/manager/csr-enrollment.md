@@ -10,6 +10,17 @@ title: Controlled CSR enrollment
 
 CSR enrollment provisions a Hub client certificate from a Manager-held CA after a local operator explicitly approves a Hub-generated CSR. It is disabled by default and should be enabled only long enough to provision the required identities.
 
+The issued Hub certificate is the STH's client identity; it is not the
+operator's `si` client identity, nor the Manager's server identity. Issue and
+authorize a separate identity for each client role, and distribute the CA
+trust bundle to each through an authenticated deployment channel. Semantic
+`si` connection bundles configure the CLI profile only. Configure the STH
+upstream separately with `manager.connectionBundle` and
+`manager.binding` (`brokerId`, `guestPeerId`, `guestRouteDomain`, and
+`federationHost`); the broker ID must exactly match the STH bundle. Conflicting
+CPM settings or upstream native overrides fail closed. See
+[Transform Hub configuration](../transform-hub/configuration.md) for details.
+
 ## Public surfaces
 
 The helper is exported by the `@scramjet/host`, `@scramjet/manager`, `@scramjet/runtime-types`, and `@scramjet/config` packages.

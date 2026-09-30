@@ -35,7 +35,7 @@ This package is **stable**. The Manager API is part of the public runtime contra
 
 ## Configuration
 
-The standalone Manager uses defaults from `@scramjet/config` and Manager types from `@scramjet/types`. File and CLI configuration loading is available through newer `@scramjet/config` command surfaces and the MultiManager package where implemented.
+The standalone Manager uses defaults from `@scramjet/config` and the current Manager configuration contracts. File and CLI configuration loading is available through newer `@scramjet/config` command surfaces and the MultiManager package where implemented; do not use deprecated `@scramjet/types` imports for new code.
 
 Manager-side verser2 TLS/mTLS settings are documented in the Manager and Hub connection guides. Do not assume Hub-side flags are also Manager-side flags.
 

@@ -50,7 +50,7 @@ sth --cpm-id production-node-1 \
   --verser2-host-url https://manager-host:2443
 ```
 
-The Hub sends a registration request on startup and uses the verser2 host URL for transport connectivity. This remains available for backwards compatibility only. For native onboarding, export a trusted bundle with `multi-manager native-bundle` and import it with `si config native import`; do not configure the unsupported `manager.connectionBundle` key directly.
+The Hub sends a registration request on startup and uses the verser2 host URL for transport connectivity. This remains available for backwards compatibility only. For native onboarding, configure the STH's upstream connection with `manager.connectionBundle` and `manager.binding` as described in [Transform Hub configuration](../transform-hub/configuration.md). The STH bundle and issued identity are distinct from the operator's `si` trusted bundle and client identity; importing the latter with `si config native import` configures the CLI only. `manager.binding.brokerId` must exactly match the broker ID in the STH trusted bundle. Native configuration rejects conflicting CPM settings and competing upstream native overrides rather than selecting a precedence.
 
 ## Manual registration
 

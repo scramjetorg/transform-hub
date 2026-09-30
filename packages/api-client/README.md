@@ -50,7 +50,7 @@ import { /* ... */ } from "@scramjet/api-client";
 
 ## Documentation
 
-See the [package docs](../../dist-docs/reference/typescript/api-client/README.md) for full documentation.
+See the [package docs](../../docs/reference/typescript/api-client/README.md) for full documentation.
 
 ---
 

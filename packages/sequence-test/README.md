@@ -17,6 +17,12 @@ Supported public exports for AppContext fixture validation:
 
 See the generated package docs for detailed usage and examples.
 
+## Memory-aware capture cleanup
+
+`@scramjet/sequence-test` captures retain output chunks and monitoring frames for assertions. Use `clear()` on output, log, and monitoring captures, or `createSequenceTest().close()`, to release retained references before AVA memory guard measurement. `Buffer.concat` remains fine for assertions as long as retained chunks are cleared before final measurement.
+
+`createSequenceAssertions({ monitoring }).memoryWithinLimit({ threshold })` is an opt-in assertion for runner/process monitoring-frame memory values (`memoryUsage`, `memoryMaxUsage`). These values describe child runner/process memory, not the AVA parent test heap.
+
 ## Install
 
 ```bash
@@ -31,7 +37,7 @@ import { /* ... */ } from "@scramjet/sequence-test";
 
 ## Documentation
 
-See the [package docs](../../dist-docs/reference/typescript/sequence-test/README.md) for full documentation.
+See the [package docs](../../docs/reference/typescript/sequence-test/README.md) for full documentation.
 
 ---
 

@@ -11,7 +11,7 @@ title: Run a Manager and Hubs with Docker Compose
 
 Work in progress — this guide has been manually verified only. Automated verification is not yet available.
 
-Use this guide when you have a Docker Compose topology that starts a Manager and one or more connected STH/Hubs. Manager-level CLI routing and Hub discovery are not available in this open topology — those capabilities are deferred to the Enterprise Version.
+Use this guide for a native API/v2 Docker Compose topology that starts a Manager and one or more connected STH/Hubs. The native client-facing ingress is the Manager/MultiManager TLS endpoint on port `2443`; all STH listeners stay private to the Compose network. The example is a topology template, not a shipped stack or guarantee of automatic configuration.
 
 This is not a new Compose stack. You must supply or adapt the Compose file and the Manager/Hub configuration that you have manually verified for your environment. The checked-in BDD Compose fixture at `scripts/test/fixtures/compose-live/compose.yaml` starts a Hub only. It does not provide a Manager service or a host-published Manager API, so it is not sufficient for this guide by itself.
 
@@ -22,13 +22,63 @@ Before relying on this workflow, manually verify the rendered Compose configurat
 Your Compose file must define all of the following:
 
 - A Manager/control service with a host-published control port when you need host access to it.
-- One or more STH/Hub services configured with an externally supplied CPM URL and CPM ID.
+- One or more STH/Hub services with distinct issued STH identities and explicit native upstream binding configuration.
 - A shared Docker network or another verified network path that lets every Hub reach its Manager endpoint.
-- Any configuration files, certificates, storage mounts, images, and environment variables required by the Manager and Hubs.
+- Trusted CA bundles and separately issued client identities for the STH and the `si` client, plus configuration files, storage mounts, images, and environment variables required by the Manager and Hubs.
 
 The names, ports, API base path, TLS settings, and service names below depend on your topology. Do not copy an example value until it matches the configuration you are starting. For the connection model, see [Connecting Hubs](connecting-hubs.md) and [Transform Hub configuration](../transform-hub/configuration.md).
 
-## Illustrative topology template
+## Native Compose topology
+
+The only host-published client-facing port is `127.0.0.1:2443:2443`. Do not
+publish an STH API, runner, local Host, or compatibility listener. Keep the
+Manager's primary native control ingress on the shared private network as well
+as loopback; bind its container listener to the container network interface.
+Configure the STH local native API with `--verser2-api-port` as appropriate,
+but do not publish it: it is a loopback-only local ingress.
+
+Provision two different client identities: one issued for the STH/Hub
+connection and one issued for the operator's `si` client. Do not reuse either
+identity or the Manager server identity. Distribute the trusted CA bundle to
+both clients through an authenticated secret/configuration channel. Configure
+the STH's semantic trusted bundle with `manager.connectionBundle` and its
+binding with `manager.binding` containing `brokerId`, `guestPeerId`,
+`guestRouteDomain`, and `federationHost`. The binding's `brokerId` must exactly
+match the broker ID in that STH bundle. Configure the CLI independently by
+exporting its semantic bundle with `multi-manager native-bundle` and importing
+it with `si config native import`; never reuse the STH identity/bundle as the
+CLI identity/bundle. Conflicting CPM settings and competing upstream native
+overrides fail closed; remove them rather than depending on precedence. See
+[Transform Hub configuration](../transform-hub/configuration.md) for the
+binding details. Keep secret values out of Compose source and logs.
+
+After starting the services, verify the native path with the installed typed
+RPC client contract (`hubClient().instance(id).rpc(contract).call(...)`) and
+confirm the response satisfies the declared result type. A successful TCP
+connection or container healthcheck alone is not proof of end-to-end routing.
+
+For exact native port roles and the semantic bundle shape, see the
+[native onboarding example](../examples/native-onboarding-poc.md).
+
+### Stop and clean up the native topology
+
+Stop services and remove orphan containers without deleting persisted
+identities, trust material, or sequence data:
+
+```sh
+docker compose -f compose.yaml down --remove-orphans
+```
+
+Use `--volumes` only when intentionally deleting named volumes and all data
+they contain. Confirm cleanup with `docker compose -f compose.yaml ps`.
+
+## Compatibility topology: CPM/HTTP and direct-Hub access
+
+The following legacy topology is retained for existing deployments only. CPM,
+port `8200`, HTTP/v1, and direct-Hub access are compatibility paths and are not
+the recommended native Compose configuration.
+
+### Illustrative compatibility template
 
 The following inline source illustrates the repository's MultiManager and STH command conventions. It is a topology template to adapt, not a claim that this repository ships this stack or its images.
 
@@ -150,7 +200,7 @@ networks:
 
 The source publishes only the optional Manager/control port on `127.0.0.1:8200`. Hub API, Sequence API, verser2, and Runner-host ports remain private to `manager-network`. Manually verify the CPM URL, certificate trust, identity storage, and Runner connectivity after adapting the source.
 
-## Start the topology
+## Start the compatibility topology
 
 Save the inline source as `compose.yaml` after adapting it, then start its fixed service names and ports.
 
@@ -183,7 +233,7 @@ docker compose -f "$COMPOSE_FILE" logs --tail=100 <hub-service-name>
 
 The Manager keeps the connected-Hub registry and routes control requests over each Hub's Manager connection. It does not execute the Sequence itself. See [Manager overview](overview.md) for the routing model and [Set up and run an installed Sequence](../sequences/setup-and-run.md) for the canonical package and run workflow.
 
-## Use the installed CLI
+## Use the installed CLI (compatibility)
 
 Manager-level CLI routing and Hub discovery are not available in this open topology — those capabilities are deferred to the Enterprise Version.
 
@@ -196,7 +246,7 @@ si config print
 
 Using a Hub endpoint directly bypasses Manager-level CLI routing. The `si` operations that follow are directed to that specific Hub only.
 
-## Deploy and control an Instance
+## Deploy and control an Instance (compatibility)
 
 Package a Sequence according to the [canonical installed Sequence run guide](../sequences/setup-and-run.md), then deploy it through the Hub endpoint that `si` is configured to target. Save the returned Instance ID for later commands.
 
