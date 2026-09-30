@@ -2,7 +2,7 @@
 
 ## Status
 
-Executing. Phase 8 is active; its final evidence and reconciliation are still pending. This status is not a claim that validation has passed or that the plan is complete.
+Paused after an incomplete Phase 8 run; final evidence and reconciliation are still pending. See the [failed-run findings](failed-run-outcomes.md).
 
 ## Objective
 
@@ -140,6 +140,7 @@ Phase 8 owns final fixes/coverage and final evidence/reconciliation for this pla
 ## Research record
 
 - `draft.md` contains the non-executable research synthesis and source references.
+- `failed-run-outcomes.md` records the verified 2.2.0 baseline, issues encountered during the attempt, and missing final evidence.
 - Oracle advisory shaped the onboarding contract and phase envelope on 2026-09-22. Materialized-plan review findings were resolved by defining native profile selection/no-fallback semantics, baseline bundle safety, Phase 0 stop/rescope criteria, Compose/Kubernetes evidence boundaries, per-runtime proof commands, and narrower phase ownership.
 
 ## Phase index
