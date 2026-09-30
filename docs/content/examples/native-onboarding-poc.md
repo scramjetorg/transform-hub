@@ -23,11 +23,11 @@ workflow.
 ```sh
 mkdir native-demo && cd native-demo
 npm init -y
-npm install --save @scramjet/sth@^2.2.0 @scramjet/cli@^2.2.0 @scramjet/rest-api2@^2.2.0
+npm install --save @scramjet/sth@^2.2.1-devel @scramjet/cli@^2.2.1-devel @scramjet/rest-api2@^2.2.1-devel
 npx si --help
 ```
 
-The `^2.2.0` range in this example is derived from the repository release
+The `^2.2.1-devel` range in this example is derived from the repository release
 version. Keep the package versions aligned; do not mix a v2 CLI with an older
 Hub or adapter contract.
 
@@ -96,11 +96,14 @@ it or paste private keys into shell history. Its shape is:
 
 Export a bundle from the MultiManager and import that artifact with the native
 configuration command. The export includes the CA trust and, for mTLS, the
-operator-issued client identity; keep the resulting file outside the project:
+operator-issued client identity; keep the resulting file outside the project.
+Use the broker peer ID from the issued `si` registration (shown here as
+`development-si.broker`):
 
 ```sh
 npx multi-manager native-bundle --config ./multimanager.json \
   --profile-name development-space --space development --hub local-hub \
+  --broker-id development-si.broker --principal si \
   --client-cert-file /run/secrets/client.pem \
   --client-key-file /run/secrets/client-key.pem --format json \
   > ./connection-bundle.json
@@ -228,16 +231,16 @@ request/response operation, not a durable queue.
 
 The Process Adapter runs the selected runtime on the Hub host. Docker and
 Kubernetes require the matching runner images; these are the actual defaults
-for release `2.2.0` and must be kept in lockstep with the package version:
+for release `2.2.1-devel` and must be kept in lockstep with the package version:
 
 ```yaml
 docker:
   runnerImages:
-    node: scramjetorg/runner:2.2.0
-    python3: scramjetorg/runner-py:2.2.0
-    bun: scramjetorg/runner-bun:2.2.0
+    node: scramjetorg/runner:2.2.1-devel
+    python3: scramjetorg/runner-py:2.2.1-devel
+    bun: scramjetorg/runner-bun:2.2.1-devel
   prerunner:
-    image: scramjetorg/pre-runner:2.2.0
+    image: scramjetorg/pre-runner:2.2.1-devel
 ```
 
 This example does not build a Compose topology or claim Kubernetes
