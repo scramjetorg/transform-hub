@@ -89,6 +89,26 @@ test("semantic Manager binding maps exact upstream fields independently of bundl
     t.is(result.verser2.hostUrl, bundle.publicEndpoint.url);
 });
 
+test("semantic Manager binding preserves a local runner Host and still enforces its exact federation Host binding", t => {
+    const config = JSON.parse(JSON.stringify(sthDefaultConfig)) as any;
+    const expectedHost = "sth.hub-a.space-a.runner.broker.host";
+    config.manager = { connectionBundle: bundle, binding: { brokerId: "broker", guestPeerId: "guest", guestRouteDomain: "guest.route", federationHost: expectedHost } };
+    config.verser2.runnerHost.localBroker.peerId = "sth.hub-a.space-a.runner.broker";
+    config.verser2.runnerHost.identityDir = "/scenario/local-runner-identity";
+    const result = applyManagerConnectionBundle(config, JSON.parse(JSON.stringify(sthDefaultConfig.verser2)), expectedHost);
+
+    t.deepEqual(result.verser2.runnerHost, config.verser2.runnerHost);
+    t.is(result.verser2.broker.peerId, "broker");
+    t.throws(() => applyManagerConnectionBundle(config, JSON.parse(JSON.stringify(sthDefaultConfig.verser2)), "sth.other.space-a.runner.broker.host"), { message: /federationHost/ });
+
+    const controlIngressConflict = JSON.parse(JSON.stringify(config));
+    controlIngressConflict.verser2.controlIngress.enabled = true;
+    t.throws(() => applyManagerConnectionBundle(controlIngressConflict, JSON.parse(JSON.stringify(sthDefaultConfig.verser2)), expectedHost), { message: /upstream verser2 setting: controlIngress/ });
+    const leasesConflict = JSON.parse(JSON.stringify(config));
+    leasesConflict.verser2.leases.minimumWaitingLeases++;
+    t.throws(() => applyManagerConnectionBundle(leasesConflict, JSON.parse(JSON.stringify(sthDefaultConfig.verser2)), expectedHost), { message: /upstream verser2 setting: leases/ });
+});
+
 test("semantic Manager binding fails closed for missing/mismatched bindings and legacy values", t => {
     const base = () => {
         const config = JSON.parse(JSON.stringify(sthDefaultConfig)) as any;

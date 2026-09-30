@@ -2,6 +2,7 @@ import { Given, Then, When } from "@cucumber/cucumber";
 import { strict as assert } from "assert";
 import { runNativeBootstrap, type NativeBootstrapResult } from "../../lib/native-bootstrap-fixture";
 import { CustomWorld } from "../world";
+import { runNoMtlsNativeBootstrap, type NoMtlsBootstrapResult } from "../../lib/native-bootstrap-no-mtls-fixture";
 
 function result(world: CustomWorld): NativeBootstrapResult { const value = world.resources.nativeBootstrap as NativeBootstrapResult | undefined; assert.ok(value, "Native bootstrap fixture has not run"); return value; }
 
@@ -24,3 +25,14 @@ Then("the private registration stage chain completes in local process order and 
 });
 Then("the legacy apiUrl and middlewareApiUrl canaries have received zero requests", function(this: CustomWorld) { assert.equal(result(this).legacyRequests, 0); });
 Then("cloned native bundles report CA exit 51, route exit 55, and identity exit 56", function(this: CustomWorld) { assert.deepEqual(result(this).negatives, { ca: 51, route: 55, identity: 56 }); });
+
+function noMtlsResult(world: CustomWorld): NoMtlsBootstrapResult { const value = world.resources.nativeBootstrapNoMtls as NoMtlsBootstrapResult | undefined; assert.ok(value, "Name-only no-mTLS fixture has not run"); return value; }
+Given("a real published name-only no-mTLS native bootstrap fixture with scenario-owned ports", async function(this: CustomWorld) { this.resources.nativeBootstrapNoMtls = await runNoMtlsNativeBootstrap(this); });
+When("the name-only native bundle is imported and the STH is queried through its named Hub route", function(this: CustomWorld) { assert.match(noMtlsResult(this).hubInfo, /hub-a/); });
+Then("the name-only STH is registered with the exact active guest route and federation Host binding", function(this: CustomWorld) {
+    const proof = noMtlsResult(this);
+    assert.equal(proof.hub, "hub-a"); assert.equal(proof.guestRoute, "sth.hub-a.space-a.scramjet.internal"); assert.equal(proof.federationHost, "sth.hub-a.space-a.runner.broker.host");
+});
+Then("the public SI private-registration probe returns 404 without changing Manager inventory", function(this: CustomWorld) { assert.deepEqual({ status: noMtlsResult(this).privateStatus, unchanged: noMtlsResult(this).inventoryUnchanged }, { status: 404, unchanged: true }); });
+Then("an active duplicate name-only STH registration is refused while the first STH remains usable", function(this: CustomWorld) { assert.ok(noMtlsResult(this).duplicateRejected); assert.ok(noMtlsResult(this).firstUsable); });
+Then("the name-only fixture legacy API canaries have received zero requests", function(this: CustomWorld) { assert.equal(noMtlsResult(this).legacyRequests, 0); });

@@ -63,3 +63,12 @@ Feature: Control-plane admission and enrollment
     And the private registration stage chain completes in local process order and the public SI route stays isolated
     And the legacy apiUrl and middlewareApiUrl canaries have received zero requests
     And cloned native bundles report CA exit 51, route exit 55, and identity exit 56
+
+  @native-bootstrap-no-mtls
+  Scenario: A reachable peer self-asserts name-only STH admission without client authentication
+    Given a real published name-only no-mTLS native bootstrap fixture with scenario-owned ports
+    When the name-only native bundle is imported and the STH is queried through its named Hub route
+    Then the name-only STH is registered with the exact active guest route and federation Host binding
+    And the public SI private-registration probe returns 404 without changing Manager inventory
+    And an active duplicate name-only STH registration is refused while the first STH remains usable
+    And the name-only fixture legacy API canaries have received zero requests

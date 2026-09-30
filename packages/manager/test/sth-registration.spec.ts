@@ -16,9 +16,16 @@ test("registration normalizes an absent body and rejects malformed payloads", (t
 });
 
 test("body-supplied certificate and federation identity evidence is rejected", (t) => {
-    for (const field of ["clientCertificateFingerprint256", "peerCertificateFingerprint256", "peerCertificateHubId", "authorizationContext"]) {
+    for (const field of ["clientCertificateFingerprint256", "peerCertificateFingerprint256", "peerCertificateHubId", "authorizationContext", "privateAdmission", "federationHostId"]) {
         t.throws(() => normalizeSthRegistrationPayload({ id: "hub-a", [field]: "forged" }), { instanceOf: Error });
     }
+});
+
+test("trusted private admission is passed separately to Manager", async t => {
+    const privateAdmission = { kind: "issued-mtls", principal: "sth:realm:space:hub", claim: { realm: "realm", space: "space", hub: "hub", federationHost: "host", broker: "broker", guestRoute: "route" } } as const;
+    let receivedArgs: unknown[] = [];
+    await registerSth({ handleSthRegistration: async (...args: unknown[]) => { receivedArgs = args; return "hub"; } } as any, { id: "hub" }, { privateAdmission });
+    t.is(receivedArgs[4], privateAdmission);
 });
 
 test("trusted transport evidence is passed separately from registration JSON", async (t) => {
@@ -26,5 +33,16 @@ test("trusted transport evidence is passed separately from registration JSON", a
     let receivedArgs: unknown[] = [];
     await registerSth({ handleSthRegistration: async (...args: unknown[]) => { receivedArgs = args; return "hub-a"; } } as any, { id: "hub-a" }, evidence);
 
-    t.deepEqual(receivedArgs, [{ id: "hub-a" }, "fingerprint", "hub-a", undefined]);
+    t.deepEqual(receivedArgs, [{ id: "hub-a" }, "fingerprint", "hub-a", undefined, undefined, "private-v2"]);
+});
+
+test("registration forwards explicit public v1 origin independently of body evidence", async t => {
+    let receivedArgs: unknown[] = [];
+    await registerSth({ handleSthRegistration: async (...args: unknown[]) => { receivedArgs = args; return "hub-a"; } } as any,
+        { id: "hub-a" }, {}, "public-v1");
+    t.is(receivedArgs[5], "public-v1");
+});
+
+test("registration origin supplied in JSON is ignored rather than trusted", t => {
+    t.deepEqual(normalizeSthRegistrationPayload({ id: "hub-a", registrationOrigin: "public-v1" }), { id: "hub-a" });
 });

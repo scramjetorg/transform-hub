@@ -7,6 +7,7 @@ import { CPMMessageCode, InstanceStatus, SequenceMessageCode } from "@scramjet/s
 
 import { Manager } from "../src/lib/manager";
 import { STHController } from "../src/lib/sth-controller";
+import { registerSth } from "../src/lib/api/sth-registration";
 
 function makeManager(): Manager {
     const manager = new Manager({ id: "test-manager", logLevel: "error" } as any);
@@ -694,5 +695,229 @@ test.serial("Manager route-change listener cleans up on degraded when route is n
         const hubInventoryState = (manager as any).hubInventoryState as Map<string, { sequencesReceived: boolean; instancesReceived: boolean }>;
 
         t.false(hubInventoryState.has("route-hub-deg-cleanup"), "Hub inventory state should be cleared on degraded when route not ready");
+    });
+});
+
+function makeNamedManager(mode: "named-no-mtls" | "issued-mtls" = "named-no-mtls"): Manager {
+    const manager = new Manager({ id: "test-space", logLevel: "error" } as any, { nativeSthAdmissionMode: mode, secureFederationEnrollmentRequired: mode === "issued-mtls" });
+    manager.setSthBrokerTransport({ isRouteReady: () => true, waitForRoute: async () => undefined } as any);
+    return manager;
+}
+
+function reserveNamed(manager: Manager, hubId: string) {
+    return manager.reserveNamedSth("test-space", hubId,
+        `sth.${hubId}.test-space.runner.broker.host`, `sth.${hubId}.test-space.scramjet.internal`);
+}
+
+async function registerNamed(manager: Manager, reservation: ReturnType<typeof reserveNamed>): Promise<string> {
+    return manager.handleSthRegistration({ id: reservation.hubId, routeDomain: reservation.guestRoute }, undefined, undefined, undefined,
+        { kind: "named-no-mtls", reservation }, "private-v2");
+}
+
+async function registerPublicV1(manager: Manager, id: string, routeDomain: string, evidence: Record<string, unknown> = {}) {
+    return registerSth(manager, { id, routeDomain }, evidence, "public-v1");
+}
+
+test.serial("named STH reservation atomically rejects pending and active hub-name collisions", async t => {
+    const manager = makeNamedManager();
+    const pending = reserveNamed(manager, "hub-collision");
+    t.throws(() => reserveNamed(manager, "hub-collision"), { instanceOf: Error });
+    await withPatchedInit(async function patchedInit(this: STHController) { this.logStream = new PassThrough(); }, async () => {
+        await registerNamed(manager, pending);
+        t.throws(() => reserveNamed(manager, "hub-collision"), { instanceOf: Error });
+    });
+});
+
+test.serial("named reservation releases after controller initialization failure", async t => {
+    const manager = makeNamedManager();
+    const reservation = reserveNamed(manager, "hub-failure");
+    let released = 0;
+    reservation.onRelease(() => released++);
+    await withPatchedInit(async function patchedInit() { throw new Error("named init failed"); }, async () => {
+        await t.throwsAsync(registerNamed(manager, reservation), { message: "named init failed" });
+    });
+    t.is(released, 1);
+    const retry = reserveNamed(manager, "hub-failure");
+    t.truthy(retry);
+    (manager as any).releaseNamedSthReservation(retry);
+});
+
+test.serial("named reservation releases on disconnect and stale controller disconnect cannot release its replacement", async t => {
+    const manager = makeNamedManager();
+    let routeReady = true;
+    manager.setSthBrokerTransport({ isRouteReady: () => routeReady, waitForRoute: async () => undefined } as any);
+    let initCount = 0;
+    await withPatchedInit(async function patchedInit(this: STHController) { initCount++; this.logStream = new PassThrough(); }, async () => {
+        const firstReservation = reserveNamed(manager, "hub-disconnect");
+        await registerNamed(manager, firstReservation);
+        const store = (manager as any).sthConnectionStore;
+        const oldController = store.getById("hub-disconnect");
+        routeReady = false;
+        oldController.emit("disconnected");
+        const replacementReservation = reserveNamed(manager, "hub-disconnect");
+        await registerNamed(manager, replacementReservation);
+        const currentController = store.getById("hub-disconnect");
+        t.not(oldController, currentController);
+        oldController.emit("disconnected");
+        t.throws(() => reserveNamed(manager, "hub-disconnect"), { instanceOf: Error });
+    });
+    t.is(initCount, 2);
+});
+
+test.serial("issued-mTLS Manager rejects certificate-free named admission and releases the reservation", async t => {
+    const manager = makeNamedManager("issued-mtls");
+    const reservation = reserveNamed(manager, "hub-mtls-denied");
+    let released = false;
+    reservation.onRelease(() => { released = true; });
+    await t.throwsAsync(registerNamed(manager, reservation), { instanceOf: Error });
+    t.true(released);
+    const retry = reserveNamed(manager, "hub-mtls-denied");
+    t.truthy(retry);
+    (manager as any).releaseNamedSthReservation(retry);
+});
+
+test.serial("managed named mode admits only exact qualified public-v1 names and rejects pending or active duplicates", async t => {
+    const manager = makeNamedManager();
+    const id = "hub-v1-named";
+    const route = `sth.${id}.test-space.scramjet.internal`;
+    for (const invalid of [
+        { id: "unqualified", routeDomain: "sth.unqualified.scramjet.internal" },
+        { id, routeDomain: "sth.other.test-space.scramjet.internal" },
+        { id, routeDomain: ` ${route}` }
+    ]) {
+        await t.throwsAsync(registerPublicV1(manager, invalid.id, invalid.routeDomain), { instanceOf: Error });
+    }
+    await t.throwsAsync(registerSth(manager, { id, routeDomain: route }, { privateAdmission: { kind: "named-no-mtls" } as any }, "public-v1"), { instanceOf: Error });
+    const pending = reserveNamed(manager, id);
+    await t.throwsAsync(registerPublicV1(manager, id, route), { instanceOf: Error });
+    (manager as any).releaseNamedSthReservation(pending);
+
+    await withPatchedInit(async function patchedInit(this: STHController) { this.logStream = new PassThrough(); }, async () => {
+        const result = await registerPublicV1(manager, id, route);
+        t.deepEqual(result, { id, opStatus: "Accepted" });
+        await t.throwsAsync(registerPublicV1(manager, id, route), { instanceOf: Error });
+    });
+});
+
+test.serial("managed mTLS mode refuses the public v1 shim before registration, even with peer certificate evidence", async t => {
+    const manager = makeNamedManager("issued-mtls");
+    await t.throwsAsync(registerPublicV1(manager, "hub-v1-mtls", "sth.hub-v1-mtls.test-space.scramjet.internal", {
+        peerCertificateFingerprint256: "presented-fingerprint",
+        peerCertificateHubId: "hub-v1-mtls"
+    }), { instanceOf: Error });
+    t.deepEqual((manager as any).sthInfoRegister.getHubs(), []);
+    t.is((manager as any).sthConnectionStore.getById("hub-v1-mtls"), undefined);
+});
+
+test.serial("managed v1 reservation releases on failure and standalone legacy v1 keeps same-id replacement", async t => {
+    const managed = makeNamedManager();
+    const managedId = "hub-v1-failed";
+    const managedRoute = `sth.${managedId}.test-space.scramjet.internal`;
+    await withPatchedInit(async function patchedInit() { throw new Error("v1 named init failed"); }, async () => {
+        await t.throwsAsync(registerPublicV1(managed, managedId, managedRoute), { message: "v1 named init failed" });
+    });
+    const retry = reserveNamed(managed, managedId);
+    t.truthy(retry);
+    (managed as any).releaseNamedSthReservation(retry);
+
+    const legacy = makeManager();
+    let initCount = 0;
+    await withPatchedInit(async function patchedInit(this: STHController) { initCount++; this.logStream = new PassThrough(); }, async () => {
+        await registerPublicV1(legacy, "legacy-v1-hub", "legacy-v1-hub.route");
+        const first = (legacy as any).sthConnectionStore.getById("legacy-v1-hub");
+        await registerPublicV1(legacy, "legacy-v1-hub", "legacy-v1-hub.route");
+        const second = (legacy as any).sthConnectionStore.getById("legacy-v1-hub");
+        t.not(first, second);
+    });
+    t.is(initCount, 2);
+});
+
+test.serial("stale pending controller completion cannot overwrite a newer named reservation registration", async t => {
+    const manager = makeNamedManager();
+    let finishFirst!: () => void;
+    let enteredFirst!: () => void;
+    const firstEntered = new Promise<void>(resolve => { enteredFirst = resolve; });
+    let initCount = 0;
+
+    await withPatchedInit(async function patchedInit(this: STHController) {
+        initCount++;
+        this.logStream = new PassThrough();
+        if (initCount === 1) {
+            enteredFirst();
+            await new Promise<void>(resolve => { finishFirst = resolve; });
+            this.emit("sequence", makeSequence("stale-late-sequence"));
+            return;
+        }
+        this.emit("sequence", makeSequence("replacement-sequence"));
+        this.emit("sequences", [] as any);
+        this.emit("instances", [] as any);
+    }, async () => {
+        const firstReservation = reserveNamed(manager, "hub-init-race");
+        const firstRegistration = registerNamed(manager, firstReservation);
+        await firstEntered;
+        const store = (manager as any).sthConnectionStore;
+        const staleController = store.getById("hub-init-race");
+        staleController.emit("disconnected");
+
+        const replacementReservation = reserveNamed(manager, "hub-init-race");
+        await registerNamed(manager, replacementReservation);
+        const replacementController = store.getById("hub-init-race");
+        t.not(staleController, replacementController);
+        finishFirst();
+        await t.throwsAsync(firstRegistration, { instanceOf: Error });
+
+        t.is(store.getById("hub-init-race"), replacementController);
+        t.deepEqual((manager as any).sthInfoRegister.getSequences().map((sequence: any) => sequence.id), ["replacement-sequence"]);
+        t.throws(() => reserveNamed(manager, "hub-init-race"), { instanceOf: Error });
+    });
+});
+
+test.serial("expired named route waiter cannot replace a newer reservation while its controller init is pending", async t => {
+    const manager = makeNamedManager();
+    const routeWaiters: Array<() => void> = [];
+    manager.setSthBrokerTransport({
+        isRouteReady: () => true,
+        waitForRoute: async () => await new Promise<void>(resolve => routeWaiters.push(resolve))
+    } as any);
+    let finishReplacementInit!: () => void;
+    let replacementInitEntered!: () => void;
+    const replacementEntered = new Promise<void>(resolve => { replacementInitEntered = resolve; });
+    let initCount = 0;
+
+    await withPatchedInit(async function patchedInit(this: STHController) {
+        initCount++;
+        this.logStream = new PassThrough();
+        this.emit("sequence", makeSequence("route-wait-replacement-sequence"));
+        this.emit("sequences", [] as any);
+        this.emit("instances", [] as any);
+        replacementInitEntered();
+        await new Promise<void>(resolve => { finishReplacementInit = resolve; });
+    }, async () => {
+        const staleReservation = reserveNamed(manager, "hub-route-wait-race");
+        const staleRegistration = registerNamed(manager, staleReservation);
+        while (routeWaiters.length < 1) await new Promise<void>(resolve => setImmediate(resolve));
+
+        (manager as any).releaseNamedSthReservation(staleReservation);
+        const currentReservation = reserveNamed(manager, "hub-route-wait-race");
+        const currentRegistration = registerNamed(manager, currentReservation);
+        while (routeWaiters.length < 2) await new Promise<void>(resolve => setImmediate(resolve));
+
+        routeWaiters[1]();
+        await replacementEntered;
+        const store = (manager as any).sthConnectionStore;
+        const replacementController = store.getById("hub-route-wait-race");
+        t.truthy(replacementController);
+
+        routeWaiters[0]();
+        await t.throwsAsync(staleRegistration, { instanceOf: Error });
+        t.is(store.getById("hub-route-wait-race"), replacementController);
+        t.is((manager as any).namedSthReservations.get("hub-route-wait-race"), currentReservation);
+        t.deepEqual((manager as any).sthInfoRegister.getSequences().map((sequence: any) => sequence.id), ["route-wait-replacement-sequence"]);
+
+        finishReplacementInit();
+        await currentRegistration;
+        t.is(store.getById("hub-route-wait-race"), replacementController);
+        t.true(replacementController.isConnectionActive);
+        t.is(initCount, 1);
     });
 });

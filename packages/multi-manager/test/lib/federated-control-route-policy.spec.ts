@@ -75,3 +75,34 @@ test("route policy removes Manager-observed STH routes on disconnect independent
     policy.removeManager("space-a");
     t.deepEqual(policy.authorize({ previousAdvertisedDomain: "host-a", nextSelectedDomain: "manager-a" }), denied);
 });
+
+test("named federation Host grant allows only its owner Manager ingress and release revokes it", t => {
+    const policy = new FederatedControlRoutePolicy();
+    policy.registerManager("space-a", "manager-a.local", "egress-a.local");
+    policy.registerManager("space-b", "manager-b.local", "egress-b.local");
+    const federationHost = "sth.hub-a.space-a.runner.broker.host";
+    const guestRoute = "sth.hub-a.space-a.scramjet.internal";
+    const release = policy.registerNamedSthHost("space-a", "hub-a", federationHost, guestRoute);
+
+    t.deepEqual(policy.authorize({ previousAdvertisedDomain: federationHost, nextSelectedDomain: "MANAGER-A.LOCAL" }), allowed);
+    t.deepEqual(policy.authorize({ previousAdvertisedDomain: federationHost, nextSelectedDomain: "manager-b.local" }), denied);
+    t.deepEqual(policy.authorize({ previousAdvertisedDomain: "sth.other.space-a.runner.broker.host", nextSelectedDomain: "manager-a.local" }), denied);
+    t.deepEqual(policy.authorize({ previousAdvertisedDomain: federationHost, nextSelectedDomain: guestRoute }), denied);
+    t.deepEqual(policy.authorize({ previousAdvertisedDomain: federationHost, nextSelectedDomain: "runner.hub-a.space-a.host" }), denied);
+    release();
+    t.deepEqual(policy.authorize({ previousAdvertisedDomain: federationHost, nextSelectedDomain: "manager-a.local" }), denied);
+});
+
+test("named Host grant disposer cannot remove a replacement grant for the same hub", t => {
+    const policy = new FederatedControlRoutePolicy();
+    policy.registerManager("space-a", "manager-a.local", "egress-a.local");
+    const oldHost = "sth.old.space-a.runner.broker.host";
+    const currentHost = "sth.current.space-a.runner.broker.host";
+    const staleRelease = policy.registerNamedSthHost("space-a", "hub-a", oldHost, "sth.old.space-a.scramjet.internal");
+    const currentRelease = policy.registerNamedSthHost("space-a", "hub-a", currentHost, "sth.current.space-a.scramjet.internal");
+    staleRelease();
+    t.deepEqual(policy.authorize({ previousAdvertisedDomain: oldHost, nextSelectedDomain: "manager-a.local" }), denied);
+    t.deepEqual(policy.authorize({ previousAdvertisedDomain: currentHost, nextSelectedDomain: "manager-a.local" }), allowed);
+    currentRelease();
+    t.deepEqual(policy.authorize({ previousAdvertisedDomain: currentHost, nextSelectedDomain: "manager-a.local" }), denied);
+});

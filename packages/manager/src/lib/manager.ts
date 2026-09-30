@@ -68,7 +68,95 @@ const defaultLimit = 100;
 const defaultOffset = 0;
 
 type ManagerRequestLogger = Pick<IObjectLogger, "debug" | "error">;
-export type ManagerRuntimeOptions = { logApiServers?: boolean; secureFederationEnrollmentRequired?: boolean };
+export type NativeSthAdmissionMode = "issued-mtls" | "named-no-mtls";
+export type SthRegistrationOrigin = "private-v2" | "public-v1" | "legacy";
+export type SthFederationClaim = { realm: string; space: string; hub: string; federationHost: string; broker: string; guestRoute: string };
+export type NamedSthReservation = Readonly<{
+    spaceId: string;
+    hubId: string;
+    federationHostId: string;
+    guestRoute: string;
+    onRelease(listener: () => void): () => void;
+    /** Internal owner-checked lifecycle operations. */
+    _bind(owner: object, controller: object): boolean;
+    _release(owner: object, controller?: object): boolean;
+    _setExpiry(owner: object, timer: NodeJS.Timeout): boolean;
+    _isLive(owner: object): boolean;
+    _controller(owner: object): object | undefined;
+}>;
+export type PrivateSthAdmission =
+    | Readonly<{ kind: "issued-mtls"; principal: string; claim: Readonly<SthFederationClaim> }>
+    | Readonly<{ kind: "named-no-mtls"; reservation: NamedSthReservation }>;
+export type ManagerRuntimeOptions = { logApiServers?: boolean; secureFederationEnrollmentRequired?: boolean; nativeSthAdmissionMode?: NativeSthAdmissionMode };
+
+type NamedReservationState = { owner: object; released: boolean; controller?: object; timer?: NodeJS.Timeout; listeners: Set<() => void> };
+const namedReservationStates = new WeakMap<NamedSthReservation, NamedReservationState>();
+
+class NamedSthReservationImpl implements NamedSthReservation {
+    readonly spaceId: string;
+    readonly hubId: string;
+    readonly federationHostId: string;
+    readonly guestRoute: string;
+
+    constructor(spaceId: string, hubId: string, federationHostId: string, guestRoute: string, owner: object) {
+        this.spaceId = spaceId;
+        this.hubId = hubId;
+        this.federationHostId = federationHostId;
+        this.guestRoute = guestRoute;
+        namedReservationStates.set(this, { owner, released: false, listeners: new Set() });
+        Object.freeze(this);
+    }
+
+    onRelease(listener: () => void): () => void {
+        const state = namedReservationStates.get(this)!;
+        if (state.released) { listener(); return () => undefined; }
+        state.listeners.add(listener);
+        return () => state.listeners.delete(listener);
+    }
+
+    _bind(owner: object, controller: object): boolean {
+        const state = namedReservationStates.get(this)!;
+        if (state.owner !== owner || state.released) return false;
+        state.controller = controller;
+        if (state.timer) clearTimeout(state.timer);
+        state.timer = undefined;
+        return true;
+    }
+
+    _release(owner: object, controller?: object): boolean {
+        const state = namedReservationStates.get(this)!;
+        if (state.owner !== owner || state.released || (controller && state.controller !== controller)) return false;
+        state.released = true;
+        if (state.timer) clearTimeout(state.timer);
+        state.timer = undefined;
+        for (const listener of state.listeners) {
+            try { listener(); } catch { /* Release must remain terminal even when an observer fails. */ }
+        }
+        state.listeners.clear();
+        return true;
+    }
+
+    _setExpiry(owner: object, timer: NodeJS.Timeout): boolean {
+        const state = namedReservationStates.get(this)!;
+        if (state.owner !== owner || state.released || state.controller) return false;
+        state.timer = timer;
+        return true;
+    }
+
+    _isLive(owner: object): boolean {
+        const state = namedReservationStates.get(this)!;
+        return state.owner === owner && !state.released;
+    }
+
+    _controller(owner: object): object | undefined {
+        const state = namedReservationStates.get(this)!;
+        return state.owner === owner ? state.controller : undefined;
+    }
+}
+
+function isQualifiedNamedHubId(value: string): boolean {
+    return /^[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?$/.test(value);
+}
 
 function boundedText(value: unknown, limit = 8192): string | undefined {
     if (value === undefined || value === null) return undefined;
@@ -249,6 +337,12 @@ export class Manager implements IComponent {
     private controlIngressHost?: VerserHost;
     private controlIngressBroker?: { close(reason?: string): Promise<void> };
     private readonly secureFederationEnrollmentRequired: boolean;
+    private readonly nativeSthAdmissionMode?: NativeSthAdmissionMode;
+    private readonly namedSthReservationOwner = {};
+    private readonly namedSthReservations = new Map<string, NamedSthReservation>();
+    private readonly initializedSthControllers = new WeakSet<object>();
+    private readonly disconnectedSthControllers = new WeakSet<object>();
+    private readonly releasedNamedSthControllers = new WeakSet<object>();
     private readonly sthControlRouteObservers = new Set<(event: { hubId: string; routeDomain?: string }) => void>();
 
     private sthInfoRegister: ISTHInfoRegister = new STHInfoRegister();
@@ -307,6 +401,57 @@ export class Manager implements IComponent {
         return () => this.sthControlRouteObservers.delete(listener);
     }
 
+    reserveNamedSth(spaceId: string, hubId: string, federationHostId: string, guestRoute: string): NamedSthReservation {
+        const expectedFederationHost = `sth.${hubId}.${spaceId}.runner.broker.host`;
+        const expectedGuestRoute = `sth.${hubId}.${spaceId}.scramjet.internal`;
+        if (spaceId !== this.id || !isQualifiedNamedHubId(hubId) || federationHostId !== expectedFederationHost || guestRoute !== expectedGuestRoute) {
+            throw new CeroError("ERR_NOT_CURRENTLY_AVAILABLE");
+        }
+        const current = this.namedSthReservations.get(hubId);
+        if ((current?._isLive(this.namedSthReservationOwner)) || this.hasActiveSthController(hubId)) {
+            throw new CeroError("ERR_NOT_CURRENTLY_AVAILABLE");
+        }
+
+        const reservation = new NamedSthReservationImpl(spaceId, hubId, federationHostId, guestRoute, this.namedSthReservationOwner);
+        this.namedSthReservations.set(hubId, reservation);
+        const readinessWindow = this.config.verser2.timeouts.routeReadinessMs;
+        const expiry = setTimeout(() => this.releaseNamedSthReservation(reservation), Math.max(1, Math.min(5_000, readinessWindow)));
+        expiry.unref?.();
+        reservation._setExpiry(this.namedSthReservationOwner, expiry);
+        return reservation;
+    }
+
+    private releaseNamedSthReservation(reservation: NamedSthReservation, controller?: object): void {
+        if (this.namedSthReservations.get(reservation.hubId) !== reservation) return;
+        const boundController = reservation._controller(this.namedSthReservationOwner);
+        if (reservation._release(this.namedSthReservationOwner, controller)) {
+            this.namedSthReservations.delete(reservation.hubId);
+            if (boundController) this.releasedNamedSthControllers.add(boundController);
+        }
+    }
+
+    private hasActiveSthController(id: string): boolean {
+        const controller = this.sthConnectionStore.getById(id);
+        const reservation = this.namedSthReservations.get(id);
+        const ownsLiveNamedReservation = Boolean(reservation?._isLive(this.namedSthReservationOwner) && reservation._controller(this.namedSthReservationOwner) === controller);
+        return Boolean(controller && this.initializedSthControllers.has(controller) && !this.disconnectedSthControllers.has(controller) &&
+            (ownsLiveNamedReservation || !this.releasedNamedSthControllers.has(controller)) && controller.isConnectionActive);
+    }
+
+    private assertNamedSthAdmission(admission: PrivateSthAdmission, id: string, routeDomain: string): NamedSthReservation {
+        if (admission.kind !== "named-no-mtls" || this.nativeSthAdmissionMode !== "named-no-mtls") throw new CeroError("ERR_NOT_CURRENTLY_AVAILABLE");
+        const reservation = admission.reservation;
+        if (
+            this.namedSthReservations.get(id) !== reservation || !reservation._isLive(this.namedSthReservationOwner) ||
+            reservation.spaceId !== this.id || reservation.hubId !== id ||
+            reservation.federationHostId !== `sth.${id}.${this.id}.runner.broker.host` ||
+            reservation.guestRoute !== `sth.${id}.${this.id}.scramjet.internal` || routeDomain !== reservation.guestRoute ||
+            this.hasActiveSthController(id)) {
+            throw new CeroError("ERR_NOT_CURRENTLY_AVAILABLE");
+        }
+        return reservation;
+    }
+
     private notifySthControlRoute(event: { hubId: string; routeDomain?: string }): void {
         for (const listener of this.sthControlRouteObservers) listener(event);
     }
@@ -344,7 +489,7 @@ export class Manager implements IComponent {
                         if (controller.routeDomain === event.domain) {
                             controller.healthy = false;
                             this.logger.warn(`Route ${event.type} for STH ${controller.id} domain ${event.domain}`, event.reason || "");
-                            this.cleanupHubState(controller.id, event.type);
+                            this.cleanupHubState(controller.id, event.type, controller);
                             this.auditor.onUpdate().catch((err: Error) => this.logger.warn("Auditor update after route event failed", err.message));
                         }
                     });
@@ -359,7 +504,7 @@ export class Manager implements IComponent {
 
                             controller.healthy = false;
                             this.logger.warn(`Route ${event.type} for STH ${controller.id} domain ${event.domain}`, event.reason || "");
-                            this.cleanupHubState(controller.id, event.type);
+                            this.cleanupHubState(controller.id, event.type, controller);
                             this.auditor.onUpdate().catch((err: Error) => this.logger.warn("Auditor update after route event failed", err.message));
                         }
                     });
@@ -404,6 +549,7 @@ export class Manager implements IComponent {
 
         merge(this._config, _config || {});
         this.secureFederationEnrollmentRequired = runtimeOptions.secureFederationEnrollmentRequired === true;
+        this.nativeSthAdmissionMode = runtimeOptions.nativeSthAdmissionMode || (this.secureFederationEnrollmentRequired ? "issued-mtls" : undefined);
 
         const enrollment = (this._config as ManagerConfiguration & { csrEnrollment?: any }).csrEnrollment;
         if (enrollment?.enabled === true) {
@@ -671,17 +817,56 @@ export class Manager implements IComponent {
         return ps;
     }
 
-    async handleSthRegistration(payload: SthRegistrationPayload, peerCertificateFingerprint256?: string, peerCertificateHubId?: string, authorizationContext?: { principal?: string; claim?: { realm: string; space: string; hub: string; federationHost: string; broker: string; guestRoute: string } }): Promise<string> {
+    async handleSthRegistration(payload: SthRegistrationPayload, peerCertificateFingerprint256?: string, peerCertificateHubId?: string, authorizationContext?: { principal?: string; claim?: SthFederationClaim }, privateAdmission?: PrivateSthAdmission, origin: SthRegistrationOrigin = "legacy"): Promise<string> {
         this.logger.info("STH Api. Incoming verser2 registration.");
 
         if (!this.sthBrokerTransport) {
             throw new CeroError("ERR_NOT_CURRENTLY_AVAILABLE");
         }
 
-        const id = typeof payload.id === "string" && payload.id.trim().length ? payload.id : IDProvider.generate();
+        const submittedId = typeof payload.id === "string" && payload.id.trim().length ? payload.id : undefined;
+        const id = submittedId || IDProvider.generate();
         const offeredRouteDomain = typeof payload.routeDomain === "string" && payload.routeDomain.trim().length ? payload.routeDomain.trim() : undefined;
-        const routeDomain = offeredRouteDomain && isTrustedSthRouteDomain(id, offeredRouteDomain) ? offeredRouteDomain : this.getSthRouteDomain(id);
+        let effectiveAdmission = privateAdmission;
+        let namedReservation: NamedSthReservation | undefined;
+
+        if (origin === "public-v1") {
+            if (this.nativeSthAdmissionMode === "issued-mtls") throw new CeroError("ERR_NOT_CURRENTLY_AVAILABLE");
+            if (this.nativeSthAdmissionMode === "named-no-mtls") {
+                const expectedRoute = `sth.${id}.${this.id}.scramjet.internal`;
+                if (!submittedId || !isQualifiedNamedHubId(submittedId) || payload.routeDomain !== expectedRoute || privateAdmission) {
+                    throw new CeroError("ERR_NOT_CURRENTLY_AVAILABLE");
+                }
+                authorizationContext = undefined;
+                const reservation = this.reserveNamedSth(this.id, id, `sth.${id}.${this.id}.runner.broker.host`, expectedRoute);
+                namedReservation = reservation;
+                effectiveAdmission = { kind: "named-no-mtls", reservation };
+            }
+        } else if (this.nativeSthAdmissionMode === "named-no-mtls") {
+            if (origin !== "private-v2" || privateAdmission?.kind !== "named-no-mtls") throw new CeroError("ERR_NOT_CURRENTLY_AVAILABLE");
+        } else if (origin === "legacy" && this.nativeSthAdmissionMode) {
+            throw new CeroError("ERR_NOT_CURRENTLY_AVAILABLE");
+        }
+
+        const namedRoute = effectiveAdmission?.kind === "named-no-mtls" ? effectiveAdmission.reservation.guestRoute : undefined;
+        const routeDomain = offeredRouteDomain && (isTrustedSthRouteDomain(id, offeredRouteDomain) || offeredRouteDomain === namedRoute) ? offeredRouteDomain : this.getSthRouteDomain(id);
         const registrationToken = this.config.verser2.registration.token;
+
+        if (effectiveAdmission?.kind === "issued-mtls") {
+            if (this.nativeSthAdmissionMode === "named-no-mtls") throw new CeroError("ERR_NOT_CURRENTLY_AVAILABLE");
+            const claim = effectiveAdmission.claim;
+            if (authorizationContext && (authorizationContext.principal !== effectiveAdmission.principal || JSON.stringify(authorizationContext.claim) !== JSON.stringify(claim))) throw new CeroError("ERR_NOT_CURRENTLY_AVAILABLE");
+            authorizationContext = { principal: effectiveAdmission.principal, claim };
+            assertVerifiedFederationRegistrationPrincipal(true, authorizationContext, this.id, id, routeDomain);
+        } else if (effectiveAdmission?.kind === "named-no-mtls") {
+            try {
+                if (origin === "private-v2" && (peerCertificateFingerprint256 || peerCertificateHubId || authorizationContext)) throw new CeroError("ERR_NOT_CURRENTLY_AVAILABLE");
+                namedReservation = this.assertNamedSthAdmission(effectiveAdmission, id, routeDomain);
+            } catch (error) {
+                if (this.namedSthReservations.get(effectiveAdmission.reservation.hubId) === effectiveAdmission.reservation) this.releaseNamedSthReservation(effectiveAdmission.reservation);
+                throw error;
+            }
+        }
 
         if (this.csrEnrollmentAuthority)
             assertAuthorizedRegistrationPeer(
@@ -693,7 +878,7 @@ export class Manager implements IComponent {
             );
 
         assertVerifiedFederationRegistrationPrincipal(this.secureFederationEnrollmentRequired, authorizationContext, this.id, id, routeDomain);
-        this.logger.info("Native STH federation principal verified");
+        if (authorizationContext?.principal) this.logger.info("Native STH federation principal verified");
 
         if (offeredRouteDomain && offeredRouteDomain !== routeDomain) {
             this.logger.warn("Ignoring untrusted STH route domain", id, offeredRouteDomain, routeDomain);
@@ -701,21 +886,31 @@ export class Manager implements IComponent {
 
         if (registrationToken && payload.enrollmentToken !== registrationToken) {
             this.logger.warn("Refusing STH registration with invalid verser2 enrollment token", id);
+            if (namedReservation) this.releaseNamedSthReservation(namedReservation);
             throw new CeroError("ERR_NOT_CURRENTLY_AVAILABLE");
         }
 
         try {
+            if (namedReservation && (!namedReservation._isLive(this.namedSthReservationOwner) || this.hasActiveSthController(id))) throw new CeroError("ERR_NOT_CURRENTLY_AVAILABLE");
             await this.sthBrokerTransport.waitForRoute(routeDomain, this.config.verser2.timeouts.routeReadinessMs);
+            if (namedReservation && (this.namedSthReservations.get(id) !== namedReservation || !namedReservation._isLive(this.namedSthReservationOwner))) {
+                throw new CeroError("ERR_NOT_CURRENTLY_AVAILABLE");
+            }
             this.logger.info("Native STH control route ready");
         } catch (error) {
             this.logger.warn("Native STH control route wait failed");
+            if (namedReservation) this.releaseNamedSthReservation(namedReservation);
             throw error;
         }
 
         const previousSth = this.sthConnectionStore.getById(id);
+        if (namedReservation && this.hasActiveSthController(id)) {
+            this.releaseNamedSthReservation(namedReservation);
+            throw new CeroError("ERR_NOT_CURRENTLY_AVAILABLE");
+        }
         let sth: ISTHController | undefined = previousSth;
 
-        if (sth) {
+        if (sth && (!namedReservation || this.hasActiveSthController(id))) {
             // Unpipe previous controller but do NOT dispose yet.
             // Disposal happens only after the new init succeeds so that
             // rollback can restore a live controller.
@@ -748,6 +943,8 @@ export class Manager implements IComponent {
             this.notifySthControlRoute({ hubId: sth.id, routeDomain });
             try {
                 await sth.init();
+                if (this.sthConnectionStore.getById(id) !== sth) throw new CeroError("ERR_NOT_CURRENTLY_AVAILABLE");
+                this.initializedSthControllers.add(sth);
                 this.logger.info("Native STH controller initialized");
             } catch (error) {
                 this.logger.warn("Native STH controller initialization failed");
@@ -768,6 +965,13 @@ export class Manager implements IComponent {
             });
             sth.logger.pipe(this.logger, { end: false });
 
+            if (namedReservation && !namedReservation._bind(this.namedSthReservationOwner, sth)) {
+                sth.logger.unpipe(this.logger);
+                sth.dispose();
+                this.releaseNamedSthReservation(namedReservation);
+                throw new CeroError("ERR_NOT_CURRENTLY_AVAILABLE");
+            }
+
             this.sthConnectionStore.add(sth);
             this.sthInfoRegister.addHub(sth.id);
             this.clearHubInventory(sth.id);
@@ -778,12 +982,20 @@ export class Manager implements IComponent {
             this.notifySthControlRoute({ hubId: sth.id, routeDomain });
             try {
                 await sth.init();
+                if (this.sthConnectionStore.getById(id) !== sth) throw new CeroError("ERR_NOT_CURRENTLY_AVAILABLE");
+                this.initializedSthControllers.add(sth);
                 this.logger.info("Native STH controller initialized");
             } catch (error) {
                 this.logger.warn("Native STH controller initialization failed");
                 this.rollbackFailedSthRegistration(sth);
+                if (namedReservation) this.releaseNamedSthReservation(namedReservation);
                 throw error;
             }
+        }
+
+        if (previousSth) {
+            const previousReservation = this.namedSthReservations.get(id);
+            if (previousReservation && previousReservation._controller(this.namedSthReservationOwner) === previousSth) this.releaseNamedSthReservation(previousReservation, previousSth);
         }
 
         this.commonLogsPipe.addInStream(sth.id, sth.logStream!);
@@ -796,7 +1008,13 @@ export class Manager implements IComponent {
         return sth.id;
     }
 
-    private cleanupHubState(id: string, routeEventType?: string) {
+    private cleanupHubState(id: string, routeEventType?: string, controller?: object) {
+        if (controller) this.disconnectedSthControllers.add(controller);
+        if (controller && this.sthConnectionStore.getById(id) !== controller) return;
+        if (controller) {
+            const reservation = this.namedSthReservations.get(id);
+            if (reservation && reservation._controller(this.namedSthReservationOwner) === controller) this.releaseNamedSthReservation(reservation, controller);
+        }
         this.notifySthControlRoute({ hubId: id });
         this.sthInfoRegister.handleHubDisconnect(id);
         this.clearHubInventory(id);
@@ -806,6 +1024,11 @@ export class Manager implements IComponent {
     }
 
     private rollbackFailedSthRegistration(sth: ISTHController, previousSth?: ISTHController, previousSnapshot?: HubStateSnapshot) {
+        if (this.sthConnectionStore.getById(sth.id) !== sth) {
+            sth.logger.unpipe(this.logger);
+            sth.dispose();
+            return;
+        }
         this.logger.warn("Rolling back failed STH registration", sth.id);
         this.notifySthControlRoute({ hubId: sth.id });
         sth.logger.unpipe(this.logger);
@@ -1046,7 +1269,12 @@ export class Manager implements IComponent {
     }
 
     attachSTHEventHandlers(sth: ISTHController) {
+        const isCurrentController = () => {
+            const current = this.sthConnectionStore.getById(sth.id);
+            return !current || current === sth;
+        };
         sth.on("event", (event: SpaceEventMessageData) => {
+            if (!isCurrentController()) return;
             this.sthConnectionStore.forEach((id: any, controller: any) => {
                 if (!controller.isConnectionActive) return;
                 if (id !== event.sourceHost) {
@@ -1057,6 +1285,7 @@ export class Manager implements IComponent {
             });
         });
         sth.on("sequence", (sequence: SequenceMessageData) => {
+            if (!isCurrentController()) return;
             this.logger.debug("Sequence event", sequence);
 
             switch (sequence.status) {
@@ -1075,10 +1304,12 @@ export class Manager implements IComponent {
         });
 
         sth.on("sequences", () => {
+            if (!isCurrentController()) return;
             this.markHubInventory(sth.id, "sequencesReceived");
         });
 
         sth.on("instance", (message: InstanceMessageData) => {
+            if (!isCurrentController()) return;
             const instance = this.normalizeInstanceEventPayload(message);
 
             this.logger.debug("Instance event", instance);
@@ -1100,10 +1331,12 @@ export class Manager implements IComponent {
         });
 
         sth.on("instances", () => {
+            if (!isCurrentController()) return;
             this.markHubInventory(sth.id, "instancesReceived");
         });
 
         sth.on("topic", (topicData: any) => {
+            if (!isCurrentController()) return;
             this.logger.trace("STH topic", topicData);
 
             const topicName = topicData.topicName;
@@ -1124,7 +1357,7 @@ export class Manager implements IComponent {
         });
 
         sth.on("disconnected", () => {
-            this.cleanupHubState(sth.id);
+            this.cleanupHubState(sth.id, undefined, sth);
         });
     }
 
@@ -1226,6 +1459,9 @@ export class Manager implements IComponent {
 
     async stop() {
         this.logger.info("Stopping manager...");
+        if (this.namedSthReservations) {
+            for (const reservation of this.namedSthReservations.values()) this.releaseNamedSthReservation(reservation);
+        }
         const cleanupErrors: Error[] = [];
         const recordError = (stage: string, error: unknown) => {
             const message = error instanceof Error ? error.message : String(error);

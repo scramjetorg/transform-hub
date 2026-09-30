@@ -6,7 +6,8 @@ export type FederatedControlRoutePair = {
 };
 
 type IssuedHostBinding = { federationHost: string; guestRoute: string };
-type ManagerRoutes = { ingress: string; egress: string; sth?: string; issuedSthHosts: Map<string, IssuedHostBinding> };
+type NamedHostBinding = { federationHost: string; guestRoute: string };
+type ManagerRoutes = { ingress: string; egress: string; sth?: string; issuedSthHosts: Map<string, IssuedHostBinding>; namedSthHosts: Map<string, NamedHostBinding> };
 
 function normalizedDomain(domain: string): string {
     const normalized = normalizeVerserRouteDomain(domain);
@@ -26,7 +27,8 @@ export class FederatedControlRoutePolicy {
             ingress: normalizedDomain(ingress),
             egress: normalizedDomain(egress),
             sth: existing?.sth,
-            issuedSthHosts: existing?.issuedSthHosts || new Map()
+            issuedSthHosts: existing?.issuedSthHosts || new Map(),
+            namedSthHosts: existing?.namedSthHosts || new Map()
         });
     }
 
@@ -50,6 +52,16 @@ export class FederatedControlRoutePolicy {
         };
     }
 
+    registerNamedSthHost(managerId: string, hubId: string, federationHost: string, guestRoute: string): () => void {
+        const manager = this.managers.get(managerId);
+        if (!manager) throw new Error("Manager route policy is not registered");
+        const binding: NamedHostBinding = { federationHost: normalizedDomain(federationHost), guestRoute: normalizedDomain(guestRoute) };
+        manager.namedSthHosts.set(hubId, binding);
+        return () => {
+            if (manager.namedSthHosts.get(hubId) === binding) manager.namedSthHosts.delete(hubId);
+        };
+    }
+
     removeManager(managerId: string): void {
         this.managers.delete(managerId);
     }
@@ -69,6 +81,7 @@ export class FederatedControlRoutePolicy {
             if (manager.sth && previous === manager.sth && next === manager.ingress) return { decision: "allow", cacheTtlMs: 0 };
             if (manager.sth && previous === manager.egress && next === manager.sth) return { decision: "allow", cacheTtlMs: 0 };
             if (next === manager.ingress && [...manager.issuedSthHosts.values()].some(binding => binding.federationHost === previous)) return { decision: "allow", cacheTtlMs: 0 };
+            if (next === manager.ingress && [...manager.namedSthHosts.values()].some(binding => binding.federationHost === previous)) return { decision: "allow", cacheTtlMs: 0 };
         }
         return { decision: "deny", cacheTtlMs: 0 };
     }

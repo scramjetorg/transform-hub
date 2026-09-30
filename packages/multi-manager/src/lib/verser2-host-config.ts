@@ -34,7 +34,7 @@ function createVerser2HostTlsOptions(config: ManagerVerser2Config, v2Authorizer?
         throw new Error("verser2 Host mTLS requires clientAuthCaFile");
     }
 
-    if (!tls.clientAuthCaFile && !tls.mtlsRequired && config.registration.allowedClientFingerprints.length === 0 && !v2Authorizer) {
+    if (!tls.clientAuthCaFile && !tls.mtlsRequired && config.registration.allowedClientFingerprints.length === 0 && !v2Authorizer && !federationAuthorizer) {
         return identity;
     }
 

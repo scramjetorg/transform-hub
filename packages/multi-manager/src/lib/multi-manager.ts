@@ -1,7 +1,7 @@
 import { APIExpose, ManagerConfiguration, MMRestAPI, MonitoringServerConfig, NextCallback, ParsedMessage } from "@scramjet/api-types";
 import { getDefaultManagerConfig as getManagerDefaultConfig } from "@scramjet/config";
 import { createDefaultHealthComponents, LoadCheck, LoadCheckConfig, summarizeHealth } from "@scramjet/load-check";
-import { CommonLogsPipe, createManagerSthLocalBrokerTransport, HealthCheck, Manager, registerSth, withVerifiedFederationPrincipal } from "@scramjet/manager";
+import { CommonLogsPipe, createManagerSthLocalBrokerTransport, HealthCheck, Manager, registerSth, withVerifiedFederationPrincipal, type ManagerRuntimeOptions, type NamedSthReservation, type NativeSthAdmissionMode } from "@scramjet/manager";
 import { IDProvider } from "@scramjet/model";
 import { MonitoringServer } from "@scramjet/monitoring-server";
 import { ObjLogger, prettyPrint } from "@scramjet/obj-logger";
@@ -41,6 +41,7 @@ type ManagerGatewayResponse = { statusCode?: number; once?: (event: string, list
 const PRIVATE_STH_REGISTRATION_PATH = "/api/v2/_internal/sth/registration";
 
 export type VerifiedSthEvidence = Readonly<{
+    kind?: "issued-mtls";
     principal: string;
     claim: Readonly<CsrEnrollmentClaim>;
     federationHostId: string;
@@ -48,6 +49,74 @@ export type VerifiedSthEvidence = Readonly<{
     serialNumber: string;
     registrations: readonly Readonly<CsrEnrollmentRegistration>[];
 }>;
+
+export type VerifiedNamedSthEvidence = Readonly<{
+    kind: "named-no-mtls";
+    managerId: string;
+    hubId: string;
+    federationHostId: string;
+    reservation: NamedSthReservation;
+}>;
+
+export type VerifiedFederatedSthEvidence = VerifiedSthEvidence | VerifiedNamedSthEvidence;
+
+export function selectNativeSthAdmissionMode(config: Pick<MultiManagerConfig, "csrEnrollment" | "verser2">): NativeSthAdmissionMode {
+    const enrollmentEnabled = config.csrEnrollment?.enabled === true;
+    const tls = config.verser2.host.tls;
+    const mtlsRequired = tls.mtlsRequired === true;
+    const restrictedClientAuth = Boolean(tls.clientAuthCaFile) || config.verser2.registration.allowedClientFingerprints.length > 0;
+
+    if (enrollmentEnabled && mtlsRequired) return "issued-mtls";
+    if (!enrollmentEnabled && !mtlsRequired && !restrictedClientAuth) return "named-no-mtls";
+    throw new Error("MultiManager STH admission requires either issued CSR with mTLS or unrestricted named no-mTLS");
+}
+
+export function parseCanonicalNamedSthHostId(value: unknown): { hubId: string; spaceId: string } | undefined {
+    if (typeof value !== "string") return undefined;
+    const match = /^sth\.([a-z0-9](?:[a-z0-9-]*[a-z0-9])?)\.([a-z0-9](?:[a-z0-9-]*[a-z0-9])?)\.runner\.broker\.host$/.exec(value);
+    return match ? { hubId: match[1], spaceId: match[2] } : undefined;
+}
+
+export function authorizeNamedSthFederation(
+    context: { hostId?: unknown },
+    admissionMode: NativeSthAdmissionMode | undefined,
+    getManager: (spaceId: string) => Manager | undefined,
+    isManagerAttached: (spaceId: string) => boolean,
+    routes: FederatedControlRoutePolicy,
+    capabilities: WeakMap<object, VerifiedFederatedSthEvidence>
+): { action: "allow"; authorizationContext: object } | { action: "close"; reason: string } {
+    if (admissionMode !== "named-no-mtls") return { action: "close", reason: "named STH admission is unavailable" };
+    const named = parseCanonicalNamedSthHostId(context.hostId);
+    if (!named || !isManagerAttached(named.spaceId)) return { action: "close", reason: "named STH manager is unavailable" };
+    const manager = getManager(named.spaceId);
+    if (!manager || manager.config.id !== named.spaceId) return { action: "close", reason: "named STH manager is unavailable" };
+
+    const guestRoute = `sth.${named.hubId}.${named.spaceId}.scramjet.internal`;
+    try {
+        const reservation = manager.reserveNamedSth(named.spaceId, named.hubId, context.hostId as string, guestRoute);
+        const releaseRoute = routes.registerNamedSthHost(named.spaceId, named.hubId, context.hostId as string, guestRoute);
+        reservation.onRelease(releaseRoute);
+        const capability = Object.freeze({});
+        capabilities.set(capability, Object.freeze({ kind: "named-no-mtls", managerId: named.spaceId, hubId: named.hubId, federationHostId: context.hostId as string, reservation }));
+        return { action: "allow", authorizationContext: capability };
+    } catch {
+        return { action: "close", reason: "named STH reservation denied" };
+    }
+}
+
+export function getVerifiedFederatedSthEvidence(
+    capability: unknown,
+    hostId: unknown,
+    managerId: string,
+    admissionMode: NativeSthAdmissionMode | undefined,
+    capabilities: WeakMap<object, VerifiedFederatedSthEvidence>
+): VerifiedFederatedSthEvidence | undefined {
+    if (!capability || typeof capability !== "object") return undefined;
+    const evidence = capabilities.get(capability);
+    if (!evidence || hostId !== evidence.federationHostId) return undefined;
+    if (evidence.kind === "named-no-mtls") return admissionMode === "named-no-mtls" && evidence.managerId === managerId ? evidence : undefined;
+    return admissionMode === "issued-mtls" ? evidence : undefined;
+}
 
 async function parsePrivateRegistrationBody(req: IncomingMessage & { body?: unknown }): Promise<unknown> {
     if (req.body !== undefined) return req.body;
@@ -61,7 +130,7 @@ async function parsePrivateRegistrationBody(req: IncomingMessage & { body?: unkn
     }
 }
 
-export async function dispatchFederatedSthRegistration(manager: Manager, req: IncomingMessage & { body?: unknown }, res: ServerResponse, evidence: VerifiedSthEvidence | undefined, onRejected?: (stage: "federation-evidence" | "claim-body-mismatch" | "manager-registration-exception", errorName?: string) => void, onAccepted?: (stage: "claim-body-verified" | "registration-accepted") => void): Promise<boolean> {
+export async function dispatchFederatedSthRegistration(manager: Manager, req: IncomingMessage & { body?: unknown }, res: ServerResponse, evidence: VerifiedFederatedSthEvidence | undefined, onRejected?: (stage: "federation-evidence" | "claim-body-mismatch" | "manager-registration-exception", errorName?: string) => void, onAccepted?: (stage: "claim-body-verified" | "named-body-verified" | "registration-accepted") => void): Promise<boolean> {
     const path = safeRequestPath(req.url);
     if (path !== PRIVATE_STH_REGISTRATION_PATH) return false;
 
@@ -73,6 +142,33 @@ export async function dispatchFederatedSthRegistration(manager: Manager, req: In
     }
 
     const body = await parsePrivateRegistrationBody(req);
+    if (evidence.kind === "named-no-mtls") {
+        const validNamed = evidence.managerId === manager.config.id && evidence.hubId === evidence.reservation.hubId &&
+            evidence.reservation.spaceId === manager.config.id && evidence.federationHostId === evidence.reservation.federationHostId &&
+            evidence.federationHostId === `sth.${evidence.hubId}.${manager.config.id}.runner.broker.host` &&
+            evidence.reservation.guestRoute === `sth.${evidence.hubId}.${manager.config.id}.scramjet.internal` &&
+            body && typeof body === "object" && !Array.isArray(body) && (body as any).id === evidence.hubId && (body as any).routeDomain === evidence.reservation.guestRoute;
+        if (!validNamed) {
+            onRejected?.("claim-body-mismatch");
+            res.statusCode = 403;
+            res.end();
+            return true;
+        }
+        try {
+            onAccepted?.("named-body-verified");
+            const result = await registerSth(manager, body, { privateAdmission: { kind: "named-no-mtls", reservation: evidence.reservation } }, "private-v2");
+            res.statusCode = 202;
+            res.setHeader("content-type", "application/json");
+            res.end(JSON.stringify(result));
+            onAccepted?.("registration-accepted");
+        } catch (error) {
+            const errorName = error instanceof Error && error.name ? error.name : typeof error;
+            onRejected?.("manager-registration-exception", errorName);
+            res.statusCode = 403;
+            res.end();
+        }
+        return true;
+    }
     const claim = evidence?.claim;
     const valid = !!claim && evidence.principal === `sth:${claim.realm}:${claim.space}:${claim.hub}` && claim.space === manager.config.id &&
         typeof claim.hub === "string" && claim.hub.length > 0 && typeof claim.guestRoute === "string" && claim.guestRoute.length > 0 &&
@@ -86,7 +182,7 @@ export async function dispatchFederatedSthRegistration(manager: Manager, req: In
 
     try {
         onAccepted?.("claim-body-verified");
-        const result = await registerSth(manager, body, { authorizationContext: { principal: evidence.principal, claim } });
+        const result = await registerSth(manager, body, { authorizationContext: { principal: evidence.principal, claim }, privateAdmission: { kind: "issued-mtls", principal: evidence.principal, claim } }, "private-v2");
         res.statusCode = 202;
         res.setHeader("content-type", "application/json");
         res.end(JSON.stringify(result));
@@ -194,7 +290,7 @@ export class MultiManager {
     /** Isolated mTLS v2 control plane; never carries Manager/STH transport. */
     controlIngressHost?: VerserHost;
     private csrEnrollmentStore?: CsrEnrollmentStore;
-    private readonly verifiedSthCapabilities = new WeakMap<object, VerifiedSthEvidence>();
+    private readonly verifiedSthCapabilities = new WeakMap<object, VerifiedFederatedSthEvidence>();
     apiBase: string;
 
     id: string;
@@ -219,6 +315,7 @@ export class MultiManager {
     private stopping = false;
     private readonly federatedControlRoutes = new FederatedControlRoutePolicy();
     private managerRouteObservers = new Map<string, () => void>();
+    private nativeSthAdmissionMode?: NativeSthAdmissionMode;
 
     /** Missing configuration preserves the historical API-server log consumption. */
     static shouldConsumeApiServerLogs(config: Pick<MultiManagerOptions, "log">): boolean {
@@ -312,17 +409,19 @@ export class MultiManager {
         this.logger.debug("MultiManager config", this.config.getMasked());
 
         if (!this.verser2Host) {
+            this.nativeSthAdmissionMode = selectNativeSthAdmissionMode(this.config);
             Object.assign(this.config.verser2, await resolveManagerVerser2HostConfig(this.config.verser2, "MultiManager"));
             const enrollment = this.config.csrEnrollment;
             if (enrollment?.enabled) {
                 this.csrEnrollmentStore = new CsrEnrollmentStore(enrollment.issuedStore || ".scramjet-csr-v2");
             }
-            this.verser2Host = createVerserHost(createVerser2HostOptions(this.config.verser2, enrollment?.enabled ? context => {
+            this.verser2Host = createVerserHost(createVerser2HostOptions(this.config.verser2, this.nativeSthAdmissionMode === "issued-mtls" ? context => {
+                if (!enrollment?.enabled) return { action: "close", reason: "issued STH enrollment is unavailable" };
                 if (context.metadata.local) return { action: "allow" };
                 if (!context.certificate) return { action: "close", reason: "client certificate required" };
                 const record = this.csrEnrollmentStore?.getIssued(context.certificate.fingerprint256.replace(/^sha256:/i, ""), certificateSerialNumber(context.certificate.raw));
                 const registration = { principal: record?.principal || "sth" as const, role: context.role, peerId: context.peerId, routedDomains: context.routedDomains };
-                if (!record || !record.registrations.some(value => JSON.stringify(value) === JSON.stringify(registration))) return { action: "close", reason: "registration is not authorized by the issued record" };
+                if (!record || !record.registrations.some((value: CsrEnrollmentRegistration) => JSON.stringify(value) === JSON.stringify(registration))) return { action: "close", reason: "registration is not authorized by the issued record" };
                 const result = authorizeCsrEnrollment({
                     fingerprint256: context.certificate.fingerprint256.replace(/^sha256:/i, ""),
                     serialNumber: certificateSerialNumber(context.certificate.raw),
@@ -336,7 +435,8 @@ export class MultiManager {
                     raw: context.certificate.raw
                 }, enrollment.policy, this.csrEnrollmentStore!);
                 return result.allowed ? { action: "allow" } : { action: "close", reason: result.reason };
-            } : undefined, enrollment?.enabled ? (context: any) => {
+            } : undefined, this.nativeSthAdmissionMode === "issued-mtls" ? (context: any) => {
+                if (!enrollment?.enabled) return { action: "close", reason: "issued STH enrollment is unavailable" };
                 if (context.metadata?.authorized !== true || !context.certificate) {
                     this.logger.warn("Native STH federation authorization denied", { stage: "authorized-certificate" });
                     return { action: "close", reason: "authorized TLS certificate required" };
@@ -348,8 +448,8 @@ export class MultiManager {
                     this.logger.warn("Native STH federation authorization denied", { stage: "issued-claim" });
                     return { action: "close", reason: "federation host is not authorized by the issued claim" };
                 }
-                const broker = record.registrations.some(value => value.principal === "sth" && value.role === "broker" && value.peerId === record.claim!.broker);
-                const guest = record.registrations.some(value => value.principal === "sth" && value.role === "guest" && value.routedDomains.length === 1 && value.routedDomains[0] === record.claim!.guestRoute);
+                const broker = record.registrations.some((value: CsrEnrollmentRegistration) => value.principal === "sth" && value.role === "broker" && value.peerId === record.claim!.broker);
+                const guest = record.registrations.some((value: CsrEnrollmentRegistration) => value.principal === "sth" && value.role === "guest" && value.routedDomains.length === 1 && value.routedDomains[0] === record.claim!.guestRoute);
                 if (!broker || !guest) {
                     this.logger.warn("Native STH federation authorization denied", { stage: "registration-binding" });
                     return { action: "close", reason: "issued federation registration binding mismatch" };
@@ -363,12 +463,19 @@ export class MultiManager {
                 this.logger.info("Native STH federation allowed after issued-record, certificate, claim, registration, and capability checks");
                 this.federatedControlRoutes.registerSth(record.claim.space, record.claim.guestRoute);
                 const claim = Object.freeze({ realm: record.claim.realm, space: record.claim.space, hub: record.claim.hub, federationHost: record.claim.federationHost, broker: record.claim.broker, guestRoute: record.claim.guestRoute });
-                const evidence: VerifiedSthEvidence = Object.freeze({ principal: `sth:${claim.realm}:${claim.space}:${claim.hub}`, claim, federationHostId: context.hostId, fingerprint256, serialNumber, registrations: Object.freeze(record.registrations.map(value => Object.freeze({ ...value, routedDomains: Object.freeze([...value.routedDomains]) }))) });
+                const evidence: VerifiedSthEvidence = Object.freeze({ principal: `sth:${claim.realm}:${claim.space}:${claim.hub}`, claim, federationHostId: context.hostId, fingerprint256, serialNumber, registrations: Object.freeze(record.registrations.map((value: CsrEnrollmentRegistration) => Object.freeze({ ...value, routedDomains: Object.freeze([...value.routedDomains]) }))) });
                 const capability = Object.freeze({});
                 this.verifiedSthCapabilities.set(capability, evidence);
                 this.logger.info("Native STH private capability verified");
                 return { action: "allow", authorizationContext: capability };
-            } : undefined, context => {
+            } : this.nativeSthAdmissionMode === "named-no-mtls" ? (context: any) => authorizeNamedSthFederation(
+                context,
+                this.nativeSthAdmissionMode,
+                spaceId => this.managersStore.getById(spaceId),
+                spaceId => this.managerVerser2Handles.has(spaceId),
+                this.federatedControlRoutes,
+                this.verifiedSthCapabilities
+            ) : undefined, context => {
                 const result = this.federatedControlRoutes.authorize(context);
                 if (result.decision === "deny") this.logger.warn("Native STH federation authorization denied", { stage: "control-route-policy" });
                 return result;
@@ -460,7 +567,7 @@ export class MultiManager {
                                     ...managerConfig.verser2,
                                     controlIngress: managerConfig.verser2.controlIngress && { ...managerConfig.verser2.controlIngress, embedded: true }
                                 }
-                            }, { logApiServers: this.config.log.apiServers, secureFederationEnrollmentRequired: this.config.csrEnrollment?.enabled === true });
+                            }, this.managerRuntimeOptions());
 
                             manager.logger.pipe(this.logger);
 
@@ -494,6 +601,14 @@ export class MultiManager {
 
     setRouting() {
         new MultiManagerAPIHandler(this).attach();
+    }
+
+    private managerRuntimeOptions(): ManagerRuntimeOptions {
+        return {
+            logApiServers: this.config.log.apiServers,
+            secureFederationEnrollmentRequired: this.nativeSthAdmissionMode === "issued-mtls",
+            nativeSthAdmissionMode: this.nativeSthAdmissionMode
+        };
     }
 
     async commonAuditPipe(req: IncomingMessage) {
@@ -538,9 +653,9 @@ export class MultiManager {
             routedDomains: [manager.config.verser2.localGuest.routeDomain],
             listener: (req, res, context) => {
                 const authorizationContext = context?.federation?.authorizationContext;
-                const evidence = authorizationContext && typeof authorizationContext === "object" ? this.verifiedSthCapabilities.get(authorizationContext) : undefined;
-                const verifiedEvidence = evidence && context?.federation?.hostId === evidence.federationHostId ? evidence : undefined;
-                return withVerifiedFederationPrincipal(verifiedEvidence as any, () => logManagerGatewayRequest(
+                const verifiedEvidence = getVerifiedFederatedSthEvidence(authorizationContext, context?.federation?.hostId, manager.config.id, this.nativeSthAdmissionMode, this.verifiedSthCapabilities);
+                const principalEvidence = verifiedEvidence && verifiedEvidence.kind !== "named-no-mtls" ? verifiedEvidence : undefined;
+                return withVerifiedFederationPrincipal(principalEvidence as any, () => logManagerGatewayRequest(
                     this.logger,
                     manager.config.id,
                     req,
@@ -552,7 +667,7 @@ export class MultiManager {
                             if (await dispatchFederatedSthRegistration(manager, req as IncomingMessage & { body?: unknown }, res as ServerResponse, verifiedEvidence, (stage, errorName) => {
                                 this.logger.warn("Federated STH registration rejected", { stage, ...(errorName && { errorName }) });
                             }, stage => {
-                                this.logger.info(stage === "claim-body-verified" ? "Native STH private claim/body verified" : "Native STH private registration accepted");
+                                this.logger.info(stage === "claim-body-verified" ? "Native STH private claim/body verified" : stage === "named-body-verified" ? "Native STH private name/body verified" : "Native STH private registration accepted");
                             })) return;
                             return manager.router.lookup(req as ParsedMessage, res as ServerResponse, (error) => {
                                 if (error) logManagerVerser2RequestFailure(this.logger, manager.config.id, req, error);
@@ -713,7 +828,7 @@ export class MultiManager {
                 ...managerConfig.verser2,
                 controlIngress: managerConfig.verser2.controlIngress && { ...managerConfig.verser2.controlIngress, embedded: true }
             }
-        }, { logApiServers: this.config.log.apiServers, secureFederationEnrollmentRequired: this.config.csrEnrollment?.enabled === true });
+        }, this.managerRuntimeOptions());
 
         manager.logger.pipe(this.logger);
 

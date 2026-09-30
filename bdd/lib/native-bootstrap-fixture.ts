@@ -162,6 +162,7 @@ export async function runNativeBootstrap(world: CustomWorld): Promise<NativeBoot
     const policy = { allowed: [...sthRegistrations, ...siRegistrations] };
     const baseVerser = { enabled: true, host: { identityDir: join(pki.dir, "mm-identity"), bindHost: "127.0.0.1", bindPort: mmPort, publicUrl: `https://127.0.0.1:${mmPort}`, tls: { caFile: pki.ca, certFile: pki.server, keyFile: pki.serverKey, mtlsRequired: true } }, registration: { allowedClientFingerprints: [] }, localBroker: { peerId: "mm.broker", routeDomain: "mm.control.scramjet.internal" }, localGuest: { peerId: "mm.guest", routeDomain: "mm.control.scramjet.internal" }, controlIngress: { enabled: false } };
     const mmConfig = { id: "native-bootstrap-mm", server: { apiBase: "/api/v1", apiPort: mmApiPort, apiHost: "127.0.0.1" }, manager: managerConfig,
+        s3: { bucket: isolation.createArtifactDirectory("manager-store") },
         verser2: baseVerser, csrEnrollment: { enabled: true, policy, issuedStore } };
     const mmConfigPath = isolation.writeConfig(mmConfig);
     const signingConfig = { ...mmConfig, verser2: { ...baseVerser, csrEnrollment: { enabled: true, policy, issuedStore, issuer: { caFile: pki.ca, certFile: pki.ca, keyFile: join(pki.dir, "ca.key") } } } };

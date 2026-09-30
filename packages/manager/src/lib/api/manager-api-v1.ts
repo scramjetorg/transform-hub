@@ -54,7 +54,7 @@ export class ManagerAPIV1Handler {
                 peerCertificateFingerprint256: fingerprint,
                 peerCertificateHubId: peerHubId,
                 authorizationContext: verifiedFederationPrincipal()
-            });
+            }, "public-v1");
         });
         router.get(`${apiBase}/list`, (req: ParsedMessage): MRestAPI.GetListResponse => {
             let offset = req.query && req.query.offset ? parseInt(req.query.offset, 10) : defaultOffset;

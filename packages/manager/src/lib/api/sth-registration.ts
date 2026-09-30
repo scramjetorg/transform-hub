@@ -1,6 +1,6 @@
 import { CeroError } from "@scramjet/api-server";
 import { ReasonPhrases } from "http-status-codes";
-import type { Manager, SthRegistrationPayload } from "../manager";
+import type { Manager, PrivateSthAdmission, SthRegistrationOrigin, SthRegistrationPayload } from "../manager";
 
 /** Evidence is supplied by a trusted transport adapter, never decoded from registration JSON. */
 export type SthRegistrationEvidence = {
@@ -10,6 +10,7 @@ export type SthRegistrationEvidence = {
         principal?: string;
         claim?: { realm: string; space: string; hub: string; federationHost: string; broker: string; guestRoute: string };
     };
+    privateAdmission?: PrivateSthAdmission;
 };
 
 const fields = ["id", "routeDomain", "enrollmentToken", "accessKey", "description", "tags"] as const;
@@ -20,7 +21,7 @@ export function normalizeSthRegistrationPayload(value: unknown): SthRegistration
 
     const input = value as Record<string, unknown>;
     // These fields represent transport identity and must never be accepted from an untrusted body.
-    if ("clientCertificateFingerprint256" in input || "peerCertificateFingerprint256" in input || "peerCertificateHubId" in input || "authorizationContext" in input)
+    if ("clientCertificateFingerprint256" in input || "peerCertificateFingerprint256" in input || "peerCertificateHubId" in input || "authorizationContext" in input || "privateAdmission" in input || "federationHostId" in input)
         throw new CeroError("ERR_NOT_CURRENTLY_AVAILABLE");
 
     const payload: Record<string, unknown> = {};
@@ -34,13 +35,15 @@ export function normalizeSthRegistrationPayload(value: unknown): SthRegistration
     return payload as SthRegistrationPayload;
 }
 
-export async function registerSth(manager: Manager, value: unknown, evidence: SthRegistrationEvidence = {}): Promise<{ id: string; opStatus: string }> {
+export async function registerSth(manager: Manager, value: unknown, evidence: SthRegistrationEvidence = {}, origin: SthRegistrationOrigin = "private-v2"): Promise<{ id: string; opStatus: string }> {
     const payload = normalizeSthRegistrationPayload(value);
     const id = await manager.handleSthRegistration(
         payload,
         evidence.peerCertificateFingerprint256,
         evidence.peerCertificateHubId,
-        evidence.authorizationContext
+        evidence.authorizationContext,
+        evidence.privateAdmission,
+        origin
     );
     return { id, opStatus: ReasonPhrases.ACCEPTED };
 }

@@ -395,6 +395,7 @@ export async function runNativeComposeProof(world: CustomWorld): Promise<NativeC
         { principal: "sth", role: "guest", peerId: "compose-sth.guest", routedDomains: ["sth.compose-sth.scramjet.internal"] }
     ];
     const siRegistrations = [{ principal: "si", role: "broker", peerId: "compose-si.broker", routedDomains: [] }];
+    const mmBrokerPeerId = configuredBrokerPeerId(mmConfig);
     const sthClaim = {
         realm: "compose-realm",
         space: "compose-space",
@@ -499,33 +500,57 @@ export async function runNativeComposeProof(world: CustomWorld): Promise<NativeC
         const siCertificate = sign(siRequest, siRegistrationsPath, join(state, "si-issued.json"));
         runOfflineCli(sthBin, ["v2", "install", "--identity-dir", join(state, "sth-identity"), "--request", sthRequest, "--certificate", sthCertificate, "--ca-file", join(state, "ca.pem"), "--ca-fingerprint", caFingerprint]);
         runOfflineCli(sequenceBin, ["identity", "enroll", "install", "--identity-dir", join(state, "si-identity"), "--request", siRequest, "--certificate", siCertificate, "--ca-file", join(state, "ca.pem"), "--ca-fingerprint", caFingerprint]);
-        run(["up", "-d", "sth"], env, remaining());
-
         // Export the trusted MM profile on the host, then import it in the
         // private STH container.  Only the semantic bundle crosses the
         // boundary; the caller and STH retain distinct mTLS identities.
         const bundleBin = resolveBddBin("@scramjet/multi-manager", "multi-manager");
-        const hostMmConfig = JSON.parse(mmConfig) as { verser2: { host: { tls: { caFile: string; certFile: string; keyFile: string } } }; manager?: unknown };
+        const hostMmConfig = JSON.parse(mmConfig) as { verser2: { host: { tls: { caFile: string; certFile: string; keyFile: string } } }; csrEnrollment: { issuedStore: string; policy: { allowed: unknown[] } }; manager?: unknown };
         hostMmConfig.manager = childManagerConfig;
-        // The SI client certificate is registered as compose-si.broker.  Set
-        // the bundle's local broker identity to that registration without
-        // changing the running MultiManager's compose-mm.broker identity.
-        (hostMmConfig as any).verser2.localBroker.peerId = siRegistrations[0].peerId;
+        hostMmConfig.csrEnrollment.issuedStore = join(state, "issued-store");
+        hostMmConfig.csrEnrollment.policy.allowed = [...sthRegistrations, ...siRegistrations];
         hostMmConfig.verser2.host.tls.caFile = join(state, "ca.pem");
         hostMmConfig.verser2.host.tls.certFile = join(state, "mm.pem");
         hostMmConfig.verser2.host.tls.keyFile = join(state, "mm.key");
         const hostMmConfigPath = join(state, "mm-host.json");
         writeFileSync(hostMmConfigPath, JSON.stringify(hostMmConfig));
-        const bundleText = execFileSync(process.execPath, [bundleBin, "native-bundle", "--config", hostMmConfigPath, "--profile-name", "native-compose", "--space", "compose-space", "--hub", "compose-sth", "--format", "json", "--client-cert-file", join(state, "si-identity", "client.cert.pem"), "--client-key-file", join(state, "si-identity", "client.key.pem")], { encoding: "utf8", timeout: remaining() });
-        const bundle = JSON.parse(bundleText) as { credentials?: { certFile?: string; keyFile?: string } };
-        if (bundle.credentials) {
-            assert.equal(resolve(bundle.credentials.certFile || ""), resolve(state, "si-identity", "client.cert.pem"));
-            assert.equal(resolve(bundle.credentials.keyFile || ""), resolve(state, "si-identity", "client.key.pem"));
-            bundle.credentials.certFile = "/work-tmp/" + relative("/work-tmp", resolve(state, "si-identity", "client.cert.pem"));
-            bundle.credentials.keyFile = "/work-tmp/" + relative("/work-tmp", resolve(state, "si-identity", "client.key.pem"));
-        }
+        const exportBundle = (principal: "si" | "sth", brokerId: string, identityDir: string, credentialRoot = "/work-tmp/" + relative("/work-tmp", resolve(state, identityDir))) => {
+            const text = execFileSync(process.execPath, [bundleBin, "native-bundle", "--config", hostMmConfigPath, "--profile-name", "native-compose", "--space", "compose-space", "--hub", "compose-sth", "--format", "json", "--broker-id", brokerId, "--principal", principal, "--client-cert-file", join(state, identityDir, "client.cert.pem"), "--client-key-file", join(state, identityDir, "client.key.pem")], { encoding: "utf8", timeout: remaining() });
+            const value = JSON.parse(text) as { credentials?: { certFile?: string; keyFile?: string }; brokerId?: string };
+            assert.equal(value.brokerId, brokerId);
+            if (value.credentials) {
+                assert.equal(resolve(value.credentials.certFile || ""), resolve(state, identityDir, "client.cert.pem"));
+                assert.equal(resolve(value.credentials.keyFile || ""), resolve(state, identityDir, "client.key.pem"));
+                value.credentials.certFile = join(credentialRoot, "client.cert.pem");
+                value.credentials.keyFile = join(credentialRoot, "client.key.pem");
+            }
+            return value;
+        };
+        assert.equal(configuredBrokerPeerId(JSON.stringify(hostMmConfig)), mmBrokerPeerId, "bundle export must not mutate the running MM broker identity");
+        const bundle = exportBundle("si", siRegistrations[0].peerId, "si-identity");
         const bundlePath = join(state, "si-bundle.json");
         writeFileSync(bundlePath, Buffer.from(JSON.stringify(bundle), "utf8").toString("base64url"));
+        const sthBundle = exportBundle("sth", sthRegistrations[0].peerId, "sth-identity", "/run/scramjet/sth-identity");
+        const sthIssued = JSON.parse(readFileSync(join(state, "sth-issued.json"), "utf8")) as { registrations: typeof sthRegistrations };
+        assert.deepEqual(sthIssued.registrations, sthRegistrations);
+        assert.deepEqual(JSON.parse(readFileSync(join(state, "si-issued.json"), "utf8")).registrations, siRegistrations);
+        const sthConfigObject = JSON.parse(sthConfig) as Record<string, any>;
+        // The trusted bundle supplies the upstream transport projection; do
+        // not leave legacy endpoint, peer, or TLS values in the Compose file.
+        delete sthConfigObject.verser2;
+        sthConfigObject.manager = {
+            connectionBundle: sthBundle,
+            binding: {
+                brokerId: sthIssued.registrations.find(registration => registration.role === "broker")!.peerId,
+                guestPeerId: sthIssued.registrations.find(registration => registration.role === "guest")!.peerId,
+                guestRouteDomain: sthIssued.registrations.find(registration => registration.role === "guest")!.routedDomains[0],
+                federationHost: sthClaim.federationHost
+            }
+        };
+        assert.equal(sthConfigObject.manager.binding.brokerId, sthClaim.broker);
+        assert.equal(sthConfigObject.manager.binding.guestRouteDomain, sthClaim.guestRoute);
+        writeFileSync(join(state, "sth.json"), JSON.stringify(sthConfigObject));
+        assert.equal(configuredBrokerPeerId(readFileSync(join(state, "mm.json"), "utf8")), mmBrokerPeerId, "runtime MultiManager broker config must remain unchanged");
+        run(["up", "-d", "sth"], env, remaining());
         mkdirSync(join(state, "native-compose-client-home"), { recursive: true, mode: 0o700 });
 
         const providerArchive = join(state, "provider.tar.gz");
@@ -551,7 +576,24 @@ export async function runNativeComposeProof(world: CustomWorld): Promise<NativeC
         pack(packageSource("caller"), callerArchive);
         execute("docker", nativeCliArgs(project, sequenceBin, ["config", "native", "import", "--bundle-file", "/work-tmp/" + relative("/work-tmp", bundlePath), "--profile", "native-compose", "--overwrite"], env, remaining(), false), { cwd: root, env, timeout: remaining() });
         waitForNativeHubHealth(project, sequenceBin, env);
+        // The public SI ingress has no registration authority.  Exercise the
+        // public v2 path with the SI identity and require a not-found response;
+        // the successful registration is only the STH federation-host guest.
+        let publicRegistrationError = "";
+        try {
+            runNativeCli(project, sequenceBin, ["api", "post", "/api/v2/_internal/sth/registration", "--json", JSON.stringify({ id: "compose-sth" }), "--no-confirm"], env, remaining());
+        } catch (error) {
+            publicRegistrationError = error instanceof Error ? error.message : String(error);
+        }
+        assert.match(publicRegistrationError, /API returned 404/, "public SI-facing registration path must not dispatch registration");
+        runNativeCli(project, sequenceBin, ["config", "set", "log", "--format", "json"], env, remaining());
         const clientProfileDiagnostic = runNativeCli(project, sequenceBin, ["config", "effective"], env, remaining());
+        const effectiveProfile = JSON.parse(clientProfileDiagnostic) as { configured?: { transportMode?: string; verser2?: { endpoint?: string; brokerId?: string; tls?: { certFile?: string } } } };
+        assert.equal(effectiveProfile.configured?.transportMode, "native", "the SI client must not fall back to HTTP");
+        assert.equal(effectiveProfile.configured?.verser2?.endpoint, "https://multimanager:2443", "native client sessions must use the sole client-facing port");
+        assert.equal(effectiveProfile.configured?.verser2?.brokerId, siRegistrations[0].peerId);
+        assert.equal(effectiveProfile.configured?.verser2?.tls?.certFile, "/work-tmp/" + relative("/work-tmp", resolve(state, "si-identity", "client.cert.pem")), "output and info sessions must reuse the issued SI identity");
+        runNativeCli(project, sequenceBin, ["config", "set", "log", "--format", "pretty"], env, remaining());
         process.stderr.write(`[native-compose] client profile=native-compose\n${boundedCommandOutput(clientProfileDiagnostic)}\n`);
         const providerId = instanceId(runNativeCli(project, sequenceBin, ["sequence", "deploy", "/work-tmp/" + relative("/work-tmp", providerArchive)], env, remaining()));
         waitForInstance(project, sequenceBin, env, providerId);
@@ -630,6 +672,10 @@ export async function runNativeComposeProof(world: CustomWorld): Promise<NativeC
         typedRpcOutput,
         managedManagerRuntime
     };
+}
+
+function configuredBrokerPeerId(config: string): string {
+    return (JSON.parse(config) as { verser2: { localBroker: { peerId: string } } }).verser2.localBroker.peerId;
 }
 
 function envImage(value: string): string { return value.replace(/[^A-Za-z0-9._:@/-]/g, "[REDACTED]"); }

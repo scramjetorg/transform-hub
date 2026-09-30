@@ -42,7 +42,7 @@ export function applyManagerConnectionBundle(config: STHConfiguration, verser2De
         enrollment: defaults.enrollment
     };
     for (const key of ["ca", "caFile", "certFile", "keyFile", "pfxFile", "passphrase"]) delete projection.tls[key];
-    const allowed = new Set(["enabled", "hostUrl", "broker", "guest", "tls", "enrollment"]);
+    const allowed = new Set(["enabled", "hostUrl", "broker", "guest", "tls", "enrollment", "runnerHost"]);
     for (const key of Object.keys(current)) {
         if (!allowed.has(key) && !equal(current[key], defaults[key])) throw new Error(`manager.connectionBundle cannot be combined with upstream verser2 setting: ${key}`);
     }
