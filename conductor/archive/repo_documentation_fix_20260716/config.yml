@@ -1,4 +1,0 @@
-workflow:
-  commitFrequency: phase
-branching:
-  mode: mainline

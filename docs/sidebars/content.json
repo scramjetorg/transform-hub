@@ -231,11 +231,11 @@
     "output": "development/contributing.md"
   },
   {
-    "id": "development-technical-debt",
-    "title": "Technical Debt Register",
-    "slug": "/development/technical-debt",
-    "source": "docs-source/development/technical-debt.md",
-    "output": "development/technical-debt.md"
+    "id": "development-typescript-node-monorepo",
+    "title": "TypeScript Node Monorepo Code Style Guide",
+    "slug": "/development/typescript-node-monorepo",
+    "source": "docs-source/development/typescript-node-monorepo.md",
+    "output": "development/typescript-node-monorepo.md"
   },
   {
     "id": "example-app-context-health-parity",

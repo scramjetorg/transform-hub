@@ -7,4 +7,4 @@
 ## Contents
 
 - [contributing.md](contributing.md)
-- [technical-debt.md](technical-debt.md)
+- [typescript-node-monorepo.md](typescript-node-monorepo.md)
