@@ -56,6 +56,28 @@ Feature: MANAGER-003 Full API capability through Verser2 forwarding
     Then the response status should be 200
     And the response body should be "POST /abc sequence-to-sequence"
 
+  @aggregation-repro-cleanup @sequence-to-sequence @sequence-to-sequence-tls
+  Scenario: Cross-Hub sequence RPC uses mutual TLS
+    Given the aggregation MultiManager requires mutual TLS with scenario certificates
+    And an isolated MultiManager aggregation stack
+    And an STH hub "hub-1" is connected to the aggregation Manager
+    And an STH hub "hub-2" is connected to the aggregation Manager
+    And I wait for hubs to register with the Manager
+    When a certificate-free external Broker is rejected by the aggregation MultiManager
+    And source sequence "hub-1-api-main" calls target sequence "hub-2-api-main" through the aggregation Manager
+    Then the cross-Hub sequence RPC response matches its unique request
+
+  @aggregation-repro-cleanup @sequence-to-sequence @sequence-to-sequence-tls
+  Scenario: Cross-Hub sequence RPC uses server-authenticated TLS
+    Given the aggregation MultiManager uses server-authenticated TLS with scenario certificates
+    And an isolated MultiManager aggregation stack
+    And an STH hub "hub-1" is connected to the aggregation Manager
+    And an STH hub "hub-2" is connected to the aggregation Manager
+    And I wait for hubs to register with the Manager
+    When a certificate-free external Broker is accepted by the aggregation MultiManager
+    And source sequence "hub-1-api-main" calls target sequence "hub-2-api-main" through the aggregation Manager
+    Then the cross-Hub sequence RPC response matches its unique request
+
   @aggregation-repro-cleanup @sequence-to-sequence
   Scenario: MANAGER-003 TC-005 Same-Hub sequence-to-sequence routing shortens to the local Hub path
     Given an isolated MultiManager aggregation stack

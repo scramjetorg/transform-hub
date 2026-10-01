@@ -16,8 +16,10 @@
 import { Given, When, Then, After } from "@cucumber/cucumber";
 import { strict as assert } from "assert";
 import { ChildProcess, spawn } from "child_process";
+import { X509Certificate } from "crypto";
 import { PassThrough } from "stream";
 import { resolve } from "path";
+import { createVerserBroker, type VerserBroker } from "@signicode/verser2-guest-node";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "fs";
 import { request as httpRequest } from "http";
 import { request as httpsRequest } from "https";
@@ -75,6 +77,16 @@ async function waitForGetFailure(baseUrl: string, endpoint: string, timeoutMs = 
 
 After({ tags: "@aggregation-repro-cleanup" }, async function (this: CustomWorld) {
     const errors: Error[] = [];
+
+    const admissionBroker = this.resources.aggAdmissionBroker as VerserBroker | undefined;
+    if (admissionBroker) {
+        try {
+            await admissionBroker.close("aggregation TLS admission scenario cleanup");
+        } catch (error) {
+            errors.push(error instanceof Error ? error : new Error(String(error)));
+        }
+        delete this.resources.aggAdmissionBroker;
+    }
 
     // Stop owned aggregation processes concurrently with safe error aggregation.
     const results = await Promise.allSettled(
@@ -144,20 +156,24 @@ function spawnProcess(
     options: string[],
     readyMatch?: string,
     timeout = 15000,
-    env: Record<string, string> = {},
+    env: Record<string, string | undefined> = {},
     lifecycle?: CustomWorld["scenarioLifecycle"]
 ): Promise<ChildProcess> {
     return new Promise((resolve, reject) => {
         const fullCmd = [...cmd, ...options];
+        const childEnv: NodeJS.ProcessEnv = {
+            ...process.env,
+            SCRAMJET_BDD_RUN_ID: ownership.runId,
+            SCRAMJET_BDD_CHUNK_ID: ownership.chunkId,
+            SCRAMJET_BDD_OWNER: ownership.owner,
+        };
+        for (const [key, value] of Object.entries(env)) {
+            if (value === undefined) delete childEnv[key];
+            else childEnv[key] = value;
+        }
         const proc = spawn("/usr/bin/env", fullCmd, {
             detached: true,
-            env: {
-                ...process.env,
-                SCRAMJET_BDD_RUN_ID: ownership.runId,
-                SCRAMJET_BDD_CHUNK_ID: ownership.chunkId,
-                SCRAMJET_BDD_OWNER: ownership.owner,
-                ...env,
-            },
+            env: childEnv,
             stdio: ["ignore", "pipe", "pipe"]
         });
         lifecycle?.ownChild(proc, `aggregation:${cmd[cmd.length - 1]}`, { group: true });
@@ -554,12 +570,55 @@ async function sendAggregationManagerProxyRequest(
 // Background steps
 // =========================================================================
 
+Given("the aggregation MultiManager requires mutual TLS with scenario certificates", async function(this: CustomWorld) {
+    assert.ok(this.scenarioIsolation, "ScenarioIsolation must be installed before creating the MultiManager mTLS identity");
+    const tls = await this.scenarioIsolation.createMtlsControlIngress();
+    const secondFingerprint = new X509Certificate(readFileSync(tls.rejectedClient.certFile)).fingerprint256;
+    assert.notEqual(tls.allowedFingerprint, secondFingerprint, "The two Hub mTLS identities must have distinct fingerprints");
+
+    this.resources.aggVerser2UseLocalhost = true;
+    this.resources.aggVerser2AdmissionCaFile = tls.allowedClient.caFile;
+    this.resources.aggVerser2MultiManagerTls = {
+        caFile: tls.allowedClient.caFile,
+        certFile: tls.server.tls.certFile,
+        keyFile: tls.server.tls.keyFile,
+        clientAuthCaFile: tls.server.tls.clientAuthCaFile,
+        mtlsRequired: true,
+    };
+    this.resources.aggVerser2AllowedClientFingerprints = [tls.allowedFingerprint, secondFingerprint];
+    this.resources.aggVerser2HubClientTls = {
+        "hub-1": tls.allowedClient,
+        "hub-2": tls.rejectedClient,
+    };
+    this.resources.aggSequenceRpcPayload = `cross-hub-mtls-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+});
+
+Given("the aggregation MultiManager uses server-authenticated TLS with scenario certificates", function(this: CustomWorld) {
+    assert.ok(this.scenarioIsolation, "ScenarioIsolation must be installed before creating the MultiManager TLS identity");
+    const tls = this.scenarioIsolation.createVerser2TlsCredentials();
+
+    this.resources.aggVerser2UseLocalhost = true;
+    this.resources.aggVerser2AdmissionCaFile = tls.caFile;
+    this.resources.aggVerser2MultiManagerTls = {
+        caFile: tls.caFile,
+        certFile: tls.certFile,
+        keyFile: tls.keyFile,
+        mtlsRequired: false,
+    };
+    this.resources.aggVerser2AllowedClientFingerprints = [];
+    this.resources.aggVerser2HubClientTls = {};
+    this.resources.aggSequenceRpcPayload = `cross-hub-one-way-tls-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+});
+
 Given("an isolated MultiManager aggregation stack", { timeout: 30000 }, async function (this: CustomWorld) {
     const runId = `${Date.now()}-${Math.floor(Math.random() * 100000)}`;
     const mmPort = process.env.AGGREGATION_REPRO_BASE_PORT
         ? parseInt(process.env.AGGREGATION_REPRO_BASE_PORT, 10)
         : await freeport();
     const verser2Port = await freeport();
+    const verser2PublicUrl = this.resources.aggVerser2UseLocalhost === true
+        ? `https://localhost:${verser2Port}`
+        : `https://127.0.0.1:${verser2Port}`;
     const id = `mm-agg-${runId}`;
     const managerId = `mgr-agg-${runId}`;
     const tempDir = mkdtempSync(resolve(ownership.tempPath, "manager-aggregation-"));
@@ -570,7 +629,7 @@ Given("an isolated MultiManager aggregation stack", { timeout: 30000 }, async fu
         "--host=0.0.0.0",
         `--verser2-host-bind-port=${verser2Port}`,
         "--verser2-host-bind-host=0.0.0.0",
-        `--verser2-host-public-url=https://127.0.0.1:${verser2Port}`,
+        `--verser2-host-public-url=${verser2PublicUrl}`,
         "--verser2-allow-local-peers=true",
         `--verser2-host-identity-dir=${tempDir}/verser2-mm`,
         "--log-level=INFO",
@@ -580,10 +639,26 @@ Given("an isolated MultiManager aggregation stack", { timeout: 30000 }, async fu
     const mmEnv = {
         SCRAMJET_VERSER2_HOST_BIND_PORT: String(verser2Port),
         SCRAMJET_VERSER2_HOST_BIND_HOST: "0.0.0.0",
-        SCRAMJET_VERSER2_HOST_PUBLIC_URL: `https://127.0.0.1:${verser2Port}`,
+        SCRAMJET_VERSER2_HOST_PUBLIC_URL: verser2PublicUrl,
         SCRAMJET_VERSER2_ALLOW_LOCAL_PEERS: "true",
         SCRAMJET_VERSER2_HOST_IDENTITY_DIR: `${tempDir}/verser2-mm`
     };
+    const tlsConfig = this.resources.aggVerser2MultiManagerTls as Record<string, unknown> | undefined;
+    if (tlsConfig) {
+        const configPath = resolve(tempDir, "verser2-host-config.json");
+        writeFileSync(configPath, JSON.stringify({
+            verser2: {
+                host: {
+                    publicUrl: verser2PublicUrl,
+                    tls: tlsConfig,
+                },
+                registration: {
+                    allowedClientFingerprints: this.resources.aggVerser2AllowedClientFingerprints || [],
+                },
+            },
+        }, null, 2));
+        mmOptions.push(`--config=${configPath}`);
+    }
     const proc = await spawnProcess(cmd, mmOptions, undefined, 15_000, {
         ...mmEnv
     }, this.scenarioLifecycle);
@@ -598,6 +673,7 @@ Given("an isolated MultiManager aggregation stack", { timeout: 30000 }, async fu
     this.resources.aggManagerId = managerId;
     this.resources.aggTempDir = tempDir;
     this.resources.aggVerser2Port = verser2Port;
+    this.resources.aggVerser2PublicUrl = verser2PublicUrl;
 
     await waitForGet(this.resources.aggMMApiBase, "version", 20_000);
 
@@ -715,16 +791,16 @@ Given("an STH hub {string} is connected to the aggregation Manager", {
         "--kill-on-exit",
         // verser2: connect to Manager
         `--verser2-enabled=true`,
-        `--verser2-host-url=https://127.0.0.1:${verser2Port}`,
+        `--verser2-host-url=${this.resources.aggVerser2PublicUrl || `https://127.0.0.1:${verser2Port}`}`,
         `--verser2-guest-peer-id=sth.${runHubName}.guest`,
         `--verser2-guest-route-domain=sth.${runHubName}.scramjet.internal`,
         `--verser2-broker-peer-id=sth.${runHubName}.broker`,
         `--verser2-broker-target-domain=manager.${managerId}.scramjet.internal`,
     ];
 
-    const hubEnv: Record<string, string> = {
+    const hubEnv: Record<string, string | undefined> = {
         SCRAMJET_VERSER2_RUNNER_HOST_BIND_PORT: String(runnerHostPort),
-        SCRAMJET_VERSER2_HOST_URL: `https://127.0.0.1:${verser2Port}`,
+        SCRAMJET_VERSER2_HOST_URL: String(this.resources.aggVerser2PublicUrl || `https://127.0.0.1:${verser2Port}`),
         SCRAMJET_VERSER2_GUEST_PEER_ID: `sth.${runHubName}.guest`,
         SCRAMJET_VERSER2_GUEST_ROUTE_DOMAIN: `sth.${runHubName}.scramjet.internal`,
         SCRAMJET_VERSER2_BROKER_PEER_ID: `sth.${runHubName}.broker`,
@@ -734,6 +810,17 @@ Given("an STH hub {string} is connected to the aggregation Manager", {
         SCRAMJET_VERSER2_RUNNER_HOST_IDENTITY_DIR: `${hubDir}/verser2-runner-host`,
         SCRAMJET_VERSER2_RUNNER_HOST_ALLOW_LOCAL_PEERS: "true",
     };
+
+    const hubClientTls = (this.resources.aggVerser2HubClientTls as Record<string, { certFile: string; keyFile: string }> | undefined)?.[hubName];
+    if (hubClientTls) {
+        hubEnv.SCRAMJET_VERSER2_CERT_FILE = hubClientTls.certFile;
+        hubEnv.SCRAMJET_VERSER2_KEY_FILE = hubClientTls.keyFile;
+    } else if (this.resources.aggVerser2UseLocalhost === true) {
+        // Explicitly remove any ambient client credentials for the
+        // server-authenticated-only scenario.
+        hubEnv.SCRAMJET_VERSER2_CERT_FILE = undefined;
+        hubEnv.SCRAMJET_VERSER2_KEY_FILE = undefined;
+    }
 
     // If we have verser2 CA, pass it
     if (this.resources.aggVerser2CA) {
@@ -779,6 +866,43 @@ Given("an STH hub {string} is connected to the aggregation Manager", {
         this.resources.aggHubCount = (this.resources.aggHubCount || 0) + 1;
     } catch (e) {
         assert.fail(`Hub ${hubName} failed to start: ${(e as Error).message}`);
+    }
+});
+
+When("a certificate-free external Broker is rejected by the aggregation MultiManager", async function(this: CustomWorld) {
+    const caFile = String(this.resources.aggVerser2AdmissionCaFile || "");
+    const hostUrl = String(this.resources.aggVerser2PublicUrl || "");
+    assert.ok(caFile && hostUrl, "Scenario-owned MultiManager TLS trust and endpoint must be configured first");
+    const broker = createVerserBroker({
+        hostUrl,
+        brokerId: `bdd-cert-free-rejected-${this.resources.aggManagerId}`,
+        // CA-only TLS options verify the server but deliberately present no client identity.
+        tls: { ca: readFileSync(caFile, "utf8") },
+    });
+    this.resources.aggAdmissionBroker = broker;
+    try {
+        await assert.rejects(broker.connect());
+    } finally {
+        await broker.close("mTLS admission assertion complete").catch(() => undefined);
+        delete this.resources.aggAdmissionBroker;
+    }
+});
+
+When("a certificate-free external Broker is accepted by the aggregation MultiManager", async function(this: CustomWorld) {
+    const caFile = String(this.resources.aggVerser2AdmissionCaFile || "");
+    const hostUrl = String(this.resources.aggVerser2PublicUrl || "");
+    assert.ok(caFile && hostUrl, "Scenario-owned MultiManager TLS trust and endpoint must be configured first");
+    const broker = createVerserBroker({
+        hostUrl,
+        brokerId: `bdd-cert-free-accepted-${this.resources.aggManagerId}`,
+        tls: { ca: readFileSync(caFile, "utf8") },
+    });
+    this.resources.aggAdmissionBroker = broker;
+    try {
+        await broker.connect();
+    } finally {
+        await broker.close("one-way TLS admission assertion complete").catch(() => undefined);
+        delete this.resources.aggAdmissionBroker;
     }
 });
 
@@ -962,9 +1086,18 @@ When("source sequence {string} calls target sequence {string} through the aggreg
     this.response = await rawHttpRequest(
         "POST",
         aggregationManagerProxyUrl(this, `/sth/${sourceHubName}/instance/${sourceInstanceName}/rpc/test/call-target?sourceHub=${sourceHub}&targetHub=${targetHub}&targetInstance=${targetInstance}`),
-        "sequence-to-sequence",
+        String(this.resources.aggSequenceRpcPayload || "sequence-to-sequence"),
         { "Content-Type": "text/plain" }
     );
+});
+
+Then("the cross-Hub sequence RPC response matches its unique request", async function(this: CustomWorld) {
+    assert.ok(this.response, "No cross-Hub sequence RPC response was recorded");
+    const body = await this.response.text();
+    const payload = String(this.resources.aggSequenceRpcPayload || "");
+    assert.match(payload, /^cross-hub-(?:mtls|one-way-tls)-\d+-[a-f0-9]+$/);
+    assert.equal(this.response.status, 200);
+    assert.equal(body, `POST /abc ${payload}`);
 });
 
 async function waitForSourceTargetReadiness(
