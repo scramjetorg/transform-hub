@@ -27,7 +27,11 @@ export class ProfileManager {
         this.source = ProfileSource.Default;
         const defaultProfile = new ProfileConfig(defaultConfigProfileFile);
 
-        if (!defaultProfile.isValid()) {
+        // Runtime TLS environment overlays participate in isValid(), but must
+        // never make an otherwise sound saved default look corrupt and cause
+        // restoreDefault() to overwrite it. A valid env overlay may also
+        // complete an incomplete stored TLS section without persisting it.
+        if (!defaultProfile.validateStored() && !defaultProfile.isValid()) {
             defaultProfile.restoreDefault();
         }
         this.profileConfig = defaultProfile;
@@ -119,7 +123,7 @@ export class ProfileManager {
     protected setProfileFromFile(path: string): boolean {
         const userProfileConfigFile = new ReadOnlyProfileConfig(path);
 
-        if (!userProfileConfigFile.isValid()) throw Error("Invalid config file");
+        if (!userProfileConfigFile.isValid() && !userProfileConfigFile.validateStored()) throw Error("Invalid config file");
         this.profileConfig = userProfileConfigFile;
         return true;
     }
@@ -127,7 +131,7 @@ export class ProfileManager {
     protected setMutableProfileFromFile(path: string): boolean {
         const userProfileConfigFile = new ProfileConfig(path);
 
-        if (!userProfileConfigFile.isValid()) throw Error("Invalid config file");
+        if (!userProfileConfigFile.isValid() && !userProfileConfigFile.validateStored()) throw Error("Invalid config file");
         this.profileConfig = userProfileConfigFile;
         return true;
     }

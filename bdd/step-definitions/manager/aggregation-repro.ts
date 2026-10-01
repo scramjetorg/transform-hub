@@ -20,7 +20,7 @@ import { X509Certificate } from "crypto";
 import { PassThrough } from "stream";
 import { resolve } from "path";
 import { createVerserBroker, type VerserBroker } from "@signicode/verser2-guest-node";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "fs";
 import { request as httpRequest } from "http";
 import { request as httpsRequest } from "https";
 import { promisify } from "util";
@@ -608,6 +608,20 @@ Given("the aggregation MultiManager uses server-authenticated TLS with scenario 
     this.resources.aggVerser2AllowedClientFingerprints = [];
     this.resources.aggVerser2HubClientTls = {};
     this.resources.aggSequenceRpcPayload = `cross-hub-one-way-tls-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+});
+
+Given(/^scenario TLS private keys are owner-only files under \/tmp$/, function(this: CustomWorld) {
+    const isolation = this.scenarioIsolation;
+    assert.ok(isolation, "ScenarioIsolation must exist before checking TLS private-key storage");
+    const certificatesDir = resolve(isolation.certificatesDir);
+    const privateKeys = isolation.privateCredentialPaths();
+    assert.ok(certificatesDir.startsWith("/tmp/"), `Scenario TLS directory must be under /tmp, got ${certificatesDir}`);
+    assert.equal(statSync(certificatesDir).mode & 0o777, 0o700, "Scenario TLS directory must be owner-only");
+    assert.ok(privateKeys.length > 0, "Expected generated scenario-private TLS keys");
+    for (const keyFile of privateKeys) {
+        assert.ok(keyFile.startsWith(`${certificatesDir}/`), `Private key escaped scenario TLS directory: ${keyFile}`);
+        assert.equal(statSync(keyFile).mode & 0o777, 0o600, `Private key must be owner-only: ${keyFile}`);
+    }
 });
 
 Given("an isolated MultiManager aggregation stack", { timeout: 30000 }, async function (this: CustomWorld) {

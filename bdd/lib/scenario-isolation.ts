@@ -1,7 +1,7 @@
 import { execFileSync } from "child_process";
 import { randomBytes } from "crypto";
 import { strict as assert } from "assert";
-import { mkdirSync, mkdtempSync, rmSync, statSync, writeFileSync } from "fs";
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, rmSync, statSync, writeFileSync } from "fs";
 import { join, relative } from "path";
 import Dockerode from "dockerode";
 
@@ -56,6 +56,7 @@ export type ScenarioIsolation = {
     configPath: string;
     artifactsDir: string;
     certificatesDir: string;
+    privateCredentialPaths: () => string[];
     environment: (overrides?: NodeJS.ProcessEnv) => NodeJS.ProcessEnv;
     writeProfile: (name: string, value: unknown, activeProfile?: string) => string;
     writeConfig: (value: unknown) => string;
@@ -146,7 +147,12 @@ export function createScenarioIsolation(lifecycle: ScenarioLifecycle, environmen
     const profilesDir = join(home, ".si", "profiles");
     const configPath = join(root, "config", "config.json");
     const artifactsDir = join(root, "artifacts");
-    const certificatesDir = join(root, "certificates");
+    // Test PKI is deliberately separate from production identity directories
+    // and lives at a literal /tmp path shared by this process and its Hub/CLI
+    // children. The scenario owner removes it after child-process cleanup.
+    const certificatesDir = mkdtempSync(join("/tmp", "scramjet-bdd-private-pki-"));
+    chmodSync(certificatesDir, 0o700);
+    const privateCredentials: string[] = [];
     const reservations: PortReservation[] = [];
     let requireDocker = false;
     let cleaned = false;
@@ -166,6 +172,7 @@ export function createScenarioIsolation(lifecycle: ScenarioLifecycle, environmen
         const serverExtFile = join(pkiDir, "server.ext");
         const createClient = (name: string): MtlsClientCredentials => {
             const keyFile = join(pkiDir, `${name}-key.pem`);
+            privateCredentials.push(keyFile);
             const csrFile = join(pkiDir, `${name}.csr`);
             const certFile = join(pkiDir, `${name}-cert.pem`);
             const extFile = join(pkiDir, `${name}.ext`);
@@ -184,6 +191,7 @@ export function createScenarioIsolation(lifecycle: ScenarioLifecycle, environmen
 
         const allowedClient = createClient("allowed-client");
         const rejectedClient = createClient("rejected-client");
+        privateCredentials.push(caKeyFile, serverKeyFile);
         for (const privateFile of [caKeyFile, serverKeyFile, allowedClient.keyFile, rejectedClient.keyFile]) {
             try { require("fs").chmodSync(privateFile, 0o600); } catch { /* mode checks are platform-specific */ }
         }
@@ -230,6 +238,7 @@ export function createScenarioIsolation(lifecycle: ScenarioLifecycle, environmen
         const csrFile = join(pkiDir, "server.csr");
         const extFile = join(pkiDir, "server.ext");
 
+        privateCredentials.push(caKeyFile, keyFile);
         runOpenSsl(["req", "-x509", "-newkey", "rsa:2048", "-nodes", "-keyout", caKeyFile, "-out", caFile, "-days", "1", "-subj", "/CN=bdd-verser2-ca"]);
         runOpenSsl(["genrsa", "-out", keyFile, "2048"]);
         runOpenSsl(["req", "-new", "-key", keyFile, "-out", csrFile, "-subj", "/CN=localhost"]);
@@ -249,6 +258,7 @@ export function createScenarioIsolation(lifecycle: ScenarioLifecycle, environmen
         configPath,
         artifactsDir,
         certificatesDir,
+        privateCredentialPaths: () => [...privateCredentials],
         environment: (overrides = {}) => ({
             ...ownershipEnv(ownership, environment),
             ...overrides,
@@ -305,6 +315,15 @@ export function createScenarioIsolation(lifecycle: ScenarioLifecycle, environmen
                 } else if (beforeContainers && beforeContainers.length > 0 && process.env.SCRAMJET_TEST_LOG) {
                     process.stderr.write(`[bdd-isolation] cleaned ${beforeContainers.length} owner-labeled Docker container(s).\n`);
                 }
+            }
+            try {
+                rmSync(certificatesDir, { recursive: true, force: true });
+                if (existsSync(certificatesDir) || privateCredentials.some(file => existsSync(file))) {
+                    errors.push(new Error("Scenario-owned /tmp TLS private credentials remain after cleanup."));
+                }
+                privateCredentials.length = 0;
+            } catch (error) {
+                errors.push(error instanceof Error ? error : new Error(String(error)));
             }
             try {
                 assertOwnedPath(ownership.tempPath, root);

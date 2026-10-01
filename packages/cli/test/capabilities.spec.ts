@@ -2,9 +2,13 @@ import baseTest from "ava";
 const { allowAvaMemoryGrowth, createAvaMemoryGuard } = require("../../../scripts/lib/ava-memory-guard");
 const test: typeof baseTest = createAvaMemoryGuard(baseTest);
 import { PassThrough, Readable } from "stream";
+import fs from "fs";
+import os from "os";
+import path from "path";
 import { ApiCommandError } from "../src/lib/commands/api";
 import { CapabilityUnavailableError, getNativeCapabilities, setCapabilityDependencies } from "../src/lib/capabilities";
-import { sessionConfig } from "../src/lib/config";
+import { getSelectedVerser2Profile, profileManager, sessionConfig, verser2ClientTlsEnvironment } from "../src/lib/config";
+import ProfileConfig from "../src/lib/config/profileConfig";
 import { displayLogStream, displayStream } from "../src/lib/output";
 import { RoutedBrokerCancelledError, RoutedBrokerDuplicateRouteError, RoutedBrokerRedirectError, RoutedBrokerRequestError, RoutedBrokerResponseLimitError, RoutedBrokerRouteUnavailableError, RoutedBrokerTimeoutError } from "@scramjet/api-router";
 
@@ -43,6 +47,76 @@ test.serial("native facade verifies identity before each request and materialize
         const failure = await t.throwsAsync(() => getNativeCapabilities()!.json("GET", "/api/v2/sequences"), { instanceOf: ApiCommandError }) as ApiCommandError;
         t.is(failure.code, code); t.is(failure.exitCode, exitCode); t.is(dispatched, 0);
     }
+});
+
+test.serial("named capabilities use selected-profile TLS environment overrides without persisting them", async t => {
+    const directory = fs.mkdtempSync(path.join(os.tmpdir(), "si-capability-env-tls-"));
+    const selectedPath = path.join(directory, "selected.json");
+    const selectedConfig = new ProfileConfig(selectedPath);
+    selectedConfig.restoreDefault();
+    const file = (name: string, mode: number) => {
+        const target = path.join(directory, name);
+        fs.writeFileSync(target, `env-${name}`);
+        fs.chmodSync(target, mode);
+        return target;
+    };
+    const baseCa = file("base-ca.pem", 0o644);
+    const baseCert = file("base-cert.pem", 0o644);
+    const baseKey = file("base-key.pem", 0o600);
+    const selectedVerser2 = {
+        endpoint: "https://selected-broker.test",
+        brokerId: "selected-profile-test",
+        ingress: { level: "hub" as const, expectedId: "hub-id", routeDomain: "route.test" },
+        tls: { caFile: baseCa, certFile: baseCert, keyFile: baseKey },
+        timeoutMs: 100
+    };
+    t.true(selectedConfig.setVerser2(selectedVerser2));
+    const persistedTls = selectedVerser2.tls;
+    const envCa = file("env-ca.pem", 0o644);
+    const envCert = file("env-cert.pem", 0o644);
+    const envKey = file("env-key.pem", 0o600);
+    const envNames = [verser2ClientTlsEnvironment.caFile, verser2ClientTlsEnvironment.certFile, verser2ClientTlsEnvironment.keyFile];
+    const previous = new Map(envNames.map(name => [name, process.env[name]]));
+    process.env[verser2ClientTlsEnvironment.caFile] = envCa;
+    process.env[verser2ClientTlsEnvironment.certFile] = envCert;
+    process.env[verser2ClientTlsEnvironment.keyFile] = envKey;
+    profileManager.useDefaultProfile();
+    profileManager.setFlagConfigPath(selectedPath);
+
+    let transportProfile: any;
+    const transport: any = {
+        waitForRoute: async () => {},
+        close: async () => {},
+        request: async (request: any) => ({
+            status: 200,
+            headers: {},
+            body: Readable.from([JSON.stringify(request.path === "/api/v2/ingress/identity"
+                ? { level: "hub", serviceId: "hub-id", routeDomain: "route.test" }
+                : { items: [] })]),
+            cleanup: async () => {}
+        })
+    };
+    setCapabilityDependencies({
+        createTransport: selected => { transportProfile = selected; return transport; }
+    });
+    t.teardown(() => {
+        for (const [name, value] of previous) {
+            if (value === undefined) delete process.env[name];
+            else process.env[name] = value;
+        }
+        profileManager.useDefaultProfile();
+        setCapabilityDependencies();
+        fs.rmSync(directory, { recursive: true, force: true });
+    });
+
+    t.deepEqual(getSelectedVerser2Profile()?.tls, { caFile: envCa, certFile: envCert, keyFile: envKey });
+    t.deepEqual(await getNativeCapabilities()!.json("GET", "/api/v2/sequences"), { items: [] });
+    t.deepEqual(transportProfile.tls, { caFile: envCa, certFile: envCert, keyFile: envKey });
+    const persisted = JSON.parse(fs.readFileSync(selectedPath, "utf8"));
+    t.deepEqual(persisted.verser2.tls, persistedTls, "TLS environment values must not be written to the selected profile");
+    t.false(JSON.stringify(persisted.verser2.tls).includes(envCa));
+    t.false(JSON.stringify(persisted.verser2.tls).includes(envCert));
+    t.false(JSON.stringify(persisted.verser2.tls).includes(envKey));
 });
 
 test.serial("native facade maps non-success v0.7 responses without HTTP fallback", async t => {

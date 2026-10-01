@@ -59,6 +59,7 @@ Feature: MANAGER-003 Full API capability through Verser2 forwarding
   @aggregation-repro-cleanup @sequence-to-sequence @sequence-to-sequence-tls
   Scenario: Cross-Hub sequence RPC uses mutual TLS
     Given the aggregation MultiManager requires mutual TLS with scenario certificates
+    And scenario TLS private keys are owner-only files under /tmp
     And an isolated MultiManager aggregation stack
     And an STH hub "hub-1" is connected to the aggregation Manager
     And an STH hub "hub-2" is connected to the aggregation Manager
@@ -70,6 +71,7 @@ Feature: MANAGER-003 Full API capability through Verser2 forwarding
   @aggregation-repro-cleanup @sequence-to-sequence @sequence-to-sequence-tls
   Scenario: Cross-Hub sequence RPC uses server-authenticated TLS
     Given the aggregation MultiManager uses server-authenticated TLS with scenario certificates
+    And scenario TLS private keys are owner-only files under /tmp
     And an isolated MultiManager aggregation stack
     And an STH hub "hub-1" is connected to the aggregation Manager
     And an STH hub "hub-2" is connected to the aggregation Manager
