@@ -47,7 +47,7 @@ function getExecutableCmd(packageName: string): string[] {
     const binName = packageName === "multi-manager" ? "multi-manager" : packageName;
     if (process.env.SCRAMJET_SPAWN_TS) {
         if (process.env.SCRAMJET_RELEASE_PRERELEASE_BDD_RECORD) resolvePublishedBin(sourceName, binName);
-        return ["npx", "ts-node", publishedSourceEntry(sourceName, "bin", "start.ts")];
+        return ["npx", "tsx", publishedSourceEntry(sourceName, "bin", "start.ts")];
     }
     return [resolvePublishedBin(sourceName, binName)];
 }

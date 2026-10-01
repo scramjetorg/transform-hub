@@ -15,7 +15,7 @@ startManager().catch(e => {
     process.exit();
 });
 ```
-- Imported by `package.json` script `"start": "ts-node ./src/bin/start"`.
+- Imported by `package.json` script `"start": "tsx ./src/bin/start"`.
 - `startManager()` (defined in `src/lib/start-manager.ts`) creates a `Manager` instance and calls `manager.main()` — which creates a `ManagerAPIHandler` and attaches both v1 and v2 routes.
 - Catches startup errors and exits with the appropriate code.
 

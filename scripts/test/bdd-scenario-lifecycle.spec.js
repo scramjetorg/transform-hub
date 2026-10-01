@@ -2,7 +2,7 @@
 
 const test = require("ava").default;
 const { spawn } = require("child_process");
-require("ts-node/register");
+require("tsx/cjs");
 const { ScenarioLifecycle, stopProcess, isAlive } = require("../../scripts/lib/bdd-scenario-lifecycle.js");
 const { MemoryRegistry } = require("../../bdd/lib/memory-registry");
 const { cleanupScenarioWorldResources } = require("../../scripts/lib/bdd-memory-hooks-lib.js");

@@ -54,7 +54,7 @@ function freshCliStartup(home: string, caFile?: string) {
     }
     if (caFile === undefined) delete env[verser2ClientTlsEnvironment.caFile];
     else env[verser2ClientTlsEnvironment.caFile] = caFile;
-    return spawnSync(process.execPath, ["-r", require.resolve("ts-node/register/transpile-only"), "-e", script, entry], {
+    return spawnSync(process.execPath, ["-r", require.resolve("tsx/cjs"), "-e", script, entry], {
         cwd: packageRoot,
         env,
         encoding: "utf8",

@@ -5,7 +5,7 @@
  * logic.  Verifies that both -P (short) and --port (long) in extraArgs
  * suppress the default -P LOCAL_HOST_PORT injection.
  *
- * Always loads current source via ts-node so the test exercises the live
+ * Always loads current source via tsx so the test exercises the live
  * bdd/lib/host-utils.ts build output, never a stale bdd/dist artifact.
  */
 
@@ -13,13 +13,10 @@
 
 const test = require("ava").default;
 const path = require("path");
-const tsNode = require("ts-node");
-
-// Register ts-node to load TypeScript source directly.  This avoids
+process.env.TSX_TSCONFIG_PATH = path.resolve(__dirname, "../../bdd/tsconfig.json");
+// Register tsx to load TypeScript source directly.  This avoids
 // falling back to a potentially stale bdd/dist/ compiled artifact.
-tsNode.register({
-	project: path.resolve(__dirname, "../../bdd/tsconfig.json"),
-});
+require("tsx/cjs");
 
 const { HostUtils } = require("../../bdd/lib/host-utils");
 

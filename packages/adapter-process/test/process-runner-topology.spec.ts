@@ -91,6 +91,11 @@ test("process adapter launches the explicit runner bin", t => {
     const command = adapter.getRunnerCmd({ engines: { node: "*" } } as any);
     t.regex(command[command.length - 1], /[\\/]start-runner\.(?:ts|js)$/);
 });
+test("process adapter chooses tsx only for TypeScript source runner entries", t => {
+    const { getRunnerInterpreter } = require("../src/process-instance-adapter");
+    t.is(getRunnerInterpreter("/workspace/runner/start-runner.ts"), "tsx");
+    t.is(getRunnerInterpreter("/workspace/runner/dist/start-runner.js"), process.execPath);
+});
 test("process adapter preserves complete runner connection and transport configuration", async t => {
     const spawnCalls: any[] = [];
 

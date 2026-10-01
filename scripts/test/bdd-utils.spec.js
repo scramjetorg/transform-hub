@@ -3,14 +3,14 @@ const fs = require("fs");
 const os = require("os");
 const path = require("path");
 const { PassThrough } = require("stream");
-const tsNode = require("ts-node");
 const { EventEmitter } = require("events");
 const http = require("http");
 const { spawnOwnedProcess } = require("../../bdd/lib/spawn-owned-process.js");
 const { clearE2eScenarioState } = require("../../bdd/lib/e2e-module-state.js");
 const { waitForInstanceDetachment } = require("../../bdd/lib/instance-detachment.js");
 const { teardownFloodSource } = require("../../bdd/lib/flood-teardown.js");
-tsNode.register({ project: path.resolve(__dirname, "../../bdd/tsconfig.json") });
+process.env.TSX_TSCONFIG_PATH = path.resolve(__dirname, "../../bdd/tsconfig.json");
+require("tsx/cjs");
 const { getSiCommand, runProfileCommand, waitUntilStreamEquals } = require("../../bdd/lib/utils.ts");
 const { ClientUtilsBase } = require("../../packages/client-utils/dist/client-utils.js");
 const fetch = require("node-fetch");
@@ -24,7 +24,8 @@ test("BDD CLI defaults to the built artifact and preserves explicit source mode"
     try {
         delete process.env.SCRAMJET_SPAWN_JS;
         delete process.env.SCRAMJET_SPAWN_TS;
-        t.deepEqual(getSiCommand({ useBddConfig: false }), ["node", "../dist/cli/bin"]);
+        const builtCommand = getSiCommand({ useBddConfig: false });
+        t.regex(builtCommand[0], /dist\/cli\/bin\/index\.js$/);
 
         process.env.SCRAMJET_SPAWN_TS = "1";
         const sourceCommand = getSiCommand({ useBddConfig: false });

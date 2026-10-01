@@ -4,7 +4,7 @@
   "description": "This package is part of Scramjet Transform Hub. The package provides health info for STH.",
   "main": "./src/index.ts",
   "scripts": {
-    "start": "ts-node ./src/index",
+    "start": "tsx ./src/index",
     "build": "../../scripts/build-all.js --config-name=tsconfig.build.json --copy-dist",
     "clean": "rm -rf ./dist .bic_cache",
     "cloc": "cloc src --fullpath --include-lang TypeScript --not-match-d \"(node_modules|test|dist|bdd)\" --by-percent cm",
@@ -27,15 +27,15 @@
     "@types/node": "^22.15.0",
     "@types/node-os-utils": "^1.2.0",
     "ava": "^8.0.0",
-    "ts-node": "^10.9.1",
-    "typescript": "~4.7.4"
+    "typescript": "~4.7.4",
+    "tsx": "^4.19.3"
   },
   "ava": {
     "files": [
       "**/*.spec.ts"
     ],
     "require": [
-      "ts-node/register"
+      "../../scripts/lib/tsx-cjs-register.cjs"
     ],
     "typescript": {
       "compile": false,

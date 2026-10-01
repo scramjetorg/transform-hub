@@ -17,7 +17,7 @@
  *                    because AVA Workers reject inherited execArgv flags.
  *   – TypeScript:    AVA 8 package tests are staged and transpiled into a
  *                    temporary sibling tree before the AVA run, then removed.
- *                    TS_NODE_TRANSPILE_ONLY=1 keeps type diagnostics non-fatal;
+ *                    SCRAMJET_AVA_TYPECHECK=1 makes staged type diagnostics fatal;
  *                    set it to 0 to make them fail the invocation.
  *   – Fetch:         --no-experimental-fetch on SCRAMJET_AVA_FETCH=0
  *   – Profiles:      SCRAMJET_TEST_PROFILE=fast runs 16 workers with an
@@ -60,6 +60,7 @@ const {
 	runnerInvocationEnv,
 	runnerTimeout,
 	stripCoverageFlag,
+	shouldFailOnTypeScriptDiagnostics,
 	resolveC8Cli,
 	c8CoverageArgs,
 } = require("./lib/ava-options.js");
@@ -135,7 +136,7 @@ function removeStagedSourceMapCaches() {
 		if (!sourceMapCache) continue;
 
 		for (const sourcePath of Object.keys(sourceMapCache)) {
-			// ts-node/register records identity source maps for AVA's staged output.
+			// Runtime loaders may record identity source maps for AVA's staged output.
 			// Let c8 load the emitted TypeScript map instead, while that output still
 			// exists, so `--exclude-after-remap` sees the original `src/**/*.ts` path.
 			if (sourcePath.includes("/.ava-")) delete sourceMapCache[sourcePath];
@@ -261,7 +262,7 @@ if (typeScriptArgs) {
 	}
 
 	if (typeScriptResult.status !== 0) {
-		if (childEnv.TS_NODE_TRANSPILE_ONLY === "0") {
+		if (shouldFailOnTypeScriptDiagnostics(childEnv)) {
 			if (typeScriptResult.stdout) process.stdout.write(typeScriptResult.stdout);
 			if (typeScriptResult.stderr) process.stderr.write(typeScriptResult.stderr);
 			compileExitCode = typeScriptResult.status === null ? 1 : typeScriptResult.status;

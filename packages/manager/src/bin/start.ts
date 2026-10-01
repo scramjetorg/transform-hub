@@ -1,4 +1,4 @@
-#!/usr/bin/env ts-node
+#!/usr/bin/env tsx
 
 import { printHelpAndExitIfRequested } from "@scramjet/config";
 import { startManager } from "../lib/start-manager";

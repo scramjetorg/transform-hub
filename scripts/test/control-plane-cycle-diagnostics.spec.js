@@ -4,7 +4,7 @@ const test = require("ava").default;
 const fs = require("node:fs");
 const path = require("node:path");
 
-require("ts-node/register");
+require("tsx/cjs");
 const fixture = require("../../bdd/lib/control-plane-cycle-fixture");
 
 const root = path.resolve(__dirname, "../..");

@@ -3,7 +3,8 @@
 const test = require("ava").default;
 const path = require("node:path");
 const { PassThrough } = require("node:stream");
-require("ts-node").register({ project: path.resolve(__dirname, "../../bdd/tsconfig.json") });
+process.env.TSX_TSCONFIG_PATH = path.resolve(__dirname, "../../bdd/tsconfig.json");
+require("tsx/cjs");
 const { HostUtils } = require("../../bdd/lib/host-utils");
 
 test("HostUtils child disposal destroys stdio and removes listeners", async t => {

@@ -1,5 +1,3 @@
-"use strict";
-
 const { parseTimingEventLines } = require("./bdd-chunk-timing.js");
 
 function parseRunnerOptions(args) {

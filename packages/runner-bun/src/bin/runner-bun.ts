@@ -7,7 +7,7 @@ import { parseBootConfigPathFromArgv, readBootConfig, RunnerBunBootConfig } from
 
 interface RunnerNodeEntry {
     entry: string;
-    needsTsNode: boolean;
+    needsTypeScriptSourceLoader: boolean;
 }
 
 function resolveRunnerNodeEntry(): RunnerNodeEntry {
@@ -19,7 +19,7 @@ function resolveRunnerNodeEntry(): RunnerNodeEntry {
         const pkg = JSON.parse(readFileSync(pkgJson, "utf8"));
 
         if (typeof pkg.main === "string" && pkg.main.includes("src/") && existsSync(srcEntry)) {
-            return { entry: srcEntry, needsTsNode: true };
+            return { entry: srcEntry, needsTypeScriptSourceLoader: true };
         }
     } catch {
         // Fall through to compiled/source probing.
@@ -31,11 +31,11 @@ function resolveRunnerNodeEntry(): RunnerNodeEntry {
     const compiledCandidates = [resolve(pkgRoot, "bin/runner-node.js"), resolve(pkgRoot, "dist/bin/runner-node.js")];
 
     for (const compiled of compiledCandidates) {
-        if (existsSync(compiled)) return { entry: compiled, needsTsNode: false };
+        if (existsSync(compiled)) return { entry: compiled, needsTypeScriptSourceLoader: false };
     }
 
     if (existsSync(srcEntry)) {
-        return { entry: srcEntry, needsTsNode: true };
+        return { entry: srcEntry, needsTypeScriptSourceLoader: true };
     }
 
     throw new Error(`runner-bun: cannot resolve runner-node entry under ${pkgRoot}`);
@@ -49,8 +49,8 @@ function runRunnerNode(bootConfigPath: string): Promise<number> {
     delete env.SEQUENCE_INFO;
     delete env.RUNNER_CONNECT_INFO;
 
-    if (resolved.needsTsNode) {
-        env.NODE_OPTIONS = [env.NODE_OPTIONS, "--require ts-node/register/transpile-only"].filter(Boolean).join(" ");
+    if (resolved.needsTypeScriptSourceLoader) {
+        env.NODE_OPTIONS = [env.NODE_OPTIONS, `--require ${require.resolve("tsx/cjs")}`].filter(Boolean).join(" ");
     }
 
     const child = spawn(process.env.NODE_BIN || "node", [resolved.entry, bootConfigPath], {

@@ -29,6 +29,9 @@
   "dependencies": {
     "@signicode/verser2-guest-python": "0.7.0"
   },
+  "devDependencies": {
+    "tsx": "^4.19.3"
+  },
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "MIT",
   "repository": {

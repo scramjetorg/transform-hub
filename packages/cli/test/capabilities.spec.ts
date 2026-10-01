@@ -190,7 +190,7 @@ test.serial("manifest-backed named sequence traversal selects platform, space, a
 });
 
 test.serial("direct Hub rejects Manager ownership before dispatch", async t => {
-    allowAvaMemoryGrowth(t, { threshold: 2097152, reason: "Error construction retains ts-node command capability module metadata." });
+    allowAvaMemoryGrowth(t, { threshold: 2097152, reason: "Error construction retains command capability module metadata." });
     setCapabilityDependencies({ getProfile: () => profile });
     const error = await t.throwsAsync(() => getNativeCapabilities()!.managerJson("GET", "/api/v2/hubs"), { instanceOf: CapabilityUnavailableError }) as ApiCommandError;
     t.is(error.exitCode, 80);
@@ -261,7 +261,7 @@ test.serial("platform and space Hub-owned manifest calls reject missing targets 
 });
 
 test.serial("identity and invalid topic topology fail before business dispatch", async t => {
-    allowAvaMemoryGrowth(t, { threshold: 1048576, reason: "Command capability module initialization is retained by ts-node." });
+    allowAvaMemoryGrowth(t, { threshold: 1048576, reason: "Command capability module initialization retains transpiler metadata." });
     const requests: any[] = []; const transport: any = { waitForRoute: async () => {}, close: async () => {}, request: async (request: any) => { requests.push(request); return { status: 200, body: Readable.from([JSON.stringify({ level: "space", serviceId: "wrong", routeDomain: "route" })]), cleanup: async () => {} }; } };
     setCapabilityDependencies({ getProfile: () => profile, createTransport: () => transport });
     const native = getNativeCapabilities()!;

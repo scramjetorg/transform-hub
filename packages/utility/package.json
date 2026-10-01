@@ -18,7 +18,7 @@
       "**/*.spec.ts"
     ],
     "require": [
-      "ts-node/register"
+      "../../scripts/lib/tsx-cjs-register.cjs"
     ],
     "typescript": {
       "compile": false,
@@ -50,7 +50,8 @@
     "@scramjet/runtime-types": "^2.2.1-devel",
     "@scramjet/types": "^2.2.1-devel",
     "ava": "^8.0.0",
-    "typed-emitter": "^1.4.0"
+    "typed-emitter": "^1.4.0",
+    "tsx": "^4.19.3"
   },
   "dependencies": {
     "normalize-url": "4",

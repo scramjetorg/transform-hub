@@ -8,7 +8,7 @@
  *   @aggregation-repro-cleanup scenarios tear down the MM+Manager+hubs stack.
  *
  * Environment variables:
- *   SCRAMJET_SPAWN_TS=1        – run from TypeScript source via ts-node
+ *   SCRAMJET_SPAWN_TS=1        – run from TypeScript source via tsx
  *   SCRAMJET_TEST_LOG=1         – pipe child process stdout/stderr
  *   AGGREGATION_REPRO_BASE_PORT – optional fixed MM port (defaults to a free port)
  */
@@ -137,7 +137,7 @@ After({ tags: "@aggregation-repro-cleanup" }, async function (this: CustomWorld)
 function getExecutableCmd(packageName: string): string[] {
     if (process.env.SCRAMJET_SPAWN_TS) {
         if (process.env.SCRAMJET_RELEASE_PRERELEASE_BDD_RECORD) resolvePublishedBin(`@scramjet/${packageName}`, packageName);
-        return ["npx", "ts-node", publishedSourceEntry(`@scramjet/${packageName}`, "bin", "start.ts")];
+        return ["npx", "tsx", publishedSourceEntry(`@scramjet/${packageName}`, "bin", "start.ts")];
     }
     return [resolvePublishedBin(`@scramjet/${packageName}`, packageName)];
 }
@@ -786,7 +786,7 @@ Given("an STH hub {string} is connected to the aggregation Manager", {
     }, null, 2));
 
     const cmd = process.env.SCRAMJET_SPAWN_TS
-        ? ["npx", "ts-node", publishedSourceEntry("@scramjet/sth", "bin", "hub.ts")]
+        ? ["npx", "tsx", publishedSourceEntry("@scramjet/sth", "bin", "hub.ts")]
         : [resolvePublishedBin("@scramjet/sth", "scramjet-transform-hub")];
 
     const hubOpts = [
