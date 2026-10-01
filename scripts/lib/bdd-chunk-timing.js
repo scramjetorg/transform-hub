@@ -71,6 +71,11 @@ function createChunkTiming(enabled, now = monotonicMs, ownership = {}, options =
 
     const emit = typeof options.emit === "function" ? options.emit : null;
     const retainRecords = options.retainRecords !== false;
+    const invocationStartedAtEpochMs = Number(options.invocationStartedAtEpochMs);
+    const epochNow = typeof options.epochNow === "function" ? options.epochNow : Date.now;
+    const elapsedOffsetMs = () => Number.isFinite(invocationStartedAtEpochMs)
+        ? Math.max(0, epochNow() - invocationStartedAtEpochMs)
+        : undefined;
 
     const retainTop = (collection, record) => {
         if (!retainRecords) return;
@@ -86,7 +91,7 @@ function createChunkTiming(enabled, now = monotonicMs, ownership = {}, options =
     const token = (world, key) => {
         if (!state.enabled || !world) return null;
         const current = state.activeScenarios.get(world);
-        return { startedAt: now(), scenario: current, key };
+        return { startedAt: now(), startOffsetMs: elapsedOffsetMs(), scenario: current, key };
     };
 
     return {
@@ -101,7 +106,8 @@ function createChunkTiming(enabled, now = monotonicMs, ownership = {}, options =
                 runId: ownership.runId || "unknown",
                 chunkId: ownership.chunkId || "unknown",
                 owner: ownership.owner || "unknown",
-                startedAt: now()
+                startedAt: now(),
+                startOffsetMs: elapsedOffsetMs()
             };
             state.activeScenarios.set(world, record);
             return record;
@@ -124,6 +130,8 @@ function createChunkTiming(enabled, now = monotonicMs, ownership = {}, options =
                 name: stepToken.key.name,
                 uri: stepToken.key.uri,
                 durationMs,
+                startOffsetMs: stepToken.startOffsetMs,
+                endOffsetMs: elapsedOffsetMs(),
                 status: result?.status || "UNKNOWN"
             };
             state.counts.steps++;
@@ -146,7 +154,9 @@ function createChunkTiming(enabled, now = monotonicMs, ownership = {}, options =
                 chunkId: ownership.chunkId || "unknown",
                 owner: ownership.owner || "unknown",
                 phase: cleanupToken.key.name,
-                durationMs: Math.max(0, now() - cleanupToken.startedAt)
+                durationMs: Math.max(0, now() - cleanupToken.startedAt),
+                startOffsetMs: cleanupToken.startOffsetMs,
+                endOffsetMs: elapsedOffsetMs()
             };
             state.counts.cleanup++;
             state.totalsMs.cleanup += record.durationMs;
@@ -167,6 +177,8 @@ function createChunkTiming(enabled, now = monotonicMs, ownership = {}, options =
                 chunkId: ownership.chunkId || "unknown",
                 owner: ownership.owner || "unknown",
                 durationMs: Math.max(0, active.finishedAt - active.startedAt),
+                startOffsetMs: active.startOffsetMs,
+                endOffsetMs: elapsedOffsetMs(),
                 status: metadata.status || "UNKNOWN"
             };
             state.counts.scenarios++;

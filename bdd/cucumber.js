@@ -42,7 +42,7 @@ const common = [
     "--require support/control-plane-cycle-diagnostics.ts",
     ...stepDefinitions,
     "--require support/timing-boundary.ts",
-    "--require-module ts-node/register",
+    "--require-module tsx/cjs",
     "--exit",
     `--tags "${tags}"`,
     ...report
