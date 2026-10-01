@@ -135,6 +135,11 @@ jobs:
           npm run test:bdd-ci-python
           npm run test:bdd-ci-api-node
           npm run test:bdd-ci-verser2
+      - name: Run Verser2 full-path RPC E2E
+        env:
+          BDD_DOCKER_MEMORY: 3g
+          BDD_INCLUDE_LONG_RUNNING: "1"
+        run: node scripts/run-bdd.js -- features/e2e/E2E-022-si-manager-hub-instance-rpc.feature --format=pretty
 
   bdd-extended-hub-topic:
     name: CI / extended hub and topic BDD
