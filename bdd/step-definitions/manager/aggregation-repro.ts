@@ -242,6 +242,7 @@ async function waitForRequiredHubInstances(
     managerId?: string,
     lifecycle?: any,
     timeoutMs = 20_000,
+    skipRpcProbe = false,
 ): Promise<void> {
     const deadline = Date.now() + timeoutMs;
     let lastStatus: number | undefined;
@@ -262,6 +263,7 @@ async function waitForRequiredHubInstances(
                 const names = new Set((Array.isArray(instances) ? instances : []).map((item: any) => item.instanceName || item.id));
                 if (requiredNames.every(name => names.has(name))) {
                     for (const name of requiredNames) {
+                        if (skipRpcProbe) continue;
                         const probe = await rawHttpRequest(
                             "GET",
                             `${apiBase}/instance/${encodeURIComponent(name)}/rpc/test/abc`,
@@ -660,7 +662,15 @@ Given("an STH hub {string} is connected to the aggregation Manager", {
 
     const cwd = getRepoRoot();
     const sequencesRootAbsolute = resolve(cwd, `${FIXTURE_ROOT}/sequences`);
-    const startupConfigAbsolute = resolve(cwd, `${FIXTURE_ROOT}/startup/${hubName}.json`);
+    let startupConfigAbsolute = resolve(cwd, `${FIXTURE_ROOT}/startup/${hubName}.json`);
+    if (this.resources.aggColdRpcObserverPort) {
+        const startup = JSON.parse(readFileSync(startupConfigAbsolute, "utf8"));
+        const target = (startup.sequences || []).find((sequence: any) => sequence.instanceName === "hub-rpc-api-main");
+        assert.ok(target, "Cold RPC fixture startup did not define the required Node instance");
+        target.appConfig = { ...(target.appConfig || {}), rpcObserverPort: this.resources.aggColdRpcObserverPort };
+        startupConfigAbsolute = resolve(hubDir, "cold-rpc-startup.json");
+        writeFileSync(startupConfigAbsolute, JSON.stringify(startup, null, 2));
+    }
     writeFileSync(configPath, JSON.stringify({
         verser2: {
             controlIngress: {
@@ -753,6 +763,8 @@ Given("an STH hub {string} is connected to the aggregation Manager", {
             this.resources.aggMMApiBase,
             this.resources.aggManagerId,
             this.scenarioLifecycle,
+            20_000,
+            this.resources.aggSkipRpcReadinessProbe === true,
         );
 
         if (!this.resources.aggHubs) {

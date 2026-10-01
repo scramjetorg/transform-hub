@@ -33,6 +33,15 @@ type Events = {
 
 const dropMessageCodes = [CPMMessageCode.KEY_REVOKED, CPMMessageCode.LIMIT_EXCEEDED, CPMMessageCode.ID_DROP];
 
+export function getManagerGuestLeaseOptions(configuredMinimum: number, configuredUpstreamMinimum?: number) {
+    const minWaitingStreams = getManagerGuestMinWaitingStreams(configuredMinimum, configuredUpstreamMinimum);
+
+    return {
+        minWaitingStreams,
+        maxOpenStreams: minWaitingStreams
+    };
+}
+
 export function createVerser2ClientTlsOptions(tls: Verser2ClientTlsConfig) {
     const trust = tls.ca ? { ca: tls.ca } : { caFile: tls.caFile };
 
@@ -207,7 +216,10 @@ export class CPMConnector extends TypedEmitter<Events> {
             hostUrl: this.config.verser2.hostUrl,
             guestId: this.config.verser2.guest.peerId,
             routedDomains: [this.config.verser2.guest.routeDomain],
-            minWaitingStreams: getManagerGuestMinWaitingStreams(this.config.verser2.leases.minimumWaitingLeases, this.config.verser2.leases.minimumUpstreamWaitingStreams),
+            ...getManagerGuestLeaseOptions(
+                this.config.verser2.leases.minimumWaitingLeases,
+                this.config.verser2.leases.minimumUpstreamWaitingStreams
+            ),
             leaseAcquireTimeoutMs: this.config.verser2.timeouts.leaseAcquireMs,
             tls
         }).attach(server, this.config.verser2.guest.routeDomain);
