@@ -54,7 +54,8 @@ const CHUNKS = Object.freeze({
         "features/manager/MANAGER-002-aggregation-repro.feature",
         "features/manager/MANAGER-003-full-api-verser2-forwarding.feature",
         "features/manager/MANAGER-004-topic-forwarding.feature",
-        "features/e2e/E2E-019-control-plane-admission.feature"
+        "features/e2e/E2E-019-control-plane-admission.feature",
+        "features/e2e/E2E-022-si-manager-hub-instance-rpc.feature"
     ]),
     verser2: Object.freeze([
         "features/verser2/VERSER2-001-isolated-routing.feature",
