@@ -28,3 +28,18 @@ test("release start rebuilds the lockfile before alignment check and staging", (
     t.true(check > buildLockfile);
     t.true(stage > check);
 });
+
+test("release start installs and verifies pinned npm before npm ci", (t) => {
+    const source = readFileSync(resolve(__dirname, "../../.github/workflows/release-start.yml"), "utf8");
+    const setupNode = source.indexOf("actions/setup-node@");
+    const installNpm = source.indexOf("name: Install pinned npm");
+    const installCommand = source.indexOf("npm install --global --ignore-scripts npm@11.19.0");
+    const versionCheck = source.indexOf('test "$(npm --version)" = "11.19.0"');
+    const ci = source.indexOf("npm ci --ignore-scripts");
+
+    t.true(setupNode >= 0);
+    t.true(installNpm > setupNode);
+    t.true(installCommand > installNpm);
+    t.true(versionCheck > installCommand);
+    t.true(ci > versionCheck);
+});
