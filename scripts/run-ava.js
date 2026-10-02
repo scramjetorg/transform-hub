@@ -310,6 +310,15 @@ function linkNestedTypeScriptOutput() {
 	}
 }
 
+function compiledAvaPattern(pattern) {
+	return pattern.replace(/\.(cts|mts|tsx|ts)$/, (_match, extension) => ({
+		cts: ".cjs",
+		mts: ".mjs",
+		tsx: ".js",
+		ts: ".js"
+	})[extension]);
+}
+
 function writeCompiledAvaConfig() {
 	if (!typeScriptArgs) return undefined;
 	if (!typeScriptArgs.stagedProjectDir) throw new Error("AVA TypeScript staging did not locate the package's compiled project output.");
@@ -318,7 +327,15 @@ function writeCompiledAvaConfig() {
 	const config = { ...packageConfig };
 	delete config.typescript;
 	config.extensions = ["js"];
-	config.files = [join(relative(process.cwd(), typeScriptArgs.stagedProjectDir), "test", "**", "*.spec.js")];
+	const configuredPatterns = Array.isArray(packageConfig.files) ? packageConfig.files : [packageConfig.files || "test/**/*.spec.ts"];
+	const sourcePatterns = configuredPatterns.filter((pattern) => !(pattern.startsWith("!") && pattern.endsWith(".d.ts")));
+	const stagedRoot = relative(process.cwd(), typeScriptArgs.stagedProjectDir);
+	config.files = sourcePatterns.map((pattern) => {
+		const isNegated = pattern.startsWith("!");
+		const sourcePattern = isNegated ? pattern.slice(1) : pattern;
+		const stagedPattern = join(stagedRoot, compiledAvaPattern(sourcePattern));
+		return isNegated ? `!${stagedPattern}` : stagedPattern;
+	});
 	config.require = (packageConfig.require || []).map((entry) => entry.startsWith(".") ? resolve(process.cwd(), entry) : entry);
 	const configPath = join(typeScriptArgs.outputDir, "ava-runner.config.cjs");
 	writeFileSync(configPath, `module.exports = ${JSON.stringify(config, null, 2)};\n`);
@@ -328,17 +345,18 @@ function writeCompiledAvaConfig() {
 function stagedTestPatterns(cliArgs) {
 	if (!typeScriptArgs) return cliArgs;
 	return cliArgs.map((arg) => {
-		if (arg.startsWith("-") || !/\.spec\.ts(?::|$)/.test(arg)) return arg;
+		if (arg.startsWith("-")) return arg;
 		const colon = arg.indexOf(":");
 		const filePattern = colon < 0 ? arg : arg.slice(0, colon);
+		if (!/\.(?:cts|mts|tsx|ts)$/.test(filePattern)) return arg;
 		const testFilter = colon < 0 ? "" : arg.slice(colon);
 		const relativePattern = relative(process.cwd(), resolve(process.cwd(), filePattern));
-		const stagedPattern = resolve(typeScriptArgs.stagedProjectDir, relativePattern.replace(/\.ts$/, ".js"));
+		const stagedPattern = resolve(typeScriptArgs.stagedProjectDir, compiledAvaPattern(relativePattern));
 		return `${stagedPattern}${testFilter}`;
 	});
 }
 
-function removeStagedTypeScriptSpecFiles(directory) {
+function removeStagedTypeScriptTestFiles(directory) {
 	if (!directory) {
 		if (!typeScriptArgs?.stagedProjectDir) return;
 		directory = join(typeScriptArgs.stagedProjectDir, "test");
@@ -348,10 +366,10 @@ function removeStagedTypeScriptSpecFiles(directory) {
 	for (const entry of readdirSync(directory, { withFileTypes: true })) {
 		const stagedPath = join(directory, entry.name);
 		if (entry.isDirectory()) {
-			removeStagedTypeScriptSpecFiles(stagedPath);
+			removeStagedTypeScriptTestFiles(stagedPath);
 			continue;
 		}
-		if (!entry.isFile() || !/\.spec\.tsx?$/.test(entry.name)) continue;
+		if (!entry.isFile() || !/\.(?:spec|test)\.tsx?$/.test(entry.name)) continue;
 
 		const compiledPath = stagedPath.replace(/\.tsx?$/, ".js");
 		if (!existsSync(compiledPath)) continue;
@@ -391,7 +409,7 @@ if (compileExitCode !== undefined) {
 	process.exit(compileExitCode);
 }
 
-removeStagedTypeScriptSpecFiles();
+removeStagedTypeScriptTestFiles();
 const compiledAvaConfig = writeCompiledAvaConfig();
 const args = buildAvaArgs(stagedTestPatterns(avaCliArgs));
 if (compiledAvaConfig) args.push("--config", compiledAvaConfig);

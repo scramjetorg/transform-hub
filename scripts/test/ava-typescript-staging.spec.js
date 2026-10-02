@@ -10,7 +10,10 @@ const packagesRoot = resolve(__dirname, "..", "..", "packages");
 const fixturesRoot = resolve(__dirname, "fixtures");
 
 function runStagedTest(packageName, testFile, ...extraArgs) {
-	return spawnSync(process.execPath, [runner, testFile, "--serial", ...extraArgs], {
+	const args = [runner];
+	if (testFile) args.push(testFile);
+	args.push("--serial", ...extraArgs);
+	return spawnSync(process.execPath, args, {
 		cwd: resolve(packagesRoot, packageName),
 		encoding: "utf8",
 		env: {
@@ -32,9 +35,10 @@ for (const [packageName, testFile] of [
 	["manager", "test/manager-api-versioned-routing.spec.ts"],
 	["sequence-test", "test/harness/no-types-dep.spec.ts"],
 	["cli", "test/command-iterator.spec.ts"],
-	["host", "test/host-id.spec.ts"]
+	["host", "test/host-id.spec.ts"],
+	["host", "test/localStorage/adapters/fileLocalStorageAdapter.test.ts"]
 ]) {
-	test(`stages nested ${packageName} TypeScript tests at AVA's rewrite path`, (t) => {
+	test.serial(`stages nested ${packageName} ${testFile} at AVA's rewrite path`, (t) => {
 		const result = runStagedTest(packageName, testFile);
 
 		t.is(result.status, 0, result.stderr || result.stdout);
