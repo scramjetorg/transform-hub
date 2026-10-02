@@ -28,6 +28,7 @@ function runFixture(fixture, ...args) {
 }
 
 for (const [packageName, testFile] of [
+	["api-router", "test/decorators.spec.ts"],
 	["manager", "test/manager-api-versioned-routing.spec.ts"],
 	["sequence-test", "test/harness/no-types-dep.spec.ts"],
 	["cli", "test/command-iterator.spec.ts"],
