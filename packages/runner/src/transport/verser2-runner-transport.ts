@@ -19,6 +19,7 @@ export type RunnerVerser2GuestFactoryOptions = {
     guestId: string;
     routedDomains: string[];
     minWaitingStreams?: number;
+    maxOpenStreams?: number;
     leaseAcquireTimeoutMs?: number;
     tls?: RunnerTransportConfigTls;
 };
@@ -55,11 +56,14 @@ const RESPONSE_BODY_ROUTES = new Map<string, CC>([
 
 /** Build the guest contract without opening local listeners or connecting. */
 export function createRunnerVerser2GuestOptions(config: RunnerTransportConfigVerser2): RunnerVerser2GuestFactoryOptions {
+    const minWaitingStreams = Math.max(config.minWaitingStreams ?? 32, 32);
+
     return {
         hostUrl: config.hostUrl,
         guestId: config.guestId,
         routedDomains: [config.routeDomain],
-        minWaitingStreams: config.minWaitingStreams,
+        minWaitingStreams,
+        maxOpenStreams: minWaitingStreams,
         leaseAcquireTimeoutMs: config.leaseAcquireTimeoutMs,
         tls: config.tls
     };

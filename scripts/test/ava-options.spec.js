@@ -29,6 +29,7 @@ const {
 	buildAvaArgs,
 	runnerTimeout,
 	runnerInvocationEnv,
+	shouldFailOnTypeScriptDiagnostics,
 	preloadGuardPath,
 	isDirectAvaInvocation,
 	isMemoryGuardEnabled,
@@ -578,35 +579,41 @@ test("runnerTimeout honours SCRAMJET_AVA_TIMEOUT", (t) => {
 
 test("runnerInvocationEnv supplies fast-path defaults", (t) => {
 	const savedJit = process.env[ENV.JITLESS];
-	const savedTranspileOnly = process.env[ENV.TS_NODE_TRANSPILE_ONLY];
+	const savedTypecheck = process.env[ENV.TYPECHECK];
 	delete process.env[ENV.JITLESS];
-	delete process.env[ENV.TS_NODE_TRANSPILE_ONLY];
+	delete process.env[ENV.TYPECHECK];
 	try {
 		const env = runnerInvocationEnv();
 		t.is(env[ENV.RUNNER], "1");
 		t.is(env[ENV.JITLESS], "0");
-		t.is(env[ENV.TS_NODE_TRANSPILE_ONLY], "1");
+		t.is(env[ENV.TYPECHECK], "0");
 	} finally {
 		if (savedJit !== undefined) process.env[ENV.JITLESS] = savedJit;
-		if (savedTranspileOnly !== undefined) process.env[ENV.TS_NODE_TRANSPILE_ONLY] = savedTranspileOnly;
+		if (savedTypecheck !== undefined) process.env[ENV.TYPECHECK] = savedTypecheck;
 	}
 });
 
 test("runnerInvocationEnv preserves explicit fast-path opt-outs", (t) => {
 	const savedJit = process.env[ENV.JITLESS];
-	const savedTranspileOnly = process.env[ENV.TS_NODE_TRANSPILE_ONLY];
+	const savedTypecheck = process.env[ENV.TYPECHECK];
 	process.env[ENV.JITLESS] = "1";
-	process.env[ENV.TS_NODE_TRANSPILE_ONLY] = "0";
+	process.env[ENV.TYPECHECK] = "1";
 	try {
 		const env = runnerInvocationEnv();
 		t.is(env[ENV.JITLESS], "1");
-		t.is(env[ENV.TS_NODE_TRANSPILE_ONLY], "0");
+		t.is(env[ENV.TYPECHECK], "1");
 	} finally {
 		if (savedJit !== undefined) process.env[ENV.JITLESS] = savedJit;
 		else delete process.env[ENV.JITLESS];
-		if (savedTranspileOnly !== undefined) process.env[ENV.TS_NODE_TRANSPILE_ONLY] = savedTranspileOnly;
-		else delete process.env[ENV.TS_NODE_TRANSPILE_ONLY];
+		if (savedTypecheck !== undefined) process.env[ENV.TYPECHECK] = savedTypecheck;
+		else delete process.env[ENV.TYPECHECK];
 	}
+});
+
+test("staged TypeScript diagnostics are fatal only when SCRAMJET_AVA_TYPECHECK=1", t => {
+	t.false(shouldFailOnTypeScriptDiagnostics({}));
+	t.false(shouldFailOnTypeScriptDiagnostics({ SCRAMJET_AVA_TYPECHECK: "0" }));
+	t.true(shouldFailOnTypeScriptDiagnostics({ SCRAMJET_AVA_TYPECHECK: "1" }));
 });
 
 test("preloadGuardPath returns absolute path to the leak-diagnostic preload", (t) => {

@@ -253,6 +253,25 @@ const killAllRunners = async () => {
 };
 
 BeforeAll({ timeout: 20e3 }, async () => {
+    const timingEventsPath = process.env.BDD_CHUNK_TIMING_EVENTS_FILE;
+    if (timingEventsPath) {
+        const invocationStartedAtEpochMs = Number(process.env.SCRAMJET_BDD_INVOCATION_STARTED_AT_EPOCH_MS);
+        const offsetMs = Number.isFinite(invocationStartedAtEpochMs)
+            ? Math.max(0, Date.now() - invocationStartedAtEpochMs)
+            : undefined;
+        fs.appendFileSync(timingEventsPath, `${JSON.stringify({
+            kind: "phase",
+            name: "suite Host BeforeAll entry",
+            durationMs: 0,
+            startOffsetMs: offsetMs,
+            endOffsetMs: offsetMs,
+            status: "STARTED",
+            runId: process.env.SCRAMJET_BDD_RUN_ID || "unknown",
+            chunkId: process.env.SCRAMJET_BDD_CHUNK_ID || "unknown",
+            owner: process.env.SCRAMJET_BDD_OWNER || "unknown",
+        })}\n`, "utf8");
+    }
+
     // The default hub-runtime selection contains only @starts-host scenarios.
     // Starting the shared suite Hub as well leaves two Hubs alive while each
     // scenario starts its requested Hub, exceeding the Docker BDD budget.

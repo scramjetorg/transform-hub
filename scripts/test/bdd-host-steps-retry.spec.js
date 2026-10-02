@@ -16,7 +16,7 @@
  * proving the retryLoadCheck callback forwards the AbortSignal to
  * getLoadCheck({ signal }), including deadline abort propagation.
  *
- * Runs via ts-node/register to load the TypeScript source directly.
+ * Runs via tsx/cjs to load the TypeScript source directly.
  *
  * Run: node scripts/run-ava.js scripts/test/bdd-host-steps-retry.spec.js
  */
@@ -27,8 +27,8 @@ const test = require("ava").default;
 const fs = require("fs");
 const path = require("path");
 
-// Register ts-node to load the BDD TypeScript source directly.
-require("ts-node/register");
+// Register tsx to load the BDD TypeScript source directly.
+require("tsx/cjs");
 
 // Import the real helper from the BDD source.
 const { retryLoadCheck } = require("../../bdd/lib/utils");

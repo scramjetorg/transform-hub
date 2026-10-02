@@ -4,7 +4,7 @@ import { finished, pipeline } from "stream/promises";
 import { Readable } from "stream";
 import { createVerserBroker, type VerserBroker, type VerserBrokerResponse } from "@signicode/verser2-guest-node";
 import { createVerser2ClientTransport, RoutedBrokerCancelledError, RoutedBrokerDuplicateRouteError, RoutedBrokerRedirectError, RoutedBrokerRequestError, RoutedBrokerResponseLimitError, RoutedBrokerRouteUnavailableError, RoutedBrokerTimeoutError, type ManagedVerser2ClientTransport, type RoutedBrokerResponse, type RoutedBrokerTransport } from "@scramjet/api-router";
-import { profileManager } from "../config";
+import { getSelectedVerser2Profile } from "../config";
 import { validateVerser2Bootstrap, validateVerser2Profile } from "../config/verser2Profile";
 import { ApiCommandError } from "../apiCommandError";
 
@@ -23,7 +23,7 @@ export type ApiDependencies = {
     stdout: NodeJS.WriteStream;
     stderr: NodeJS.WriteStream;
 };
-const productionDependencies: ApiDependencies = { getProfile: () => profileManager.getProfileConfig().get().verser2, createBroker: createVerserBroker, stdin: process.stdin, stdout: process.stdout, stderr: process.stderr };
+const productionDependencies: ApiDependencies = { getProfile: getSelectedVerser2Profile, createBroker: createVerserBroker, stdin: process.stdin, stdout: process.stdout, stderr: process.stderr };
 let dependencies = productionDependencies;
 /** Test seam; production always uses the native broker and process IO. */
 export function setApiDependencies(overrides?: Partial<ApiDependencies>) { dependencies = overrides ? { ...productionDependencies, ...overrides } : productionDependencies; }

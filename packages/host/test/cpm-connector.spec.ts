@@ -2,7 +2,7 @@ import test from "ava";
 import { EventEmitter } from "events";
 
 import { getManagerGuestMinWaitingStreams } from "../src/lib/cpm-connector-leases";
-import { CPMConnector } from "../src/lib/cpm-connector";
+import { CPMConnector, getManagerGuestLeaseOptions } from "../src/lib/cpm-connector";
 import { Host } from "../src/lib/host";
 import { SequenceMessageCode } from "@scramjet/symbols";
 
@@ -12,6 +12,20 @@ test("getManagerGuestMinWaitingStreams leaves room for Manager control streams a
     t.is(getManagerGuestMinWaitingStreams(256), 256);
     t.is(getManagerGuestMinWaitingStreams(1, 192), 192);
     t.is(getManagerGuestMinWaitingStreams(256, 128), 256);
+});
+
+test("Manager Guest defaults propagate the effective minimum as both minimum and maximum", t => {
+    t.deepEqual(getManagerGuestLeaseOptions(1), {
+        minWaitingStreams: 128,
+        maxOpenStreams: 128
+    });
+});
+
+test("Manager Guest propagates a configured higher minimum identically as its maximum", t => {
+    t.deepEqual(getManagerGuestLeaseOptions(256), {
+        minWaitingStreams: 256,
+        maxOpenStreams: 256
+    });
 });
 
 function makeReconnectConnector(failuresBeforeConnect: number, config: Record<string, unknown> = {}) {

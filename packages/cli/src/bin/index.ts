@@ -1,4 +1,4 @@
-#!/usr/bin/env ts-node
+#!/usr/bin/env tsx
 
 import { type CommandDescriptor, cmd, executeCommand, generateHelp, isHelpRequested, parseCommandContext, resolveCommandPath } from "@scramjet/config";
 import chalk from "chalk";

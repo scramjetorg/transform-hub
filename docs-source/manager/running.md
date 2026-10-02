@@ -18,7 +18,7 @@ This page covers starting and configuring a Manager instance.
 The Manager is available as the `@scramjet/manager` package. It is typically started programmatically or as part of a larger deployment. The source entrypoint is `packages/manager/src/bin/start.ts`:
 
 ```bash
-npx ts-node ./node_modules/@scramjet/manager/src/bin/start.ts
+npx tsx ./node_modules/@scramjet/manager/src/bin/start.ts
 ```
 
 > **Note**: The Manager entrypoint currently accepts no CLI flags. Configuration is handled programmatically via the `ManagerConfiguration` type. The exact startup method is evolving — refer to the generated reference or package documentation for the latest instructions.

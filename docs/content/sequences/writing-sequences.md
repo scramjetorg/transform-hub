@@ -33,7 +33,7 @@ The platform auto-detects the runtime by inspecting `package.json` engine keys v
 
 ### Node.js / TypeScript sequences
 
-Node.js sequences are the most common. Export a function (or an array of functions) from the module entry point. An optional exported `initialize` function runs before the sequence function and is the readiness hook for local validation and API route registration. TypeScript is fully supported — the runner compiles or loads via `ts-node` in development mode.
+Node.js sequences are the most common. Export a function (or an array of functions) from the module entry point. An optional exported `initialize` function runs before the sequence function and is the readiness hook for local validation and API route registration. TypeScript is fully supported — the runner compiles or loads TypeScript source through `tsx` in development mode.
 
 **Minimal Node.js sequence:**
 

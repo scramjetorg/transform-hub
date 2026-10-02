@@ -5,7 +5,7 @@ import { randomBytes } from "crypto";
 import { configEnv, ProfileConfigEntity } from "../../types";
 import { profileConfigDefault, validateProfileEntry, validateProfileKeysSize } from "./commonProfileConfig";
 import { Verser2ProfileConfig } from "../../types";
-import { validateVerser2Profile } from "./verser2Profile";
+import { resolveVerser2ProfileEnvironment, validateVerser2Profile } from "./verser2Profile";
 
 
 // Profile configuration class. Represents configuration that can be maniupulated by user.
@@ -31,12 +31,26 @@ export default class ProfileConfig extends ConfigFileDefault<ProfileConfigEntity
         const { verser2Draft: _draft, ...active } = stored;
         return active;
     }
+    getStoredConfig(): ProfileConfigEntity {
+        const stored = (this.file.exists() ? this.file.read() : this.getDefault()) as ProfileConfigEntity;
+        const { verser2Draft: _draft, ...active } = stored;
+        return active;
+    }
+    validateStored(config: Object = this.getStoredConfig()): boolean {
+        if (!validateProfileKeysSize(config)) return false;
+        return super.validate(config);
+    }
     getEntry(key: keyof ProfileConfigEntity): any | null {
         return key === "verser2Draft" ? null : super.getEntry(key);
     }
 
     set(config: any): boolean {
-        const { log: currentLog, ...currentConfig } = super.get();
+        // ConfigFile invokes the virtual set() method during super() before
+        // ConfigFileDefault has assigned defaultConfiguration. If an env
+        // overlay makes the initial stored profile invalid, get() can still
+        // be undefined at this construction boundary.
+        const current = super.get() || this.defaultConfiguration || profileConfigDefault;
+        const { log: currentLog, ...currentConfig } = current;
         const { log: newLog, ...newConfig } = config;
         const overlap = { ...currentConfig, ...newConfig, log: { ...currentLog, ...newLog } };
 
@@ -131,7 +145,7 @@ export default class ProfileConfig extends ConfigFileDefault<ProfileConfigEntity
     validate(config: Object): boolean {
         if (!validateProfileKeysSize(config))
             return false;
-        return super.validate(config);
+        return super.validate(resolveVerser2ProfileEnvironment(config as ProfileConfigEntity));
     }
 
     protected validateEntry(key: string, value: any): boolean | null {

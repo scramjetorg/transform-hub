@@ -1,4 +1,4 @@
-#!/usr/bin/env ts-node
+#!/usr/bin/env tsx
 
 import { CommandUsageError } from "@scramjet/config";
 import { runCsrEnrollmentCli } from "../lib/csr-enrollment-cli";

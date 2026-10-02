@@ -1,8 +1,35 @@
 "use strict";
+const { createServer } = require("http");
 
 /** @this {import("@scramjet/sequence-types").SequenceAppContext}*/
 module.exports = async function(_stream) {
     this.logger.info("Aggregation API server started");
+    const rpcArrivals = [];
+    const heldResponses = new Map();
+    let holdRpcResponses = false;
+    const observerPort = Number(this.config && this.config.rpcObserverPort);
+    const observer = createServer(async (req, res) => {
+        if (req.url === "/receipts" && req.method === "GET") {
+            res.writeHead(200, { "content-type": "application/json" }).end(JSON.stringify(rpcArrivals));
+            return;
+        }
+        if (req.url === "/gate" && req.method === "POST") {
+            let body = "";
+            for await (const chunk of req) body += chunk;
+            holdRpcResponses = body === "hold";
+            if (!holdRpcResponses) {
+                for (const release of heldResponses.values()) release();
+                heldResponses.clear();
+            }
+            res.writeHead(200).end(holdRpcResponses ? "holding" : "released");
+            return;
+        }
+        res.writeHead(404).end("not found");
+    });
+    if (Number.isInteger(observerPort) && observerPort > 0) {
+        observer.listen(observerPort, "127.0.0.1");
+        this.api.server.once("close", () => observer.close());
+    }
 
     const readBody = async (req) => {
         let body = "";
@@ -111,6 +138,22 @@ module.exports = async function(_stream) {
             res.writeHead(status).end(`${e.message || e}`);
         }
     });
+
+    if (Number.isInteger(observerPort) && observerPort > 0) {
+        this.api.use("/rpc", async (req, res) => {
+            const url = new URL(req.url, "http://sequence.local");
+            const requestPath = decodeURIComponent(url.pathname.startsWith("/") ? url.pathname.slice(1) : url.pathname);
+            const id = requestPath.startsWith("rpc/") ? requestPath.slice(4) : requestPath;
+            const body = await readBody(req);
+            rpcArrivals.push({ id, body });
+            const finish = () => res.writeHead(200, { "content-type": "text/plain" }).end(`receipt:${id}:${body}`);
+            if (holdRpcResponses) {
+                heldResponses.set(id, finish);
+                return;
+            }
+            finish();
+        });
+    }
 
     if (!this.api.server.listening) {
         await new Promise((resolve, reject) => {

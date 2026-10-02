@@ -13,6 +13,7 @@ const { spawnSync } = require("node:child_process");
 const buildAll = resolve(__dirname, "..", "build-all.js");
 const prePack = resolve(__dirname, "..", "lib", "pre-pack.js");
 const rootPackage = resolve(__dirname, "..", "..", "package.json");
+const PrePack = require(prePack);
 
 function createWorkspace(t) {
 	const root = mkdtempSync(join(tmpdir(), "transform-hub-build-all-"));
@@ -69,4 +70,17 @@ test("root build handoffs use the repository npm binary", (t) => {
 	t.true(scripts["build:all"].includes("./node_modules/.bin/npm run build:packages"));
 	t.true(scripts["build:all"].includes("./node_modules/.bin/npm run build:docker"));
 	t.true(scripts["build:docker"].startsWith("./node_modules/.bin/npm run build:docker:stage-runner"));
+});
+
+test("pre-pack rewrites tsx source shebangs to node in packaged output", async t => {
+	const root = mkdtempSync(join(tmpdir(), "transform-hub-shebang-"));
+	const binDir = join(root, "bin");
+	mkdirSync(binDir, { recursive: true });
+	writeFileSync(join(binDir, "tsx-entry.ts"), "#!/usr/bin/env tsx\nconsole.log('tsx');\n");
+	writeFileSync(join(binDir, "js-entry.ts"), "#!/usr/bin/env node\nconsole.log('js');\n");
+	t.teardown(() => rmSync(root, { force: true, recursive: true }));
+	const prepack = new PrePack({ outDir: root, rootDistPack: root, cwd: root, rootDir: root });
+	await prepack.fixShebang({ "tsx-entry.ts": "bin/tsx-entry.ts", "js-entry.ts": "bin/js-entry.ts" });
+	t.is(readFileSync(join(binDir, "tsx-entry.ts"), "utf8"), "#!/usr/bin/env node\nconsole.log('tsx');\n");
+	t.is(readFileSync(join(binDir, "js-entry.ts"), "utf8"), "#!/usr/bin/env node\nconsole.log('js');\n");
 });

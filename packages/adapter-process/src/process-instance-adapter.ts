@@ -57,7 +57,9 @@ async function readProcessRss(pid: number): Promise<{ memoryUsage: number; memor
     }
 }
 
-const isTSNode = !!((process as any)._preload_modules as string[]).some((mod) => mod.includes("/tsx/")) || !!(process as any)[Symbol.for("ts-node.register.instance")];
+export function getRunnerInterpreter(entry: string): string {
+    return path.extname(entry) === ".ts" ? "tsx" : process.execPath;
+}
 
 /**
  * Adapter for running Instance by Runner executed in separate process.
@@ -124,7 +126,8 @@ class ProcessInstanceAdapter implements ILifeCycleAdapterMain, ILifeCycleAdapter
 
         if (this.sthConfig.debug) debugFlags = ["--inspect-brk=9229"];
 
-        return [isTSNode ? "tsx" : process.execPath, ...debugFlags, resolveRunnerBin()];
+        const runnerBin = resolveRunnerBin();
+        return [getRunnerInterpreter(runnerBin), ...debugFlags, runnerBin];
     }
 
     setRunner(system: Record<string, string>): void {

@@ -297,10 +297,10 @@ class PrePack {
                 const file = path.resolve(this.rootDistPackPath, relative);
                 const contents = await readFile(file, "utf-8");
 
-                if (!contents.match(/^\s*#!\/usr\/bin\/env ts-node/)) return;
+                if (!contents.match(/^\s*#!\/usr\/bin\/env (?:ts-node|tsx)(?=\s|$)/)) return;
 
                 this.log(`Replacing shebang in ${file}`);
-                await writeFile(file, contents.replace(/^\s*#!\/usr\/bin\/env ts-node/, "#!/usr/bin/env node"));
+                await writeFile(file, contents.replace(/^\s*#!\/usr\/bin\/env (?:ts-node|tsx)(?=\s|$)/, "#!/usr/bin/env node"));
                 await chmod(file, 0o755);
             }
         ));

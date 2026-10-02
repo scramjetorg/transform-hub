@@ -302,12 +302,12 @@ async function main(): Promise<void> {
 
             runtimeEntry = entry.entry;
 
-            if (entry.needsTsNode) {
-                // ts-node fallback for source-tree development. Inherit the parent's
-                // PATH/HOME/NODE_PATH so ts-node and resolved modules stay reachable;
+            if (entry.needsTypeScriptSourceLoader) {
+                // tsx fallback for source-tree development. Inherit the parent's
+                // PATH/HOME/NODE_PATH so tsx and resolved modules stay reachable;
                 // anything runner-owned (SEQUENCE_PATH, RUNNER_CONNECT_INFO, ...) is
                 // NOT forwarded - the boot config file replaces that channel.
-                childEnv.NODE_OPTIONS = "--require ts-node/register/transpile-only";
+                childEnv.NODE_OPTIONS = `--require ${require.resolve("tsx/cjs")}`;
                 if (process.env.PATH) childEnv.PATH = process.env.PATH;
                 if (process.env.HOME) childEnv.HOME = process.env.HOME;
                 if (process.env.NODE_PATH) childEnv.NODE_PATH = process.env.NODE_PATH;

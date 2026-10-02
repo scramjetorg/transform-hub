@@ -2,9 +2,8 @@
 
 const test = require("ava").default;
 const path = require("path");
-const tsNode = require("ts-node");
-
-tsNode.register({ project: path.resolve(__dirname, "../../bdd/tsconfig.json") });
+process.env.TSX_TSCONFIG_PATH = path.resolve(__dirname, "../../bdd/tsconfig.json");
+require("tsx/cjs");
 
 const { HostUtils } = require("../../bdd/lib/host-utils");
 

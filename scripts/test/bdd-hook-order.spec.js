@@ -49,7 +49,7 @@ async function runHookOrderScenario() {
         "    Given hook order test setup",
     ].join("\n"), "utf8");
 
-    // Create a temporary JS step-def file (not TS — avoids ts-node
+    // Create a temporary JS step-def file (not TS — avoids loader
     // module-resolution issues in temp dirs).
     const stepDefFile = path.join(tmpDir, "steps.js");
     fs.writeFileSync(stepDefFile, [

@@ -79,6 +79,51 @@ test("Docker BDD runner gets cucumber-js from the root npm install", (t) => {
 	t.false(dockerRunner.includes("yarn"));
 });
 
+test("supported runner quiet and silent Docker modes suppress successful output and retain failures", t => {
+	const binDir = fs.mkdtempSync(path.join(os.tmpdir(), "bdd-output-mode-"));
+	const docker = path.join(binDir, "docker");
+	const getent = path.join(binDir, "getent");
+	fs.writeFileSync(docker, `#!/bin/sh
+case "$1" in
+  --version) exit 0 ;;
+  image) exit 0 ;;
+  run) printf 'mock-container\\n' ;;
+  logs) printf 'normal cucumber output\\n'; printf 'normal cucumber stderr\\n' >&2 ;;
+  wait) printf '%s\\n' "${"$MOCK_WAIT_STATUS"}" ;;
+  inspect) printf '{"ExitCode":0,"OOMKilled":false,"Error":"","StartedAt":"start","FinishedAt":"finish"}\\n' ;;
+  rm|kill) exit 0 ;;
+  *) exit 0 ;;
+esac
+`, { mode: 0o755 });
+	fs.writeFileSync(getent, "#!/bin/sh\nprintf 'docker:x:9999:\\n'\n", { mode: 0o755 });
+	const invoke = (flags, waitStatus = "0") => spawnSync(process.execPath, [path.resolve(__dirname, "..", "run-bdd.js"), ...flags], {
+		encoding: "utf8", timeout: 10000,
+		env: { ...process.env, PATH: `${binDir}:${process.env.PATH}`, MOCK_WAIT_STATUS: waitStatus, BDD_TIMEOUT_MS: "0", SCRAMJET_BDD_MEMORY_GUARD: "0", SCRAMJET_BDD_CHUNK_MEMORY_POLICY: "off", SCRAMJET_BDD_RUN_ID: "output-test", SCRAMJET_BDD_CHUNK_ID: "chunk", SCRAMJET_BDD_OWNER: "output-test/chunk" }
+	});
+	try {
+		const quietPass = invoke(["--quiet"]);
+		t.is(quietPass.status, 0);
+		t.true(quietPass.stdout.includes("phase container launch/start ["), `${quietPass.stdout}\n${quietPass.stderr}`);
+		t.true(quietPass.stdout.includes("BDD PASS"), `${quietPass.stdout}\n${quietPass.stderr}`);
+		t.false(`${quietPass.stdout}${quietPass.stderr}`.includes("normal cucumber output"));
+		t.false(`${quietPass.stdout}${quietPass.stderr}`.includes("normal cucumber stderr"));
+
+		const silentPass = invoke(["--quiet", "--silent"]);
+		t.is(silentPass.status, 0);
+		t.is(silentPass.stdout.trim(), "PASS");
+		t.false(`${silentPass.stdout}${silentPass.stderr}`.includes("phase "));
+		t.false(`${silentPass.stdout}${silentPass.stderr}`.includes("normal cucumber"));
+
+		const silentFail = invoke(["--silent"], "1");
+		t.is(silentFail.status, 1);
+		t.true(silentFail.stdout.includes("FAIL"));
+		t.true(silentFail.stderr.includes("normal cucumber stderr"));
+		t.false(`${silentFail.stdout}${silentFail.stderr}`.includes("phase "));
+	} finally {
+		fs.rmSync(binDir, { recursive: true, force: true });
+	}
+});
+
 test("Docker BDD runner builds and preflights its Node 22, Bun, and Python 3.14 image", (t) => {
 	const dockerRunner = fs.readFileSync(path.resolve(__dirname, "..", "run-bdd-docker.js"), "utf8");
 	const dockerfile = fs.readFileSync(path.resolve(__dirname, "../../docker/Dockerfile.bdd-bun"), "utf8");
@@ -86,7 +131,11 @@ test("Docker BDD runner builds and preflights its Node 22, Bun, and Python 3.14 
 	t.true(dockerRunner.includes('const DEFAULT_BDD_NODE_IMAGE = "transform-hub-bdd-bun:dev"'));
 	t.true(dockerRunner.includes('["build", "--file", path.join(repoRoot, "docker", "Dockerfile.bdd-bun")'));
 	t.true(dockerRunner.includes("python3 --version 2>&1 | grep -E '^Python 3\\\\.14\\\\.'"), "preflight must require Python 3.14");
-	t.true(dockerRunner.includes("`${runtimePreflight} && ${fixturePacking}"), "preflight runs inside the BDD container before fixtures");
+	t.true(dockerRunner.includes('runPhase("runtime version preflight", runtimePreflight)'));
+	t.true(dockerRunner.includes('runPhase("fixture: simple-stdio archive"'));
+	t.true(dockerRunner.includes('runPhase("fixture: appcontext packages"'));
+	t.true(dockerRunner.includes('runPhase("fixture: BDD packages"'));
+	t.true(dockerRunner.includes('runPhase("fixture: Python BDD packages"'));
 	t.true(dockerfile.includes("FROM python:3.14-slim-bookworm"));
 	t.true(dockerfile.includes("ca-certificates curl git gnupg procps unzip"), "BDD image must include git for long-running Bun fixtures");
 	t.true(dockerfile.includes("node_22.x"));

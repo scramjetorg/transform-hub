@@ -88,6 +88,7 @@ test("Node and Hub feature paths use balanced exclusive chunks", t => {
     ]);
     t.deepEqual(runner.CHUNKS["hub-idle-resource"], ["features/hub/HUB-005-idle-resource.feature"]);
     t.true(runner.CHUNKS.manager.includes("features/e2e/E2E-019-control-plane-admission.feature"));
+    t.true(runner.CHUNKS.manager.includes("features/e2e/E2E-022-si-manager-hub-instance-rpc.feature"));
 });
 
 // ---------------------------------------------------------------------------

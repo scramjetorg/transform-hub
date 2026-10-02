@@ -19,7 +19,8 @@ const {
 } = require("../../../../scripts/lib/ava-memory-guard");
 const test: typeof testBase = createAvaMemoryGuard(testBase);
 
-const walkthroughPath = path.resolve(__dirname, "../../../../docs-source/examples/source-side-data-summary.md");
+// The staged test's __dirname is under .ava-*, but the docs remain at the repository root.
+const walkthroughPath = path.resolve(process.cwd(), "../../docs-source/examples/source-side-data-summary.md");
 
 test("source-side data walkthrough compiles and runs its loaded sequence", async t => {
     allowAvaMemoryGrowth(t, {

@@ -1,7 +1,8 @@
 "use strict";
 
 const test = require("ava").default;
-require("ts-node").register({ project: require("node:path").resolve(__dirname, "../../bdd/tsconfig.json") });
+process.env.TSX_TSCONFIG_PATH = require("node:path").resolve(__dirname, "../../bdd/tsconfig.json");
+require("tsx/cjs");
 const {
     externalClientForUrl,
     reuseExternalClient,

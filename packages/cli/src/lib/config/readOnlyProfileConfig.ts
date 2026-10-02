@@ -1,6 +1,7 @@
 import { ProfileConfigEntity } from "../../types";
 import { ReadOnlyConfigFileDefault } from "@scramjet/utility";
 import { profileConfigDefault, validateProfileEntry, validateProfileKeysSize } from "./commonProfileConfig";
+import { resolveVerser2ProfileEnvironment } from "./verser2Profile";
 
 // Profile configuration class. Represents configuration that can be maniupulated by user.
 export default class ReadOnlyProfileConfig extends ReadOnlyConfigFileDefault<ProfileConfigEntity> {
@@ -25,6 +26,15 @@ export default class ReadOnlyProfileConfig extends ReadOnlyConfigFileDefault<Pro
         const { verser2Draft: _draft, ...active } = stored;
         return active;
     }
+    getStoredConfig(): ProfileConfigEntity {
+        const stored = (this.file.exists() ? this.file.read() : this.getDefault()) as ProfileConfigEntity;
+        const { verser2Draft: _draft, ...active } = stored;
+        return active;
+    }
+    validateStored(config: Object = this.getStoredConfig()): boolean {
+        if (!validateProfileKeysSize(config)) return false;
+        return super.validate(config);
+    }
     getEntry(key: keyof ProfileConfigEntity): any | null {
         return key === "verser2Draft" ? null : super.getEntry(key);
     }
@@ -32,7 +42,7 @@ export default class ReadOnlyProfileConfig extends ReadOnlyConfigFileDefault<Pro
     validate(config: Object): boolean {
         if (!validateProfileKeysSize(config))
             return false;
-        return super.validate(config);
+        return super.validate(resolveVerser2ProfileEnvironment(config as ProfileConfigEntity));
     }
 
     protected validateEntry(key: string, value: any): boolean | null {

@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/runner-python",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "description": "Python runtime wrapper for packages/runner — python3 runner_python process launcher.",
   "scripts": {
     "build": "bash scripts/build-dist.sh && node scripts/assert-dist-artifact.js",
@@ -28,6 +28,9 @@
   ],
   "dependencies": {
     "@signicode/verser2-guest-python": "0.7.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.3"
   },
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "MIT",

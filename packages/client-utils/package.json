@@ -1,11 +1,11 @@
 {
   "name": "@scramjet/client-utils",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "description": "This package is part of Scramjet Transform Hub. The package provides the API Client Utils for use with Scramjet Transform Hub.",
   "main": "./src/index.ts",
   "browser": "./src/index.browser.ts",
   "scripts": {
-    "start": "ts-node ./src/index",
+    "start": "tsx ./src/index",
     "build": "../../scripts/build-all.js --config-name=tsconfig.build.json --copy-dist",
     "clean": "rm -rf ./dist .bic_cache",
     "test": "node ../../scripts/run-ava.js"
@@ -13,10 +13,10 @@
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "MIT",
   "dependencies": {
-    "@scramjet/model": "^2.2.0",
-    "@scramjet/obj-logger": "^2.2.0",
-    "@scramjet/symbols": "^2.2.0",
-    "@scramjet/utility": "^2.2.0",
+    "@scramjet/model": "^2.2.1",
+    "@scramjet/obj-logger": "^2.2.1",
+    "@scramjet/symbols": "^2.2.1",
+    "@scramjet/utility": "^2.2.1",
     "@types/node-fetch": "^2.6.12",
     "abort-controller": "^3.0.0",
     "n-readlines": "^1.0.1",
@@ -29,15 +29,15 @@
     "@types/node": "^22.15.0",
     "@types/node-fetch": "^2.6.12",
     "ava": "^8.0.0",
-    "ts-node": "^10.9.1",
-    "typescript": "~4.7.4"
+    "typescript": "~4.7.4",
+    "tsx": "^4.19.3"
   },
   "ava": {
     "files": [
       "**/*.spec.ts"
     ],
     "require": [
-      "ts-node/register"
+      "../../scripts/lib/tsx-cjs-register.cjs"
     ],
     "typescript": {
       "compile": false,
