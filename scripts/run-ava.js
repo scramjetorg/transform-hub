@@ -17,7 +17,7 @@
  *                    because AVA Workers reject inherited execArgv flags.
  *   – TypeScript:    AVA 8 package tests are staged and transpiled into a
  *                    temporary sibling tree before the AVA run, then removed.
- *                    TS_NODE_TRANSPILE_ONLY=1 keeps type diagnostics non-fatal;
+ *                    SCRAMJET_AVA_TYPECHECK=1 makes staged type diagnostics fatal;
  *                    set it to 0 to make them fail the invocation.
  *   – Fetch:         --no-experimental-fetch on SCRAMJET_AVA_FETCH=0
  *   – Profiles:      SCRAMJET_TEST_PROFILE=fast runs 16 workers with an
@@ -60,6 +60,7 @@ const {
 	runnerInvocationEnv,
 	runnerTimeout,
 	stripCoverageFlag,
+	shouldFailOnTypeScriptDiagnostics,
 	resolveC8Cli,
 	c8CoverageArgs,
 } = require("./lib/ava-options.js");
@@ -100,7 +101,6 @@ const cliArgs = [
 	...process.argv.slice(2)
 ];
 const { args: avaCliArgs, coverage } = stripCoverageFlag(cliArgs);
-const args = buildAvaArgs(avaCliArgs);
 
 // Build the child environment.
 const childEnv = {
@@ -135,7 +135,7 @@ function removeStagedSourceMapCaches() {
 		if (!sourceMapCache) continue;
 
 		for (const sourcePath of Object.keys(sourceMapCache)) {
-			// ts-node/register records identity source maps for AVA's staged output.
+			// Runtime loaders may record identity source maps for AVA's staged output.
 			// Let c8 load the emitted TypeScript map instead, while that output still
 			// exists, so `--exclude-after-remap` sees the original `src/**/*.ts` path.
 			if (sourcePath.includes("/.ava-")) delete sourceMapCache[sourcePath];
@@ -187,6 +187,8 @@ function findStagedProjectDir(directory) {
 		const nested = findStagedProjectDir(candidate);
 		if (nested) return nested;
 	}
+
+	if (existsSync(join(directory, "package.json")) && existsSync(join(directory, "test"))) return directory;
 }
 
 function rewriteStagedImports(directory, sourceDirectory, sourceRoot) {
@@ -198,25 +200,85 @@ function rewriteStagedImports(directory, sourceDirectory, sourceRoot) {
 		}
 		if (!entry.isFile() || !entry.name.endsWith(".js")) continue;
 
-		const sourcePath = join(sourceDirectory, relative(typeScriptArgs.stagedProjectDir, stagedPath));
+		const sourceRelativePath = relative(typeScriptArgs.stagedProjectDir, stagedPath).replace(/\.js$/, ".ts");
+		const sourcePath = join(sourceDirectory, sourceRelativePath);
 		const sourceDirectoryName = dirname(sourcePath);
 		const stagedDirectoryName = dirname(stagedPath);
 		const source = readFileSync(stagedPath, "utf8");
+		const moduleSpecifierOffsets = findRelativeModuleSpecifierOffsets(source, stagedPath);
+		let nextMatchStart = 0;
 		const rewritten = source.replace(/(["'])(\.{1,2}\/[^"]*?)\1/g, (match, quote, request) => {
+			const matchStart = source.indexOf(match, nextMatchStart);
+			nextMatchStart = matchStart + match.length;
+			if (matchStart < 0 || !moduleSpecifierOffsets.has(matchStart)) return match;
+
 			const sourceTarget = resolve(sourceDirectoryName, request);
-			if (isWithin(process.cwd(), sourceTarget)) return match;
-			const emittedTarget = sourceTarget !== sourceRoot && isWithin(sourceRoot, sourceTarget)
-				? join(typeScriptArgs.outputDir, relative(sourceRoot, sourceTarget))
+			const emittedTarget = isWithin(sourceRoot, sourceTarget)
+				? findEmittedModule(sourceTarget, join(typeScriptArgs.outputDir, relative(sourceRoot, sourceTarget)))
 				: undefined;
-			const stagedTarget = emittedTarget && existsSync(emittedTarget) ? emittedTarget : sourceTarget;
+			const stagedTarget = emittedTarget || sourceTarget;
 
 			let stagedRequest = relative(stagedDirectoryName, stagedTarget);
+			if (emittedTarget && !/\.(?:c|m)?js$/.test(emittedTarget) && !/\.json$/.test(emittedTarget)) return match;
 			if (!stagedRequest.startsWith(".")) stagedRequest = `./${stagedRequest}`;
+			if (emittedTarget && /\.(?:c|m)?js$/.test(emittedTarget) && !/\.(?:c|m)?js$/.test(stagedRequest)) stagedRequest = `${stagedRequest}.js`;
 			return `${quote}${stagedRequest}${quote}`;
 		});
 
 		if (rewritten !== source) writeFileSync(stagedPath, rewritten);
 	}
+}
+
+function findRelativeModuleSpecifierOffsets(source, filePath) {
+	const offsets = new Set();
+	if (!/(?:["'])(?:\.{1,2})\//.test(source)) return offsets;
+
+	const typescript = require(require.resolve("typescript", { paths: [process.cwd()] }));
+	const sourceFile = typescript.createSourceFile(filePath, source, typescript.ScriptTarget.Latest, true, typescript.ScriptKind.JS);
+
+	function visit(node) {
+		let moduleSpecifier;
+
+		if (typescript.isImportDeclaration(node) || typescript.isExportDeclaration(node)) {
+			moduleSpecifier = node.moduleSpecifier;
+		} else if (typescript.isCallExpression(node) && node.arguments.length > 0) {
+			const expression = node.expression;
+			const isRequire = typescript.isIdentifier(expression) && expression.text === "require";
+			const isRequireResolve = typescript.isPropertyAccessExpression(expression)
+				&& typescript.isIdentifier(expression.expression)
+				&& expression.expression.text === "require"
+				&& expression.name.text === "resolve";
+			const isDynamicImport = expression.kind === typescript.SyntaxKind.ImportKeyword;
+
+			if (isRequire || isRequireResolve || isDynamicImport) moduleSpecifier = node.arguments[0];
+		}
+
+		if (moduleSpecifier && typescript.isStringLiteral(moduleSpecifier)) {
+			const request = moduleSpecifier.text;
+			if (request.startsWith("./") || request.startsWith("../")) offsets.add(moduleSpecifier.getStart(sourceFile));
+		}
+
+		typescript.forEachChild(node, visit);
+	}
+
+	visit(sourceFile);
+	return offsets;
+}
+
+function findEmittedModule(sourceTarget, emittedTarget) {
+	const candidates = [emittedTarget];
+	if (sourceTarget.endsWith(".ts")) candidates.unshift(emittedTarget.replace(/\.ts$/, ".js"));
+	else if (sourceTarget.endsWith(".tsx")) candidates.unshift(emittedTarget.replace(/\.tsx$/, ".js"));
+	else if (!/\.[^/]+$/.test(sourceTarget)) candidates.push(`${emittedTarget}.js`, `${emittedTarget}.json`);
+
+	for (const candidate of candidates) {
+		if (existsSync(candidate) && !require("node:fs").statSync(candidate).isDirectory()) return candidate;
+	}
+	for (const candidate of candidates) {
+		const indexFile = join(candidate, "index.js");
+		if (existsSync(indexFile)) return indexFile;
+	}
+	return undefined;
 }
 
 function linkNestedTypeScriptOutput() {
@@ -227,19 +289,92 @@ function linkNestedTypeScriptOutput() {
 
 	typeScriptArgs.stagedProjectDir = stagedProjectDir;
 	const stagedProjectRelativePath = relative(typeScriptArgs.outputDir, stagedProjectDir);
-	const sourceRoot = resolve(process.cwd(), ...stagedProjectRelativePath.split(sep).map(() => ".."));
+	const sourceRoot = stagedProjectDir === typeScriptArgs.outputDir
+		? process.cwd()
+		: resolve(process.cwd(), ...stagedProjectRelativePath.split(sep).map(() => ".."));
 
-	cpSync(process.cwd(), stagedProjectDir, { recursive: true, filter: shouldStage });
+	if (stagedProjectDir !== typeScriptArgs.outputDir) {
+		cpSync(process.cwd(), stagedProjectDir, { recursive: true, filter: shouldStage });
+	}
 	rewriteStagedImports(stagedProjectDir, process.cwd(), sourceRoot);
-	linkSiblingPackages(dirname(stagedProjectDir));
+	if (stagedProjectDir !== typeScriptArgs.outputDir) linkSiblingPackages(dirname(stagedProjectDir));
 
 	for (const directory of ["src", "test"]) {
 		const stagedPath = join(typeScriptArgs.outputDir, directory);
 		const compiledPath = join(stagedProjectDir, directory);
+		if (stagedProjectDir === typeScriptArgs.outputDir) continue;
 		if (!existsSync(compiledPath)) continue;
 
 		rmSync(stagedPath, { recursive: true, force: true });
 		symlinkSync(relative(typeScriptArgs.outputDir, compiledPath), stagedPath, "dir");
+	}
+}
+
+function compiledAvaPattern(pattern) {
+	return pattern.replace(/\.(cts|mts|tsx|ts)$/, (_match, extension) => ({
+		cts: ".cjs",
+		mts: ".mjs",
+		tsx: ".js",
+		ts: ".js"
+	})[extension]);
+}
+
+function writeCompiledAvaConfig() {
+	if (!typeScriptArgs) return undefined;
+	if (!typeScriptArgs.stagedProjectDir) throw new Error("AVA TypeScript staging did not locate the package's compiled project output.");
+
+	const packageConfig = JSON.parse(readFileSync(join(process.cwd(), "package.json"), "utf8")).ava || {};
+	const config = { ...packageConfig };
+	delete config.typescript;
+	config.extensions = ["js"];
+	const configuredPatterns = Array.isArray(packageConfig.files) ? packageConfig.files : [packageConfig.files || "test/**/*.spec.ts"];
+	const sourcePatterns = configuredPatterns.filter((pattern) => !(pattern.startsWith("!") && pattern.endsWith(".d.ts")));
+	const stagedRoot = relative(process.cwd(), typeScriptArgs.stagedProjectDir);
+	config.files = sourcePatterns.map((pattern) => {
+		const isNegated = pattern.startsWith("!");
+		const sourcePattern = isNegated ? pattern.slice(1) : pattern;
+		const stagedPattern = join(stagedRoot, compiledAvaPattern(sourcePattern));
+		return isNegated ? `!${stagedPattern}` : stagedPattern;
+	});
+	config.require = (packageConfig.require || []).map((entry) => entry.startsWith(".") ? resolve(process.cwd(), entry) : entry);
+	const configPath = join(typeScriptArgs.outputDir, "ava-runner.config.cjs");
+	writeFileSync(configPath, `module.exports = ${JSON.stringify(config, null, 2)};\n`);
+	return configPath;
+}
+
+function stagedTestPatterns(cliArgs) {
+	if (!typeScriptArgs) return cliArgs;
+	return cliArgs.map((arg) => {
+		if (arg.startsWith("-")) return arg;
+		const colon = arg.indexOf(":");
+		const filePattern = colon < 0 ? arg : arg.slice(0, colon);
+		if (!/\.(?:cts|mts|tsx|ts)$/.test(filePattern)) return arg;
+		const testFilter = colon < 0 ? "" : arg.slice(colon);
+		const relativePattern = relative(process.cwd(), resolve(process.cwd(), filePattern));
+		const stagedPattern = resolve(typeScriptArgs.stagedProjectDir, compiledAvaPattern(relativePattern));
+		return `${stagedPattern}${testFilter}`;
+	});
+}
+
+function removeStagedTypeScriptTestFiles(directory) {
+	if (!directory) {
+		if (!typeScriptArgs?.stagedProjectDir) return;
+		directory = join(typeScriptArgs.stagedProjectDir, "test");
+	}
+	if (!existsSync(directory)) return;
+
+	for (const entry of readdirSync(directory, { withFileTypes: true })) {
+		const stagedPath = join(directory, entry.name);
+		if (entry.isDirectory()) {
+			removeStagedTypeScriptTestFiles(stagedPath);
+			continue;
+		}
+		if (!entry.isFile() || !/\.(?:spec|test)\.tsx?$/.test(entry.name)) continue;
+
+		const compiledPath = stagedPath.replace(/\.tsx?$/, ".js");
+		if (!existsSync(compiledPath)) continue;
+
+		rmSync(stagedPath);
 	}
 }
 
@@ -261,7 +396,7 @@ if (typeScriptArgs) {
 	}
 
 	if (typeScriptResult.status !== 0) {
-		if (childEnv.TS_NODE_TRANSPILE_ONLY === "0") {
+		if (shouldFailOnTypeScriptDiagnostics(childEnv)) {
 			if (typeScriptResult.stdout) process.stdout.write(typeScriptResult.stdout);
 			if (typeScriptResult.stderr) process.stderr.write(typeScriptResult.stderr);
 			compileExitCode = typeScriptResult.status === null ? 1 : typeScriptResult.status;
@@ -273,6 +408,11 @@ if (compileExitCode !== undefined) {
 	removeTypeScriptOutput();
 	process.exit(compileExitCode);
 }
+
+removeStagedTypeScriptTestFiles();
+const compiledAvaConfig = writeCompiledAvaConfig();
+const args = buildAvaArgs(stagedTestPatterns(avaCliArgs));
+if (compiledAvaConfig) args.push("--config", compiledAvaConfig);
 
 // Resolve timeout.
 const timeout = runnerTimeout();

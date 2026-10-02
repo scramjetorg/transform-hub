@@ -7,14 +7,20 @@ import { ProfileManager } from "./profileManager";
 import ProfileConfig from "./profileConfig";
 import ReadOnlyProfileConfig from "./readOnlyProfileConfig";
 import { parseConfigSelection } from "./args";
+import { resolveVerser2ProfileEnvironment, verser2ClientTlsEnvironment } from "./verser2Profile";
 
 export { ProfileConfig, ReadOnlyProfileConfig };
 export { isProfileConfig } from "./profileManager";
+export { resolveVerser2ProfileEnvironment, verser2ClientTlsEnvironment } from "./verser2Profile";
 
 export const profileManager = ProfileManager.getInstance();
 export const siConfig = SiConfig.getInstance();
 export const sessionConfig = new SessionConfig();
 //export const profileConfig = profileManager.getProfileConfig();
+
+export function getSelectedVerser2Profile() {
+    return resolveVerser2ProfileEnvironment(profileManager.getProfileConfig().getStoredConfig()).verser2;
+}
 
 profileManager.setConfigProfile(profileManager.getProfileName());
 
@@ -37,14 +43,29 @@ export const initConfig = () => {
     else profileManager.setConfigProfile(profile);
 
     const profileConfig = profileManager.getProfileConfig();
+    const storedProfile = profileConfig.getStoredConfig();
+    const storedProfileIsValid = profileConfig.validateStored(storedProfile);
+    let effectiveProfileIsValid = false;
+    let effectiveProfileError: unknown;
 
     try {
-        const isProfileConfigValid = profileConfig.validate(profileConfig.get());
-
-        if (isProfileConfigValid) return;
-    } catch (error: any) {
-        displayError(error);
+        const effectiveProfile = resolveVerser2ProfileEnvironment(storedProfile);
+        effectiveProfileIsValid = profileConfig.validate(effectiveProfile);
+    } catch (error) {
+        effectiveProfileError = error;
     }
+
+    if (effectiveProfileIsValid) return;
+
+    const hasTlsEnvironmentOverride = storedProfile.verser2 !== undefined &&
+        Object.values(verser2ClientTlsEnvironment).some(name => process.env[name] !== undefined);
+    if (storedProfileIsValid && hasTlsEnvironmentOverride) {
+        const error = new Error("Invalid Verser2 TLS environment override for the selected profile; the saved profile and selection were left unchanged.");
+        displayError(error);
+        throw error;
+    }
+
+    if (effectiveProfileError) displayError(effectiveProfileError as Error);
 
     const profileUsed = profileManager.getProfileName();
 

@@ -15,15 +15,15 @@
  *   - Docker working-set computation via Docker Engine stats socket
  *   - Diagnostic helpers: buildProcessRssDiagnostics, buildDockerWorkingSetDiagnostics
  *
- * Runs via ts-node/register to handle TypeScript imports.
+ * Runs via tsx/cjs to handle TypeScript imports.
  */
 
 "use strict";
 
 const test = require("ava").default;
 
-// ts-node/register must be loaded before importing the TS module
-require("ts-node/register");
+// tsx/cjs must be loaded before importing the TS module
+require("tsx/cjs");
 
 const {
     getProcessRssBytes,

@@ -16,16 +16,12 @@ After STH is built with esbuild it should run with this flag
 
 `SCRAMJET_SPAWN_JS: boolean (default: false)`
 
-Used to switch between running `host` with `ts-node` and `node`.
-Which comes down to whether you have to build `host` first or is it run directly from the TS source code.
-It is used in CLI tests, when set to `true` CLI commands will be run with `node` out of dist folder.
-When set to `false` (default) cli commands will be run with the CLI installed from npm (with `si` command).
+Used by CLI tests to run the selected CLI entry directly through `node` rather than the installed `si` command.
 
 ---
 `SCRAMJET_SPAWN_TS: boolean (default: false)`
 
-Used to switch between running `host` with `ts-node` and `node`.
-Which comes down to whether you have to build `host` first or is it run directly from the TS source code.
+Used to run TypeScript source entrypoints directly through `tsx` instead of the installed/built CLI command.
 
 ---
 `SCRAMJET_HOST_URL: string`

@@ -4,8 +4,8 @@ const test = require("ava").default;
 const fs = require("node:fs");
 const path = require("node:path");
 
-process.env.TS_NODE_COMPILER_OPTIONS = JSON.stringify({ module: "commonjs" });
-require("ts-node/register");
+process.env.TSX_TSCONFIG_PATH = path.resolve(__dirname, "../../bdd/tsconfig.json");
+require("tsx/cjs");
 const { spawnProcess, disposeClient } = require("../../bdd/step-definitions/manager/common.ts");
 const { isTransientReadinessStatus, isSuccessfulReadinessResponse } = require("../../bdd/lib/readiness-contract.ts");
 

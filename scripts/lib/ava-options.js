@@ -16,8 +16,8 @@
  *   SCRAMJET_AVA_JITLESS             – defaults to "0" (JIT enabled with Node's
  *                                      permissive default WASM capabilities);
  *                                      set to a non-disabled value to enable --jitless
- *   TS_NODE_TRANSPILE_ONLY           – defaults to "1" for test runtime transpilation;
- *                                      set to "0" to enable ts-node typechecking
+ *   SCRAMJET_AVA_TYPECHECK            – defaults to "0"; set to "1" to make
+ *                                      staged TypeScript diagnostics fatal
  *   SCRAMJET_AVA_FETCH               – set to "0"|"false"|"no"|"off" to add
  *                                      --no-experimental-fetch
  *   SCRAMJET_AVA_WORKERS             – AVA concurrency / worker count (positive integer)
@@ -307,7 +307,7 @@ function c8CoverageArgs(projectDir = process.cwd()) {
 const ENV = Object.freeze({
 	TEST_PROFILE: "SCRAMJET_TEST_PROFILE",
 	JITLESS: "SCRAMJET_AVA_JITLESS",
-	TS_NODE_TRANSPILE_ONLY: "TS_NODE_TRANSPILE_ONLY",
+	TYPECHECK: "SCRAMJET_AVA_TYPECHECK",
 	FETCH: "SCRAMJET_AVA_FETCH",
 	MAX_OLD_SPACE: "SCRAMJET_AVA_MAX_OLD_SPACE_SIZE",
 	WORKERS: "SCRAMJET_AVA_WORKERS",
@@ -657,14 +657,14 @@ function memoryHeapThresholdBytes() {
  * Returns an env object with SCRAMJET_AVA_RUNNER=1 that should be merged into
  * the child process environment to mark a legitimate runner invocation.
  *
- * @returns {{ SCRAMJET_AVA_RUNNER: string, SCRAMJET_AVA_JITLESS: string, TS_NODE_TRANSPILE_ONLY: string }}
+ * @returns {{ SCRAMJET_AVA_RUNNER: string, SCRAMJET_AVA_JITLESS: string, SCRAMJET_AVA_TYPECHECK: string }}
  */
 function runnerInvocationEnv() {
 	const profile = testProfile();
 	const invocationEnv = {
 		[ENV.RUNNER]: "1",
 		[ENV.JITLESS]: process.env[ENV.JITLESS] ?? "0",
-		[ENV.TS_NODE_TRANSPILE_ONLY]: process.env[ENV.TS_NODE_TRANSPILE_ONLY] ?? "1"
+		[ENV.TYPECHECK]: process.env[ENV.TYPECHECK] ?? "0"
 	};
 
 	if (
@@ -701,6 +701,10 @@ function preloadGuardPath() {
  */
 function isDirectAvaInvocation() {
 	return !process.env[ENV.RUNNER];
+}
+
+function shouldFailOnTypeScriptDiagnostics(env = process.env) {
+	return env[ENV.TYPECHECK] === "1";
 }
 
 // ---------------------------------------------------------------------------
@@ -746,5 +750,6 @@ module.exports = {
 	// Bypass guard
 	runnerInvocationEnv,
 	preloadGuardPath,
-	isDirectAvaInvocation
+	isDirectAvaInvocation,
+	shouldFailOnTypeScriptDiagnostics
 };

@@ -5,7 +5,8 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 
-require("ts-node").register({ project: path.resolve(__dirname, "../../bdd/tsconfig.json") });
+process.env.TSX_TSCONFIG_PATH = path.resolve(__dirname, "../../bdd/tsconfig.json");
+require("tsx/cjs");
 const {
     assertMtlsAccepted,
     assertMtlsRejected,

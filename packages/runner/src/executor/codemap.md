@@ -16,11 +16,11 @@ Child-process launch/execution adapters for Node/Bun/Python, runtime-selection l
   - fd4: control (raw duplex byte pipe)
   - fd5: monitoring (raw duplex byte pipe)
 - **Runtime-specific guardrails**:
-  - Node (`node-process-executor.ts`): absolute-path validation, optional ts-node setup (`--require` when `needsTsNode`).
+  - Node (`node-process-executor.ts`): absolute-path validation, optional tsx CJS loader (`--require` when the resolved entry is TypeScript source).
   - Bun (`bun-process-executor.ts`): uses `process.env.BUN_BIN || "bun"`, strips `SEQUENCE_*`/`RUNNER_CONNECT_INFO` from child env.
   - Python (`python-process-executor.ts`): uses `process.env.PYTHON_BIN || "python3"`, builds `PYTHONPATH` via candidate search, two spawn forms (production `-m runner_python` vs test override).
 - **Entry resolvers**:
-  - `runner-node-launcher.ts`: resolves `@scramjet/runner-node` entry — searches `package.json` bin, dist, src with ts-node fallback; returns `ResolvedRunnerNodeEntry { entry, needsTsNode }`.
+  - `runner-node-launcher.ts`: resolves `@scramjet/runner-node` entry — searches `package.json` bin, dist, src with TypeScript source fallback; returns `ResolvedRunnerNodeEntry { entry, needsTypeScriptSourceLoader }`.
   - `runner-bun-launcher.ts`: resolves `@scramjet/runner-bun` entry — searches dist, bin, src; returns `ResolvedRunnerBunEntry { entry }`.
 - **Non-destructive monitoring observation** (`lifecycle-observer.ts`): inspects a copy of the monitoring stream for terminal frames (`SEQUENCE_COMPLETED`/`SEQUENCE_STOPPED`) without consuming bytes from the stream.
 - **Stream forwarding** (`stream-forwarder.ts`): pipes child stdout/stderr to host with `{ end: false }`; idempotent `detach()` for teardown.

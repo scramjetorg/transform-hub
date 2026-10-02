@@ -21,6 +21,14 @@
  * `npm --prefix ./bdd run test:bdd`.
  */
 
+const processInvocationStartedAt = process.hrtime.bigint();
+const processInvocationStartedAtEpochMs = Date.now();
+const inheritedInvocationStartedAtNs = process.env.SCRAMJET_BDD_INVOCATION_STARTED_AT_NS;
+const invocationStartedAt = inheritedInvocationStartedAtNs && /^\d+$/.test(inheritedInvocationStartedAtNs)
+    ? BigInt(inheritedInvocationStartedAtNs)
+    : processInvocationStartedAt;
+const invocationStartedAtEpochMs = Number(process.env.SCRAMJET_BDD_INVOCATION_STARTED_AT_EPOCH_MS) || processInvocationStartedAtEpochMs;
+
 const { spawn, spawnSync } = require("child_process");
 const crypto = require("crypto");
 const fs = require("fs");
@@ -37,6 +45,7 @@ const { reportLeakedProcesses, cleanupTempDirs } = require("./lib/bdd-cleanup.js
 const { dockerOutcomeDiagnostics } = require("./lib/bdd-outcome-diagnostics.js");
 const { createForensicRecorder, parseWaitResult } = require("./lib/bdd-docker-forensics.js");
 const { createOwnership, ownershipEnv, encodePart } = require("../bdd/lib/ownership.js");
+const { formatRunLog, readTimingEvents, actionableOutput } = require("./lib/bdd-run-log.js");
 
 const DEFAULT_BDD_NODE_IMAGE = "transform-hub-bdd-bun:dev";
 // Node 22's compile cache otherwise follows TMPDIR, which is the mounted BDD artifact root.
@@ -69,6 +78,40 @@ const MISSING_DEPENDENCY_EXIT_CODE = 127;
 const repoRoot = path.resolve(__dirname, "..");
 const tarballRoot = process.env.SCRAMJET_TARBALL_BDD_ROOT ? path.resolve(process.env.SCRAMJET_TARBALL_BDD_ROOT) : null;
 const tarballRootMode = Boolean(tarballRoot);
+const outputMode = process.env.SCRAMJET_BDD_OUTPUT_MODE || "full";
+let writeFailureStderr = process.stderr.write.bind(process.stderr);
+if (outputMode !== "full") {
+    const writeStderr = writeFailureStderr;
+    process.stderr.write = (chunk, ...args) => {
+        const message = String(chunk);
+        if (/\b(error|failed|failure|timeout|timed out|warning)\b/i.test(message)) return writeStderr(chunk, ...args);
+        return true;
+    };
+}
+const runnerStartedAt = process.hrtime.bigint();
+const preflightStartedAt = runnerStartedAt;
+const runnerPhases = [];
+let phaseEvents = [];
+let childLogStdout = "";
+let childLogStderr = "";
+let waitStartedAt = null;
+const recordPhase = (name, startedAt, status = "PASS", category) => {
+    const durationMs = Number(process.hrtime.bigint() - startedAt) / 1e6;
+    const endOffsetMs = Math.max(0, Date.now() - invocationStartedAtEpochMs);
+    runnerPhases.push({
+        name,
+        durationMs,
+        startOffsetMs: Math.max(0, endOffsetMs - durationMs),
+        endOffsetMs,
+        status,
+        ...(category ? { category } : {})
+    });
+};
+const emitRunLog = (code) => {
+    if (outputMode === "quiet") {
+        process.stdout.write(`${formatRunLog({ phases: [...runnerPhases, ...phaseEvents.filter(event => event.kind === "phase")], events: phaseEvents.filter(event => ["scenario", "step", "cleanup"].includes(event.kind)), status: code === 0 ? "PASS" : "FAIL", mode: "docker", runId: ownership?.runId, chunkId: ownership?.chunkId, owner: ownership?.owner, invocationElapsedMs: Number(process.hrtime.bigint() - invocationStartedAt) / 1e6 })}\n`);
+    }
+};
 
 const separatorIndex = process.argv.indexOf("--");
 const runnerArgs = separatorIndex === -1 ? process.argv.slice(2) : process.argv.slice(2, separatorIndex);
@@ -103,6 +146,7 @@ const dockerGid = dockerGroupFields[2] && dockerGroupFields[2].trim();
 if (!dockerGid) {
     failPrereq("docker group entry from 'getent group docker' had no GID field.");
 }
+recordPhase("host preflight", preflightStartedAt);
 
 const ensureDefaultBddImage = () => {
     if (BDD_NODE_IMAGE !== DEFAULT_BDD_NODE_IMAGE) {
@@ -127,8 +171,11 @@ const ensureDefaultBddImage = () => {
     }
 };
 
+const imageStartedAt = process.hrtime.bigint();
 ensureDefaultBddImage();
+recordPhase("BDD image check/build", imageStartedAt);
 
+const setupStartedAt = process.hrtime.bigint();
 const ownership = createOwnership(process.env, { artifactRoot: "/work-tmp" });
 const hostOwnershipRoot = path.join(require("node:os").tmpdir(), "scramjet-bdd-runs", encodePart(ownership.runId), "chunks", encodePart(ownership.chunkId));
 fs.mkdirSync(hostOwnershipRoot, { recursive: true });
@@ -141,6 +188,7 @@ if (tarballRootMode) {
     fs.symlinkSync("/work/node_modules/@scramjet", path.join(bddNodeModulesDir, "@scramjet"), "dir");
 }
 const containerName = `bdd-runner-${ownership.runId}-${ownership.chunkId}-${crypto.randomBytes(3).toString("hex")}`;
+recordPhase("owner-scoped host setup", setupStartedAt);
 
 const shellEscape = (arg) => `'${String(arg).replace(/'/g, "'\\''")}'`;
 
@@ -248,21 +296,23 @@ if (memlabEnabled) {
 }
 
 const escapedPassthrough = passthroughArgs.map(shellEscape).join(" ");
+const phaseScript = "node scripts/lib/bdd-phase.js";
+const runPhase = (name, command) => `${phaseScript} ${shellEscape(name)} -- sh -c ${shellEscape(command)}`;
 const fixturePacking = [
-    "node scripts/prepare-bdd-simple-stdio.js /work-tmp",
-    "OUT_DIR=/work-tmp/appcontext-packages node scripts/pack-appcontext-fixtures.js",
-    "OUT_DIR=/work-tmp/bdd-packages node scripts/pack-bdd-fixtures.js",
-    "OUT_DIR=/work-tmp/python-bdd-packages node scripts/pack-python-bdd-fixtures.js"
+    runPhase("fixture: simple-stdio archive", "node scripts/prepare-bdd-simple-stdio.js /work-tmp"),
+    runPhase("fixture: appcontext packages", "OUT_DIR=/work-tmp/appcontext-packages node scripts/pack-appcontext-fixtures.js"),
+    runPhase("fixture: BDD packages", "OUT_DIR=/work-tmp/bdd-packages node scripts/pack-bdd-fixtures.js"),
+    runPhase("fixture: Python BDD packages", "OUT_DIR=/work-tmp/python-bdd-packages node scripts/pack-python-bdd-fixtures.js")
 ].join(" && ");
 const runtimePreflight = ["node --version", "npm --version", "bun --version", "python3 --version 2>&1 | grep -E '^Python 3\\.14\\.'"].join(" && ");
 const packageDirs =
     "PACKAGES_DIR=/work-tmp/appcontext-packages/:/work-tmp/python-bdd-packages/:/work-tmp/bdd-packages/ SCRAMJET_BDD_SIMPLE_STDIO_ARCHIVE=/work-tmp/simple-stdio.tar.gz";
 const bddPrefix = tarballRootMode ? "cd /repo && " : "";
-const preparedCommand = `${runtimePreflight} && ${fixturePacking}`;
+const preparedCommand = `${runPhase("runtime version preflight", runtimePreflight)} && ${fixturePacking}`;
 const innerCommand =
     escapedPassthrough.length > 0
-        ? `${bddPrefix}${preparedCommand} && ${packageDirs} PATH=/work/node_modules/.bin:$PATH npm --prefix ./bdd run test:bdd -- ${escapedPassthrough}`
-        : `${bddPrefix}${preparedCommand} && ${packageDirs} PATH=/work/node_modules/.bin:$PATH npm --prefix ./bdd run test:bdd`;
+        ? `${bddPrefix}${preparedCommand} && ${packageDirs} PATH=/work/node_modules/.bin:$PATH ${runPhase("Cucumber invocation", `npm --prefix ./bdd run test:bdd -- ${escapedPassthrough}`)}`
+        : `${bddPrefix}${preparedCommand} && ${packageDirs} PATH=/work/node_modules/.bin:$PATH ${runPhase("Cucumber invocation", "npm --prefix ./bdd run test:bdd")}`;
 
 dockerRunArgs.push(BDD_NODE_IMAGE, "sh", "-c", innerCommand);
 
@@ -395,6 +445,7 @@ const cleanup = () => {
     // removing it is both faster and safer than a label scan during process
     // shutdown.  In particular, never let an unrelated/stale container make
     // the timeout path wait for the cleanup helper's 10s Docker timeout.
+    const containerCleanupStartedAt = process.hrtime.bigint();
     if (containerId && forensicEnabled) {
         // In forensic mode --rm is deliberately omitted. Verify both labels
         // before removing, so recovery cannot cross an owner's boundary.
@@ -439,7 +490,11 @@ const cleanup = () => {
     } else if (containerId) {
         dockerControl(["rm", "-f", containerId], "default scoped cleanup");
     }
+    if (containerId) recordPhase("container removal", containerCleanupStartedAt);
+    const tempCleanupStartedAt = process.hrtime.bigint();
     if (process.env.SCRAMJET_BDD_SCHEDULER_CHILD !== "1") cleanupTempDirs(require("node:os").tmpdir(), "", ownership);
+    try { if (tmpDir && fs.existsSync(tmpDir)) fs.rmSync(tmpDir, { recursive: true, force: true }); } catch { /* best effort */ }
+    recordPhase("owner-scoped temporary cleanup", tempCleanupStartedAt);
 };
 
 // Scope cleanup to current run resources only.
@@ -459,6 +514,21 @@ const exitWith = (code) => {
     finalized = true;
     cleanup();
     const hasLeaks = reportLeakedProcesses();
+    const finalCode = (forensicEnabled && forensicCleanupOutcome === false) || (hasLeaks && process.env.SCRAMJET_BDD_FAIL_ON_LEAK === "1") ? (code || 1) : code;
+
+    if (outputMode !== "full") {
+        if (finalCode !== 0) {
+            if (childLogStderr) writeFailureStderr(childLogStderr);
+            const failedSteps = phaseEvents.filter(event => event.kind === "step" && event.status !== "PASSED" && event.status !== "SKIPPED");
+            for (const event of failedSteps) writeFailureStderr(`[run-bdd-docker] FAILED ${event.scenario || "scenario"}: ${event.name || "step"} (${Number(event.durationMs || 0).toFixed(1)}ms)\n`);
+            if (!childLogStderr && !failedSteps.length) {
+                const diagnostics = actionableOutput(childLogStdout);
+                if (diagnostics) writeFailureStderr(`${diagnostics}\n`);
+            }
+            writeFailureStderr(`[run-bdd-docker] BDD command failed (exit ${finalCode}).\n`);
+        }
+        emitRunLog(finalCode);
+    }
 
     // In forensic mode, fail when owner-scoped container cleanup could not
     // be verified.  This prevents silently leaking retained containers even
@@ -607,12 +677,14 @@ const recordWorkingSetSample = async (cid) => {
  * @param {number} exitCode  Exit code from `docker wait`.
  */
 const printContainerSummary = async (cid, exitCode, { forceSummary = false } = {}) => {
+    const inspectStartedAt = process.hrtime.bigint();
     // Obtain OOMKilled + timestamps from Docker inspect.
     const inspectResult = spawnSync("docker", ["inspect", "--format={{json .State}}", cid], {
         encoding: "utf8",
         stdio: ["ignore", "pipe", "pipe"]
     });
     finalInspect = inspectResult;
+    recordPhase("container inspection", inspectStartedAt, inspectResult.status === 0 ? "PASS" : "FAIL");
 
     const outcome = dockerOutcomeDiagnostics(inspectResult, timedOut);
     const { oomKilled, startedAt, finishedAt } = outcome;
@@ -650,6 +722,11 @@ const printContainerSummary = async (cid, exitCode, { forceSummary = false } = {
         timingMetrics = JSON.parse(fs.readFileSync(path.join(tmpDir, "chunk-timing.json"), "utf8"));
     } catch {
         timingMetrics = null;
+    }
+    try {
+        phaseEvents = readTimingEvents(fs.readFileSync(path.join(tmpDir, "chunk-timing.events.jsonl"), "utf8"));
+    } catch {
+        phaseEvents = [];
     }
     const childContainer = childMetrics?.chunkContainer;
     if (childContainer) {
@@ -765,7 +842,9 @@ const finishTimedOutRun = () => {
         });
 };
 
+const containerLaunchStartedAt = process.hrtime.bigint();
 const runResult = spawnSync("docker", dockerRunArgs, { encoding: "utf8" });
+recordPhase("container launch/start", containerLaunchStartedAt, runResult.status === 0 ? "PASS" : "FAIL");
 
 if (runResult.error) {
     process.stderr.write(`[run-bdd-docker] failed to launch docker run: ${runResult.error.message}\n`);
@@ -809,7 +888,16 @@ const initializeWorkingSetSampling = async () => {
 };
 initializeWorkingSetSampling().catch(() => undefined);
 
-logsChild = spawn("docker", ["logs", "-f", containerId], { stdio: ["ignore", "inherit", "inherit"] });
+logsChild = spawn("docker", ["logs", "-f", containerId], { stdio: ["ignore", outputMode === "full" ? "inherit" : "pipe", outputMode === "full" ? "inherit" : "pipe"] });
+
+if (outputMode !== "full") {
+    const capture = (target, chunk) => {
+        const next = target + chunk.toString();
+        return next.length > 1024 * 1024 ? next.slice(-1024 * 1024) : next;
+    };
+    logsChild.stdout.on("data", chunk => { childLogStdout = capture(childLogStdout, chunk); });
+    logsChild.stderr.on("data", chunk => { childLogStderr = capture(childLogStderr, chunk); });
+}
 
 logsChild.once("error", (error) => {
     process.stderr.write(`[run-bdd-docker] docker logs failed: ${error.message}\n`);
@@ -817,7 +905,9 @@ logsChild.once("error", (error) => {
 
 let waitStdout = "";
 
-waitChild = spawn("docker", ["wait", containerId], { stdio: ["ignore", "pipe", "inherit"] });
+waitChild = spawn("docker", ["wait", containerId], { stdio: ["ignore", "pipe", outputMode === "full" ? "inherit" : "pipe"] });
+if (outputMode !== "full") waitChild.stderr.on("data", chunk => { childLogStderr += chunk.toString(); });
+waitStartedAt = process.hrtime.bigint();
 
 waitChild.stdout.on("data", (chunk) => {
     waitStdout += chunk.toString();
@@ -882,6 +972,7 @@ waitChild.once("close", (code, signal) => {
     if (finalized) return;
     const parsedWait = parseWaitResult(waitStdout);
     const parsed = parsedWait.parsedStatus;
+    if (waitStartedAt !== null) recordPhase("container wait/test lifetime", waitStartedAt, Number(parsed) === 0 ? "PASS" : "FAIL", "envelope");
     waitClose = { code, signal, rawStdout: parsedWait.rawStdout, parsedStatus: parsed };
     forensic.record("docker-wait-close", waitClose);
 

@@ -5,7 +5,7 @@
 // runner's boot-config validator agrees with the Node validator on accept/
 // reject for shared inputs.
 
-require("ts-node/register/transpile-only");
+require("tsx/cjs");
 
 const path = require("path");
 const fs = require("fs");

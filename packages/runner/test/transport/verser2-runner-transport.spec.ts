@@ -22,15 +22,23 @@ function config() {
     };
 }
 
-test("maps runner configuration to a guest contract without opening a listener", t => {
+test("maps runner configuration to a guest contract with the effective minimum stream capacity", t => {
     t.deepEqual(createRunnerVerser2GuestOptions(config()), {
         hostUrl: "http://verser2.local",
         guestId: `runner.${INSTANCE_ID}.guest`,
         routedDomains: [`runner.${INSTANCE_ID}.scramjet.internal`],
-        minWaitingStreams: 2,
+        minWaitingStreams: 32,
+        maxOpenStreams: 32,
         leaseAcquireTimeoutMs: 1234,
         tls: { caFile: "/tmp/ca.pem" }
     });
+});
+
+test("preserves a configured runner waiting-stream minimum above the default capacity", t => {
+    const options = createRunnerVerser2GuestOptions({ ...config(), minWaitingStreams: 48 });
+
+    t.is(options.minWaitingStreams, 48);
+    t.is(options.maxOpenStreams, 48);
 });
 
 test("does not publish the guest route before runtime readiness", async t => {

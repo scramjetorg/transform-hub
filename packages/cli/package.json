@@ -7,8 +7,8 @@
     "si": "./src/bin/index.ts"
   },
   "scripts": {
-    "start": "ts-node ./src/bin/index",
-    "start:dev": "NODE_ENV=development ts-node ./src/bin/index",
+    "start": "tsx ./src/bin/index",
+    "start:dev": "NODE_ENV=development tsx ./src/bin/index",
     "build": "../../scripts/build-all.js --config-name=tsconfig.build.json --copy-dist",
     "clean": "rm -rf ./dist .bic_cache",
     "cloc": "cloc src --fullpath --include-lang TypeScript --not-match-d \"(node_modules|test|dist|bdd)\" --by-percent cm",
@@ -28,7 +28,7 @@
     "@scramjet/obj-logger": "^2.2.1-devel",
     "@scramjet/rest-api2": "^2.2.1-devel",
     "@scramjet/utility": "^2.2.1-devel",
-    "@signicode/verser2-guest-node": "0.7.0",
+    "@signicode/verser2-guest-node": "0.9.2",
     "chalk": "^4.1.2",
     "find-package-json": "^1.2.0",
     "minimatch": "^3.1.5",
@@ -45,8 +45,8 @@
     "@types/node": "^22.15.0",
     "@types/validator": "^13.7.8",
     "ava": "^8.0.0",
-    "ts-node": "^10.9.1",
-    "typescript": "~4.7.4"
+    "typescript": "~4.7.4",
+    "tsx": "^4.19.3"
   },
   "assets": [
     {
@@ -59,7 +59,7 @@
       "**/*.spec.ts"
     ],
     "require": [
-      "ts-node/register"
+      "../../scripts/lib/tsx-cjs-register.cjs"
     ],
     "typescript": {
       "compile": false,

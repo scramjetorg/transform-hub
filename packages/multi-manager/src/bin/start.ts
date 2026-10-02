@@ -1,4 +1,4 @@
-#!/usr/bin/env ts-node
+#!/usr/bin/env tsx
 import { ConfigOptionDescriptor, parseCliOptions, printHelpAndExitIfRequested } from "@scramjet/config";
 import { MultiManager as MultiManager } from "../lib/multi-manager";
 import { createServer, ServerConfiguration } from "@scramjet/api-server";

@@ -33,7 +33,7 @@ import type { HubContext } from "../../src";
 // These generic helpers accept the types only if @scramjet/sequence-types
 // resolves and exports SequenceAppContext, AppConfig, and ILocalStorage.
 // If the frozen API package changes incompatibly, these lines will fail to
-// compile through ts-node/register.
+// compile through the TypeScript CJS runtime hook.
 // ---------------------------------------------------------------------------
 function _useType<T>(_arg: T): T { return _arg; }
 

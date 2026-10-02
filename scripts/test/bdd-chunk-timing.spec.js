@@ -2,6 +2,71 @@
 
 const test = require("ava").default;
 const { createChunkTiming, summarizeTimingEvents, parseTimingEventLines } = require("../lib/bdd-chunk-timing.js");
+const { parseRunnerOptions, formatRunLog, renderModeOutput } = require("../lib/bdd-run-log.js");
+
+test("runner quiet/silent options are consumed and silent has precedence", t => {
+    t.deepEqual(parseRunnerOptions(["-q", "--mode=direct", "--", "--tags", "@smoke"]), {
+        mode: "quiet", runnerArgs: ["--mode=direct"], cucumberArgs: ["--tags", "@smoke"]
+    });
+    t.is(parseRunnerOptions(["-s"]).mode, "silent");
+    t.is(parseRunnerOptions(["--quiet", "--silent"]).mode, "silent");
+});
+
+test("run log shows invocation offsets, warm-up, steps, teardown, and total elapsed", t => {
+    const events = [
+        { kind: "scenario", name: "example scenario", durationMs: 40, startOffsetMs: 100, endOffsetMs: 140, status: "PASSED" },
+        { kind: "step", scenario: "example scenario", name: "Given a fixture", durationMs: 12.5, startOffsetMs: 110, endOffsetMs: 122.5, status: "FAILED" },
+        { kind: "cleanup", scenario: "example scenario", phase: "After hooks", durationMs: 17.5, startOffsetMs: 122.5, endOffsetMs: 140 },
+    ];
+    const log = formatRunLog({ phases: [{ name: "preflight", durationMs: 4, startOffsetMs: 0, endOffsetMs: 4, status: "PASS" }], events, status: "FAIL", runId: "r", chunkId: "c", owner: "o", invocationElapsedMs: 1200 });
+    t.true(log.includes("phase preflight [+0.000s → +0.004s; 4.0ms] PASS"));
+    t.true(log.includes("phase warm-up (invocation to first Gherkin step) [+0.000s → +0.110s; 110.0ms]"));
+    t.true(log.includes("scenario [PASSED] example scenario [+0.100s → +0.140s; 40.0ms]"));
+    t.true(log.includes("step [FAILED] example scenario — Given a fixture [+0.110s → +0.122s; 12.5ms]"));
+    t.true(log.includes("teardown example scenario — After hooks [+0.122s → +0.140s; 17.5ms]"));
+    t.true(log.includes("phase teardown (last Gherkin step to log emission) [+0.122s → +1.200s; 1077.5ms] FAIL (enclosing span; not additive)"));
+    t.true(log.includes("BDD FAIL"));
+    t.true(log.endsWith("Total elapsed since invocation: 1.20s"));
+});
+
+test("chunk timing events include start and end offsets from invocation", t => {
+    let clock = 0;
+    let epoch = 1000;
+    const events = [];
+    const timing = createChunkTiming(true, () => clock, { runId: "run-offset" }, {
+        retainRecords: false,
+        emit: event => events.push(event),
+        invocationStartedAtEpochMs: 900,
+        epochNow: () => epoch,
+    });
+    const world = {};
+
+    timing.startScenario(world, { name: "offset scenario" });
+    epoch = 1010;
+    clock = 4;
+    const step = timing.startStep(world, { name: "offset step" });
+    epoch = 1022;
+    clock = 10;
+    timing.finishStep(step, { status: "PASSED" });
+    epoch = 1025;
+    const cleanup = timing.startCleanup(world, "After hooks");
+    epoch = 1030;
+    clock = 17;
+    timing.finishCleanup(cleanup);
+    epoch = 1032;
+    timing.finishScenario(world, { status: "PASSED" });
+
+    t.like(events.find(event => event.kind === "scenario"), { startOffsetMs: 100, endOffsetMs: 132 });
+    t.like(events.find(event => event.kind === "step"), { startOffsetMs: 110, endOffsetMs: 122, durationMs: 6 });
+    t.like(events.find(event => event.kind === "cleanup"), { startOffsetMs: 125, endOffsetMs: 130, durationMs: 7 });
+});
+
+test("quiet and silent output modes preserve failure diagnostics without successful noise", t => {
+    t.deepEqual(renderModeOutput({ mode: "quiet", success: true, runLog: "BDD PASS", stderr: "hidden" }), { stdout: "BDD PASS\n", stderr: "" });
+    t.deepEqual(renderModeOutput({ mode: "silent", success: true, runLog: "hidden", stderr: "hidden" }), { stdout: "PASS\n", stderr: "" });
+    t.deepEqual(renderModeOutput({ mode: "quiet", success: false, runLog: "BDD FAIL", diagnostic: "failed step\n", stderr: "child error" }), { stdout: "BDD FAIL\n", stderr: "failed step\nchild error" });
+    t.deepEqual(renderModeOutput({ mode: "silent", success: false, runLog: "hidden", diagnostic: "failed step\n", stderr: "child error" }), { stdout: "FAIL\n", stderr: "failed step\nchild error" });
+});
 
 test("chunk timing records scenarios, steps, cleanup, and top contributors", t => {
     let clock = 0;

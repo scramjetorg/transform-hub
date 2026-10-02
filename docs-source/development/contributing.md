@@ -107,7 +107,7 @@ npm run test:packages:fast
 npm run test:packages:phase-final
 ```
 
-Package tests use **AVA** with `ts-node/register` and match `**/*.spec.ts`. Tests run through `scripts/run-ava.js`, which defaults to `NODE_OPTIONS="--max-old-space-size=2048"`, JIT with WASM caps of 8192 pages and 256 MB committed code/code space, and `TS_NODE_TRANSPILE_ONLY=1`. The local j4 and GitHub j2 limits are aggregate-RSS budgets, not `ulimit -v` caps: AVA worker-thread isolates reserve substantial virtual address space. `SCRAMJET_TEST_PROFILE=fast` uses 16 AVA workers and an 8 MiB concurrent-mode budget; it does not enable unsound concurrent per-test GC measurement. `SCRAMJET_TEST_PROFILE=phase-final` serializes packages and AVA and enables the existing strict 524288-byte guard without raising timeouts, thresholds, skips, or allowances. Set `SCRAMJET_AVA_JITLESS=1` or `TS_NODE_TRANSPILE_ONLY=0` for explicit opt-ins. Source TypeScript builds remain the correctness gate. The cross-package runner completes every selected package and reports a nonzero result after collecting failures; use `--fail-fast` (or `SCRAMJET_RUN_SCRIPT_FAIL_FAST=1`) only when early stopping is desired.
+Package tests use **AVA** with `tsx/cjs` and match `**/*.spec.ts`. Tests run through `scripts/run-ava.js`, which defaults to `NODE_OPTIONS="--max-old-space-size=2048"`, JIT with WASM caps of 8192 pages and 256 MB committed code/code space, and tsx runtime transpilation. Set `SCRAMJET_AVA_TYPECHECK=1` to make diagnostics from the runner's staged TypeScript compilation fatal; tsx does not typecheck. The local j4 and GitHub j2 limits are aggregate-RSS budgets, not `ulimit -v` caps: AVA worker-thread isolates reserve substantial virtual address space. `SCRAMJET_TEST_PROFILE=fast` uses 16 AVA workers and an 8 MiB concurrent-mode budget; it does not enable unsound concurrent per-test GC measurement. `SCRAMJET_TEST_PROFILE=phase-final` serializes packages and AVA and enables the existing strict 524288-byte guard without raising timeouts, thresholds, skips, or allowances. Set `SCRAMJET_AVA_JITLESS=1` for explicit opt-in. Source TypeScript builds remain the correctness gate. The cross-package runner completes every selected package and reports a nonzero result after collecting failures; use `--fail-fast` (or `SCRAMJET_RUN_SCRIPT_FAIL_FAST=1`) only when early stopping is desired.
 
 ### BDD integration tests
 
@@ -189,14 +189,14 @@ ulimit -v 1835008
 NODE_OPTIONS="--max-old-space-size=1024"
 ```
 
-When running through `scripts/run-ava.js`, the AVA child process automatically uses `--max-old-space-size=2048`, JIT with WASM caps, and transpile-only TypeScript runtime loading. Use `SCRAMJET_AVA_JITLESS=1` or `TS_NODE_TRANSPILE_ONLY=0` only when a test specifically requires those opt-ins; retain source TypeScript builds as the typechecking gate.
+When running through `scripts/run-ava.js`, the AVA child process automatically uses `--max-old-space-size=2048`, JIT with WASM caps, and tsx TypeScript runtime loading. Use `SCRAMJET_AVA_JITLESS=1` or `SCRAMJET_AVA_TYPECHECK=1` only when a test specifically requires those opt-ins; retain source TypeScript builds as the correctness gate.
 
 ### TypeScript configuration
 
 - Base: strict CommonJS targeting ES2019
 - Features: `allowJs`, decorators, declarations, `noUnusedLocals`
 - Config file: `tsconfig.build.json` for package builds
-- Some packages use `ts-node` for development/test mode
+- Packages use `tsx` for development/test source execution
 
 ## Key packages and entry points
 

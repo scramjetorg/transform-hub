@@ -8,6 +8,8 @@ import { PassThrough, Readable } from "stream";
 import { executeCommand, parseCommandContext, resolveCommandPath } from "@scramjet/config";
 import { apiCommand, ApiCommandError, setApiDependencies } from "../src/lib/commands/api";
 import { RoutedBrokerCancelledError, RoutedBrokerDuplicateRouteError, RoutedBrokerRedirectError, RoutedBrokerRequestError, RoutedBrokerResponseLimitError, RoutedBrokerRouteUnavailableError, RoutedBrokerTimeoutError } from "@scramjet/api-router";
+import ProfileConfig from "../src/lib/config/profileConfig";
+import { getSelectedVerser2Profile, profileManager, verser2ClientTlsEnvironment } from "../src/lib/config";
 
 const profile = (directory: string, level: "platform" | "space" | "hub" = "platform") => {
     const file = (name: string, mode: number) => { const target = path.join(directory, name); fs.writeFileSync(target, name); fs.chmodSync(target, mode); return target; };
@@ -28,6 +30,85 @@ test.serial("command parser dispatches identity then GET with repeated query and
     const state = setup(t, [response(200, JSON.stringify({ level: "platform", serviceId: "platform-id", routeDomain: "route.test" })), response(200, JSON.stringify({ ok: true }))]);
     await run(["get", "/version", "--query", "tag=a", "--query", "tag=b", "-H", "accept: application/json", "--output", "json"]);
     t.is(state.requests.length, 2); t.is(state.requests[1].path, "/api/v2/version?tag=a&tag=b"); t.deepEqual(state.requests[1].headers, { accept: "application/json" }); t.regex(state.output, /"ok": true/); t.is(state.closes, 1);
+});
+
+test.serial("raw API uses TLS environment overrides on the selected profile without persisting them", async t => {
+    const directory = fs.mkdtempSync(path.join(os.tmpdir(), "si-api-env-tls-"));
+    const selectedPath = path.join(directory, "selected.json");
+    const selectedProfile = new ProfileConfig(selectedPath);
+    selectedProfile.restoreDefault();
+    const selected = profile(directory, "hub");
+    selectedProfile.setVerser2(selected);
+    const persistedTls = selected.tls;
+    const file = (name: string, mode: number) => {
+        const target = path.join(directory, name);
+        fs.writeFileSync(target, `env-${name}`);
+        fs.chmodSync(target, mode);
+        return target;
+    };
+    const envCa = file("env-ca.pem", 0o644);
+    const envCert = file("env-cert.pem", 0o644);
+    const envKey = file("env-key.pem", 0o600);
+    const envNames = [verser2ClientTlsEnvironment.caFile, verser2ClientTlsEnvironment.certFile, verser2ClientTlsEnvironment.keyFile];
+    const previous = new Map(envNames.map(name => [name, process.env[name]]));
+    process.env[verser2ClientTlsEnvironment.caFile] = envCa;
+    process.env[verser2ClientTlsEnvironment.certFile] = envCert;
+    process.env[verser2ClientTlsEnvironment.keyFile] = envKey;
+    profileManager.useDefaultProfile();
+    profileManager.setFlagConfigPath(selectedPath);
+
+    const requests: any[] = [];
+    let brokerTls: any;
+    const broker: any = {
+        connect: async () => {},
+        close: async () => {},
+        getRoutes: () => [{ domain: "route.test", targetId: "target" }],
+        request: async (request: any) => {
+            requests.push(request);
+            const identity = request.path === "/api/v2/ingress/identity";
+            return response(200, identity
+                ? JSON.stringify({ level: "hub", serviceId: "hub-id", routeDomain: "route.test" })
+                : "raw-result", identity ? { "content-type": "application/json" } : { "content-type": "text/plain" });
+        }
+    };
+    const stdout = new PassThrough();
+    let output = "";
+    stdout.on("data", chunk => output += chunk.toString());
+    setApiDependencies({
+        createBroker: options => { brokerTls = options.tls; return broker; },
+        stdin: new PassThrough() as any,
+        stdout: stdout as any,
+        stderr: new PassThrough() as any
+    });
+    t.teardown(() => {
+        for (const [name, value] of previous) {
+            if (value === undefined) delete process.env[name];
+            else process.env[name] = value;
+        }
+        profileManager.useDefaultProfile();
+        setApiDependencies();
+        fs.rmSync(directory, { recursive: true, force: true });
+    });
+
+    t.deepEqual(getSelectedVerser2Profile()?.tls, {
+        caFile: envCa,
+        certFile: envCert,
+        keyFile: envKey
+    });
+    await run(["get", "/sequences", "--output", "text"]);
+
+    t.deepEqual(brokerTls, {
+        ca: "env-env-ca.pem",
+        cert: "env-env-cert.pem",
+        key: "env-env-key.pem"
+    });
+    t.deepEqual(requests.map(request => request.path), ["/api/v2/ingress/identity", "/api/v2/sequences"]);
+    t.is(output, "raw-result");
+    const persisted = JSON.parse(fs.readFileSync(selectedPath, "utf8"));
+    t.deepEqual(persisted.verser2.tls, persistedTls, "TLS environment values must not be written to the selected profile");
+    t.false(JSON.stringify(persisted.verser2.tls).includes(envCa));
+    t.false(JSON.stringify(persisted.verser2.tls).includes(envCert));
+    t.false(JSON.stringify(persisted.verser2.tls).includes(envKey));
 });
 
 test.serial("command parser encodes JSON, binary, and file bodies without overriding explicit content type", async t => {

@@ -116,7 +116,15 @@ test("MultiManagerConfig loads verser2 config from file env and cli with precede
         verser2HostKeyFile: "/cli/key.pem"
     }, {
         SCRAMJET_VERSER2_ENABLED: "true",
-        SCRAMJET_VERSER2_HOST_PUBLIC_URL: "https://env.example:2443"
+        SCRAMJET_VERSER2_HOST_PUBLIC_URL: "https://env.example:2443",
+        SCRAMJET_VERSER2_HOST_CA_FILE: "/env/host-ca.pem",
+        SCRAMJET_VERSER2_HOST_CERT_FILE: "/env/host-cert.pem",
+        SCRAMJET_VERSER2_HOST_KEY_FILE: "/env/host-key.pem",
+        SCRAMJET_VERSER2_HOST_CLIENT_AUTH_CA_FILE: "/env/client-ca.pem",
+        SCRAMJET_VERSER2_CONTROL_INGRESS_CA_FILE: "/env/control-ca.pem",
+        SCRAMJET_VERSER2_CONTROL_INGRESS_CERT_FILE: "/env/control-cert.pem",
+        SCRAMJET_VERSER2_CONTROL_INGRESS_KEY_FILE: "/env/control-key.pem",
+        SCRAMJET_VERSER2_CONTROL_INGRESS_CLIENT_AUTH_CA_FILE: "/env/control-client-ca.pem"
     }).get();
 
     t.true(loaded.verser2.enabled);
@@ -124,6 +132,13 @@ test("MultiManagerConfig loads verser2 config from file env and cli with precede
     t.is(loaded.verser2.host.bindPort, 3443);
     t.is(loaded.verser2.host.publicUrl, "https://env.example:2443");
     t.is(loaded.verser2.host.tls.keyFile, "/cli/key.pem");
+    t.is(loaded.verser2.host.tls.caFile, "/env/host-ca.pem");
+    t.is(loaded.verser2.host.tls.certFile, "/env/host-cert.pem");
+    t.is(loaded.verser2.host.tls.clientAuthCaFile, "/env/client-ca.pem");
+    t.is(loaded.verser2.controlIngress?.host.tls.caFile, "/env/control-ca.pem");
+    t.is(loaded.verser2.controlIngress?.host.tls.certFile, "/env/control-cert.pem");
+    t.is(loaded.verser2.controlIngress?.host.tls.keyFile, "/env/control-key.pem");
+    t.is(loaded.verser2.controlIngress?.host.tls.clientAuthCaFile, "/env/control-client-ca.pem");
 });
 
 test("MultiManagerConfig masks verser2 secret descriptor paths", t => {

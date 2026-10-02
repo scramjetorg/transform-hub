@@ -9,7 +9,7 @@ Contains the complete source for the `@scramjet/manager` package: the `Manager` 
 src/
   index.ts              — Package barrel export (re-exports all lib modules except storage-routers)
   bin/
-    start.ts            — CLI entrypoint (ts-node)
+    start.ts            — CLI entrypoint (tsx)
   lib/
     manager.ts            — Core Manager class (801 lines)
     sth-controller.ts     — STH node controller (Verser2-based, description/tags/accessKey metadata)

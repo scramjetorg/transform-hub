@@ -6,6 +6,7 @@ import {
     createOptionRegistry,
     formatZodError,
     loadConfig,
+    managerVerser2Options,
     maskConfig,
     mergeConfig,
     sthOutboundVerser2ConfigSchema,
@@ -220,6 +221,20 @@ test("verser2 descriptors preserve an explicit legacy runner Host port and mask 
                     registration: { allowedClientFingerprints: [] },
                     localBroker: { peerId: "auto" }
                 },
+                controlIngress: {
+                    enabled: true,
+                    identityDir: "/tmp/sth-control-ingress",
+                    caFile: "/default/control-ca.pem",
+                    host: {
+                        bindHost: "127.0.0.1",
+                        bindPort: 2444,
+                        publicUrl: "https://127.0.0.1:2444",
+                        tls: { mtlsRequired: true }
+                    },
+                    registration: { allowedClientFingerprints: [] },
+                    localBroker: { peerId: "sth.control.broker" },
+                    guest: { peerId: "sth.control.guest", routeDomain: "sth.control.test" }
+                },
                 broker: { peerId: "", targetDomain: "" },
                 guest: { peerId: "", routeDomain: "" },
                 tls: {},
@@ -233,9 +248,15 @@ test("verser2 descriptors preserve an explicit legacy runner Host port and mask 
             SCRAMJET_VERSER2_CA: "-----BEGIN CERTIFICATE-----\ninline\n-----END CERTIFICATE-----",
             SCRAMJET_VERSER2_RUNNER_HOST_PUBLIC_URL: "https://sth-local.example:2444",
             SCRAMJET_VERSER2_RUNNER_MINIMUM_WAITING_STREAMS: "40",
+            SCRAMJET_VERSER2_CA_FILE: "/ca/from-env.pem",
             CPM_SSL_CA_PATH: "/ca/from-alias.pem",
             SCRAMJET_VERSER2_CERT_FILE: "/safe/cert.pem",
-            SCRAMJET_VERSER2_KEY_FILE: "/secret/key.pem"
+            SCRAMJET_VERSER2_KEY_FILE: "/secret/key.pem",
+            SCRAMJET_VERSER2_PASSPHRASE: "passphrase-from-env",
+            SCRAMJET_VERSER2_CONTROL_INGRESS_CA_FILE: "/ca/control-ca.pem",
+            SCRAMJET_VERSER2_CONTROL_INGRESS_CERT_FILE: "/cert/control-cert.pem",
+            SCRAMJET_VERSER2_CONTROL_INGRESS_KEY_FILE: "/secret/control-key.pem",
+            SCRAMJET_VERSER2_CONTROL_INGRESS_CLIENT_AUTH_CA_FILE: "/ca/control-client-ca.pem"
         },
         cli: {
             verser2Enabled: true,
@@ -259,7 +280,13 @@ test("verser2 descriptors preserve an explicit legacy runner Host port and mask 
     t.is(loaded.config.verser2.runnerHost?.host.tls.keyFile, "/secret/runner.key");
     t.is(loaded.config.verser2.tls.ca, "-----BEGIN CERTIFICATE-----\ninline\n-----END CERTIFICATE-----");
     t.is(loaded.config.verser2.tls.caFile, "/ca/from-cli.pem");
+    t.is(loaded.config.verser2.tls.certFile, "/safe/cert.pem");
     t.is(loaded.config.verser2.tls.keyFile, "/secret/key.pem");
+    t.is(loaded.config.verser2.tls.passphrase, "passphrase-from-env");
+    t.is(loaded.config.verser2.controlIngress?.caFile, "/ca/control-ca.pem");
+    t.is(loaded.config.verser2.controlIngress?.host.tls.certFile, "/cert/control-cert.pem");
+    t.is(loaded.config.verser2.controlIngress?.host.tls.keyFile, "/secret/control-key.pem");
+    t.is(loaded.config.verser2.controlIngress?.host.tls.clientAuthCaFile, "/ca/control-client-ca.pem");
     t.is(loaded.config.verser2.leases.minimumRunnerWaitingStreams, 40);
     t.is(loaded.config.verser2.leases.minimumUpstreamWaitingStreams, 160);
     t.is((loaded.publicConfig as any).verser2.tls.keyFile, "********");
@@ -269,6 +296,48 @@ test("verser2 descriptors preserve an explicit legacy runner Host port and mask 
     const runnerBrokerPeerIdOption = sthOutboundVerser2Options.find(option => option.name === "verser2RunnerHostBrokerPeerId");
 
     t.true(Boolean(runnerBrokerPeerIdOption?.description?.includes("auto")));
+});
+
+test("Verser2 environment descriptor contract shares client file names and keeps server names role-specific", t => {
+    const managerOptions = new Map(managerVerser2Options.map(option => [option.name, option]));
+    const sthOptions = new Map(sthOutboundVerser2Options.map(option => [option.name, option]));
+    const managerFields = [
+        ["verser2HostCaFile", "verser2.host.tls.caFile", "SCRAMJET_VERSER2_HOST_CA_FILE"],
+        ["verser2HostCertFile", "verser2.host.tls.certFile", "SCRAMJET_VERSER2_HOST_CERT_FILE"],
+        ["verser2HostKeyFile", "verser2.host.tls.keyFile", "SCRAMJET_VERSER2_HOST_KEY_FILE"],
+        ["verser2HostPfxFile", "verser2.host.tls.pfxFile", "SCRAMJET_VERSER2_HOST_PFX_FILE"],
+        ["verser2HostPassphrase", "verser2.host.tls.passphrase", "SCRAMJET_VERSER2_HOST_PASSPHRASE"],
+        ["verser2HostClientAuthCaFile", "verser2.host.tls.clientAuthCaFile", "SCRAMJET_VERSER2_HOST_CLIENT_AUTH_CA_FILE"],
+        ["verser2ControlIngressCaFile", "verser2.controlIngress.host.tls.caFile", "SCRAMJET_VERSER2_CONTROL_INGRESS_CA_FILE"],
+        ["verser2ControlIngressCertFile", "verser2.controlIngress.host.tls.certFile", "SCRAMJET_VERSER2_CONTROL_INGRESS_CERT_FILE"],
+        ["verser2ControlIngressKeyFile", "verser2.controlIngress.host.tls.keyFile", "SCRAMJET_VERSER2_CONTROL_INGRESS_KEY_FILE"],
+        ["verser2ControlIngressPfxFile", "verser2.controlIngress.host.tls.pfxFile", "SCRAMJET_VERSER2_CONTROL_INGRESS_PFX_FILE"],
+        ["verser2ControlIngressPassphrase", "verser2.controlIngress.host.tls.passphrase", "SCRAMJET_VERSER2_CONTROL_INGRESS_PASSPHRASE"],
+        ["verser2ControlIngressClientAuthCaFile", "verser2.controlIngress.host.tls.clientAuthCaFile", "SCRAMJET_VERSER2_CONTROL_INGRESS_CLIENT_AUTH_CA_FILE"]
+    ] as const;
+    const sthFields = [
+        ["verser2CaFile", "verser2.tls.caFile", "SCRAMJET_VERSER2_CA_FILE"],
+        ["verser2CertFile", "verser2.tls.certFile", "SCRAMJET_VERSER2_CERT_FILE"],
+        ["verser2KeyFile", "verser2.tls.keyFile", "SCRAMJET_VERSER2_KEY_FILE"],
+        ["verser2PfxFile", "verser2.tls.pfxFile", "SCRAMJET_VERSER2_PFX_FILE"],
+        ["verser2Passphrase", "verser2.tls.passphrase", "SCRAMJET_VERSER2_PASSPHRASE"],
+        ["verser2ControlIngressKeyFile", "verser2.controlIngress.host.tls.keyFile", "SCRAMJET_VERSER2_CONTROL_INGRESS_KEY_FILE"],
+        ["verser2ControlIngressPfxFile", "verser2.controlIngress.host.tls.pfxFile", "SCRAMJET_VERSER2_CONTROL_INGRESS_PFX_FILE"],
+        ["verser2ControlIngressPassphrase", "verser2.controlIngress.host.tls.passphrase", "SCRAMJET_VERSER2_CONTROL_INGRESS_PASSPHRASE"],
+        ["verser2ControlIngressCaFile", "verser2.controlIngress.caFile", "SCRAMJET_VERSER2_CONTROL_INGRESS_CA_FILE"],
+        ["verser2ControlIngressCertFile", "verser2.controlIngress.host.tls.certFile", "SCRAMJET_VERSER2_CONTROL_INGRESS_CERT_FILE"],
+        ["verser2ControlIngressClientAuthCaFile", "verser2.controlIngress.host.tls.clientAuthCaFile", "SCRAMJET_VERSER2_CONTROL_INGRESS_CLIENT_AUTH_CA_FILE"]
+    ] as const;
+    for (const [options, fields] of [[managerOptions, managerFields], [sthOptions, sthFields]] as const) {
+        for (const [name, path, env] of fields) {
+            const descriptor = options.get(name);
+            t.is(descriptor?.path, path, `${name} config path`);
+            t.is(descriptor?.env, env, `${name} environment name`);
+        }
+    }
+    t.deepEqual(sthOptions.get("verser2CaFile")?.envAliases, ["CPM_SSL_CA_PATH"]);
+    t.is(managerOptions.get("verser2HostKeyFile")?.secret, true);
+    t.is(sthOptions.get("verser2KeyFile")?.secret, true);
 });
 
 test("verser2 schema requires usable routed config in verser2 mode", t => {

@@ -418,7 +418,11 @@ const chunkTiming = createChunkTiming(
         chunkId: process.env.SCRAMJET_BDD_CHUNK_ID,
         owner: process.env.SCRAMJET_BDD_OWNER,
     },
-    { retainRecords: !timingEventsPath, emit: timingEventsPath ? emitTimingEvent : undefined },
+    {
+        retainRecords: !timingEventsPath,
+        emit: timingEventsPath ? emitTimingEvent : undefined,
+        invocationStartedAtEpochMs: Number(process.env.SCRAMJET_BDD_INVOCATION_STARTED_AT_EPOCH_MS) || Date.now(),
+    },
 );
 
 // ---------------------------------------------------------------------------

@@ -43,8 +43,8 @@ test("the selected workspace bin executes directly and prints CLI usage", (t) =>
 	const resolved = resolveSthBin({ cwd: REPO_ROOT });
 	const env = {
 		...process.env,
-		// The workspace bin is the TypeScript source entrypoint, executed via
-		// its `#!/usr/bin/env ts-node` shebang; ts-node must be on PATH.
+		// The workspace bin is executed directly via its tsx source shebang;
+		// the workspace .bin directory supplies the tsx command.
 		PATH: `${resolve(REPO_ROOT, "node_modules", ".bin")}:${process.env.PATH || ""}`,
 	};
 	const result = spawnSync(resolved.binPath, ["--help"], { encoding: "utf8", env, timeout: 120000 });
