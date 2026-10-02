@@ -5,6 +5,7 @@ import fs from "fs";
 import os from "os";
 import path from "path";
 import { PassThrough, Readable } from "stream";
+import { mock } from "node:test";
 import { executeCommand, parseCommandContext, resolveCommandPath } from "@scramjet/config";
 import { apiCommand, ApiCommandError, setApiDependencies } from "../src/lib/commands/api";
 import { RoutedBrokerCancelledError, RoutedBrokerDuplicateRouteError, RoutedBrokerRedirectError, RoutedBrokerRequestError, RoutedBrokerResponseLimitError, RoutedBrokerRouteUnavailableError, RoutedBrokerTimeoutError } from "@scramjet/api-router";
@@ -139,13 +140,54 @@ test.serial("request timeout aborts pending broker dispatch and closes once", as
 });
 
 test.serial("response body timeout after headers destroys the stalled body and closes once", async t => {
-    const stalled = new PassThrough();
+    let markCollectionStarted!: () => void;
+    const collectionStarted = new Promise<void>(resolve => { markCollectionStarted = resolve; });
+    let signalledCollection = false;
+    const stalled = new Readable({
+        read() {
+            if (signalledCollection) return;
+            signalledCollection = true;
+            markCollectionStarted();
+        }
+    });
     const state = setup(t, [response(200, JSON.stringify({ level: "platform", serviceId: "platform-id", routeDomain: "route.test" })), { statusCode: 200, headers: {}, body: stalled }]);
-    state.broker.request = async (request: any) => request.path === "/api/v2/ingress/identity"
-        ? response(200, JSON.stringify({ level: "platform", serviceId: "platform-id", routeDomain: "route.test" }))
-        : { statusCode: 200, headers: {}, body: stalled };
-    const error = await t.throwsAsync(() => run(["get", "/items", "--timeout", "1"]), { instanceOf: ApiCommandError }) as ApiCommandError;
-    t.is(error.code, "TIMEOUT"); t.true(stalled.destroyed); t.is(state.closes, 1);
+    const nativeSetTimeout = globalThis.setTimeout.bind(globalThis);
+    const nativeClearTimeout = globalThis.clearTimeout.bind(globalThis);
+    let collectionWaitTimer: ReturnType<typeof setTimeout> | undefined;
+    let runPromise: Promise<void> | undefined;
+    let runOutcome: Promise<{ error?: unknown }> | undefined;
+    mock.timers.enable({ apis: ["Date", "setTimeout"] });
+    state.broker.request = async (request: any) => {
+        if (request.path === "/api/v2/ingress/identity")
+            return response(200, JSON.stringify({ level: "platform", serviceId: "platform-id", routeDomain: "route.test" }));
+        t.is(request.path, "/api/v2/items");
+        return { statusCode: 200, headers: {}, body: stalled };
+    };
+    try {
+        runPromise = run(["get", "/items", "--timeout", "1"]);
+        runOutcome = runPromise.then(() => ({}), error => ({ error }));
+        await Promise.race([
+            collectionStarted,
+            new Promise<never>((_, reject) => {
+                collectionWaitTimer = nativeSetTimeout(() => reject(new Error("Timed out waiting for response body collection to start")), 2000);
+            })
+        ]);
+        if (collectionWaitTimer) nativeClearTimeout(collectionWaitTimer);
+        mock.timers.tick(1);
+        const outcome = await Promise.race([
+            runOutcome,
+            new Promise<never>((_, reject) => {
+                collectionWaitTimer = nativeSetTimeout(() => reject(new Error("Timed out waiting for request to settle after timeout tick")), 2000);
+            })
+        ]);
+        if (collectionWaitTimer) nativeClearTimeout(collectionWaitTimer);
+        const error = await t.throwsAsync(() => Promise.reject(outcome.error), { instanceOf: ApiCommandError }) as ApiCommandError;
+        t.is(error.code, "TIMEOUT"); t.true(stalled.destroyed); t.is(state.closes, 1);
+    } finally {
+        if (collectionWaitTimer) nativeClearTimeout(collectionWaitTimer);
+        mock.timers.reset();
+        stalled.destroy();
+    }
 });
 
 test.serial("identity mismatch, direct Hub traversal, and API failures are bounded and cleaned", async t => {

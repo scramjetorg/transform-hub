@@ -2,10 +2,12 @@
 
 This is the changelog for Scramjet Transform Hub. It holds only notable commits, others are grouped without commit info.
 
-## [2.2.0] - Unreleased
+## [2.2.1] - Current release
 
-### Changed
-- Release candidates now produce one immutable, checksum-verified GitHub release bundle; the tag workflow publishes those exact tarballs without rebuilding or substituting artifacts.
+### Fixed
+- Fixed Verser2 guest stream capacity and lease configuration.
+
+## [2.2.0] - 2026-09-26
 
 ## [2.1.0] - 2026-09-07
 
