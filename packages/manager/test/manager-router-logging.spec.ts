@@ -45,7 +45,8 @@ test.serial("Manager router logging records direct lookup failure and completion
     });
     t.is(records[2].message, "Manager API request completed");
     t.is(records[2].details.status, 500);
-    t.truthy(records[2].details.durationMs);
+    const durationMs = records[2].details.durationMs;
+    t.true(typeof durationMs === "number" && Number.isFinite(durationMs) && durationMs >= 0);
 });
 
 test.serial("Manager router logging preserves unmatched-route next behavior", t => {
