@@ -32,3 +32,4 @@ export { SequenceStoppedMessageData } from "./sequence-stopped";
 export { ReadinessMessageData, ReadinessDiagnostic } from "./readiness";
 export { OpRecord } from "./op-record";
 export * from "./sth-topic";
+export * from "./runtime-manifest";

@@ -53,6 +53,7 @@ export enum OpRecordCode {
     HOST_HEARTBEAT = 13010,
     INSTANCE_HEARTBEAT = 13012,
     MANAGER_HEARTBEAT = 13020,
+    MANIFEST_CHANGE = 13030,
 
     /**
      * Message codes related to STH connection states

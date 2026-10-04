@@ -40,6 +40,7 @@ import {
     EventMessageData,
     ReadinessMessageData
 } from "./messages";
+import { ManifestDeclareMessage, ManifestDeclareMessageData, ManifestResultMessage, ManifestResultMessageData } from "./messages/runtime-manifest";
 import { CPMMessageSTHID, STHIDMessageData } from "./messages/sth-id";
 import { LoadCheckStat } from "./load-check-stat";
 import { NetworkInfo } from "./network-info";
@@ -62,6 +63,8 @@ export type MessageType<T> =
     T extends RunnerMessageCode.STOP ? StopSequenceMessage :
     T extends RunnerMessageCode.PING ? HandshakeMessage :
     T extends RunnerMessageCode.READY ? HandshakeMessage :
+    T extends RunnerMessageCode.MANIFEST_DECLARE ? ManifestDeclareMessage :
+    T extends RunnerMessageCode.MANIFEST_RESULT ? ManifestResultMessage :
     T extends RunnerMessageCode.PONG ? HandshakeAcknowledgeMessage :
     T extends CPMMessageCode.STH_ID ? CPMMessageSTHID :
     T extends CPMMessageCode.LOAD ? LoadCheckStatMessage :
@@ -82,6 +85,8 @@ export type MessageDataType<T> =
     T extends RunnerMessageCode.STOP ? StopSequenceMessageData :
     T extends RunnerMessageCode.PING ? PingMessageData :
     T extends RunnerMessageCode.READY ? ReadinessMessageData :
+    T extends RunnerMessageCode.MANIFEST_DECLARE ? ManifestDeclareMessageData :
+    T extends RunnerMessageCode.MANIFEST_RESULT ? ManifestResultMessageData :
     T extends RunnerMessageCode.PONG ? HandshakeAcknowledgeMessageData :
     T extends RunnerMessageCode.SET ? SetMessageData :
     T extends RunnerMessageCode.PANG ? PangMessageData :
@@ -107,7 +112,7 @@ export type EncodedMessage<
 
 export type ControlMessageCode =
     RunnerMessageCode.KILL | RunnerMessageCode.MONITORING_RATE | RunnerMessageCode.MONITORING_REPLY | RunnerMessageCode.STOP | RunnerMessageCode.EVENT |
-    RunnerMessageCode.PONG | RunnerMessageCode.SET |
+    RunnerMessageCode.PONG | RunnerMessageCode.SET | RunnerMessageCode.MANIFEST_RESULT |
     CPMMessageCode.STH_ID | CPMMessageCode.KEY_REVOKED | CPMMessageCode.LIMIT_EXCEEDED | CPMMessageCode.ID_DROP |
     RunnerMessageCode.INPUT_CONTENT_TYPE | CPMMessageCode.EVENT |
     RunnerMessageCode.STORAGE | RunnerMessageCode.STORAGE_UPDATE;
@@ -117,7 +122,7 @@ export type EncodedControlMessage = EncodedMessage<ControlMessageCode>;
 export type MonitoringMessageCode =
     RunnerMessageCode.ACKNOWLEDGE | RunnerMessageCode.DESCRIBE_SEQUENCE | RunnerMessageCode.STATUS |
     RunnerMessageCode.ALIVE | RunnerMessageCode.ERROR | RunnerMessageCode.MONITORING | RunnerMessageCode.EVENT |
-    RunnerMessageCode.PING | RunnerMessageCode.PANG |
+    RunnerMessageCode.PING | RunnerMessageCode.PANG | RunnerMessageCode.MANIFEST_DECLARE |
     RunnerMessageCode.SEQUENCE_STOPPED | RunnerMessageCode.SEQUENCE_COMPLETED | RunnerMessageCode.READY |
     CPMMessageCode.LOAD | CPMMessageCode.NETWORK_INFO | CPMMessageCode.EVENT |
     RunnerMessageCode.STORAGE | RunnerMessageCode.STORAGE_UPDATE;
