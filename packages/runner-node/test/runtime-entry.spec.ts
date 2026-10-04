@@ -1,11 +1,13 @@
 import test from "ava";
 import { EventEmitter } from "events";
+import { Agent } from "http";
 import { resolve } from "path";
 
 import { RunnerMessageCode } from "@scramjet/symbols";
 
 import {
     bootstrap,
+    buildAppContext,
     buildSequenceContext,
     loadSequenceModule,
     resolveSequenceFunctions,
@@ -197,4 +199,37 @@ test("SequenceLocalContext type signature exposes keepAlive/end/destroy/on/emit"
     const probe: keyof SequenceLocalContext = "keepAlive";
 
     t.is(probe, "keepAlive");
+});
+
+test("host-backed RunnerAppContext exposes the attached instance manifest declaration API", async t => {
+    const agent = new Agent();
+    const monitor = new PassThrough();
+    const declaration = { input: { schema: { type: "object", "x-extension": ["preserved"] } } };
+    const receipt = { instanceId: "inst-1", sequenceId: "seq-1", revision: "rev-1" };
+    let received: unknown;
+
+    try {
+        const built = buildAppContext({
+            bootConfig: { sequencePath: "/x", instanceId: "inst-1" },
+            monitorStream: monitor,
+            emitter: new EventEmitter(),
+            logger: new ObjLogger("test"),
+            hostClient: {
+                getApiBase: () => "http://hub.internal/api/v1",
+                getV2ApiBase: () => "http://hub.internal/api/v2",
+                getAgent: () => agent
+            } as any,
+            onKeepAliveIssued: () => undefined,
+            declareManifest: async input => {
+                received = input;
+                return receipt;
+            }
+        });
+
+        t.deepEqual(await built.context.api.declare(declaration), receipt);
+        t.deepEqual(received, declaration);
+    } finally {
+        agent.destroy();
+        monitor.destroy();
+    }
 });

@@ -8,6 +8,7 @@ import { ReadableStream, WritableStream } from "@scramjet/runtime-types";
 import { EncodedSerializedControlMessage, EncodedSerializedMonitoringMessage } from "@scramjet/api-types";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { CommonLogsPipe } from "../src/lib/common-logs-pipe";
+import { InstancesStore } from "../src/lib/instance-store";
 
 function createLogLifecycleCsi(appConfig: Record<string, unknown> = {}) {
     const communication = {
@@ -210,6 +211,71 @@ test("PING dispatcher establishment is committed before PONG is written", async 
     ] as any);
 
     t.deepEqual(order, ["dispatcher", "pong"]);
+});
+
+test("CSI registers correlated manifest requests, commits before replying, and preserves state on rejection", async t => {
+    const controls: Array<[RunnerMessageCode, unknown]> = [];
+    let manifestHandler: ((message: any) => Promise<void>) | undefined;
+    const store = new InstancesStore();
+    const communication = {
+        logger: { trace: () => undefined },
+        addMonitoringHandler: (code: RunnerMessageCode, handler: (message: any) => Promise<void>) => {
+            if (code === RunnerMessageCode.MANIFEST_DECLARE) manifestHandler = handler;
+            return communication;
+        },
+        sendControlMessage: async (code: RunnerMessageCode, payload: unknown) => {
+            controls.push([code, payload]);
+        }
+    };
+    const config: any = {
+        runtimeAdapter: "process",
+        docker: { runner: { maxMem: 128 } },
+        timings: { instanceLifetimeExtensionDelay: 0 },
+        host: { apiBase: "/api/v1" }
+    };
+    const createCsi = () => new CSIController({
+        id: "manifest-instance",
+        sequenceInfo: { id: "manifest-sequence", name: "manifest-sequence", config: { name: "pkg", version: "1", description: "public" }, location: "local" },
+        payload: { system: {}, appConfig: {}, args: [], limits: {} }
+    } as any, communication as any, config, {} as any, "process", store, { getAllItems: async () => ({}) } as any);
+    const csi = createCsi();
+    store.set(csi.id, csi);
+    (csi as any).registerManifestDeclarationHandler();
+    t.truthy(manifestHandler);
+
+    await manifestHandler!([RunnerMessageCode.MANIFEST_DECLARE, {
+        requestId: "request-1",
+        declaration: { output: { schema: { type: "object", "x-extension": [1, 2] } } }
+    }]);
+    const accepted = controls[0]?.[1] as any;
+    t.is(controls[0]?.[0], RunnerMessageCode.MANIFEST_RESULT);
+    t.is(accepted.requestId, "request-1");
+    t.true(accepted.accepted);
+    t.is(accepted.receipt.instanceId, csi.id);
+    t.is(accepted.receipt.sequenceId, "manifest-sequence");
+    t.deepEqual(store.getManifest(csi)?.manifest, { output: { schema: { type: "object", "x-extension": [1, 2] } } });
+
+    await manifestHandler!([RunnerMessageCode.MANIFEST_DECLARE, {
+        requestId: "request-invalid",
+        declaration: { output: { schema: () => "invalid" } }
+    }]);
+    const rejected = controls[1]?.[1] as any;
+    t.is(rejected.requestId, "request-invalid");
+    t.false(rejected.accepted);
+    t.is(rejected.error.code, "INVALID_MANIFEST");
+    t.is(rejected.error.path, "declaration.output.schema");
+    t.deepEqual(store.getManifest(csi)?.manifest, { output: { schema: { type: "object", "x-extension": [1, 2] } } });
+
+    const replacement = createCsi();
+    store.set(replacement.id, replacement);
+    await manifestHandler!([RunnerMessageCode.MANIFEST_DECLARE, {
+        requestId: "request-stale",
+        declaration: { input: { description: "stale" } }
+    }]);
+    const stale = controls[2]?.[1] as any;
+    t.false(stale.accepted);
+    t.is(stale.error.code, "INSTANCE_NOT_ACTIVE");
+    t.is(store.getManifest(replacement)?.manifest, null);
 });
 
 test("stop timeout racing with terminal completion does not send a late KILL", async t => {

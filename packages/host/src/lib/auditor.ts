@@ -1,6 +1,6 @@
 import { ObjLogger } from "@scramjet/obj-logger";
 import { ParsedMessage } from "@scramjet/api-types";
-import { InstanceLimits, InstanceStats, OpRecord } from "@scramjet/runtime-types";
+import { InstanceLimits, InstanceStats, ManifestChange, OpRecord } from "@scramjet/runtime-types";
 import { InstanceMessageCode, OpRecordCode, SequenceMessageCode } from "@scramjet/symbols";
 import { onRequestDisconnect } from "@scramjet/utility";
 import { StringStream } from "scramjet";
@@ -170,6 +170,17 @@ export class Auditor {
             objectId: id,
             requestorId: "system",
             receivedAt: Date.now()
+        });
+    }
+
+    auditManifestChange(manifestChange: ManifestChange) {
+        this.write({
+            opState: "",
+            opCode: OpRecordCode.MANIFEST_CHANGE,
+            objectId: manifestChange.instanceId,
+            requestorId: "system",
+            receivedAt: Date.now(),
+            manifestChange
         });
     }
 }

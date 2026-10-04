@@ -50,6 +50,10 @@ import {
     VersionResponse,
     writableFdParam
 } from "./schemas";
+import { INSTANCE_MANIFEST_ENDPOINT } from "./defaults";
+import { InstanceManifestResponseSchema } from "./runtime-manifest";
+
+const INSTANCE_MANIFEST_RESOURCE_PATH = INSTANCE_MANIFEST_ENDPOINT.replace(/^\/instances\/:instanceId/, "");
 
 const handlerless = () => undefined;
 
@@ -134,6 +138,7 @@ function sequenceRouteSet() {
 function instanceRouteSet() {
     return {
         info: Router.get("/", { schemas: { response: InstanceResponse } }),
+        manifest: Router.get(INSTANCE_MANIFEST_RESOURCE_PATH, { schemas: { response: InstanceManifestResponseSchema } }),
         deleteInstance: Router.route("delete", "/", { schemas: { body: DeleteInstancePayload, response: opResponse(DeleteInstanceResponse) } }),
         patchInstance: Router.route("patch", "/", { schemas: { body: InstanceParametersPatch, response: opResponse(InstanceParametersResponse) } }),
         stdio: Router.get("/stdio", { schemas: { response: StdIODescriptorList } }),
