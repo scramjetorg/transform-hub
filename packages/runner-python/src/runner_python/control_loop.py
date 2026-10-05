@@ -84,6 +84,9 @@ class StartupControlReader:
         self.manifest_client = manifest_client
         self.controls: asyncio.Queue[tuple[int, Any] | BaseException] = asyncio.Queue()
         self.early_kill = asyncio.Event()
+        self.terminated = asyncio.Event()
+        self.terminal_error: BaseException | None = None
+        self.kill_received = False
         self._pump_task: asyncio.Task[None] | None = None
 
     def start(self) -> None:
@@ -97,14 +100,24 @@ class StartupControlReader:
                     if code == MANIFEST_RESULT:
                         self.manifest_client.handle_result(payload)
                     else:
-                        await self.controls.put((code, payload))
                         if code == KILL:
-                            self.early_kill.set()
+                            self._terminate(HardKillSignal("Sequence killed by host"), killed=True)
+                        await self.controls.put((code, payload))
         except asyncio.CancelledError:
             raise
         except BaseException as error:
-            self.manifest_client.reject_pending(error)
+            self._terminate(error)
             await self.controls.put(error)
+
+    def _terminate(self, error: BaseException, *, killed: bool = False) -> None:
+        if self.terminal_error is not None:
+            return
+        self.terminal_error = error
+        self.kill_received = killed
+        self.terminated.set()
+        if killed:
+            self.early_kill.set()
+        self.manifest_client.reject_pending(error)
 
     async def next_frame(self) -> tuple[int, Any]:
         item = await self.controls.get()
@@ -113,6 +126,7 @@ class StartupControlReader:
         return item
 
     async def close(self) -> None:
+        self._terminate(EOFError("control reader stopped"))
         if self._pump_task is not None and not self._pump_task.done():
             self._pump_task.cancel()
         if self._pump_task is not None:
@@ -120,7 +134,6 @@ class StartupControlReader:
                 await self._pump_task
             except (asyncio.CancelledError, EOFError):
                 pass
-        self.manifest_client.reject_pending(EOFError("control reader stopped"))
 
 
 async def _dispatch_kill(app_context: Any) -> None:
@@ -132,28 +145,45 @@ async def _dispatch_kill(app_context: Any) -> None:
 async def run_initializer_with_control(
     reader: StartupControlReader, initializer: Any, app_context: Any
 ) -> Any:
-    """Let early KILL interrupt initialization without activating other controls."""
+    """Stop startup when KILL or terminal reader shutdown races initialization."""
     initialize_task = asyncio.create_task(initializer())
-    kill_task = asyncio.create_task(reader.early_kill.wait())
-    try:
-        done, _ = await asyncio.wait(
-            {initialize_task, kill_task}, return_when=asyncio.FIRST_COMPLETED
-        )
-        if kill_task in done and reader.early_kill.is_set():
+    terminal_task = asyncio.create_task(reader.terminated.wait())
+
+    async def cancel_initializer() -> None:
+        if not initialize_task.done():
+            initialize_task.cancel()
+        try:
+            await initialize_task
+        except BaseException:
+            pass
+
+    async def stop_for_terminal(error: BaseException) -> None:
+        if reader.kill_received:
             try:
                 await _dispatch_kill(app_context)
             finally:
-                initialize_task.cancel()
-                try:
-                    await initialize_task
-                except asyncio.CancelledError:
-                    pass
+                await cancel_initializer()
             raise HardKillSignal("Sequence killed during initialization")
-        return await initialize_task
+        await cancel_initializer()
+        raise error
+
+    try:
+        done, _ = await asyncio.wait(
+            {initialize_task, terminal_task}, return_when=asyncio.FIRST_COMPLETED
+        )
+        terminal_error = reader.terminal_error
+        if terminal_task in done or terminal_error is not None:
+            if terminal_error is None:
+                terminal_error = EOFError("control reader stopped")
+            await stop_for_terminal(terminal_error)
+        result = await initialize_task
+        if reader.terminal_error is not None:
+            await stop_for_terminal(reader.terminal_error)
+        return result
     finally:
-        kill_task.cancel()
+        terminal_task.cancel()
         try:
-            await kill_task
+            await terminal_task
         except asyncio.CancelledError:
             pass
 

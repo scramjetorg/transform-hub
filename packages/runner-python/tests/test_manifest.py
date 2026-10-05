@@ -15,7 +15,9 @@ from runner_python.control_loop import (
     KILL,
     MANIFEST_RESULT,
     SET,
+    HardKillSignal,
     StartupControlReader,
+    control_loop,
     run_initializer_with_control,
 )
 from runner_python.fd_streams import ControlInput
@@ -179,13 +181,20 @@ async def test_early_kill_dispatches_handlers_once_and_eof_closes_declaration_cl
     writer = Writer()
     reader, client, control_input, write_fd = pipe_reader(writer)
     entered = asyncio.Event()
+    kill_closed_declarations = asyncio.Event()
     kill_calls: list[str] = []
     sequence_context = SimpleNamespace(_kill_handlers=[])
     monitoring_stream = io.BytesIO()
     monitoring_writer = MonitoringWriter(monitoring_stream)
 
     async def initialize():
-        sequence_context._kill_handlers.append(lambda: kill_calls.append("killed"))
+        async def on_kill():
+            kill_calls.append("killed")
+            with pytest.raises(EOFError, match="channel is closed"):
+                await client.declare({})
+            kill_closed_declarations.set()
+
+        sequence_context._kill_handlers.append(on_kill)
         entered.set()
         await client.declare({})
 
@@ -203,6 +212,11 @@ async def test_early_kill_dispatches_handlers_once_and_eof_closes_declaration_cl
         assert writer.frames[0][0] == MANIFEST_DECLARE
         assert reader._pump_task is not None and not reader._pump_task.done()
         assert kill_calls == ["killed"]
+        assert kill_closed_declarations.is_set()
+        frames_before_retry = list(writer.frames)
+        with pytest.raises(EOFError, match="channel is closed"):
+            await client.declare({})
+        assert writer.frames == frames_before_retry
         assert all(
             json.loads(frame)[0] != READY
             for frame in monitoring_stream.getvalue().splitlines()
@@ -229,6 +243,198 @@ async def test_early_kill_dispatches_handlers_once_and_eof_closes_declaration_cl
     finally:
         await reader.close()
         control_input.close()
+
+
+@pytest.mark.asyncio
+async def test_caught_and_retried_eof_still_prevents_startup_success() -> None:
+    from runner_python import __main__ as runner_main
+
+    writer = Writer()
+    reader, client, control_input, write_fd = pipe_reader(writer)
+    caught_eof = asyncio.Event()
+    returned_after_retry = asyncio.Event()
+    sequence_context = SimpleNamespace(_kill_handlers=[])
+    monitoring_stream = io.BytesIO()
+    monitoring_writer = MonitoringWriter(monitoring_stream)
+
+    async def initialize():
+        try:
+            await client.declare({})
+        except EOFError:
+            caught_eof.set()
+        try:
+            await client.declare({})
+        except EOFError:
+            returned_after_retry.set()
+        return "initializer returned despite EOF"
+
+    async def startup():
+        initialized = await runner_main._initialize_before_ready(
+            reader, initialize, sequence_context
+        )
+        if initialized:
+            monitoring_writer.write_frame(READY, {"state": "ready"})
+
+    try:
+        startup_task = asyncio.create_task(startup())
+        while not writer.frames:
+            await asyncio.sleep(0)
+        os.close(write_fd)
+        write_fd = -1
+        with pytest.raises(EOFError):
+            await startup_task
+        assert caught_eof.is_set()
+        assert returned_after_retry.is_set()
+        assert isinstance(reader.terminal_error, EOFError)
+        assert [code for code, _ in writer.frames] == [MANIFEST_DECLARE]
+        assert all(
+            json.loads(frame)[0] != READY
+            for frame in monitoring_stream.getvalue().splitlines()
+        )
+    finally:
+        await reader.close()
+        control_input.close()
+        if write_fd >= 0:
+            os.close(write_fd)
+
+
+@pytest.mark.asyncio
+async def test_eof_interrupts_initializer_waiting_without_manifest_declaration() -> None:
+    writer = Writer()
+    reader, _client, control_input, write_fd = pipe_reader(writer)
+    entered = asyncio.Event()
+    cancelled = asyncio.Event()
+
+    async def initialize():
+        entered.set()
+        try:
+            await asyncio.Event().wait()
+        except asyncio.CancelledError:
+            cancelled.set()
+            raise
+
+    initializing = asyncio.create_task(
+        run_initializer_with_control(reader, initialize, SimpleNamespace(_kill_handlers=[]))
+    )
+    try:
+        await entered.wait()
+        os.close(write_fd)
+        write_fd = -1
+        with pytest.raises(EOFError):
+            await initializing
+        assert cancelled.is_set()
+        assert reader._pump_task is not None and reader._pump_task.done()
+        assert writer.frames == []
+    finally:
+        await reader.close()
+        control_input.close()
+        if write_fd >= 0:
+            os.close(write_fd)
+
+
+@pytest.mark.asyncio
+async def test_caught_validation_error_does_not_terminate_reader_or_initializer() -> None:
+    writer = Writer()
+    reader, client, control_input, write_fd = pipe_reader(writer)
+    caught_validation = asyncio.Event()
+
+    async def initialize():
+        with pytest.raises(ValueError, match="schema"):
+            await client.declare({"input": {"schema": 1}})
+        caught_validation.set()
+        receipt = await client.declare({"input": {"schema": True}})
+        return receipt
+
+    initializing = asyncio.create_task(
+        run_initializer_with_control(reader, initialize, SimpleNamespace(_kill_handlers=[]))
+    )
+    try:
+        while not writer.frames:
+            await asyncio.sleep(0)
+        request_id = writer.frames[0][1]["requestId"]
+        write_frame(write_fd, MANIFEST_RESULT, {
+            "requestId": request_id,
+            "accepted": True,
+            "receipt": {"instanceId": "i", "sequenceId": "s", "revision": "valid"},
+        })
+        assert (await initializing)["revision"] == "valid"
+        assert caught_validation.is_set()
+        assert reader.terminal_error is None
+    finally:
+        await reader.close()
+        control_input.close()
+        os.close(write_fd)
+
+
+@pytest.mark.asyncio
+async def test_post_ready_kill_waits_for_handler_after_declaration_closure() -> None:
+    from runner_python import __main__ as runner_main
+
+    writer = Writer()
+    reader, client, control_input, write_fd = pipe_reader(writer)
+    monitoring_stream = io.BytesIO()
+    monitoring_writer = MonitoringWriter(monitoring_stream)
+    monitoring_writer.write_frame(READY, {"state": "ready"})
+    cleanup_started = asyncio.Event()
+    allow_cleanup_to_finish = asyncio.Event()
+    handler_calls: list[str] = []
+    coordinator: asyncio.Task[int | None] | None = None
+    control_task: asyncio.Task[None] | None = None
+
+    async def kill_handler():
+        handler_calls.append("started")
+        cleanup_started.set()
+        await allow_cleanup_to_finish.wait()
+        handler_calls.append("finished")
+
+    control_context = SimpleNamespace(_kill_handlers=[kill_handler])
+    terminator = SimpleNamespace(is_set=lambda: False)
+    try:
+        control_task = asyncio.create_task(control_loop(reader, control_context, terminator))
+        declaration = asyncio.create_task(client.declare({}))
+        while not writer.frames:
+            await asyncio.sleep(0)
+
+        write_frame(write_fd, KILL, {})
+        with pytest.raises(EOFError, match="channel is closed"):
+            await declaration
+        assert reader.kill_received
+        await cleanup_started.wait()
+
+        coordinator = asyncio.create_task(
+            runner_main._wait_for_kill_after_sequence_failure(
+                reader, control_task, control_context
+            )
+        )
+        await asyncio.sleep(0)
+        assert not coordinator.done(), "sequence failure must wait for registered KILL cleanup"
+        assert not control_task.done()
+        assert not control_task.cancelled()
+        assert handler_calls == ["started"]
+
+        allow_cleanup_to_finish.set()
+        assert await coordinator == 137
+        assert control_task.done()
+        assert not control_task.cancelled()
+        assert isinstance(control_task.exception(), HardKillSignal)
+        assert handler_calls == ["started", "finished"]
+        assert all(
+            json.loads(frame)[0] == READY
+            for frame in monitoring_stream.getvalue().splitlines()
+        )
+    finally:
+        allow_cleanup_to_finish.set()
+        if coordinator is not None and not coordinator.done():
+            coordinator.cancel()
+            with pytest.raises(asyncio.CancelledError):
+                await coordinator
+        await reader.close()
+        if control_task is not None and not control_task.done():
+            control_task.cancel()
+            with pytest.raises(asyncio.CancelledError):
+                await control_task
+        control_input.close()
+        os.close(write_fd)
 
 
 @pytest.mark.asyncio

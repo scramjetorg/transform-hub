@@ -36,6 +36,7 @@ from runner_python.control_loop import (
     EVENT,
     HardKillSignal,
     StartupControlReader,
+    _dispatch_kill,
     control_loop,
     run_initializer_with_control,
 )
@@ -383,7 +384,28 @@ async def _initialize_before_ready(
         await run_initializer_with_control(reader, initializer, app_context)
     except HardKillSignal:
         return False
+    if reader.terminal_error is not None:
+        if reader.kill_received:
+            await _dispatch_kill(app_context)
+            return False
+        raise reader.terminal_error
     return True
+
+
+async def _wait_for_kill_after_sequence_failure(
+    reader: StartupControlReader, control_task: asyncio.Task[None], app_context: Any
+) -> int | None:
+    if not reader.kill_received:
+        return None
+    try:
+        await control_task
+    except HardKillSignal:
+        return 137
+    control_error = control_task.exception()
+    if control_error is not None:
+        raise control_error
+    await _dispatch_kill(app_context)
+    return 137
 
 
 def _build_control_context(
@@ -634,29 +656,30 @@ async def main() -> int:
             )
             return 1
 
-        if initializer is not None:
-            async def run_initializer() -> Any:
-                return await maybe_await(initializer(sequence_context))
+        async def run_initializer() -> Any:
+            if initializer is None:
+                return None
+            return await maybe_await(initializer(sequence_context))
 
-            try:
-                if not await _initialize_before_ready(
-                    control_reader, run_initializer, sequence_context
-                ):
-                    return 137
-            except Exception as exc:
-                monitoring_writer.write_frame(
-                    READY,
-                    {
-                        "state": "errored",
-                        "diagnostic": {
-                            "code": "INITIALIZE_REJECTED",
-                            "phase": "initialize",
-                            "message": str(exc),
-                        },
+        try:
+            if not await _initialize_before_ready(
+                control_reader, run_initializer, sequence_context
+            ):
+                return 137
+        except Exception as exc:
+            monitoring_writer.write_frame(
+                READY,
+                {
+                    "state": "errored",
+                    "diagnostic": {
+                        "code": "INITIALIZE_REJECTED",
+                        "phase": "initialize",
+                        "message": str(exc),
                     },
-                )
-                _log_sth_runtime_error("initialize", boot_config, exc)
-                return 1
+                },
+            )
+            _log_sth_runtime_error("initialize", boot_config, exc)
+            return 1
 
         monitoring_writer.write_frame(PANG, {"requires": "", "contentType": ""})
 
@@ -732,6 +755,12 @@ async def main() -> int:
             if sequence_task in done:
                 sequence_exception = sequence_task.exception()
                 if sequence_exception is not None:
+                    if control_reader is not None and control_task is not None:
+                        kill_exit_code = await _wait_for_kill_after_sequence_failure(
+                            control_reader, control_task, control_context
+                        )
+                        if kill_exit_code is not None:
+                            return kill_exit_code
                     with contextlib.suppress(Exception):
                         sys.stdout.flush()
                     with contextlib.suppress(Exception):
