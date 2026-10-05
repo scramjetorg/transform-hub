@@ -40,10 +40,13 @@ test("timeout summary is emitted before cleanup and stays distinct from cleanup 
     const now = Date.now;
     const originalWrite = process.stderr.write;
     const messages = [];
+    const logMessages = [];
+    const stderrMessages = [];
     Date.now = () => 50_000;
     process.stderr.write = function(chunk) {
         const output = String(chunk);
         messages.push(output);
+        stderrMessages.push(output);
         events.push("timeout-output");
         return true;
     };
@@ -79,6 +82,7 @@ test("timeout summary is emitted before cleanup and stays distinct from cleanup 
         },
         log: message => {
             events.push("cucumber-log");
+            logMessages.push(message);
             messages.push(message);
         }
     };
@@ -99,7 +103,16 @@ test("timeout summary is emitted before cleanup and stays distinct from cleanup 
         t.true(String(summary).includes("18.2 s"));
         t.true(String(summary).includes("assigned-instance-1"));
         t.true(String(summary).includes("assigned-sequence-1"));
-        t.is(messages.filter(message => String(message).includes("BDD step timed out")).length, 1);
+        t.is(messages.filter(message => String(message).includes("BDD step timed out")).length, 2);
+        t.is(logMessages.length, 1);
+        t.is(stderrMessages.filter(message => message.includes("BDD step timed out")).length, 1);
+        t.true(logMessages[0].startsWith("[runtime-manifest.timeout] BDD step timed out"));
+        for (const expected of ["python.consumer.observed-event", "runtime-manifest-observed", "18.2 s", "assigned-instance-1", "assigned-sequence-1"]) {
+            t.true(logMessages[0].includes(expected), `Cucumber report log should include ${expected}`);
+        }
+        for (const sentinel of ["RESPONSE_SENTINEL", "CONFIG_SENTINEL", "ENV_SENTINEL", "TLS_SENTINEL", "CREDENTIAL_SENTINEL"]) {
+            t.false(logMessages[0].includes(sentinel));
+        }
         t.is(events.filter(event => event === "attachment").length, 1);
         t.true(events.indexOf("timeout-output") < events.indexOf("audit-close"));
         t.true(events.indexOf("audit-close") < events.indexOf("proof-cleanup"));

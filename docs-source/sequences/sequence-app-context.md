@@ -24,7 +24,7 @@ Import the author-facing contract from `@scramjet/sequence-types`. The parity su
 | Lifecycle, logs, events | Full sequence surface and host channels | Wrapper parity with Python naming | Delegates to Node |
 | Hub/Space clients | Typed v2 `hubClient()` / `spaceClient()` | `context.hub` / `context.space` Broker views; no generic Node `@scramjet/rest-api2` client | Delegates to Node and verser2 |
 | Manifest declaration | `await this.api.declare(declaration)` on `ManifestSequenceAppContext` | `await context.api.declare(declaration)` | Delegates to Node; not a native-Bun execution claim |
-| Manifest retrieval | `this.hubClient().instance(id).manifest()` / `.sequence(id).manifest()` | `context.hub_client().instance(id).manifest()` / `.sequence(id).manifest()` when HubClient v2 is configured | Delegates to Node and verser2 |
+| Manifest retrieval | `this.hubClient().instance(id).manifest()` / `.sequence(id).manifest()` | `context.hub_client().instance(id).manifest()` / `.sequence(id).manifest()` over the hosted wrapper's existing Hub connection; no separate SDK setup | Delegates to Node and verser2 |
 | Exposed API | `this.api.use()` below `exposePath` | `context.api.attach(asgi_app)` below `exposePath`; exposure is separate from declaration | Delegates to Node |
 | Durable save/checkpoint | Not provided | Not provided | Not provided |
 

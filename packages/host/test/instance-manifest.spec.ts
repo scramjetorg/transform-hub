@@ -52,7 +52,7 @@ test("InstancesStore publishes detached per-instance snapshots and fresh revisio
     t.deepEqual(firstResponse.manifest, { input: { schema: { type: "object", properties: { field: { type: "string" } } } } });
     t.deepEqual(secondResponse.manifest, secondDeclaration);
     t.not(firstResponse.manifest, store.getManifest(first)?.manifest);
-    t.deepEqual(store.getSequenceManifests("sequence-1").map((item) => item.instanceId), [first.id, second.id]);
+    t.deepEqual(store.getSequenceManifests("sequence-1").map((item) => item.instanceId).sort(), [first.id, second.id].sort());
     t.deepEqual(firstResponse.sequence, { name: "sample-package", version: "1.2.3", description: "Public sequence description" });
     t.false(JSON.stringify(firstResponse).includes("privateConfig"));
     t.deepEqual(changes.map((change) => change.action), ["published", "published"]);

@@ -50,7 +50,7 @@ async function reportTimeout(this: RuntimeManifestWorld, exception: unknown, cle
     try { await this.attach(JSON.stringify(report.attachment), "application/json"); } catch (error) {
         process.stderr.write(`[runtime-manifest.timeout] attachment failed (${error instanceof Error ? error.constructor.name : typeof error})\n`);
     }
-    try { this.log("[runtime-manifest.timeout] Sanitized timeout details are attached."); } catch (error) {
+    try { this.log(`[runtime-manifest.timeout] ${report.message}`); } catch (error) {
         process.stderr.write(`[runtime-manifest.timeout] Cucumber log failed (${error instanceof Error ? error.constructor.name : typeof error})\n`);
     }
 }

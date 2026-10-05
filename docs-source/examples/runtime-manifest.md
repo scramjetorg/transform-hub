@@ -79,7 +79,7 @@ async def initialize(context):
     context.logger.info("Runtime manifest published: %s", receipt)
 ```
 
-Manifest declaration is available to hosted Python whether or not HTTP/ASGI exposure is configured. Attaching an ASGI application with `context.api.attach(app)` remains a separate operation. Existing `context.hub` / `context.space` behavior is unchanged; use `context.hub_client()` for the v2 manifest reads below when that client is configured.
+Manifest declaration is available to hosted Python whether or not HTTP/ASGI exposure is configured. Attaching an ASGI application with `context.api.attach(app)` remains a separate operation. Existing `context.hub` / `context.space` behavior is unchanged. For hosted Python, `context.hub_client()` reads use the Hub Broker connection already established by the runtime wrapper; no separate connection or SDK installation/configuration is needed, and this API does not fall back to the legacy `context.hub` client.
 
 ## Read manifests through HubClient v2
 
@@ -88,25 +88,36 @@ Current hosted Node/Bun sequences use the injected HubClient v2 view:
 ```typescript
 const instanceResponse = await this.hubClient().instance(instanceId).manifest();
 if (instanceResponse.status !== 200) throw new Error("Could not read instance manifest");
-const instanceDocument = instanceResponse.body;
+const instanceDocument = instanceResponse.body.manifest;
+if (instanceDocument === null) {
+  // This known instance currently has no published manifest.
+}
 
 const sequenceResponse = await this.hubClient().sequence(sequenceId).manifest();
 if (sequenceResponse.status !== 200) throw new Error("Could not read sequence manifests");
-const publishedInstances = sequenceResponse.body.items;
+for (const { instanceId, revision, manifest } of sequenceResponse.body.items) {
+  // Each item labels its own current document; the collection has no shared contract.
+  console.log(instanceId, revision, manifest);
+}
 ```
 
-Hosted Python has corresponding read-only views over its existing verser2 Broker:
+In the current hosted Python runtime, `context.hub_client()` uses the Hub Broker connection already established by the runtime wrapper. It requires no separate broker connection, SDK installation, or extra author configuration and does not fall back to the legacy `context.hub` client. Python has the corresponding read-only views:
 
 ```python
 instance_response = await context.hub_client().instance(instance_id).manifest()
 if instance_response.status != 200:
     raise RuntimeError("Could not read instance manifest")
-instance_document = instance_response.body
+instance_document = instance_response.body["manifest"]
+if instance_document is None:
+    # This known instance currently has no published manifest.
+    pass
 
 sequence_response = await context.hub_client().sequence(sequence_id).manifest()
 if sequence_response.status != 200:
     raise RuntimeError("Could not read sequence manifests")
-published_instances = sequence_response.body["items"]
+for item in sequence_response.body["items"]:
+    # Each item labels its own current document; the collection has no shared contract.
+    print(item["instanceId"], item["revision"], item["manifest"])
 ```
 
 Both APIs return the ordinary status/headers/body envelope. An instance body has `instanceId`, `sequenceId`, `revision`, `manifest`, and public `sequence` metadata (`name`, `version`, and `description` when available). A known instance without a current publication returns status 200 with `revision: null` and `manifest: null`. A sequence collection has `sequenceId` and `items`; it contains only currently published instance documents, retaining each instance's identity and declaration. A known sequence with no published manifests returns an empty `items` array. Unknown identities follow the existing not-found behavior; check status before using the body.
@@ -123,10 +134,10 @@ The current publication belongs to its running instance and is removed when that
 
 ## Executable examples
 
-The canonical producer and consumer fixtures are used by the hosted runtime proof:
+The following linked files are repository sources for coordinated BDD proof fixtures, not drop-in applications. Their `runId`, `producerSequenceId`, `producerInstanceIds`, and `refresh`/`finish` actions coordinate the test harness; they are not requirements of the declaration API. The simple language examples above show the standalone declaration and read calls.
 
-- [Node producer](../../bdd/data/sequences/bdd-runtime-manifest-node-producer/index.js) and [Node consumer](../../bdd/data/sequences/bdd-runtime-manifest-node-consumer/index.js)
-- [Bun-selected producer](../../bdd/data/sequences/bdd-runtime-manifest-bun-producer/index.js) and [Bun-selected consumer](../../bdd/data/sequences/bdd-runtime-manifest-bun-consumer/index.js); this exercises the current Bun wrapper's Node delegation, not native Bun execution
-- [Python producer](../../bdd/data/sequences/python-bdd-runtime-manifest-producer/main.py) and [Python consumer](../../bdd/data/sequences/python-bdd-runtime-manifest-consumer/main.py)
+- Repository source: [Node producer](https://github.com/scramjetorg/transform-hub/blob/HEAD/bdd/data/sequences/bdd-runtime-manifest-node-producer/index.js) and [Node consumer](https://github.com/scramjetorg/transform-hub/blob/HEAD/bdd/data/sequences/bdd-runtime-manifest-node-consumer/index.js)
+- Repository source: [Bun-selected producer](https://github.com/scramjetorg/transform-hub/blob/HEAD/bdd/data/sequences/bdd-runtime-manifest-bun-producer/index.js) and [Bun-selected consumer](https://github.com/scramjetorg/transform-hub/blob/HEAD/bdd/data/sequences/bdd-runtime-manifest-bun-consumer/index.js). These fixtures exercise the current Bun wrapper's Node delegation, not native Bun execution.
+- Repository source: [Python producer](https://github.com/scramjetorg/transform-hub/blob/HEAD/bdd/data/sequences/python-bdd-runtime-manifest-producer/main.py) and [Python consumer](https://github.com/scramjetorg/transform-hub/blob/HEAD/bdd/data/sequences/python-bdd-runtime-manifest-consumer/main.py)
 
-These are distinct from the earlier disposable EVENT/getEvent proof. Hosted source and built BDD results are pending; this guide describes the API and does not claim that the end-to-end proof has passed.
+These fixtures are distinct from the earlier disposable EVENT/getEvent proof.

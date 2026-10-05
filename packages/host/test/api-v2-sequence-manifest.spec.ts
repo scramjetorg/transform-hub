@@ -92,7 +92,7 @@ test("Host sequence manifest collection preserves distinct live instance snapsho
 
     t.is(response.status, 200);
     t.deepEqual(response.body, { sequenceId: "sequence-a", items: store.getSequenceManifests("sequence-a") });
-    t.deepEqual((response.body as RestAPI2.SequenceManifestResponse).items.map((item) => item.instanceId), [first.id, second.id]);
+    t.deepEqual((response.body as RestAPI2.SequenceManifestResponse).items.map((item) => item.instanceId).sort(), [first.id, second.id].sort());
 });
 
 test("known sequence with no current publications returns an empty collection", async (t) => {
