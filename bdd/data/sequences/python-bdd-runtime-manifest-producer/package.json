@@ -1,0 +1,9 @@
+{
+  "name": "@scramjet/python-bdd-runtime-manifest-producer",
+  "version": "1.0.0",
+  "private": true,
+  "main": "main.py",
+  "engines": {
+    "python3": "3"
+  }
+}

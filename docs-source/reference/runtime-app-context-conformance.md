@@ -15,7 +15,9 @@ author-visible direct/headless Bun mode.
 | Events | Instance-scoped `on` / `emit`; `emitToSpace` adds `scope: "space"` | Same instance and space scopes over `MONITORING` event frames | Node delegation |
 | Hub client | `hubClient()` with typed resource depth (for example `status.get()`) | `context.hub` scoped request client with `get()`/`post()` path methods; not a Node-fluent client equivalent, no generic Python REST SDK | Node delegation and verser2 transport |
 | Space client | `spaceClient()` with typed resource depth | `context.space`, a scoped Broker view; it falls back to the Hub target when no space target is configured; no generic Node client | Node delegation and verser2 transport |
-| API registration and `exposePath` | `this.api.use(path, handler)` mounted below `exposePath` | `context.api.attach(asgi_app)` mounted through the Python verser2 Guest below `exposePath` | Node delegation; uses Node registration |
+| Manifest declaration | `this.api.declare(declaration)` on the additive `ManifestSequenceAppContext` | `await context.api.declare(declaration)`; does not require ASGI exposure | Node delegation; not a native-Bun claim |
+| Manifest retrieval | `hubClient().instance(id).manifest()` / `.sequence(id).manifest()` | `context.hub_client().instance(id).manifest()` / `.sequence(id).manifest()` when HubClient v2 is configured | Node delegation and verser2 transport |
+| API registration and `exposePath` | `this.api.use(path, handler)` mounted below `exposePath` | `context.api.attach(asgi_app)` mounted through the Python verser2 Guest below `exposePath`; this is separate from manifest declaration | Node delegation; uses Node registration |
 | Local storage | `localStorage` is an instance-local storage API | Not exposed by this wrapper | Node delegation |
 | `save` persistence | Unsupported as persistence; `save` must not be described as durable state | Unsupported as persistence; `save` must not be described as durable state | Node delegation (unsupported as persistence) |
 
@@ -23,5 +25,7 @@ The real hosted-runtime fixture `APPCONTEXT-002` exercises instance/host
 channels, monitoring, LOG, scoped events, Hub/Space requests, and
 `exposePath` for Python and Bun. The focused wrapper tests remain useful for
 shape and bootstrap checks, but do not replace that integration fixture.
+
+The runtime manifest is per running instance, not a shared sequence contract. The current declaration, response, guard, and audit boundaries are documented in the [runtime manifest guide](../examples/runtime-manifest.md); manifest presence does not replace live inventory or imply RPC/topic wiring or payload enforcement. Current Bun uses Node delegation for this surface, and the older exported JavaScript Runner API is not manifest-capable.
 
 See the [SequenceAppContext guide](../sequences/sequence-app-context.md) and the [health parity walkthrough](../examples/app-context-health-parity.md). Python's wrapper clients are not a promise of a generic Python REST SDK.

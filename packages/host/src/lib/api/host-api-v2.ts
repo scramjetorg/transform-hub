@@ -215,7 +215,18 @@ export class HostAPIV2Handler {
                     sequenceId: instance.sequenceId,
                     status: instance.status
                 }))
-            })
+            }),
+            manifest: ({ params }): RestAPI2.SequenceManifestResponse | { opStatus: "Not Found"; error: string } => {
+                const sequence = host.getSequence(sequenceId(params));
+                if (!("id" in sequence)) {
+                    return { opStatus: "Not Found", error: `Sequence ${sequenceId(params)} not found` };
+                }
+
+                return {
+                    sequenceId: sequence.id,
+                    items: host.instancesStore.getSequenceManifests(sequence.id)
+                };
+            }
         });
     }
 

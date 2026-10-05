@@ -1,4 +1,5 @@
 import { HttpMethod, ResolverDefinition, RouteDefinition, Router, RouterDefinition } from "@scramjet/api-router";
+import { z } from "zod";
 
 import {
     RestAPI2Schemas,
@@ -50,10 +51,15 @@ import {
     VersionResponse,
     writableFdParam
 } from "./schemas";
-import { INSTANCE_MANIFEST_ENDPOINT } from "./defaults";
-import { InstanceManifestResponseSchema } from "./runtime-manifest";
+import { INSTANCE_MANIFEST_ENDPOINT, SEQUENCE_MANIFEST_ENDPOINT } from "./defaults";
+import { InstanceManifestResponseSchema, SequenceManifestResponseSchema } from "./runtime-manifest";
 
 const INSTANCE_MANIFEST_RESOURCE_PATH = INSTANCE_MANIFEST_ENDPOINT.replace(/^\/instances\/:instanceId/, "");
+const SEQUENCE_MANIFEST_RESOURCE_PATH = SEQUENCE_MANIFEST_ENDPOINT.replace(/^\/sequences/, "");
+const sequenceManifestRouteResponse = z.union([
+    SequenceManifestResponseSchema,
+    z.object({ opStatus: z.literal("Not Found"), error: z.string() }).strict()
+]);
 
 const handlerless = () => undefined;
 
@@ -131,7 +137,10 @@ function sequenceRouteSet() {
             schemas: { params: RestAPI2Schemas.params.sequence, body: StartSequencePayload, response: opResponse(StartSequenceResponse) }
         }),
         getSequence: Router.get("/:sequenceId", { schemas: { params: RestAPI2Schemas.params.sequence, response: SequenceResponse } }),
-        getSequenceInstances: Router.get("/:sequenceId/instances", { schemas: { params: RestAPI2Schemas.params.sequence, response: listResponse(Instance) } })
+        getSequenceInstances: Router.get("/:sequenceId/instances", { schemas: { params: RestAPI2Schemas.params.sequence, response: listResponse(Instance) } }),
+        manifest: Router.get(SEQUENCE_MANIFEST_RESOURCE_PATH, {
+            schemas: { params: RestAPI2Schemas.params.sequence, response: sequenceManifestRouteResponse }
+        })
     } as const;
 }
 

@@ -6,8 +6,14 @@ import logging
 import importlib
 import asyncio
 
+import pytest
+
 from runner_python.app_context import AppContext
-from runner_python.verser2_runtime import PythonHubClient, PythonSequenceApiExposure
+from runner_python.verser2_runtime import (
+    PythonHubClient,
+    PythonSequenceApiExposure,
+    create_python_hub_v2_client,
+)
 
 runner_main = importlib.import_module("runner_python.__main__")
 
@@ -15,10 +21,20 @@ runner_main = importlib.import_module("runner_python.__main__")
 class RecordingBroker:
     def __init__(self) -> None:
         self.requests: list[dict] = []
+        self.response = {"status": 200}
 
     async def request(self, **kwargs):
         self.requests.append(kwargs)
-        return {"status": 200}
+        return self.response
+
+
+class RecordingJSONResponse:
+    status = 200
+    headers = {"content-type": "application/json"}
+    request_id = "request-v2"
+
+    async def json(self):
+        return {"sequenceId": "sequence", "items": []}
 
 
 class RecordingMonitoringWriter:
@@ -153,3 +169,47 @@ def test_hosted_python_context_exposes_sequence_api() -> None:
     app = object()
     assert ctx.api.attach(app) is app
     assert exposure.app is app
+
+
+async def test_hub_client_v2_view_is_injected_without_replacing_v1_or_space() -> None:
+    broker = RecordingBroker()
+    legacy_hub = PythonHubClient(broker, "hub.internal")
+    v2_hub = create_python_hub_v2_client(legacy_hub)
+    space = legacy_hub.scoped("space.internal")
+    broker.response = RecordingJSONResponse()
+    ctx = runner_main._build_sequence_context(
+        RecordingMonitoringWriter(),
+        logging.getLogger("conformance.v2"),
+        {},
+        "INFO",
+        legacy_hub,
+        space,
+        hub_client_v2=v2_hub,
+    )
+    control_ctx = runner_main._build_control_context(
+        ctx, logging.getLogger("conformance.v2.control")
+    )
+
+    assert ctx.hub is legacy_hub
+    assert ctx.space is space
+    assert ctx.hub_client() is v2_hub
+    assert control_ctx.hub_client() is v2_hub
+    response = await control_ctx.hub_client().sequence("sequence").manifest()
+    assert response.status == 200
+    assert response.body == {"sequenceId": "sequence", "items": []}
+    assert broker.requests == [
+        {
+            "method": "GET",
+            "url": "http://hub.internal/api/v2/sequences/sequence/manifest",
+            "headers": None,
+            "body": None,
+        }
+    ]
+
+
+def test_context_hub_client_accessor_requires_an_injected_v2_view() -> None:
+    ctx = runner_main._build_sequence_context(
+        RecordingMonitoringWriter(), logging.getLogger("conformance.no-v2"), {}, "INFO"
+    )
+    with pytest.raises(RuntimeError, match="not configured"):
+        ctx.hub_client()

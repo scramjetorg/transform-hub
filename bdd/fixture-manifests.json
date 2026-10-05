@@ -11,7 +11,11 @@
     "bdd-hello-output",
     "bdd-js-hostclient-basic",
     "bdd-js-inert-function",
-    "bdd-process-not-responding"
+    "bdd-process-not-responding",
+    "bdd-runtime-manifest-bun-consumer",
+    "bdd-runtime-manifest-bun-producer",
+    "bdd-runtime-manifest-node-consumer",
+    "bdd-runtime-manifest-node-producer"
   ],
   "python-bdd": [
     "python-bdd-appcontext-hosted",
@@ -19,6 +23,8 @@
     "python-bdd-exception",
     "python-bdd-gen-async",
     "python-bdd-logs",
+    "python-bdd-runtime-manifest-consumer",
+    "python-bdd-runtime-manifest-producer",
     "python-bdd-topic-consumer",
     "python-bdd-topic-producer",
     "python-bdd-unhealthy",

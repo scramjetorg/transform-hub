@@ -53,10 +53,17 @@ class AppContext:
         self.space: Any | None = None
         self.api: Any | None = None
         self._manifest_api: Any | None = None
+        self._hub_client_v2: Any | None = None
         self.initial_state: Any = None
         self.local_storage: None = None
         self.logger = logging.getLogger("runner_python.app_context")
         self.logger.setLevel(logging.INFO)
+
+    def hub_client(self) -> Any:
+        """Return the injected HubClient v2 view when Verser2 is configured."""
+        if self._hub_client_v2 is None:
+            raise RuntimeError("HubClient v2 is not configured for this instance")
+        return self._hub_client_v2
 
     # --- Stop handlers ---
 

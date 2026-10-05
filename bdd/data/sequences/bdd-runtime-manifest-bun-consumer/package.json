@@ -1,0 +1,9 @@
+{
+  "name": "@scramjet/bdd-runtime-manifest-bun-consumer",
+  "version": "1.0.0",
+  "private": true,
+  "main": "index.js",
+  "engines": {
+    "bun": "1"
+  }
+}

@@ -1,7 +1,7 @@
 import test from "ava";
 
 import { bindRoutes, routeBinding } from "@scramjet/api-router";
-import { RestAPI2RouteSets, RestAPI2RouteTree, RestAPI2Routes, getOpaqueRouteKeys, getRestAPI2Route } from "../src";
+import { INSTANCE_MANIFEST_ENDPOINT, SEQUENCE_MANIFEST_ENDPOINT, RestAPI2RouteSets, RestAPI2RouteTree, RestAPI2Routes, getOpaqueRouteKeys, getRestAPI2Route } from "../src";
 
 test("typed route sets build the existing handlerless router factories", t => {
     const contract = RestAPI2Routes.hub.hubRouter().collect();
@@ -125,4 +125,29 @@ test("RPC route contract preserves opaque application wire bodies", t => {
 
     t.true(rpc.schemas?.body?.safeParse({ arbitrary: "caller payload" }).success);
     t.true(rpc.schemas?.response?.safeParse("raw proxy response").success);
+});
+
+test("instance and sequence manifest contracts expose public response paths and schemas", t => {
+    const expanded = RestAPI2Routes.hub.router("/api/v2").collect({ expandResolvers: true });
+    const instancePath = INSTANCE_MANIFEST_ENDPOINT.replace(/^\//, "/api/v2/");
+    const sequencePath = SEQUENCE_MANIFEST_ENDPOINT.replace(/^\//, "/api/v2/");
+    const instanceRoute = expanded.routes.find((route) => route.id === `GET ${instancePath}`);
+    const sequenceRoute = expanded.routes.find((route) => route.id === `GET ${sequencePath}`);
+    const schema = JSON.parse('{"toJSON":"preserved","__proto__":{"keyword":true},"x-extension":[1,true]}');
+    const validInstance = {
+        instanceId: "instance-1",
+        sequenceId: "sequence-1",
+        revision: null,
+        manifest: { input: { schema } },
+        sequence: { name: "public-sequence", version: "1.2.3" }
+    };
+
+    t.truthy(instanceRoute);
+    t.truthy(sequenceRoute);
+    t.is(instanceRoute?.fullPath, instancePath);
+    t.is(sequenceRoute?.fullPath, sequencePath);
+    t.true(instanceRoute?.schemas?.response?.safeParse(validInstance).success);
+    t.true(sequenceRoute?.schemas?.response?.safeParse({ sequenceId: "sequence-1", items: [validInstance] }).success);
+    t.true(sequenceRoute?.schemas?.response?.safeParse({ sequenceId: "sequence-1", items: [] }).success);
+    t.true(sequenceRoute?.schemas?.response?.safeParse({ opStatus: "Not Found", error: "Sequence missing not found" }).success);
 });

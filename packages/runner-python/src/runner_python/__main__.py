@@ -66,6 +66,7 @@ from runner_python.verser2_runtime import (
     PythonHubClient,
     PythonSequenceApiExposure,
     create_python_hub_client,
+    create_python_hub_v2_client,
     create_python_space_client,
     python_rpc_url,
     start_python_sequence_guest,
@@ -322,6 +323,7 @@ def _build_sequence_context(
     space_client: Any | None = None,
     api_exposure: Any | None = None,
     instance_id: str = "",
+    hub_client_v2: Any | None = None,
 ) -> AppContext:
     app_context = AppContext()
     app_context.logger = runtime_logger
@@ -333,6 +335,7 @@ def _build_sequence_context(
     app_context.space = space_client
     app_context.api = api_exposure
     app_context.instance_id = instance_id
+    app_context._hub_client_v2 = hub_client_v2
 
     def emit(event_name: str, message: Any = "") -> AppContext:
         monitoring_writer.write_frame(
@@ -391,6 +394,7 @@ def _build_control_context(
     control_context.config = shared_context.config
     control_context._app_config = shared_context._app_config
     control_context._manifest_api = shared_context._manifest_api
+    control_context._hub_client_v2 = shared_context._hub_client_v2
     control_context.logger = control_logger
     control_context._sequence_logger = shared_context.logger
     control_context._stop_handlers = []
@@ -522,6 +526,7 @@ async def main() -> int:
     sequence_task: asyncio.Task[None] | None = None
     terminal_task: asyncio.Task[None] | None = None
     hub_client: PythonHubClient | None = None
+    hub_client_v2: Any | None = None
     space_client: Any | None = None
     sequence_guest: Any | None = None
 
@@ -572,6 +577,7 @@ async def main() -> int:
 
         try:
             hub_client = await create_python_hub_client(boot_config.verser2Runtime)
+            hub_client_v2 = create_python_hub_v2_client(hub_client)
             space_client = create_python_space_client(
                 hub_client, boot_config.verser2Runtime
             )
@@ -596,6 +602,7 @@ async def main() -> int:
             space_client,
             sequence_api,
             instance_id=boot_config.instanceId,
+            hub_client_v2=hub_client_v2,
         )
         sequence_context._manifest_api = manifest_api
         control_context = _build_control_context(sequence_context, control_logger)
