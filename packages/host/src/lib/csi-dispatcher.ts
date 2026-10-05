@@ -93,7 +93,8 @@ export class CSIDispatcher extends TypedEmitter<Events> {
         payload: STHRestAPI.StartSequencePayload,
         communicationHandler: ICommunicationHandler,
         config: STHConfiguration,
-        instanceProxy: HostProxy
+        instanceProxy: HostProxy,
+        ownedCompletion?: Promise<number>
     ) {
         sequenceInfo.instances = sequenceInfo.instances || [];
 
@@ -111,7 +112,8 @@ export class CSIDispatcher extends TypedEmitter<Events> {
             this.STHConfig.runtimeAdapter,
             this.instanceStore,
             this.localStorageAdapter,
-            this.runnerBrokerProvider
+            this.runnerBrokerProvider,
+            ownedCompletion
         );
 
         this.logger.trace("CSIController created", id, sequenceInfo);
@@ -330,6 +332,9 @@ export class CSIDispatcher extends TypedEmitter<Events> {
                 throw await mapRunnerExitCode(dispatchResultCode, sequence);
             }
 
+            const ownedCompletion = instanceAdapter.waitUntilExit(undefined, id, sequence);
+            ownedCompletion.catch(() => undefined);
+
             this.logger.debug("Dispatched. Waiting for connection...", id);
 
             if (this.usesSthLocalRunnerVerser2Transport()) {
@@ -339,7 +344,8 @@ export class CSIDispatcher extends TypedEmitter<Events> {
                     payload,
                     new CommunicationHandler(),
                     this.STHConfig,
-                    this.hostProxy || ({ onInstanceRequest: () => undefined, onRPCExpose: () => undefined } as HostProxy)
+                    this.hostProxy || ({ onInstanceRequest: () => undefined, onRPCExpose: () => undefined } as HostProxy),
+                    ownedCompletion
                 );
                 const streams = Array.from({ length: 9 }, () => new PassThrough()) as unknown as DownstreamStreamsConfig;
 
@@ -373,7 +379,7 @@ export class CSIDispatcher extends TypedEmitter<Events> {
                     sequence
                 })),
                 Promise.resolve().then(() =>
-                    instanceAdapter.waitUntilExit(undefined, id, sequence).then(async (exitCode: number) => {
+                    ownedCompletion.then(async (exitCode: number) => {
                         if (!established) {
                             this.logger.info("Exited before established", id, exitCode);
 

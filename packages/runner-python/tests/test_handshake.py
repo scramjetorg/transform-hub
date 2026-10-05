@@ -54,6 +54,9 @@ def load_golden_ping_bytes() -> bytes:
 def normalize_ping_bytes(frame_bytes: bytes) -> bytes:
     code, payload = json.loads(frame_bytes)
     payload["payload"]["system"]["processPID"] = "<pid>"
+    if "created" in payload:
+        created = payload.pop("created")
+        assert isinstance(created, int) and not isinstance(created, bool)
     normalized = json.dumps([code, payload], separators=(",", ":"), ensure_ascii=False)
     return normalized.encode("utf-8") + b"\r\n"
 
@@ -127,6 +130,26 @@ async def test_handshake_sends_ping_matching_golden_fixture_bytes() -> None:
     assert normalize_ping_bytes(writer.raw_frames[0]) == normalize_ping_bytes(
         load_golden_ping_bytes()
     )
+
+
+@pytest.mark.asyncio
+async def test_ping_includes_controlled_integer_epoch_millisecond_timestamp(monkeypatch) -> None:
+    expected_time_ns = 1_700_000_000_123_456_789
+    monkeypatch.setattr("runner_python.handshake.time.time_ns", lambda: expected_time_ns)
+    writer = RecordingMonitoringWriter([])
+    control_decoder = ScriptedControlDecoder(
+        [encode_control_line(PONG, {"appConfig": {}, "args": [], "logLevel": "INFO"})],
+        [],
+    )
+
+    await perform_handshake(writer, control_decoder, make_boot_config())
+
+    ping_code, ping_payload = json.loads(writer.raw_frames[0])
+    created = ping_payload["created"]
+    assert ping_code == PING
+    assert created == expected_time_ns // 1_000_000
+    assert isinstance(created, int)
+    assert not isinstance(created, bool)
 
 
 @pytest.mark.asyncio

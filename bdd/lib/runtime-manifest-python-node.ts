@@ -16,6 +16,29 @@ function assertJsonObject(value: unknown): asserts value is Record<string, unkno
     assert.ok(value !== null && typeof value === "object" && !Array.isArray(value), "Expected a JSON object");
 }
 
+function requireRecord(value: unknown, label: string): Record<string, unknown> {
+    assertJsonObject(value);
+    assert.ok(value !== null && typeof value === "object" && !Array.isArray(value), `${label} must be an object`);
+    return value;
+}
+
+function timestamp(value: unknown, label: string): number {
+    const parsed = value instanceof Date ? value.getTime() : typeof value === "string" ? Date.parse(value) : NaN;
+    assert.ok(Number.isFinite(parsed), `${label} must be a valid timestamp`);
+    return parsed;
+}
+
+function assertSuccessfulPythonCompletion(info: unknown, instanceId: string, createdAt: number): Record<string, unknown> {
+    const completion = requireRecord(info, `Python instance ${instanceId} completion info`);
+    assert.equal(completion.status, "completed", `Python instance ${instanceId} must complete naturally`);
+    const terminated = requireRecord(completion.terminated, `Python instance ${instanceId} termination info`);
+    assert.equal(terminated.exitcode, 0, `Python instance ${instanceId} must exit with code 0`);
+    const endedAt = timestamp(completion.ended, `Python instance ${instanceId} ended`);
+    const elapsed = endedAt - createdAt;
+    assert.ok(Number.isFinite(elapsed) && elapsed >= 0, `Python instance ${instanceId} must have a finite nonnegative elapsed duration`);
+    return completion;
+}
+
 function eventData(response: { message: unknown }): any {
     const message = (response as any)?.event?.message ?? ("message" in (response as any) ? (response as any).message : response);
     return typeof message === "string" ? JSON.parse(message) : message;
@@ -123,6 +146,8 @@ export async function runPythonNodeManifestProof(world: ProofWorld): Promise<voi
     const producer = await checkpoint(world, "python.producer.start", () => pythonSequence.start({ appConfig: { runId, variant: "string", version: 1 }, args: [] }), { sequenceId: pythonSequence.id });
     instances.push(producer);
     const initialized = eventData(await checkpoint(world, "python.producer.initialized-event", () => producer.getEvent("runtime-manifest-initialized"), { instanceId: producer.id, sequenceId: pythonSequence.id, eventName: "runtime-manifest-initialized" }));
+    const startupInfo = await checkpoint(world, "python.producer.startup-info", () => producer.getInfo(), { instanceId: producer.id });
+    const createdAt = timestamp(startupInfo.created, `Python producer ${producer.id} created`);
     assert.equal(initialized.runId, runId);
     const initialReceipt = initialized.receipt;
     assert.ok(initialReceipt?.instanceId === producer.id && initialReceipt.sequenceId === pythonSequence.id && initialReceipt.revision, "Python producer must return its actual assigned declaration receipt");
@@ -209,6 +234,15 @@ export async function runPythonNodeManifestProof(world: ProofWorld): Promise<voi
     assert.equal(producerChanges.length, 2, "rejected declaration must not create a committed audit change");
     assert.deepEqual(producerChanges.map(change => change.revision), [initialReceipt.revision, updateReceipt.revision]);
     assert.equal(producerChanges[1].previousRevision, initialReceipt.revision);
+
+    await checkpoint(world, "python.producer.finish-command", () => producer.sendEvent("runtime-manifest-action", JSON.stringify({ runId, action: "finish" })), { instanceId: producer.id, eventName: "runtime-manifest-action" });
+    const completedInfo = await checkpoint(world, "python.producer.completion", () => waitForCondition(
+        async () => { try { return await producer.getInfo(); } catch { return undefined; } },
+        info => Boolean(info && typeof info.status === "string" && ["completed", "errored", "gone"].includes(info.status)),
+        { timeoutMs: 15000, intervalMs: 100, description: `Python producer completion for ${producer.id}` }
+    ), { instanceId: producer.id });
+    const completionInfo = assertSuccessfulPythonCompletion(completedInfo, producer.id, createdAt);
+    assert.equal(completionInfo.id, producer.id, "naturally finished Python instance diagnostic record must remain retained");
 
     if (world.resources.runtimeManifestCleanupStarted) return;
     world.resources.runtimeManifestProofComplete = true;

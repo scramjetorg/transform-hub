@@ -236,7 +236,8 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
         private adapter: STHConfiguration["runtimeAdapter"] = sthConfig.runtimeAdapter,
         private instanceStore: InstancesStore,
         localStorageAdapter: IStorageAdapter,
-        private runnerBrokerProvider?: () => Verser2RunnerBroker | undefined
+        private runnerBrokerProvider?: () => Verser2RunnerBroker | undefined,
+        private ownedCompletion?: Promise<number>
     ) {
         super();
         this.instanceStore = instanceStore;
@@ -463,7 +464,7 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
 
         this._instanceAdapter.logger.pipe(this.logger, { end: false });
 
-        this.endOfSequence = this._instanceAdapter.waitUntilExit(undefined, this.id, this.sequence);
+        this.endOfSequence = this.ownedCompletion || this._instanceAdapter.waitUntilExit(undefined, this.id, this.sequence);
 
         // @todo this also is moved to CSIDispatcher in entirety
         const instanceMain = async () => {

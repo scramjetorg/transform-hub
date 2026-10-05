@@ -68,9 +68,13 @@ def decode_monitor_frame(raw: bytes) -> tuple[int, Any]:
     return json.loads(payload.decode("utf-8"))
 
 
-def normalize_monitor_frame(raw: bytes) -> bytes:
+def normalize_monitor_frame(raw: bytes, *, observed: bool = False) -> bytes:
     code, payload = decode_monitor_frame(raw)
     if code == 3000:
+        created = payload.get("created")
+        if observed:
+            assert type(created) is int and created > 0, "observed PING created must be a positive integer"
+        payload.pop("created", None)
         payload["payload"]["system"]["processPID"] = "<pid>"
     return json.dumps([code, payload], separators=(", ", ": ")).encode("utf-8") + MONITORING_EOL
 
@@ -87,8 +91,8 @@ def channel_bytes(recorded: dict[str, Any], channel: str, direction: str) -> lis
     ]
 
 
-def monitoring_groups(frames: list[bytes]) -> tuple[list[bytes], list[bytes]]:
-    normalized = [normalize_monitor_frame(frame) for frame in frames]
+def monitoring_groups(frames: list[bytes], *, observed: bool = False) -> tuple[list[bytes], list[bytes]]:
+    normalized = [normalize_monitor_frame(frame, observed=observed) for frame in frames]
     heartbeats = []
     others = []
     for frame in normalized:
@@ -247,6 +251,7 @@ class PipeCapture:
 
     async def finish(self) -> None:
         safe_close_fd(self.control_write_fd)
+        self.control_write_fd = None
         safe_close_fd(self.monitor_write_fd)
         if self._task is not None:
             self._task.cancel()
@@ -262,35 +267,20 @@ async def orchestrate_scenario(scenario: str, host: RunnerHost, recorded: dict[s
 
     if scenario == "text-input":
         await host.send_in(channel_bytes(recorded, "IN", "host-send")[0], close_after=True, content_type="text/plain")
-        safe_close_fd(host.control_write_fd)
-        host.control_write_fd = None
     elif scenario == "binary-input":
         await host.send_in(channel_bytes(recorded, "IN", "host-send")[0], close_after=True, content_type="application/octet-stream")
-        safe_close_fd(host.control_write_fd)
-        host.control_write_fd = None
     elif scenario == "stop-handler":
         await host.wait_for_monitor_event("stop-handler-ready")
         await host.send_control(control_frames[1])
-        safe_close_fd(host.control_write_fd)
-        host.control_write_fd = None
     elif scenario == "event-emit-receive":
         await host.wait_for_monitor_event("sequence-started")
         await host.send_control(control_frames[1])
-        safe_close_fd(host.control_write_fd)
-        host.control_write_fd = None
     elif scenario == "control-set":
         await host.wait_for_monitor_event("set-ready")
         await host.send_control(control_frames[1])
-        safe_close_fd(host.control_write_fd)
-        host.control_write_fd = None
     elif scenario == "control-kill":
         await host.wait_for_monitor_event("kill-ready")
         await host.send_control(control_frames[1])
-        safe_close_fd(host.control_write_fd)
-        host.control_write_fd = None
-    else:
-        safe_close_fd(host.control_write_fd)
-        host.control_write_fd = None
 
 
 async def run_scenario(tmp_path: Path, scenario: str, recorded: dict[str, Any]) -> dict[str, Any]:
@@ -409,7 +399,7 @@ async def test_golden_replay(tmp_path: Path, scenario: str) -> None:
     recorded_heartbeats, recorded_other_monitoring = monitoring_groups(
         channel_bytes(recorded, "MONITORING", "host-recv")
     )
-    observed_heartbeats, observed_other_monitoring = monitoring_groups(observed["monitoring"])
+    observed_heartbeats, observed_other_monitoring = monitoring_groups(observed["monitoring"], observed=True)
 
     assert observed_other_monitoring == recorded_other_monitoring
     assert observed_heartbeats == recorded_heartbeats

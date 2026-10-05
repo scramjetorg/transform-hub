@@ -31,6 +31,23 @@ function requireString(record: Record<string, unknown>, key: string, label: stri
     return value;
 }
 
+function timestamp(value: unknown, label: string): number {
+    const parsed = value instanceof Date ? value.getTime() : typeof value === "string" ? Date.parse(value) : NaN;
+    assert.ok(Number.isFinite(parsed), `${label} must be a valid timestamp`);
+    return parsed;
+}
+
+function assertSuccessfulPythonCompletion(info: unknown, instanceId: string, createdAt: number): Record<string, unknown> {
+    const completion = requireRecord(info, `Python instance ${instanceId} completion info`);
+    assert.equal(completion.status, "completed", `Python instance ${instanceId} must complete naturally`);
+    const terminated = requireRecord(completion.terminated, `Python instance ${instanceId} termination info`);
+    assert.equal(terminated.exitcode, 0, `Python instance ${instanceId} must exit with code 0`);
+    const endedAt = timestamp(completion.ended, `Python instance ${instanceId} ended`);
+    const elapsed = endedAt - createdAt;
+    assert.ok(Number.isFinite(elapsed) && elapsed >= 0, `Python instance ${instanceId} must have a finite nonnegative elapsed duration`);
+    return completion;
+}
+
 function requireManifest(value: unknown, isManifestDeclaration: (value: unknown) => value is RestAPI2.ManifestDeclaration, label: string): RestAPI2.ManifestDeclaration {
     assert.ok(isManifestDeclaration(value), `${label} must be a valid manifest declaration`);
     return value;
@@ -294,6 +311,8 @@ export async function runNodePythonManifestProof(world: ProofWorld): Promise<voi
     assert.equal(observation.runId, runId);
     assert.equal(observation.phase, "initial");
     assertSelectedProvenance(observation.provenance, artifacts, "python");
+    const startupInfo = await checkpoint(world, "python.consumer.startup-info", () => consumer.getInfo(), { instanceId: consumer.id });
+    const createdAt = timestamp(startupInfo.created, `Python consumer ${consumer.id} created`);
 
     const byInstance = new Map<string, ManifestResponse>();
     assert.ok(Array.isArray(observation.instanceResponses), "Python consumer observation must contain instanceResponses");
@@ -377,6 +396,15 @@ export async function runNodePythonManifestProof(world: ProofWorld): Promise<voi
     assert.ok(otherResponse.body.manifest, "Surviving producer should retain a manifest");
     assert.equal(schemaExtension(otherResponse.body.manifest, "Surviving object producer").variant, "object");
     assert.deepEqual(afterRemoval.body.items.map(item => item.instanceId), [producerObject.id]);
+
+    await checkpoint(world, "python.consumer.finish-command", () => consumer.sendEvent("runtime-manifest-action", JSON.stringify({ runId, action: "finish" })), { instanceId: consumer.id, eventName: "runtime-manifest-action" });
+    const completedInfo = await checkpoint(world, "python.consumer.completion", () => waitForCondition(
+        async () => { try { return await consumer.getInfo(); } catch { return undefined; } },
+        info => Boolean(info && typeof info.status === "string" && ["completed", "errored", "gone"].includes(info.status)),
+        { timeoutMs: 15000, intervalMs: 100, description: `Python consumer completion for ${consumer.id}` }
+    ), { instanceId: consumer.id }, info => ({ status: info?.status }));
+    const completionInfo = assertSuccessfulPythonCompletion(completedInfo, consumer.id, createdAt);
+    assert.equal(completionInfo.id, consumer.id, "naturally finished Python consumer diagnostic record must remain retained");
 
     const undeclared = await checkpoint(world, "undeclared.start", () => producerSequence.start({ appConfig: { runId, variant: "string", version: 1, publish: false }, args: [] }), { sequenceId: producerSequence.id, producerCount: producers.length }, result => ({ instanceId: result.id }));
     producers.push(undeclared);

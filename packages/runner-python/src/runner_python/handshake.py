@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
+import time
 from dataclasses import dataclass
 from typing import Any, Callable, cast
 
@@ -47,6 +48,7 @@ def _build_ping_payload(boot_config: Any) -> dict[str, Any]:
         },
         "sequenceInfo": sequence_info,
         "id": instance_id,
+        "created": time.time_ns() // 1_000_000,
     }
 
     app_config = getattr(boot_config, "appConfig", None)
