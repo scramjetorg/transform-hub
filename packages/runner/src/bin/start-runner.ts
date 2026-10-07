@@ -24,79 +24,6 @@ import { copyRunnerLogForwarding } from "../runner-log-forwarding";
 
 const STDERR_TAIL_BYTES = 4096;
 const CR = 0x0d;
-const TEMP_STDERR_PREFIX = "[pr1137-stderr-boundary] ";
-const TEMP_STDERR_MARKER = Buffer.from("TestException: This exception should appear on stderr", "ascii");
-const TEMP_STDERR_LINE_BYTES = 4096;
-const TEMP_STDERR_SIGNALS = new Set(["SIGTERM", "SIGKILL", "SIGINT", "SIGHUP", "SIGABRT", "SIGPIPE"]);
-
-type TempProducerEvent = "forward-attached" | "child-close-observed" | "disconnect-start" | "disconnect-settled";
-type TempProducerCapture = ((event: TempProducerEvent, values?: Record<string, unknown>) => void) & { observe(chunk: Buffer): void; attach(): void };
-type TempStreamState = { readableLength?: number; writableLength?: number; readableEnded?: boolean; writableEnded?: boolean; writableFinished?: boolean; writableNeedDrain?: boolean; destroyed?: boolean };
-
-function tempStreamState(stream: Readable | Writable | undefined): TempStreamState | undefined {
-    if (!stream) return undefined;
-    const state: TempStreamState = {};
-    const candidate = stream as Readable & Writable;
-    for (const key of ["readableLength", "writableLength", "readableEnded", "writableEnded", "writableFinished", "writableNeedDrain", "destroyed"] as const) {
-        const value = candidate[key];
-        if (typeof value === "boolean" || (typeof value === "number" && Number.isSafeInteger(value) && value >= 0)) (state as Record<string, unknown>)[key] = value;
-    }
-    return Object.keys(state).length ? state : undefined;
-}
-
-function createTempProducerCapture(source: Readable | undefined, target: Writable, childPid: number | undefined): TempProducerCapture {
-    let seq = 1;
-    let bytes = 0;
-    let chunks = 0;
-    let preAttachBytes = 0;
-    let postAttachBytes = 0;
-    let forwardingAttached = false;
-    let markerBeforeAttach = false;
-    let markerAfterAttach = false;
-    let tail = Buffer.alloc(0);
-
-    const capture: TempProducerCapture = (event, values = {}) => {
-        try {
-            const pid = process.pid;
-            if (!Number.isSafeInteger(pid) || pid <= 0 || !/^[A-Za-z0-9._:-]{1,128}$/.test(instanceId!)) return;
-            const disconnectRejected = values.disconnectRejected === true;
-            const errorCode = values.errorCode === "ECONNRESET" || values.errorCode === "EPIPE" || values.errorCode === "ERR_STREAM_PREMATURE_CLOSE" || values.errorCode === "ERR_STREAM_DESTROYED" || values.errorCode === "ERR_HTTP2_STREAM_CANCEL" || values.errorCode === "ERR_HTTP2_INVALID_STREAM" || values.errorCode === "ABORT_ERR" ? values.errorCode : disconnectRejected ? "other-error" : "none";
-            const streamSnapshots = event === "disconnect-start" || event === "disconnect-settled" ? {
-                ...(tempStreamState(source) ? { source: tempStreamState(source) } : {}),
-                ...(tempStreamState(target) ? { target: tempStreamState(target) } : {})
-            } : {};
-            const record: Record<string, unknown> = {
-                capture: "pr1137-stderr-boundary", level: event === "disconnect-settled" && disconnectRejected ? "WARN" : "DEBUG",
-                boundary: "producer", event, pid, seq: seq++, wallMs: Date.now(), monoMs: Number(process.hrtime.bigint()) / 1e6,
-                instanceId, outcome: event === "forward-attached" ? "pending" : event === "child-close-observed" ? "fulfilled" : event === "disconnect-start" ? "pending" : disconnectRejected ? "rejected" : "fulfilled",
-                reason: event === "forward-attached" ? "none" : event === "child-close-observed" ? "child-close" : "disconnect",
-                errorCode, bytes, chunks, preAttachBytes, postAttachBytes, markerFound: markerBeforeAttach || markerAfterAttach,
-                markerBeforeAttach, markerAfterAttach, forwardingAttached, ...(Number.isSafeInteger(childPid) && childPid! > 0 ? { childPid } : {}),
-                ...(event === "child-close-observed" ? { childExitCode: values.childExitCode, signal: values.signal } : {}),
-                ...(event === "disconnect-start" ? { hardTeardown: values.hardTeardown } : {}),
-                ...(event === "disconnect-settled" ? { disconnectRejected } : {}), ...streamSnapshots
-            };
-            if (record.signal !== undefined && record.signal !== null) record.signal = TEMP_STDERR_SIGNALS.has(String(record.signal)) ? record.signal : "other-signal";
-            const line = TEMP_STDERR_PREFIX + JSON.stringify(record) + "\n";
-            if (Buffer.byteLength(line, "utf8") <= TEMP_STDERR_LINE_BYTES) process.stderr.write(line);
-        } catch { /* best-effort diagnostics must not affect runner outcomes */ }
-    };
-    capture.observe = (chunk: Buffer) => {
-        const length = Buffer.byteLength(chunk);
-        const before = forwardingAttached;
-        bytes += length;
-        chunks += 1;
-        if (before) postAttachBytes += length; else preAttachBytes += length;
-        const combined = tail.length ? Buffer.concat([tail, chunk]) : chunk;
-        const found = combined.indexOf(TEMP_STDERR_MARKER) !== -1;
-        if (found) {
-            if (before) markerAfterAttach = true; else markerBeforeAttach = true;
-        }
-        tail = Buffer.from(combined.subarray(Math.max(0, combined.length - (TEMP_STDERR_MARKER.length - 1))));
-    };
-    capture.attach = () => { forwardingAttached = true; capture("forward-attached"); };
-    return capture;
-}
 
 function normalizeSequencePath(path: string | undefined, engines?: Record<string, string>): string {
     if (!path) return "";
@@ -400,10 +327,8 @@ async function main(): Promise<void> {
     }
 
     let childStderrTail = "";
-    const tempStderrCapture = createTempProducerCapture(handles.child.stderr, hostClient.stderrStream, handles.child.pid);
     handles.child.stderr?.on("data", (chunk: Buffer) => {
         childStderrTail = appendTail(childStderrTail, chunk);
-        tempStderrCapture.observe(chunk);
     });
 
     // Install terminal handling before any awaited runtime readiness work. A
@@ -431,7 +356,6 @@ async function main(): Promise<void> {
 
     const finalization = waitForChildCloseAndConnection(childClose, connectionAttempt).then(({ close }) => {
         const { code, signal } = close;
-        tempStderrCapture("child-close-observed", { childExitCode: code, signal });
         const translated = translateChildClose(code, signal);
 
         if (translated.exitCode !== RunnerExitCode.SUCCESS) {
@@ -460,18 +384,10 @@ async function main(): Promise<void> {
 
         tryRemove(bootConfigPath);
 
-        const hardTeardown = requiresHardChildTeardown(translated);
-        tempStderrCapture("disconnect-start", { hardTeardown });
-        let disconnectRejected = false;
-        let disconnectErrorCode: unknown;
         return hostClient
-            .disconnect(hardTeardown)
-            .catch((error: unknown) => {
-                disconnectRejected = true;
-                disconnectErrorCode = error && typeof error === "object" && "code" in error ? (error as { code?: unknown }).code : undefined;
-            })
+            .disconnect(requiresHardChildTeardown(translated))
+            .catch(() => undefined)
             .finally(() => {
-                tempStderrCapture("disconnect-settled", { disconnectRejected, errorCode: disconnectErrorCode });
                 process.exitCode = translated.exitCode;
                 process.exit();
             });
@@ -501,7 +417,6 @@ async function main(): Promise<void> {
         hostStdout: hostClient.stdoutStream,
         hostStderr: hostClient.stderrStream
     });
-    tempStderrCapture.attach();
 
     // host control -> child fd4 (raw)
     pipeRaw(hostClient.controlStream, handles.control);

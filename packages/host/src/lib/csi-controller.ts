@@ -47,7 +47,7 @@ import { InstanceAPIV2 } from "./api/instance-api-v2";
 import { CSIEvents, ICSI } from "./types";
 import { ManifestPublicationError } from "./instance-store";
 import { ManifestDeclareRequestSchema } from "@scramjet/rest-api2";
-import { createRunnerBrokerRpcTransport, createTempStderrBoundary, emitTempStderrBoundary, retireTempStderrBoundary, tagTempStderrBoundary, TempStderrBoundaryContext, Verser2RunnerBroker, Verser2RunnerTransport } from "./runner-transport";
+import { createRunnerBrokerRpcTransport, Verser2RunnerBroker, Verser2RunnerTransport } from "./runner-transport";
 
 /**
  * @TODO: Runner exits after 10secs and k8s client checks status every 500ms so we need to give it some time
@@ -226,7 +226,6 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
      */
     private downStreams: DownstreamStreamsConfig | null = null;
     private upStreams: PassThroughStreamsConfig;
-    private tempStderrContext?: TempStderrBoundaryContext;
 
     public localEmitter: EventEmitter & { lastEvents: { [evname: string]: any } };
     constructor(
@@ -264,8 +263,6 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
         this.status = InstanceStatus.INITIALIZING;
 
         this.upStreams = [new PassThrough(), new PassThrough(), new PassThrough(), new PassThrough(), new PassThrough(), new PassThrough(), new PassThrough(), new PassThrough()];
-        this.tempStderrContext = createTempStderrBoundary("down-to-up", { instanceId: this.id, sequenceId: this.sequence.id });
-        tagTempStderrBoundary(this.upStreams[CC.STDERR] as PassThrough, this.tempStderrContext);
 
         // Register the stable runner log channel once, independently of API
         // router creation. Reconnects recreate the routers, but not this CSI
@@ -579,7 +576,6 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
             this.logger.end?.();
             return;
         }
-        if (this.tempStderrContext) emitTempStderrBoundary(this.tempStderrContext as any, "csi-finalize-enter", { outcome: "pending", reason: "finalize", errorCode: "none" }, { immediate, terminalExitCode: this.terminated?.exitcode });
         this.upStreams![CC.STDIN].unpipe();
         this.downStreams![CC.IN].unpipe();
 
@@ -596,10 +592,6 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
             await this.finalizingPromise;
         }
 
-        if (this.tempStderrContext) {
-            emitTempStderrBoundary(this.tempStderrContext as any, "csi-before-unpipe-end", { outcome: "pending", reason: "finalize", errorCode: "none" }, { immediate, terminalExitCode: this.terminated?.exitcode });
-            retireTempStderrBoundary(this.tempStderrContext, "finalize");
-        }
         this.downStreams![CC.STDOUT].unpipe();
         this.downStreams![CC.STDERR].unpipe();
         this.downStreams![CC.OUT].unpipe();
@@ -623,10 +615,6 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
     }
 
     unhookStreams() {
-        if (this.tempStderrContext) {
-            emitTempStderrBoundary(this.tempStderrContext as any, "csi-unhook", { outcome: "pending", reason: "unhook", errorCode: "none" });
-            retireTempStderrBoundary(this.tempStderrContext, "unhook");
-        }
         this.downStreams![CC.STDOUT].unpipe();
         this.downStreams![CC.STDERR].unpipe();
         this.downStreams![CC.OUT].unpipe();
@@ -638,19 +626,7 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
     hookupStreams(streams: DownstreamStreamsConfig) {
         this.logger.trace("Hookup streams");
 
-        if (this.tempStderrContext?.view.retired) {
-            this.tempStderrContext = createTempStderrBoundary("down-to-up", { instanceId: this.id, sequenceId: this.sequence.id, csiOrdinal: this.tempStderrContext.view.csiOrdinal });
-            tagTempStderrBoundary(this.upStreams[CC.STDERR] as PassThrough, this.tempStderrContext);
-        }
-
-        if (this.downStreams && this.downStreams !== streams && this.tempStderrContext) {
-            retireTempStderrBoundary(this.tempStderrContext, "replacement");
-            this.tempStderrContext = createTempStderrBoundary("down-to-up", { instanceId: this.id, sequenceId: this.sequence.id, csiOrdinal: this.tempStderrContext.view.csiOrdinal });
-            tagTempStderrBoundary(this.upStreams[CC.STDERR] as PassThrough, this.tempStderrContext);
-        }
-
         this.downStreams = streams;
-        if (this.tempStderrContext) tagTempStderrBoundary(streams[CC.STDERR] as PassThrough, this.tempStderrContext);
 
         if (development()) {
             streams[CC.STDOUT].pipe(process.stdout);
@@ -914,10 +890,6 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
     }
 
     async handleInstanceDisconnect() {
-        if (this.tempStderrContext) {
-            emitTempStderrBoundary(this.tempStderrContext as any, "csi-disconnect", { outcome: "pending", reason: "disconnect", errorCode: "none" });
-            retireTempStderrBoundary(this.tempStderrContext, "disconnect");
-        }
         await this.runnerTransport?.disconnect();
 
         this.runnerTransport = undefined;

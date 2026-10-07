@@ -404,7 +404,6 @@ AfterAll(async () => {
 });
 
 Before(() => {
-    HostUtils.clearTempStderrCapture();
     actualHealthResponse = "";
     actualStatusResponse = "";
     streams = {};
@@ -479,7 +478,6 @@ After({}, async function (this: any) {
         processId = undefined as unknown as number;
         hostUtils.output = "";
     } finally {
-        HostUtils.clearTempStderrCapture();
         // Scenario-owned clients are disposed only after all scenario cleanup
         // operations. The module-level suite client remains shared and usable.
         const state = clearE2eScenarioState(this.resources, {
@@ -1121,20 +1119,9 @@ Then("Python exception should appear on stderr", async function(this: CustomWorl
     const instance = this.resources.instance;
     assert.ok(instance, "No active instance client set");
     try {
-        const diagnostic = await assertPythonExceptionOnStderr(instance.getStream("stderr"), PYTHON_EXCEPTION_MARKER, undefined, {
-            instanceId: instance.id,
-            onRecord: record => HostUtils.acceptTempStderrRecord(record),
-        });
+        const diagnostic = await assertPythonExceptionOnStderr(await instance.getStream("stderr"), PYTHON_EXCEPTION_MARKER);
         assert.strictEqual(diagnostic.markerFound, true);
-    } catch (error) {
-        throw error;
     } finally {
-        try {
-            await this.attach(JSON.stringify(HostUtils.tempStderrSnapshots(instance.id)), "application/json");
-        } catch {
-            try { await this.attach("Temporary stderr diagnostics unavailable", "text/plain"); } catch { /* never mask assertion failure */ }
-        }
-        HostUtils.clearTempStderrCapture();
         this.resources.instance = undefined;
     }
 });
