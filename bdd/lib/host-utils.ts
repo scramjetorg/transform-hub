@@ -7,6 +7,7 @@ import { StringDecoder } from "string_decoder";
 import { memoryRegistry } from "../lib/memory-registry";
 import { resolvePublishedBin } from "./published-artifacts";
 import { publishedSourceEntry } from "./published-modules";
+import { createTempStderrCollector, createTempStderrLineAssembler, formatTempStderrRecord, TempStderrRecord } from "./python-exception-stderr";
 const { getOwnership } = require("./ownership.js");
 const { describeSthBinResolution, resolveSthBin } = require("../../scripts/lib/sth-bin.js");
 
@@ -52,8 +53,20 @@ const MAX_OUTPUT_BYTES = Number.isFinite(configuredMaxOutputBytes) && configured
     ? configuredMaxOutputBytes
     : 1024 * 1024;
 const ownership = getOwnership(process.env);
+const tempStderrCollector = createTempStderrCollector();
+const tempStderrAssembler = createTempStderrLineAssembler(record => HostUtils.acceptTempStderrRecord(record));
 
 export class HostUtils {
+    static acceptTempStderrRecord(record: TempStderrRecord): void {
+        try {
+            const formatted = formatTempStderrRecord(record);
+            if (!formatted) return;
+            try { process.stderr.write(formatted); } catch { /* sink failure does not affect collection */ }
+            try { tempStderrCollector.accept(record); } catch { /* best effort */ }
+        } catch { /* invalid or unavailable diagnostic data is omitted */ }
+    }
+    static tempStderrSnapshots(instanceId: string): readonly TempStderrRecord[] { try { return tempStderrCollector.snapshots(instanceId); } catch { return []; } }
+    static clearTempStderrCapture(): void { try { tempStderrAssembler.clear(); tempStderrCollector.clear(); } catch { /* best effort */ } }
     private static cleanupHandlersInstalled = false;
     private static hosts = new Set<ChildProcess>();
 
@@ -360,6 +373,7 @@ export class HostUtils {
             this.exitFinishedAt = undefined;
             this.stdoutTail = "";
             this.stderrTail = "";
+            tempStderrAssembler.clear();
 
             if (process.env.SCRAMJET_TEST_LOG) {
                 hub.stdout?.pipe(process.stdout);
@@ -375,6 +389,7 @@ export class HostUtils {
             };
             const stderrListener = (data: Buffer) => {
                 this.stderrTail = (this.stderrTail + data.toString()).slice(-MAX_OUTPUT_BYTES);
+                try { tempStderrAssembler.push(data); } catch { /* best effort */ }
             };
 
             let decodedData = "";
@@ -402,6 +417,7 @@ export class HostUtils {
             hub.stdout?.on("data", listener);
 
             this.host.on("exit", (code: number | null, signal: NodeJS.Signals | null) => {
+                try { tempStderrAssembler.clear(); } catch { /* best effort */ }
                 console.log("host process exited with code: ", code, " and signal: ", signal);
                 if (code !== 0 || signal) {
                     console.error("Host startup/lifecycle diagnostics", {
@@ -439,6 +455,9 @@ export class HostUtils {
                     code !== 0 && code === this.expectedExitCode) {
                     resolve(decodedData);
                 }
+            });
+            this.host.once("close", () => {
+                try { tempStderrAssembler.finish(); } catch { /* partial candidate is discarded */ }
             });
         });
     }

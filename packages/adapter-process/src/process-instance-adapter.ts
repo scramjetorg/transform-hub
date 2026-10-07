@@ -21,6 +21,66 @@ import path from "path";
 import { getRunnerEnvVariables, getRunnerTransportEnv } from "@scramjet/adapters-common";
 
 const CRASH_LOG_TAIL_BYTES = 4096;
+const TEMP_STDERR_PREFIX = "[pr1137-stderr-boundary] ";
+const TEMP_STDERR_COMMON = ["capture", "level", "boundary", "event", "pid", "seq", "wallMs", "monoMs", "instanceId", "outcome", "reason", "errorCode"];
+const TEMP_STDERR_PRODUCER_FIELDS = ["bytes", "chunks", "preAttachBytes", "postAttachBytes", "markerFound", "markerBeforeAttach", "markerAfterAttach", "forwardingAttached"];
+const TEMP_STDERR_STREAM_KEYS = new Set(["readableLength", "writableLength", "readableEnded", "writableEnded", "writableFinished", "writableNeedDrain", "destroyed"]);
+const TEMP_STDERR_ERROR_CODES = new Set(["none", "ECONNRESET", "EPIPE", "ERR_STREAM_PREMATURE_CLOSE", "ERR_STREAM_DESTROYED", "ERR_HTTP2_STREAM_CANCEL", "ERR_HTTP2_INVALID_STREAM", "ABORT_ERR", "other-error"]);
+const TEMP_STDERR_SIGNALS = new Set(["SIGTERM", "SIGKILL", "SIGINT", "SIGHUP", "SIGABRT", "SIGPIPE", "other-signal"]);
+
+function isTempStreamState(value: unknown): boolean {
+    if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+    const state = value as Record<string, unknown>;
+    return Object.keys(state).every((key) => TEMP_STDERR_STREAM_KEYS.has(key) && (typeof state[key] === "boolean" || (Number.isSafeInteger(state[key]) && Number(state[key]) >= 0)));
+}
+
+function relayTempProducerRecords(stderr: string, instanceId: string, expectedPid: number | undefined): void {
+    const lines = tailLog(stderr).split("\n");
+    if (!stderr.endsWith("\n")) lines.pop();
+    for (const line of lines) {
+        try {
+            const cleanLine = line.endsWith("\r") ? line.slice(0, -1) : line;
+            if (!cleanLine.startsWith(TEMP_STDERR_PREFIX) || Buffer.byteLength(cleanLine + "\n", "utf8") > 4096) continue;
+            const json = cleanLine.slice(TEMP_STDERR_PREFIX.length);
+            const value: unknown = JSON.parse(json);
+            if (!value || typeof value !== "object" || Array.isArray(value)) continue;
+            const record = value as Record<string, unknown>;
+            const keys = Object.keys(record);
+            const events = {
+                "forward-attached": { outcome: "pending", reason: "none", errorCode: "none", allowed: [...TEMP_STDERR_COMMON, ...TEMP_STDERR_PRODUCER_FIELDS, "sequenceId", "childPid"] },
+                "child-close-observed": { outcome: "fulfilled", reason: "child-close", errorCode: "none", allowed: [...TEMP_STDERR_COMMON, ...TEMP_STDERR_PRODUCER_FIELDS, "sequenceId", "childPid", "childExitCode", "signal"] },
+                "disconnect-start": { outcome: "pending", reason: "disconnect", errorCode: "none", allowed: [...TEMP_STDERR_COMMON, ...TEMP_STDERR_PRODUCER_FIELDS, "sequenceId", "childPid", "hardTeardown", "source", "target"] },
+                "disconnect-settled": { outcome: record.outcome, reason: "disconnect", errorCode: record.errorCode, allowed: [...TEMP_STDERR_COMMON, ...TEMP_STDERR_PRODUCER_FIELDS, "sequenceId", "childPid", "disconnectRejected", "source", "target"] }
+            } as Record<string, { outcome: unknown; reason: unknown; errorCode: unknown; allowed: string[] }>;
+            const event = typeof record.event === "string" ? events[record.event] : undefined;
+            if (!event || keys.some((key) => !event.allowed.includes(key)) || [...TEMP_STDERR_COMMON, ...TEMP_STDERR_PRODUCER_FIELDS].some((key) => !Object.prototype.hasOwnProperty.call(record, key))) continue;
+            if (record.capture !== "pr1137-stderr-boundary" || record.boundary !== "producer" || record.instanceId !== instanceId || record.pid !== expectedPid || !Number.isSafeInteger(record.pid) || Number(record.pid) <= 0) continue;
+            if (!Number.isSafeInteger(record.seq) || Number(record.seq) <= 0 || !Number.isFinite(record.wallMs) || Number(record.wallMs) < 0 || !Number.isFinite(record.monoMs) || Number(record.monoMs) < 0) continue;
+            if (record.outcome !== event.outcome || record.reason !== event.reason || record.errorCode !== event.errorCode || !TEMP_STDERR_ERROR_CODES.has(String(record.errorCode))) continue;
+            if (record.event === "disconnect-settled" && ((record.outcome === "fulfilled" && record.errorCode !== "none") || (record.outcome === "rejected" && record.errorCode === "none"))) continue;
+            if (record.level !== (record.outcome === "rejected" ? "WARN" : "DEBUG")) continue;
+            if (!["bytes", "chunks", "preAttachBytes", "postAttachBytes"].every((key) => Number.isSafeInteger(record[key]) && Number(record[key]) >= 0)) continue;
+            const partitionTotal = Number(record.preAttachBytes) + Number(record.postAttachBytes);
+            if (!Number.isSafeInteger(partitionTotal) || Number(record.bytes) !== partitionTotal) continue;
+            if (!["markerFound", "markerBeforeAttach", "markerAfterAttach", "forwardingAttached"].every((key) => typeof record[key] === "boolean") || record.markerFound !== (record.markerBeforeAttach || record.markerAfterAttach)) continue;
+            if (record.event === "forward-attached" && record.forwardingAttached !== true) continue;
+            if (record.sequenceId !== undefined && (typeof record.sequenceId !== "string" || !/^[A-Za-z0-9._:-]{1,128}$/.test(record.sequenceId))) continue;
+            if (record.childPid !== undefined && (!Number.isSafeInteger(record.childPid) || Number(record.childPid) <= 0)) continue;
+            if (record.childExitCode !== undefined && record.childExitCode !== null && !Number.isSafeInteger(record.childExitCode)) continue;
+            if (record.signal !== undefined && record.signal !== null && !TEMP_STDERR_SIGNALS.has(String(record.signal))) continue;
+            if (record.hardTeardown !== undefined && typeof record.hardTeardown !== "boolean") continue;
+            if (record.disconnectRejected !== undefined && record.disconnectRejected !== (record.outcome === "rejected")) continue;
+            if ((record.event === "child-close-observed") !== (record.childExitCode !== undefined && Object.prototype.hasOwnProperty.call(record, "signal"))) continue;
+            if ((record.event === "disconnect-start") !== (record.hardTeardown !== undefined)) continue;
+            if ((record.event === "disconnect-settled") !== (record.disconnectRejected !== undefined)) continue;
+            if ((record.source !== undefined && !isTempStreamState(record.source)) || (record.target !== undefined && !isTempStreamState(record.target))) continue;
+            const outputRecord: Record<string, unknown> = {};
+            for (const key of event.allowed) if (Object.prototype.hasOwnProperty.call(record, key)) outputRecord[key] = record[key];
+            const output = TEMP_STDERR_PREFIX + JSON.stringify(outputRecord) + "\n";
+            if (Buffer.byteLength(output, "utf8") <= 4096) process.stderr.write(output);
+        } catch { /* clipped/malformed diagnostic records are omitted */ }
+    }
+}
 
 function resolveRunnerBin(): string {
     const packageJsonPath = require.resolve("@scramjet/runner/package.json");
@@ -320,6 +380,8 @@ class ProcessInstanceAdapter implements ILifeCycleAdapterMain, ILifeCycleAdapter
         sequenceInfo: SequenceInfo
     ): Promise<void> {
         const [stdout = "", stderr = ""] = await this.getCrashLog();
+
+        relayTempProducerRecords(stderr, instanceId, this.runnerProcess?.pid);
 
         const stdoutTail = tailLog(stdout);
         const stderrTail = tailLog(stderr);
