@@ -76,6 +76,7 @@ export type OpRecord = {
     rx?: number;
     objectId: string;
     limits?: any;
+    manifestChange?: import("./runtime-manifest").ManifestChange;
 };
 
 import { LogLevel } from "./object-logger";

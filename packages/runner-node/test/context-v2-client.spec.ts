@@ -9,7 +9,7 @@ import { PassThrough } from "stream";
 
 import { ObjLogger } from "@scramjet/obj-logger";
 import { ClientUtilsCustomAgent } from "@scramjet/client-utils";
-import type { HubClient, SpaceClient } from "@scramjet/rest-api2";
+import type { HubClient, RestAPI2, SpaceClient } from "@scramjet/rest-api2";
 
 import { buildAppContext } from "../src/context";
 
@@ -226,6 +226,87 @@ test.serial("buildAppContext: hubClient uses hubTargetDomain, spaceClient uses s
         t.deepEqual(requests, [
             { apiBase: "http://hub.internal", method: "get", path: "api/v2/status" },
             { apiBase: "http://manager.space.scramjet.internal", method: "get", path: "api/v2/hubs" }
+        ]);
+    } finally {
+        ClientUtilsCustomAgent.prototype.request = original;
+        agent.destroy();
+    }
+});
+
+test.serial("buildAppContext HubClient exposes v2 instance and sequence manifest retrieval through the injected agent", async t => {
+    const requests: Array<{ apiBase: string; method: string; path: string }> = [];
+    const agent = makeBlockingAgent();
+    const original = ClientUtilsCustomAgent.prototype.request;
+    const instanceManifest: RestAPI2.InstanceManifestResponse = {
+        instanceId: "instance 1",
+        sequenceId: "sequence 1",
+        revision: "revision-1",
+        manifest: { input: { schema: { $ref: "#/input", "x-public": true } } },
+        sequence: { name: "named sequence", version: "1.0.0" }
+    };
+    const sequenceManifest: RestAPI2.SequenceManifestResponse = { sequenceId: "sequence 1", items: [instanceManifest] };
+    const absentInstanceManifest: RestAPI2.InstanceManifestResponse = {
+        instanceId: "instance without manifest",
+        sequenceId: "sequence 1",
+        revision: null,
+        manifest: null,
+        sequence: { name: "named sequence", version: "1.0.0" }
+    };
+
+    ClientUtilsCustomAgent.prototype.request = async function(method: string, path: string) {
+        requests.push({ apiBase: this.apiBase, method, path });
+        const unknownInstance = path.includes("/instances/unknown/");
+        const body = unknownInstance
+            ? { error: { code: "NOT_FOUND", message: "Instance unknown not found" } }
+            : path.includes("without%20manifest")
+              ? absentInstanceManifest
+              : path.includes("sequence-empty")
+                ? { sequenceId: "sequence-empty", items: [] }
+                : path.includes("/instances/")
+                  ? instanceManifest
+                  : sequenceManifest;
+
+        return {
+            status: unknownInstance ? 404 : 200,
+            headers: { forEach(callback: (value: string, key: string) => void) { callback("application/json", "content-type"); } },
+            text: async () => JSON.stringify(body)
+        } as Response;
+    };
+
+    try {
+        const { context } = buildAppContext({
+            bootConfig: { sequencePath: "/x", instanceId: "instance 1" },
+            monitorStream: new PassThrough(),
+            emitter: new EventEmitter(),
+            logger: new ObjLogger("manifest-client-test"),
+            hostClient: {
+                getApiBase: () => "http://hub.internal/api/v1",
+                getV2ApiBase: () => "http://hub.internal/api/v2",
+                getAgent: () => agent
+            } as any,
+            onKeepAliveIssued: () => undefined
+        });
+
+        const instanceResponse = await context.hubClient().instance("instance 1").manifest();
+        const sequenceResponse = await context.hubClient().sequence("sequence 1").manifest();
+        const absentResponse = await context.hubClient().instance("instance without manifest").manifest();
+        const emptySequenceResponse = await context.hubClient().sequence("sequence-empty").manifest();
+        const unknownInstanceResponse = await context.hubClient().instance("unknown").manifest();
+
+        t.is(instanceResponse.status, 200);
+        t.deepEqual(instanceResponse.body, instanceManifest);
+        t.is(sequenceResponse.status, 200);
+        t.deepEqual(sequenceResponse.body, sequenceManifest);
+        t.deepEqual(absentResponse.body, absentInstanceManifest);
+        t.deepEqual(emptySequenceResponse.body, { sequenceId: "sequence-empty", items: [] });
+        t.is(unknownInstanceResponse.status, 404);
+        t.deepEqual(unknownInstanceResponse.body, { error: { code: "NOT_FOUND", message: "Instance unknown not found" } });
+        t.deepEqual(requests, [
+            { apiBase: "http://hub.internal", method: "get", path: "api/v2/instances/instance%201/manifest" },
+            { apiBase: "http://hub.internal", method: "get", path: "api/v2/sequences/sequence%201/manifest" },
+            { apiBase: "http://hub.internal", method: "get", path: "api/v2/instances/instance%20without%20manifest/manifest" },
+            { apiBase: "http://hub.internal", method: "get", path: "api/v2/sequences/sequence-empty/manifest" },
+            { apiBase: "http://hub.internal", method: "get", path: "api/v2/instances/unknown/manifest" }
         ]);
     } finally {
         ClientUtilsCustomAgent.prototype.request = original;

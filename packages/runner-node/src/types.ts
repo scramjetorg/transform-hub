@@ -2,7 +2,7 @@ import type { EventEmitter } from "events";
 import type { Writable } from "stream";
 
 import type { ObjLogger } from "@scramjet/obj-logger";
-import { AppConfig, AppError } from "@scramjet/runtime-types";
+import { AppConfig, AppError, ManifestDeclaration, ManifestReceipt } from "@scramjet/runtime-types";
 import type { APIExpose } from "@scramjet/api-types";
 import type { EventMessageData, SetMessageData, StopSequenceMessageData, StorageUpdateMessageData, SequenceInfo } from "@scramjet/runtime-types";
 
@@ -74,11 +74,16 @@ export interface BuildAppContextDeps {
     logger: ObjLogger;
     hostClient: HostClient;
     onKeepAliveIssued: () => void;
+    declareManifest?: (declaration: unknown) => Promise<ManifestReceipt>;
 }
+
+export type ManifestCapableAPIExpose = APIExpose & {
+    declare(declaration: ManifestDeclaration): Promise<ManifestReceipt>;
+};
 
 export interface BuildAppContextResult {
     context: RunnerAppContext<AppConfig, unknown, HubClient, SpaceClient> & LifecycleContext;
-    api: APIExpose;
+    api: ManifestCapableAPIExpose;
     localStorage: LocalStorageAgent;
 }
 

@@ -11,10 +11,13 @@ from __future__ import annotations
 import inspect
 import os
 import tempfile
+from dataclasses import dataclass
 from collections.abc import Callable
 from typing import Any
+from urllib.parse import quote
 
 from runner_python.boot_config import Verser2RuntimeConfig
+from runner_python.defaults import INSTANCE_MANIFEST_PATH, SEQUENCE_MANIFEST_PATH
 
 
 def _wrap_close_with_cleanup(handle: Any, cleanup: Callable[[], None]) -> Any:
@@ -148,6 +151,57 @@ class PythonSpaceClient(PythonHubClient):
     @property
     def api_base(self) -> str:
         return f"http://{self._target_domain}/api/v2"
+
+
+@dataclass(slots=True)
+class PythonAPIResponse:
+    """JSON response envelope matching the JavaScript REST client surface."""
+
+    status: int
+    headers: dict[str, str]
+    body: Any
+    request_id: str | None = None
+
+
+class PythonManifestTargetClient:
+    def __init__(self, client: PythonHubClient, path: str) -> None:
+        self._client = client
+        self._path = path
+
+    async def manifest(self) -> PythonAPIResponse:
+        response = await self._client.get(self._path)
+        body = await response.json()
+        return PythonAPIResponse(
+            status=response.status,
+            headers=dict(response.headers),
+            body=body,
+            request_id=getattr(response, "request_id", None),
+        )
+
+
+class PythonManifestHubClient(PythonHubClient):
+    """Read-only v2 manifest views over an existing connected Broker."""
+
+    @property
+    def api_base(self) -> str:
+        return f"http://{self._target_domain}/api/v2"
+
+    def instance(self, instance_id: str) -> PythonManifestTargetClient:
+        path = INSTANCE_MANIFEST_PATH.format(instance_id=quote(instance_id, safe=""))
+        return PythonManifestTargetClient(self, path)
+
+    def sequence(self, sequence_id: str) -> PythonManifestTargetClient:
+        path = SEQUENCE_MANIFEST_PATH.format(sequence_id=quote(sequence_id, safe=""))
+        return PythonManifestTargetClient(self, path)
+
+
+def create_python_hub_v2_client(
+    hub_client: PythonHubClient | None,
+) -> PythonManifestHubClient | None:
+    """Create a v2 view without opening another Broker connection."""
+    if hub_client is None:
+        return None
+    return PythonManifestHubClient(hub_client._broker, hub_client._target_domain)
 
 
 class PythonSequenceApiExposure:

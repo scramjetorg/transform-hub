@@ -46,7 +46,7 @@ test("observer stays false when only non-terminal frames are seen", t => {
 test("observer is non-destructive: src can still be piped/consumed elsewhere", t => {
     const src = new PassThrough();
 
-    observeChildLifecycleFrames(src);
+    const observer = observeChildLifecycleFrames(src);
 
     const sink: Buffer[] = [];
 
@@ -58,6 +58,8 @@ test("observer is non-destructive: src can still be piped/consumed elsewhere", t
     const collected = Buffer.concat(sink).toString("utf8");
 
     t.is(collected, "hello\r\n");
+    observer.dispose();
+    t.is(src.listenerCount("data"), 1);
 });
 
 test("observer tolerates malformed JSON without throwing", t => {
@@ -69,4 +71,78 @@ test("observer tolerates malformed JSON without throwing", t => {
     src.write(`[${RunnerMessageCode.SEQUENCE_STOPPED},{}]\r\n`);
 
     t.true(observer.observed());
+});
+
+test("observer snapshots READY, completion and STOPPED with STOPPED taking precedence", async t => {
+    const src = new PassThrough();
+    const observer = observeChildLifecycleFrames(src);
+    const ended = new Promise<void>(resolve => src.once("end", resolve));
+
+    src.write(`[${RunnerMessageCode.READY},{"state":"ready"}]\r\n`);
+    src.write(`[${RunnerMessageCode.SEQUENCE_COMPLETED},{}]`);
+    src.write("\r\n");
+    src.write(`[${RunnerMessageCode.SEQUENCE_STOPPED},{"sequenceError":{}}]\r\n`);
+    src.end();
+    await ended;
+
+    t.true(observer.observed());
+    t.deepEqual(observer.snapshot(), { ready: true, completed: true, stopped: true, valid: true });
+    observer.dispose();
+    t.is(src.listenerCount("data"), 0);
+});
+
+test("READY errored is not readiness and remains structurally valid", async t => {
+    const src = new PassThrough();
+    const observer = observeChildLifecycleFrames(src);
+    const ended = new Promise<void>(resolve => src.once("end", resolve));
+
+    src.end(`[${RunnerMessageCode.READY},{"state":"errored"}]\r\n`);
+    await ended;
+
+    t.deepEqual(observer.snapshot(), { ready: false, completed: false, stopped: false, valid: true });
+    observer.dispose();
+});
+
+test("malformed, oversized and trailing partial monitoring data invalidate grace classification only", async t => {
+    const malformed = new PassThrough();
+    const malformedObserver = observeChildLifecycleFrames(malformed);
+    const malformedEnded = new Promise<void>(resolve => malformed.once("end", resolve));
+    malformed.end("[not-json,{}]\r\n");
+    await malformedEnded;
+    t.false(malformedObserver.snapshot().valid);
+    t.false(malformedObserver.observed());
+    malformedObserver.dispose();
+
+    const oversized = new PassThrough();
+    const oversizedObserver = observeChildLifecycleFrames(oversized);
+    const oversizedEnded = new Promise<void>(resolve => oversized.once("end", resolve));
+    oversized.end(`${"x".repeat(64 * 1024 + 1)}\r\n`);
+    await oversizedEnded;
+    t.false(oversizedObserver.snapshot().valid);
+    oversizedObserver.dispose();
+
+    const partial = new PassThrough();
+    const partialObserver = observeChildLifecycleFrames(partial);
+    const partialEnded = new Promise<void>(resolve => partial.once("end", resolve));
+    partial.end(`[${RunnerMessageCode.READY},{"state":"ready"}]`);
+    await partialEnded;
+    t.false(partialObserver.snapshot().valid);
+    t.false(partialObserver.snapshot().ready);
+    partialObserver.dispose();
+});
+
+test("byte-overlimit multibyte terminal frame still preserves legacy observed suppression", async t => {
+    const src = new PassThrough();
+    const observer = observeChildLifecycleFrames(src);
+    const ended = new Promise<void>(resolve => src.once("end", resolve));
+    const frame = `[${RunnerMessageCode.SEQUENCE_STOPPED},{"detail":"${"é".repeat(33000)}"}]\r\n`;
+
+    t.true(frame.length < 64 * 1024);
+    t.true(Buffer.byteLength(frame) > 64 * 1024);
+    src.end(frame);
+    await ended;
+
+    t.true(observer.observed());
+    t.false(observer.snapshot().valid);
+    observer.dispose();
 });

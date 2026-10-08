@@ -18,7 +18,10 @@ import {
     StopSequenceMessageData,
     WritableStream,
     RunnerConnectInfo,
-    IStorageAdapter
+    IStorageAdapter,
+    InstanceManifestResponse,
+    ManifestDeclareRequest,
+    ManifestDeclareResult
 } from "@scramjet/runtime-types";
 import { APIRoute, STHConfiguration, STHRestAPI } from "@scramjet/api-types";
 import { EncodedMessage, HandshakeAcknowledgeMessage, ICommunicationHandler, MessageDataType, MonitoringMessageData } from "./types/from-types";
@@ -42,6 +45,8 @@ import { InstancesStore } from "./instance-store";
 import { InstanceAPI } from "./api/instance-api";
 import { InstanceAPIV2 } from "./api/instance-api-v2";
 import { CSIEvents, ICSI } from "./types";
+import { ManifestPublicationError } from "./instance-store";
+import { ManifestDeclareRequestSchema } from "@scramjet/rest-api2";
 import { createRunnerBrokerRpcTransport, Verser2RunnerBroker, Verser2RunnerTransport } from "./runner-transport";
 
 /**
@@ -231,7 +236,8 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
         private adapter: STHConfiguration["runtimeAdapter"] = sthConfig.runtimeAdapter,
         private instanceStore: InstancesStore,
         localStorageAdapter: IStorageAdapter,
-        private runnerBrokerProvider?: () => Verser2RunnerBroker | undefined
+        private runnerBrokerProvider?: () => Verser2RunnerBroker | undefined,
+        private ownedCompletion?: Promise<number>
     ) {
         super();
         this.instanceStore = instanceStore;
@@ -295,6 +301,10 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
             status: this.status,
             terminated: this.terminated
         };
+    }
+
+    getManifest(): InstanceManifestResponse | undefined {
+        return this.instanceStore.getManifest(this);
     }
 
     async set(payload: SetMessageData) {
@@ -454,7 +464,7 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
 
         this._instanceAdapter.logger.pipe(this.logger, { end: false });
 
-        this.endOfSequence = this._instanceAdapter.waitUntilExit(undefined, this.id, this.sequence);
+        this.endOfSequence = this.ownedCompletion || this._instanceAdapter.waitUntilExit(undefined, this.id, this.sequence);
 
         // @todo this also is moved to CSIDispatcher in entirety
         const instanceMain = async () => {
@@ -723,6 +733,8 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
             this.localEmitter.emit(event.eventName, event);
         });
 
+        this.registerManifestDeclarationHandler();
+
         // Handle storage updates FROM the runner so setItem/getItem
         // roundtrips complete.  When the runner writes STORAGE_UPDATE
         // on the monitoring channel, apply the change locally and
@@ -736,6 +748,49 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
         });
 
         this.upStreams[CC.MONITORING].resume();
+    }
+
+    private registerManifestDeclarationHandler(): void {
+        this.communicationHandler.addMonitoringHandler(RunnerMessageCode.MANIFEST_DECLARE, (message) => this.handleManifestDeclaration(message));
+    }
+
+    private async handleManifestDeclaration(message: EncodedMessage<RunnerMessageCode.MANIFEST_DECLARE>): Promise<void> {
+        const payload = message[1] as Partial<ManifestDeclareRequest> | null | undefined;
+        const requestId = typeof payload?.requestId === "string" ? payload.requestId : "";
+        const parsed = ManifestDeclareRequestSchema.safeParse(payload);
+        let result: ManifestDeclareResult;
+
+        if (!parsed.success) {
+            const issue = parsed.error.issues[0];
+            const issuePath = issue?.path[0] === "declaration" && issue.path[1] === "declaration" ? issue.path.slice(1) : issue?.path;
+            result = {
+                requestId,
+                accepted: false,
+                error: {
+                    code: "INVALID_MANIFEST",
+                    message: issue?.message || "Invalid manifest declaration",
+                    ...(issuePath?.length ? { path: issuePath.join(".") } : {})
+                }
+            };
+        } else {
+            try {
+                result = {
+                    requestId: parsed.data.requestId,
+                    accepted: true,
+                    receipt: this.instanceStore.publishManifest(this, parsed.data.declaration)
+                };
+            } catch (error) {
+                const code = error instanceof ManifestPublicationError ? error.code : "MANIFEST_PUBLICATION_FAILED";
+                result = {
+                    requestId: parsed.data.requestId,
+                    accepted: false,
+                    error: { code, message: error instanceof ManifestPublicationError ? error.message : "Manifest declaration could not be published" }
+                };
+            }
+        }
+
+        this.logger.debug("Runtime manifest declaration handled", { instanceId: this.id, accepted: result.accepted, code: result.accepted ? undefined : result.error.code });
+        await this.communicationHandler.sendControlMessage(RunnerMessageCode.MANIFEST_RESULT, result);
     }
 
     async applyUpdate(key: string, value: string | null): Promise<void> {

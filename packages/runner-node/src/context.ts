@@ -230,6 +230,9 @@ export function buildAppContext(deps: BuildAppContextDeps): BuildAppContextResul
     const appConfig: AppConfig = bootConfig.appConfig ?? {};
     const instanceId = bootConfig.instanceId;
 
+    const declareManifest = deps.declareManifest ?? (() => Promise.reject(new Error("Manifest declaration transport is unavailable")));
+    const apiWithManifest = Object.assign(api, { declare: declareManifest });
+
     const context = new RunnerAppContext<AppConfig, unknown, typeof v2Hub, typeof v2Space>(
         appConfig,
         monitorStream,
@@ -241,7 +244,7 @@ export function buildAppContext(deps: BuildAppContextDeps): BuildAppContextResul
         v2Space,
         instanceId,
         logLevel,
-        api,
+        apiWithManifest,
         localStorage,
         logger
     ) as BuildAppContextResult["context"];
@@ -249,5 +252,5 @@ export function buildAppContext(deps: BuildAppContextDeps): BuildAppContextResul
 
     emitter.on("error", (e) => logger.error("Sequence emitted an error event", e));
 
-    return { context, api, localStorage };
+    return { context, api: apiWithManifest, localStorage };
 }

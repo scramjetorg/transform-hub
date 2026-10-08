@@ -3,13 +3,13 @@ import { assertDockerPrerequisite, assertMinioPrerequisite, createScenarioIsolat
 import { CustomWorld } from "../step-definitions/world";
 import { strict as assert } from "assert";
 import { randomBytes, randomUUID } from "crypto";
-import { createRunnerVerser2TransportFixture } from "../lib/runner-verser2-transport-fixture";
 
 Before(function(this: CustomWorld) {
     this.scenarioIsolation = createScenarioIsolation(this.scenarioLifecycle);
 });
 
 Before({ tags: "@warm-runner-verser2-lifecycle" }, async function(this: CustomWorld) {
+    const { createRunnerVerser2TransportFixture } = require("../lib/runner-verser2-transport-fixture") as typeof import("../lib/runner-verser2-transport-fixture");
     const isolation = this.scenarioIsolation;
     assert.ok(isolation, "ScenarioIsolation must be installed before runner transport warm-up");
     const suffix = randomBytes(8).toString("hex");

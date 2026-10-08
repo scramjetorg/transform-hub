@@ -32,7 +32,14 @@ _add_local_packages()
 from runner_python.app_context import AppContext
 from runner_python.boot_config import load_boot_config
 from runner_python.control_codec import ControlFrameDecoder
-from runner_python.control_loop import EVENT, HardKillSignal, control_loop
+from runner_python.control_loop import (
+    EVENT,
+    HardKillSignal,
+    StartupControlReader,
+    _dispatch_kill,
+    control_loop,
+    run_initializer_with_control,
+)
 from runner_python.fd_streams import FdStreams, open_fd_streams
 from runner_python.handshake import MONITORING, PING, READY, perform_handshake
 from runner_python.heartbeat import run_heartbeat
@@ -40,6 +47,7 @@ from runner_python.host_channels import HostChannels, connect_host_channels
 from runner_python.input_stream import is_ndjson_content_type
 from runner_python.lifecycle import perform_shutdown
 from runner_python.monitoring_codec import MonitoringWriter
+from runner_python.manifest import ManifestDeclarationClient, ManifestSequenceAPI
 from runner_python.output_stream import PANG, forward_output_stream
 from runner_python.sequence_loader import (
     SequenceLoadError,
@@ -59,6 +67,7 @@ from runner_python.verser2_runtime import (
     PythonHubClient,
     PythonSequenceApiExposure,
     create_python_hub_client,
+    create_python_hub_v2_client,
     create_python_space_client,
     python_rpc_url,
     start_python_sequence_guest,
@@ -122,6 +131,9 @@ class LiveControlDecoder:
 
     def readline_crlf(self) -> bytes:
         return self._streams.control_in.readline_crlf()
+
+    async def readline_crlf_async(self) -> bytes:
+        return await self._streams.control_in.readline_crlf_async()
 
 
 class DeferredMonitoringWriter:
@@ -310,8 +322,9 @@ def _build_sequence_context(
     log_level: str,
     hub_client: PythonHubClient | None = None,
     space_client: Any | None = None,
-    api_exposure: PythonSequenceApiExposure | None = None,
+    api_exposure: Any | None = None,
     instance_id: str = "",
+    hub_client_v2: Any | None = None,
 ) -> AppContext:
     app_context = AppContext()
     app_context.logger = runtime_logger
@@ -323,6 +336,7 @@ def _build_sequence_context(
     app_context.space = space_client
     app_context.api = api_exposure
     app_context.instance_id = instance_id
+    app_context._hub_client_v2 = hub_client_v2
 
     def emit(event_name: str, message: Any = "") -> AppContext:
         monitoring_writer.write_frame(
@@ -348,6 +362,52 @@ def _build_sequence_context(
     return app_context
 
 
+def _build_sequence_api(
+    manifest_api: ManifestDeclarationClient,
+    verser2_runtime: Any,
+    expose_path: str | None,
+) -> tuple[PythonSequenceApiExposure | None, ManifestSequenceAPI]:
+    exposure = (
+        PythonSequenceApiExposure()
+        if expose_path and verser2_runtime
+        else None
+    )
+    return exposure, ManifestSequenceAPI(manifest_api, exposure)
+
+
+async def _initialize_before_ready(
+    reader: StartupControlReader,
+    initializer: Any,
+    app_context: AppContext,
+) -> bool:
+    try:
+        await run_initializer_with_control(reader, initializer, app_context)
+    except HardKillSignal:
+        return False
+    if reader.terminal_error is not None:
+        if reader.kill_received:
+            await _dispatch_kill(app_context)
+            return False
+        raise reader.terminal_error
+    return True
+
+
+async def _wait_for_kill_after_sequence_failure(
+    reader: StartupControlReader, control_task: asyncio.Task[None], app_context: Any
+) -> int | None:
+    if not reader.kill_received:
+        return None
+    try:
+        await control_task
+    except HardKillSignal:
+        return 137
+    control_error = control_task.exception()
+    if control_error is not None:
+        raise control_error
+    await _dispatch_kill(app_context)
+    return 137
+
+
 def _build_control_context(
     shared_context: AppContext, control_logger: logging.Logger
 ) -> AppContext:
@@ -355,6 +415,8 @@ def _build_control_context(
     control_context._emitter = shared_context._emitter
     control_context.config = shared_context.config
     control_context._app_config = shared_context._app_config
+    control_context._manifest_api = shared_context._manifest_api
+    control_context._hub_client_v2 = shared_context._hub_client_v2
     control_context.logger = control_logger
     control_context._sequence_logger = shared_context.logger
     control_context._stop_handlers = []
@@ -389,6 +451,20 @@ async def _close_writer(writer: asyncio.StreamWriter | None) -> None:
         await writer.wait_closed()
     except Exception:
         pass
+
+
+async def _start_sequence_guest_and_ready_payload(
+    verser2_runtime: Any,
+    expose_path: str | None,
+    api_exposure: PythonSequenceApiExposure | None,
+) -> tuple[Any | None, dict[str, Any]]:
+    guest = await start_python_sequence_guest(verser2_runtime, api_exposure)
+    ready_payload: dict[str, Any] = {"state": "ready"}
+    if expose_path and guest is not None:
+        ready_payload["exposePath"] = expose_path
+        if verser2_runtime is not None:
+            ready_payload["rpcUrl"] = python_rpc_url(verser2_runtime.runnerRouteDomain)
+    return guest, ready_payload
 
 
 async def _run_sequence_output(
@@ -468,9 +544,11 @@ async def main() -> int:
     sequence: SequenceModule | None = None
     heartbeat_task: asyncio.Task[None] | None = None
     control_task: asyncio.Task[None] | None = None
+    control_reader: StartupControlReader | None = None
     sequence_task: asyncio.Task[None] | None = None
     terminal_task: asyncio.Task[None] | None = None
     hub_client: PythonHubClient | None = None
+    hub_client_v2: Any | None = None
     space_client: Any | None = None
     sequence_guest: Any | None = None
 
@@ -521,6 +599,7 @@ async def main() -> int:
 
         try:
             hub_client = await create_python_hub_client(boot_config.verser2Runtime)
+            hub_client_v2 = create_python_hub_v2_client(hub_client)
             space_client = create_python_space_client(
                 hub_client, boot_config.verser2Runtime
             )
@@ -532,10 +611,9 @@ async def main() -> int:
             _write_boot_error(f"Verser2 runtime error: {exc}")
             return 2
 
-        api_exposure = (
-            PythonSequenceApiExposure()
-            if boot_config.exposePath and boot_config.verser2Runtime
-            else None
+        manifest_api = ManifestDeclarationClient(monitoring_writer)
+        api_exposure, sequence_api = _build_sequence_api(
+            manifest_api, boot_config.verser2Runtime, boot_config.exposePath
         )
         sequence_context = _build_sequence_context(
             monitoring_writer,
@@ -544,14 +622,18 @@ async def main() -> int:
             handshake_result.logLevel,
             hub_client,
             space_client,
-            api_exposure,
+            sequence_api,
             instance_id=boot_config.instanceId,
+            hub_client_v2=hub_client_v2,
         )
+        sequence_context._manifest_api = manifest_api
         control_context = _build_control_context(sequence_context, control_logger)
         terminator = RuntimeTerminator(sequence_context, monitoring_writer)
         sequence_context.bind_terminator(
             lambda payload: asyncio.create_task(terminator.stop(payload))
         )
+        control_reader = StartupControlReader(control_decoder, manifest_api)
+        control_reader.start()
         input_stream = build_input_stream(
             input_reader, get_input_content_type(sequence)
         )
@@ -574,23 +656,30 @@ async def main() -> int:
             )
             return 1
 
-        if initializer is not None:
-            try:
-                await maybe_await(initializer(sequence_context))
-            except Exception as exc:
-                monitoring_writer.write_frame(
-                    READY,
-                    {
-                        "state": "errored",
-                        "diagnostic": {
-                            "code": "INITIALIZE_REJECTED",
-                            "phase": "initialize",
-                            "message": str(exc),
-                        },
+        async def run_initializer() -> Any:
+            if initializer is None:
+                return None
+            return await maybe_await(initializer(sequence_context))
+
+        try:
+            if not await _initialize_before_ready(
+                control_reader, run_initializer, sequence_context
+            ):
+                return 137
+        except Exception as exc:
+            monitoring_writer.write_frame(
+                READY,
+                {
+                    "state": "errored",
+                    "diagnostic": {
+                        "code": "INITIALIZE_REJECTED",
+                        "phase": "initialize",
+                        "message": str(exc),
                     },
-                )
-                _log_sth_runtime_error("initialize", boot_config, exc)
-                return 1
+                },
+            )
+            _log_sth_runtime_error("initialize", boot_config, exc)
+            return 1
 
         monitoring_writer.write_frame(PANG, {"requires": "", "contentType": ""})
 
@@ -616,40 +705,19 @@ async def main() -> int:
             monitoring_writer.write_frame(PANG, payload)
 
         try:
-            sequence_guest = await start_python_sequence_guest(
-                boot_config.verser2Runtime, api_exposure
+            sequence_guest, ready_payload = await _start_sequence_guest_and_ready_payload(
+                boot_config.verser2Runtime, boot_config.exposePath, api_exposure
             )
         except Exception as exc:
             _write_boot_error(f"Verser2 sequence API Guest error: {exc}")
             return 2
 
-        monitoring_writer.write_frame(
-            READY,
-            {
-                "state": "ready",
-                **(
-                    {"exposePath": boot_config.exposePath}
-                    if boot_config.exposePath and sequence_guest is not None
-                    else {}
-                ),
-                **(
-                    {
-                        "rpcUrl": python_rpc_url(
-                            boot_config.verser2Runtime.runnerRouteDomain
-                        )
-                    }
-                    if boot_config.exposePath
-                    and sequence_guest is not None
-                    and boot_config.verser2Runtime
-                    else {}
-                ),
-            },
-        )
+        monitoring_writer.write_frame(READY, ready_payload)
 
         handshake_writer.flush()
 
         control_task = asyncio.create_task(
-            control_loop(control_decoder, control_context, terminator)
+            control_loop(control_reader, control_context, terminator)
         )
         heartbeat_task = asyncio.create_task(
             run_heartbeat(monitoring_writer, sequence_context)
@@ -687,6 +755,12 @@ async def main() -> int:
             if sequence_task in done:
                 sequence_exception = sequence_task.exception()
                 if sequence_exception is not None:
+                    if control_reader is not None and control_task is not None:
+                        kill_exit_code = await _wait_for_kill_after_sequence_failure(
+                            control_reader, control_task, control_context
+                        )
+                        if kill_exit_code is not None:
+                            return kill_exit_code
                     with contextlib.suppress(Exception):
                         sys.stdout.flush()
                     with contextlib.suppress(Exception):
@@ -715,6 +789,10 @@ async def main() -> int:
     except HardKillSignal:
         return 137
     finally:
+        if control_reader is not None:
+            await control_reader.close()
+        with contextlib.suppress(Exception):
+            streams.control_in.close()
         if sequence_task is not None and not sequence_task.done():
             sequence_task.cancel()
             try:

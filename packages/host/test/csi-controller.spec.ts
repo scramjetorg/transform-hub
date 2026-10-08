@@ -1,4 +1,5 @@
 import test from "ava";
+import { augment } from "@scramjet/adapter-process";
 import { CSIController } from "../src/lib/csi-controller";
 import { CommunicationHandler } from "@scramjet/model";
 import { CommunicationChannel as CC, InstanceStatus, RunnerMessageCode } from "@scramjet/symbols";
@@ -8,6 +9,122 @@ import { ReadableStream, WritableStream } from "@scramjet/runtime-types";
 import { EncodedSerializedControlMessage, EncodedSerializedMonitoringMessage } from "@scramjet/api-types";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { CommonLogsPipe } from "../src/lib/common-logs-pipe";
+import { InstancesStore } from "../src/lib/instance-store";
+
+function deferredValue<T>() {
+    let resolve!: (value: T) => void;
+    const promise = new Promise<T>(res => { resolve = res; });
+    return { promise, resolve };
+}
+
+test.serial("CSI consumes owned completion without observer polling and retains fallback waiter arguments", async t => {
+    const prototype = augment().LifeCycleAdapterClass.prototype;
+    const originalWait = Object.getOwnPropertyDescriptor(prototype, "waitUntilExit");
+    const calls: unknown[][] = [];
+    Object.defineProperty(prototype, "waitUntilExit", {
+        configurable: true,
+        writable: true,
+        value: function(this: object, ...args: unknown[]) {
+            const completion = Promise.resolve(0);
+            calls.push([this, ...args, completion]);
+            return completion;
+        }
+    });
+    t.teardown(() => {
+        if (originalWait) Object.defineProperty(prototype, "waitUntilExit", originalWait);
+        else delete (prototype as any).waitUntilExit;
+    });
+
+    const owned = Promise.resolve(0);
+    const config: any = {
+        runtimeAdapter: "process", docker: { runner: { maxMem: 128 } },
+        timings: { instanceLifetimeExtensionDelay: 0, instanceAdapterExitDelay: 0 }, host: { apiBase: "/api/v1" }
+    };
+    const storage: any = { getAllItems: async () => ({}) };
+    const communication: any = { sendControlMessage: async () => undefined, addMonitoringHandler: () => undefined };
+    const make = (id: string, completion?: Promise<number>) => new CSIController({
+        id,
+        sequenceInfo: { id: "sequence", name: "sequence", config: {}, location: "local" },
+        payload: { system: {}, appConfig: {}, args: [], limits: {} }
+    } as any, communication, config, {} as any, "process", new InstancesStore(), storage, undefined, completion);
+
+    const ownedController = make("owned-controller", owned);
+    ownedController.startInstance();
+    t.is((ownedController as any).endOfSequence, owned);
+    const ownedResult = await ownedController.instancePromise;
+    t.is(ownedResult?.exitcode, 0);
+    t.is(ownedResult?.status, InstanceStatus.COMPLETED);
+    t.deepEqual(calls, [], "owned completion must not start a second adapter waiter");
+
+    const fallback = make("fallback-controller");
+    fallback.startInstance();
+    t.is(calls.length, 1);
+    t.is(calls[0]?.[1], undefined);
+    t.is(calls[0]?.[2], "fallback-controller");
+    t.is((fallback as any).endOfSequence, calls[0]?.[4]);
+    await fallback.instancePromise;
+
+    const nonzero = make("nonzero-controller", Promise.resolve(7));
+    nonzero.startInstance();
+    const nonzeroResult = await nonzero.instancePromise;
+    t.is(nonzeroResult?.exitcode, 7);
+    t.is(nonzeroResult?.status, InstanceStatus.ERRORED);
+    t.is(calls.length, 1, "nonzero owned completion must not start observer polling");
+
+    ownedController.logger.end?.();
+    fallback.logger.end?.();
+    nonzero.logger.end?.();
+});
+
+test.serial("CSI reconnect retains pending owned completion without starting another adapter waiter", async t => {
+    const prototype = augment().LifeCycleAdapterClass.prototype;
+    const originalWait = Object.getOwnPropertyDescriptor(prototype, "waitUntilExit");
+    const waits: unknown[][] = [];
+    Object.defineProperty(prototype, "waitUntilExit", {
+        configurable: true,
+        writable: true,
+        value: function(this: object, ...args: unknown[]) {
+            waits.push([this, ...args]);
+            throw new Error("owned completion must suppress observer polling");
+        }
+    });
+    t.teardown(() => {
+        if (originalWait) Object.defineProperty(prototype, "waitUntilExit", originalWait);
+        else delete (prototype as any).waitUntilExit;
+    });
+
+    let resolveCompletion!: (code: number) => void;
+    const completion = new Promise<number>(resolve => { resolveCompletion = resolve; });
+    const csi = new CSIController({
+        id: "reconnect-owned",
+        sequenceInfo: { id: "sequence", name: "sequence", config: {}, location: "local" },
+        payload: { system: {}, appConfig: {}, args: [], limits: {} }
+    } as any, { sendControlMessage: async () => undefined, addMonitoringHandler: () => undefined } as any, {
+        runtimeAdapter: "process", docker: { runner: { maxMem: 128 } },
+        timings: { instanceLifetimeExtensionDelay: 0, instanceAdapterExitDelay: 0 }, host: { apiBase: "/api/v1" }
+    } as any, {} as any, "process", new InstancesStore(), { getAllItems: async () => ({}) } as any, undefined, completion);
+
+    csi.startInstance();
+    const ownedEnd = csi.endOfSequence;
+    const hookupEntered = deferredValue<void>();
+    const order: string[] = [];
+    (csi as any).handleInstanceDisconnect = async () => { order.push("disconnect"); };
+    (csi as any).hookupStreams = () => { order.push("hookup"); hookupEntered.resolve(); };
+    (csi as any).createInstanceAPIRouter = () => { order.push("router"); };
+
+    const reconnect = csi.handleInstanceReconnect(Array.from({ length: 9 }, () => new PassThrough()) as any);
+    await hookupEntered.promise;
+    t.is(csi.endOfSequence, ownedEnd);
+    t.deepEqual(order, ["disconnect", "hookup", "router"]);
+    t.deepEqual(waits, []);
+    csi.emit("pang", {} as any);
+    await reconnect;
+    resolveCompletion(0);
+    const result = await csi.instancePromise;
+    t.is(result?.exitcode, 0);
+    t.is(waits.length, 0);
+    csi.logger.end?.();
+});
 
 function createLogLifecycleCsi(appConfig: Record<string, unknown> = {}) {
     const communication = {
@@ -210,6 +327,71 @@ test("PING dispatcher establishment is committed before PONG is written", async 
     ] as any);
 
     t.deepEqual(order, ["dispatcher", "pong"]);
+});
+
+test("CSI registers correlated manifest requests, commits before replying, and preserves state on rejection", async t => {
+    const controls: Array<[RunnerMessageCode, unknown]> = [];
+    let manifestHandler: ((message: any) => Promise<void>) | undefined;
+    const store = new InstancesStore();
+    const communication = {
+        logger: { trace: () => undefined },
+        addMonitoringHandler: (code: RunnerMessageCode, handler: (message: any) => Promise<void>) => {
+            if (code === RunnerMessageCode.MANIFEST_DECLARE) manifestHandler = handler;
+            return communication;
+        },
+        sendControlMessage: async (code: RunnerMessageCode, payload: unknown) => {
+            controls.push([code, payload]);
+        }
+    };
+    const config: any = {
+        runtimeAdapter: "process",
+        docker: { runner: { maxMem: 128 } },
+        timings: { instanceLifetimeExtensionDelay: 0 },
+        host: { apiBase: "/api/v1" }
+    };
+    const createCsi = () => new CSIController({
+        id: "manifest-instance",
+        sequenceInfo: { id: "manifest-sequence", name: "manifest-sequence", config: { name: "pkg", version: "1", description: "public" }, location: "local" },
+        payload: { system: {}, appConfig: {}, args: [], limits: {} }
+    } as any, communication as any, config, {} as any, "process", store, { getAllItems: async () => ({}) } as any);
+    const csi = createCsi();
+    store.set(csi.id, csi);
+    (csi as any).registerManifestDeclarationHandler();
+    t.truthy(manifestHandler);
+
+    await manifestHandler!([RunnerMessageCode.MANIFEST_DECLARE, {
+        requestId: "request-1",
+        declaration: { output: { schema: { type: "object", "x-extension": [1, 2] } } }
+    }]);
+    const accepted = controls[0]?.[1] as any;
+    t.is(controls[0]?.[0], RunnerMessageCode.MANIFEST_RESULT);
+    t.is(accepted.requestId, "request-1");
+    t.true(accepted.accepted);
+    t.is(accepted.receipt.instanceId, csi.id);
+    t.is(accepted.receipt.sequenceId, "manifest-sequence");
+    t.deepEqual(store.getManifest(csi)?.manifest, { output: { schema: { type: "object", "x-extension": [1, 2] } } });
+
+    await manifestHandler!([RunnerMessageCode.MANIFEST_DECLARE, {
+        requestId: "request-invalid",
+        declaration: { output: { schema: () => "invalid" } }
+    }]);
+    const rejected = controls[1]?.[1] as any;
+    t.is(rejected.requestId, "request-invalid");
+    t.false(rejected.accepted);
+    t.is(rejected.error.code, "INVALID_MANIFEST");
+    t.is(rejected.error.path, "declaration.output.schema");
+    t.deepEqual(store.getManifest(csi)?.manifest, { output: { schema: { type: "object", "x-extension": [1, 2] } } });
+
+    const replacement = createCsi();
+    store.set(replacement.id, replacement);
+    await manifestHandler!([RunnerMessageCode.MANIFEST_DECLARE, {
+        requestId: "request-stale",
+        declaration: { input: { description: "stale" } }
+    }]);
+    const stale = controls[2]?.[1] as any;
+    t.false(stale.accepted);
+    t.is(stale.error.code, "INSTANCE_NOT_ACTIVE");
+    t.is(store.getManifest(replacement)?.manifest, null);
 });
 
 test("stop timeout racing with terminal completion does not send a late KILL", async t => {

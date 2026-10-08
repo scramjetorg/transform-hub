@@ -49,5 +49,16 @@ const common = [
 ].join(" ");
 
 module.exports = {
-    default: common
+    default: common,
+    "runtime-manifest": [
+        "--require support/scenario-isolation.ts",
+        "--require support/memory-hooks.ts",
+        "--require step-definitions/world.ts",
+        "--require step-definitions/e2e/runtime-manifest-steps.ts",
+        "--require support/timing-boundary.ts",
+        `--require-module "${require("node:path").resolve(__dirname, "lib/runtime-manifest-register.cjs")}"`,
+        "--exit",
+        `--tags \"${tags}\"`,
+        ...report
+    ].join(" ")
 };

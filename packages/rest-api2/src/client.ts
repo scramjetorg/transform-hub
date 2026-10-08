@@ -143,16 +143,38 @@ export type FluentClientForRouteTreeNode<TNode extends RestAPI2RouteTreeRouteNod
 type RootRouteSet = ReturnType<typeof RestAPI2RouteTree.root.routes>;
 type SpaceRouteSet = ReturnType<typeof RestAPI2RouteTree.space.routes>;
 type HubRouteSet = ReturnType<typeof RestAPI2RouteTree.hub.routes>;
+type SequenceRouteSet = ReturnType<typeof RestAPI2RouteTree.sequence.routes>;
 type InstanceRouteSet = ReturnType<typeof RestAPI2RouteTree.instance.routes>;
 type InstanceStandardRouteSet = Omit<InstanceRouteSet, "rpc">;
+
+type CallableGetEndpoint<TContract extends RouteDefinition, TResponse = RouteResponseFor<TContract>> = (() => Promise<RestAPI2.ClientResponse<RestAPI2.OperationId, TResponse>>) & {
+    get(request?: FluentClientRequest<TContract>): Promise<RestAPI2.ClientResponse<RestAPI2.OperationId, TResponse>>;
+};
+
+function callableGetEndpoint<TContract extends RouteDefinition, TResponse = RouteResponseFor<TContract>>(
+    context: FluentBuildContext,
+    contract: TContract
+): CallableGetEndpoint<TContract, TResponse> {
+    const get = (endpoint(context, contract) as unknown as { get: CallableGetEndpoint<TContract, TResponse>["get"] }).get;
+
+    return Object.assign(() => get(), { get }) as CallableGetEndpoint<TContract, TResponse>;
+}
 
 export type InstanceClient = FluentRouteMethods<InstanceStandardRouteSet> & {
     /** Contract-bound JSON RPC calls and contract-free native RPC requests. */
     rpc: InstanceRpcNamespace;
+    /** Current public manifest for this running instance. */
+    manifest: CallableGetEndpoint<InstanceStandardRouteSet["manifest"]>;
+};
+
+export type SequenceClient = Omit<FluentRouteMethods<SequenceRouteSet>, "manifest"> & {
+    /** Current instance-labelled collection of published sequence manifests. */
+    manifest: CallableGetEndpoint<SequenceRouteSet["manifest"], RestAPI2.SequenceManifestResponse>;
 };
 
 export type HubClient = FluentRouteMethods<HubRouteSet> & {
     instance(instanceId: string): InstanceClient;
+    sequence(sequenceId: string): SequenceClient;
 };
 
 export type SpaceClient = FluentRouteMethods<SpaceRouteSet> & {
@@ -381,13 +403,25 @@ function buildInstanceRpcClient<TContract>(context: FluentBuildContext, contract
 }
 
 function buildInstanceClient(context: FluentBuildContext): InstanceClient {
+    const routes = RestAPI2RouteTree.instance.routes();
+
     return {
-        ...standardRouteMethods(context, RestAPI2RouteTree.instance.routes(), getOpaqueRouteKeys(RestAPI2RouteTree.instance)),
+        ...standardRouteMethods(context, routes, getOpaqueRouteKeys(RestAPI2RouteTree.instance)),
+        manifest: callableGetEndpoint(context, routes.manifest),
         rpc: Object.assign(
             <TContract>(contractDefinition: TContract) => buildInstanceRpcClient(context, contractDefinition),
             { request: (request: InstanceRpcRequest) => requestInstanceRpc(context, request) }
         ) as unknown as InstanceRpcNamespace
     } as InstanceClient;
+}
+
+function buildSequenceClient(context: FluentBuildContext): SequenceClient {
+    const routes = RestAPI2RouteTree.sequence.routes();
+
+    return {
+        ...standardRouteMethods(context, routes),
+        manifest: callableGetEndpoint<typeof routes.manifest, RestAPI2.SequenceManifestResponse>(context, routes.manifest)
+    } as SequenceClient;
 }
 
 function buildHubClient(context: FluentBuildContext): HubClient {
@@ -398,6 +432,13 @@ function buildHubClient(context: FluentBuildContext): HubClient {
                 ...context,
                 prefix: joinPaths(context.prefix, "/instances/:instanceId"),
                 params: { ...context.params, instanceId }
+            });
+        },
+        sequence(sequenceId: string) {
+            return buildSequenceClient({
+                ...context,
+                prefix: joinPaths(context.prefix, "/sequences"),
+                params: { ...context.params, sequenceId }
             });
         }
     };

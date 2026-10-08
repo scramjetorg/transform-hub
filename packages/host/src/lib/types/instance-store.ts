@@ -1,5 +1,8 @@
-import { InstanceId } from "@scramjet/runtime-types";
+import { InstanceId, InstanceManifestResponse, ManifestChange, ManifestDeclaration, ManifestReceipt } from "@scramjet/runtime-types";
 import { ICSI } from "./csi";
+
+export type ManifestRemovalReason = NonNullable<ManifestChange["reason"]>;
+export type ManifestChangeHandler = (change: ManifestChange) => void;
 
 export interface IInstanceStore extends Map<InstanceId, ICSI> {
     get length(): number;
@@ -20,6 +23,12 @@ export interface IInstanceStore extends Map<InstanceId, ICSI> {
     map<X>(mapper: (csiController: ICSI) => X): X[];
     getByInstanceId(instanceId: string): ICSI | undefined;
     getByExposePath(exposePath: string): ICSI[];
+    setManifestChangeHandler(handler?: ManifestChangeHandler): void;
+    publishManifest(owner: ICSI, declaration: ManifestDeclaration): ManifestReceipt;
+    getManifest(owner: ICSI): InstanceManifestResponse | undefined;
+    getSequenceManifests(sequenceId: string): InstanceManifestResponse[];
+    removeManifest(owner: ICSI, reason: ManifestRemovalReason): boolean;
     set(instanceId: string, value: ICSI): this;
     delete(instanceId: string): boolean;
+    clear(): void;
 }

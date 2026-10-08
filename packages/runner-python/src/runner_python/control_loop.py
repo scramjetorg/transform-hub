@@ -24,6 +24,7 @@ STOP = 4001
 KILL = 4002
 SET = 4005
 EVENT = 5001
+MANIFEST_RESULT = 4006
 
 
 class HardKillSignal(Exception):
@@ -67,8 +68,124 @@ async def _get_frames_async(control_decoder: Any) -> list[tuple[int, Any]]:
         raise TypeError("Control decoder must expose decode_control_frames()")
 
     decode = cast(Callable[[bytes], Iterable[tuple[int, Any]]], decode_frames)
-    raw_line = await asyncio.to_thread(_get_control_line_reader(control_decoder))
+    async_reader = getattr(control_decoder, "readline_crlf_async", None)
+    if callable(async_reader):
+        raw_line = await async_reader()
+    else:
+        raw_line = await asyncio.to_thread(_get_control_line_reader(control_decoder))
     return list(decode(_normalize_control_line(raw_line)))
+
+
+class StartupControlReader:
+    """The sole fd4 reader, separating early replies from deferred controls."""
+
+    def __init__(self, decoder: Any, manifest_client: Any) -> None:
+        self.decoder = decoder
+        self.manifest_client = manifest_client
+        self.controls: asyncio.Queue[tuple[int, Any] | BaseException] = asyncio.Queue()
+        self.early_kill = asyncio.Event()
+        self.terminated = asyncio.Event()
+        self.terminal_error: BaseException | None = None
+        self.kill_received = False
+        self._pump_task: asyncio.Task[None] | None = None
+
+    def start(self) -> None:
+        if self._pump_task is None:
+            self._pump_task = asyncio.create_task(self._pump())
+
+    async def _pump(self) -> None:
+        try:
+            while True:
+                for code, payload in await _get_frames_async(self.decoder):
+                    if code == MANIFEST_RESULT:
+                        self.manifest_client.handle_result(payload)
+                    else:
+                        if code == KILL:
+                            self._terminate(HardKillSignal("Sequence killed by host"), killed=True)
+                        await self.controls.put((code, payload))
+        except asyncio.CancelledError:
+            raise
+        except BaseException as error:
+            self._terminate(error)
+            await self.controls.put(error)
+
+    def _terminate(self, error: BaseException, *, killed: bool = False) -> None:
+        if self.terminal_error is not None:
+            return
+        self.terminal_error = error
+        self.kill_received = killed
+        self.terminated.set()
+        if killed:
+            self.early_kill.set()
+        self.manifest_client.reject_pending(error)
+
+    async def next_frame(self) -> tuple[int, Any]:
+        item = await self.controls.get()
+        if isinstance(item, BaseException):
+            raise item
+        return item
+
+    async def close(self) -> None:
+        self._terminate(EOFError("control reader stopped"))
+        if self._pump_task is not None and not self._pump_task.done():
+            self._pump_task.cancel()
+        if self._pump_task is not None:
+            try:
+                await self._pump_task
+            except (asyncio.CancelledError, EOFError):
+                pass
+
+
+async def _dispatch_kill(app_context: Any) -> None:
+    kill_handlers = getattr(app_context, "_kill_handlers", [])
+    for handler in list(kill_handlers):
+        await maybe_await(handler())
+
+
+async def run_initializer_with_control(
+    reader: StartupControlReader, initializer: Any, app_context: Any
+) -> Any:
+    """Stop startup when KILL or terminal reader shutdown races initialization."""
+    initialize_task = asyncio.create_task(initializer())
+    terminal_task = asyncio.create_task(reader.terminated.wait())
+
+    async def cancel_initializer() -> None:
+        if not initialize_task.done():
+            initialize_task.cancel()
+        try:
+            await initialize_task
+        except BaseException:
+            pass
+
+    async def stop_for_terminal(error: BaseException) -> None:
+        if reader.kill_received:
+            try:
+                await _dispatch_kill(app_context)
+            finally:
+                await cancel_initializer()
+            raise HardKillSignal("Sequence killed during initialization")
+        await cancel_initializer()
+        raise error
+
+    try:
+        done, _ = await asyncio.wait(
+            {initialize_task, terminal_task}, return_when=asyncio.FIRST_COMPLETED
+        )
+        terminal_error = reader.terminal_error
+        if terminal_task in done or terminal_error is not None:
+            if terminal_error is None:
+                terminal_error = EOFError("control reader stopped")
+            await stop_for_terminal(terminal_error)
+        result = await initialize_task
+        if reader.terminal_error is not None:
+            await stop_for_terminal(reader.terminal_error)
+        return result
+    finally:
+        terminal_task.cancel()
+        try:
+            await terminal_task
+        except asyncio.CancelledError:
+            pass
 
 
 def _replace_app_config(app_context: Any, app_config: dict[str, Any]) -> None:
@@ -186,7 +303,10 @@ async def _dispatch_event(app_context: Any, payload: Any) -> None:
 async def control_loop(control_decoder: Any, app_context: Any, terminator: Any) -> None:
     while not _terminator_is_set(terminator):
         try:
-            frames = await _get_frames_async(control_decoder)
+            if isinstance(control_decoder, StartupControlReader):
+                frames = [await control_decoder.next_frame()]
+            else:
+                frames = await _get_frames_async(control_decoder)
         except EOFError:
             break
 
@@ -196,9 +316,7 @@ async def control_loop(control_decoder: Any, app_context: Any, terminator: Any) 
                 continue
 
             if code == KILL:
-                kill_handlers = getattr(app_context, "_kill_handlers", [])
-                for handler in list(kill_handlers):
-                    await maybe_await(handler())
+                await _dispatch_kill(app_context)
                 raise HardKillSignal("Sequence killed by host")
 
             if code == STOP:
@@ -207,6 +325,12 @@ async def control_loop(control_decoder: Any, app_context: Any, terminator: Any) 
 
             if code == EVENT:
                 await _dispatch_event(app_context, payload)
+                continue
+
+            if code == MANIFEST_RESULT:
+                manifest_api = getattr(app_context, "_manifest_api", None)
+                if manifest_api is not None:
+                    manifest_api.handle_result(payload)
                 continue
 
             logger.warning(

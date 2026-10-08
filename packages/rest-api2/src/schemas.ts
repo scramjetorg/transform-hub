@@ -1,4 +1,20 @@
 import { z } from "zod";
+import {
+    InstanceManifestResponseSchema,
+    ManifestChangeSchema,
+    ManifestDeclarationErrorSchema,
+    ManifestDeclarationSchema,
+    ManifestDeclareRequestSchema,
+    ManifestDeclareResultSchema,
+    ManifestFieldSchema,
+    ManifestJsonValueSchema,
+    ManifestReceiptSchema,
+    ManifestRpcSchema,
+    ManifestSchemaSchema,
+    ManifestSequenceMetadataSchema,
+    ManifestTopicSchema,
+    SequenceManifestResponseSchema
+} from "./runtime-manifest";
 
 // ============================================================
 // Individual DTO schemas based on contracts.ts
@@ -454,5 +470,21 @@ export const RestAPI2Schemas = {
         }),
         load: z.unknown(),
         list: z.object({ items: z.array(z.unknown()) }).passthrough()
+    },
+    manifest: {
+        jsonValue: ManifestJsonValueSchema,
+        schema: ManifestSchemaSchema,
+        field: ManifestFieldSchema,
+        rpc: ManifestRpcSchema,
+        topic: ManifestTopicSchema,
+        declaration: ManifestDeclarationSchema,
+        receipt: ManifestReceiptSchema,
+        sequenceMetadata: ManifestSequenceMetadataSchema,
+        instanceResponse: InstanceManifestResponseSchema,
+        sequenceResponse: SequenceManifestResponseSchema,
+        declarationError: ManifestDeclarationErrorSchema,
+        declareRequest: ManifestDeclareRequestSchema,
+        declareResult: ManifestDeclareResultSchema,
+        change: ManifestChangeSchema
     }
 };

@@ -18,7 +18,8 @@ import {
     SequenceInfo,
     StartInstanceReturnType,
     IStorageAdapter,
-    InstanceId
+    InstanceId,
+    ManifestChange
 } from "@scramjet/runtime-types";
 import { APIExpose, MonitoringServerConfig, ParsedMessage, PublicSTHConfiguration, STHConfiguration, STHRestAPI } from "@scramjet/api-types";
 import { CPMConnectorOptions, OpResponse, StartSequenceDTO, SpaceEventMessageData } from "./types/from-types";
@@ -297,6 +298,7 @@ export class Host implements IHost, IComponent {
         }
 
         this.auditor = new Auditor();
+        this.instancesStore.setManifestChangeHandler((change: ManifestChange) => this.auditor.auditManifestChange(change));
         //this.auditor.logger.pipe(this.logger);
 
         const { safeOperationLimit, instanceRequirements } = this.config;
@@ -492,6 +494,9 @@ export class Host implements IHost, IComponent {
         this.logger.debug("handleDispatcherTerminatedEvent", eventData);
 
         if (eventData.controller && this.instancesStore.get(eventData.id) !== eventData.controller) return;
+
+        const terminatedOwner = eventData.controller || this.instancesStore.get(eventData.id);
+        if (terminatedOwner) this.instancesStore.removeManifest(terminatedOwner, "instance-ended");
 
         this.cleanupRequiredStartupInstance(eventData.id);
 
@@ -1580,6 +1585,7 @@ export class Host implements IHost, IComponent {
 
         await this.stopControlIngress();
 
+        this.instancesStore.clear();
         this.instancesStore = new InstancesStore();
         this.sequenceStore.clear();
 

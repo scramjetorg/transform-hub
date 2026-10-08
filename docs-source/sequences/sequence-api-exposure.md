@@ -10,6 +10,8 @@ title: Exposing a sequence HTTP API
 
 Use `this.api.use(path, handler)` for a sequence-local HTTP surface. Validate packaged resources and required configuration before registering routes or entering a long-running stream/promise. The listener is deferred until validation succeeds. On validation failure, emit structured diagnostics, leave no route listener active, and end the instance as errored; callers must start a fresh instance.
 
+Manifest declaration is separate from HTTP route registration: `this.api.declare(declaration)` publishes public descriptive metadata for the current instance, but does not create a route, register RPC handlers, connect topics, or validate runtime payloads. The Python equivalent, `await context.api.declare(declaration)`, is available without ASGI exposure; calling `context.api.attach(asgi_app)` remains a separate configuration step. See the [runtime manifest guide](../examples/runtime-manifest.md) for supported fields, HubClient retrieval, instance ownership, and lifecycle behavior. The older exported JavaScript Runner API does not expose this declaration method.
+
 Readiness is separate from liveness. Poll the Hub or Manager readiness signal and verify the instance route is available. Do not replace readiness polling with a fixed sleep. Return small JSON values, stream large bodies, or provide a configured artifact/reference; the platform does not impose a new universal payload limit for this guide.
 
 The sequence API owns its route and its own authorization assumptions. External services may call it, but each such service manages its own authentication, authorization, and lifecycle.

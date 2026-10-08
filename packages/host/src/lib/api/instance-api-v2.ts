@@ -23,6 +23,7 @@ export class InstanceAPIV2 {
 
         return bindRoutes(routes, {
             info: () => this.handleInfo(),
+            manifest: () => this.handleManifest(),
             deleteInstance: ({ body }) => this.handleDelete(body),
             patchInstance: ({ body }) => this.handlePatch(body),
             stdio: () => this.handleStdio(),
@@ -123,6 +124,12 @@ export class InstanceAPIV2 {
                     : undefined
             }
         };
+    }
+
+    private handleManifest(): RestAPI2.InstanceManifestResponse {
+        const manifest = this.csi.getManifest();
+        if (!manifest) throw new HostError("UNKNOWN_INSTANCE", `Instance ${this.csi.id} is no longer registered`);
+        return manifest;
     }
 
     private async handleDelete(body: RestAPI2.DeleteInstancePayload): Promise<RestAPI2.OpResponse<RestAPI2.DeleteInstanceResponse>> {

@@ -11,6 +11,7 @@
 // ---------------------------------------------------------------------------
 
 export * from "./app-context";
+export type { ManifestDeclaration, ManifestReceipt } from "@scramjet/runtime-types";
 export * from "./application";
 
 // Re-export canonical runtime-types surface so sequence authors have
