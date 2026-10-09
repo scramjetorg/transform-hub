@@ -7,6 +7,7 @@ export type FetchLike = (url: string, init: {
     headers?: Record<string, string>;
     body?: any;
     duplex?: "half";
+    signal?: AbortSignal;
 }) => Promise<{
     status: number;
     headers: { forEach(callback: (value: string, key: string) => void): void };
@@ -90,18 +91,34 @@ export function createHttpClientTransport({ baseUrl, fetch }: { baseUrl: string;
                 method: request.route.method.toUpperCase(),
                 headers: request.headers,
                 body: request.body === undefined ? undefined : request.raw ? request.body as any : JSON.stringify(request.body),
-                duplex: request.raw && request.body instanceof Readable ? "half" : undefined
+                duplex: request.raw && request.body instanceof Readable ? "half" : undefined,
+                signal: request.signal
             });
 
             if (request.raw) {
-                const body = response.body;
+                let body = response.body;
+                if (body && typeof body === "object" && "getReader" in body && typeof Readable.fromWeb === "function") {
+                    body = Readable.fromWeb(body as any);
+                }
+                let cleaned = false;
+                const cleanup = async () => {
+                    if (cleaned) return;
+                    cleaned = true;
+                    const stream = body as any;
+                    if (stream && typeof stream.destroy === "function" && !stream.destroyed) stream.destroy();
+                    else if (stream && typeof stream.cancel === "function") await stream.cancel().catch(() => {});
+                };
+                if (request.signal) {
+                    const abortCleanup = () => { void cleanup(); };
+                    request.signal.addEventListener("abort", abortCleanup, { once: true });
+                    if ((body as any)?.once) (body as any).once("close", () => request.signal?.removeEventListener("abort", abortCleanup));
+                }
 
                 return {
                     status: response.status,
                     headers: collectHeaders(response.headers),
-                    body: (body && typeof body === "object" && "getReader" in body && typeof Readable.fromWeb === "function"
-                        ? Readable.fromWeb(body as any)
-                        : body) as T
+                    body: body as T,
+                    cleanup
                 };
             }
 

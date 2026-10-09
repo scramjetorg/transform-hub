@@ -160,7 +160,8 @@ test("Host-owned Hub v2 routes are mounted locally and reachable through verser2
         "/topics/:name/stream",
         "/topics/:name/stream",
         "/logs",
-        "/audit"
+        "/audit",
+        "/events/watch"
     ]);
     t.deepEqual(await registrations.find(registration => registration.fullPath === "/api/v2/version").handle({
         method: "GET",

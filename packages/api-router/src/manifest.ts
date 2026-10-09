@@ -50,6 +50,7 @@ export type RouteKind = "request" | "upstream" | "downstream" | "duplex";
  */
 export type StreamRouteOptions = {
     handlerValidatesContentType?: true;
+    json?: true;
 };
 
 export type ResolverRequest<TSchemas extends RouteSchemas = RouteSchemas> = RouteRequest<TSchemas> & {

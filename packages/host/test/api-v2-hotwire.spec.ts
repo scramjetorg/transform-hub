@@ -1,8 +1,11 @@
 import test from "ava";
 import { ObjLogger } from "@scramjet/obj-logger";
-import { PassThrough } from "stream";
+import { PassThrough, Readable } from "stream";
+import { EventEmitter } from "events";
+import { HubStateStore } from "@scramjet/hub-state";
 
 import { HostAPIHandler } from "../src/lib/api/host-api";
+import { Auditor } from "../src/lib/auditor";
 import { Topic } from "../src/lib/serviceDiscovery/topic";
 import TopicId from "../src/lib/serviceDiscovery/topicId";
 import { RouteRecorder } from "@scramjet/api-server/test/lib/route-recorder";
@@ -72,6 +75,56 @@ test("HostAPIHandler registers Host-owned v2 Hub routes as local mounted paths",
     t.true(recorder.has("upstream", "/api/v2/audit"));
     t.false(recorder.has("get", "/api/v2/spaces/:spaceId/hubs/:hubId/load"));
     t.false(recorder.has("get", "/api/v2/spaces/:spaceId/hubs/:hubId/load-check"));
+});
+
+test("registered Host event-watch route validates a stream response and yields its snapshot before EOF", async t => {
+    const recorder = new RouteRecorder();
+    const auditor = new Auditor();
+    const hubState = new HubStateStore();
+    const unsubscribe = auditor.subscribeState(record => hubState.consume(record));
+    const health = { healthy: true, status: "healthy", lifecycle: "running", startupReady: true, cpm: { configured: false, connected: false }, required: [] } as const;
+    auditor.resetStateIdentity("hub", "epoch");
+    auditor.auditStateCheckpoint({ sequences: [], instances: [], topics: [], health });
+    const host = { ...createHostStub(), hubState };
+
+    new HostAPIHandler(recorder.asApiExpose(), host, "1.0.0", "build").attach();
+
+    const route = recorder.require("upstream", "/api/v2/events/watch");
+    const req = Object.assign(new EventEmitter(), {
+        method: "GET",
+        url: "/api/v2/events/watch?kind=health",
+        params: {},
+        query: { kind: "health" },
+        headers: { accept: "application/x-ndjson" }
+    });
+    const response = Object.assign(new EventEmitter(), {
+        destroyed: false,
+        writableEnded: false,
+        headers: {} as Record<string, string>,
+        setHeader(name: string, value: string) { this.headers[name.toLowerCase()] = value; },
+        destroy() { this.destroyed = true; this.emit("close"); }
+    });
+    let stream: Readable | undefined;
+
+    try {
+        stream = await (route.handler as Function)(req, response);
+        const firstChunk = await new Promise<string>((resolve, reject) => {
+            stream!.once("data", chunk => resolve(String(chunk)));
+            stream!.once("error", reject);
+        });
+        t.is(response.headers["content-type"], "application/x-ndjson");
+        t.is(response.headers["cache-control"], "no-store, no-transform");
+        t.deepEqual(JSON.parse(firstChunk), {
+            type: "snapshot", kind: "health", cursor: { hubId: "hub", epoch: "epoch", position: 0 }, items: [health]
+        });
+        t.false(stream.readableEnded, "the initial snapshot arrives while the watch remains open");
+    } finally {
+        stream?.destroy();
+        unsubscribe();
+        hubState.close();
+        auditor.auditStream.destroy();
+        auditor.outStream.destroy();
+    }
 });
 
 test("HostAPIHandler registers Host-owned v2 Sequence routes as local mounted paths", t => {

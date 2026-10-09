@@ -64,6 +64,7 @@ import {
 
 import { parse } from "path";
 import { HostAPIHandler } from "./api/host-api";
+import { closeHubEventWatchStreams } from "./hub-event-watch";
 import { readHostInfoFile, resolveStableHostId, writeHostInfoFile } from "./host-id";
 import {
     checkSthRunnerVerser2LegacyBrokerPeerId,
@@ -1720,6 +1721,10 @@ export class Host implements IHost, IComponent {
 
         this.hubLifecycle = "stopped";
         this.auditHubHealth();
+
+        // Watch streams are request-scoped; release them before server.close so
+        // a peer that stopped reading cannot hold Host teardown open.
+        await closeHubEventWatchStreams(this.hubState);
 
         this.logger.trace("Stopping API server");
 

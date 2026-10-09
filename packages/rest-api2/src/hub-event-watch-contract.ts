@@ -23,7 +23,7 @@ export type HubWatchErrorDetails = {
     status?: number;
     cause?: unknown;
 };
-export declare class HubWatchError extends Error {
+export class HubWatchError extends Error {
     readonly code: HubWatchErrorCode;
     readonly cursor?: HubCursor;
     readonly expectedPreviousCursor?: HubCursor;
@@ -31,7 +31,17 @@ export declare class HubWatchError extends Error {
     readonly side?: "server" | "client";
     readonly status?: number;
     readonly cause?: unknown;
-    constructor(code: HubWatchErrorCode, message: string, details?: HubWatchErrorDetails);
+    constructor(code: HubWatchErrorCode, message: string, details: HubWatchErrorDetails = {}) {
+        super(message);
+        this.name = "HubWatchError";
+        this.code = code;
+        this.cursor = details.cursor;
+        this.expectedPreviousCursor = details.expectedPreviousCursor;
+        this.receivedCursor = details.receivedCursor;
+        this.side = details.side;
+        this.status = details.status;
+        this.cause = details.cause;
+    }
 }
 export type HubWatchHeartbeat = { type: "heartbeat"; kind: HubWatchKind; cursor: HubCursor; deliveredCursor: HubCursor };
 export type HubWatchTerminal = { type: "error"; kind: HubWatchKind; cursor: HubCursor; error: { code: "WATCH_GAP" | "WATCH_OVERFLOW" | "WATCH_RESTARTED" | "WATCH_SOURCE_UNAVAILABLE"; message: string; side?: "server" } };

@@ -53,6 +53,8 @@ import {
 } from "./schemas";
 import { INSTANCE_MANIFEST_ENDPOINT, SEQUENCE_MANIFEST_ENDPOINT } from "./defaults";
 import { InstanceManifestResponseSchema, SequenceManifestResponseSchema } from "./runtime-manifest";
+import { HUB_EVENT_WATCH_ENDPOINT } from "./defaults";
+import { HubWatchQuerySchema } from "./hub-event-watch-contract";
 
 const INSTANCE_MANIFEST_RESOURCE_PATH = INSTANCE_MANIFEST_ENDPOINT.replace(/^\/instances\/:instanceId/, "");
 const SEQUENCE_MANIFEST_RESOURCE_PATH = SEQUENCE_MANIFEST_ENDPOINT.replace(/^\/sequences/, "");
@@ -122,6 +124,7 @@ function hubRouteSet() {
         }),
         logs: Router.get("/logs", { kind: "upstream", schemas: { response: LogRecord } }),
         audit: Router.get("/audit", { kind: "upstream", schemas: { response: RestAPI2Schemas.stream } }),
+        watchEvents: Router.get(HUB_EVENT_WATCH_ENDPOINT, { kind: "upstream", stream: { json: true }, schemas: { query: HubWatchQuerySchema, response: RestAPI2Schemas.stream } }),
     } as const;
 }
 
@@ -277,6 +280,7 @@ export const RestAPI2RouteTree = {
             topics: { routeKeys: ["topics", "topicRead", "topicWrite"] },
             logs: { routeKeys: ["logs"] },
             audit: { routeKeys: ["audit"] },
+            watchEvents: { routeKeys: ["watchEvents"], opaque: true },
         },
         children: {
             instance: { resolver: "instance", node: "instance" }

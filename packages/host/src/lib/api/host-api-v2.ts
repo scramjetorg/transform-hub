@@ -21,6 +21,7 @@ import TopicId from "../serviceDiscovery/topicId";
 import { isContentType } from "../serviceDiscovery/contentType";
 import { TOPIC_CONTENT_TYPE_MISMATCH, topicError } from "../serviceDiscovery/topic-errors";
 import { projectHostTopic, projectInstance, projectSequence } from "./hub-inventory";
+import { createHubEventWatchStream } from "../hub-event-watch";
 
 export class HostAPIV2Handler {
     constructor(
@@ -99,7 +100,12 @@ export class HostAPIV2Handler {
             topicRead: routeBinding.handler<typeof routes.topicRead>((req) => this.topicRead(req.params.name, req.headers)),
             topicWrite: routeBinding.handler<typeof routes.topicWrite>((req) => this.topicWrite(req.params.name, this.rawReadable(req), req.headers)),
             logs: () => host.commonLogsPipe.getOut(),
-            audit: routeBinding.handler<typeof routes.audit>((req) => this.handleAuditRequest(req), { id: "hub.v2.audit" })
+            audit: routeBinding.handler<typeof routes.audit>((req) => this.handleAuditRequest(req), { id: "hub.v2.audit" }),
+            watchEvents: routeBinding.handler<typeof routes.watchEvents>((req) => {
+                req.raw.response?.setHeader("content-type", "application/x-ndjson");
+                req.raw.response?.setHeader("cache-control", "no-store, no-transform");
+                return createHubEventWatchStream(host.hubState, req.query.kind, req, host.logger);
+            }, { id: "hub.v2.watch-events" })
         });
     }
 

@@ -12,6 +12,7 @@ import { Readable } from "stream";
 import { Socket } from "net";
 import { IInstanceStore } from "./instance-store";
 import { ISequenceStore } from "./sequence-store";
+import type { HubStateStore } from "@scramjet/hub-state";
 
 type SequenceId = string;
 
@@ -29,6 +30,7 @@ export interface IHost {
     heartBeatInterval: RefCountHandler;
 
     auditor: Auditor;
+    readonly hubState: HubStateStore;
     loadCheck: LoadCheck;
     runnerVerser2UpstreamHealth?: HealthComponent;
     serviceDiscovery: ServiceDiscovery;

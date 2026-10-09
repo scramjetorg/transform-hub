@@ -313,3 +313,87 @@ test.serial("buildAppContext HubClient exposes v2 instance and sequence manifest
         agent.destroy();
     }
 });
+
+test.serial("buildAppContext HubClient event watch streams before EOF and aborts only its request", async t => {
+    const agent = makeBlockingAgent();
+    const original = ClientUtilsCustomAgent.prototype.request;
+    const body = new PassThrough();
+    const requests: Array<{ method: string; path: string; signal?: AbortSignal }> = [];
+    let textCalls = 0;
+    ClientUtilsCustomAgent.prototype.request = async function(method: string, path: string, options?: { signal?: AbortSignal }) {
+        requests.push({ method, path, signal: options?.signal });
+        if (path.startsWith("api/v2/events/watch")) {
+            return {
+                status: 200,
+                headers: { forEach(callback: (value: string, key: string) => void) { callback("application/x-ndjson", "content-type"); } },
+                body,
+                text: async () => { textCalls++; return ""; }
+            } as unknown as Response;
+        }
+
+        return {
+            status: 200,
+            headers: { forEach(callback: (value: string, key: string) => void) { callback("application/json", "content-type"); } },
+            text: async () => JSON.stringify({ status: "ok" })
+        } as unknown as Response;
+    };
+    const hostClient = {
+        getApiBase: () => "http://hub.internal/api/v1",
+        getV2ApiBase: () => "http://hub.internal/api/v2",
+        getAgent: () => agent
+    };
+    const abortController = new AbortController();
+    let watch: ReturnType<HubClient["events"]["watch"]> | undefined;
+
+    try {
+        const { context } = buildAppContext({
+            bootConfig: { sequencePath: "/x", instanceId: "i-1" },
+            monitorStream: new PassThrough(),
+            emitter: new EventEmitter(),
+            logger: new ObjLogger("event-watch-test"),
+            hostClient: hostClient as any,
+            onKeepAliveIssued: () => undefined
+        });
+        const hubClient: HubClient = context.hubClient();
+
+        watch = hubClient.events.watch("sequence", { signal: abortController.signal });
+        const requestObserved = new Promise<void>(resolve => {
+            const check = () => {
+                if (requests.length) resolve();
+                else setImmediate(check);
+            };
+            check();
+        });
+        await requestObserved;
+        body.write(`${JSON.stringify({
+            type: "snapshot", kind: "sequence", cursor: { hubId: "hub-1", epoch: "epoch-1", position: 0 }, items: []
+        })}\n`);
+
+        const snapshot = await watch.next();
+        t.false(snapshot.done);
+        t.deepEqual(snapshot.value, {
+            type: "snapshot", kind: "sequence", cursor: { hubId: "hub-1", epoch: "epoch-1", position: 0 }, items: []
+        });
+        t.is(textCalls, 0, "watch response was not buffered through response.text()");
+        t.true(requests[0].signal instanceof AbortSignal);
+        t.false(body.destroyed, "the response remains open after snapshot delivery");
+
+        abortController.abort();
+        const aborted = await t.throwsAsync(watch.next());
+        t.is(aborted?.name, "AbortError");
+        t.true(body.destroyed, "aborting the watch destroys its request body");
+
+        const unaryResponse = await hubClient.status.get();
+        t.is(unaryResponse.status, 200);
+        t.deepEqual(requests.map(({ method, path }) => ({ method, path })), [
+            { method: "get", path: "api/v2/events/watch?kind=sequence" },
+            { method: "get", path: "api/v2/status" }
+        ]);
+        t.is(hostClient.getAgent(), agent, "the context continues to borrow the shared Agent");
+    } finally {
+        if (watch) await watch.close();
+        if (!body.destroyed) body.destroy();
+        ClientUtilsCustomAgent.prototype.request = original;
+        agent.destroy();
+    }
+});

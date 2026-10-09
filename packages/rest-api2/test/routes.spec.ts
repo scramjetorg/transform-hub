@@ -22,7 +22,8 @@ test("typed route sets build the existing handlerless router factories", t => {
         topicRead: routeBinding.contractOnly(),
         topicWrite: routeBinding.contractOnly(),
         logs: routeBinding.contractOnly(),
-        audit: routeBinding.contractOnly()
+        audit: routeBinding.contractOnly(),
+        watchEvents: routeBinding.contractOnly()
     }).collect();
 
     t.deepEqual(routeSetRouter.routes.map(route => `${route.method} ${route.fullPath}`), contract.routes.map(route => `${route.method} ${route.fullPath}`));
@@ -37,6 +38,16 @@ test("only topic stream writers opt into handler-owned content-type validation",
     t.deepEqual(hubTopicWrite.stream, { handlerValidatesContentType: true });
     t.deepEqual(spaceTopicWrite.stream, { handlerValidatesContentType: true });
     t.is(sequenceUpload.stream, undefined);
+});
+
+test("Hub event watch is a strict kind-only NDJSON upstream route and remains opaque", t => {
+    const route = RestAPI2RouteSets.hub.hubRoutes().watchEvents;
+    t.is(route.path, "/events/watch");
+    t.is(route.kind, "upstream");
+    t.deepEqual(route.stream, { json: true });
+    t.true(route.schemas?.query?.safeParse({ kind: "sequence" }).success);
+    t.false(route.schemas?.query?.safeParse({ kind: "sequence", cursor: "replay" }).success);
+    t.deepEqual(getOpaqueRouteKeys(RestAPI2RouteTree.hub), ["watchEvents"]);
 });
 
 test("RestAPI2RouteTree exposes final public Root Space Hub Instance concepts", t => {
@@ -112,10 +123,11 @@ test("GET /spaces route includes page query schema", t => {
     t.true(empty.success, "should accept empty query");
 });
 
-test("RPC route group is an explicit opaque route-tree exception", t => {
+test("RPC and Hub event watch are explicit opaque route-tree exceptions", t => {
     const opaqueKeys = getOpaqueRouteKeys(RestAPI2RouteTree.instance);
 
     t.deepEqual(opaqueKeys, ["rpc"]);
+    t.deepEqual(getOpaqueRouteKeys(RestAPI2RouteTree.hub), ["watchEvents"]);
     t.true(RestAPI2RouteTree.instance.groups.rpc.opaque);
     t.true(RestAPI2RouteTree.instance.routes().rpc.path.includes("/rpc"));
 });
