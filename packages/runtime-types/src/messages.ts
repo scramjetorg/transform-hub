@@ -77,6 +77,7 @@ export type OpRecord = {
     objectId: string;
     limits?: any;
     manifestChange?: import("./runtime-manifest").ManifestChange;
+    hubState?: import("./hub-state").HubStateAudit;
 };
 
 import { LogLevel } from "./object-logger";

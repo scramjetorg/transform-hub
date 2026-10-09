@@ -20,23 +20,7 @@ import { IHost } from "../types";
 import TopicId from "../serviceDiscovery/topicId";
 import { isContentType } from "../serviceDiscovery/contentType";
 import { TOPIC_CONTENT_TYPE_MISMATCH, topicError } from "../serviceDiscovery/topic-errors";
-
-type HostTopicListItem = {
-    id?: unknown;
-    name?: unknown;
-    topic?: unknown;
-    topicName?: unknown;
-    contentType?: unknown;
-    origin?: unknown;
-};
-
-type HasIdMethod = {
-    id(): unknown;
-};
-
-function hasIdMethod(value: unknown): value is HasIdMethod {
-    return Boolean(value && typeof value === "object" && "id" in value && typeof (value as { id?: unknown }).id === "function");
-}
+import { projectHostTopic, projectInstance, projectSequence } from "./hub-inventory";
 
 export class HostAPIV2Handler {
     constructor(
@@ -96,50 +80,10 @@ export class HostAPIV2Handler {
                 details: host.getStatus()
             }),
             sequences: (): RestAPI2.ListResponse<RestAPI2.Sequence> => ({
-                items: (host.getSequences() as any[]).map((sequence) => {
-                    const id = String(sequence.id);
-                    const hostId = (host as any).config?.host?.id;
-
-                    return {
-                        id,
-                        name: sequence.name ?? sequence.config?.name ?? sequence.config?.id ?? id,
-                        status: sequence.status,
-                        hubId: sequence.hubId || hostId,
-                        location: sequence.location,
-                        apiBase: `${this.v2ApiBase}/sequences/${id}`,
-                        instances: sequence.instances
-                    };
-                })
+                items: (host.getSequences() as any[]).map((sequence) => projectSequence(sequence, String((host as any).config?.host?.id), this.v2ApiBase))
             }),
             instances: (): RestAPI2.ListResponse<RestAPI2.Instance> => ({
-                items: (host.getInstances() as any[]).map((instance) => {
-                    const id = String(instance.id);
-                    const seqId = instance.sequenceId || instance.sequence?.id;
-                    const hostId = (host as any).config?.host?.id;
-                    const hubId = instance.hubId || hostId;
-
-                    return {
-                        id,
-                        instanceName: instance.instanceName,
-                        sequenceId: seqId,
-                        status: instance.status,
-                        hubId,
-                        location: instance.location || hubId,
-                        apiBase: `${this.v2ApiBase}/instances/${id}`,
-                        sequence: instance.sequence
-                            ? {
-                                  id: instance.sequence.id,
-                                  name: instance.sequence.name ?? instance.sequence.config?.name ?? instance.sequence.config?.id ?? instance.sequence.id,
-                                  status: instance.sequence.status,
-                                  hubId: instance.sequence.hubId || hubId,
-                                  location: instance.sequence.location,
-                                  apiBase: `${this.v2ApiBase}/sequences/${instance.sequence.id}`
-                              }
-                            : seqId
-                              ? { id: seqId }
-                              : undefined
-                    };
-                })
+                items: (host.getInstances() as any[]).map((instance) => projectInstance(instance, String((host as any).config?.host?.id), this.v2ApiBase))
             }),
             entities: (): RestAPI2.ListResponse<RestAPI2.Entity> => ({
                 items: [
@@ -294,71 +238,7 @@ export class HostAPIV2Handler {
     }
 
     private hostTopic(topic: unknown): RestAPI2.Topic {
-        const origin = this.hostTopicOrigin(topic);
-        return {
-            name: this.hostTopicName(topic),
-            contentType: this.hostTopicContentType(topic),
-            origin
-        };
-    }
-
-    private hostTopicName(topic: unknown): string {
-        if (typeof topic !== "object" || topic === null) {
-            return String(topic);
-        }
-
-        const item = topic as HostTopicListItem;
-
-        const methodId = hasIdMethod(topic) ? topic.id() : undefined;
-
-        return String(methodId || item.name || item.topicName || item.topic || this.topicValue(item.id) || topic);
-    }
-
-    private hostTopicContentType(topic: unknown): string {
-        if (typeof topic !== "object" || topic === null) {
-            return "";
-        }
-
-        const item = topic as HostTopicListItem;
-
-        return item.contentType === undefined ? "" : String(item.contentType);
-    }
-
-    private hostTopicOrigin(topic: unknown): RestAPI2.Topic["origin"] {
-        if (typeof topic !== "object" || topic === null) {
-            return { type: "hub", id: String((this.host as any).config?.host?.id || "hub") };
-        }
-
-        const item = topic as HostTopicListItem;
-        const origin = item.origin;
-        if (origin && typeof origin === "object" && "type" in origin && "id" in origin) {
-            const value = origin as { type?: unknown; id?: unknown };
-            if ((value.type === "hub" || value.type === "space") && typeof value.id === "string") {
-                return { type: value.type, id: value.id };
-            }
-        }
-
-        const value = topic as { origin?: () => { type?: unknown; id?: unknown } };
-        if (typeof value.origin === "function") {
-            const resolved = value.origin.call(topic);
-            if (resolved && (resolved.type === "hub" || resolved.type === "space") && typeof resolved.id === "string") {
-                return { type: resolved.type, id: resolved.id };
-            }
-        }
-
-        return { type: "hub", id: String((this.host as any).config?.host?.id || "hub") };
-    }
-
-    private topicValue(value: unknown): unknown {
-        if (typeof value === "function") {
-            return value();
-        }
-
-        if (hasIdMethod(value)) {
-            return value.id();
-        }
-
-        return value;
+        return projectHostTopic(topic, String((this.host as any).config?.host?.id || "hub"));
     }
 
     private createTopic(body: RestAPI2.TopicCreatePayload, headers?: Record<string, unknown>): RestAPI2.OpResponse<RestAPI2.TopicCreateResponse> {
@@ -373,7 +253,7 @@ export class HostAPIV2Handler {
 
         try {
             const topic = this.host.serviceDiscovery.createTopicIfNotExist({ topic: new TopicId(name), contentType });
-            const origin = this.hostTopicOrigin(topic);
+            const origin = projectHostTopic(topic, String((this.host as any).config?.host?.id || "hub")).origin;
 
             return this.completedOperation(name, { topic: { name, contentType, origin } });
         } catch (error) {

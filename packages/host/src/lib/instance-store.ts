@@ -37,6 +37,7 @@ export class InstancesStore extends Map<string, ICSI> {
     private manifestOwners = new Map<string, ManifestOwnerRegistration>();
     private instanceManifests = new Map<string, InstanceManifestPublication>();
     private manifestChangeHandler?: ManifestChangeHandler;
+    private inventoryAuditHandler?: (owner: ICSI | null, instanceId: string, sequenceId: string) => void;
 
     get length() {
         return this.size;
@@ -44,6 +45,15 @@ export class InstancesStore extends Map<string, ICSI> {
 
     setManifestChangeHandler(handler?: ManifestChangeHandler): void {
         this.manifestChangeHandler = handler;
+    }
+
+    setInventoryAuditHandler(handler?: (owner: ICSI | null, instanceId: string, sequenceId: string) => void): void {
+        this.inventoryAuditHandler = handler;
+    }
+
+    auditCurrent(owner: ICSI): void {
+        if (this.get(owner.id) !== owner) return;
+        this.inventoryAuditHandler?.(owner, owner.id, owner.sequence?.id || "");
     }
 
     publishManifest(owner: ICSI, declaration: ManifestDeclaration): ManifestReceipt {
@@ -288,6 +298,8 @@ export class InstancesStore extends Map<string, ICSI> {
             this.nameMap.set(name, instanceId);
         }
 
+        this.inventoryAuditHandler?.(value, instanceId, value.sequence?.id || "");
+
         return res;
     }
 
@@ -306,7 +318,9 @@ export class InstancesStore extends Map<string, ICSI> {
             }
         }
 
-        return super.delete(instanceId);
+        const deleted = super.delete(instanceId);
+        if (deleted) this.inventoryAuditHandler?.(null, instanceId, current?.sequence?.id || "");
+        return deleted;
     }
 
     clear(): void {
@@ -319,6 +333,8 @@ export class InstancesStore extends Map<string, ICSI> {
         this.nameMap.clear();
         this.nameReverse.clear();
         this.exposePathMap.clear();
+        const removed = Array.from(this.entries());
         super.clear();
+        for (const [instanceId, owner] of removed) this.inventoryAuditHandler?.(null, instanceId, owner.sequence?.id || "");
     }
 }

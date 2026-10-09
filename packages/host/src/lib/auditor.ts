@@ -1,6 +1,6 @@
 import { ObjLogger } from "@scramjet/obj-logger";
 import { ParsedMessage } from "@scramjet/api-types";
-import { InstanceLimits, InstanceStats, ManifestChange, OpRecord } from "@scramjet/runtime-types";
+import { HubInventoryCheckpoint, HubStateAudit, HubStateMutation, InstanceLimits, InstanceStats, ManifestChange, OpRecord } from "@scramjet/runtime-types";
 import { InstanceMessageCode, OpRecordCode, SequenceMessageCode } from "@scramjet/symbols";
 import { onRequestDisconnect } from "@scramjet/utility";
 import { StringStream } from "scramjet";
@@ -26,6 +26,8 @@ export class Auditor {
     logger = new ObjLogger(this);
 
     outStream = new ReReadable({ length: 1e6 });
+    private stateListeners = new Set<(record: Readonly<OpRecord>) => void>();
+    private stateIdentity?: { hubId: string; epoch: string; position: number };
 
     getOutputStream(req: IncomingMessage, res: ServerResponse) {
         this.logger.debug("request", req.url, req.method);
@@ -45,11 +47,42 @@ export class Auditor {
     }
 
     write(msg: OpRecord) {
+        if (msg.hubState) {
+            for (const listener of this.stateListeners) {
+                try { listener(msg); } catch (e) { this.logger.error("Hub state audit listener failed", e); }
+            }
+        }
         try {
             this.auditStream.write(JSON.stringify(msg) + "\n");
         } catch (e) {
             this.logger.error("Failed to write audit message", e);
         }
+    }
+
+    subscribeState(listener: (record: Readonly<OpRecord>) => void): () => void {
+        this.stateListeners.add(listener);
+        return () => this.stateListeners.delete(listener);
+    }
+
+    resetStateIdentity(hubId: string, epoch: string): void {
+        this.stateIdentity = { hubId, epoch, position: 0 };
+    }
+
+    auditStateCheckpoint(inventory: HubInventoryCheckpoint): void {
+        const identity = this.requireStateIdentity();
+        this.write({ opState: "", opCode: OpRecordCode.HUB_STATE_CHECKPOINT, objectId: identity.hubId, requestorId: "system", receivedAt: Date.now(), hubState: { type: "checkpoint", cursor: { hubId: identity.hubId, epoch: identity.epoch, position: identity.position }, inventory } });
+    }
+
+    auditStateChange(mutation: HubStateMutation): void {
+        const identity = this.requireStateIdentity();
+        const previousCursor = { hubId: identity.hubId, epoch: identity.epoch, position: identity.position };
+        identity.position += 1;
+        this.write({ opState: "", opCode: OpRecordCode.HUB_STATE_CHANGE, objectId: identity.hubId, requestorId: "system", receivedAt: Date.now(), hubState: { type: "change", previousCursor, cursor: { hubId: identity.hubId, epoch: identity.epoch, position: identity.position }, mutation } });
+    }
+
+    private requireStateIdentity() {
+        if (!this.stateIdentity) throw new Error("Hub state audit identity has not been initialized");
+        return this.stateIdentity;
     }
 
     /**
@@ -174,13 +207,21 @@ export class Auditor {
     }
 
     auditManifestChange(manifestChange: ManifestChange) {
+        const identity = this.stateIdentity;
+        const sequenceId = manifestChange.sequenceId;
+        const hubState: HubStateAudit | undefined = identity && sequenceId ? (() => {
+            const previousCursor = { hubId: identity.hubId, epoch: identity.epoch, position: identity.position };
+            identity.position += 1;
+            return { type: "change", previousCursor, cursor: { hubId: identity.hubId, epoch: identity.epoch, position: identity.position }, mutation: { kind: "sequence", action: "manifest", sequenceId, instanceId: manifestChange.instanceId, manifestChange } };
+        })() : undefined;
         this.write({
             opState: "",
             opCode: OpRecordCode.MANIFEST_CHANGE,
             objectId: manifestChange.instanceId,
             requestorId: "system",
             receivedAt: Date.now(),
-            manifestChange
+            manifestChange,
+            hubState
         });
     }
 }

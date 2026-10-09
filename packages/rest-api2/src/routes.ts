@@ -121,7 +121,7 @@ function hubRouteSet() {
             schemas: { params: RestAPI2Schemas.params.topic, headers: RestAPI2Schemas.headers.http, response: opResponse(TopicStreamResponse) }
         }),
         logs: Router.get("/logs", { kind: "upstream", schemas: { response: LogRecord } }),
-        audit: Router.get("/audit", { kind: "upstream", schemas: { response: RestAPI2Schemas.stream } })
+        audit: Router.get("/audit", { kind: "upstream", schemas: { response: RestAPI2Schemas.stream } }),
     } as const;
 }
 
@@ -276,7 +276,7 @@ export const RestAPI2RouteTree = {
             sequence: { node: "sequence", routes: sequenceRouteSet },
             topics: { routeKeys: ["topics", "topicRead", "topicWrite"] },
             logs: { routeKeys: ["logs"] },
-            audit: { routeKeys: ["audit"] }
+            audit: { routeKeys: ["audit"] },
         },
         children: {
             instance: { resolver: "instance", node: "instance" }

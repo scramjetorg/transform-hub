@@ -191,6 +191,7 @@ export class CSIDispatcher extends TypedEmitter<Events> {
 
                 if (seq) {
                     seq.instances.push(csiController.id);
+                    this.sequenceStore.auditCurrent(csiController.sequence.id);
                 } else {
                     this.logger.warn("Instance of not existing sequence connected");
                     //@TODO: ?
@@ -229,6 +230,7 @@ export class CSIDispatcher extends TypedEmitter<Events> {
 
                     if (seq) {
                         seq.instances = seq.instances.filter((i) => i !== csiController.id);
+                        this.sequenceStore.auditCurrent(csiController.sequence.id);
                     }
 
                     this.instanceStore.delete(csiController.id);

@@ -3,10 +3,13 @@ import TopicId from "./topicId";
 
 class TopicsMap {
     private topicsMap: Map<string, Topic>;
+    private inventoryAuditHandler?: (topic: Topic | null, name: string) => void;
 
     constructor() {
         this.topicsMap = new Map();
     }
+
+    setInventoryAuditHandler(handler?: (topic: Topic | null, name: string) => void): void { this.inventoryAuditHandler = handler; }
 
     get topics() {
         return Array.from(this.topicsMap, ([, topic]) => ({
@@ -19,6 +22,7 @@ class TopicsMap {
 
     set(id: TopicId, topic: Topic) {
         this.topicsMap.set(id.toString(), topic);
+        this.inventoryAuditHandler?.(topic, id.toString());
     }
     has(id: TopicId) {
         return this.topicsMap.has(id.toString());
@@ -32,7 +36,9 @@ class TopicsMap {
         if (!topic) return false;
         topic.unpipe();
         topic.delete();
-        return this.topicsMap.delete(id.toString());
+        const deleted = this.topicsMap.delete(id.toString());
+        if (deleted) this.inventoryAuditHandler?.(null, id.toString());
+        return deleted;
     }
 }
 

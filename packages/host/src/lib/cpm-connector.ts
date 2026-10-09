@@ -96,6 +96,18 @@ export class CPMConnector extends TypedEmitter<Events> {
      */
     connected = false;
 
+    private connectivityObserver?: (connected: boolean) => void;
+
+    setConnectivityObserver(observer?: (connected: boolean) => void): void {
+        this.connectivityObserver = observer;
+    }
+
+    private setConnected(connected: boolean): void {
+        if (this.connected === connected) return;
+        this.connected = connected;
+        this.connectivityObserver?.(connected);
+    }
+
     /**
      * Stream used to write data to Manager.
      *
@@ -254,6 +266,7 @@ export class CPMConnector extends TypedEmitter<Events> {
         this.logger.info("Disconnecting from Manager");
         this.isAbandoned = true;
         this.abandonReconnect();
+        this.setConnected(false);
 
         this.handleCommunicationRequestEnd();
 
@@ -474,7 +487,7 @@ export class CPMConnector extends TypedEmitter<Events> {
              * and made requests to it).
              * @TODO: Provide detailed communication status.
              */
-            this.connected = true;
+            this.setConnected(true);
             this.connectionAttempts = 0;
             this.ensureReconnectBackoff().success();
             this.emit("connect");
@@ -545,7 +558,7 @@ export class CPMConnector extends TypedEmitter<Events> {
         this.handleCommunicationRequestEnd();
 
         this.connection?.removeAllListeners();
-        this.connected = false;
+        this.setConnected(false);
 
         this.logger.info("CPM connection closed.", connectionStatusCode, this.getId());
 

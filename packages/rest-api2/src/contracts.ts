@@ -1,5 +1,8 @@
 import type {
     InstanceManifestResponse as RuntimeInstanceManifestResponse,
+    HubSequenceRecord,
+    HubInstanceRecord,
+    HubTopicRecord,
     ManifestChange as RuntimeManifestChange,
     ManifestDeclaration as RuntimeManifestDeclaration,
     ManifestDeclarationError as RuntimeManifestDeclarationError,
@@ -123,33 +126,8 @@ export namespace RestAPI2 {
         routeDomain: string;
     };
 
-    export type Sequence = {
-        id: string;
-        name?: string;
-        status?: string;
-        hubId?: string;
-        location?: string;
-        apiBase?: string;
-        instances?: string[];
-    };
-
-    export type Instance = {
-        id: string;
-        instanceName?: string;
-        sequenceId?: string;
-        status?: string;
-        hubId?: string;
-        location?: string;
-        apiBase?: string;
-        sequence?: {
-            id: string;
-            name?: string;
-            status?: string;
-            hubId?: string;
-            location?: string;
-            apiBase?: string;
-        };
-    };
+    export type Sequence = HubSequenceRecord;
+    export type Instance = HubInstanceRecord;
 
     export type ManifestSchema = RuntimeManifestSchema;
     export type ManifestJsonValue = RuntimeManifestJsonValue;
@@ -167,12 +145,7 @@ export namespace RestAPI2 {
     export type ManifestChange = RuntimeManifestChange;
 
     export type Entity = { id: string; type?: string };
-    export type Topic = {
-        name: string;
-        contentType: string;
-        origin?: { type: "hub" | "space"; id: string };
-        direction?: "input" | "output" | "duplex";
-    };
+    export type Topic = HubTopicRecord;
     export type StoreItem = { path: string; size?: number };
     export type LogRecord = { time: number; level: string; message: string; meta?: unknown };
     export type AuditRecord = { id: string; time: number; event: string; meta?: unknown };

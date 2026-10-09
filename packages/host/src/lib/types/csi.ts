@@ -61,6 +61,7 @@ export interface ICSI extends TypedEmitter<CSIEvents> {
     readonly lastHealth: HealthPayload;
 
     readonly isRunning: boolean;
+    getWatchReadiness(): { readiness: "pending" | "ready" | "errored"; terminal: boolean };
     readonly heartBeatPromise?: Promise<InstanceId>;
 
     readonly sequence: SequenceInfo;

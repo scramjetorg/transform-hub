@@ -38,6 +38,11 @@ import { readJsonFile, defer, RefCountHandler, attachVerser2ServerStreamBoundary
 import { DataStream } from "scramjet";
 
 import { Auditor } from "./auditor";
+import { HubStateStore } from "@scramjet/hub-state";
+import { HubInventoryCheckpoint } from "@scramjet/runtime-types";
+import { projectHostTopic, projectInstance, projectSequence, projectTopic } from "./api/hub-inventory";
+import { projectHubWatchHealth } from "./hub-watch-health";
+import type { RequiredStartupHealthEntry, HubWatchHealth } from "@scramjet/runtime-types";
 
 import { ServiceDiscovery } from "./serviceDiscovery/sd-adapter";
 import { getTelemetryAdapter, ITelemetryAdapter } from "@scramjet/telemetry";
@@ -85,6 +90,7 @@ const PARALLEL_SEQUENCE_STARTUP = 4;
 
 type RequiredStartupEntry = {
     key: string;
+    declarationIndex: number;
     sequenceId: string;
     config: StartSequenceDTO;
     restartAttemptsRemaining: number;
@@ -116,6 +122,8 @@ export class Host implements IHost, IComponent {
      * @type {Auditor}
      */
     auditor: Auditor;
+    readonly hubState = new HubStateStore();
+    private removeHubStateAuditListener?: () => void;
 
     telemetryAdapter?: ITelemetryAdapter;
 
@@ -163,6 +171,9 @@ export class Host implements IHost, IComponent {
     private requiredStartupEntries = new Map<string, RequiredStartupEntry>();
     private requiredStartupEntriesByInstanceId = new Map<string, string>();
     private startupReady = false;
+    private hubLifecycle: HubWatchHealth["lifecycle"] = "starting";
+    private declaredRequiredStartup = new Map<number, { sequenceId: string | null; instanceId: string | null }>();
+    private lastHubHealth?: HubWatchHealth;
 
     /**
      * Sequences store.
@@ -298,7 +309,25 @@ export class Host implements IHost, IComponent {
         }
 
         this.auditor = new Auditor();
+        this.auditor.resetStateIdentity(this.config.host.id, IDProvider.generate());
+        this.removeHubStateAuditListener = this.auditor.subscribeState((record) => this.hubState.consume(record));
         this.instancesStore.setManifestChangeHandler((change: ManifestChange) => this.auditor.auditManifestChange(change));
+        this.sequenceStore.setInventoryAuditHandler((sequence, sequenceId) => {
+            this.auditor.auditStateChange(sequence ? { kind: "sequence", action: "upsert", sequenceId, value: projectSequence(sequence, this.config.host.id, this.config.host.apiBase.replace(/v\d+$/, "v2")) } : { kind: "sequence", action: "remove", sequenceId, value: null });
+        });
+        this.instancesStore.setInventoryAuditHandler((owner, instanceId, sequenceId) => {
+            this.auditor.auditStateChange(owner ? { kind: "instance", action: "upsert", instanceId, sequenceId, value: projectInstance(owner.getInfo(), this.config.host.id, this.config.host.apiBase.replace(/v\d+$/, "v2")) } : { kind: "instance", action: "remove", instanceId, sequenceId, value: null });
+            this.auditHubHealth();
+        });
+        this.serviceDiscovery.setInventoryAuditHandler((topic, name) => {
+            if (!topic) this.auditor.auditStateChange({ kind: "topic", action: "remove", topic: name, value: null });
+            else {
+                const record = projectTopic(String(topic.id()), String(topic.contentType || ""), { type: "hub", id: this.config.host.id });
+                this.auditor.auditStateChange({ kind: "topic", action: "upsert", topic: record.name, value: record });
+            }
+        });
+        this.lastHubHealth = this.projectCurrentHubHealth();
+        this.auditor.auditStateCheckpoint(this.currentHubInventory());
         //this.auditor.logger.pipe(this.logger);
 
         const { safeOperationLimit, instanceRequirements } = this.config;
@@ -587,6 +616,7 @@ export class Host implements IHost, IComponent {
     private createRequiredStartupEntry(sequence: SequenceInfo, sequenceConfig: StartSequenceDTO, index: number): RequiredStartupEntry {
         return {
             key: sequenceConfig.instanceName || sequenceConfig.instanceId || `required-startup:${sequence.id}:${index}`,
+            declarationIndex: index,
             sequenceId: sequence.id,
             config: { ...sequenceConfig },
             restartAttemptsRemaining: sequenceConfig.restartLimit ?? 0,
@@ -602,6 +632,9 @@ export class Host implements IHost, IComponent {
 
         this.requiredStartupEntriesByInstanceId.delete(entry.currentInstanceId);
         entry.currentInstanceId = undefined;
+        const declaration = this.declaredRequiredStartup?.get(entry.declarationIndex);
+        if (declaration) declaration.instanceId = null;
+        this.auditHubHealth();
     }
 
     private validateStartupConfigUniqueness(startupConfig: StartSequenceDTO[]) {
@@ -653,6 +686,9 @@ export class Host implements IHost, IComponent {
 
         entry.currentInstanceId = instanceId;
         this.requiredStartupEntriesByInstanceId.set(instanceId, entry.key);
+        const declaration = this.declaredRequiredStartup?.get(entry.declarationIndex);
+        if (declaration) declaration.instanceId = instanceId;
+        this.auditHubHealth();
     }
 
     private takeRequiredStartupEntryByInstanceId(instanceId: string): RequiredStartupEntry | undefined {
@@ -668,6 +704,9 @@ export class Host implements IHost, IComponent {
 
         if (entry?.currentInstanceId === instanceId) {
             entry.currentInstanceId = undefined;
+            const declaration = this.declaredRequiredStartup?.get(entry.declarationIndex);
+            if (declaration) declaration.instanceId = null;
+            this.auditHubHealth();
         }
 
         return entry;
@@ -895,9 +934,14 @@ export class Host implements IHost, IComponent {
 
             this.cpmConnector.logger.pipe(this.logger);
             this.cpmConnector.setLoadCheck(this.loadCheck);
+            this.cpmConnector.setConnectivityObserver(() => this.auditHubHealth());
             this.cpmConnector.on("id", (id) => {
+                if (id === this.config.host.id) return;
                 this.config.host.id = id;
                 this.logger.updateBaseLog({ id });
+                this.auditor.resetStateIdentity(id, IDProvider.generate());
+                this.lastHubHealth = this.projectCurrentHubHealth();
+                this.auditor.auditStateCheckpoint(this.currentHubInventory());
             });
 
             this.cpmConnector.on("event", async (event: SpaceEventMessageData) => {
@@ -937,6 +981,9 @@ export class Host implements IHost, IComponent {
         }
 
         await this.performStartup();
+
+        this.hubLifecycle = "running";
+        this.auditHubHealth();
 
         this.logger.info("Host running!");
     }
@@ -1055,6 +1102,7 @@ export class Host implements IHost, IComponent {
 
     async performStartup() {
         this.startupReady = false;
+        this.auditHubHealth();
         if (!this.config.startupConfig) {
             this.logger.info("No startup config provided, skipping startup sequences");
             this.startupReady = true;
@@ -1071,6 +1119,11 @@ export class Host implements IHost, IComponent {
         }
 
         this.validateStartupConfigUniqueness(startupConfig);
+        this.declaredRequiredStartup.clear();
+        startupConfig.forEach((entry, index) => {
+            if (entry.required === true) this.declaredRequiredStartup.set(index, { sequenceId: null, instanceId: null });
+        });
+        this.auditHubHealth();
 
         const startupEntries = startupConfig.map((sequenceConfig, index) => ({ sequenceConfig, index }));
 
@@ -1078,6 +1131,12 @@ export class Host implements IHost, IComponent {
             .setOptions({ maxParallel: PARALLEL_SEQUENCE_STARTUP })
             .map(async ({ sequenceConfig, index }: { sequenceConfig: StartSequenceDTO; index: number }) => {
                 const sequence = await this.resolveStartupSequence(sequenceConfig);
+
+                if (sequenceConfig.required === true) {
+                    const declaration = this.declaredRequiredStartup.get(index);
+                    if (declaration && sequence) declaration.sequenceId = sequence.id;
+                    this.auditHubHealth();
+                }
 
                 if (!sequence) {
                     this.logger.warn("Sequence id not found for startup config", sequenceConfig);
@@ -1092,6 +1151,9 @@ export class Host implements IHost, IComponent {
 
                 if (sequenceConfig.required) {
                     const entry = this.createRequiredStartupEntry(sequence, sequenceConfig, index);
+                    const declaration = this.declaredRequiredStartup.get(index);
+                    if (declaration) declaration.instanceId = entry.stableInstanceId;
+                    this.auditHubHealth();
 
                     this.requiredStartupEntries.set(entry.key, entry);
 
@@ -1108,6 +1170,7 @@ export class Host implements IHost, IComponent {
             .run();
 
         this.startupReady = true;
+        this.auditHubHealth();
     }
 
     /**
@@ -1528,6 +1591,49 @@ export class Host implements IHost, IComponent {
         return this.serviceDiscovery.getTopics();
     }
 
+    private currentHubInventory(): HubInventoryCheckpoint {
+        const hubId = this.config.host.id;
+        const v2ApiBase = this.config.host.apiBase.replace(/v\d+$/, "v2");
+        return {
+            sequences: this.sequenceStore.sequences.map((sequence) => ({ ...projectSequence(sequence, hubId, v2ApiBase), manifests: this.instancesStore.getSequenceManifests(sequence.id) })),
+            instances: this.instancesStore.map((owner) => projectInstance(owner.getInfo(), hubId, v2ApiBase)),
+            topics: this.serviceDiscovery.getTopics().map((topic: unknown) => projectHostTopic(topic, hubId)),
+            health: this.projectCurrentHubHealth()
+        };
+    }
+
+    private projectCurrentHubHealth(): HubWatchHealth {
+        const required: RequiredStartupHealthEntry[] = [...(this.declaredRequiredStartup || new Map<number, { sequenceId: string | null; instanceId: string | null }>()).entries()].map(([index, declaration]) => {
+            const id = declaration.instanceId;
+            const owner = id ? this.instancesStore.get(id) : undefined;
+            const observation = owner?.getWatchReadiness();
+            const readiness = !declaration.sequenceId || !owner ? "missing" : observation?.readiness || "pending";
+            const status = owner ? String(owner.status) : null;
+            return {
+                key: `startup:${index}`,
+                sequenceId: declaration.sequenceId,
+                instanceId: owner ? id : null,
+                status,
+                readiness,
+                satisfied: !!(declaration.sequenceId && owner && observation?.readiness === "ready" && !observation.terminal && owner.status === InstanceStatus.RUNNING)
+            };
+        });
+        return projectHubWatchHealth({
+            lifecycle: this.hubLifecycle,
+            startupReady: this.startupReady,
+            cpm: { configured: !!this.isCPMConfigured(), connected: !!this.cpmConnector?.connected },
+            required
+        });
+    }
+
+    private auditHubHealth(): void {
+        if (!this.auditor || !this.hubState) return;
+        const health = this.projectCurrentHubHealth();
+        if (JSON.stringify(health) === JSON.stringify(this.lastHubHealth)) return;
+        this.lastHubHealth = health;
+        this.auditor?.auditStateChange?.({ kind: "health", action: "upsert", value: health });
+    }
+
     getStatus(): STHRestAPI.GetStatusResponse {
         const { connected, cpmId } = this.cpmConnector || {};
 
@@ -1547,6 +1653,8 @@ export class Host implements IHost, IComponent {
             return;
         }
         this._stopping = true;
+        this.hubLifecycle = "stopping";
+        this.auditHubHealth();
 
         this.logger.trace("Stopping instances");
 
@@ -1568,6 +1676,8 @@ export class Host implements IHost, IComponent {
             return;
         }
         this._cleaning = true;
+        if (this.hubLifecycle !== "stopping") this.hubLifecycle = "failed";
+        this.auditHubHealth();
 
         this.logger.info("Cleaning up", this.config.killOnExit);
 
@@ -1587,6 +1697,16 @@ export class Host implements IHost, IComponent {
 
         this.instancesStore.clear();
         this.instancesStore = new InstancesStore();
+        this.instancesStore.setManifestChangeHandler((change: ManifestChange) => this.auditor.auditManifestChange(change));
+        this.instancesStore.setInventoryAuditHandler((owner, instanceId, sequenceId) => {
+            this.auditor.auditStateChange(owner ? { kind: "instance", action: "upsert", instanceId, sequenceId, value: projectInstance(owner.getInfo(), this.config.host.id, this.config.host.apiBase.replace(/v\d+$/, "v2")) } : { kind: "instance", action: "remove", instanceId, sequenceId, value: null });
+            this.auditHubHealth();
+        });
+        this.instancesStore.setManifestChangeHandler((change: ManifestChange) => this.auditor.auditManifestChange(change));
+        this.instancesStore.setInventoryAuditHandler((owner, instanceId, sequenceId) => {
+            this.auditor.auditStateChange(owner ? { kind: "instance", action: "upsert", instanceId, sequenceId, value: projectInstance(owner.getInfo(), this.config.host.id, this.config.host.apiBase.replace(/v\d+$/, "v2")) } : { kind: "instance", action: "remove", instanceId, sequenceId, value: null });
+            this.auditHubHealth();
+        });
         this.sequenceStore.clear();
 
         this.s3Client?.dispose();
@@ -1598,6 +1718,9 @@ export class Host implements IHost, IComponent {
             this.cpmConnector = undefined;
         }
 
+        this.hubLifecycle = "stopped";
+        this.auditHubHealth();
+
         this.logger.trace("Stopping API server");
 
         await new Promise<void>((res, _rej) => {
@@ -1608,6 +1731,9 @@ export class Host implements IHost, IComponent {
                 })
                 .close();
         });
+        this.removeHubStateAuditListener?.();
+        this.removeHubStateAuditListener = undefined;
+        this.hubState?.close();
     }
 
     /**

@@ -26,6 +26,7 @@
     "@scramjet/monitoring-server": "^2.2.2-devel",
     "@scramjet/obj-logger": "^2.2.2-devel",
     "@scramjet/rest-api2": "^2.2.2-devel",
+    "@scramjet/hub-state": "^2.2.2-devel",
     "@scramjet/config": "^2.2.2-devel",
     "@scramjet/symbols": "^2.2.2-devel",
     "@scramjet/telemetry": "^2.2.2-devel",
