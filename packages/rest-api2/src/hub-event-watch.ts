@@ -98,8 +98,9 @@ export function createHubEventWatch<K extends HubWatchKind>(kind: K, options: { 
             for await (const chunk of body) {
                 if (terminal) return;
                 text += decoder.write(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
-                let newline: number;
-                while ((newline = text.indexOf("\n")) >= 0) {
+                while (true) {
+                    const newline = text.indexOf("\n");
+                    if (newline < 0) break;
                     const line = text.slice(0, newline); text = text.slice(newline + 1);
                     if (!line.trim()) { lost("WATCH_PROTOCOL_ERROR", "Empty watch frame"); return; }
                     let raw: unknown;

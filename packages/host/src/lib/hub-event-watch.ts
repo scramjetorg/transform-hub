@@ -45,7 +45,10 @@ export function createHubEventWatchStream(source: HubStateStore, kind: HubWatchK
     const log = (message: string, detail: Record<string, unknown> = {}) => logger.debug("Hub event watch", { watchId, kind, ...detail, message });
     const stream = new Readable({ objectMode: false, highWaterMark: 1, read() { blocked = false; pump(); } });
     let active = activeBySource.get(source);
-    if (!active) activeBySource.set(source, active = new Set());
+    if (!active) {
+        active = new Set();
+        activeBySource.set(source, active);
+    }
     active.add(stream);
 
     const detach = () => {
