@@ -75,9 +75,14 @@ export class Auditor {
 
     auditStateChange(mutation: HubStateMutation): void {
         const identity = this.requireStateIdentity();
+        const cursors = this.advanceStateCursor(identity);
+        this.write({ opState: "", opCode: OpRecordCode.HUB_STATE_CHANGE, objectId: identity.hubId, requestorId: "system", receivedAt: Date.now(), hubState: { type: "change", ...cursors, mutation } });
+    }
+
+    private advanceStateCursor(identity: { hubId: string; epoch: string; position: number }) {
         const previousCursor = { hubId: identity.hubId, epoch: identity.epoch, position: identity.position };
         identity.position += 1;
-        this.write({ opState: "", opCode: OpRecordCode.HUB_STATE_CHANGE, objectId: identity.hubId, requestorId: "system", receivedAt: Date.now(), hubState: { type: "change", previousCursor, cursor: { hubId: identity.hubId, epoch: identity.epoch, position: identity.position }, mutation } });
+        return { previousCursor, cursor: { hubId: identity.hubId, epoch: identity.epoch, position: identity.position } };
     }
 
     private requireStateIdentity() {
@@ -209,11 +214,11 @@ export class Auditor {
     auditManifestChange(manifestChange: ManifestChange) {
         const identity = this.stateIdentity;
         const sequenceId = manifestChange.sequenceId;
-        const hubState: HubStateAudit | undefined = identity && sequenceId ? (() => {
-            const previousCursor = { hubId: identity.hubId, epoch: identity.epoch, position: identity.position };
-            identity.position += 1;
-            return { type: "change", previousCursor, cursor: { hubId: identity.hubId, epoch: identity.epoch, position: identity.position }, mutation: { kind: "sequence", action: "manifest", sequenceId, instanceId: manifestChange.instanceId, manifestChange } };
-        })() : undefined;
+        const hubState: HubStateAudit | undefined = identity && sequenceId ? {
+            type: "change",
+            ...this.advanceStateCursor(identity),
+            mutation: { kind: "sequence", action: "manifest", sequenceId, instanceId: manifestChange.instanceId, manifestChange }
+        } : undefined;
         this.write({
             opState: "",
             opCode: OpRecordCode.MANIFEST_CHANGE,

@@ -312,13 +312,9 @@ export class Host implements IHost, IComponent {
         this.auditor = new Auditor();
         this.auditor.resetStateIdentity(this.config.host.id, IDProvider.generate());
         this.removeHubStateAuditListener = this.auditor.subscribeState((record) => this.hubState.consume(record));
-        this.instancesStore.setManifestChangeHandler((change: ManifestChange) => this.auditor.auditManifestChange(change));
+        this.installInstanceAuditHandlers();
         this.sequenceStore.setInventoryAuditHandler((sequence, sequenceId) => {
             this.auditor.auditStateChange(sequence ? { kind: "sequence", action: "upsert", sequenceId, value: projectSequence(sequence, this.config.host.id, this.config.host.apiBase.replace(/v\d+$/, "v2")) } : { kind: "sequence", action: "remove", sequenceId, value: null });
-        });
-        this.instancesStore.setInventoryAuditHandler((owner, instanceId, sequenceId) => {
-            this.auditor.auditStateChange(owner ? { kind: "instance", action: "upsert", instanceId, sequenceId, value: projectInstance(owner.getInfo(), this.config.host.id, this.config.host.apiBase.replace(/v\d+$/, "v2")) } : { kind: "instance", action: "remove", instanceId, sequenceId, value: null });
-            this.auditHubHealth();
         });
         this.serviceDiscovery.setInventoryAuditHandler((topic, name) => {
             if (!topic) this.auditor.auditStateChange({ kind: "topic", action: "remove", topic: name, value: null });
@@ -1592,6 +1588,14 @@ export class Host implements IHost, IComponent {
         return this.serviceDiscovery.getTopics();
     }
 
+    private installInstanceAuditHandlers(): void {
+        this.instancesStore.setManifestChangeHandler((change: ManifestChange) => this.auditor.auditManifestChange(change));
+        this.instancesStore.setInventoryAuditHandler((owner, instanceId, sequenceId) => {
+            this.auditor.auditStateChange(owner ? { kind: "instance", action: "upsert", instanceId, sequenceId, value: projectInstance(owner.getInfo(), this.config.host.id, this.config.host.apiBase.replace(/v\d+$/, "v2")) } : { kind: "instance", action: "remove", instanceId, sequenceId, value: null });
+            this.auditHubHealth();
+        });
+    }
+
     private currentHubInventory(): HubInventoryCheckpoint {
         const hubId = this.config.host.id;
         const v2ApiBase = this.config.host.apiBase.replace(/v\d+$/, "v2");
@@ -1698,16 +1702,7 @@ export class Host implements IHost, IComponent {
 
         this.instancesStore.clear();
         this.instancesStore = new InstancesStore();
-        this.instancesStore.setManifestChangeHandler((change: ManifestChange) => this.auditor.auditManifestChange(change));
-        this.instancesStore.setInventoryAuditHandler((owner, instanceId, sequenceId) => {
-            this.auditor.auditStateChange(owner ? { kind: "instance", action: "upsert", instanceId, sequenceId, value: projectInstance(owner.getInfo(), this.config.host.id, this.config.host.apiBase.replace(/v\d+$/, "v2")) } : { kind: "instance", action: "remove", instanceId, sequenceId, value: null });
-            this.auditHubHealth();
-        });
-        this.instancesStore.setManifestChangeHandler((change: ManifestChange) => this.auditor.auditManifestChange(change));
-        this.instancesStore.setInventoryAuditHandler((owner, instanceId, sequenceId) => {
-            this.auditor.auditStateChange(owner ? { kind: "instance", action: "upsert", instanceId, sequenceId, value: projectInstance(owner.getInfo(), this.config.host.id, this.config.host.apiBase.replace(/v\d+$/, "v2")) } : { kind: "instance", action: "remove", instanceId, sequenceId, value: null });
-            this.auditHubHealth();
-        });
+        this.installInstanceAuditHandlers();
         this.sequenceStore.clear();
 
         this.s3Client?.dispose();

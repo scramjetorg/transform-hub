@@ -2,7 +2,8 @@ import type { ApiClientResponse } from "@scramjet/api-router";
 import { HubCursor, HubWatchEvent, HubWatchKind } from "@scramjet/runtime-types";
 import { StringDecoder } from "string_decoder";
 import { Readable } from "stream";
-import { HubEventWatch, HubWatchConnectionHealth, HubWatchError, HubWatchErrorCode, HubWatchFrame, HubWatchFrameSchema, HubWatchKindSchema } from "./hub-event-watch-contract";
+import { HubEventWatch, HubWatchConnectionHealth, HubWatchError, HubWatchErrorCode, HubWatchFrame, HubWatchFrameSchema } from "./hub-event-watch-contract";
+import { abortError, copyCursor, sameCursor, sameIdentity, validateWatchOptions } from "./hub-event-watch-helpers";
 
 import { HUB_WATCH_OPEN_TIMEOUT_MS, HUB_WATCH_SILENCE_TIMEOUT_MS, HUB_WATCH_QUEUE_CAPACITY } from "./defaults";
 type Clock = { now(): number; setTimeout(callback: () => void, ms: number): unknown; clearTimeout(handle: unknown): void };
@@ -11,10 +12,7 @@ type OpenWatch = (signal: AbortSignal) => Promise<ApiClientResponse<Readable>>;
 const systemClock: Clock = { now: () => performance.now(), setTimeout: (cb, ms) => setTimeout(cb, ms), clearTimeout: handle => clearTimeout(handle as NodeJS.Timeout) };
 
 export function createHubEventWatch<K extends HubWatchKind>(kind: K, options: { signal?: AbortSignal } = {}, open: OpenWatch, hooks: WatchHooks = {}): HubEventWatch<K> {
-    if (!HubWatchKindSchema.safeParse(kind).success) throw new TypeError("Unsupported Hub watch kind");
-    if (!options || typeof options !== "object" || Array.isArray(options) || Object.keys(options).some(key => key !== "signal")) throw new TypeError("Invalid Hub watch options");
-    const signal = options.signal;
-    if (signal !== undefined && (!signal || typeof signal.aborted !== "boolean" || typeof signal.addEventListener !== "function" || typeof signal.removeEventListener !== "function")) throw new TypeError("Invalid Hub watch signal");
+    const signal = validateWatchOptions(kind, options);
     const clock = hooks.clock ?? systemClock;
     const diagnostic = (event: string, detail?: unknown): void => { try { hooks.diagnostic?.(event, detail); } catch { /* observational only */ } };
     const controller = new AbortController();
@@ -36,7 +34,6 @@ export function createHubEventWatch<K extends HubWatchKind>(kind: K, options: { 
     let cursor: HubCursor | undefined;
     let gotSnapshot = false;
 
-    const copyCursor = (value: HubCursor): HubCursor => Object.freeze({ hubId: value.hubId, epoch: value.epoch, position: value.position });
     const notify = (next: HubWatchConnectionHealth): void => {
         state = Object.freeze({ ...next, ...(next.cursor ? { cursor: copyCursor(next.cursor) } : {}) });
         for (const listener of [...listeners]) { try { listener(state); } catch { /* observer isolation */ } }
@@ -70,7 +67,6 @@ export function createHubEventWatch<K extends HubWatchKind>(kind: K, options: { 
         notify({ state: next, ...(cursor ? { cursor } : {}), ...(error instanceof HubWatchError ? { error } : {}) });
         dispose(response?.body, response?.cleanup);
     };
-    function abortError(): Error { const error = new Error("The watch was aborted"); error.name = "AbortError"; return error; }
     function abortListener(): void { selectTerminal("aborted", abortError()); }
     const lost = (code: HubWatchErrorCode, message: string, details: ConstructorParameters<typeof HubWatchError>[2] = {}): void => selectTerminal("lost", new HubWatchError(code, message, { ...details, cursor: details.cursor ?? cursor }));
     const setSilenceDeadline = (): void => {
@@ -166,6 +162,3 @@ export function createHubEventWatch<K extends HubWatchKind>(kind: K, options: { 
     void readPump();
     return iterator;
 }
-
-function sameIdentity(left: HubCursor, right: HubCursor): boolean { return left.hubId === right.hubId && left.epoch === right.epoch; }
-function sameCursor(left: HubCursor, right: HubCursor): boolean { return sameIdentity(left, right) && left.position === right.position; }
