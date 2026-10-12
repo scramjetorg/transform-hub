@@ -226,3 +226,164 @@ test("malformed, wrong-kind, truncated EOF, and duplicate snapshots have protoco
         await watch.close();
     }
 });
+
+test("real EOF wins a reentrant double-close and late abort while remote cleanup is pending", async t => {
+    let now = 0;
+    const timers = new Map<number, { at: number; callback: () => void }>();
+    let timerId = 0;
+    const clock = {
+        now: () => now,
+        setTimeout: (callback: () => void, ms: number) => {
+            const id = ++timerId;
+            timers.set(id, { at: now + ms, callback });
+            return id;
+        },
+        clearTimeout: (handle: unknown) => { timers.delete(handle as number); }
+    };
+    let rejectCleanup!: (reason: Error) => void;
+    let cleanupCalls = 0;
+    let cleanupErrors = 0;
+    let internalSignal: AbortSignal | undefined;
+    const body = new PassThrough();
+    const controller = new AbortController();
+    const watch = createHubEventWatch("health", { signal: controller.signal }, async signal => {
+        internalSignal = signal;
+        return {
+            ...response(body),
+            cleanup: () => {
+                cleanupCalls++;
+                return new Promise<void>((_resolve, reject) => { rejectCleanup = reject; });
+            }
+        };
+    }, { clock, diagnostic: event => { if (event === "cleanup-error") cleanupErrors++; } });
+    body.write(`${JSON.stringify(snapshot)}\n`);
+    t.deepEqual((await watch.next()).value, snapshot);
+
+    let terminalNotifications = 0;
+    let firstClose: Promise<void> | undefined;
+    let secondClose: Promise<void> | undefined;
+    let initialHealth = true;
+    watch.onHealthChange(state => {
+        if (initialHealth) { initialHealth = false; return; }
+        if (state.state === "lost") {
+            terminalNotifications++;
+            firstClose = watch.close();
+            secondClose = watch.close();
+            controller.abort();
+        }
+    });
+
+    const firstPending = watch.next();
+    const secondPending = watch.next();
+    const firstRejection = t.throwsAsync(firstPending, { instanceOf: HubWatchError, code: "WATCH_DISCONNECTED" });
+    const secondRejection = t.throwsAsync(secondPending, { instanceOf: HubWatchError, code: "WATCH_DISCONNECTED" });
+    body.end();
+
+    const firstError = await firstRejection;
+    const secondError = await secondRejection;
+    t.is(firstError, secondError, "both pending reads receive the selected first terminal error");
+    t.is(watch.health.state, "lost");
+    t.is(terminalNotifications, 1);
+    t.is(firstClose, secondClose, "reentrant close calls share the same promise");
+    await firstClose;
+    t.is(cleanupCalls, 1);
+    t.is(internalSignal?.aborted, true);
+    t.true(body.destroyed);
+    t.is(timers.size, 0);
+    t.true(controller.signal.aborted, "the observer's late external abort does not replace EOF loss");
+
+    rejectCleanup(new Error("deferred cleanup failure"));
+    await new Promise<void>(resolve => setImmediate(resolve));
+    t.is(cleanupErrors, 1, "deferred cleanup rejection is observed");
+    const laterError = await t.throwsAsync(watch.next(), { instanceOf: HubWatchError });
+    t.is(laterError, firstError);
+    t.is(watch.health.state, "lost");
+    t.is(watch.close(), firstClose);
+});
+
+test("four full unread queue cycles survive heartbeats and drain as one linked FIFO", async t => {
+    let now = 0;
+    const timers = new Map<number, { at: number; callback: () => void }>();
+    let timerId = 0;
+    const clock = {
+        now: () => now,
+        setTimeout: (callback: () => void, ms: number) => {
+            const id = ++timerId;
+            timers.set(id, { at: now + ms, callback });
+            return id;
+        },
+        clearTimeout: (handle: unknown) => { timers.delete(handle as number); }
+    };
+    const tick = (ms: number) => {
+        now += ms;
+        for (const [id, timer] of [...timers]) {
+            if (timer.at <= now) {
+                timers.delete(id);
+                timer.callback();
+            }
+        }
+    };
+    let cleanupCalls = 0;
+    const body = new PassThrough();
+    const watch = createHubEventWatch("health", {}, async () => ({
+        ...response(body),
+        cleanup: () => { cleanupCalls++; return Promise.resolve(); }
+    }), { clock });
+    body.write(`${JSON.stringify(snapshot)}\n`);
+    t.deepEqual((await watch.next()).value, snapshot);
+
+    let parsedPosition = 0;
+    watch.onHealthChange(state => { if (state.cursor) parsedPosition = state.cursor.position; });
+    const totalChanges = HUB_WATCH_QUEUE_CAPACITY * 4;
+    let previousPosition = 0;
+    let drainedChanges = 0;
+    for (let cycle = 0; cycle < 4; cycle++) {
+        const first = cycle * HUB_WATCH_QUEUE_CAPACITY + 1;
+        const last = first + HUB_WATCH_QUEUE_CAPACITY - 1;
+        const changes = Array.from({ length: HUB_WATCH_QUEUE_CAPACITY }, (_, index) => {
+            const position = first + index;
+            const previousCursor = { hubId: "hub", epoch: "epoch", position: position - 1 };
+            return {
+                type: "change", kind: "health", action: "upsert",
+                cursor: { hubId: "hub", epoch: "epoch", position }, previousCursor,
+                value: { healthy: true, status: "healthy", lifecycle: "running", startupReady: true, cpm: { configured: false, connected: false }, required: [] }
+            };
+        });
+        body.write(`${changes.map(change => JSON.stringify(change)).join("\n")}\n`);
+        for (let attempts = 0; attempts < 20 && parsedPosition !== last; attempts++) await new Promise<void>(resolve => setImmediate(resolve));
+        t.is(parsedPosition, last, `cycle ${cycle + 1} parsed all changes without application reads`);
+        t.is(watch.health.state, "live", `cycle ${cycle + 1} remains live at queue capacity`);
+
+        // Heartbeat control frames are processed while all 256 application slots are occupied.
+        tick(5_000);
+        const cursor = { hubId: "hub", epoch: "epoch", position: last };
+        body.write(`${JSON.stringify({ type: "heartbeat", kind: "health", cursor, deliveredCursor: cursor })}\n`);
+        await new Promise<void>(resolve => setImmediate(resolve));
+        t.is(watch.health.state, "live", `cycle ${cycle + 1} heartbeat refreshes liveness`);
+        t.is(timers.size, 1, "one silence timer remains armed");
+
+        for (let position = first; position <= last; position++) {
+            const result = await watch.next();
+            t.is(result.done, false);
+            t.is(result.value?.type, "change");
+            t.deepEqual(result.value?.previousCursor, { hubId: "hub", epoch: "epoch", position: position - 1 });
+            t.deepEqual(result.value?.cursor, { hubId: "hub", epoch: "epoch", position });
+            drainedChanges++;
+        }
+        previousPosition = last;
+    }
+
+    t.is(previousPosition, totalChanges);
+    t.is(drainedChanges, totalChanges);
+    t.is(now, 20_000);
+    t.is(watch.health.state, "live", "20 seconds of fake time with valid heartbeats does not cause false loss");
+
+    const pending = watch.next();
+    const close = watch.close();
+    t.deepEqual(await pending, { done: true, value: undefined });
+    await close;
+    t.is(watch.health.state, "closed");
+    t.true(body.destroyed);
+    t.is(cleanupCalls, 1);
+    t.is(timers.size, 0);
+});
