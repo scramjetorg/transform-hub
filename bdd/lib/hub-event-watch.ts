@@ -2466,7 +2466,7 @@ function startupManifestArtifacts(): ManifestProofArtifacts {
     return resolveManifestProofArtifacts("built", { workspaceRoot: resolve(__dirname, "../..") });
 }
 
-/** Startup-gated P3 producer proves real READY, legacy-ready preservation, and existing supervised restart. */
+/** Startup-gated producer proves real READY, legacy-ready preservation, and existing supervised restart. */
 export async function proveHostedRequiredStartupReadinessAndRestart(world: WatchWorld): Promise<Record<string, any>> {
     const isolation = world.scenarioIsolation;
     assert.ok(isolation, "ScenarioIsolation must own startup config, seeded fixture and gate release files");

@@ -86,7 +86,7 @@ const withoutPseudo = (headers: Record<string, unknown>, keep: readonly string[]
     Object.fromEntries(Object.entries(headers).filter(([name]) => !name.startsWith(":") || keep.includes(name)));
 
 /**
- * Private P3 relay for the existing routed BrokerAgent H2 request path.
+ * Private relay for the existing routed BrokerAgent H2 request path.
  * It intentionally has no product-facing or generic proxy API.
  */
 export class HubEventWatchH2Relay {

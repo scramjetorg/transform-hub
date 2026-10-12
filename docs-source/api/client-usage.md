@@ -126,6 +126,57 @@ export default async function (this: Context) {
 
 Use `this.hubClient()` for current-Hub operations and `this.spaceClient()` for Manager/Space-level operations. Existing `this.hub` and `this.space` properties remain available as legacy v1-compatible clients.
 
+### Watching Hub state
+
+The Hub client exposes a snapshot-and-change watch for `sequence`, `instance`, `topic`, and `health` state. Each watch first yields its current snapshot, then yields ordered changes for that kind:
+
+```typescript
+import { HubWatchError, createHubClient, createHttpClientTransport } from "@scramjet/rest-api2";
+
+const hub = createHubClient({
+  transport: createHttpClientTransport({ baseUrl: "http://localhost:8000", fetch }),
+  basePath: "/api/v2",
+});
+const controller = new AbortController();
+const watch = hub.events.watch("sequence", { signal: controller.signal });
+
+try {
+  for await (const event of watch) {
+    if (event.type === "snapshot") {
+      // The initial inventory is delivered before any changes.
+      console.log("initial sequences", event.items);
+    } else {
+      console.log("sequence change", event.cursor, event);
+    }
+  }
+} catch (error: unknown) {
+  if (error instanceof HubWatchError) {
+    // Loss is terminal for this watch. Decide whether and when to open another.
+    console.warn("watch ended", error.code, error.cursor, error.cause);
+  } else if (error instanceof Error && error.name === "AbortError") {
+    // The supplied AbortSignal cancelled this watch.
+  } else {
+    throw error;
+  }
+} finally {
+  // Idempotent; for-await break/return also closes the iterator.
+  await watch.close();
+}
+```
+
+The same API is available to a hosted Node sequence through `this.hubClient()`:
+
+```typescript
+const controller = new AbortController();
+const watch = this.hubClient().events.watch("health", { signal: controller.signal });
+```
+
+Use `watch.health` and `watch.onHealthChange(listener)` for the **connection** state (`opening`, `live`, then a terminal state); `onHealthChange` returns an unsubscribe function. To receive Hub operational-health inventory and changes, open `events.watch("health")` instead. `close()` returns a promise, is idempotent, settles local reads promptly, and requests cancellation of the underlying resource. Aborting the supplied signal rejects pending reads with an `AbortError`; unexpected transport/source loss rejects them with a typed `HubWatchError`.
+
+Unexpected loss ends that subscription. The client does not automatically reconnect, replay, or resume from the old cursor. If the caller elects to recover, it opens a new watch, which starts with a fresh snapshot. A cursor is for ordering/linkage, not a resume token. Current support covers the common HubClient over external HTTP and native/routed transports, plus the hosted Node path, including Bun's Node delegation; it does not claim browser or Python support.
+
+The protocol sends heartbeats every 5 seconds and uses 15-second open and silence deadlines. The documented 16-second silence-detection bound assumes timer scheduling lag of at most 1 second and a stream able to deliver healthy frames within the silence budget. Each subscriber has a bounded queue of 256 live changes on the server and client; this is a change-count bound, not a snapshot or byte-size limit. Overflow is terminal and reported as `WATCH_OVERFLOW` rather than silently dropping changes.
+
 ### Discovering a remote Hub and calling its instance
 
 Space-level discovery is the cross-Hub path. First list Hubs or Instances through the Manager/Space

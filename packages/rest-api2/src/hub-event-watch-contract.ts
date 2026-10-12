@@ -3,14 +3,20 @@ import { z } from "zod";
 import { Instance, Sequence, Topic } from "./schemas";
 import { InstanceManifestResponseSchema, ManifestChangeSchema } from "./runtime-manifest";
 
+/** Optional cancellation for a Hub state watch. */
 export type HubWatchOptions = { signal?: AbortSignal };
 export type HubWatchConnectionState = "opening" | "live" | "closed" | "aborted" | "lost";
+/** Health of this watch connection, distinct from Hub operational health events. */
 export type HubWatchConnectionHealth = { state: HubWatchConnectionState; cursor?: HubCursor; error?: HubWatchError };
+/** Single-consumer async iterator: snapshot first, then ordered changes. */
 export interface HubEventWatch<K extends HubWatchKind> extends AsyncIterableIterator<HubWatchEvent<K>> {
     readonly health: Readonly<HubWatchConnectionHealth>;
+    /** Close idempotently; resolves after local cleanup is initiated, not remote acknowledgement. */
     close(): Promise<void>;
+    /** Subscribe to connection-state updates; immediately invokes the listener and returns its unsubscribe function. */
     onHealthChange(listener: (health: Readonly<HubWatchConnectionHealth>) => void): () => void;
 }
+/** Opens a fresh snapshot-and-change subscription. Loss is terminal; open a new watch to recover. */
 export interface HubEventsClient { watch<K extends HubWatchKind>(kind: K, options?: HubWatchOptions): HubEventWatch<K> }
 export type HubWatchErrorCode =
     | "WATCH_OPEN_TIMEOUT" | "WATCH_SILENCE_TIMEOUT" | "WATCH_DISCONNECTED" | "WATCH_GAP" | "WATCH_OVERFLOW"
@@ -21,6 +27,7 @@ export type HubWatchErrorDetails = {
     receivedCursor?: HubCursor;
     side?: "server" | "client";
     status?: number;
+    /** Original thrown value, preserved without normalization. */
     cause?: unknown;
 };
 export class HubWatchError extends Error {
@@ -30,6 +37,7 @@ export class HubWatchError extends Error {
     readonly receivedCursor?: HubCursor;
     readonly side?: "server" | "client";
     readonly status?: number;
+    /** Original thrown value, preserved without normalization. */
     readonly cause?: unknown;
     constructor(code: HubWatchErrorCode, message: string, details: HubWatchErrorDetails = {}) {
         super(message);
