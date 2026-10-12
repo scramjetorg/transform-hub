@@ -11,7 +11,7 @@ import type { ClientUtils as ClientUtilsType } from "@scramjet/client-utils";
 import type { ManagerConfiguration } from "@scramjet/api-types";
 import type { CustomWorld } from "../step-definitions/world";
 import { resolveFixturePackagePath } from "./fixture-package-path.js";
-import { resolveManifestProofArtifacts, type ManifestProofArtifacts } from "./runtime-manifest-artifacts";
+import { assertManifestProductPath, manifestPackageRoot, resolveManifestProofArtifacts, type ManifestProofArtifacts } from "./runtime-manifest-artifacts";
 import type { HostUtils } from "./host-utils";
 import type { ScenarioIsolation, MtlsControlIngress } from "./scenario-isolation";
 import { readManifestHostConfig, startManifestHost } from "./runtime-manifest-host";
@@ -252,7 +252,6 @@ export async function startHostedConfiguredCpmHub(world: WatchWorld): Promise<vo
 
     const workspaceRoot = resolve(__dirname, "../..");
     const artifacts = resolveManifestProofArtifacts("built", { workspaceRoot });
-    const distRoot = realpathSync(join(artifacts.workspaceRoot, "dist"));
     cpm.tls = isolation.createVerser2TlsCredentials();
     cpm.mmApiPort = await isolation.reservePort();
     cpm.mmVerserPort = await isolation.reservePort();
@@ -260,14 +259,12 @@ export async function startHostedConfiguredCpmHub(world: WatchWorld): Promise<vo
     cpm.mmVerserUrl = `https://127.0.0.1:${cpm.mmVerserPort}`;
 
     const mmBin = resolvePublishedBin("@scramjet/multi-manager", "multi-manager", { workspaceRoot: artifacts.workspaceRoot });
-    cpm.mmBinPath = realpathSync(mmBin);
-    assert.ok(cpm.mmBinPath.startsWith(`${distRoot}${require("node:path").sep}`), `MultiManager bin resolved outside selected dist: ${cpm.mmBinPath}`);
+    cpm.mmBinPath = assertManifestProductPath(artifacts, "@scramjet/multi-manager", mmBin, "MultiManager bin");
     const mmClientModulePath = realpathSync(resolvePublishedModule("@scramjet/multi-manager-api-client", { workspaceRoot: artifacts.workspaceRoot }));
     const clientUtilsModulePath = realpathSync(resolvePublishedModule("@scramjet/client-utils", { workspaceRoot: artifacts.workspaceRoot }));
     cpm.clientUtilsModulePath = clientUtilsModulePath;
-    for (const [name, path] of [["MultiManager API client", mmClientModulePath], ["ClientUtils", clientUtilsModulePath]] as const) {
-        assert.ok(path.startsWith(`${distRoot}${require("node:path").sep}`), `${name} resolved outside selected dist: ${path}`);
-    }
+    assertManifestProductPath(artifacts, "@scramjet/multi-manager-api-client", mmClientModulePath, "MultiManager API client");
+    assertManifestProductPath(artifacts, "@scramjet/client-utils", clientUtilsModulePath, "ClientUtils");
     const { MultiManagerClient: SelectedMultiManagerClient } = require(mmClientModulePath) as typeof import("@scramjet/multi-manager-api-client");
     const { ClientUtils: SelectedClientUtils } = require(clientUtilsModulePath) as typeof import("@scramjet/client-utils");
     const mmIdentityDir = join(isolation.artifactsDir, "watch-cpm-mm-identity");
@@ -475,11 +472,10 @@ export async function proveHostedConfiguredCpmHealthCycle(world: WatchWorld): Pr
         const ready = eventData<{ runId: string; provenance: Record<string, any> }>(await observer.getEvent("hub-watch-observer-ready"));
         assert.equal(ready.runId, runId);
         assert.equal(ready.provenance.runtime?.name, "node");
-        const selectedDist = realpathSync(join(state.artifacts.workspaceRoot, "dist"));
         for (const name of ["runner-node", "rest-api2", "api-router"] as const) {
             const selected = ready.provenance.productModulePaths?.[name];
             assert.ok(selected, `hosted CPM observer omitted selected ${name} artifact provenance`);
-            assert.ok(realpathSync(selected).startsWith(`${selectedDist}${require("node:path").sep}`), `${name} resolved outside selected dist: ${selected}`);
+            assertManifestProductPath(state.artifacts, `@scramjet/${name}`, selected, `hosted CPM observer ${name}`);
         }
 
         const watchId = `${runId}-configured-cpm-health`;
@@ -718,11 +714,10 @@ export async function proveHostedNativeHealthyIdleRelay(world: WatchWorld): Prom
         const ready = eventData<{ runId: string; provenance: Record<string, any> }>(await observer.getEvent("hub-watch-observer-ready"));
         assert.equal(ready.runId, runId);
         assert.equal(ready.provenance.runtime?.name, "node");
-        const selectedDist = realpathSync(require("node:path").join(state.artifacts.workspaceRoot, "dist"));
         for (const name of ["runner-node", "rest-api2", "api-router"] as const) {
             const selected = ready.provenance.productModulePaths?.[name];
             assert.ok(selected, `hosted observer omitted selected ${name} artifact provenance`);
-            assert.ok(realpathSync(selected).startsWith(`${selectedDist}${require("node:path").sep}`), `${name} resolved outside selected dist: ${selected}`);
+            assertManifestProductPath(state.artifacts, `@scramjet/${name}`, selected, `hosted observer ${name}`);
         }
         const watchId = `${runId}-healthy-idle-sequence`;
         const openCommandId = randomUUID();
@@ -881,11 +876,10 @@ export async function proveHostedNativeRelayFault(world: WatchWorld, fault: Host
         const ready = eventData<{ runId: string; provenance: Record<string, any> }>(await observer.getEvent("hub-watch-observer-ready"));
         assert.equal(ready.runId, runId);
         assert.equal(ready.provenance.runtime?.name, "node");
-        const selectedDist = realpathSync(require("node:path").join(state.artifacts.workspaceRoot, "dist"));
         for (const name of ["runner-node", "rest-api2", "api-router"] as const) {
             const selected = ready.provenance.productModulePaths?.[name];
             assert.ok(selected, `hosted observer omitted selected ${name} artifact provenance`);
-            assert.ok(realpathSync(selected).startsWith(`${selectedDist}${require("node:path").sep}`), `${name} resolved outside selected dist: ${selected}`);
+            assertManifestProductPath(state.artifacts, `@scramjet/${name}`, selected, `hosted observer ${name}`);
         }
         const relay = relayResources.relay!;
         const sourceId = `runner.${observer.id}.hub.broker`;
@@ -1157,16 +1151,25 @@ export async function prepareAuthenticatedNativeCleanup(world: WatchWorld): Prom
 
     const state = world.resources.runtimeManifestHost;
     assert.ok(state, "Configured DEBUG built Host must run before native Broker setup");
-    const sdkRequire = createRequire(require.resolve("../../dist/runner-node/package.json"));
+    const runnerNodeRoot = manifestPackageRoot(state.artifacts, "@scramjet/runner-node");
+    const sdkConsumerPath = join(runnerNodeRoot, "package.json");
+    const sdkRequire = createRequire(sdkConsumerPath);
     const sdk = sdkRequire("@signicode/verser2-guest-node");
     native.sdkPath = realpathSync(sdkRequire.resolve("@signicode/verser2-guest-node"));
-    native.sdkVersion = JSON.parse(readFileSync(require("node:path").join(require("node:path").dirname(native.sdkPath), "..", "package.json"), "utf8")).version;
-    native.verserCommonPath = realpathSync(sdkRequire.resolve("@signicode/verser-common"));
+    const sdkPackageRoot = manifestPackageRoot(state.artifacts, "@signicode/verser2-guest-node", sdkConsumerPath);
+    native.sdkVersion = JSON.parse(readFileSync(join(sdkPackageRoot, "package.json"), "utf8")).version;
+    assertManifestProductPath(state.artifacts, "@signicode/verser2-guest-node", native.sdkPath, "Verser2 guest SDK", sdkConsumerPath);
+    assert.equal(native.sdkVersion, "0.9.3", "native watch SDK must use the approved Verser2 dependency");
+    const sdkDependencyRequire = createRequire(native.sdkPath);
+    native.verserCommonPath = realpathSync(sdkDependencyRequire.resolve("@signicode/verser-common"));
+    assertManifestProductPath(state.artifacts, "@signicode/verser-common", native.verserCommonPath, "Verser2 common SDK", native.sdkPath);
     const clientUtilsPath = require("./published-artifacts").resolvePublishedModule("@scramjet/client-utils", { workspaceRoot: state.artifacts.workspaceRoot });
+    assertManifestProductPath(state.artifacts, "@scramjet/client-utils", clientUtilsPath, "ClientUtils");
     const clientUtilsRequire = createRequire(clientUtilsPath);
     const { ClientUtilsCustomAgent } = clientUtilsRequire(clientUtilsPath);
     const nodeFetch = clientUtilsRequire("node-fetch").default;
     native.nodeFetchPath = realpathSync(clientUtilsRequire.resolve("node-fetch"));
+    assertManifestProductPath(state.artifacts, "node-fetch", native.nodeFetchPath, "node-fetch", clientUtilsPath);
     native.broker = sdk.createVerserBroker({
         hostUrl: native.tls.publicUrl,
         brokerId: native.brokerId,
@@ -1463,13 +1466,10 @@ export async function proveHostedNodeCleanup(world: WatchWorld): Promise<Array<{
         const ready = eventData<{ runId: string; provenance: Record<string, any> }>(await observer.getEvent("hub-watch-observer-ready"));
         assert.equal(ready.runId, runId);
         assert.equal(ready.provenance.runtime?.name, "node");
-        const fs = require("node:fs") as typeof import("node:fs");
-        const path = require("node:path") as typeof import("node:path");
-        const selectedDistRoot = fs.realpathSync(path.join(state.artifacts.workspaceRoot, "dist"));
         for (const name of ["runner-node", "rest-api2", "api-router"] as const) {
             const resolved = ready.provenance.productModulePaths?.[name];
             assert.ok(resolved, `hosted observer provenance omitted ${name}`);
-            assert.ok(fs.realpathSync(resolved).startsWith(`${selectedDistRoot}${path.sep}`), `${name} resolved outside selected built dist: ${resolved}`);
+            assertManifestProductPath(state.artifacts, `@scramjet/${name}`, resolved, `hosted observer ${name}`);
         }
         const rest = require(state.artifacts.modules.restApi2) as typeof import("@scramjet/rest-api2");
         const mutationClient = rest.createHubClient({ transport: rest.createHttpClientTransport({ baseUrl: new URL(state.apiBaseUrl).origin, fetch }), basePath: "/api/v2" });
@@ -1582,14 +1582,11 @@ export async function proveHostedNodeSnapshots(world: WatchWorld): Promise<void>
         assert.equal(observerReady.runId, runId);
         assert.equal(observerReady.provenance.runtime?.name, "node");
         assert.equal(observerReady.provenance.execPath, process.execPath);
-        const fs = require("node:fs") as typeof import("node:fs");
-        const selectedDistRoot = fs.realpathSync(require("node:path").join(state.artifacts.workspaceRoot, "dist"));
         const productKeys = ["runner-node", "rest-api2", "api-router"] as const;
         for (const name of productKeys) {
             const path = observerReady.provenance.productModulePaths?.[name];
             assert.ok(path, `observer provenance omitted ${name}`);
-            const realPath = fs.realpathSync(path);
-            assert.ok(realPath.startsWith(`${selectedDistRoot}${require("node:path").sep}`), `${name} resolved outside selected artifact dist: ${realPath} (expected under ${selectedDistRoot})`);
+            assertManifestProductPath(state.artifacts, `@scramjet/${name}`, path, `observer ${name}`);
         }
         for (const kind of ["sequence", "instance", "topic", "health"] as const) {
             const watchId = `${runId}-${kind}`;
@@ -1736,13 +1733,10 @@ export async function proveHostedNodeMutationRevisionSnapshot(world: WatchWorld)
         const observerReady = eventData<{ runId: string; provenance: Record<string, any> }>(await observer.getEvent("hub-watch-observer-ready"));
         assert.equal(observerReady.runId, runId);
         assert.equal(observerReady.provenance.runtime?.name, "node");
-        const fs = require("node:fs") as typeof import("node:fs");
-        const selectedDistRoot = fs.realpathSync(require("node:path").join(state.artifacts.workspaceRoot, "dist"));
         for (const name of ["runner-node", "rest-api2", "api-router"] as const) {
             const path = observerReady.provenance.productModulePaths?.[name];
             assert.ok(path, `observer provenance omitted ${name}`);
-            const realPath = fs.realpathSync(path);
-            assert.ok(realPath.startsWith(`${selectedDistRoot}${require("node:path").sep}`), `${name} resolved outside selected artifact dist: ${realPath}`);
+            assertManifestProductPath(state.artifacts, `@scramjet/${name}`, path, `observer ${name}`);
         }
 
         // Establish sequence and instance observers before the real producer starts.
@@ -1944,11 +1938,10 @@ export async function proveHostedTwoInstanceManifestRevisions(world: WatchWorld)
         const observerReady = eventData<{ runId: string; provenance: Record<string, any> }>(await observer.getEvent("hub-watch-observer-ready"));
         assert.equal(observerReady.runId, runId);
         assert.equal(observerReady.provenance.runtime?.name, "node");
-        const selectedDist = realpathSync(join(state.artifacts.workspaceRoot, "dist"));
         for (const name of ["runner-node", "rest-api2", "api-router"] as const) {
             const path = observerReady.provenance.productModulePaths?.[name];
             assert.ok(path, `observer provenance omitted ${name}`);
-            assert.ok(realpathSync(path).startsWith(`${selectedDist}${require("node:path").sep}`), `${name} resolved outside selected dist: ${path}`);
+            assertManifestProductPath(state.artifacts, `@scramjet/${name}`, path, `observer ${name}`);
         }
 
         const baseline = new Set(watchLogRecords(state.hostUtils.output).map(record => record.watchId));
@@ -2146,13 +2139,10 @@ export async function proveHostedBunDelegatedWatch(world: WatchWorld): Promise<R
         assert.ok(provenance.nodeVersion?.startsWith("v"), "inner Node version is required");
         assert.equal(provenance.bunExecutable, "/opt/bun/bin/bun", "Bun version must be read from the image-owned executable");
         assert.equal(provenance.bunVersion, "1.4.2", "the supported BDD image's actual Bun version must be verified in-container");
-        const fs = require("node:fs") as typeof import("node:fs");
-        const path = require("node:path") as typeof import("node:path");
-        const distRoot = fs.realpathSync(path.join(state.artifacts.workspaceRoot, "dist"));
         for (const name of ["host", "runner", "runner-bun", "runner-node", "rest-api2", "api-router", "adapter-process", "hub-state"]) {
             const selected = provenance.productModulePaths?.[name];
             assert.ok(selected, `Bun-declared fixture omitted selected ${name} module path`);
-            assert.ok(fs.realpathSync(selected).startsWith(`${distRoot}${path.sep}`), `${name} resolved outside selected dist: ${selected}`);
+            assertManifestProductPath(state.artifacts, `@scramjet/${name}`, selected, `Bun-declared fixture ${name}`);
         }
         assert.ok(provenance.productModulePaths.fixture?.endsWith("/index.js"), "fixture path must identify its uploaded entry");
 
@@ -2187,12 +2177,18 @@ export async function proveHostedBunDelegatedWatch(world: WatchWorld): Promise<R
         const lineage = provenance.processLineage as Array<{ pid: number; executable: string; entry: string }>;
         assert.ok(Array.isArray(lineage) && lineage.some(item => item.pid === state.child.pid), "observer process ancestry must reach the owned Host");
         assert.ok(lineage.some(item => item.executable.includes("/opt/bun/bin/bun")), "owned observer ancestry must include the real container Bun executable");
-        assert.ok(lineage.some(item => item.entry.includes("/dist/runner-bun/")), "ancestry must include selected runner-bun entry");
-        assert.ok(lineage.some(item => item.entry.includes("/dist/runner-node/")), "ancestry must include selected runner-node entry");
-        assert.ok(lineage.some(item => item.entry.includes("/dist/runner/") && item.entry.includes("start-runner")), "ancestry must include selected outer runner entry");
+        const selectedEntry = (packageName: string) => lineage.find(item => {
+            if (!item.entry) return false;
+            try { assertManifestProductPath(state.artifacts, packageName, item.entry, "Bun-declared process ancestry"); return true; }
+            catch { return false; }
+        });
+        assert.ok(selectedEntry("@scramjet/runner-bun"), "ancestry must include selected runner-bun entry");
+        assert.ok(selectedEntry("@scramjet/runner-node"), "ancestry must include selected runner-node entry");
+        const outerRunnerEntry = selectedEntry("@scramjet/runner");
+        assert.ok(outerRunnerEntry?.entry.includes("start-runner"), "ancestry must include selected outer runner entry");
         assert.equal(lineage[0].pid, provenance.pid);
         assert.equal(lineage[0].executable, realpathSync(provenance.execPath), "observer PID must execute the reported Node binary");
-        assert.ok(lineage[0].entry.includes("/dist/runner-node/"), "observer itself must be the delegated Node runtime");
+        assertManifestProductPath(state.artifacts, "@scramjet/runner-node", lineage[0].entry, "Bun observer delegated Node runtime");
         console.log(`[hub-event-watch-bun.provenance] ${JSON.stringify({ declaredEngine: provenance.declaredEngines.bun, runtime: provenance.runtime, nodeVersion: provenance.nodeVersion, bunExecutable: provenance.bunExecutable, bunVersion: provenance.bunVersion, selectedModules: provenance.productModulePaths, lineage })}`);
         world.resources.hubWatchBunDelegationProof = { outcome: "AbortError", acquiredId, releasedId: acquiredId, probeStatus: probe.status, declaredEngine: provenance.declaredEngines.bun, runtime: provenance.runtime };
         return world.resources.hubWatchBunDelegationProof;
@@ -2279,12 +2275,10 @@ async function openStartupHealthWatch(host: HostClientType, state: WatchHostStat
     const ready = eventData<{ runId: string; provenance: Record<string, any> }>(await observer.getEvent("hub-watch-observer-ready"));
     assert.equal(ready.runId, runId);
     assert.equal(ready.provenance.runtime?.name, "node");
-    const selectedDist = realpathSync(join(state.artifacts.workspaceRoot, "dist"));
     for (const name of ["runner-node", "rest-api2", "api-router"] as const) {
         const path = ready.provenance.productModulePaths?.[name];
         assert.ok(path, `health observer provenance omitted ${name}`);
-        const resolved = realpathSync(path);
-        assert.ok(resolved.startsWith(`${selectedDist}${require("node:path").sep}`), `${name} resolved outside selected worktree dist: ${resolved}`);
+        assertManifestProductPath(state.artifacts, `@scramjet/${name}`, path, `health observer ${name}`);
     }
     const baseline = new Set(watchLogRecords(state.hostUtils.output).map(record => record.watchId));
     const watchId = `${runId}-required-health`;

@@ -16,7 +16,7 @@ test("base and extra partitions are complete and have no overlap", (t) => {
     const partition = modes.partition();
     t.deepEqual([...new Set([...partition.base, ...partition.extra])].sort(), [...new Set(partition.all)].sort());
     t.is(partition.base.filter((name) => partition.extra.includes(name)).length, 0);
-    t.deepEqual(partition.extra, ["cli-basics", "cli-matrix", "python", "hub-idle-resource", "errors", "stream"]);
+    t.deepEqual(partition.extra, ["cli-basics", "cli-matrix", "python", "hub-idle-resource", "errors", "stream", "runtime-manifest", "hub-event-watch"]);
     t.false(partition.extra.includes("harness"));
     t.true(partition.all.every((name) => waves.CHUNKS[name]));
 });

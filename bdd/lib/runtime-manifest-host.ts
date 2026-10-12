@@ -94,7 +94,7 @@ export async function startManifestHost(world: ManifestWorld, mode: ManifestProo
     const hostUtils = new HostUtils({
         executableCommand: artifacts.hostCommand as [string, ...string[]],
         environment: isolation.environment({ SCRAMJET_CONFIG: configurationPath, SCRAMJET_CONFIG_PATH: configurationPath, NO_HOST: "false" }),
-        ...(mode === "source" ? { cwd: artifacts.workspaceRoot } : {})
+        ...(artifacts.mode === "source" ? { cwd: artifacts.workspaceRoot } : artifacts.mode === "tarball" ? { cwd: artifacts.productRoot } : {})
     });
     hostUtils.hostUrl = "";
     const startup = hostUtils.spawnHost(["port", "instances-server-port", "cpm-url", "runtime-adapter", "instance-lifetime-extension-delay"], "--config", configurationPath);

@@ -5,6 +5,7 @@ const report = process.env.TEST_REPORT
 const includeHarnessSelftest = ["1", "true"].includes(String(process.env.BDD_INCLUDE_HARNESS_SELFTEST).toLowerCase());
 const includeLongRunning = ["1", "true"].includes(String(process.env.BDD_INCLUDE_LONG_RUNNING).toLowerCase());
 const includeNeedsFix = ["1", "true"].includes(String(process.env.BDD_INCLUDE_NEEDS_FIX).toLowerCase());
+const runtimeManifestRegister = require("node:path").resolve(__dirname, "lib/runtime-manifest-register.cjs");
 const validationExclusions = "not @slow and not @stress and not @perf and not @load and not @external-dependency and not @compatibility and not @manager-migration and not @requires-docker and not @docker-specific";
 const tagParts = ["not @ignore"];
 
@@ -14,6 +15,10 @@ if (!includeHarnessSelftest) tagParts.push("not @harness-selftest");
 if (!includeLongRunning) tagParts.push(validationExclusions);
 
 const tags = tagParts.join(" and ");
+const runtimeManifestTags = process.env.SCRAMJET_TARBALL_BDD_ROOT ? `${tags} and not @source` : tags;
+const harnessTypescriptRegistration = process.env.SCRAMJET_TARBALL_BDD_ROOT
+    ? `--require-module "${runtimeManifestRegister}"`
+    : "--require-module tsx/cjs";
 const stepDefinitions = {
     "hub-configuration": [
         "--require step-definitions/world.ts",
@@ -28,7 +33,8 @@ const stepDefinitions = {
     ],
     "hub-event-watch": [
         "--require step-definitions/world.ts",
-        "--require step-definitions/hub-event-watch.ts"
+        "--require step-definitions/hub-event-watch.ts",
+        "--require step-definitions/hub-event-watch-preheaders.ts"
     ]
 }[process.env.SCRAMJET_BDD_CHUNK_ID] || ["--require step-definitions/**/*.ts"];
 
@@ -46,7 +52,7 @@ const common = [
     "--require support/control-plane-cycle-diagnostics.ts",
     ...stepDefinitions,
     "--require support/timing-boundary.ts",
-    "--require-module tsx/cjs",
+    harnessTypescriptRegistration,
     "--exit",
     `--tags "${tags}"`,
     ...report
@@ -62,7 +68,7 @@ module.exports = {
         "--require support/timing-boundary.ts",
         `--require-module "${require("node:path").resolve(__dirname, "lib/runtime-manifest-register.cjs")}"`,
         "--exit",
-        `--tags \"${tags}\"`,
+        `--tags \"${runtimeManifestTags}\"`,
         ...report
     ].join(" ")
 };

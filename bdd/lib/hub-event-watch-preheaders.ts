@@ -1,9 +1,8 @@
 import { strict as assert } from "node:assert";
 import { createReadStream } from "node:fs";
 import { randomUUID } from "node:crypto";
-import { realpathSync } from "node:fs";
-import { join } from "node:path";
 import { resolveFixturePackagePath } from "./fixture-package-path.js";
+import { assertManifestProductPath } from "./runtime-manifest-artifacts";
 import { startHostedHealthyIdleRelay } from "./hub-event-watch";
 import type { HubWatchRelaySelection } from "./hub-event-watch-relay";
 import type { CustomWorld } from "../step-definitions/world";
@@ -68,11 +67,10 @@ export async function proveHostedWatchPreheaderCancellation(world: PreheaderWorl
         const ready = readyResponse?.event?.message ?? readyResponse?.message ?? readyResponse;
         assert.equal(ready.runId, runId);
         assert.equal(ready.provenance?.runtime?.name, "node");
-        const selectedDist = realpathSync(join(state.artifacts.workspaceRoot, "dist"));
         for (const name of ["runner-node", "rest-api2", "api-router"] as const) {
             const modulePath = ready.provenance?.productModulePaths?.[name];
             assert.ok(modulePath, `observer provenance must include ${name}`);
-            assert.ok(realpathSync(modulePath).startsWith(`${selectedDist}${require("node:path").sep}`), `${name} must resolve from selected built artifacts`);
+            assertManifestProductPath(state.artifacts, `@scramjet/${name}`, modulePath, `pre-header observer ${name}`);
         }
         const sourceId = `runner.${observer.id}.hub.broker`;
 

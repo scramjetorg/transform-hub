@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import type { CustomWorld } from "../step-definitions/world";
 import { resolveFixturePackagePath } from "./fixture-package-path.js";
 import { openManifestAuditCapture, type ManifestAuditRecord } from "./runtime-manifest-audit";
+import { assertManifestProductPath } from "./runtime-manifest-artifacts";
 
 const { waitForCondition } = require("./readiness.js") as {
     waitForCondition: <T>(check: () => Promise<T> | T, isReady: (value: T) => boolean, options?: { timeoutMs?: number; intervalMs?: number; description?: string }) => Promise<T>;
@@ -66,29 +67,30 @@ function assertPythonProvenance(provenance: any, artifacts: any): void {
     for (const key of ["__main__", "runner_python.app_context", "runner_python.manifest", "runner_python.verser2_runtime", "verser2_guest_python"]) {
         assert.equal(typeof products[key], "string", `Python producer did not report ${key}`);
     }
+    for (const key of ["runner_python.app_context", "runner_python.manifest", "runner_python.verser2_runtime", "verser2_guest_python"]) {
+        assertManifestProductPath(artifacts, "@scramjet/runner-python", products[key], `Python producer ${key}`);
+    }
     if (artifacts.mode === "source") {
         for (const key of ["runner_python.app_context", "runner_python.manifest", "runner_python.verser2_runtime"]) {
             assert.ok(products[key].includes("/packages/runner-python/src/runner_python/"), `Python ${key} did not resolve from source: ${products[key]}`);
         }
         assert.ok(products.verser2_guest_python.includes("/packages/runner-python/__pypackages__/verser2_guest_python/"), `Python vendored transport did not resolve from source: ${products.verser2_guest_python}`);
         assert.equal(products.__main__, provenance.scriptPath);
-    } else {
+    } else if (artifacts.mode === "built") {
         const sourcePackage = `${artifacts.workspaceRoot}/packages/runner-python/src/`;
-        for (const key of ["__main__", "runner_python.app_context", "runner_python.manifest", "runner_python.verser2_runtime", "verser2_guest_python"]) {
-            assert.ok(!products[key].startsWith(sourcePackage), `Built Python run fell back to source module ${key}: ${products[key]}`);
-        }
+        assert.ok(!products.__main__.startsWith(sourcePackage), `Built Python run fell back to the source runner entry: ${products.__main__}`);
     }
 }
 
 function assertNodeProvenance(provenance: any, artifacts: any): void {
     assert.ok(provenance && provenance.pid > 0 && provenance.ppid > 0, "Node consumer must report actual process identity");
     assert.ok(String(provenance.argv1 || "").includes("runner-node/"), `Node consumer runner entry is missing: ${provenance.argv1}`);
+    assertManifestProductPath(artifacts, "@scramjet/runner-node", provenance.argv1, "Node consumer runner entry");
     const products = provenance.productModulePaths;
     assert.ok(products && typeof products === "object", "Node consumer product module provenance is missing");
-    for (const key of ["runnerNode", "restApi2", "apiRouter"]) {
+    for (const [key, packageName] of [["runnerNode", "@scramjet/runner-node"], ["restApi2", "@scramjet/rest-api2"], ["apiRouter", "@scramjet/api-router"]] as const) {
         assert.equal(typeof products[key], "string", `Node consumer did not report ${key}`);
-        const expectedTree = artifacts.mode === "source" ? "/packages/" : "/dist/";
-        assert.ok(products[key].includes(expectedTree), `Node consumer ${key} did not use ${artifacts.mode} artifacts: ${products[key]}`);
+        assertManifestProductPath(artifacts, packageName, products[key], `Node consumer ${key}`);
     }
     assert.equal(realpathSync(products.restApi2), realpathSync(artifacts.modules.restApi2));
     assert.equal(realpathSync(products.apiRouter), realpathSync(artifacts.modules.apiRouter));

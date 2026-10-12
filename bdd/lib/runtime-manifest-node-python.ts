@@ -1,12 +1,13 @@
 import { createReadStream, existsSync, realpathSync } from "node:fs";
 import { strict as assert } from "node:assert";
 import { randomUUID } from "node:crypto";
+import { isAbsolute, join, relative, sep } from "node:path";
 import type { HostClient as HostClientType, InstanceClient, SequenceClient } from "@scramjet/api-client";
 import type { HubClient, RestAPI2 } from "@scramjet/rest-api2";
 import type { CustomWorld } from "../step-definitions/world";
 import { resolveFixturePackagePath } from "./fixture-package-path.js";
 import { openManifestAuditCapture, type ManifestAuditRecord } from "./runtime-manifest-audit";
-import type { ManifestProofArtifacts } from "./runtime-manifest-artifacts";
+import { assertManifestProductPath, manifestPackageRoot, type ManifestProofArtifacts } from "./runtime-manifest-artifacts";
 const { waitForCondition } = require("./readiness.js") as {
     waitForCondition: <T>(check: () => Promise<T> | T, isReady: (value: T) => boolean, options?: { timeoutMs?: number; intervalMs?: number; description?: string }) => Promise<T>;
 };
@@ -167,16 +168,15 @@ export function assertSelectedProvenance(provenanceValue: unknown, artifacts: Ma
     const label = language === "node" ? "Node producer" : "Python consumer";
     const provenance = requireRecord(provenanceValue, `${label} provenance`);
     assert.ok(typeof provenance.pid === "number" && provenance.pid > 0 && typeof provenance.ppid === "number" && provenance.ppid > 0, `${label} must report actual process identity`);
-    const rootSegment = artifacts.mode === "source" ? "/packages/" : "/dist/";
     const products = requireRecord(provenance.productModulePaths, `${label} productModulePaths`);
     if (language === "node") {
-        for (const key of ["restApi2", "apiRouter"]) {
+        for (const [key, packageName] of [["restApi2", "@scramjet/rest-api2"], ["apiRouter", "@scramjet/api-router"], ["runnerNode", "@scramjet/runner-node"]] as const) {
             const path = products[key];
             assert.ok(typeof path === "string", `Node producer did not report ${key}`);
-            assert.ok(path.includes(rootSegment), `Node producer ${key} was not loaded from selected ${artifacts.mode} tree`);
+            assertManifestProductPath(artifacts, packageName, path, `Node producer ${key}`);
         }
-        assert.ok(typeof provenance.argv1 === "string" && provenance.argv1.includes(`${rootSegment}runner-node/`), `Node runner entry did not use selected ${artifacts.mode} tree`);
-        assert.ok(typeof products.runnerNode === "string" && products.runnerNode.includes(`${rootSegment}runner-node/`), `Node runner runtime was not loaded from selected ${artifacts.mode} tree`);
+        assert.ok(typeof provenance.argv1 === "string", "Node runner entry path is missing");
+        assertManifestProductPath(artifacts, "@scramjet/runner-node", provenance.argv1, "Node runner entry");
         const engines = requireRecord(provenance.declaredEngines, "Node fixture declaredEngines");
         assert.ok(typeof engines.node === "string", "Node fixture did not report its declared runtime engine");
         const restApi2Path = products.restApi2;
@@ -185,11 +185,12 @@ export function assertSelectedProvenance(provenanceValue: unknown, artifacts: Ma
         assert.equal(realpathSync(restApi2Path), realpathSync(artifacts.modules.restApi2));
         assert.equal(realpathSync(apiRouterPath), realpathSync(artifacts.modules.apiRouter));
     } else {
-        assert.ok(typeof provenance.scriptPath === "string" && provenance.scriptPath.includes(`${rootSegment}runner-python/`), `Python runner script did not use selected ${artifacts.mode} tree`);
+        assert.ok(typeof provenance.scriptPath === "string", "Python runner script path is missing");
+        assertManifestProductPath(artifacts, "@scramjet/runner-python", provenance.scriptPath, "Python runner script");
         for (const key of ["runner_python.app_context", "runner_python.manifest", "runner_python.verser2_runtime", "verser2_guest_python"]) {
             const path = products[key];
             assert.ok(typeof path === "string", `Python consumer did not report ${key}`);
-            assert.ok(path.includes(`${rootSegment}runner-python/`), `Python ${key} was not loaded from selected ${artifacts.mode} runner tree`);
+            assertManifestProductPath(artifacts, "@scramjet/runner-python", path, `Python ${key}`);
             if (artifacts.mode === "source" && key.startsWith("runner_python.")) {
                 assert.ok(path.includes("/packages/runner-python/src/runner_python/"), `Python ${key} did not come from source`);
             }
@@ -197,6 +198,10 @@ export function assertSelectedProvenance(provenanceValue: unknown, artifacts: Ma
                 assert.ok(path.includes("/packages/runner-python/__pypackages__/verser2_guest_python/"), "Python transport did not come from the selected vendored package");
             }
         }
+        const selectedSdkRoot = realpathSync(join(manifestPackageRoot(artifacts, "@scramjet/runner-python"), "__pypackages__", "verser2_guest_python"));
+        const selectedSdkModule = realpathSync(products.verser2_guest_python as string);
+        const selectedSdkRelativePath = relative(selectedSdkRoot, selectedSdkModule);
+        assert.ok(selectedSdkRelativePath !== "" && selectedSdkRelativePath !== ".." && !selectedSdkRelativePath.startsWith(`..${sep}`) && !isAbsolute(selectedSdkRelativePath), `Python Verser2 SDK module did not load from the selected vendored package: ${selectedSdkModule}`);
     }
 }
 

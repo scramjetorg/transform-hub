@@ -6,7 +6,7 @@ import type { HostClient as HostClientType, InstanceClient, SequenceClient } fro
 import type { CustomWorld } from "../step-definitions/world";
 import { resolveFixturePackagePath } from "./fixture-package-path.js";
 import { openManifestAuditCapture, type ManifestAuditRecord } from "./runtime-manifest-audit";
-import type { ManifestProofArtifacts } from "./runtime-manifest-artifacts";
+import { assertManifestProductPath, type ManifestProofArtifacts } from "./runtime-manifest-artifacts";
 
 const { waitForCondition } = require("./readiness.js") as {
 	waitForCondition: <T>(check: () => Promise<T> | T, isReady: (value: T) => boolean, options?: { timeoutMs?: number; intervalMs?: number; description?: string }) => Promise<T>;
@@ -83,23 +83,32 @@ function assertProvenance(provenance: FixtureProvenance, artifacts: ManifestProo
 	assert.equal(provenance.declaredEngines?.bun, "1", `${fixture} must declare the Bun engine`);
 	assert.equal(provenance.execPath, process.execPath, `${fixture} did not report its actual Node execution`);
 	assert.ok(String(provenance.nodeVersion || "").startsWith("v"), `${fixture} must report Node runtime evidence`);
-	const segment = artifacts.mode === "source" ? "/packages/" : "/dist/";
 	const products = provenance.productModulePaths;
-	for (const name of ["runnerNode", "restApi2", "apiRouter"] as const) {
+	for (const [name, packageName] of [["runnerNode", "@scramjet/runner-node"], ["restApi2", "@scramjet/rest-api2"], ["apiRouter", "@scramjet/api-router"]] as const) {
 		const path = products[name];
 		assert.ok(typeof path === "string", `${fixture} did not report ${name}`);
-		assert.ok(path.includes(segment), `${fixture} ${name} is outside selected ${artifacts.mode} artifacts`);
+		assertManifestProductPath(artifacts, packageName, path, `${fixture} ${name}`);
 	}
-	assert.ok(String(provenance.argv1 || "").includes(`${segment}runner-node/`), `${fixture} did not report the selected Node runtime entry`);
-	assert.ok(products.restApi2 && products.apiRouter, `${fixture} is missing selected client/router module paths`);
-	assert.equal(realpathSync(products.restApi2), realpathSync(artifacts.modules.restApi2));
-	assert.equal(realpathSync(products.apiRouter), realpathSync(artifacts.modules.apiRouter));
+	assert.ok(typeof provenance.argv1 === "string", `${fixture} did not report the selected Node runtime entry`);
+	assertManifestProductPath(artifacts, "@scramjet/runner-node", provenance.argv1, `${fixture} Node runtime entry`);
+	const restApi2Path = products.restApi2;
+	const apiRouterPath = products.apiRouter;
+	assert.ok(typeof restApi2Path === "string" && typeof apiRouterPath === "string", `${fixture} is missing selected client/router module paths`);
+	assert.equal(realpathSync(restApi2Path), realpathSync(artifacts.modules.restApi2));
+	assert.equal(realpathSync(apiRouterPath), realpathSync(artifacts.modules.apiRouter));
 
 	const lineage = processLineage(provenance.pid, hostPid);
-	const entries = lineage.map(item => item.entry).filter(Boolean);
-	assert.ok(entries.some(entry => entry.includes(`${segment}runner-bun/`)), `${fixture} parent chain lacks selected Bun wrapper entry`);
-	assert.ok(entries.some(entry => entry.includes(`${segment}runner-node/`)), `${fixture} parent chain lacks selected Node runtime entry`);
-	assert.ok(entries.some(entry => entry.includes(`${segment}runner/`) && entry.includes("start-runner")), `${fixture} parent chain lacks selected outer runner entry`);
+	const selectedEntry = (packageName: string) => lineage.find(item => {
+		if (!item.entry) return false;
+		try { assertManifestProductPath(artifacts, packageName, item.entry, `${fixture} ancestry entry`); return true; }
+		catch { return false; }
+	});
+	const bunEntry = selectedEntry("@scramjet/runner-bun");
+	const nodeEntry = selectedEntry("@scramjet/runner-node");
+	const outerEntry = selectedEntry("@scramjet/runner");
+	assert.ok(bunEntry, `${fixture} parent chain lacks selected Bun wrapper entry`);
+	assert.ok(nodeEntry, `${fixture} parent chain lacks selected Node runtime entry`);
+	assert.ok(outerEntry && outerEntry.entry.includes("start-runner"), `${fixture} parent chain lacks selected outer runner entry`);
 	const reportedLineage = lineage.filter(item => item.pid === hostPid || item.entry || /(?:^|\/)(?:node|bun)$/.test(item.executable));
 	console.log(`[runtime-manifest-bun.provenance] ${JSON.stringify(reportedLineage.map(item => ({ pid: item.pid, executable: item.executable, ...(item.entry ? { entry: item.entry } : {}) })))}`);
 }

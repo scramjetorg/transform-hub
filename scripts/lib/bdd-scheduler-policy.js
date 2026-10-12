@@ -44,7 +44,9 @@ const SCHEDULER_POLICY = Object.freeze({
     verser2: Object.freeze({ classification: "parallel-ready", reservation: measuredReservation() }),
     errors: Object.freeze({ classification: "parallel-ready", reservation: measuredReservation() }),
     stream: Object.freeze({ classification: "exclusive", reservation: measuredReservation() }),
-    harness: Object.freeze({ classification: "exclusive", reservation: measuredReservation() })
+    harness: Object.freeze({ classification: "exclusive", reservation: measuredReservation() }),
+    "runtime-manifest": Object.freeze({ classification: "exclusive", reservation: measuredReservation() }),
+    "hub-event-watch": Object.freeze({ classification: "exclusive", reservation: measuredReservation() })
 });
 
 function isMeasuredReservation(reservation, now = Date.now(), maxAgeMs = RESERVATION_MAX_AGE_MS) {
