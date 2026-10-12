@@ -281,11 +281,11 @@ export class Topic extends Transform implements TopicHandler {
     protected addXndjsonException(source: Readable) {
         const NEWLINE_BYTE = "\n".charCodeAt(0);
 
-        let lastChunk = Buffer.from("");
+        let lastChunk: Buffer<ArrayBufferLike> = Buffer.from("");
 
         source
             .on("data", (chunk) => {
-                lastChunk = chunk as Buffer;
+                lastChunk = chunk as Buffer<ArrayBufferLike>;
             })
             .on("end", () => {
                 const lastByte = lastChunk[lastChunk.length - 1];

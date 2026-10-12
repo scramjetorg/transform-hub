@@ -25,6 +25,10 @@ const stepDefinitions = {
         "--require step-definitions/e2e/host-steps.ts",
         "--require step-definitions/hub/config.ts",
         "--require step-definitions/e2e/cli.ts"
+    ],
+    "hub-event-watch": [
+        "--require step-definitions/world.ts",
+        "--require step-definitions/hub-event-watch.ts"
     ]
 }[process.env.SCRAMJET_BDD_CHUNK_ID] || ["--require step-definitions/**/*.ts"];
 

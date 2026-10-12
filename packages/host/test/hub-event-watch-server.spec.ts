@@ -1,5 +1,6 @@
 import test from "ava";
 import { EventEmitter } from "events";
+import { createServer, request } from "http";
 import { HubStateStore } from "@scramjet/hub-state";
 import type { HubInventoryCheckpoint, HubWatchChange } from "@scramjet/runtime-types";
 import { HUB_WATCH_QUEUE_CAPACITY } from "@scramjet/rest-api2";
@@ -19,7 +20,7 @@ function setup() {
         destroyed: false,
         writableEnded: false,
         destroyCalls: 0,
-        destroy() { this.destroyCalls++; this.destroyed = true; this.emit("close"); }
+        destroy() { this.destroyCalls++; this.destroyed = true; (this as any).emit("close"); }
     });
     const logger = { debug: (_message: string, detail: Record<string, unknown>) => logs.push(detail) };
     const logs: Record<string, unknown>[] = [];
@@ -59,7 +60,7 @@ test("Hub watch server sends initial checkpoint then an audited queued change wi
     const ctx = setup();
     let changes = 0;
     const subscribe = ctx.source.subscribe.bind(ctx.source);
-    ctx.source.subscribe = ((...args: any[]) => { changes++; return subscribe(...args); }) as any;
+    ctx.source.subscribe = ((...args: any[]) => { changes++; return (subscribe as any)(...args); }) as any;
     const stream = createHubEventWatchStream(ctx.source, "topic", ctx.request, ctx.logger as any);
     try {
         auditedTopic(ctx.auditor, 1);
@@ -80,7 +81,7 @@ test("Hub watch server bounds queued changes, reports overflow, and keeps blocke
     let subscriptionCloses = 0;
     const subscribe = ctx.source.subscribe.bind(ctx.source);
     ctx.source.subscribe = ((...args: any[]) => {
-        const subscription = subscribe(...args);
+        const subscription = (subscribe as any)(...args);
         return { snapshot: subscription.snapshot, close() { subscriptionCloses++; subscription.close(); } };
     }) as any;
     const stream = createHubEventWatchStream(ctx.source, "topic", ctx.request, ctx.logger as any, { heartbeatMs: 60_000 });
@@ -134,7 +135,7 @@ test("Hub watch server heartbeats advance the global cursor without delivering e
 });
 
 test("Hub watch server detaches only on abort/response close/stream destroy and shuts down owned streams", async (t) => {
-    for (const disconnect of ["aborted", "response-close", "stream-destroy"] as const) {
+    for (const disconnect of ["aborted", "response-close", "stream-destroy", "request-error"] as const) {
         const ctx = setup();
         const stream = createHubEventWatchStream(ctx.source, "topic", ctx.request, ctx.logger as any, { heartbeatMs: 60_000 });
         const peerRequest = { raw: { request: new EventEmitter(), response: Object.assign(new EventEmitter(), { destroyed: false, writableEnded: false }) } } as any;
@@ -145,6 +146,7 @@ test("Hub watch server detaches only on abort/response close/stream destroy and 
             ctx.req.emit("close");
             t.false(stream.destroyed);
             const closed = new Promise<void>((resolve) => stream.once("close", resolve));
+            if (disconnect === "request-error") ctx.req.emit("error", new Error("routed request cancelled"));
             if (disconnect === "aborted") ctx.req.emit("aborted");
             if (disconnect === "response-close") ctx.res.emit("close");
             if (disconnect === "stream-destroy") stream.destroy();
@@ -176,7 +178,7 @@ test("Hub watch server detaches only on abort/response close/stream destroy and 
         destroyed: false,
         writableEnded: false,
         destroyCalls: 0,
-        destroy() { this.destroyCalls++; this.destroyed = true; this.emit("close"); }
+        destroy() { this.destroyCalls++; this.destroyed = true; (this as any).emit("close"); }
     });
     const blockedPeer = { raw: { request: new EventEmitter(), response: blockedResponse } } as any;
     const blockedStream = createHubEventWatchStream(blocked.source, "topic", blockedPeer, blocked.logger as any, { heartbeatMs: 60_000 });
@@ -188,4 +190,64 @@ test("Hub watch server detaches only on abort/response close/stream destroy and 
         t.true(blockedPeer.raw.response.destroyed, "response lifecycle completes for a peer that cannot read");
         t.is(blocked.logs.filter(({ message }) => message === "released").length, 1);
     } finally { blockedStream.destroy(); blocked.close(); }
+});
+
+test("real HTTP socket end releases only the cancelled watch before teardown", async (t) => {
+    const ctx = setup();
+    let subscriptions = 0;
+    let releases = 0;
+    const subscribe = ctx.source.subscribe.bind(ctx.source);
+    ctx.source.subscribe = ((...args: any[]) => {
+        subscriptions++;
+        const value = (subscribe as any)(...args);
+        return { snapshot: value.snapshot, close() { releases++; value.close(); } };
+    }) as any;
+    const server = createServer((req, res) => {
+        if (req.url === "/status") { res.statusCode = 200; res.end("ok"); return; }
+        const stream = createHubEventWatchStream(ctx.source, "topic", { raw: { request: req, response: res } } as any, ctx.logger as any, { heartbeatMs: 60_000 });
+        stream.pipe(res);
+    });
+    server.listen(0, "127.0.0.1");
+    await new Promise<void>(resolve => server.once("listening", resolve));
+    const address = server.address() as import("net").AddressInfo;
+    try {
+        const controller = new AbortController();
+        const cancelled = request(`http://127.0.0.1:${address.port}/watch`, { signal: controller.signal });
+        const responsePromise = new Promise<import("http").IncomingMessage>((resolve, reject) => {
+            cancelled.once("response", resolve);
+            cancelled.once("error", reject);
+        });
+        cancelled.end();
+        const response = await responsePromise;
+        t.is(response.statusCode, 200);
+        response.once("data", () => controller.abort());
+        await new Promise<void>((resolve, reject) => {
+            const deadline = setTimeout(() => reject(new Error("watch subscription did not release")), 2_000);
+            const poll = () => {
+                if (releases === 1) { clearTimeout(deadline); resolve(); }
+                else setTimeout(poll, 5);
+            };
+            poll();
+        });
+        t.is(subscriptions, 1);
+        t.is(releases, 1);
+        t.is(ctx.logs.filter(({ message }) => message === "released").length, 1);
+        // A normal unary response remains unaffected by the watch socket listeners.
+        auditedTopic(ctx.auditor, 1);
+        const statusRequest = request(`http://127.0.0.1:${address.port}/status`);
+        const statusResponsePromise = new Promise<import("http").IncomingMessage>((resolve, reject) => {
+            statusRequest.once("response", resolve);
+            statusRequest.once("error", reject);
+        });
+        statusRequest.end();
+        const status = await statusResponsePromise;
+        let statusBody = "";
+        status.setEncoding("utf8");
+        for await (const chunk of status) statusBody += chunk;
+        t.is(status.statusCode, 200);
+        t.is(statusBody, "ok");
+    } finally {
+        await new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve()));
+        ctx.close();
+    }
 });

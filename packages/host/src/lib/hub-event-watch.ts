@@ -29,6 +29,7 @@ export function createHubEventWatchStream(source: HubStateStore, kind: HubWatchK
     const req = raw.raw?.request;
     const res = raw.raw?.response;
     if (!req || !res) throw new Error("Raw HTTP request and response are required for Hub event watches");
+    const socket = res.socket ?? req.socket;
     const watchId = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 9)}`;
     const live: HubWatchChange<typeof kind>[] = [];
     let subscription: HubStateSubscription<typeof kind> | undefined;
@@ -56,7 +57,10 @@ export function createHubEventWatchStream(source: HubStateStore, kind: HubWatchK
         if (heartbeat) clearInterval(heartbeat);
         heartbeat = undefined;
         req.removeListener("aborted", onDisconnect);
+        req.removeListener("error", onDisconnect);
         res.removeListener("close", onDisconnect);
+        socket?.removeListener("end", onDisconnect);
+        socket?.removeListener("close", onDisconnect);
         stream.removeListener("close", onDisconnect);
         stream.removeListener("error", onDisconnect);
         log("released", { cursor: deliveredCursor, queued: live.length });
@@ -76,6 +80,7 @@ export function createHubEventWatchStream(source: HubStateStore, kind: HubWatchK
     const onDisconnect = () => {
         detach();
         if (!stream.destroyed && !stream.readableEnded) stream.destroy();
+        if (!res.destroyed && !res.writableEnded && typeof res.destroy === "function") res.destroy();
     };
     const enqueue = (change: HubWatchChange<typeof kind>) => {
         if (detached || terminal) return;
@@ -98,7 +103,10 @@ export function createHubEventWatchStream(source: HubStateStore, kind: HubWatchK
     heartbeat = setInterval(() => { heartbeatPending = true; pump(); }, options.heartbeatMs ?? HUB_WATCH_HEARTBEAT_MS);
     heartbeat.unref?.();
     req.once("aborted", onDisconnect);
+    req.once("error", onDisconnect);
     res.once("close", onDisconnect);
+    socket?.once("end", onDisconnect);
+    socket?.once("close", onDisconnect);
     stream.once("close", onDisconnect);
     stream.once("error", onDisconnect);
     log("acquired", { cursor: deliveredCursor, queued: 0, at: now() });

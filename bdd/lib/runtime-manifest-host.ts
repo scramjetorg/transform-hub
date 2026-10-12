@@ -21,9 +21,24 @@ type ManifestWorld = CustomWorld & {
     scenarioIsolation?: ScenarioIsolation;
 };
 
+export type ManifestHostConfigureContext = {
+    readonly isolation: ScenarioIsolation;
+    readonly artifacts: ManifestProofArtifacts;
+    readonly apiBaseUrl: string;
+    readonly configurationPath: string;
+    readonly hostInfoPath: string;
+    readonly sequencePath: string;
+    readonly identityDir: string;
+    readonly apiPort: number;
+    readonly runnerPort: number;
+    readonly instancesServerPort: number;
+};
+
+export type ConfigureManifestHost = (configuration: Record<string, any>, context: ManifestHostConfigureContext) => void | Promise<void>;
+
 const workspaceRoot = resolve(__dirname, "../..");
 
-export async function startManifestHost(world: ManifestWorld, mode: ManifestProofMode): Promise<ManifestHostState> {
+export async function startManifestHost(world: ManifestWorld, mode: ManifestProofMode, configure?: ConfigureManifestHost): Promise<ManifestHostState> {
     if (world.resources.runtimeManifestHost) throw new Error("Runtime-manifest Host is already started for this scenario");
     const isolation = world.scenarioIsolation;
     if (!isolation) throw new Error("ScenarioIsolation must be installed before starting runtime-manifest Host");
@@ -32,6 +47,7 @@ export async function startManifestHost(world: ManifestWorld, mode: ManifestProo
     const { defaultConfig } = require(artifacts.modules.config) as { defaultConfig: Record<string, any> };
     const apiPort = await isolation.reservePort();
     const runnerPort = await isolation.reservePort();
+    const instancesServerPort = await isolation.reservePort();
     const hostInfoPath = join(isolation.artifactsDir, "runtime-manifest-host-info.json");
     const sequencePath = join(isolation.artifactsDir, "sequences");
     const identityDir = join(isolation.artifactsDir, "runner-host-identity");
@@ -52,7 +68,7 @@ export async function startManifestHost(world: ManifestWorld, mode: ManifestProo
         },
         killOnExit: true,
         exitWithLastInstance: false,
-        host: { ...defaultConfig.host, port: apiPort, instancesServerPort: await isolation.reservePort(), hostname: "127.0.0.1", infoFilePath: hostInfoPath },
+        host: { ...defaultConfig.host, port: apiPort, instancesServerPort, hostname: "127.0.0.1", infoFilePath: hostInfoPath },
         verser2: {
             ...defaultConfig.verser2,
             enabled: true,
@@ -73,6 +89,7 @@ export async function startManifestHost(world: ManifestWorld, mode: ManifestProo
         },
         telemetry: { ...defaultConfig.telemetry, status: false }
     };
+    if (configure) await configure(config, { isolation, artifacts, apiBaseUrl, configurationPath, hostInfoPath, sequencePath, identityDir, apiPort, runnerPort, instancesServerPort });
     writeFileSync(configurationPath, JSON.stringify(config, null, 2), { mode: 0o600 });
     const hostUtils = new HostUtils({
         executableCommand: artifacts.hostCommand as [string, ...string[]],
