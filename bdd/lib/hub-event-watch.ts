@@ -1,5 +1,5 @@
 import { strict as assert } from "node:assert";
-import { spawn, type ChildProcess } from "node:child_process";
+import { execFileSync, spawn, type ChildProcess } from "node:child_process";
 import { createServer } from "node:net";
 import { cpSync, createReadStream, existsSync, mkdirSync, readFileSync, realpathSync, rmSync, unlinkSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
@@ -2138,7 +2138,8 @@ export async function proveHostedBunDelegatedWatch(world: WatchWorld): Promise<R
         assert.equal(provenance.execPath, process.execPath, "Node delegation must use the container's actual Node executable");
         assert.ok(provenance.nodeVersion?.startsWith("v"), "inner Node version is required");
         assert.equal(provenance.bunExecutable, "/opt/bun/bin/bun", "Bun version must be read from the image-owned executable");
-        assert.equal(provenance.bunVersion, "1.4.2", "the supported BDD image's actual Bun version must be verified in-container");
+        const imageBunVersion = execFileSync("/opt/bun/bin/bun", ["--version"], { encoding: "utf8" }).trim();
+        assert.equal(provenance.bunVersion, imageBunVersion, "the Bun-declared observer must report the supported BDD image's actual Bun version");
         for (const name of ["host", "runner", "runner-bun", "runner-node", "rest-api2", "api-router", "adapter-process", "hub-state"]) {
             const selected = provenance.productModulePaths?.[name];
             assert.ok(selected, `Bun-declared fixture omitted selected ${name} module path`);
