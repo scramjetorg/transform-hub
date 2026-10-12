@@ -939,3 +939,23 @@ test("late READY after readiness failure cannot register an RPC route", t => {
 
     t.deepEqual(exposed, []);
 });
+
+test("watch readiness distinguishes PING/RUNNING from accepted READY and audits READY only", t => {
+    const audits: unknown[] = [];
+    const controller = createController({
+        status: InstanceStatus.RUNNING,
+        readinessState: "pending",
+        endEmitted: false,
+        info: {},
+        instanceStore: { auditCurrent: (owner: unknown) => audits.push(owner) },
+        hostProxy: { onRPCExpose: () => undefined }
+    });
+
+    t.deepEqual(controller.getWatchReadiness(), { readiness: "pending", terminal: false });
+    t.is(audits.length, 0, "RUNNING alone must not report readiness");
+
+    (controller as any).handleReadinessMessage({ state: "ready" });
+
+    t.deepEqual(controller.getWatchReadiness(), { readiness: "ready", terminal: false });
+    t.deepEqual(audits, [controller]);
+});

@@ -27,7 +27,7 @@
     "@types/node": "^22.15.0",
     "@types/node-os-utils": "^1.2.0",
     "ava": "^8.0.0",
-    "typescript": "~4.7.4",
+    "typescript": "5.9.3",
     "tsx": "^4.19.3"
   },
   "ava": {

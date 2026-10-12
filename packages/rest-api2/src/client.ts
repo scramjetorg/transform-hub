@@ -13,6 +13,9 @@ import {
 import { Readable } from "stream";
 
 import { RestAPI2 } from "./contracts";
+import { HubEventsClient, HubWatchKind, HubWatchOptions } from "./hub-event-watch-contract";
+import { createHubEventWatch } from "./hub-event-watch";
+import { HUB_EVENT_WATCH_ENDPOINT } from "./defaults";
 import { RestAPI2RouteTree, RestAPI2RouteTreeRouteNode, RestAPI2Routes, getOpaqueRouteKeys } from "./routes";
 
 export type RestAPI2ClientOptions = {
@@ -172,7 +175,8 @@ export type SequenceClient = Omit<FluentRouteMethods<SequenceRouteSet>, "manifes
     manifest: CallableGetEndpoint<SequenceRouteSet["manifest"], RestAPI2.SequenceManifestResponse>;
 };
 
-export type HubClient = FluentRouteMethods<HubRouteSet> & {
+export type HubClient = FluentRouteMethods<Omit<HubRouteSet, "watchEvents">> & {
+    events: HubEventsClient;
     instance(instanceId: string): InstanceClient;
     sequence(sequenceId: string): SequenceClient;
 };
@@ -425,8 +429,19 @@ function buildSequenceClient(context: FluentBuildContext): SequenceClient {
 }
 
 function buildHubClient(context: FluentBuildContext): HubClient {
+    const fullWatchPath = joinPaths(context.prefix, HUB_EVENT_WATCH_ENDPOINT);
+    const watchRoute = (): RouteManifestEntry => findManifestRoute(context.manifest, "get", fullWatchPath);
+
     return {
         ...standardRouteMethods(context, RestAPI2RouteTree.hub.routes(), getOpaqueRouteKeys(RestAPI2RouteTree.hub)),
+        events: {
+            watch<K extends HubWatchKind>(kind: K, options: HubWatchOptions = {}) {
+                return createHubEventWatch(kind, options, signal => context.transport.request<Readable>({
+                    route: watchRoute(), params: context.params, query: { kind },
+                    headers: { accept: "application/x-ndjson" }, raw: true, signal
+                }));
+            }
+        },
         instance(instanceId: string) {
             return buildInstanceClient({
                 ...context,

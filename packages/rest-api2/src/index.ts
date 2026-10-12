@@ -4,3 +4,4 @@ export * from "./defaults";
 export * from "./routes";
 export * from "./runtime-manifest";
 export * from "./schemas";
+export * from "./hub-event-watch-contract";

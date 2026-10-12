@@ -2,8 +2,10 @@ cffi==2.1.1 \\
     --hash=sha256:34e261f78cb6ceaaa36f42f2613f4380d94d9c759a9c73c769ee6e0247364632 \\
     --hash=sha256:c1453022f490d2459a11819d83ad1d586e9ff65a12ac3e705ffebd46d3685dcf \\
     --hash=sha256:b0431303acaea1089ad4b3e9ce4e6518193def1118d4073ca848635ee4ea2e96
-cryptography==49.0.0 \\
-    --hash=sha256:0e959b578856a3924bc0cbb710fc12c387b9412a951389f3ca61704a9e25f325
+cryptography==50.0.0 \\
+    --hash=sha256:06a32a980526a6ab9a4b9bf8f7385800791e2bb960903cb6b530e4817509a3b7 \\
+    --hash=sha256:b42a28c1844fd9de8f3f7d540e36b66f3a9c83fceac7170ebc7a6a19edd9dcae \\
+    --hash=sha256:82148ec5bddac30b51a5b3c1945075f896fa022cb93f8e4a01e9f6ee95292c5f
 h2==4.4.1 \\
     --hash=sha256:0e25f1462b23c9cb82d9eb02e28bc706dac2a68cb457c6a0d74d63c8a2a5d0e6
 hpack==4.2.0 \\
@@ -18,5 +20,5 @@ scramjet-framework-py==0.10.1 \\
     --hash=sha256:ff50a2144dac63c0f2aafbd7c7ad293e3e9f4ac4aa60fc2a44f1d0efff2691d5
 typing-extensions==4.16.0 \\
     --hash=sha256:481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8
-verser2-guest-python==0.4.2 \\
-    --hash=sha256:da5ab6efd2ef572a864b8f6766f043fcbe25af3d10a5f5ba0c3878e82e84eef0
+verser2-guest-python==0.9.3 \\
+    --hash=sha256:7e511a910c49cb8efd0af9e1f7f9ee604786aa2c891fbf243b1107cfcbbc509a

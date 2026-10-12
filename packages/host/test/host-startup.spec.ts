@@ -2,6 +2,18 @@ import test from "ava";
 import { InstanceStatus } from "@scramjet/symbols";
 import { Host } from "../src/lib/host";
 import { InstancesStore } from "../src/lib/instance-store";
+import { projectHubWatchHealth } from "../src/lib/hub-watch-health";
+
+test("Hub watch health distinguishes required readiness, CPM degradation, and lifecycle", t => {
+    const required = { key: "startup:0", sequenceId: "seq", instanceId: "inst", status: "RUNNING", readiness: "ready" as const, satisfied: true };
+    const base = { lifecycle: "running" as const, startupReady: true, cpm: { configured: true, connected: false }, required: [required] };
+
+    t.deepEqual(projectHubWatchHealth(base), { ...base, healthy: false, status: "degraded" });
+    t.is(projectHubWatchHealth({ ...base, cpm: { configured: true, connected: true } }).healthy, true);
+    t.is(projectHubWatchHealth({ ...base, required: [{ ...required, readiness: "pending", satisfied: false }] }).status, "unhealthy");
+    t.is(projectHubWatchHealth({ ...base, lifecycle: "stopping", cpm: { configured: true, connected: true } }).status, "unhealthy");
+    t.is(projectHubWatchHealth({ ...base, required: [] , cpm: { configured: false, connected: false } }).status, "healthy");
+});
 
 test("required restart cleanup removes the canonical instance, name, and RPC route first", t => {
     const store = new InstancesStore();

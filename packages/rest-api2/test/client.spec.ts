@@ -552,6 +552,26 @@ test("createHubClient honors provided manifest", async t => {
     t.throws(() => client.version.get(), { message: /Missing fluent RestAPI2 route/ });
 });
 
+test("HubClient.events opens the manifest watch route as a raw abortable NDJSON request", async t => {
+    const requests: ApiClientRequest[] = [];
+    const body = new Readable({ read() {} });
+    const manifest = { basePath: "/api/v2", routes: [{ id: "GET /api/v2/events/watch", method: "get" as const, fullPath: "/api/v2/events/watch", path: "/events/watch", schemas: {} }] };
+    const controller = new AbortController();
+    const client = createHubClient({ basePath: "/api/v2", manifest, transport: {
+        async request<T>(request: ApiClientRequest) {
+            requests.push(request);
+            return { status: 200, headers: { "content-type": "application/x-ndjson" }, body: body as T };
+        }
+    } });
+    const watch = client.events.watch("health", { signal: controller.signal });
+    t.is(requests.length, 1);
+    t.is(requests[0].route.fullPath, "/api/v2/events/watch");
+    t.deepEqual(requests[0].query, { kind: "health" });
+    t.is(requests[0].raw, true);
+    t.is(requests[0].signal instanceof AbortSignal, true);
+    await watch.close();
+});
+
 test("createInstanceClient honors provided manifest", async t => {
     const seen: ApiClientRequest[] = [];
     const transport: ApiClientTransport = {

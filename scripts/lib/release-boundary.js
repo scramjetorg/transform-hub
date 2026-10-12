@@ -107,6 +107,7 @@ const INCLUDED_PACKAGES = new Set([
 	"@scramjet/api-server",
 	"@scramjet/api-types",
 	"@scramjet/runtime-types",
+	"@scramjet/hub-state",
 	"@scramjet/sequence-types",
 	"@scramjet/types",
 	"@scramjet/symbols",
@@ -155,7 +156,7 @@ const RELEASE_WAVES = [
 		"@scramjet/symbols",
 		"@scramjet/utility",
 	],
-	["@scramjet/api-types", "@scramjet/obj-logger", "@scramjet/sequence-types"],
+	["@scramjet/api-types", "@scramjet/hub-state", "@scramjet/obj-logger", "@scramjet/sequence-types"],
 	[
 		"@scramjet/adapters-common",
 		"@scramjet/config",

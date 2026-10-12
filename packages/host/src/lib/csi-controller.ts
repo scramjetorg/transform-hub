@@ -132,6 +132,14 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
         return { healthy: this._lastHealth.healthy, details: { ...this._lastHealth.details } };
     }
 
+    getWatchReadiness(): { readiness: "pending" | "ready" | "errored"; terminal: boolean } {
+        return { readiness: this.readinessState, terminal: this.endEmitted || !!this.info.ended || !!this.terminalTransition };
+    }
+
+    private auditCurrentState(): void {
+        this.instanceStore?.auditCurrent?.(this);
+    }
+
     limits: InstanceLimits = {};
     runnerSystemInfo: RunnerConnectInfo["system"];
     sequence: SequenceInfo;
@@ -350,6 +358,7 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
             this.readinessTimer = setTimeout(() => {
                 const error = new Error(`Instance readiness timed out after ${timeout}ms`);
                 this.readinessState = "errored";
+                this.auditCurrentState();
                 this.readinessFailure = this.failReadiness(error);
                 this.readinessFailure.then(() => reject(error), reject);
             }, timeout);
@@ -376,6 +385,7 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
         }
 
         this.status = InstanceStatus.ERRORED;
+        this.auditCurrentState();
         this.logger.error("Runner readiness failed", error);
     }
 
@@ -406,6 +416,7 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
 
         if (readiness.state === "ready") {
             this.readinessState = "ready";
+            this.auditCurrentState();
             if (this.readinessTimer) clearTimeout(this.readinessTimer);
             this.readinessResolver?.();
         }
@@ -413,6 +424,7 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
         if (readiness.state === "errored") {
             this.logger.error("Runner initialization rejected", readiness.diagnostic);
             this.readinessState = "errored";
+            this.auditCurrentState();
             if (this.readinessTimer) clearTimeout(this.readinessTimer);
             const error = new Error(readiness.diagnostic?.message || "Runner initialization rejected");
             this.readinessFailure = this.failReadiness(error);
@@ -425,6 +437,7 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
 
     async main() {
         this.status = InstanceStatus.RUNNING;
+        this.auditCurrentState();
         this.logger.trace("Main. Current status:", this.status);
 
         let code = -1;
@@ -448,6 +461,7 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
             code = e.exitcode;
 
             this.status = e.status || InstanceStatus.ERRORED;
+            this.auditCurrentState();
             terminalStatus = this.status;
             terminalReason = e.reason;
 
@@ -470,6 +484,7 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
         const instanceMain = async () => {
             try {
                 this.status = InstanceStatus.STARTING;
+                this.auditCurrentState();
 
                 this.logger.trace("Streams hooked and routed");
 
@@ -481,6 +496,7 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
 
                 if (exitcode > 0) {
                     this.status = InstanceStatus.ERRORED;
+                    this.auditCurrentState();
                     this.logger.error("Crashlog", await this.instanceAdapter.getCrashLog());
                 }
 
@@ -489,6 +505,7 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
                 return exitcode;
             } catch (error: any) {
                 this.status = InstanceStatus.ERRORED;
+                this.auditCurrentState();
                 this.logger.error("Error caught", error.stack);
 
                 await this.cleanup();
@@ -683,6 +700,7 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
             // dispatcher may establish the runner's routed channels in its
             // synchronous listener; sending PONG first lets the runtime race
             // its first /input request against that establishment.
+            this.auditCurrentState();
             this.emit("ping", message[1]);
             await this.handleHandshake(message);
 
@@ -870,6 +888,7 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
         this.instanceName = message[1].payload.instanceName;
         this.inputTopic = message[1].payload?.inputTopic;
         this.outputTopic = message[1].payload?.outputTopic;
+        this.auditCurrentState();
         // TODO: add message to initiate the instance adapter
 
         if (this.controlDataStream) {
@@ -886,6 +905,7 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
         }
 
         this.info.started = new Date(); //@TODO: set by runner?
+        this.auditCurrentState();
         this.logger.info("Handshake", JSON.stringify(message, undefined));
     }
 
@@ -972,6 +992,7 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
         if (this.terminalTransition || this.endEmitted) return;
 
         this.status = InstanceStatus.STOPPING;
+        this.auditCurrentState();
 
         const terminalCompletion = this.awaitTerminalCompletion();
         const boundedTerminalCompletion = terminalCompletion ? promiseTimeout(terminalCompletion, runnerExitDelay) : undefined;
@@ -1069,6 +1090,7 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
         }
 
         this.status = InstanceStatus.KILLING;
+        this.auditCurrentState();
 
         const terminalCompletion = this.awaitTerminalCompletion();
         const boundedTerminalCompletion = terminalCompletion ? promiseTimeout(terminalCompletion, runnerExitDelay) : undefined;
@@ -1150,6 +1172,7 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
         this.terminalTransition = (async () => {
             this.status = status || this.status || InstanceStatus.COMPLETED;
             if (!this.info.ended) this.info.ended = new Date();
+            this.auditCurrentState();
             this.executionTime = this.info.created ? (this.info.ended.getTime() - this.info.created.getTime()) / 1000 : -1;
             this.setExitInfo(code, reason || "");
             if (error) this.emit("error", error);

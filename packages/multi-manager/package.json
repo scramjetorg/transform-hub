@@ -32,8 +32,8 @@
     "@scramjet/obj-logger": "^2.2.2-devel",
     "@scramjet/rest-api2": "^2.2.2-devel",
     "@scramjet/utility": "^2.2.2-devel",
-    "@signicode/verser-common": "0.5.0",
-    "@signicode/verser2-host": "0.9.2",
+    "@signicode/verser-common": "0.9.3",
+    "@signicode/verser2-host": "0.9.3",
     "find-package-json": "^1.2.0",
     "http-status-codes": "^2.2.0",
     "rereadable-stream": "^1.4.13",
@@ -48,7 +48,7 @@
     "@scramjet/types": "^2.2.2-devel",
     "@types/node": "^22.15.0",
     "ava": "^8.0.0",
-    "typescript": "^4.7.4",
+    "typescript": "5.9.3",
     "tsx": "^4.19.3"
   },
   "ava": {

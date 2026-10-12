@@ -1,0 +1,7 @@
+{
+  "name": "@scramjet/bdd-hub-event-watch-bun-observer",
+  "version": "1.0.0",
+  "private": true,
+  "main": "index.js",
+  "engines": { "bun": "1" }
+}

@@ -1,5 +1,6 @@
 import type { RoutedForwardTransport } from "@scramjet/api-server";
 import { CommunicationChannel as CC } from "@scramjet/symbols";
+import type { VerserBrokerRouteChangeEvent } from "@signicode/verser2-guest-node";
 import { Readable } from "stream";
 import { PassThroughStreamsConfig } from "@scramjet/runtime-types";
 import {
@@ -36,12 +37,14 @@ const UNSUCCESSFUL_ROUTE_BODY_READ_TIMEOUT_MS = 100;
 
 export type Verser2RunnerBroker = {
     getRoutes(): Verser2RunnerRoute[];
-    waitForRoute(domain: string, timeoutMs?: number): Promise<void>;
+    getActiveRoute?(domain: string): Verser2RunnerRoute | undefined;
+    waitForRoute(domain: string, timeoutMs?: number, signal?: AbortSignal): Promise<void>;
     request(request: Verser2RunnerBrokerRequest): Promise<Verser2RunnerBrokerResponse>;
 };
 
 export type Verser2RunnerBrokerLike = {
     getRoutes(): Verser2RunnerRoute[];
+    onRouteChange?(listener: (event: VerserBrokerRouteChangeEvent) => void): () => void;
     request(request: Verser2RunnerBrokerRequest): Promise<Verser2RunnerBrokerResponse>;
 };
 
@@ -53,7 +56,13 @@ export class Verser2RunnerRouteUnavailableError extends Error {
 }
 
 class PollingVerser2RunnerBroker implements Verser2RunnerBroker {
-    constructor(private readonly broker: Verser2RunnerBrokerLike) {}
+    private readonly inactiveRoutes = new Set<string>();
+    private readonly lastInactiveGenerations = new Map<string, string>();
+    private readonly routeWaiters = new Set<() => void>();
+
+    constructor(private readonly broker: Verser2RunnerBrokerLike) {
+        broker.onRouteChange?.(event => this.handleRouteChange(event));
+    }
 
     getRoutes(): Verser2RunnerRoute[] {
         return this.broker.getRoutes();
@@ -63,8 +72,20 @@ class PollingVerser2RunnerBroker implements Verser2RunnerBroker {
         return this.broker.request(request);
     }
 
-    async waitForRoute(domain: string, timeoutMs?: number): Promise<void> {
-        if (this.getRoutes().some(route => route.domain === domain)) {
+    getActiveRoute(domain: string): Verser2RunnerRoute | undefined {
+        const allRoutes = this.getRoutes();
+        const active = allRoutes.filter(route => route.domain === domain && !this.inactiveRoutes.has(this.routeKey(route.targetId, route.domain)));
+
+        if (active.length > 1) {
+            throw new Error(`Duplicate active runner routes advertised: ${domain}`);
+        }
+
+        const route = active[0];
+        return route;
+    }
+
+    async waitForRoute(domain: string, timeoutMs?: number, signal?: AbortSignal): Promise<void> {
+        if (this.getActiveRoute(domain)) {
             return;
         }
 
@@ -75,29 +96,71 @@ class PollingVerser2RunnerBroker implements Verser2RunnerBroker {
             const finish = (error?: Error) => {
                 if (finished) return;
                 finished = true;
-                clearInterval(interval);
+                this.routeWaiters.delete(check);
+                if (interval) clearInterval(interval);
                 if (timeout) clearTimeout(timeout);
+                signal?.removeEventListener("abort", onAbort);
                 if (error) reject(error);
                 else resolve();
             };
+            const onAbort = () => finish(new Error("Runner verser2 transport connection was cancelled"));
             const check = () => {
                 try {
-                    if (this.getRoutes().some(route => route.domain === domain)) finish();
+                    if (this.getActiveRoute(domain)) finish();
                 } catch (error) {
                     finish(error instanceof Error ? error : new Error(String(error)));
                 }
             };
 
+            if (signal?.aborted) {
+                onAbort();
+                return;
+            }
+
+            this.routeWaiters.add(check);
+            signal?.addEventListener("abort", onAbort, { once: true });
+            // Broker.getRoutes() is the public snapshot API; initial runner registration
+            // updates that snapshot without an onRouteChange event. The event subscription
+            // wakes lifecycle transitions, while this bounded poll observes snapshot-only
+            // additions and is always cleared with the route waiter.
             interval = setInterval(check, 10);
-            timeout = timeoutMs === undefined ? undefined : setTimeout(() => {
-                finish(new Verser2RunnerRouteUnavailableError(
+            if (timeoutMs !== undefined) {
+                timeout = setTimeout(() => finish(new Verser2RunnerRouteUnavailableError(
                     domain,
                     `Timed out waiting for runner verser2 route: ${domain}`
-                ));
-            }, timeoutMs);
-
+                )), timeoutMs);
+            }
             check();
         });
+    }
+
+    private handleRouteChange(event: VerserBrokerRouteChangeEvent): void {
+        const key = this.routeKey(event.targetId, event.domain);
+        const generationId = event.generation?.generationId;
+
+        if (event.type === "added" || event.type === "changed") {
+            this.inactiveRoutes.delete(key);
+        } else if (event.type === "degraded" || event.type === "removed") {
+            if (generationId && this.lastInactiveGenerations.get(key) === generationId) {
+                if (event.type === "removed") {
+                    this.inactiveRoutes.delete(key);
+                    this.lastInactiveGenerations.delete(key);
+                }
+                return;
+            }
+            if (generationId) this.lastInactiveGenerations.set(key, generationId);
+            this.inactiveRoutes.add(key);
+            if (event.type === "removed") {
+                this.inactiveRoutes.delete(key);
+                this.lastInactiveGenerations.delete(key);
+            }
+        }
+
+        for (const waiter of [...this.routeWaiters]) waiter();
+    }
+
+    private routeKey(targetId: string, domain: string): string {
+        return `${domain}\u0000${targetId}`;
     }
 }
 
@@ -110,13 +173,13 @@ export function createRunnerBrokerRpcTransport(broker: Verser2RunnerBroker): Rou
         waitForRoute: (domain, timeoutMs) => broker.waitForRoute(domain, timeoutMs),
         request: async (request) => {
             const routes = broker.getRoutes().filter(candidate => candidate.domain === request.domain);
-            const route = routes[0];
+            const route = broker.getActiveRoute ? broker.getActiveRoute(request.domain) : routes[0];
 
             if (!route) {
                 throw new Error(`Runner route unavailable: ${request.domain}`);
             }
 
-            if (routes.length > 1) {
+            if (!broker.getActiveRoute && routes.length > 1) {
                 throw new Error(`Duplicate runner route advertised: ${request.domain}`);
             }
 
@@ -198,7 +261,7 @@ export class Verser2RunnerTransport implements RunnerTransport {
             await this.waitForRoute(domain, generation);
             this.assertCurrentGeneration(generation);
 
-            const route = this.broker.getRoutes().find(candidate => candidate.domain === domain);
+            const route = this.getRoute(domain);
 
             if (!route) {
                 throw new Error(`Runner route unavailable: ${domain}`);
@@ -282,7 +345,7 @@ export class Verser2RunnerTransport implements RunnerTransport {
             this.assertCurrentGeneration(generation);
         }
 
-        const route = this.broker!.getRoutes().find(candidate => candidate.domain === domain);
+        const route = this.getRoute(domain);
 
         if (!route) {
             throw new Error(`Runner route unavailable: ${domain}`);
@@ -415,9 +478,14 @@ export class Verser2RunnerTransport implements RunnerTransport {
 
     private async waitForRoute(domain: string, generation: number): Promise<void> {
         await Promise.race([
-            this.broker!.waitForRoute(domain, this.routeReadinessMs),
+            this.broker!.waitForRoute(domain, this.routeReadinessMs, this.abortController?.signal),
             this.abortPromise(generation)
         ]);
+    }
+
+    private getRoute(domain: string): Verser2RunnerRoute | undefined {
+        if (this.broker?.getActiveRoute) return this.broker.getActiveRoute(domain);
+        return this.broker?.getRoutes().find(candidate => candidate.domain === domain);
     }
 
     private async requestRoute(request: Verser2RunnerBrokerRequest, generation: number): Promise<Verser2RunnerBrokerResponse> {

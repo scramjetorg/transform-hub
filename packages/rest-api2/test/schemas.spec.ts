@@ -333,3 +333,16 @@ test("manager inventory hub DELETE query parses true and false strings", t => {
     if (parsedTrue.success) t.deepEqual(parsedTrue.data, { delete: true, force: true });
     t.false(schema.safeParse({ delete: "not-a-boolean" }).success);
 });
+
+test("watch frame schemas validate safe cursors, health DTOs and exact manifest changes", async (t) => {
+    const api = await import("../src/hub-event-watch-contract");
+    const cursor = { hubId: "hub", epoch: "epoch", position: 0 };
+    const health = { healthy: true, status: "healthy", lifecycle: "running", startupReady: true, cpm: { configured: false, connected: false }, required: [] };
+    t.true(api.HubWatchFrameSchema.safeParse({ type: "snapshot", kind: "health", cursor, items: [health] }).success);
+    t.false(api.HubCursorSchema.safeParse({ ...cursor, position: Number.MAX_SAFE_INTEGER + 1 }).success);
+    t.false(api.HubWatchFrameSchema.safeParse({ type: "snapshot", kind: "health", cursor, items: [health, health] }).success);
+    const mutation = { kind: "sequence", action: "manifest", sequenceId: "s", instanceId: "i", manifestChange: {
+        action: "removed", instanceId: "i", sequenceId: "s", revision: null, previousRevision: "r", manifest: null, sequence: {}, reason: "instance-ended"
+    } };
+    t.true(api.HubWatchChangeSchema.safeParse({ type: "change", cursor: { ...cursor, position: 1 }, previousCursor: cursor, ...mutation }).success);
+});

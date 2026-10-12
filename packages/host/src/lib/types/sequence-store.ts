@@ -6,6 +6,8 @@ export interface ISequenceStore {
     getByName(sequenceName: string): SequenceInfo | undefined;
     getByNameOrId(sequenceNameOrId: string): SequenceInfo | undefined;
     set(sequence: SequenceInfo): void;
+    setInventoryAuditHandler(handler?: (sequence: SequenceInfo | null, sequenceId: string) => void): void;
+    auditCurrent(sequenceId: string): void;
     delete(sequenceId: string): boolean;
     clear(): void;
 }

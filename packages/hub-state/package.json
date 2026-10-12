@@ -1,0 +1,27 @@
+{
+  "name": "@scramjet/hub-state",
+  "version": "2.2.2-devel",
+  "description": "Transport-independent audit-fed Hub inventory state.",
+  "main": "./src/index.ts",
+  "scripts": {
+    "build": "../../scripts/build-all.js --config-name=tsconfig.build.json --copy-dist",
+    "clean": "rm -rf ./dist .bic_cache",
+    "test": "node ../../scripts/run-ava.js -T 50000"
+  },
+  "dependencies": {
+    "@scramjet/runtime-types": "^2.2.2-devel"
+  },
+  "devDependencies": {
+    "@ava/typescript": "^7.0.0",
+    "@types/node": "^22.15.0",
+    "ava": "^8.0.0",
+    "typescript": "5.9.3"
+  },
+  "ava": {
+    "files": ["test/**/*.spec.ts"],
+    "require": ["../../scripts/lib/tsx-cjs-register.cjs"],
+    "typescript": { "compile": false, "rewritePaths": { "./": "../.ava-hub-state/" } }
+  },
+  "files": ["**/*.js", "**/*.d.ts", "**/*.json", "!src/**", "!test/**", "!**/*.map", "!**/*.tsbuildinfo"],
+  "license": "MIT"
+}

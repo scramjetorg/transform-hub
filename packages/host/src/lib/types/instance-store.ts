@@ -24,6 +24,8 @@ export interface IInstanceStore extends Map<InstanceId, ICSI> {
     getByInstanceId(instanceId: string): ICSI | undefined;
     getByExposePath(exposePath: string): ICSI[];
     setManifestChangeHandler(handler?: ManifestChangeHandler): void;
+    setInventoryAuditHandler(handler?: (owner: ICSI | null, instanceId: string, sequenceId: string) => void): void;
+    auditCurrent(owner: ICSI): void;
     publishManifest(owner: ICSI, declaration: ManifestDeclaration): ManifestReceipt;
     getManifest(owner: ICSI): InstanceManifestResponse | undefined;
     getSequenceManifests(sequenceId: string): InstanceManifestResponse[];
