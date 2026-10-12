@@ -40,5 +40,10 @@
     "!**/*.map",
     "!**/*.tsbuildinfo"
   ],
-  "license": "MIT"
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/scramjetorg/transform-hub.git",
+    "directory": "packages/hub-state"
+  }
 }

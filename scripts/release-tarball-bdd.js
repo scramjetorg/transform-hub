@@ -14,7 +14,7 @@ function readBundle(root) {
     const resolved = resolve(root);
     if (!existsSync(join(resolved, "manifest.json")) || !existsSync(join(resolved, "SHA256SUMS"))) throw new Error("Tarball BDD input must contain manifest.json and SHA256SUMS");
     const manifest = JSON.parse(readFileSync(join(resolved, "manifest.json"), "utf8"));
-    if (!Array.isArray(manifest.tarballs) || manifest.tarballs.length !== INCLUDED_PACKAGES.size) throw new Error("Tarball BDD input must contain exactly the 37 release tarballs");
+    if (!Array.isArray(manifest.tarballs) || manifest.tarballs.length !== INCLUDED_PACKAGES.size) throw new Error(`Tarball BDD input must contain exactly ${INCLUDED_PACKAGES.size} release tarballs`);
     for (const item of manifest.tarballs) assertAssetName(item.name);
     const expected = new Set(["manifest.json", "SHA256SUMS", ...manifest.tarballs.map((item) => item.name)]);
     const entries = readdirSync(resolved, { withFileTypes: true });

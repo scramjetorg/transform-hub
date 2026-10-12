@@ -6,6 +6,9 @@ const os = require("node:os");
 const path = require("node:path");
 
 const script = require("../release-tarball-bdd.js");
+const { INCLUDED_PACKAGES } = require("../lib/release-boundary.js");
+const releaseTarballCount = INCLUDED_PACKAGES.size;
+const exactReleaseTarballCountMessage = new RegExp(`exactly ${releaseTarballCount} release tarballs`);
 
 test("tarball BDD preparation exposes the immutable-root contract", (t) => {
     const source = fs.readFileSync(path.join(__dirname, "..", "release-tarball-bdd.js"), "utf8");
@@ -29,7 +32,7 @@ test("tarball BDD preparation requires first-party file tarball specs", (t) => {
 function createAssetBundle(t, layout) {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), `tarball-bdd-${layout}-`));
     t.teardown(() => fs.rmSync(root, { recursive: true, force: true }));
-    const tarballs = Array.from({ length: 37 }, (_, i) => `package-${i}.tgz`);
+    const tarballs = Array.from({ length: releaseTarballCount }, (_, i) => `package-${i}.tgz`);
     fs.writeFileSync(path.join(root, "manifest.json"), JSON.stringify({ tarballs: tarballs.map((name, i) => ({ name, package: `@scramjet/package-${i}`, sha256: `sha256:${"a".repeat(64)}` })) }));
     fs.writeFileSync(path.join(root, "SHA256SUMS"), "");
     const target = layout === "canonical" ? fs.mkdirSync(path.join(root, "tarballs")) || path.join(root, "tarballs") : root;
@@ -38,8 +41,8 @@ function createAssetBundle(t, layout) {
 }
 
 test("assertRoot accepts flat downloaded and canonical nested release bundles", (t) => {
-    t.is(script.assertRoot(createAssetBundle(t, "flat")).tarballs.length, 37);
-    t.is(script.assertRoot(createAssetBundle(t, "canonical")).tarballs.length, 37);
+    t.is(script.assertRoot(createAssetBundle(t, "flat")).tarballs.length, releaseTarballCount);
+    t.is(script.assertRoot(createAssetBundle(t, "canonical")).tarballs.length, releaseTarballCount);
 });
 
 for (const [label, mutate] of [
@@ -54,12 +57,12 @@ for (const [label, mutate] of [
     });
 }
 
-test("downloaded release assets must be exactly manifest plus checksums and 37 tarballs", (t) => {
+test("downloaded release assets must be exactly manifest plus checksums and the current boundary tarballs", (t) => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), "tarball-bdd-assets-"));
     t.teardown(() => fs.rmSync(root, { recursive: true, force: true }));
     fs.writeFileSync(path.join(root, "manifest.json"), JSON.stringify({ tarballs: [] }));
     fs.writeFileSync(path.join(root, "SHA256SUMS"), "");
-    t.throws(() => script.assertRoot(root), { message: /exactly the 37/ });
+    t.throws(() => script.assertRoot(root), { message: exactReleaseTarballCountMessage });
 });
 
 function response(value) {
@@ -73,21 +76,21 @@ test("draft downloader lists by release ID and downloads by asset ID into a clea
     const root = fs.mkdtempSync(path.join(os.tmpdir(), "tarball-bdd-download-"));
     fs.writeFileSync(path.join(root, "stale.txt"), "stale");
     t.teardown(() => fs.rmSync(root, { recursive: true, force: true }));
-    const assets = [{ id: 1, name: "manifest.json" }, { id: 2, name: "SHA256SUMS" }, ...Array.from({ length: 37 }, (_, i) => ({ id: i + 3, name: `package-${i}.tgz` }))];
+    const assets = [{ id: 1, name: "manifest.json" }, { id: 2, name: "SHA256SUMS" }, ...Array.from({ length: releaseTarballCount }, (_, i) => ({ id: i + 3, name: `package-${i}.tgz` }))];
     const urls = [];
     await t.throwsAsync(script.downloadDraftRelease({ repository: "scramjetorg/transform-hub", releaseId: 396988308, outputDir: root, token: "test-token", request: async (url) => {
         urls.push(url);
         if (url.includes("/assets?")) return response(assets);
         if (url.endsWith("/1")) return response(JSON.stringify({ tarballs: [] }));
         return response("");
-    } }), { message: /exactly the 37/ });
+    } }), { message: exactReleaseTarballCountMessage });
     t.false(fs.existsSync(path.join(root, "stale.txt")));
     t.is(urls[0], "https://api.github.com/repos/scramjetorg/transform-hub/releases/396988308/assets?per_page=100&page=1");
     t.is(urls[1], "https://api.github.com/repos/scramjetorg/transform-hub/releases/assets/1");
 });
 
 for (const [label, assets, message] of [
-    ["missing manifest", Array.from({ length: 37 }, (_, i) => ({ id: i + 1, name: `package-${i}.tgz` })), /must contain manifest.json and SHA256SUMS/],
+    ["missing manifest", Array.from({ length: releaseTarballCount }, (_, i) => ({ id: i + 1, name: `package-${i}.tgz` })), /must contain manifest.json and SHA256SUMS/],
     ["unsafe names", [{ id: 1, name: "../manifest.json" }], /Unsafe draft release asset/],
     ["duplicate names", [{ id: 1, name: "manifest.json" }, { id: 2, name: "manifest.json" }], /Duplicate draft release asset/],
     ["unexpected names", [{ id: 1, name: "release.zip" }], /Unexpected draft release asset/]

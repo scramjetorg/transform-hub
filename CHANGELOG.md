@@ -2,7 +2,21 @@
 
 This is the changelog for Scramjet Transform Hub. It holds only notable commits, others are grouped without commit info.
 
-## [2.2.1] - Current release
+## [2.3.0] - Current release
+
+### Features
+- Added instance-owned runtime manifest publication and retrieval through HubClient v2, with per-instance revisions and audited publication, update, and removal changes.
+- Added an abortable, snapshot-first HubClient v2 watch for sequence, instance, topic, and health inventory, with ordered linked changes and explicit terminal loss/overflow detection.
+- Added prompt local cleanup for explicit close, iterator termination, and AbortSignal cancellation; callers can observe watch connection health separately from watched Hub health.
+
+### Changed
+- Aligned the Verser2 guest SDK to 0.9.3 across Node, Bun, and Python runtimes.
+- Raised the Python runner minimum supported version to Python 3.11; Python 3.9 and 3.10 are no longer supported.
+
+### Fixed
+- Improved runner route readiness and health recovery when a supervised runner restarts.
+
+## [2.2.1] - 2026-10-02
 
 ### Fixed
 - Fixed Verser2 guest stream capacity and lease configuration.
