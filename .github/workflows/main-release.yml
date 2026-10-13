@@ -12,17 +12,9 @@ on:
         description: Recorded peeled stable-tag commit SHA (40 hex)
         required: true
         type: string
-      release_id:
-        description: Recorded public GitHub release ID
-        required: true
-        type: string
-      release_pr:
-        description: Recorded merged release PR number
-        required: true
-        type: string
       expected_bundle_checksum:
-        description: Recorded manifest outerChecksum (sha256:64 hex)
-        required: true
+        description: Optional recorded manifest outerChecksum (sha256:64 hex)
+        required: false
         type: string
 permissions:
   contents: read
@@ -30,8 +22,46 @@ concurrency:
   group: ${{ format('tag-{0}', github.event_name == 'workflow_dispatch' && inputs.stable_tag || github.ref_name) }}
   cancel-in-progress: false
 jobs:
+  admission:
+    name: Validate publication admission
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - name: Validate publication event and ref
+        env:
+          RELEASE_REPOSITORY: ${{ github.repository }}
+          RELEASE_EVENT_NAME: ${{ github.event_name }}
+          RELEASE_REF: ${{ github.ref }}
+          RELEASE_REF_PROTECTED: ${{ github.ref_protected }}
+        run: |
+          set -euo pipefail
+          if [[ "$RELEASE_REPOSITORY" != "scramjetorg/transform-hub" ]]; then
+            echo "::error::Publication is restricted to scramjetorg/transform-hub."
+            exit 1
+          fi
+          if [[ "$RELEASE_EVENT_NAME" == "workflow_dispatch" ]]; then
+            if [[ "$RELEASE_REF" != "refs/heads/main" ]]; then
+              echo "::error::Recovery dispatch must run on refs/heads/main; observed ref=$RELEASE_REF. No production/OIDC job was admitted."
+              exit 1
+            fi
+          elif [[ "$RELEASE_EVENT_NAME" == "push" ]]; then
+            if [[ ! "$RELEASE_REF" =~ ^refs/tags/v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
+              echo "::error::Stable publication requires a canonical stable version tag; observed ref=$RELEASE_REF."
+              exit 1
+            fi
+          else
+            echo "::error::Unsupported publication event; observed event=$RELEASE_EVENT_NAME."
+            exit 1
+          fi
+          if [[ "${RELEASE_REF_PROTECTED:-}" != "true" ]]; then
+            echo "::error::Publication requires a protected Git ref; observed ref=$RELEASE_REF."
+            exit 1
+          fi
+          echo "Admitted publication event=$RELEASE_EVENT_NAME ref=$RELEASE_REF"
   publish:
-    if: ${{ github.repository == 'scramjetorg/transform-hub' && github.ref_protected && ((github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')) || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')) }}
+    needs: admission
+    if: ${{ needs.admission.result == 'success' && github.repository == 'scramjetorg/transform-hub' && github.ref_protected && ((github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')) || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')) }}
     runs-on: ubuntu-24.04
     environment: production
     permissions:
