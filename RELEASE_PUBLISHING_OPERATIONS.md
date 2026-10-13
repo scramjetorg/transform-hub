@@ -16,11 +16,14 @@ and its complete bundle before the merge/tag handoff. A candidate failure must
 be fixed on the release branch and the incomplete draft replaced; never rebuild
 or substitute tarballs during tag publication. If npm publication fails, rerun
 the tag job using the already-published GitHub assets. A published version whose
-identity or package checksum differs from the bundle fails closed.
+identity or package checksum differs from the bundle fails closed. A rerun of
+an old tag workflow uses its original workflow revision; changes merged later
+cannot repair that rerun. Use a fresh protected-main recovery dispatch when the
+reviewed recovery workflow is needed.
 
 ## Release boundary
 
-The production set is `INCLUDED_PACKAGES` in [`scripts/lib/release-boundary.js`](scripts/lib/release-boundary.js), also represented by root `workspaces.release`. Do not infer it from `packages/*` or use a wildcard publisher registration. Each of these **37** packages requires a separate npm trusted-publisher registration:
+The production set is `INCLUDED_PACKAGES` in [`scripts/lib/release-boundary.js`](scripts/lib/release-boundary.js), also represented by root `workspaces.release`. Do not infer it from `packages/*` or use a wildcard publisher registration. Each of these **38** packages requires a separate npm trusted-publisher registration:
 
 ```text
 @scramjet/sth                         @scramjet/cli
@@ -42,6 +45,7 @@ The production set is `INCLUDED_PACKAGES` in [`scripts/lib/release-boundary.js`]
 @scramjet/obj-logger                  @scramjet/logger
 @scramjet/module-loader               @scramjet/middleware-api-client
 @scramjet/multi-manager-api-client
+@scramjet/hub-state
 ```
 
 `@scramjet/verser`, `@scramjet/bpmux`, `@scramjet/frame-stream`, and `scramjet-bdd` are explicitly excluded and must not be registered through this release path.
@@ -56,6 +60,8 @@ For **every individual package** above, an npm package administrator must add a 
 | GitHub owner | `scramjetorg` |
 | Repository | `transform-hub` |
 | Workflow filename | `main-release.yml` |
+| Environment | `production` |
+| Publishing access | Direct publishing allowed |
 | Package | The individual package being registered |
 
 The protected production workflow is `.github/workflows/main-release.yml`. Do
@@ -70,7 +76,8 @@ Use npm trusted publishing/OIDC only: do not create an `NPM_TOKEN`, automation t
 Create a repository environment named exactly `production` and attach it only to
 the active `main-release.yml` publish job. Operators must:
 
-1. Restrict deployment to protected production tag pushes (`vX.Y.Z`) from the trusted repository. The workflow must independently prove that the tag commit equals `origin/main` and that the merged same-repository release PR head/tree matches the immutable bundle; do not permit devel, feature branches, pull requests, or forks.
+1. Restrict deployment to protected production tag pushes (`vX.Y.Z`) and the explicit recovery exception: `workflow_dispatch` on protected `main` from the trusted repository. The workflow independently proves the dispatch SHA equals current `origin/main`, the historical tag commit is its ancestor, and the merged same-repository release PR head/tree matches the immutable bundle. Recovery is public-release-only and requires the recorded tag SHA, release ID, PR number, and manifest checksum; do not permit devel, feature branches, pull requests, or forks.
+   Ordinary stable-tag pushes remain bound to the tag commit being exactly the current `origin/main` commit; the historical-ancestor exception applies only to recovery dispatches.
 2. Require approval from the designated release-maintainers team before OIDC issuance. Require at least two reviewers where supported and prevent self-review.
 3. Disable routine administrator/environment-protection bypass. Emergency bypass is an audited organization incident action, never a workflow input.
 4. Keep npm credentials out of the environment; it gates short-lived OIDC and must not become a token vault.
@@ -81,7 +88,7 @@ Create or update a non-bypassable `main` ruleset that requires pull requests, cu
 
 The production job must use GitHub-hosted Node **22** and npm **11** (11.19.0), run `npm ci` from the committed `package-lock.json`, and never use Yarn or an unlocked global install. Record exact `node --version` and `npm --version` in release evidence. Existing local setup policy is [`.github/actions/setup-workspace/action.yml`](.github/actions/setup-workspace/action.yml).
 
-Run release alignment before publishing. The package boundary and release-wave topology remain fixed. `check`, `dry-run`, and `apply` require an explicit stable SemVer version; for the 2.2.0 release, run:
+For candidate preparation, run release alignment before opening the release PR. These alignment commands are not part of public-asset recovery and must not be used to rebuild or replace an already-published release bundle. The package boundary and release-wave topology remain fixed. `check`, `dry-run`, and `apply` require an explicit stable SemVer version; for the 2.2.0 candidate-preparation example, run:
 
 ```bash
 npm run release:align:check -- --release-version=2.2.0
@@ -98,17 +105,24 @@ Only the protected npm publish job may request `id-token: write`; all other jobs
 | Issuer | `https://token.actions.githubusercontent.com` |
 | Audience | `npm:registry.npmjs.org` |
 | `repository` / `repository_owner` | `scramjetorg/transform-hub` / `scramjetorg` |
-| `event_name` / `ref` / `ref_protected` | `push` / `refs/tags/vX.Y.Z` / `true` |
-| `workflow_ref` | `scramjetorg/transform-hub/.github/workflows/main-release.yml@refs/tags/vX.Y.Z` |
+| Normal tag push `event_name` / `ref` / `ref_protected` | `push` / `refs/tags/vX.Y.Z` / `true` |
+| Normal tag push `workflow_ref` | `scramjetorg/transform-hub/.github/workflows/main-release.yml@refs/tags/vX.Y.Z` |
+| Recovery `event_name` / `ref` / `ref_protected` | `workflow_dispatch` / `refs/heads/main` / `true` |
+| Recovery `workflow_ref` | `scramjetorg/transform-hub/.github/workflows/main-release.yml@refs/heads/main` |
 | `sub` with the production environment | `repo:scramjetorg/transform-hub:environment:production` |
 
-With an environment, GitHub uses the environment form of `sub`, not the ref form. Therefore the protected tag, the workflow's tag-to-main SHA check, the merged-PR/tree binding, and the tag-triggered `workflow_ref` are jointly required. npm's registration constrains the provider/repository/workflow; GitHub controls enforce protected production approval.
+With an environment, GitHub uses the environment form of `sub`, not the ref form. Therefore the protected tag or protected-main recovery admission, the workflow's current-main/tag ancestry checks, merged-PR/tree binding, and mode-specific `workflow_ref` are jointly required. npm's registration constrains the provider/repository/workflow; GitHub controls enforce protected production approval. Operators must separately allow protected `main` in production environment eligibility for recovery; this repository does not prove that remote setting.
 
 ## Failure and recovery
 
 1. Stop on a failed check, draft asset-list/binding/checksum mismatch, approval denial, OIDC/npm rejection, or package-order failure. Do not bypass controls or use a long-lived token.
-2. Preserve the workflow URL, commit SHA, package list, exact Node/npm versions, package/version state, and error. Re-run alignment with the same explicit `--release-version` before retrying.
+2. Preserve the workflow URL, commit SHA, package list, exact Node/npm versions, package/version state, and error. Re-run alignment only when repairing a candidate before publication. Public-asset recovery requires no alignment, build, repack, or bootstrap repetition.
 3. npm versions are immutable. Query every attempted `@scramjet/*@version` and reuse only a package whose published identity and final package checksum match the recorded manifest. Never unpublish/re-publish to force a retry.
 4. For a partial release, retain the protected commit and repair only the operator/configuration fault after verifying all published packages. If the package boundary, lockfile, contents, or source SHA differ, create a new reviewed release version.
-5. If candidate validation fails, fix the release branch and rerun it so the incomplete draft is replaced. If npm publication fails after the draft is public, rerun the tag workflow using the existing GitHub assets; never rebuild or substitute tarballs. A published version with mismatched identity or checksum fails closed.
+5. If candidate validation fails, fix the release branch and rerun it so the incomplete draft is replaced. For recovery after the release PR has merged, start a **new** run of the existing `main-release.yml` workflow on protected `main` (`workflow_dispatch`) with these exact inputs: `stable_tag`, `expected_tag_sha`, `release_id`, `release_pr`, and `expected_bundle_checksum`. Record the checksum from the immutable manifest's `outerChecksum` field (not a SHA of the manifest file). The workflow requires the dispatch SHA to equal current remote `main`, verifies the historical tag is its ancestor, and verifies the original public assets before npm. A rerun after `main` advances fails closed; start a new dispatch with the reviewed current workflow. Never alter/move the stable tag, redraft/recreate the release, or rebuild/substitute assets. Public release finalization is a no-op; npm versions are reused only on exact identity and package-checksum matches.
 6. For OIDC, environment, ruleset, or npm registration issues, disable the production job/environment, correct the remote setting under change control, then retry. Treat unexpected publication or credential exposure as a security incident and follow [SECURITY.md](SECURITY.md).
+
+The separate `@scramjet/hub-state@0.0.0` stub with the `bootstrap` dist-tag is
+not a stable release, must not use the `latest` dist-tag, and must not occupy
+stable version `2.3.0`. The bootstrap has been handled separately; do not repeat
+it as part of this recovery.
