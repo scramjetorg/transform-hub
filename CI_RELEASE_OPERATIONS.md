@@ -100,12 +100,12 @@ or scanner bypass, follow [SECURITY.md](SECURITY.md).
 
 The repository cannot prove GitHub required workflows/rulesets, protected
 production-environment approvals, npm trusted publishers/OIDC configuration,
-tag protection, registry retention, Actionlint, or Zizmor. Operators must
+registry retention, Actionlint, or Zizmor. Operators must
 validate those controls in their respective services before enabling live
 publication. The production environment must permit trusted tag releases and, if
 recovery is enabled, protected-main recovery dispatches; both require approval
 before OIDC issuance. The workflow independently requires protected main and
 recorded historical-tag ancestry for recovery. The `main` ruleset must
-require the release candidate and merge checks, and tag protection must prevent
-unreviewed tag creation or movement. These remote controls complement the
-workflow's explicit tag-to-main SHA and release-bundle binding checks.
+require the release candidate and merge checks. Ordinary stable-tag publication
+does not require tag protection; explicit tag-to-main SHA and release-bundle
+binding checks remain enforced by the workflow.
