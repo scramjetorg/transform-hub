@@ -24,7 +24,7 @@
   "devDependencies": {
     "@cucumber/cucumber": "^13.0.0",
     "@cucumber/messages": "^34.0.0",
-    "@types/dockerode": "^4.0.1"
+    "@types/dockerode": "4.0.1"
   },
   "scripts": {
     "build:bdd": "tsc -p tsconfig.json",

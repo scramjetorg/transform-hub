@@ -30,7 +30,7 @@
     "@signicode/verser2-guest-python": "0.9.3"
   },
   "devDependencies": {
-    "tsx": "^4.19.3"
+    "tsx": "^4.23.15"
   },
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "MIT",
