@@ -1,0 +1,11 @@
+{
+  "name": "routed-echo",
+  "version": "1.0.0",
+  "main": "index.js",
+  "engines": {
+    "node": ">=16"
+  },
+  "scripts": {
+    "build": "si pack -o ../routed-echo.tar.gz ."
+  }
+}

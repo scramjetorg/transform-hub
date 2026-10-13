@@ -173,6 +173,25 @@ test("run-sequence parity: StringStream final output pipes raw bytes to hostClie
     t.true("outputEncoding" in frames[1][1]);
 });
 
+test("run-sequence parity: native readable echo preserves split text bytes without DataStream serialization", async t => {
+    const host = makeHost();
+    const deps = makeDeps(host);
+    const outputCollected = collect(host.outputStream);
+    deps.inputDataStream.write("routed-");
+    deps.inputDataStream.end("input");
+
+    const echo = (input: Readable) => {
+        const output = Readable.from(input);
+        (output as Readable & { contentType?: string }).contentType = "text/plain";
+        return output;
+    };
+
+    await runSequence([echo], deps);
+
+    t.is((await outputCollected).toString("utf8"), "routed-input");
+    t.deepEqual(host.monitorFrames()[1][1].contentType, "text/plain");
+});
+
 test("run-sequence parity: ndjson contentType triggers serialization through outputDataStream", async t => {
     const host = makeHost();
     const outputDataStream = new DataStream();
