@@ -46,7 +46,7 @@ function freshCliStartup(home: string, caFile?: string) {
             process.exitCode = 23;
         }
     `;
-    const env: NodeJS.ProcessEnv = { ...process.env, HOME: home };
+    const env: NodeJS.ProcessEnv = { ...process.env, HOME: home, SCRAMJET_HOME: home };
     delete env.SI_CONFIG;
     delete env.SI_CONFIG_PATH;
     for (const variable of Object.values(verser2ClientTlsEnvironment)) {

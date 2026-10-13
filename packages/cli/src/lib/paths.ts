@@ -5,10 +5,14 @@ import { sessionId } from "../utils/sessionId";
 
 export const configFileExt = ".json";
 
-export const siDir = resolve(homedir(), "./.si");
+const configuredHome = process.env.SCRAMJET_HOME;
+const hasConfiguredHome = configuredHome !== undefined && configuredHome !== "";
+const cliHome = hasConfiguredHome ? resolve(configuredHome) : homedir();
+
+export const siDir = resolve(cliHome, "./.si");
 export const scopesDir = resolve(siDir, "./scopes");
 export const profilesDir = resolve(siDir, "./profiles");
-export const siTempDir = resolve(tmpdir(), "./.si-tmp");
+export const siTempDir = hasConfiguredHome ? resolve(cliHome, "./.si-tmp") : resolve(tmpdir(), "./.si-tmp");
 export const sessionDir = resolve(siTempDir, `./${sessionId()}`);
 export const sessionConfigFile = resolve(sessionDir, `./session-config${configFileExt}`);
 export const siConfigFile = resolve(siDir, `si-config${configFileExt}`);

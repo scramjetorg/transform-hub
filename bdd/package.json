@@ -18,7 +18,7 @@
     "dockerode": "^5.0.1",
     "find-package-json": "^1.2.0",
     "freeport": "^1.0.5",
-    "n-readlines": "^1.0.1",
+    "n-readlines": "^3.4.1",
     "scramjet": "^4.37.0"
   },
   "devDependencies": {

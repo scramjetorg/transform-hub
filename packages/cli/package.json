@@ -59,6 +59,7 @@
       "**/*.spec.ts"
     ],
     "require": [
+      "../../scripts/lib/cli-test-home.cjs",
       "../../scripts/lib/tsx-cjs-register.cjs"
     ],
     "typescript": {

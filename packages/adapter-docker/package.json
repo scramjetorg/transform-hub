@@ -28,7 +28,7 @@
     "@scramjet/runtime-types": "^2.3.1-devel",
     "@scramjet/types": "^2.3.1-devel",
     "@types/dockerode": "^4.0.1",
-    "@types/js-yaml": "4.0.5",
+    "@types/js-yaml": "^4.0.9",
     "@types/node": "^22.15.0",
     "ava": "^8.0.0",
     "typescript": "5.9.3",
