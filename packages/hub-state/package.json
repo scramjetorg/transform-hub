@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/hub-state",
-  "version": "2.3.1-devel",
+  "version": "2.3.1",
   "description": "Transport-independent audit-fed Hub inventory state.",
   "main": "./src/index.ts",
   "scripts": {
@@ -9,7 +9,7 @@
     "test": "node ../../scripts/run-ava.js -T 50000"
   },
   "dependencies": {
-    "@scramjet/runtime-types": "^2.3.1-devel"
+    "@scramjet/runtime-types": "^2.3.1"
   },
   "devDependencies": {
     "@ava/typescript": "^7.0.0",
