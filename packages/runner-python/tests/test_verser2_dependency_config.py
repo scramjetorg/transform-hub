@@ -10,6 +10,7 @@ are purely static/file-level checks.
 
 from __future__ import annotations
 
+import json
 import re
 from pathlib import Path
 
@@ -22,6 +23,9 @@ CONFIG_FILE = SCRIPTS / "verser2-config.sh"
 INSTALL_DEPS = SCRIPTS / "install-deps.sh"
 DOCKERFILE = REPO_ROOT / "packages" / "runner-python" / "Dockerfile"
 REQUIREMENTS = REPO_ROOT / "packages" / "runner-python" / "requirements.txt"
+PACKAGE_JSON = REPO_ROOT / "packages" / "runner-python" / "package.json"
+PYPROJECT = REPO_ROOT / "packages" / "runner-python" / "pyproject.toml"
+PACKAGE_LOCK = REPO_ROOT / "package-lock.json"
 
 # Expected variable names that must be defined in the config file
 REQUIRED_VARS = (
@@ -81,6 +85,38 @@ class TestVerser2Config:
         assert re.match(r"^\d+\.\d+\.\d+$", version), (
             f"VERSER2_VERSION '{version}' does not look like semver"
         )
+
+    def test_published_python_sdk_versions_and_minimum_python_are_aligned(self) -> None:
+        config_version = _parse_config(CONFIG_FILE)["VERSER2_VERSION"]
+        package = json.loads(PACKAGE_JSON.read_text("utf-8"))
+        lock = json.loads(PACKAGE_LOCK.read_text("utf-8"))
+        locked_dependency = lock["packages"]["node_modules/@signicode/verser2-guest-python"]
+        pyproject = PYPROJECT.read_text("utf-8")
+
+        assert config_version == "0.9.3"
+        assert package["dependencies"]["@signicode/verser2-guest-python"] == config_version
+        assert locked_dependency["version"] == config_version
+        assert locked_dependency["integrity"] == "sha512-3j5rrr7HKWkRXsBP1MdNp/oZMN4bgrSm9CUKLGmNNCKK5Wq5WrTuXt5X2O97ZvD2mYaWZp465NX+sR3lguWQ1w=="
+        assert 'requires-python = ">=3.11"' in pyproject
+
+    def test_python_wheel_sha256_matches_the_requirement_pin(self) -> None:
+        config_sha = _parse_config(CONFIG_FILE)["VERSER2_WHEEL_SHA256"]
+        requirements = REQUIREMENTS.read_text("utf-8")
+        sdk_block = requirements.split("verser2-guest-python==", 1)[1]
+        assert "verser2-guest-python==0.9.3" in requirements
+        assert config_sha == "7e511a910c49cb8efd0af9e1f7f9ee604786aa2c891fbf243b1107cfcbbc509a"
+        assert f"--hash=sha256:{config_sha}" in sdk_block
+
+    def test_cryptography_50_hashes_cover_supported_linux_x86_64_wheels(self) -> None:
+        requirements = REQUIREMENTS.read_text("utf-8")
+        crypto_block = requirements.split("cryptography==", 1)[1].split("h2==", 1)[0]
+        assert "cryptography==50.0.0" in requirements
+        for digest in (
+            "06a32a980526a6ab9a4b9bf8f7385800791e2bb960903cb6b530e4817509a3b7",
+            "b42a28c1844fd9de8f3f7d540e36b66f3a9c83fceac7170ebc7a6a19edd9dcae",
+            "82148ec5bddac30b51a5b3c1945075f896fa022cb93f8e4a01e9f6ee95292c5f",
+        ):
+            assert f"--hash=sha256:{digest}" in crypto_block
 
     def test_wheel_name_references_version_variable(self) -> None:
         vars_ = _parse_config(CONFIG_FILE)

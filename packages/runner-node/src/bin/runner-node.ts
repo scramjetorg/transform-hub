@@ -20,9 +20,10 @@ import { defer } from "@scramjet/utility";
 import { RunnerLifecycle } from "../lifecycle";
 import type { LifecycleContext } from "../lifecycle";
 import { MessageUtils } from "../message-utils";
+import { awaitInitializerOrTerminal, ManifestDeclarationSession } from "../manifest-declaration";
 import { runSequence } from "../run-sequence";
 import type { RunSequenceHostClient } from "../run-sequence";
-import type { BootstrapOverrides, ResolvedSequenceFunctions } from "../types";
+import type { BootstrapOverrides, ControlDispatch, ResolvedSequenceFunctions } from "../types";
 import {
     getMemoryUsage,
     applySetLogLevel,
@@ -128,12 +129,49 @@ export async function bootstrap(overrides: BootstrapOverrides = {}): Promise<num
     let exitCode: RunnerExitCode = RunnerExitCode.SUCCESS;
     const lifecycleRef: { current?: RunnerLifecycle } = {};
     let hostClient: HostClient | undefined;
+    let manifestSession: ManifestDeclarationSession | undefined;
     let hostAdapter: RunSequenceHostClient;
     let inputDataStream: DataStream;
     let api: APIExpose | undefined;
     let context: LifecycleContext & {
         localStorage: { handleBroadcastUpdate(data: { key: string; value: string | null }): void };
         monitor: () => Promise<{ healthy: boolean; details?: Record<string, unknown> }>;
+    };
+    let killed = false;
+    let resolveKilled!: () => void;
+    const killedPromise = new Promise<void>((resolve) => {
+        resolveKilled = resolve;
+    });
+    let terminalStop = false;
+    let resolveTerminalStop!: () => void;
+    const terminalStopPromise = new Promise<void>((resolve) => {
+        resolveTerminalStop = resolve;
+    });
+    let terminalControl = false;
+    let resolveTerminalControl!: () => void;
+    const terminalControlPromise = new Promise<void>((resolve) => {
+        resolveTerminalControl = resolve;
+    });
+    let lifecycle!: RunnerLifecycle;
+    let initializationContinues = true;
+    const initializeLifecycle = (lifecycleContext: LifecycleContext): RunnerLifecycle => {
+        const instanceLifecycle = new RunnerLifecycle({
+            context: lifecycleContext,
+            monitorStream: streams.monitoringOut,
+            logger,
+            onExit: (code) => {
+                exitCode = code;
+            },
+            onTerminalStop: () => {
+                terminalStop = true;
+                terminalControl = true;
+                resolveTerminalStop();
+                resolveTerminalControl();
+            }
+        });
+
+        lifecycleRef.current = instanceLifecycle;
+        return instanceLifecycle;
     };
     const outputDataStream = new DataStream();
 
@@ -162,25 +200,51 @@ export async function bootstrap(overrides: BootstrapOverrides = {}): Promise<num
             throw err;
         }
 
+        // Attach the sole fd4 reader before user initialization so declaration
+        // replies can settle awaited calls without competing readers.
+        manifestSession = new ManifestDeclarationSession(streams.controlIn, streams.monitoringOut, logger);
+        manifestSession.setTerminalHandler(() => {
+            terminalControl = true;
+            resolveTerminalControl();
+        });
+
         const built = buildAppContext({
             bootConfig,
             monitorStream: streams.monitoringOut,
             emitter,
             logger,
             hostClient,
-            onKeepAliveIssued: () => lifecycleRef.current?.keepAliveIssued()
+            onKeepAliveIssued: () => lifecycleRef.current?.keepAliveIssued(),
+            declareManifest: (declaration) => manifestSession!.declare(declaration)
         });
 
         api = built.api;
         context = built.context as unknown as typeof context;
+        lifecycle = initializeLifecycle(context);
+        manifestSession.setEarlyKillHandler(() => {
+            killed = true;
+            const handling = lifecycle.handleKillRequest();
+            resolveKilled();
+            void handling.catch((error) => logger.error("Error handling KILL during initialization", error));
+        });
+        manifestSession.setEarlyStopHandler(async (data) => {
+            await lifecycle.handleStopRequest(data);
+            return terminalStop;
+        });
         if (shouldForwardRunnerLogs(bootConfig)) {
             logger.pipe(hostClient.logStream, { stringified: true });
         }
 
         if (sequenceFns.initialize) {
             try {
-                await sequenceFns.initialize.call(context, context);
+                initializationContinues = await awaitInitializerOrTerminal(
+                    () => sequenceFns.initialize!.call(context, context),
+                    terminalControlPromise,
+                    () => terminalControl
+                );
             } catch (error) {
+                manifestSession.close(error instanceof Error ? error : new Error(String(error)));
+                lifecycle.cleanup();
                 writeMonitoring(streams.monitoringOut, [
                     RunnerMessageCode.READY,
                     {
@@ -192,9 +256,14 @@ export async function bootstrap(overrides: BootstrapOverrides = {}): Promise<num
             }
         }
 
-        const exposed = bootConfig.exposePath ? await startApiServer(built.api, bootConfig.exposePath, bootConfig.exposeHost, logger) : undefined;
+        initializationContinues = initializationContinues && !terminalControl;
+        const exposed = initializationContinues && bootConfig.exposePath
+            ? await startApiServer(built.api, bootConfig.exposePath, bootConfig.exposeHost, logger)
+            : undefined;
 
-        outputDataStream.JSONStringify().pipe(hostClient.outputStream as unknown as Writable);
+        if (initializationContinues && !terminalControl) {
+            outputDataStream.JSONStringify().pipe(hostClient.outputStream as unknown as Writable);
+        }
 
         hostAdapter = {
             outputStream: hostClient.outputStream as unknown as RunSequenceHostClient["outputStream"],
@@ -202,7 +271,7 @@ export async function bootstrap(overrides: BootstrapOverrides = {}): Promise<num
         };
 
         inputDataStream = new DataStream();
-        readInputStreamHeaders(hostClient.inputStream as unknown as Readable)
+        if (initializationContinues && !terminalControl) readInputStreamHeaders(hostClient.inputStream as unknown as Readable)
             .then((headers) => {
                 const contentType = headers["content-type"];
 
@@ -228,34 +297,39 @@ export async function bootstrap(overrides: BootstrapOverrides = {}): Promise<num
                 inputDataStream.end();
             });
 
-        await new Promise<void>((resolveWrite) => {
-            MessageUtils.writeMessageOnStream(
-                buildPing({
-                    instanceId: bootConfig.instanceId,
-                    sequenceInfo,
-                    appConfig,
-                    args,
-                    instanceName: bootConfig.instanceName,
-                    inputTopic: bootConfig.inputTopic,
-                    outputTopic: bootConfig.outputTopic,
-                    exposePath: undefined,
-                    exposeHost: exposed?.host,
-                    exposePort: exposed?.port
-                }) as EncodedMonitoringMessage,
-                streams.monitoringOut
-            );
-            resolveWrite();
-        });
+        if (initializationContinues && !terminalControl) {
+            await new Promise<void>((resolveWrite) => {
+                MessageUtils.writeMessageOnStream(
+                    buildPing({
+                        instanceId: bootConfig.instanceId,
+                        sequenceInfo,
+                        appConfig,
+                        args,
+                        instanceName: bootConfig.instanceName,
+                        inputTopic: bootConfig.inputTopic,
+                        outputTopic: bootConfig.outputTopic,
+                        exposePath: undefined,
+                        exposeHost: exposed?.host,
+                        exposePort: exposed?.port
+                    }) as EncodedMonitoringMessage,
+                    streams.monitoringOut
+                );
+                resolveWrite();
+            });
 
-        writeMonitoring(streams.monitoringOut, [RunnerMessageCode.MONITORING, { healthy: true, ...getMemoryUsage() }]);
+            writeMonitoring(streams.monitoringOut, [RunnerMessageCode.MONITORING, { healthy: true, ...getMemoryUsage() }]);
 
-        writeMonitoring(streams.monitoringOut, [
-            RunnerMessageCode.READY,
-            {
-                state: "ready",
-                ...(bootConfig.exposePath ? { exposePath: bootConfig.exposePath, exposeHost: exposed?.host, exposePort: exposed?.port } : {})
-            }
-        ]);
+            writeMonitoring(streams.monitoringOut, [
+                RunnerMessageCode.READY,
+                {
+                    state: "ready",
+                    ...(bootConfig.exposePath ? { exposePath: bootConfig.exposePath, exposeHost: exposed?.host, exposePort: exposed?.port } : {})
+                }
+            ]);
+        } else {
+            manifestSession.close(new Error("Runtime terminated during initialization"));
+            inputDataStream.end();
+        }
     } else {
         const built = buildSequenceContext({
             bootConfig,
@@ -291,20 +365,7 @@ export async function bootstrap(overrides: BootstrapOverrides = {}): Promise<num
         writeMonitoring(streams.monitoringOut, [RunnerMessageCode.READY, { state: "ready" }]);
     }
 
-    const lifecycle = new RunnerLifecycle({
-        context,
-        monitorStream: streams.monitoringOut,
-        logger,
-        onExit: (code) => {
-            exitCode = code;
-        },
-        onTerminalStop: () => {
-            terminalStop = true;
-            resolveTerminalStop();
-        }
-    });
-
-    lifecycleRef.current = lifecycle;
+    if (!hasHost) lifecycle = initializeLifecycle(context);
 
     // runner-node owns the active child runtime, so it must evaluate author
     // monitoring handlers itself. Runtime telemetry is appended after the
@@ -327,26 +388,18 @@ export async function bootstrap(overrides: BootstrapOverrides = {}): Promise<num
     monitoringInterval.unref();
     lifecycle.setMonitoringInterval(monitoringInterval);
 
-    let killed = false;
-    let resolveKilled!: () => void;
-    const killedPromise = new Promise<void>((resolve) => {
-        resolveKilled = resolve;
-    });
-
-    let terminalStop = false;
-    let resolveTerminalStop!: () => void;
-    const terminalStopPromise = new Promise<void>((resolve) => {
-        resolveTerminalStop = resolve;
-    });
-
-    wireControlStream(
-        streams.controlIn,
-        {
-            onStop: (data) => lifecycle.handleStopRequest(data),
+    const controlDispatch: ControlDispatch = {
+            onStop: async (data) => {
+                await lifecycle.handleStopRequest(data);
+                if (terminalStop) manifestSession?.terminate(new Error("Manifest declaration cancelled by terminal runtime STOP"));
+            },
             onKill: async () => {
-                await lifecycle.handleKillRequest();
                 killed = true;
+                const handling = lifecycle.handleKillRequest();
                 resolveKilled();
+                terminalControl = true;
+                resolveTerminalControl();
+                await handling;
             },
             onEvent: (data) => emitter.emit(data.eventName, data.message),
             onSet: (data) => applySetLogLevel(logger, data),
@@ -356,38 +409,42 @@ export async function bootstrap(overrides: BootstrapOverrides = {}): Promise<num
                 }
             },
             onStorageUpdate: (data) => context.localStorage.handleBroadcastUpdate(data)
-        },
-        logger
-    );
+    };
+    if (manifestSession) manifestSession.activate(controlDispatch);
+    else wireControlStream(streams.controlIn, controlDispatch, logger);
 
     try {
-        const sequenceRun = runSequence(sequenceFns, {
-            context,
-            inputDataStream,
-            outputDataStream,
-            hostClient: hostAdapter,
-            args,
-            logger
-        });
-
-        await Promise.race([sequenceRun, killedPromise, terminalStopPromise]);
-
-        if (killed) {
-            logger.warn("Sequence execution interrupted by KILL");
-            sequenceRun.catch((error) => logger.debug("Sequence rejected after KILL", error));
-        } else if (terminalStop) {
-            logger.info("Sequence execution interrupted by terminal STOP");
-            sequenceRun.catch((error) => logger.debug("Sequence rejected after terminal STOP", error));
+        if (terminalControl) {
+            logger.info("Sequence execution skipped after terminal initialization control");
         } else {
-            await sequenceRun;
+            const sequenceRun = runSequence(sequenceFns, {
+                context,
+                inputDataStream,
+                outputDataStream,
+                hostClient: hostAdapter,
+                args,
+                logger
+            });
 
-            // Legacy parity: wait for exitTimeout after sequence completes
-            // so post-return control messages (events, storage updates) are
-            // still processed before writing SEQUENCE_COMPLETED.
-            const exitTimeout = resolveCompletionExitTimeout(context, bootConfig);
-            await Promise.race([defer(exitTimeout), killedPromise, terminalStopPromise]);
+            await Promise.race([sequenceRun, killedPromise, terminalStopPromise]);
 
-            writeMonitoring(streams.monitoringOut, [RunnerMessageCode.SEQUENCE_COMPLETED, { timeout: 0 }]);
+            if (killed) {
+                logger.warn("Sequence execution interrupted by KILL");
+                sequenceRun.catch((error) => logger.debug("Sequence rejected after KILL", error));
+            } else if (terminalStop) {
+                logger.info("Sequence execution interrupted by terminal STOP");
+                sequenceRun.catch((error) => logger.debug("Sequence rejected after terminal STOP", error));
+            } else {
+                await sequenceRun;
+
+                // Legacy parity: wait for exitTimeout after sequence completes
+                // so post-return control messages (events, storage updates) are
+                // still processed before writing SEQUENCE_COMPLETED.
+                const exitTimeout = resolveCompletionExitTimeout(context, bootConfig);
+                await Promise.race([defer(exitTimeout), killedPromise, terminalStopPromise]);
+
+                writeMonitoring(streams.monitoringOut, [RunnerMessageCode.SEQUENCE_COMPLETED, { timeout: 0 }]);
+            }
         }
     } catch (err) {
         logRuntimeError(logger, "instance-runtime", bootConfig, err);
@@ -395,6 +452,7 @@ export async function bootstrap(overrides: BootstrapOverrides = {}): Promise<num
         writeMonitoring(streams.monitoringOut, [RunnerMessageCode.SEQUENCE_STOPPED, { sequenceError: serializeError(err) }]);
         exitCode = RunnerExitCode.SEQUENCE_FAILED_DURING_EXECUTION;
     } finally {
+        manifestSession?.close();
         lifecycle.cleanup();
 
         if (api?.server.listening) {

@@ -161,6 +161,53 @@ test("Topic data flow: retains one first ingress chunk until a consumer pipe att
     topic.destroy();
 });
 
+test("Topic data flow: repeated pipes to the same destination deliver ingress once", async t => {
+    const topic = new Topic(new TopicId("duplicate-route"), "text/plain", testOrigin);
+    const provider = new PassThrough();
+    const consumer = new PassThrough();
+    const received: Buffer[] = [];
+
+    consumer.on("data", chunk => received.push(Buffer.from(chunk)));
+    topic.acceptPipe(provider);
+    topic.pipe(consumer);
+    topic.pipe(consumer);
+    provider.end("single-publication");
+    await new Promise<void>(resolve => provider.once("end", resolve));
+    await new Promise<void>(resolve => setImmediate(resolve));
+
+    t.is(Buffer.concat(received).toString(), "single-publication");
+    consumer.destroy();
+    topic.destroy();
+});
+
+test("Topic data flow: unpipe(undefined) permits reattachment and distinct destinations each receive one copy", async t => {
+    const topic = new Topic(new TopicId("reattach-route"), "text/plain", testOrigin);
+    const provider = new PassThrough();
+    const consumer = new PassThrough();
+    const fanout = new PassThrough();
+    const received = [[], []] as Buffer[][];
+
+    consumer.on("data", chunk => received[0].push(Buffer.from(chunk)));
+    fanout.on("data", chunk => received[1].push(Buffer.from(chunk)));
+    topic.acceptPipe(provider);
+    topic.pipe(consumer);
+    topic.unpipe(undefined);
+    topic.pipe(consumer);
+    topic.pipe(fanout);
+    topic.pipe(fanout);
+    provider.end("fanout-publication");
+    await new Promise<void>(resolve => provider.once("end", resolve));
+    await new Promise<void>(resolve => setImmediate(resolve));
+
+    t.deepEqual(received.map(chunks => Buffer.concat(chunks).toString()), [
+        "fanout-publication",
+        "fanout-publication"
+    ]);
+    consumer.destroy();
+    fanout.destroy();
+    topic.destroy();
+});
+
 test("Topic data flow: cancelled first ingress releases the pending chunk without delivery", async t => {
     const topic = new Topic(new TopicId("cancelled-ingress"), "text/plain", testOrigin);
     const provider = new PassThrough();

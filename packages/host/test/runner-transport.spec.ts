@@ -225,6 +225,75 @@ test("Verser2RunnerTransport waits for runner route and opens routed stream requ
     t.true(requests.slice(3).every(request => request.body === undefined));
 });
 
+test("Verser2RunnerTransport waits for a fresh active generation instead of using a retained degraded route", async t => {
+    const { downstreams, upstreams } = streams();
+    const domain = "runner.inst-1.scramjet.internal";
+    const staleTargetId = "runner.guest.inst-1";
+    const freshTargetId = "runner.guest.inst-1";
+    const routes = [{ targetId: staleTargetId, domain }];
+    const requests: any[] = [];
+    const responseBodies: PassThrough[] = [];
+    let routeListener: (event: any) => void = () => undefined;
+    const rawBroker = {
+        getRoutes: () => routes,
+        onRouteChange: (listener: (event: any) => void) => {
+            routeListener = listener;
+            return () => { routeListener = () => undefined; };
+        },
+        request: async (request: any) => {
+            const body = new PassThrough();
+            requests.push(request);
+            responseBodies.push(body);
+            return { statusCode: 200, body };
+        }
+    };
+    const broker = createVerser2RunnerBrokerTransport(rawBroker as any);
+    const transport = new Verser2RunnerTransport({ broker, upstreams });
+
+    routeListener!({
+        type: "degraded",
+        targetId: staleTargetId,
+        domain,
+        reason: "disconnected",
+        generation: { generationId: "gen-1", sessionId: "old-session" }
+    });
+
+    const connecting = transport.connect({ instanceId: "inst-1", streams: downstreams });
+    await nextTick();
+    t.is(requests.length, 0, "a retained route snapshot must not open /stdin before active re-registration");
+
+    routeListener!({
+        type: "changed",
+        targetId: freshTargetId,
+        domain,
+        reason: "reconnected",
+        generation: { generationId: "gen-2", sessionId: "new-session" }
+    });
+    // A late disappearance of the old generation must not roll the selected route back.
+    routeListener!({
+        type: "removed",
+        targetId: staleTargetId,
+        domain,
+        reason: "disconnected",
+        generation: { generationId: "gen-1", sessionId: "old-session" }
+    });
+
+    await connecting;
+    t.deepEqual(requests.map(request => [request.method, request.path]), [
+        ["POST", "/stdin"],
+        ["POST", "/control"],
+        ["POST", "/input"],
+        ["GET", "/stdout"],
+        ["GET", "/stderr"],
+        ["GET", "/monitoring"],
+        ["GET", "/output"],
+        ["GET", "/log"]
+    ]);
+    t.true(requests.every(request => request.targetId === freshTargetId));
+    await transport.disconnect("test cleanup");
+    t.true(responseBodies.every(body => body.destroyed));
+});
+
 test("Verser2RunnerTransport hooks communication handler before routed requests", async t => {
     const { downstreams } = streams();
     const upstreams = streams().upstreams;
@@ -604,13 +673,21 @@ test("Verser2RunnerTransport destroys late replacement response body after disco
 
 test("createVerser2RunnerBrokerTransport waits for raw broker routes", async t => {
     const routes: { targetId: string; domain: string; }[] = [];
+    let routeListener: ((event: any) => void) | undefined;
     const broker = createVerser2RunnerBrokerTransport({
         getRoutes: () => routes,
+        onRouteChange: listener => {
+            routeListener = listener;
+            return () => { routeListener = undefined; };
+        },
         request: async () => ({ body: new PassThrough() })
     });
     const wait = broker.waitForRoute("runner.delayed.scramjet.internal", 200);
 
-    setTimeout(() => routes.push({ targetId: "runner-1", domain: "runner.delayed.scramjet.internal" }), 25);
+    setTimeout(() => {
+        routes.push({ targetId: "runner-1", domain: "runner.delayed.scramjet.internal" });
+        routeListener?.({ type: "added", targetId: "runner-1", domain: "runner.delayed.scramjet.internal", reason: "registered" });
+    }, 25);
 
     await t.notThrowsAsync(wait);
 });
@@ -618,6 +695,7 @@ test("createVerser2RunnerBrokerTransport waits for raw broker routes", async t =
 test("createVerser2RunnerBrokerTransport times out for missing raw broker route", async t => {
     const broker = createVerser2RunnerBrokerTransport({
         getRoutes: () => [],
+        onRouteChange: () => () => undefined,
         request: async () => ({ body: new PassThrough() })
     });
 
@@ -625,6 +703,41 @@ test("createVerser2RunnerBrokerTransport times out for missing raw broker route"
         broker.waitForRoute("runner.missing.scramjet.internal", 10),
         { instanceOf: Verser2RunnerRouteUnavailableError }
     );
+});
+
+test("createVerser2RunnerBrokerTransport removes a cancelled active-route waiter", async t => {
+    const routes: { targetId: string; domain: string; }[] = [{ targetId: "stale", domain: "runner.cancelled.scramjet.internal" }];
+    let routeListener: ((event: any) => void) | undefined;
+    const broker = createVerser2RunnerBrokerTransport({
+        getRoutes: () => routes,
+        onRouteChange: listener => {
+            routeListener = listener;
+            return () => { routeListener = undefined; };
+        },
+        request: async () => ({ body: new PassThrough() })
+    });
+    routeListener?.({
+        type: "degraded",
+        targetId: "stale",
+        domain: "runner.cancelled.scramjet.internal",
+        reason: "disconnected",
+        generation: { generationId: "gen-1", sessionId: "stale-session" }
+    });
+    const signal = new AbortController();
+    const wait = broker.waitForRoute("runner.cancelled.scramjet.internal", undefined, signal.signal);
+
+    signal.abort();
+    await t.throwsAsync(wait, { message: "Runner verser2 transport connection was cancelled" });
+
+    routes.push({ targetId: "fresh", domain: "runner.cancelled.scramjet.internal" });
+    routeListener?.({
+        type: "changed",
+        targetId: "fresh",
+        domain: "runner.cancelled.scramjet.internal",
+        reason: "reconnected",
+        generation: { generationId: "gen-2", sessionId: "fresh-session" }
+    });
+    t.is(broker.getActiveRoute("runner.cancelled.scramjet.internal")?.targetId, "fresh");
 });
 
 test("unknown instanceId produces well-formed but route-unresolvable domain (route unavailable contract)", t => {

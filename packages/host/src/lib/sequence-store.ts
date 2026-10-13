@@ -3,6 +3,7 @@ import { ISequenceStore } from "./types/sequence-store";
 
 class SequenceStore implements ISequenceStore {
     private store: Map<string, SequenceInfo>;
+    private inventoryAuditHandler?: (sequence: SequenceInfo | null, sequenceId: string) => void;
 
     constructor() {
         this.store = new Map<string, SequenceInfo>();
@@ -31,11 +32,26 @@ class SequenceStore implements ISequenceStore {
         return this.getById(sequenceNameOrId) || this.getByName(sequenceNameOrId);
     }
 
-    set(sequence: SequenceInfo) { return this.store.set(sequence.id, sequence); }
+    setInventoryAuditHandler(handler?: (sequence: SequenceInfo | null, sequenceId: string) => void): void { this.inventoryAuditHandler = handler; }
 
-    delete(sequenceId: string) { return this.store.delete(sequenceId); }
+    set(sequence: SequenceInfo) {
+        const result = this.store.set(sequence.id, sequence);
+        this.auditCurrent(sequence.id);
+        return result;
+    }
 
-    clear() { this.store.clear(); }
+    auditCurrent(sequenceId: string): void { this.inventoryAuditHandler?.(this.store.get(sequenceId) || null, sequenceId); }
+
+    delete(sequenceId: string) {
+        const deleted = this.store.delete(sequenceId);
+        if (deleted) this.inventoryAuditHandler?.(null, sequenceId);
+        return deleted;
+    }
+
+    clear() {
+        for (const sequenceId of this.store.keys()) this.inventoryAuditHandler?.(null, sequenceId);
+        this.store.clear();
+    }
 }
 
 export default SequenceStore;

@@ -141,7 +141,13 @@ When("I execute CLI with {string}", { timeout: 60000 }, async function (
             `terminalStopIds=${JSON.stringify(terminalStop || {})}`
         );
     }
-    assert.equal(res.stdio[2], 0);
+    assert.equal(
+        res.stdio[2],
+        0,
+        args === "inst input - data/test-data/checksum.json --end"
+            ? `inst input --end failed; stdout=${JSON.stringify(res.stdio[0])} stderr=${JSON.stringify(res.stdio[1])}`
+            : undefined
+    );
     if (args.startsWith("seq pack ")) res.stdio = undefined;
 });
 

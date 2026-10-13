@@ -197,6 +197,8 @@ export class Topic extends Transform implements TopicHandler {
     }
 
     pipe<T extends NodeJS.WritableStream>(destination: T, options?: { end?: boolean }): T {
+        if (this._pipeTargets.has(destination)) return destination;
+
         this._pipeTargets.add(destination);
         const result = super.pipe(destination, options);
         this.flushPendingIngress();
@@ -204,7 +206,7 @@ export class Topic extends Transform implements TopicHandler {
     }
 
     unpipe(...args: any[]) {
-        if (args.length === 0) this._pipeTargets.clear();
+        if (args.length === 0 || args[0] === undefined) this._pipeTargets.clear();
         else this._pipeTargets.delete(args[0] as NodeJS.WritableStream);
         return super.unpipe(...args);
     }
@@ -281,11 +283,11 @@ export class Topic extends Transform implements TopicHandler {
     protected addXndjsonException(source: Readable) {
         const NEWLINE_BYTE = "\n".charCodeAt(0);
 
-        let lastChunk = Buffer.from("");
+        let lastChunk: Buffer<ArrayBufferLike> = Buffer.from("");
 
         source
             .on("data", (chunk) => {
-                lastChunk = chunk as Buffer;
+                lastChunk = chunk as Buffer<ArrayBufferLike>;
             })
             .on("end", () => {
                 const lastByte = lastChunk[lastChunk.length - 1];

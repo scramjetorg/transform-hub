@@ -4,9 +4,9 @@ build-backend = "setuptools.backends._legacy:_Backend"
 
 [project]
 name = "scramjet-runner-python"
-version = "2.2.1"
+version = "2.3.0"
 description = "Python runtime wrapper for packages/runner"
-requires-python = ">=3.9"
+requires-python = ">=3.11"
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]

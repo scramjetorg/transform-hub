@@ -11,6 +11,7 @@ export enum RunnerMessageCode {
     PANG = 3012,
     INPUT_CONTENT_TYPE = 3013,
     READY = 3014,
+    MANIFEST_DECLARE = 3015,
 
     PONG = 4000,
     STOP = 4001,
@@ -18,6 +19,7 @@ export enum RunnerMessageCode {
     MONITORING_RATE = 4003,
     MONITORING_REPLY = 4004,
     SET = 4005,
+    MANIFEST_RESULT = 4006,
 
     EVENT = 5001,
     STORAGE = 5002,

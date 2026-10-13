@@ -1,3 +1,23 @@
+import type {
+    InstanceManifestResponse as RuntimeInstanceManifestResponse,
+    HubSequenceRecord,
+    HubInstanceRecord,
+    HubTopicRecord,
+    ManifestChange as RuntimeManifestChange,
+    ManifestDeclaration as RuntimeManifestDeclaration,
+    ManifestDeclarationError as RuntimeManifestDeclarationError,
+    ManifestDeclareRequest as RuntimeManifestDeclareRequest,
+    ManifestDeclareResult as RuntimeManifestDeclareResult,
+    ManifestField as RuntimeManifestField,
+    ManifestJsonValue as RuntimeManifestJsonValue,
+    ManifestReceipt as RuntimeManifestReceipt,
+    ManifestRpc as RuntimeManifestRpc,
+    ManifestSchema as RuntimeManifestSchema,
+    ManifestSequenceMetadata as RuntimeManifestSequenceMetadata,
+    ManifestTopic as RuntimeManifestTopic,
+    SequenceManifestResponse as RuntimeSequenceManifestResponse
+} from "@scramjet/runtime-types";
+
 export namespace RestAPI2 {
     export type ScopeName = "root" | "space" | "hub" | "seq" | "inst" | "audit" | "stdio" | "rpc";
 
@@ -106,41 +126,26 @@ export namespace RestAPI2 {
         routeDomain: string;
     };
 
-    export type Sequence = {
-        id: string;
-        name?: string;
-        status?: string;
-        hubId?: string;
-        location?: string;
-        apiBase?: string;
-        instances?: string[];
-    };
+    export type Sequence = HubSequenceRecord;
+    export type Instance = HubInstanceRecord;
 
-    export type Instance = {
-        id: string;
-        instanceName?: string;
-        sequenceId?: string;
-        status?: string;
-        hubId?: string;
-        location?: string;
-        apiBase?: string;
-        sequence?: {
-            id: string;
-            name?: string;
-            status?: string;
-            hubId?: string;
-            location?: string;
-            apiBase?: string;
-        };
-    };
+    export type ManifestSchema = RuntimeManifestSchema;
+    export type ManifestJsonValue = RuntimeManifestJsonValue;
+    export type ManifestField = RuntimeManifestField;
+    export type ManifestRpc = RuntimeManifestRpc;
+    export type ManifestTopic = RuntimeManifestTopic;
+    export type ManifestDeclaration = RuntimeManifestDeclaration;
+    export type ManifestReceipt = RuntimeManifestReceipt;
+    export type ManifestSequenceMetadata = RuntimeManifestSequenceMetadata;
+    export type InstanceManifestResponse = RuntimeInstanceManifestResponse;
+    export type SequenceManifestResponse = RuntimeSequenceManifestResponse;
+    export type ManifestDeclarationError = RuntimeManifestDeclarationError;
+    export type ManifestDeclareRequest = RuntimeManifestDeclareRequest;
+    export type ManifestDeclareResult = RuntimeManifestDeclareResult;
+    export type ManifestChange = RuntimeManifestChange;
 
     export type Entity = { id: string; type?: string };
-    export type Topic = {
-        name: string;
-        contentType: string;
-        origin?: { type: "hub" | "space"; id: string };
-        direction?: "input" | "output" | "duplex";
-    };
+    export type Topic = HubTopicRecord;
     export type StoreItem = { path: string; size?: number };
     export type LogRecord = { time: number; level: string; message: string; meta?: unknown };
     export type AuditRecord = { id: string; time: number; event: string; meta?: unknown };

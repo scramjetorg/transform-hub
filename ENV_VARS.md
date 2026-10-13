@@ -102,6 +102,11 @@ Used in starting runner locally only. Path to input FIFO file.
 `OUTPUT_PATH: string`
 Used in starting runner locally only. Path to output FIFO file.
 
+---
+`SCRAMJET_RUNNER_SHUTDOWN_GRACE_MS: decimal integer milliseconds (default: 100)`
+
+Set this through the Hub's existing `runnerEnvs` configuration or `--runner-envs` option. It controls the outer Runner's bounded forwarding grace before transport disconnect for eligible natural completion and unframed execution-failure outcomes. `0` disables the grace. Values are trimmed decimal nonnegative integers from `0` through `2147483647`; an explicitly blank or invalid value fails outer Runner startup with invalid-environment exit code `20`.
+
 ### Scripts
 
 ---

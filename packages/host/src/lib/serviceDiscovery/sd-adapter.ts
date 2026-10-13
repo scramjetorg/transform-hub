@@ -48,6 +48,10 @@ export class ServiceDiscovery {
         this.logger.pipe(logger);
     }
 
+    setInventoryAuditHandler(handler?: (topic: Topic | null, name: string) => void): void {
+        this.topicsController.setInventoryAuditHandler(handler);
+    }
+
     getTopic(id: TopicId): Topic | undefined {
         return this.topicsController.get(id);
     }

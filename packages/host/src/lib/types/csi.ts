@@ -10,7 +10,8 @@ import {
     DownstreamStreamsConfig,
     InstanceId,
     SequenceInfo,
-    HealthPayload
+    HealthPayload,
+    InstanceManifestResponse
 } from "@scramjet/runtime-types";
 import { STHRestAPI, APIRoute } from "@scramjet/api-types";
 import { MessageDataType } from "./from-types";
@@ -60,12 +61,16 @@ export interface ICSI extends TypedEmitter<CSIEvents> {
     readonly lastHealth: HealthPayload;
 
     readonly isRunning: boolean;
+    getWatchReadiness(): { readiness: "pending" | "ready" | "errored"; terminal: boolean };
     readonly heartBeatPromise?: Promise<InstanceId>;
 
     readonly sequence: SequenceInfo;
 
     /** GET “/” → instance info */
     getInfo(): STHRestAPI.GetInstanceResponse;
+
+    /** Current public instance manifest, or null publication while retained without a declaration. */
+    getManifest(): InstanceManifestResponse | undefined;
 
     /** [ stdin, stdout, stderr ] */
     getStdio(): [WritableStream<any>, ReadableStream<any>, ReadableStream<any>];

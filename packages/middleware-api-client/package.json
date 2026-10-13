@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/middleware-api-client",
-  "version": "2.2.1",
+  "version": "2.3.0",
   "description": "Scramjet Middleware API Client",
   "main": "src/index.ts",
   "scripts": {
@@ -13,16 +13,16 @@
     "test:ava": "node ../../scripts/run-ava.js"
   },
   "dependencies": {
-    "@scramjet/api-client": "^2.2.1",
-    "@scramjet/api-types": "^2.2.1",
-    "@scramjet/client-utils": "^2.2.1",
-    "@scramjet/multi-manager-api-client": "^2.2.1"
+    "@scramjet/api-client": "^2.3.0",
+    "@scramjet/api-types": "^2.3.0",
+    "@scramjet/client-utils": "^2.3.0",
+    "@scramjet/multi-manager-api-client": "^2.3.0"
   },
   "devDependencies": {
     "@ava/typescript": "^7.0.0",
     "ava": "^8.0.0",
     "esbuild": "^0.28.0",
-    "typescript": "~4.7.4",
+    "typescript": "5.9.3",
     "tsx": "^4.19.3"
   },
   "ava": {

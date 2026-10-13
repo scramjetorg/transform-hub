@@ -62,6 +62,13 @@ function createCsiStub(calls: any[] = []): any {
             sequence: { id: "seq-1" },
             status: InstanceStatus.RUNNING
         }),
+        getManifest: () => ({
+            instanceId: "inst-1",
+            sequenceId: "seq-1",
+            revision: null,
+            manifest: null,
+            sequence: { name: "seq-1" }
+        }),
         getOutputStream: () => new PassThrough(),
         getLogStream: () => new PassThrough(),
         getMonitoringStream: () => new PassThrough(),
@@ -125,6 +132,7 @@ test("InstanceAPIV2 registers local per-instance v2 routes", t => {
     registerHttpRoutes(recorder.asApiRoute(), new InstanceAPIV2(createCsiStub(), logger).createRouter());
 
     t.true(recorder.has("get", "/"));
+    t.true(recorder.has("get", "/manifest"));
     t.true(recorder.has("op", "/", "delete"));
     t.true(recorder.has("op", "/", "patch"));
     t.true(recorder.has("get", "/stdio"));
@@ -236,6 +244,13 @@ test("InstanceAPIV2 local handlers adapt CSI behavior", async t => {
     t.is(infoResult.instance.sequence!.hubId, undefined);
     t.is(infoResult.instance.sequence!.location, undefined);
     t.is(infoResult.instance.sequence!.apiBase, "/api/v2/sequences/seq-1");
+    t.deepEqual(await (recorder.require("get", "/manifest").handler as Function)({}), {
+        instanceId: "inst-1",
+        sequenceId: "seq-1",
+        revision: null,
+        manifest: null,
+        sequence: { name: "seq-1" }
+    });
     t.deepEqual(await (recorder.require("op", "/", "delete").handler as Function)({
         body: { mode: "kill" }
     }), {

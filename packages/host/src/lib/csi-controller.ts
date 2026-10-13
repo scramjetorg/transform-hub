@@ -18,7 +18,10 @@ import {
     StopSequenceMessageData,
     WritableStream,
     RunnerConnectInfo,
-    IStorageAdapter
+    IStorageAdapter,
+    InstanceManifestResponse,
+    ManifestDeclareRequest,
+    ManifestDeclareResult
 } from "@scramjet/runtime-types";
 import { APIRoute, STHConfiguration, STHRestAPI } from "@scramjet/api-types";
 import { EncodedMessage, HandshakeAcknowledgeMessage, ICommunicationHandler, MessageDataType, MonitoringMessageData } from "./types/from-types";
@@ -42,6 +45,8 @@ import { InstancesStore } from "./instance-store";
 import { InstanceAPI } from "./api/instance-api";
 import { InstanceAPIV2 } from "./api/instance-api-v2";
 import { CSIEvents, ICSI } from "./types";
+import { ManifestPublicationError } from "./instance-store";
+import { ManifestDeclareRequestSchema } from "@scramjet/rest-api2";
 import { createRunnerBrokerRpcTransport, Verser2RunnerBroker, Verser2RunnerTransport } from "./runner-transport";
 
 /**
@@ -125,6 +130,14 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
 
     get lastHealth(): HealthPayload {
         return { healthy: this._lastHealth.healthy, details: { ...this._lastHealth.details } };
+    }
+
+    getWatchReadiness(): { readiness: "pending" | "ready" | "errored"; terminal: boolean } {
+        return { readiness: this.readinessState, terminal: this.endEmitted || !!this.info.ended || !!this.terminalTransition };
+    }
+
+    private auditCurrentState(): void {
+        this.instanceStore?.auditCurrent?.(this);
     }
 
     limits: InstanceLimits = {};
@@ -231,7 +244,8 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
         private adapter: STHConfiguration["runtimeAdapter"] = sthConfig.runtimeAdapter,
         private instanceStore: InstancesStore,
         localStorageAdapter: IStorageAdapter,
-        private runnerBrokerProvider?: () => Verser2RunnerBroker | undefined
+        private runnerBrokerProvider?: () => Verser2RunnerBroker | undefined,
+        private ownedCompletion?: Promise<number>
     ) {
         super();
         this.instanceStore = instanceStore;
@@ -297,6 +311,10 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
         };
     }
 
+    getManifest(): InstanceManifestResponse | undefined {
+        return this.instanceStore.getManifest(this);
+    }
+
     async set(payload: SetMessageData) {
         await this.communicationHandler.sendControlMessage(RunnerMessageCode.SET, payload);
     }
@@ -340,6 +358,7 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
             this.readinessTimer = setTimeout(() => {
                 const error = new Error(`Instance readiness timed out after ${timeout}ms`);
                 this.readinessState = "errored";
+                this.auditCurrentState();
                 this.readinessFailure = this.failReadiness(error);
                 this.readinessFailure.then(() => reject(error), reject);
             }, timeout);
@@ -366,6 +385,7 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
         }
 
         this.status = InstanceStatus.ERRORED;
+        this.auditCurrentState();
         this.logger.error("Runner readiness failed", error);
     }
 
@@ -396,6 +416,7 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
 
         if (readiness.state === "ready") {
             this.readinessState = "ready";
+            this.auditCurrentState();
             if (this.readinessTimer) clearTimeout(this.readinessTimer);
             this.readinessResolver?.();
         }
@@ -403,6 +424,7 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
         if (readiness.state === "errored") {
             this.logger.error("Runner initialization rejected", readiness.diagnostic);
             this.readinessState = "errored";
+            this.auditCurrentState();
             if (this.readinessTimer) clearTimeout(this.readinessTimer);
             const error = new Error(readiness.diagnostic?.message || "Runner initialization rejected");
             this.readinessFailure = this.failReadiness(error);
@@ -415,6 +437,7 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
 
     async main() {
         this.status = InstanceStatus.RUNNING;
+        this.auditCurrentState();
         this.logger.trace("Main. Current status:", this.status);
 
         let code = -1;
@@ -438,6 +461,7 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
             code = e.exitcode;
 
             this.status = e.status || InstanceStatus.ERRORED;
+            this.auditCurrentState();
             terminalStatus = this.status;
             terminalReason = e.reason;
 
@@ -454,12 +478,13 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
 
         this._instanceAdapter.logger.pipe(this.logger, { end: false });
 
-        this.endOfSequence = this._instanceAdapter.waitUntilExit(undefined, this.id, this.sequence);
+        this.endOfSequence = this.ownedCompletion || this._instanceAdapter.waitUntilExit(undefined, this.id, this.sequence);
 
         // @todo this also is moved to CSIDispatcher in entirety
         const instanceMain = async () => {
             try {
                 this.status = InstanceStatus.STARTING;
+                this.auditCurrentState();
 
                 this.logger.trace("Streams hooked and routed");
 
@@ -471,6 +496,7 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
 
                 if (exitcode > 0) {
                     this.status = InstanceStatus.ERRORED;
+                    this.auditCurrentState();
                     this.logger.error("Crashlog", await this.instanceAdapter.getCrashLog());
                 }
 
@@ -479,6 +505,7 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
                 return exitcode;
             } catch (error: any) {
                 this.status = InstanceStatus.ERRORED;
+                this.auditCurrentState();
                 this.logger.error("Error caught", error.stack);
 
                 await this.cleanup();
@@ -673,6 +700,7 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
             // dispatcher may establish the runner's routed channels in its
             // synchronous listener; sending PONG first lets the runtime race
             // its first /input request against that establishment.
+            this.auditCurrentState();
             this.emit("ping", message[1]);
             await this.handleHandshake(message);
 
@@ -723,6 +751,8 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
             this.localEmitter.emit(event.eventName, event);
         });
 
+        this.registerManifestDeclarationHandler();
+
         // Handle storage updates FROM the runner so setItem/getItem
         // roundtrips complete.  When the runner writes STORAGE_UPDATE
         // on the monitoring channel, apply the change locally and
@@ -736,6 +766,49 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
         });
 
         this.upStreams[CC.MONITORING].resume();
+    }
+
+    private registerManifestDeclarationHandler(): void {
+        this.communicationHandler.addMonitoringHandler(RunnerMessageCode.MANIFEST_DECLARE, (message) => this.handleManifestDeclaration(message));
+    }
+
+    private async handleManifestDeclaration(message: EncodedMessage<RunnerMessageCode.MANIFEST_DECLARE>): Promise<void> {
+        const payload = message[1] as Partial<ManifestDeclareRequest> | null | undefined;
+        const requestId = typeof payload?.requestId === "string" ? payload.requestId : "";
+        const parsed = ManifestDeclareRequestSchema.safeParse(payload);
+        let result: ManifestDeclareResult;
+
+        if (!parsed.success) {
+            const issue = parsed.error.issues[0];
+            const issuePath = issue?.path[0] === "declaration" && issue.path[1] === "declaration" ? issue.path.slice(1) : issue?.path;
+            result = {
+                requestId,
+                accepted: false,
+                error: {
+                    code: "INVALID_MANIFEST",
+                    message: issue?.message || "Invalid manifest declaration",
+                    ...(issuePath?.length ? { path: issuePath.join(".") } : {})
+                }
+            };
+        } else {
+            try {
+                result = {
+                    requestId: parsed.data.requestId,
+                    accepted: true,
+                    receipt: this.instanceStore.publishManifest(this, parsed.data.declaration)
+                };
+            } catch (error) {
+                const code = error instanceof ManifestPublicationError ? error.code : "MANIFEST_PUBLICATION_FAILED";
+                result = {
+                    requestId: parsed.data.requestId,
+                    accepted: false,
+                    error: { code, message: error instanceof ManifestPublicationError ? error.message : "Manifest declaration could not be published" }
+                };
+            }
+        }
+
+        this.logger.debug("Runtime manifest declaration handled", { instanceId: this.id, accepted: result.accepted, code: result.accepted ? undefined : result.error.code });
+        await this.communicationHandler.sendControlMessage(RunnerMessageCode.MANIFEST_RESULT, result);
     }
 
     async applyUpdate(key: string, value: string | null): Promise<void> {
@@ -815,6 +888,7 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
         this.instanceName = message[1].payload.instanceName;
         this.inputTopic = message[1].payload?.inputTopic;
         this.outputTopic = message[1].payload?.outputTopic;
+        this.auditCurrentState();
         // TODO: add message to initiate the instance adapter
 
         if (this.controlDataStream) {
@@ -831,6 +905,7 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
         }
 
         this.info.started = new Date(); //@TODO: set by runner?
+        this.auditCurrentState();
         this.logger.info("Handshake", JSON.stringify(message, undefined));
     }
 
@@ -917,6 +992,7 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
         if (this.terminalTransition || this.endEmitted) return;
 
         this.status = InstanceStatus.STOPPING;
+        this.auditCurrentState();
 
         const terminalCompletion = this.awaitTerminalCompletion();
         const boundedTerminalCompletion = terminalCompletion ? promiseTimeout(terminalCompletion, runnerExitDelay) : undefined;
@@ -1014,6 +1090,7 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
         }
 
         this.status = InstanceStatus.KILLING;
+        this.auditCurrentState();
 
         const terminalCompletion = this.awaitTerminalCompletion();
         const boundedTerminalCompletion = terminalCompletion ? promiseTimeout(terminalCompletion, runnerExitDelay) : undefined;
@@ -1095,6 +1172,7 @@ export class CSIController extends TypedEmitter<CSIEvents> implements ICSI {
         this.terminalTransition = (async () => {
             this.status = status || this.status || InstanceStatus.COMPLETED;
             if (!this.info.ended) this.info.ended = new Date();
+            this.auditCurrentState();
             this.executionTime = this.info.created ? (this.info.ended.getTime() - this.info.created.getTime()) / 1000 : -1;
             this.setExitInfo(code, reason || "");
             if (error) this.emit("error", error);

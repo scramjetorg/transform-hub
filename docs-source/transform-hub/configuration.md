@@ -56,6 +56,30 @@ Each [adapter](../deployment/process-adapter.md) has additional configuration op
 
 Set these under the `adapter` key in the configuration file or pass them as Hub startup options. See the [deployment documentation](../deployment/process-adapter.md) for adapter-specific guidance.
 
+## Runner shutdown grace
+
+The Hub can pass `SCRAMJET_RUNNER_SHUTDOWN_GRACE_MS` to newly launched outer Runner processes through the existing `runnerEnvs` setting. The default is `100` milliseconds. For example, set it in the Hub configuration file:
+
+```json
+{
+  "runnerEnvs": {
+    "SCRAMJET_RUNNER_SHUTDOWN_GRACE_MS": "100"
+  }
+}
+```
+
+Or disable the added grace for newly launched runners with the existing Hub option:
+
+```bash
+scramjet-transform-hub --runner-envs "SCRAMJET_RUNNER_SHUTDOWN_GRACE_MS=0"
+```
+
+The value is a trimmed decimal nonnegative integer in milliseconds, from `0` through `2147483647`; leading zeroes are accepted. An explicitly blank value, negative or fractional number, exponent or hexadecimal notation, or a value outside that range is invalid and causes the newly launched Runner's startup to fail with invalid-environment exit code `20`. The raw invalid value is not logged. A value of `0` disables the added grace without scheduling a timer.
+
+After the child reaches `READY`, the grace gives the outer Runner a bounded opportunity to continue forwarding child stderr before its existing transport disconnect for eligible natural completion (`0`) or an unframed execution failure (translated exit code `23`). It is a forwarding-time allowance, not confirmation that output was delivered or acknowledged. Startup failures, signals, and hard shutdowns do not receive the grace. A child `SEQUENCE_STOPPED` frame is excluded, including outcomes from `context.end()` or `destroy()`; because some framed Node/Bun execution errors use that same frame, they are conservatively excluded as well. A later STOP or KILL interrupts a pending grace; existing shutdown deadlines and retention behavior are unchanged. This applies to newly launched outer runners and is not a live per-instance override.
+
+Pass the setting through `runnerEnvs`; a bare environment export beside the Hub process is not universally forwarded to launched processes. In process-adapter development mode, an inherited environment value can override the configured `runnerEnvs` value.
+
 ## Logging
 
 Configure log level with the `--log-level` flag or `SCRAMJET_LOG_LEVEL` environment variable. Supported levels: `debug`, `info`, `warn`, `error`. The default is `info`.

@@ -7,7 +7,7 @@
 #
 # VERSER2_WHEEL_URL is derived from VERSER2_VERSION automatically.
 
-VERSER2_VERSION="0.4.2"
+VERSER2_VERSION="0.9.3"
 VERSER2_WHEEL="verser2_guest_python-${VERSER2_VERSION}-py3-none-any.whl"
-VERSER2_WHEEL_SHA256="da5ab6efd2ef572a864b8f6766f043fcbe25af3d10a5f5ba0c3878e82e84eef0"
+VERSER2_WHEEL_SHA256="7e511a910c49cb8efd0af9e1f7f9ee604786aa2c891fbf243b1107cfcbbc509a"
 VERSER2_WHEEL_URL="https://github.com/signicode/verser2/releases/download/v${VERSER2_VERSION}/${VERSER2_WHEEL}"

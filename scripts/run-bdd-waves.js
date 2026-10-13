@@ -66,7 +66,9 @@ const CHUNKS = Object.freeze({
     "cli-prune-diagnostic": Object.freeze(["features/e2e/E2E-010-cli-prune-diagnostic.feature"]),
     "external-services": Object.freeze(["features/external-services/EXTERNAL-SERVICES-001-minio-docker.feature"]),
     /** Internal harness self-tests — excluded from default run. */
-    harness: Object.freeze(["features/_harness/harness-timeout.feature"])
+    harness: Object.freeze(["features/_harness/harness-timeout.feature"]),
+    "runtime-manifest": Object.freeze(["features/appcontext/RUNTIME-MANIFEST-001.feature"]),
+    "hub-event-watch": Object.freeze(["features/api-router/hub-event-watch.feature", "features/api-router/hub-event-watch-preheaders.feature"])
 });
 
 /**
@@ -87,7 +89,9 @@ const DEFAULT_CHUNKS = Object.freeze([
     "hub-idle-resource",
     "manager",
     "errors",
-    "stream"
+    "stream",
+    "runtime-manifest",
+    "hub-event-watch"
 ]);
 
 // A feature can only be outside the default suite when that exclusion is
@@ -102,7 +106,7 @@ const EXCLUDED_FEATURES = Object.freeze({
 
 // Resource-owning paths remain explicit scheduler exclusions. Exclusive
 // chunks are admitted as single-worker barriers by the capped scheduler.
-const EXCLUSIVE_CHUNKS = Object.freeze(["harness", "hub-configuration", "hub-runtime", "hub-idle-resource", "manager", "stream"]);
+const EXCLUSIVE_CHUNKS = Object.freeze(["harness", "hub-configuration", "hub-runtime", "hub-idle-resource", "manager", "stream", "runtime-manifest", "hub-event-watch"]);
 
 // Explicit telemetry contracts. Exclusive chunks do not bypass admission;
 // they are admitted through the same telemetry checks as other chunks.
@@ -125,7 +129,9 @@ const CHUNK_COMPONENTS = Object.freeze({
     stream: Object.freeze({ container: true, processes: [], exclusive: true }),
     harness: Object.freeze({ container: true, processes: [], exclusive: true }),
     "cli-prune-diagnostic": Object.freeze({ container: true, processes: [] }),
-    "external-services": Object.freeze({ container: true, processes: [] })
+    "external-services": Object.freeze({ container: true, processes: [] }),
+    "runtime-manifest": Object.freeze({ container: true, processes: ["hub:"], exclusive: true }),
+    "hub-event-watch": Object.freeze({ container: true, processes: ["hub:"], exclusive: true })
 });
 
 // ---------------------------------------------------------------------------
@@ -274,18 +280,20 @@ function parseArgs(args) {
 // Command construction
 // ---------------------------------------------------------------------------
 
-function commandArgs(features, passthrough) {
+function commandArgs(features, passthrough, chunkName) {
     const noFailFast = passthrough.includes("--no-fail-fast");
     const filtered = passthrough.filter((a) => a !== "--no-fail-fast");
+    const hasProfile = filtered.some(arg => arg === "--profile" || arg.startsWith("--profile="));
+    const profileArgs = chunkName === "runtime-manifest" && !hasProfile ? ["--profile", "runtime-manifest"] : [];
 
     if (noFailFast) {
         // --no-fail-fast suppresses the forced --fail-fast and is not forwarded
         // to Cucumber (it is not a valid Cucumber flag).
-        return [dockerRunner, "--", ...filtered, ...features];
+        return [dockerRunner, "--", ...filtered, ...profileArgs, ...features];
     }
 
     const options = filtered.includes("--fail-fast") ? filtered : ["--fail-fast", ...filtered];
-    return [dockerRunner, "--", ...options, ...features];
+    return [dockerRunner, "--", ...options, ...profileArgs, ...features];
 }
 
 // ---------------------------------------------------------------------------
@@ -333,7 +341,7 @@ module.exports.emitSummary = defaultEmitSummary;
 // ---------------------------------------------------------------------------
 
 function defaultRunChild(owner, features, passthrough) {
-    const args = commandArgs(features, passthrough);
+    const args = commandArgs(features, passthrough, owner);
     process.stderr.write(`[run-bdd-waves] owner=${owner} features=${features.length}\n`);
     process.stderr.write(`[run-bdd-waves] command=${process.execPath} ${args.join(" ")}\n`);
 
@@ -544,7 +552,7 @@ async function runParallelWaves({ chunkName, chunkNames, passthrough }) {
             const startedAt = Date.now();
             return spawnOwnedChild({
                 command: process.execPath,
-                args: commandArgs(chunk.features, passthrough),
+                args: commandArgs(chunk.features, passthrough, chunk.name),
                 cwd: repoRoot,
                 env: childEnv,
                 spawnImpl: require("node:child_process").spawn,

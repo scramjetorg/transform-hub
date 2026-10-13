@@ -1,6 +1,8 @@
 import { InstanceMessageCode, OpRecordCode, SequenceMessageCode } from "@scramjet/symbols";
 import { InstanceLimits } from "../instance-limits";
 import { DeepPartial } from "../utils";
+import type { ManifestChange } from "./runtime-manifest";
+import type { HubStateAudit } from "@scramjet/runtime-types";
 
 export type OpRecord = {
     /**
@@ -47,5 +49,6 @@ export type OpRecord = {
      * Instance stats
      */
     limits?: DeepPartial<InstanceLimits>
+    manifestChange?: ManifestChange;
+    hubState?: HubStateAudit;
 }
-

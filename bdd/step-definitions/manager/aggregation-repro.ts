@@ -1508,9 +1508,49 @@ Then("aggregation routed input should contain {string} and routed output topic s
     assert.ok(this.resources.aggInstanceOutput, "No aggregation instance output stream is open");
     assert.ok(this.resources.aggTopicStream, "No aggregation topic stream is open");
 
+    const waitForExactPayload = (stream: NodeJS.ReadableStream, expected: string): Promise<void> =>
+        new Promise((resolve, reject) => {
+            const chunks: Buffer[] = [];
+            let receivedBytes = 0;
+            const cleanup = () => {
+                clearTimeout(timer);
+                stream.off("data", onData);
+                stream.off("end", onEnd);
+                stream.off("error", onError);
+            };
+            const onData = (chunk: Buffer | string) => {
+                chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+                receivedBytes += chunks[chunks.length - 1].length;
+                if (receivedBytes >= Buffer.byteLength(expected)) {
+                    cleanup();
+                    try {
+                        assert.equal(Buffer.concat(chunks).toString("utf8"), expected);
+                        resolve();
+                    } catch (error) {
+                        reject(error);
+                    }
+                }
+            };
+            const onEnd = () => {
+                cleanup();
+                reject(new Error(`Stream ended before complete payload ${JSON.stringify(expected)}`));
+            };
+            const onError = (error: Error) => {
+                cleanup();
+                reject(error);
+            };
+            const timer = setTimeout(() => {
+                cleanup();
+                reject(new Error(`Stream did not deliver complete payload ${JSON.stringify(expected)} before timeout`));
+            }, 20_000);
+            stream.on("data", onData);
+            stream.on("end", onEnd);
+            stream.on("error", onError);
+        });
+
     const results = await Promise.allSettled([
-        waitUntilStreamContainsBounded(this.resources.aggInstanceOutput, inputExpected, 20_000),
-        waitUntilStreamContainsBounded(this.resources.aggTopicStream, outputExpected, 20_000)
+        waitForExactPayload(this.resources.aggInstanceOutput, inputExpected),
+        waitForExactPayload(this.resources.aggTopicStream, outputExpected)
     ]);
 
     this.resources.aggInstanceOutput.destroy?.();

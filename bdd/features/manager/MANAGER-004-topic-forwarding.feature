@@ -23,9 +23,9 @@ Feature: MANAGER-004 Topic forwarding through Manager space
     And an STH hub "hub-1" is connected to the aggregation Manager
     And an STH hub "hub-2" is connected to the aggregation Manager
     And I wait for hubs to register with the Manager
-    When aggregation sequence "hello-2" on hub "hub-2" starts with input topic "manager-routed-input-red"
+    When aggregation sequence "routed-echo" on hub "hub-2" starts with input topic "manager-routed-input-red"
     And aggregation hub "hub-1" sends topic "manager-routed-input-red" data "routed-input" with content-type "text/plain"
-    And aggregation sequence "hello-1" on hub "hub-1" starts with output topic "manager-routed-output-red"
+    And aggregation sequence "routed-echo" on hub "hub-1" starts with output topic "manager-routed-output-red"
     And aggregation topic "manager-routed-output-red" is opened on hub "hub-2" with content-type "text/plain"
     And aggregation instance receives input "routed-output"
-    Then aggregation routed input should contain "Hello routed-input?" and routed output topic should contain "Hello routed-output?"
+    Then aggregation routed input should contain "routed-input" and routed output topic should contain "routed-output"

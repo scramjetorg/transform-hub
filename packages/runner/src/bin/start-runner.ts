@@ -14,6 +14,13 @@ import { selectExecutor } from "../executor/select";
 import { forwardChildStdio } from "../executor/stream-forwarder";
 import { requiresHardChildTeardown, translateChildClose, writeTerminalLifecycleFrame } from "../executor/exit-translation";
 import { waitForChildClose, waitForChildCloseAndConnection } from "../executor/child-close";
+import {
+    disconnectAfterRunnerShutdownGrace,
+    isRunnerShutdownGraceEligible,
+    observeShutdownControl,
+    prepareRunnerShutdownGraceStartup
+} from "../executor/shutdown-grace";
+import type { GraceResult, ShutdownControlObserver } from "../executor/shutdown-grace";
 import { resolveRunnerNodeEntry } from "../executor/runner-node-launcher";
 import { resolveRunnerBunEntry } from "../executor/runner-bun-launcher";
 import { observeChildLifecycleFrames } from "../executor/lifecycle-observer";
@@ -265,11 +272,56 @@ async function waitForRuntimeChannels(
     }
 }
 
+function writeRunnerShutdownGraceRecord(
+    instanceId: string,
+    runtime: string,
+    rawExitCode: number | null,
+    signal: NodeJS.Signals | null,
+    translatedExitCode: number,
+    configuredMs: number,
+    elapsedMs: number,
+    result: GraceResult
+): void {
+    const level = result.reason === "observation-invalid" ? "WARN" : "DEBUG";
+    const safeSignal = signal === null ? null : signal === "SIGTERM" || signal === "SIGKILL" ? signal : "OTHER";
+    const line = `[runner-shutdown-grace] ${JSON.stringify({
+        level,
+        instanceId,
+        runtime,
+        rawExitCode,
+        signal: safeSignal,
+        translatedExitCode,
+        configuredMs,
+        elapsedMs,
+        status: result.status,
+        reason: result.reason
+    })}\n`;
+
+    if (Buffer.byteLength(line) > 512) return;
+    try {
+        const bytes = Buffer.from(line);
+        let offset = 0;
+        while (offset < bytes.length) {
+            const written = fs.writeSync(2, bytes, offset, bytes.length - offset);
+            if (written <= 0) return;
+            offset += written;
+        }
+    } catch {
+        // Diagnostic output must not change the child-derived exit outcome.
+    }
+}
+
 async function main(): Promise<void> {
-    const hostClient = new RunnerVerser2Transport({
-        config: runnerTransportConfig,
-        instanceId: instanceId!
-    });
+    const startup = prepareRunnerShutdownGraceStartup(
+        process.env.SCRAMJET_RUNNER_SHUTDOWN_GRACE_MS,
+        () => {
+            console.error("Invalid setting SCRAMJET_RUNNER_SHUTDOWN_GRACE_MS (expected decimal milliseconds in range 0..2147483647)");
+            process.exit(RunnerExitCode.INVALID_ENV_VARS);
+        },
+        () => new RunnerVerser2Transport({ config: runnerTransportConfig, instanceId: instanceId! })
+    );
+    const runnerShutdownGraceMs = startup.durationMs;
+    const hostClient = startup.resource;
 
     await hostClient.init({ connectGuest: false });
     const resolvedInstancesServerHost = hostClient.localChannelHost;
@@ -337,6 +389,7 @@ async function main(): Promise<void> {
     // waiting forever for a close event it already missed.
     const lifecycle = observeChildLifecycleFrames(handles.monitoring);
     const childClose = waitForChildClose(handles.child);
+    let shutdownControlObserver: ShutdownControlObserver | undefined;
 
     if (hostClient instanceof RunnerVerser2Transport) {
         observeRpcExpose(handles.monitoring, hostClient);
@@ -354,7 +407,7 @@ async function main(): Promise<void> {
         await hostClient.connectGuest();
     })();
 
-    const finalization = waitForChildCloseAndConnection(childClose, connectionAttempt).then(({ close }) => {
+    const finalization = waitForChildCloseAndConnection(childClose, connectionAttempt).then(async ({ close, connection }) => {
         const { code, signal } = close;
         const translated = translateChildClose(code, signal);
 
@@ -374,7 +427,9 @@ async function main(): Promise<void> {
             );
         }
 
-        if (!lifecycle.observed()) {
+        const childLifecycle = lifecycle.snapshot();
+        const childTerminalObserved = lifecycle.observed();
+        if (!childTerminalObserved) {
             try {
                 writeTerminalLifecycleFrame(hostClient.monitorStream, translated);
             } catch {
@@ -382,15 +437,42 @@ async function main(): Promise<void> {
             }
         }
 
+        let lifecycleObservationValid = true;
+        try {
+            lifecycle.dispose();
+        } catch {
+            lifecycleObservationValid = false;
+        }
+
         tryRemove(bootConfigPath);
 
-        return hostClient
-            .disconnect(requiresHardChildTeardown(translated))
-            .catch(() => undefined)
-            .finally(() => {
-                process.exitCode = translated.exitCode;
-                process.exit();
-            });
+        const disconnectHard = requiresHardChildTeardown(translated);
+        const graceEligible = isRunnerShutdownGraceEligible({
+            runtimeKind: executor.kind,
+            connectionFulfilled: connection.status === "fulfilled",
+            rawChildCode: close.code,
+            signal: close.signal,
+            translatedExitCode: translated.exitCode,
+            hardTeardown: disconnectHard,
+            lifecycle: { ...childLifecycle, valid: childLifecycle.valid && lifecycleObservationValid },
+            stderrEnded: handles.child.stderr?.readableEnded === true,
+            stderrErrored: handles.child.stderr?.errored != null
+        });
+        const controlObserver = shutdownControlObserver;
+        shutdownControlObserver = undefined;
+        return disconnectAfterRunnerShutdownGrace(
+            runnerShutdownGraceMs,
+            graceEligible,
+            controlObserver,
+            () => hostClient
+                .disconnect(disconnectHard)
+                .catch(() => undefined)
+                .finally(() => {
+                    process.exitCode = translated.exitCode;
+                    process.exit();
+                }),
+            (graceResult, elapsedMs) => writeRunnerShutdownGraceRecord(instanceId!, executor.kind, close.code, close.signal, translated.exitCode, runnerShutdownGraceMs, elapsedMs, graceResult)
+        );
     });
 
     try {
@@ -420,6 +502,9 @@ async function main(): Promise<void> {
 
     // host control -> child fd4 (raw)
     pipeRaw(hostClient.controlStream, handles.control);
+    if (runnerShutdownGraceMs > 0) {
+        shutdownControlObserver = observeShutdownControl(hostClient.controlStream, handles.control);
+    }
 
 }
 

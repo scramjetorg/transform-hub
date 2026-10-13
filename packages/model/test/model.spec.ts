@@ -2,7 +2,7 @@ import { RunnerMessageCode } from "@scramjet/symbols";
 import { StopSequenceMessage } from "@scramjet/types";
 import testModel from "ava";
 
-import { IDProvider, MessageUtilities } from "@scramjet/model";
+import { CommunicationHandler, IDProvider, MessageUtilities } from "@scramjet/model";
 
 testModel("IDProvider generates UUIDs validated by the CommonJS UUID runtime", t => {
     const id = IDProvider.generate();
@@ -50,4 +50,11 @@ testModel("Deserialization must throw an error when a message is incorrectly ser
     }, { instanceOf: TypeError });
 
     t.is(error.message, "Error while parsing a message.");
+});
+
+testModel("StreamHandler initializes manifest monitoring and control handler slots", t => {
+    const communication = new CommunicationHandler();
+
+    t.is(communication.addMonitoringHandler(RunnerMessageCode.MANIFEST_DECLARE, () => undefined), communication);
+    t.is(communication.addControlHandler(RunnerMessageCode.MANIFEST_RESULT, () => undefined), communication);
 });

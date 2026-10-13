@@ -83,6 +83,6 @@ test("CommandIterator firstChild on leaf node sets command to undefined", t => {
     const iterator = new CommandIterator(leaf);
 
     iterator.firstChild();
-    t.is(iterator.command, undefined);
+    t.true(iterator.command === undefined);
     t.is(iterator.valid(), false);
 });

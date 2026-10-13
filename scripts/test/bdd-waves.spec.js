@@ -17,7 +17,7 @@ test("chunk manifest defines all expected chunks", t => {
     const names = Object.keys(runner.CHUNKS).sort();
     t.deepEqual(names, [
         "appcontext", "cli-basics", "cli-matrix", "cli-prune-diagnostic", "errors", "external-services", "harness",
-        "hub-configuration", "hub-idle-resource", "hub-runtime", "manager", "node-spawn-core", "node-streaming-stop", "python", "stream", "topics-api", "verser2",
+        "hub-configuration", "hub-event-watch", "hub-idle-resource", "hub-runtime", "manager", "node-spawn-core", "node-streaming-stop", "python", "runtime-manifest", "stream", "topics-api", "verser2",
     ]);
 });
 
@@ -102,6 +102,7 @@ test("default chunks list is ordered and contains expected entries", t => {
     // First chunk is verser2 (matches Phase 9 ordering).
     t.is(runner.DEFAULT_CHUNKS[0], "verser2");
     t.deepEqual(runner.DEFAULT_CHUNKS.slice(3, 5), ["topics-api", "python"]);
+    t.deepEqual(runner.DEFAULT_CHUNKS.slice(-2), ["runtime-manifest", "hub-event-watch"]);
 });
 
 test("every default chunk is defined in CHUNKS", t => {
@@ -140,7 +141,7 @@ test("external service feature is opt-in with an explicit prerequisite rationale
 });
 
 test("resource-owning chunks remain explicitly exclusive", t => {
-    t.deepEqual(runner.EXCLUSIVE_CHUNKS, ["harness", "hub-configuration", "hub-runtime", "hub-idle-resource", "manager", "stream"]);
+    t.deepEqual(runner.EXCLUSIVE_CHUNKS, ["harness", "hub-configuration", "hub-runtime", "hub-idle-resource", "manager", "stream", "runtime-manifest", "hub-event-watch"]);
     t.true(runner.EXCLUSIVE_CHUNKS.every(name => runner.CHUNKS[name]));
 });
 
@@ -384,6 +385,18 @@ test("commandArgs default behavior remains fail-fast when no --no-fail-fast is g
 
     t.true(args.includes("--fail-fast"), "default must include --fail-fast");
     t.false(args.includes("--no-fail-fast"), "--no-fail-fast must not appear by default");
+});
+
+test("runtime-manifest chunk selects its existing Cucumber profile exactly once", t => {
+    const features = runner.CHUNKS["runtime-manifest"];
+    const args = runner.commandArgs(features, [], "runtime-manifest");
+    const profileCount = args.filter((arg, index) => arg === "--profile" || arg.startsWith("--profile=")).length;
+    t.is(profileCount, 1);
+    t.true(args.includes("runtime-manifest"));
+    t.deepEqual(args.slice(-features.length), features);
+
+    const explicitProfile = runner.commandArgs(features, ["--profile", "runtime-manifest"], "runtime-manifest");
+    t.is(explicitProfile.filter(arg => arg === "--profile").length, 1, "an existing Cucumber profile is not duplicated");
 });
 
 // ---------------------------------------------------------------------------

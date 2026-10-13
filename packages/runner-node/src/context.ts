@@ -14,6 +14,7 @@ import { RunnerAppContext } from "./runner-app-context";
 import type { RunnerProxy } from "./runner-app-context";
 import type { BuildAppContextDeps, BuildAppContextResult, BuildContextDeps, BuildSequenceContextResult, SequenceLocalContext } from "./types";
 import { writeMonitoring } from "./utils";
+import { Readable } from "stream";
 
 function materializePath(path: string, params: unknown): string {
     if (!params || typeof params !== "object") {
@@ -84,12 +85,33 @@ function createRestApi2Transport(clientUtils: ClientUtilsCustomAgent): ApiClient
             try {
                 response = await clientUtils.request(request.route.method as any, path, {
                     headers,
-                    body: request.body === undefined ? undefined : JSON.stringify(request.body)
+                    body: request.body === undefined ? undefined : JSON.stringify(request.body),
+                    signal: request.signal
                 });
             } catch (err) {
                 // Catches JSON parse errors from the verser-common/agent layer
                 // before a Response object is formed (e.g. empty-body 308).
                 throw normalizeRestApiResponseError(err, request.route.fullPath);
+            }
+
+            if (request.raw) {
+                let body: any = response.body;
+                if (body && typeof body === "object" && "getReader" in body && typeof Readable.fromWeb === "function") {
+                    body = Readable.fromWeb(body as any);
+                }
+                let cleaned = false;
+                const cleanup = async () => {
+                    if (cleaned) return;
+                    cleaned = true;
+                    if (body && typeof body.destroy === "function" && !body.destroyed) body.destroy();
+                    else if (body && typeof body.cancel === "function") await body.cancel().catch(() => {});
+                };
+                if (request.signal) {
+                    const abortCleanup = () => { void cleanup(); };
+                    request.signal.addEventListener("abort", abortCleanup, { once: true });
+                    body?.once?.("close", () => request.signal?.removeEventListener("abort", abortCleanup));
+                }
+                return { status: response.status, headers: responseHeaders(response), body: body as T, cleanup };
             }
 
             const text = await response.text();
@@ -230,6 +252,9 @@ export function buildAppContext(deps: BuildAppContextDeps): BuildAppContextResul
     const appConfig: AppConfig = bootConfig.appConfig ?? {};
     const instanceId = bootConfig.instanceId;
 
+    const declareManifest = deps.declareManifest ?? (() => Promise.reject(new Error("Manifest declaration transport is unavailable")));
+    const apiWithManifest = Object.assign(api, { declare: declareManifest });
+
     const context = new RunnerAppContext<AppConfig, unknown, typeof v2Hub, typeof v2Space>(
         appConfig,
         monitorStream,
@@ -241,7 +266,7 @@ export function buildAppContext(deps: BuildAppContextDeps): BuildAppContextResul
         v2Space,
         instanceId,
         logLevel,
-        api,
+        apiWithManifest,
         localStorage,
         logger
     ) as BuildAppContextResult["context"];
@@ -249,5 +274,5 @@ export function buildAppContext(deps: BuildAppContextDeps): BuildAppContextResul
 
     emitter.on("error", (e) => logger.error("Sequence emitted an error event", e));
 
-    return { context, api, localStorage };
+    return { context, api: apiWithManifest, localStorage };
 }

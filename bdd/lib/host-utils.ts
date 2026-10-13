@@ -38,7 +38,6 @@ function resolveHostExecutableCommand(): string[] {
     return [resolved.binPath];
 }
 
-const hostExecutableCommand = resolveHostExecutableCommand();
 
 type NoDefault = ("port"|"instances-server-port"|"cpm-url"|"runtime-adapter"|"instance-lifetime-extension-delay")[];
 type CleanupSignal = "SIGHUP" | "SIGINT" | "SIGTERM";
@@ -79,9 +78,16 @@ export class HostUtils {
 
     hostUrl: string;
 
-    constructor() {
+    constructor(options: { executableCommand?: readonly [string, ...string[]]; environment?: NodeJS.ProcessEnv; cwd?: string } = {}) {
         this.hostUrl = process.env.SCRAMJET_HOST_URL || process.env.SCRAMJET_HOST_BASE_URL || "";
+        this.executableCommand = options.executableCommand;
+        this.environment = options.environment;
+        this.cwd = options.cwd;
     }
+
+    private readonly executableCommand?: readonly [string, ...string[]];
+    private readonly environment?: NodeJS.ProcessEnv;
+    private readonly cwd?: string;
 
     hasLocallyOwnedHubChild() {
         return !this.hostUrl && !["1", "true"].includes((process.env.NO_HOST || "").toLowerCase()) && Boolean(this.host) && !this.hostProcessStopped;
@@ -329,14 +335,15 @@ export class HostUtils {
         }
 
         return new Promise<string>((resolve) => {
-            const command: string[] = [...hostExecutableCommand];
+            const command: string[] = [...(this.executableCommand || resolveHostExecutableCommand())];
 
             this.setArgs(command, extraArgs, ommit);
 
             const hub = this.host = spawn("/usr/bin/env", command, {
                 detached: true,
+                ...(this.cwd === undefined ? {} : { cwd: this.cwd }),
                 env: {
-                    ...process.env,
+                    ...(this.environment || process.env),
                     SCP_ENV_VALUE: "GH_CI",
                     SCRAMJET_BDD_RUN_ID: ownership.runId,
                     SCRAMJET_BDD_CHUNK_ID: ownership.chunkId,

@@ -241,11 +241,13 @@ test("registerHttpRoutes dispatches dynamic resolvers to verser2 redirects", asy
 test("registerHttpRoutes registers stream route kinds when target supports them", t => {
     const calls: string[] = [];
     const downstreamOptions: Array<Record<string, unknown> | undefined> = [];
+    const upstreamOptions: Array<Record<string, unknown> | undefined> = [];
     const api = {
         get() {},
         op() {},
-        upstream(path: string) {
+        upstream(path: string, _handler: Function, options?: Record<string, unknown>) {
             calls.push(`upstream:${path}`);
+            upstreamOptions.push(options);
         },
         downstream(path: string, _handler: Function, options?: { method?: string }) {
             calls.push(`downstream:${path}:${options?.method || "post"}`);
@@ -257,6 +259,7 @@ test("registerHttpRoutes registers stream route kinds when target supports them"
     } as any;
     const router = createRouter({ basePath: "/api/v2" })
         .route(Router.get("/logs", { kind: "upstream" }))
+        .route(Router.get("/events/watch", { kind: "upstream", stream: { json: true } }))
         .route(Router.post("/sequences", { kind: "downstream" }))
         .route(Router.route("put", "/sequences/:sequenceId", { kind: "downstream" }))
         .route(Router.post("/topics/:name/stream", { kind: "downstream", stream: { handlerValidatesContentType: true } }))
@@ -266,6 +269,7 @@ test("registerHttpRoutes registers stream route kinds when target supports them"
 
     t.deepEqual(calls, [
         "upstream:/api/v2/logs",
+        "upstream:/api/v2/events/watch",
         "downstream:/api/v2/sequences:post",
         "downstream:/api/v2/sequences/:sequenceId:put",
         "downstream:/api/v2/topics/:name/stream:post",
@@ -276,6 +280,7 @@ test("registerHttpRoutes registers stream route kinds when target supports them"
         { method: "put" },
         { checkContentType: false }
     ]);
+    t.deepEqual(upstreamOptions, [undefined, { json: true }]);
 });
 
 test("registerHttpRoutes exposes raw request and response to stream handlers", async t => {

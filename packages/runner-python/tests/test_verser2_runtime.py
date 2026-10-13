@@ -5,8 +5,10 @@ import pytest
 from runner_python.boot_config import Verser2RuntimeConfig
 from runner_python.verser2_runtime import (
     PythonHubClient,
+    PythonManifestHubClient,
     PythonSequenceApiExposure,
     create_python_hub_client,
+    create_python_hub_v2_client,
     create_python_sequence_guest,
     python_guest_id,
     python_rpc_route_domain,
@@ -47,6 +49,31 @@ class FakeGuest:
 
     async def close(self) -> None:
         self.closed = True
+
+
+class JsonResponse:
+    def __init__(self, status, headers, request_id, body) -> None:
+        self.status = status
+        self.headers = headers
+        self.request_id = request_id
+        self._body = body
+        self.json_reads = 0
+
+    async def json(self):
+        self.json_reads += 1
+        if self.json_reads > 1:
+            raise RuntimeError("response JSON was read more than once")
+        return self._body
+
+
+class ManifestBroker(FakeBroker):
+    def __init__(self, responses) -> None:
+        super().__init__()
+        self.responses = list(responses)
+
+    async def request(self, **kwargs):
+        self.requests.append(kwargs)
+        return self.responses.pop(0)
 
 
 def config(**overrides) -> Verser2RuntimeConfig:
@@ -139,6 +166,71 @@ async def test_python_hub_client_closes_underlying_broker() -> None:
     await client.close()
 
     assert broker.closed is True
+
+
+@pytest.mark.asyncio
+async def test_hub_v2_manifest_views_use_encoded_paths_and_preserve_response_envelopes() -> None:
+    instance_body = {
+        "instanceId": "instance/a",
+        "sequenceId": "sequence",
+        "revision": "r1",
+        "manifest": {"topics": [{"name": "events", "direction": "duplex"}]},
+        "sequence": {"name": "public-name"},
+    }
+    sequence_body = {"sequenceId": "sequence", "items": [instance_body]}
+    instance_response = JsonResponse(200, {"content-type": "application/json"}, "req-1", instance_body)
+    sequence_response = JsonResponse(200, {"content-type": "application/json"}, "req-2", sequence_body)
+    broker = ManifestBroker([instance_response, sequence_response])
+    old_hub = PythonHubClient(broker, "sth.local")
+    v2_hub = create_python_hub_v2_client(old_hub)
+
+    assert isinstance(v2_hub, PythonManifestHubClient)
+    instance = await v2_hub.instance("instance/a ?").manifest()
+    collection = await v2_hub.sequence("sequence #1").manifest()
+
+    assert instance.status == 200
+    assert instance.headers == {"content-type": "application/json"}
+    assert instance.body == instance_body
+    assert instance.request_id == "req-1"
+    assert instance_response.json_reads == 1
+    assert collection.status == 200
+    assert collection.body == sequence_body
+    assert sequence_response.json_reads == 1
+    assert broker.requests == [
+        {
+            "method": "GET",
+            "url": "http://sth.local/api/v2/instances/instance%2Fa%20%3F/manifest",
+            "headers": None,
+            "body": None,
+        },
+        {
+            "method": "GET",
+            "url": "http://sth.local/api/v2/sequences/sequence%20%231/manifest",
+            "headers": None,
+            "body": None,
+        },
+    ]
+    assert old_hub.api_base == "http://sth.local/api/v1"
+    assert broker.connected is False
+
+
+@pytest.mark.asyncio
+async def test_hub_v2_manifest_keeps_not_found_status_and_body() -> None:
+    error_body = {"error": {"code": "NOT_FOUND", "message": "instance not found"}}
+    response = JsonResponse(404, {"content-type": "application/json"}, "req-404", error_body)
+    broker = ManifestBroker([response])
+    hub = create_python_hub_v2_client(PythonHubClient(broker, "target"))
+
+    result = await hub.instance("unknown").manifest()
+
+    assert result.status == 404
+    assert result.body == error_body
+    assert result.request_id == "req-404"
+    assert response.json_reads == 1
+
+
+def test_v2_manifest_view_is_unavailable_without_existing_hub_client() -> None:
+    assert create_python_hub_v2_client(None) is None
 
 
 def test_create_python_sequence_guest_uses_explicit_routed_domain_and_waiting_streams() -> (

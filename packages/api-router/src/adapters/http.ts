@@ -41,6 +41,7 @@ function isOpMethod(method: RouteDefinition["method"]): method is "post" | "put"
 function streamOptions(route: RouteDefinition): StreamConfig | undefined {
     const options = {
         ...(route.stream?.handlerValidatesContentType ? { checkContentType: false } : {}),
+        ...(route.stream?.json ? { json: true as const } : {}),
         ...(route.method === "put" ? { method: "put" as const } : {})
     };
 
@@ -212,7 +213,7 @@ export function registerHttpRoutes(api: HttpRouteTarget, router: RouterDefinitio
 
     for (const { route, entry } of router.collectedRoutes()) {
         if (route.kind === "upstream") {
-            api.upstream?.(entry.fullPath, (req: ParsedMessage, res: ServerResponse) => executeHttpRoute(route, req, res));
+            api.upstream?.(entry.fullPath, (req: ParsedMessage, res: ServerResponse) => executeHttpRoute(route, req, res), streamOptions(route));
             continue;
         }
 

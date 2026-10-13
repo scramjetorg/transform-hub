@@ -54,6 +54,9 @@ def load_golden_ping_bytes() -> bytes:
 def normalize_ping_bytes(frame_bytes: bytes) -> bytes:
     code, payload = json.loads(frame_bytes)
     payload["payload"]["system"]["processPID"] = "<pid>"
+    if "created" in payload:
+        created = payload.pop("created")
+        assert isinstance(created, int) and not isinstance(created, bool)
     normalized = json.dumps([code, payload], separators=(",", ":"), ensure_ascii=False)
     return normalized.encode("utf-8") + b"\r\n"
 
@@ -127,6 +130,64 @@ async def test_handshake_sends_ping_matching_golden_fixture_bytes() -> None:
     assert normalize_ping_bytes(writer.raw_frames[0]) == normalize_ping_bytes(
         load_golden_ping_bytes()
     )
+
+
+@pytest.mark.asyncio
+async def test_ping_includes_controlled_integer_epoch_millisecond_timestamp(monkeypatch) -> None:
+    expected_time_ns = 1_700_000_000_123_456_789
+    monkeypatch.setattr("runner_python.handshake.time.time_ns", lambda: expected_time_ns)
+    writer = RecordingMonitoringWriter([])
+    control_decoder = ScriptedControlDecoder(
+        [encode_control_line(PONG, {"appConfig": {}, "args": [], "logLevel": "INFO"})],
+        [],
+    )
+
+    await perform_handshake(writer, control_decoder, make_boot_config())
+
+    ping_code, ping_payload = json.loads(writer.raw_frames[0])
+    created = ping_payload["created"]
+    assert ping_code == PING
+    assert created == expected_time_ns // 1_000_000
+    assert isinstance(created, int)
+    assert not isinstance(created, bool)
+
+
+@pytest.mark.asyncio
+async def test_handshake_round_trips_boot_config_and_args_from_ping() -> None:
+    app_config = {"runId": "run-from-boot", "manifest": {"version": 1}}
+    sequence_args = ["--mode", "consumer"]
+    writer = RecordingMonitoringWriter([])
+    control_decoder = ScriptedControlDecoder([], [])
+    control_decoder._lines = []
+
+    # Capture the emitted PING and model the Host's corresponding PONG mapping.
+    original_readline = control_decoder.readline_crlf
+
+    def pong_from_ping() -> bytes:
+        ping_code, ping = json.loads(writer.raw_frames[0])
+        assert ping_code == PING
+        host_payload = ping["payload"]
+        return encode_control_line(
+            PONG,
+            {
+                "appConfig": host_payload.get("appConfig", {}),
+                "args": host_payload.get("args", []),
+                "logLevel": "INFO",
+            },
+        )
+
+    control_decoder.readline_crlf = pong_from_ping  # type: ignore[method-assign]
+    try:
+        result = await perform_handshake(
+            writer,
+            control_decoder,
+            make_boot_config(appConfig=app_config, sequenceArgs=sequence_args),
+        )
+    finally:
+        control_decoder.readline_crlf = original_readline  # type: ignore[method-assign]
+
+    assert result.appConfig == app_config
+    assert result.args == sequence_args
 
 
 @pytest.mark.asyncio

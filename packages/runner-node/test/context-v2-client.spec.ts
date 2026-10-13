@@ -9,7 +9,7 @@ import { PassThrough } from "stream";
 
 import { ObjLogger } from "@scramjet/obj-logger";
 import { ClientUtilsCustomAgent } from "@scramjet/client-utils";
-import type { HubClient, SpaceClient } from "@scramjet/rest-api2";
+import type { HubClient, RestAPI2, SpaceClient } from "@scramjet/rest-api2";
 
 import { buildAppContext } from "../src/context";
 
@@ -228,6 +228,171 @@ test.serial("buildAppContext: hubClient uses hubTargetDomain, spaceClient uses s
             { apiBase: "http://manager.space.scramjet.internal", method: "get", path: "api/v2/hubs" }
         ]);
     } finally {
+        ClientUtilsCustomAgent.prototype.request = original;
+        agent.destroy();
+    }
+});
+
+test.serial("buildAppContext HubClient exposes v2 instance and sequence manifest retrieval through the injected agent", async t => {
+    const requests: Array<{ apiBase: string; method: string; path: string }> = [];
+    const agent = makeBlockingAgent();
+    const original = ClientUtilsCustomAgent.prototype.request;
+    const instanceManifest: RestAPI2.InstanceManifestResponse = {
+        instanceId: "instance 1",
+        sequenceId: "sequence 1",
+        revision: "revision-1",
+        manifest: { input: { schema: { $ref: "#/input", "x-public": true } } },
+        sequence: { name: "named sequence", version: "1.0.0" }
+    };
+    const sequenceManifest: RestAPI2.SequenceManifestResponse = { sequenceId: "sequence 1", items: [instanceManifest] };
+    const absentInstanceManifest: RestAPI2.InstanceManifestResponse = {
+        instanceId: "instance without manifest",
+        sequenceId: "sequence 1",
+        revision: null,
+        manifest: null,
+        sequence: { name: "named sequence", version: "1.0.0" }
+    };
+
+    ClientUtilsCustomAgent.prototype.request = async function(method: string, path: string) {
+        requests.push({ apiBase: this.apiBase, method, path });
+        const unknownInstance = path.includes("/instances/unknown/");
+        const body = unknownInstance
+            ? { error: { code: "NOT_FOUND", message: "Instance unknown not found" } }
+            : path.includes("without%20manifest")
+              ? absentInstanceManifest
+              : path.includes("sequence-empty")
+                ? { sequenceId: "sequence-empty", items: [] }
+                : path.includes("/instances/")
+                  ? instanceManifest
+                  : sequenceManifest;
+
+        return {
+            status: unknownInstance ? 404 : 200,
+            headers: { forEach(callback: (value: string, key: string) => void) { callback("application/json", "content-type"); } },
+            text: async () => JSON.stringify(body)
+        } as Response;
+    };
+
+    try {
+        const { context } = buildAppContext({
+            bootConfig: { sequencePath: "/x", instanceId: "instance 1" },
+            monitorStream: new PassThrough(),
+            emitter: new EventEmitter(),
+            logger: new ObjLogger("manifest-client-test"),
+            hostClient: {
+                getApiBase: () => "http://hub.internal/api/v1",
+                getV2ApiBase: () => "http://hub.internal/api/v2",
+                getAgent: () => agent
+            } as any,
+            onKeepAliveIssued: () => undefined
+        });
+
+        const instanceResponse = await context.hubClient().instance("instance 1").manifest();
+        const sequenceResponse = await context.hubClient().sequence("sequence 1").manifest();
+        const absentResponse = await context.hubClient().instance("instance without manifest").manifest();
+        const emptySequenceResponse = await context.hubClient().sequence("sequence-empty").manifest();
+        const unknownInstanceResponse = await context.hubClient().instance("unknown").manifest();
+
+        t.is(instanceResponse.status, 200);
+        t.deepEqual(instanceResponse.body, instanceManifest);
+        t.is(sequenceResponse.status, 200);
+        t.deepEqual(sequenceResponse.body, sequenceManifest);
+        t.deepEqual(absentResponse.body, absentInstanceManifest);
+        t.deepEqual(emptySequenceResponse.body, { sequenceId: "sequence-empty", items: [] });
+        t.is(unknownInstanceResponse.status, 404);
+        t.deepEqual(unknownInstanceResponse.body, { error: { code: "NOT_FOUND", message: "Instance unknown not found" } });
+        t.deepEqual(requests, [
+            { apiBase: "http://hub.internal", method: "get", path: "api/v2/instances/instance%201/manifest" },
+            { apiBase: "http://hub.internal", method: "get", path: "api/v2/sequences/sequence%201/manifest" },
+            { apiBase: "http://hub.internal", method: "get", path: "api/v2/instances/instance%20without%20manifest/manifest" },
+            { apiBase: "http://hub.internal", method: "get", path: "api/v2/sequences/sequence-empty/manifest" },
+            { apiBase: "http://hub.internal", method: "get", path: "api/v2/instances/unknown/manifest" }
+        ]);
+    } finally {
+        ClientUtilsCustomAgent.prototype.request = original;
+        agent.destroy();
+    }
+});
+
+test.serial("buildAppContext HubClient event watch streams before EOF and aborts only its request", async t => {
+    const agent = makeBlockingAgent();
+    const original = ClientUtilsCustomAgent.prototype.request;
+    const body = new PassThrough();
+    const requests: Array<{ method: string; path: string; signal?: AbortSignal }> = [];
+    let textCalls = 0;
+    ClientUtilsCustomAgent.prototype.request = async function(method: string, path: string, options?: { signal?: AbortSignal }) {
+        requests.push({ method, path, signal: options?.signal });
+        if (path.startsWith("api/v2/events/watch")) {
+            return {
+                status: 200,
+                headers: { forEach(callback: (value: string, key: string) => void) { callback("application/x-ndjson", "content-type"); } },
+                body,
+                text: async () => { textCalls++; return ""; }
+            } as unknown as Response;
+        }
+
+        return {
+            status: 200,
+            headers: { forEach(callback: (value: string, key: string) => void) { callback("application/json", "content-type"); } },
+            text: async () => JSON.stringify({ status: "ok" })
+        } as unknown as Response;
+    };
+    const hostClient = {
+        getApiBase: () => "http://hub.internal/api/v1",
+        getV2ApiBase: () => "http://hub.internal/api/v2",
+        getAgent: () => agent
+    };
+    const abortController = new AbortController();
+    let watch: ReturnType<HubClient["events"]["watch"]> | undefined;
+
+    try {
+        const { context } = buildAppContext({
+            bootConfig: { sequencePath: "/x", instanceId: "i-1" },
+            monitorStream: new PassThrough(),
+            emitter: new EventEmitter(),
+            logger: new ObjLogger("event-watch-test"),
+            hostClient: hostClient as any,
+            onKeepAliveIssued: () => undefined
+        });
+        const hubClient: HubClient = context.hubClient();
+
+        watch = hubClient.events.watch("sequence", { signal: abortController.signal });
+        const requestObserved = new Promise<void>(resolve => {
+            const check = () => {
+                if (requests.length) resolve();
+                else setImmediate(check);
+            };
+            check();
+        });
+        await requestObserved;
+        body.write(`${JSON.stringify({
+            type: "snapshot", kind: "sequence", cursor: { hubId: "hub-1", epoch: "epoch-1", position: 0 }, items: []
+        })}\n`);
+
+        const snapshot = await watch.next();
+        t.false(snapshot.done);
+        t.deepEqual(snapshot.value, {
+            type: "snapshot", kind: "sequence", cursor: { hubId: "hub-1", epoch: "epoch-1", position: 0 }, items: []
+        });
+        t.is(textCalls, 0, "watch response was not buffered through response.text()");
+        t.true(requests[0].signal instanceof AbortSignal);
+        t.false(body.destroyed, "the response remains open after snapshot delivery");
+
+        abortController.abort();
+        const aborted = await t.throwsAsync(watch.next());
+        t.is(aborted?.name, "AbortError");
+        t.true(body.destroyed, "aborting the watch destroys its request body");
+
+        const unaryResponse = await hubClient.status.get();
+        t.is(unaryResponse.status, 200);
+        t.deepEqual(requests.map(({ method, path }) => ({ method, path })), [
+            { method: "get", path: "api/v2/events/watch?kind=sequence" },
+            { method: "get", path: "api/v2/status" }
+        ]);
+        t.is(hostClient.getAgent(), agent, "the context continues to borrow the shared Agent");
+    } finally {
+        if (watch) await watch.close();
+        if (!body.destroyed) body.destroy();
         ClientUtilsCustomAgent.prototype.request = original;
         agent.destroy();
     }

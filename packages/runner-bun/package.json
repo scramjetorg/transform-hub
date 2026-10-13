@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/runner-bun",
-  "version": "2.2.1",
+  "version": "2.3.0",
   "description": "Bun sequence runtime wrapper for Scramjet Transform Hub runner isolation.",
   "main": "./src/index.ts",
   "scripts": {
@@ -13,15 +13,15 @@
   "author": "Scramjet <opensource@scramjet.org>",
   "license": "MIT",
   "dependencies": {
-    "@scramjet/runner-node": "^2.2.1",
-    "@signicode/verser2-guest-bun": "0.7.0",
+    "@scramjet/runner-node": "^2.3.0",
+    "@signicode/verser2-guest-bun": "0.9.3",
     "tsx": "^4.19.3"
   },
   "devDependencies": {
-    "@scramjet/runtime-types": "^2.2.1",
-    "@scramjet/types": "^2.2.1",
+    "@scramjet/runtime-types": "^2.3.0",
+    "@scramjet/types": "^2.3.0",
     "@types/node": "^22.15.0",
-    "typescript": "~4.7.4"
+    "typescript": "5.9.3"
   },
   "files": [
     "**/*.js",

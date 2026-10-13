@@ -1,7 +1,8 @@
 import test from "ava";
 import { STHConfiguration } from "@scramjet/types";
 
-import { buildRunnerTrustBundle, getRunnerTransportEnv } from "../src/get-runner-env";
+import { buildRunnerTrustBundle, getRunnerEnvVariables, getRunnerTransportEnv } from "../src/get-runner-env";
+import type { RunnerEnvConfig } from "../src/types";
 
 const baseVerser2: STHConfiguration["verser2"] = {
     enabled: true,
@@ -118,6 +119,23 @@ test("getRunnerTransportEnv does not propagate STH TLS identity material to runn
     t.false(JSON.stringify(parsed).includes("/cert.pem"));
     t.false(JSON.stringify(parsed).includes("/key.pem"));
     t.false(JSON.stringify(parsed).includes("PRIVATE KEY"));
+});
+
+test("generic runnerEnvs preserves configurable shutdown grace values", t => {
+    const config: RunnerEnvConfig = {
+        sequencePath: "/sequence/main.py",
+        pipesPath: "/tmp/pipes",
+        instancesServerPort: 1234,
+        instancesServerHost: "127.0.0.1",
+        instanceId: "instance-1" as RunnerEnvConfig["instanceId"],
+        sequenceInfo: { id: "sequence-1", config: {}, instances: [], location: "local" },
+        payload: {} as RunnerEnvConfig["payload"]
+    };
+
+    for (const value of ["100", "0"]) {
+        const env = getRunnerEnvVariables(config, { SCRAMJET_RUNNER_SHUTDOWN_GRACE_MS: value });
+        t.is(env.SCRAMJET_RUNNER_SHUTDOWN_GRACE_MS, value);
+    }
 });
 
 test("buildRunnerTrustBundle returns undefined until STH-local CA is available", t => {

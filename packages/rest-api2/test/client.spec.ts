@@ -156,6 +156,56 @@ test("fluent root client dispatches nested Root Space Hub and Instance routes", 
     t.deepEqual(seen[3].params, { spaceId: "space-1", hubId: "hub-1", instanceId: "inst-1" });
 });
 
+test("HubClient instance and sequence manifest methods preserve typed response envelopes and encoded paths", async t => {
+    const requests: Array<{ url: string; method: string }> = [];
+    const client = createHubClient({
+        basePath: "/api/v2",
+        transport: createHttpClientTransport({
+            baseUrl: "http://hub.internal",
+            fetch: async (url, init) => {
+                requests.push({ url, method: init.method });
+                const isInstance = url.includes("/instances/");
+                const body: RestAPI2.InstanceManifestResponse | RestAPI2.SequenceManifestResponse = isInstance
+                    ? {
+                          instanceId: "instance one",
+                          sequenceId: "sequence one",
+                          revision: "revision-1",
+                          manifest: { input: { schema: { $ref: "#/definitions/input", "x-extra": [true] } } },
+                          sequence: { name: "public-name", version: "1.0.0" }
+                      }
+                    : { sequenceId: "sequence one", items: [] };
+
+                return {
+                    status: 200,
+                    headers: { forEach(callback: (value: string, key: string) => void) { callback("application/json", "content-type"); } },
+                    async json() { return body; },
+                    async text() { return JSON.stringify(body); }
+                } as Response;
+            }
+        })
+    });
+
+    const instanceResponse = await client.instance("instance one").manifest();
+    const typedInstanceBody: RestAPI2.InstanceManifestResponse = instanceResponse.body;
+    const sequenceResponse = await client.sequence("sequence one").manifest();
+    const typedSequenceBody: RestAPI2.SequenceManifestResponse = sequenceResponse.body;
+
+    t.is(instanceResponse.status, 200);
+    t.deepEqual(instanceResponse.headers, { "content-type": "application/json" });
+    t.deepEqual(typedInstanceBody, {
+        instanceId: "instance one",
+        sequenceId: "sequence one",
+        revision: "revision-1",
+        manifest: { input: { schema: { $ref: "#/definitions/input", "x-extra": [true] } } },
+        sequence: { name: "public-name", version: "1.0.0" }
+    });
+    t.deepEqual(typedSequenceBody, { sequenceId: "sequence one", items: [] });
+    t.deepEqual(requests, [
+        { url: "http://hub.internal/api/v2/instances/instance%20one/manifest", method: "GET" },
+        { url: "http://hub.internal/api/v2/sequences/sequence%20one/manifest", method: "GET" }
+    ]);
+});
+
 test("direct level fluent clients dispatch through the manifest transport", async t => {
     const seen: ApiClientRequest[] = [];
     const transport: ApiClientTransport = {
@@ -444,10 +494,11 @@ test("custom route tree nodes with opaque groups exclude opaque routes from type
     // Opaque route is excluded at runtime
     t.false("secret" in client);
 
-    if (false) {
+    const opaqueTypeAssertion = (): void => {
         // @ts-expect-error opaque routes are excluded on the type level
         client.secret.post();
-    }
+    };
+    void opaqueTypeAssertion;
 });
 
 test("createRootClient honors provided manifest", async t => {
@@ -501,6 +552,26 @@ test("createHubClient honors provided manifest", async t => {
     t.throws(() => client.version.get(), { message: /Missing fluent RestAPI2 route/ });
 });
 
+test("HubClient.events opens the manifest watch route as a raw abortable NDJSON request", async t => {
+    const requests: ApiClientRequest[] = [];
+    const body = new Readable({ read() {} });
+    const manifest = { basePath: "/api/v2", routes: [{ id: "GET /api/v2/events/watch", method: "get" as const, fullPath: "/api/v2/events/watch", path: "/events/watch", schemas: {} }] };
+    const controller = new AbortController();
+    const client = createHubClient({ basePath: "/api/v2", manifest, transport: {
+        async request<T>(request: ApiClientRequest) {
+            requests.push(request);
+            return { status: 200, headers: { "content-type": "application/x-ndjson" }, body: body as T };
+        }
+    } });
+    const watch = client.events.watch("health", { signal: controller.signal });
+    t.is(requests.length, 1);
+    t.is(requests[0].route.fullPath, "/api/v2/events/watch");
+    t.deepEqual(requests[0].query, { kind: "health" });
+    t.is(requests[0].raw, true);
+    t.is(requests[0].signal instanceof AbortSignal, true);
+    await watch.close();
+});
+
 test("createInstanceClient honors provided manifest", async t => {
     const seen: ApiClientRequest[] = [];
     const transport: ApiClientTransport = {
@@ -551,7 +622,7 @@ test("fluent client compile-time route method and schema assertions", t => {
         }
     });
 
-    if (false) {
+    const routeTypeAssertions = (): void => {
         // @ts-expect-error GET routes must not expose POST methods
         client.health.post();
         // @ts-expect-error resolver ids must be strings
@@ -587,7 +658,8 @@ test("fluent client compile-time route method and schema assertions", t => {
         rpc.call("math/subtract", [2, 4]);
         // @ts-expect-error input is selected by the caller-provided procedure contract
         rpc.call("math/add", ["2", 4]);
-    }
+    };
+    void routeTypeAssertions;
 
     t.pass();
 });

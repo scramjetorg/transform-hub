@@ -4,7 +4,7 @@ const test: typeof baseTest = createAvaMemoryGuard(baseTest);
 
 import { ApiClientRequest, createApiClient, createHttpClientTransport, createRouter, createVerser2ClientTransport } from "../src";
 import { ClientRequestProbeError, createClientRequestProbe } from "./lib/no-circumvention";
-import { Readable } from "stream";
+import { PassThrough, Readable } from "stream";
 
 test("HTTP client transport materializes params, query, headers and body", async t => {
     const manifest = createRouter({ basePath: "/api/v2" }).post("/sequence/:id").collect();
@@ -95,6 +95,38 @@ test("HTTP client transport marks raw readable bodies as streaming requests", as
 
     t.is(seen[0].body, body);
     t.is(seen[0].duplex, "half");
+});
+
+test("HTTP raw response is incremental and abort cleans its response body once", async t => {
+    const controller = new AbortController();
+    const body = new PassThrough();
+    let receivedSignal: AbortSignal | undefined;
+    const transport = createHttpClientTransport({
+        baseUrl: "http://localhost",
+        async fetch(_, init) {
+            receivedSignal = init.signal;
+            return { status: 200, headers: { forEach() {} }, body, async json() {}, async text() { throw new Error("buffered"); } };
+        }
+    });
+    const response = await transport.request({
+        route: { id: "GET /events", method: "get", path: "/events", fullPath: "/events", kind: "upstream" },
+        raw: true,
+        signal: controller.signal
+    });
+    const chunks: string[] = [];
+    (response.body as Readable).on("data", chunk => chunks.push(String(chunk)));
+    body.write("first\n");
+    await new Promise(resolve => setImmediate(resolve));
+    t.deepEqual(chunks, ["first\n"]);
+    t.is(receivedSignal, controller.signal);
+    let closeCount = 0;
+    body.on("close", () => closeCount++);
+    controller.abort();
+    await response.cleanup?.();
+    await response.cleanup?.();
+    await new Promise(resolve => setImmediate(resolve));
+    t.true(body.destroyed);
+    t.is(closeCount, 1);
 });
 
 test("verser2 client transport delegates to broker request", async t => {

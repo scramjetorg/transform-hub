@@ -1,4 +1,5 @@
 import { HttpMethod, ResolverDefinition, RouteDefinition, Router, RouterDefinition } from "@scramjet/api-router";
+import { z } from "zod";
 
 import {
     RestAPI2Schemas,
@@ -50,6 +51,17 @@ import {
     VersionResponse,
     writableFdParam
 } from "./schemas";
+import { INSTANCE_MANIFEST_ENDPOINT, SEQUENCE_MANIFEST_ENDPOINT } from "./defaults";
+import { InstanceManifestResponseSchema, SequenceManifestResponseSchema } from "./runtime-manifest";
+import { HUB_EVENT_WATCH_ENDPOINT } from "./defaults";
+import { HubWatchQuerySchema } from "./hub-event-watch-contract";
+
+const INSTANCE_MANIFEST_RESOURCE_PATH = INSTANCE_MANIFEST_ENDPOINT.replace(/^\/instances\/:instanceId/, "");
+const SEQUENCE_MANIFEST_RESOURCE_PATH = SEQUENCE_MANIFEST_ENDPOINT.replace(/^\/sequences/, "");
+const sequenceManifestRouteResponse = z.union([
+    SequenceManifestResponseSchema,
+    z.object({ opStatus: z.literal("Not Found"), error: z.string() }).strict()
+]);
 
 const handlerless = () => undefined;
 
@@ -111,7 +123,8 @@ function hubRouteSet() {
             schemas: { params: RestAPI2Schemas.params.topic, headers: RestAPI2Schemas.headers.http, response: opResponse(TopicStreamResponse) }
         }),
         logs: Router.get("/logs", { kind: "upstream", schemas: { response: LogRecord } }),
-        audit: Router.get("/audit", { kind: "upstream", schemas: { response: RestAPI2Schemas.stream } })
+        audit: Router.get("/audit", { kind: "upstream", schemas: { response: RestAPI2Schemas.stream } }),
+        watchEvents: Router.get(HUB_EVENT_WATCH_ENDPOINT, { kind: "upstream", stream: { json: true }, schemas: { query: HubWatchQuerySchema, response: RestAPI2Schemas.stream } }),
     } as const;
 }
 
@@ -127,13 +140,17 @@ function sequenceRouteSet() {
             schemas: { params: RestAPI2Schemas.params.sequence, body: StartSequencePayload, response: opResponse(StartSequenceResponse) }
         }),
         getSequence: Router.get("/:sequenceId", { schemas: { params: RestAPI2Schemas.params.sequence, response: SequenceResponse } }),
-        getSequenceInstances: Router.get("/:sequenceId/instances", { schemas: { params: RestAPI2Schemas.params.sequence, response: listResponse(Instance) } })
+        getSequenceInstances: Router.get("/:sequenceId/instances", { schemas: { params: RestAPI2Schemas.params.sequence, response: listResponse(Instance) } }),
+        manifest: Router.get(SEQUENCE_MANIFEST_RESOURCE_PATH, {
+            schemas: { params: RestAPI2Schemas.params.sequence, response: sequenceManifestRouteResponse }
+        })
     } as const;
 }
 
 function instanceRouteSet() {
     return {
         info: Router.get("/", { schemas: { response: InstanceResponse } }),
+        manifest: Router.get(INSTANCE_MANIFEST_RESOURCE_PATH, { schemas: { response: InstanceManifestResponseSchema } }),
         deleteInstance: Router.route("delete", "/", { schemas: { body: DeleteInstancePayload, response: opResponse(DeleteInstanceResponse) } }),
         patchInstance: Router.route("patch", "/", { schemas: { body: InstanceParametersPatch, response: opResponse(InstanceParametersResponse) } }),
         stdio: Router.get("/stdio", { schemas: { response: StdIODescriptorList } }),
@@ -262,7 +279,8 @@ export const RestAPI2RouteTree = {
             sequence: { node: "sequence", routes: sequenceRouteSet },
             topics: { routeKeys: ["topics", "topicRead", "topicWrite"] },
             logs: { routeKeys: ["logs"] },
-            audit: { routeKeys: ["audit"] }
+            audit: { routeKeys: ["audit"] },
+            watchEvents: { routeKeys: ["watchEvents"], opaque: true },
         },
         children: {
             instance: { resolver: "instance", node: "instance" }

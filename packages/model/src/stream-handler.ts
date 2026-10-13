@@ -42,6 +42,7 @@ type MonitoringMessageHandlerList = {
     [RunnerMessageCode.PING]: ConfiguredMessageHandler<RunnerMessageCode.PING>[];
     [RunnerMessageCode.PANG]: ConfiguredMessageHandler<RunnerMessageCode.PANG>[];
     [RunnerMessageCode.READY]: ConfiguredMessageHandler<RunnerMessageCode.READY>[];
+    [RunnerMessageCode.MANIFEST_DECLARE]: ConfiguredMessageHandler<RunnerMessageCode.MANIFEST_DECLARE>[];
     [RunnerMessageCode.SEQUENCE_STOPPED]: ConfiguredMessageHandler<RunnerMessageCode.SEQUENCE_STOPPED>[];
     [RunnerMessageCode.SEQUENCE_COMPLETED]: ConfiguredMessageHandler<RunnerMessageCode.SEQUENCE_COMPLETED>[];
     [RunnerMessageCode.EVENT]: ConfiguredMessageHandler<RunnerMessageCode.EVENT>[];
@@ -60,6 +61,7 @@ type ControlMessageHandlerList = {
     [RunnerMessageCode.STOP]: ConfiguredMessageHandler<RunnerMessageCode.STOP>[];
     [RunnerMessageCode.PONG]: ConfiguredMessageHandler<RunnerMessageCode.PONG>[];
     [RunnerMessageCode.SET]: ConfiguredMessageHandler<RunnerMessageCode.SET>[];
+    [RunnerMessageCode.MANIFEST_RESULT]: ConfiguredMessageHandler<RunnerMessageCode.MANIFEST_RESULT>[];
     [RunnerMessageCode.INPUT_CONTENT_TYPE]: ConfiguredMessageHandler<RunnerMessageCode.PONG>[];
     [RunnerMessageCode.EVENT]: ConfiguredMessageHandler<RunnerMessageCode.EVENT>[];
     [CPMMessageCode.EVENT]: ConfiguredMessageHandler<CPMMessageCode.EVENT>[];
@@ -97,6 +99,7 @@ export class CommunicationHandler implements ICommunicationHandler {
         [RunnerMessageCode.PING]: [],
         [RunnerMessageCode.PANG]: [],
         [RunnerMessageCode.READY]: [],
+        [RunnerMessageCode.MANIFEST_DECLARE]: [],
         [RunnerMessageCode.SEQUENCE_STOPPED]: [],
         [RunnerMessageCode.SEQUENCE_COMPLETED]: [],
         [CPMMessageCode.EVENT]: [],
@@ -113,6 +116,7 @@ export class CommunicationHandler implements ICommunicationHandler {
         [RunnerMessageCode.EVENT]: [],
         [RunnerMessageCode.PONG]: [],
         [RunnerMessageCode.SET]: [],
+        [RunnerMessageCode.MANIFEST_RESULT]: [],
         [RunnerMessageCode.INPUT_CONTENT_TYPE]: [],
         [CPMMessageCode.EVENT]: [],
         [CPMMessageCode.STH_ID]: [],

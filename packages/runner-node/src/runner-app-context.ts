@@ -15,7 +15,7 @@ import {
     StopHandler,
     WritableStream
 } from "@scramjet/runtime-types";
-import type { EventMessageData, KeepAliveMessageData } from "@scramjet/runtime-types";
+import type { EventMessageData, KeepAliveMessageData, ManifestDeclaration, ManifestReceipt } from "@scramjet/runtime-types";
 import type { APIExpose, HostClient, ManagerClient } from "@scramjet/api-types";
 import { EventEmitter } from "events";
 
@@ -65,7 +65,7 @@ export class RunnerAppContext<AppConfigType extends AppConfig, State, HubClientT
     private v2HubClient: HubClientType;
     private v2SpaceClient: SpaceClientType;
     instanceId: string;
-    api: APIExpose;
+    api: APIExpose & { declare(declaration: ManifestDeclaration): Promise<ManifestReceipt> };
     localStorage: ILocalStorage;
 
     constructor(
@@ -79,7 +79,7 @@ export class RunnerAppContext<AppConfigType extends AppConfig, State, HubClientT
         v2SpaceClient: SpaceClientType,
         id: string,
         logLevel: LogLevel,
-        api: APIExpose,
+        api: APIExpose & { declare(declaration: ManifestDeclaration): Promise<ManifestReceipt> },
         localStorage: ILocalStorage,
         logger: IObjectLogger = new ObjLogger(`App:${id}`, {}, logLevel)
     ) {

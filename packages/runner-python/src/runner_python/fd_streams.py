@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import asyncio
 from dataclasses import dataclass, field
 from typing import Any, BinaryIO
 
@@ -33,6 +34,32 @@ class ControlInput:
             if not chunk:
                 raise EOFError("control stream closed before CRLF terminator")
 
+            self._buffer.extend(chunk)
+
+    async def readline_crlf_async(self) -> bytes:
+        """Read one line without parking a cancellable task in a worker thread."""
+        loop = asyncio.get_running_loop()
+        descriptor = self.stream.fileno()
+        while True:
+            delimiter_index = self._buffer.find(b"\n")
+            if delimiter_index != -1:
+                line = bytes(self._buffer[:delimiter_index])
+                del self._buffer[: delimiter_index + 1]
+                return line[:-1] if line.endswith(b"\r") else line
+
+            ready = loop.create_future()
+            def mark_ready() -> None:
+                if not ready.done():
+                    ready.set_result(None)
+
+            loop.add_reader(descriptor, mark_ready)
+            try:
+                await ready
+            finally:
+                loop.remove_reader(descriptor)
+            chunk = os.read(descriptor, 4096)
+            if not chunk:
+                raise EOFError("control stream closed before CRLF terminator")
             self._buffer.extend(chunk)
 
     def __getattr__(self, name: str) -> Any:
