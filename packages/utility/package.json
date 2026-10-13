@@ -51,10 +51,10 @@
     "@scramjet/types": "^2.3.1-devel",
     "ava": "^8.0.0",
     "typed-emitter": "^1.4.0",
-    "tsx": "^4.19.3"
+    "tsx": "^4.23.15"
   },
   "dependencies": {
     "normalize-url": "4",
-    "yaml": "^2.9.0"
+    "yaml": "^2.9.1"
   }
 }

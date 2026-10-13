@@ -37,7 +37,7 @@
     "@scramjet/utility": "^2.3.1-devel",
     "@signicode/verser2-guest-node": "0.9.3",
     "scramjet": "^4.37.0",
-    "tsx": "^4.19.3"
+    "tsx": "^4.23.15"
   },
   "devDependencies": {
     "@ava/typescript": "^7.0.0",

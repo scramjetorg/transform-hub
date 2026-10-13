@@ -15,7 +15,7 @@
   "dependencies": {
     "@scramjet/runner-node": "^2.3.1-devel",
     "@signicode/verser2-guest-bun": "0.9.3",
-    "tsx": "^4.19.3"
+    "tsx": "^4.23.15"
   },
   "devDependencies": {
     "@scramjet/runtime-types": "^2.3.1-devel",

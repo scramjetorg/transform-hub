@@ -21,9 +21,9 @@
   "devDependencies": {
     "@ava/typescript": "^7.0.0",
     "ava": "^8.0.0",
-    "esbuild": "^0.28.0",
+    "esbuild": "^0.28.2",
     "typescript": "5.9.3",
-    "tsx": "^4.19.3"
+    "tsx": "^4.23.15"
   },
   "ava": {
     "files": [

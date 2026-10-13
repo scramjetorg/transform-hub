@@ -49,12 +49,12 @@
     "@scramjet/obj-logger": "^2.3.1-devel",
     "@scramjet/utility": "^2.3.1-devel",
     "winston": "^3.8.2",
-    "winston-loki": "^6.1.5"
+    "winston-loki": "^6.1.7"
   },
   "devDependencies": {
     "@ava/typescript": "^7.0.0",
     "@scramjet/types": "^2.3.1-devel",
     "ava": "^8.0.0",
-    "tsx": "^4.19.3"
+    "tsx": "^4.23.15"
   }
 }
