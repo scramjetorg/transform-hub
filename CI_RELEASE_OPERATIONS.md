@@ -20,18 +20,19 @@ removed; `security-check.yml` is retained.
 | `release-candidate.yml` | Same-repository `release/**` pull requests to `main` | `Release / candidate validation and draft` | Validates release candidates, builds production dist once, maintains the immutable draft release bundle, then downloads and verifies that draft with the producer's release-app token and runs four sequential tarball BDD partitions in the same job. |
 | `release-merge.yml` | Push to `main` | `Complete stable release` | Resolves and verifies the merged release PR's draft bundle, reconstructs `devel`, and creates the tag only after binding checks. |
 | `release-start.yml` | Manual dispatch on `devel` | `Start stable release` | Aligns the first `2.2.0-devel` baseline into `release/2.2.0` and opens the release PR. |
-| `main-release.yml` | Push of `v*.*.*` tag | `Publish stable tag` | Publishes the already-verified GitHub tarballs to npm using protected OIDC; it never rebuilds or repacks. |
+| `main-release.yml` | Push of `v*.*.*` tag; manual recovery dispatch on protected `main` | `Publish stable tag` | Publishes verified GitHub tarballs to npm using production OIDC; recovery binds protected-main invocation to a recorded historical public release. |
 
 ### Audit outcome and intentional overlap
 
 The release handoff is deliberately linear: `release-start.yml` creates the
 release branch and PR; the guarded `release-candidate.yml` builds dist once and
-maintains a draft containing exactly `manifest.json`, `SHA256SUMS`, and 37
-tarballs; `release-merge.yml` resolves the merged same-repository PR and verifies
+maintains a draft containing exactly 40 assets (`manifest.json`, `SHA256SUMS`,
+and 38 tarballs); `release-merge.yml` resolves the merged same-repository PR and verifies
 the draft's version, branch, candidate head/tree, and main tree before tagging;
-`main-release.yml` validates the draft manifest before making it public, then
-downloads every asset into a clean directory, performs full embedded-identity
-and checksum verification, and publishes only those tarballs.
+`main-release.yml` resolves immutable tag/PR/release identity, downloads the
+selected release assets once into a clean directory, fully verifies the bundle,
+and only then finalizes a normal draft or leaves a public recovery release
+unchanged before publishing those tarballs.
 
 ### Concurrency semantics
 
@@ -39,15 +40,16 @@ Ordinary pull-request and merge-queue runs may cancel stale predecessors. The
 same-repository candidate run serializes work per release PR and replaces the
 draft assets for that release version, so an updated release head cannot leave
 older assets in place. The merge workflow uses its `main` push concurrency group;
-the tag workflow uses its tag-specific concurrency group. Neither release handoff
-may be cancelled into a partially published npm operation.
+the tag workflow uses a target-tag concurrency group shared by stable pushes and
+recovery dispatches, with cancellation disabled so active npm publication is
+never cancelled into a partial release.
 
 ## Handoffs, identities, and artifacts
 
 - Ordinary CI outputs are disposable. No build directory, credential, or mutable
   package artifact is handed between unrelated jobs.
 - The sole durable release handoff is the draft GitHub Release. Its asset set is
-  exactly `manifest.json`, `SHA256SUMS`, and the 37 recorded package tarballs;
+  exactly 40 assets: `manifest.json`, `SHA256SUMS`, and the 38 recorded package tarballs;
   extra, missing, duplicate, unsafe, or changed assets fail closed.
 - The candidate workflow builds production dist once, records the release
   identity and package checksums, and replaces the draft asset set for the
@@ -57,9 +59,10 @@ may be cancelled into a partially published npm operation.
   sequentially without a package build or workspace/source fallback. The merge
   workflow validates the draft version, branch, candidate PR head/tree, and
   resulting main tree before creating the stable tag.
-- The tag workflow validates that binding before making the draft public, then
-  downloads every public asset into a clean directory and verifies checksums and
-  embedded package identity before npm publication. It publishes those exact
+- The tag/recovery workflow downloads the selected release assets into a clean
+  directory and fully verifies checksums and embedded package identity before
+  finalization. It then makes an eligible normal draft public (or leaves an
+  already-public recovery release unchanged) and publishes those verified
   tarballs in release-wave order, waiting 10 seconds only between waves.
   Existing npm versions are reused only when name, version, identity digest, and
   final package checksum match exactly; mismatches fail closed.
@@ -93,8 +96,10 @@ The repository cannot prove GitHub required workflows/rulesets, protected
 production-environment approvals, npm trusted publishers/OIDC configuration,
 tag protection, registry retention, Actionlint, or Zizmor. Operators must
 validate those controls in their respective services before enabling live
-publication. The production environment must permit only the trusted tag release
-workflow and require approval before OIDC issuance. The `main` ruleset must
+publication. The production environment must permit trusted tag releases and, if
+recovery is enabled, protected-main recovery dispatches; both require approval
+before OIDC issuance. The workflow independently requires protected main and
+recorded historical-tag ancestry for recovery. The `main` ruleset must
 require the release candidate and merge checks, and tag protection must prevent
 unreviewed tag creation or movement. These remote controls complement the
 workflow's explicit tag-to-main SHA and release-bundle binding checks.
