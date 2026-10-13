@@ -1,7 +1,7 @@
 {
   "generatedBy": "scripts/docs.js",
   "generatedAt": "1970-01-01T00:00:00.000Z",
-  "sourceIdentifier": "sha256:aa9bf264a237a3d22e0999abc9db4813255f4a18ce20a48946e81496bfe51124",
+  "sourceIdentifier": "sha256:312bffdf29c542735dc2d679530c22948ad9e74c6dd88b5d359104175743c18f",
   "outputRoot": {
     "value": "docs",
     "resolvedPath": "docs",
@@ -44,7 +44,7 @@
       "deployment/kubernetes-adapter.md",
       "deployment/process-adapter.md",
       "development/contributing.md",
-      "development/technical-debt.md",
+      "development/typescript-node-monorepo.md",
       "examples/app-context-health-parity.md",
       "examples/customer-site-health-control.md",
       "examples/customer-site-topic-probe-pipeline.md",

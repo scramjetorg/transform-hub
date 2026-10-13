@@ -67,7 +67,7 @@ Run `si --help` for all commands, or `si <resource> --help` for resource-specifi
 
 ## Configuration
 
-The CLI stores profiles and configuration in `~/.scramjet/`. Use `si config` to view and update settings:
+The CLI stores profiles and configuration in `~/.si/` by default, with session/temp state in the OS temporary directory under `.si-tmp/`. Set `SCRAMJET_HOME` to use a different CLI data root: CLI-managed profiles and configuration default to `$SCRAMJET_HOME/.si/`, while session/temp state uses `$SCRAMJET_HOME/.si-tmp/`. Unset or empty values preserve the defaults. Relative values resolve against the current working directory; use an absolute path to share the same CLI state across directories. Explicitly selected configuration files retain their existing path semantics, and this setting does not relocate STH runtime storage. Use `si config` to view and update settings:
 
 ```bash
 si config print

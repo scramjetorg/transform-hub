@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/multi-manager-api-client",
-  "version": "2.3.0",
+  "version": "2.3.1",
   "description": "Scramjet MultiManager API Client",
   "main": "src/index.ts",
   "scripts": {
@@ -11,17 +11,17 @@
     "test:ava": "node ../../scripts/run-ava.js"
   },
   "dependencies": {
-    "@scramjet/api-client": "^2.3.0",
-    "@scramjet/client-utils": "^2.3.0",
-    "@scramjet/api-types": "^2.3.0",
-    "@scramjet/runtime-types": "^2.3.0"
+    "@scramjet/api-client": "^2.3.1",
+    "@scramjet/client-utils": "^2.3.1",
+    "@scramjet/api-types": "^2.3.1",
+    "@scramjet/runtime-types": "^2.3.1"
   },
   "devDependencies": {
     "@ava/typescript": "^7.0.0",
     "@types/node": "^22.15.0",
     "ava": "^8.0.0",
     "typescript": "5.9.3",
-    "tsx": "^4.19.3"
+    "tsx": "^4.23.15"
   },
   "ava": {
     "files": [

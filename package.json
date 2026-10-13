@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/transform-hub",
-  "version": "2.3.0",
+  "version": "2.3.1",
   "private": true,
   "description": "A development repo for Scramjet Transform Hub, a container supervisor that allows deployment, execution and monitoring of any application based on a simple interface.",
   "main": "index.js",
@@ -139,7 +139,7 @@
     "ava": "^8.0.0",
     "c8": "^12.0.0",
     "cloc": "^2.11.0",
-    "fs-extra": "^9.1.0",
+    "fs-extra": "^11.4.1",
     "glob": "^7.2.3",
     "globrex": "^0.1.2",
     "minimist": "^1.2.8",
@@ -148,7 +148,7 @@
     "semver": "^7.7.1",
     "tar": "^7.5.21",
     "toposort": "^2.0.2",
-    "tsx": "^4.19.3",
+    "tsx": "^4.23.15",
     "typescript": "5.9.3"
   },
   "workspaces": {
