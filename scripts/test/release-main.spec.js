@@ -47,6 +47,14 @@ function resolverQueue({ environment, mode, releaseDraft = false }) {
     const release = { id: 123, tag_name: "v2.2.0", draft: releaseDraft, prerelease: false, target_commitish: candidate };
     const git = (args, stdout = "\n") => ({ command: "git", args, environment, stdout });
     const gh = (args, stdout) => ({ command: "gh", args, environment, stdout });
+    const projectionPage = (projection, endpoint, page, items) => ({
+        command: "gh",
+        args: ["api", "--method", "GET", `${endpoint}?per_page=100&page=${page}`, "--jq", `if type != "array" then error("Expected GitHub collection array") else {count: length, items: map(${projection})} end`],
+        environment,
+        stdout: JSON.stringify({ count: items.length, items })
+    });
+    const unrelatedPrs = Array.from({ length: 100 }, (_, index) => ({ number: index + 900, merged_at: null, merge_commit_sha: null, base: { ref: "maintenance", repo: { full_name: repo } }, head: { ref: "maintenance", sha: candidate, repo: { full_name: repo } } }));
+    const unrelatedReleases = Array.from({ length: 100 }, (_, index) => ({ id: index + 900, tag_name: `v9.${index}.0`, draft: false, prerelease: false }));
     const steps = [
         git(["rev-parse", "--verify", "HEAD^{commit}"], `${execution}\n`),
         git(["fetch", "--no-tags", "origin", "+refs/heads/main:refs/remotes/origin/main"]),
@@ -59,10 +67,12 @@ function resolverQueue({ environment, mode, releaseDraft = false }) {
     steps.push(
         git(["show", `${tagCommit}:package.json`], JSON.stringify({ version: "2.2.0" })),
         git(["rev-parse", "--verify", `${tagCommit}^{tree}`], `${tree}\n`),
-        gh(["api", "--method", "GET", `repos/${repo}/commits/${tagCommit}/pulls`, "--paginate", "--slurp"], JSON.stringify([[{ number: 99 }], [pr]])),
+        projectionPage("{number,merged_at,merge_commit_sha,base:{ref:.base.ref,repo:{full_name:.base.repo.full_name}},head:{ref:.head.ref,sha:.head.sha,repo:{full_name:.head.repo.full_name}}}", `repos/${repo}/commits/${tagCommit}/pulls`, 1, unrelatedPrs),
+        projectionPage("{number,merged_at,merge_commit_sha,base:{ref:.base.ref,repo:{full_name:.base.repo.full_name}},head:{ref:.head.ref,sha:.head.sha,repo:{full_name:.head.repo.full_name}}}", `repos/${repo}/commits/${tagCommit}/pulls`, 2, [pr]),
         git(["fetch", "--no-tags", "origin", candidate]),
         git(["rev-parse", "--verify", `${candidate}^{tree}`], `${tree}\n`),
-        gh(["api", "--method", "GET", `repos/${repo}/releases`, "--paginate", "--slurp"], JSON.stringify([[{ id: 1, tag_name: "v1.0.0" }], [release]]))
+        projectionPage("{id,tag_name,draft,prerelease}", `repos/${repo}/releases`, 1, unrelatedReleases),
+        projectionPage("{id,tag_name,draft,prerelease}", `repos/${repo}/releases`, 2, [release])
     );
     return { steps, execution, tagCommit, tagObject, candidate, tree, pr, release };
 }
@@ -132,44 +142,31 @@ test("exact release and merged PR selectors enforce uniqueness before recorded-I
     t.throws(() => selectExactMergedReleasePr([pr], { repository: DEFAULT_REPOSITORY, version: "2.2.0", tagCommitSha: commit, prNumber: "457" }), { message: /does not match/ });
 });
 
-test("publication identity binds historical tag tree and requires recovery checksum", (t) => {
+test("publication identity binds historical tag tree and accepts an optional recovery checksum", (t) => {
     const identity = { format: INVOCATION_FORMAT, mode: "recovery", repository: DEFAULT_REPOSITORY, executionSha: "a".repeat(40), tag: "v2.2.0", tagObjectSha: "c".repeat(40), tagCommitSha: "b".repeat(40), version: "2.2.0", branch: "release/2.2.0", releaseId: "123", releaseDraft: false, prNumber: "456", candidateHead: "d".repeat(40), candidateTree: "e".repeat(40), tagTree: "e".repeat(40), expectedBundleChecksum: `sha256:${"f".repeat(64)}` };
     t.deepEqual(publicationBindings(identity), { expectedVersion: "2.2.0", expectedBranch: "release/2.2.0", expectedCandidateHead: "d".repeat(40), expectedCandidateTree: "e".repeat(40), expectedMainTree: "e".repeat(40), expectedRepository: DEFAULT_REPOSITORY, expectedBundleChecksum: identity.expectedBundleChecksum });
+    t.deepEqual(publicationBindings({ ...identity, expectedBundleChecksum: null }), { expectedVersion: "2.2.0", expectedBranch: "release/2.2.0", expectedCandidateHead: "d".repeat(40), expectedCandidateTree: "e".repeat(40), expectedMainTree: "e".repeat(40), expectedRepository: DEFAULT_REPOSITORY });
     t.throws(() => publicationBindings({ ...identity, releaseDraft: true }), { message: /public release/ });
+    t.throws(() => publicationBindings({ ...identity, expectedBundleChecksum: undefined }), { message: /checksum must be null/ });
 });
 
 test("recovery identity resolves a pinned historical tag against protected current main", (t) => {
-    const execution = "a".repeat(40); const tagCommit = "b".repeat(40); const object = "c".repeat(40); const candidate = "d".repeat(40); const tree = "e".repeat(40);
-    const repo = DEFAULT_REPOSITORY;
-    const env = { GITHUB_REPOSITORY: repo, GITHUB_EVENT_NAME: "workflow_dispatch", GITHUB_REF: "refs/heads/main", GITHUB_REF_PROTECTED: "true", GITHUB_SHA: execution, GH_TOKEN: "fixture-only" };
-    const release = { id: 123, tag_name: "v2.2.0", draft: false, prerelease: false, target_commitish: candidate };
-    const pr = { number: 456, merged_at: "2026-10-13T00:00:00Z", merge_commit_sha: tagCommit, base: { ref: "main", repo: { full_name: repo } }, head: { ref: "release/2.2.0", sha: candidate, repo: { full_name: repo } } };
-    const git = (args, stdout = "\n") => ({ command: "git", args, environment: env, stdout });
-    const gh = (args, stdout) => ({ command: "gh", args, environment: env, stdout });
-    const queue = [
-        git(["rev-parse", "--verify", "HEAD^{commit}"], `${execution}\n`),
-        git(["fetch", "--no-tags", "origin", "+refs/heads/main:refs/remotes/origin/main"]),
-        git(["rev-parse", "--verify", "refs/remotes/origin/main^{commit}"], `${execution}\n`),
-        git(["fetch", "--no-tags", "origin", "refs/tags/v2.2.0"]),
-        git(["rev-parse", "--verify", "FETCH_HEAD"], `${object}\n`),
-        git(["rev-parse", "--verify", "FETCH_HEAD^{commit}"], `${tagCommit}\n`),
-        git(["merge-base", "--is-ancestor", tagCommit, execution]),
-        git(["show", `${tagCommit}:package.json`], JSON.stringify({ version: "2.2.0" })),
-        git(["rev-parse", "--verify", `${tagCommit}^{tree}`], `${tree}\n`),
-        gh(["api", "--method", "GET", `repos/${repo}/commits/${tagCommit}/pulls`, "--paginate", "--slurp"], JSON.stringify([[{ number: 99 }], [pr]])),
-        git(["fetch", "--no-tags", "origin", candidate]),
-        git(["rev-parse", "--verify", `${candidate}^{tree}`], `${tree}\n`),
-        gh(["api", "--method", "GET", `repos/${repo}/releases`, "--paginate", "--slurp"], JSON.stringify([[{ id: 1, tag_name: "v1.0.0" }], [release]]))
-    ];
-    const identity = resolvePublicationIdentity({ environment: env, event: { inputs: { stable_tag: "v2.2.0", expected_tag_sha: tagCommit, release_id: "123", release_pr: "456", expected_bundle_checksum: `sha256:${"f".repeat(64)}` } }, runner: scriptedRunner(t, queue) });
-    t.is(identity.mode, "recovery");
-    t.is(identity.executionSha, execution);
-    t.is(identity.tagCommitSha, tagCommit);
-    t.is(identity.tagObjectSha, object);
-    t.is(identity.releaseId, "123");
-    t.is(identity.candidateTree, tree);
-    t.is(identity.expectedBundleChecksum, `sha256:${"f".repeat(64)}`);
-    t.is(queue.length, 0);
+    const environment = { GITHUB_REPOSITORY: DEFAULT_REPOSITORY, GITHUB_EVENT_NAME: "workflow_dispatch", GITHUB_REF: "refs/heads/main", GITHUB_REF_PROTECTED: "true", GITHUB_SHA: "a".repeat(40), GH_TOKEN: "fixture-only" };
+    for (const optionalChecksum of [undefined, "", `sha256:${"f".repeat(64)}`]) {
+        const { steps, tagCommit, tagObject, tree, candidate } = resolverQueue({ environment, mode: "recovery" });
+        const inputs = { stable_tag: "v2.2.0", expected_tag_sha: tagCommit, ...(optionalChecksum === undefined ? {} : { expected_bundle_checksum: optionalChecksum }) };
+        const identity = resolvePublicationIdentity({ environment, event: { inputs, release_id: "wrong-ignored", release_pr: "also-ignored" }, runner: scriptedRunner(t, steps) });
+        t.is(identity.mode, "recovery");
+        t.is(identity.executionSha, environment.GITHUB_SHA);
+        t.is(identity.tagCommitSha, tagCommit);
+        t.is(identity.tagObjectSha, tagObject);
+        t.is(identity.releaseId, "123");
+        t.is(identity.prNumber, "456");
+        t.is(identity.candidateHead, candidate);
+        t.is(identity.candidateTree, tree);
+        t.is(identity.expectedBundleChecksum, optionalChecksum || null);
+        t.is(steps.length, 0);
+    }
 });
 
 test("tag-push identity accepts an exact tag and either a draft or public release", (t) => {
@@ -192,7 +189,7 @@ test("resolver fails closed before later GitHub operations when commit or releas
         { name: "tag commit", index: 5, stdout: `${"f".repeat(40)}\n`, error: /Tag commit mismatch/ },
         { name: "tag ancestry", mode: "recovery", index: 6, errorValue: Object.assign(new Error("not an ancestor"), { code: 1 }), error: /not an ancestor/ },
         { name: "tag package version", index: 6, stdout: JSON.stringify({ version: "2.3.0" }), error: /Tagged package version mismatch/ },
-        { name: "candidate tree", index: 10, stdout: `${"f".repeat(40)}\n`, error: /Candidate\/tag tree mismatch/, noReleaseList: true }
+        { name: "candidate tree", index: 11, stdout: `${"f".repeat(40)}\n`, error: /Candidate\/tag tree mismatch/, noReleaseList: true }
     ];
     for (const scenario of scenarios) {
         const mode = scenario.mode || "tag-push";
@@ -200,7 +197,7 @@ test("resolver fails closed before later GitHub operations when commit or releas
         const { steps } = resolverQueue({ environment, mode });
         steps[scenario.index].stdout = scenario.stdout;
         if (scenario.errorValue) steps[scenario.index].error = scenario.errorValue;
-        if (scenario.noReleaseList) steps.pop();
+        if (scenario.noReleaseList) steps.splice(-2);
         let calls = 0;
         const runner = (...args) => { calls++; return scriptedRunner(t, steps)(...args); };
         const event = mode === "recovery" ? { inputs: { stable_tag: "v2.2.0", expected_tag_sha: "b".repeat(40), release_id: "123", release_pr: "456", expected_bundle_checksum: `sha256:${"f".repeat(64)}` } } : {};
@@ -220,6 +217,71 @@ test("recovery refuses a mismatched expected tag SHA before reading package meta
     t.is(calls, 6);
 });
 
+test("resolver scans later pages for ambiguity and does not return a match before a later page error", (t) => {
+    const environment = { GITHUB_REPOSITORY: DEFAULT_REPOSITORY, GITHUB_EVENT_NAME: "push", GITHUB_REF: "refs/tags/v2.2.0", GITHUB_REF_PROTECTED: "true", GITHUB_SHA: SHA, GH_TOKEN: "fixture-only" };
+    const cases = [
+        { pageIndex: 8, matching: (fixture) => fixture.pr, unrelated: (index) => ({ number: 900 + index, merged_at: null, merge_commit_sha: null, base: { ref: "maintenance", repo: { full_name: DEFAULT_REPOSITORY } }, head: { ref: "maintenance", sha: SHA, repo: { full_name: DEFAULT_REPOSITORY } } }), error: /more than one across pages/ },
+        { pageIndex: 12, matching: (fixture) => fixture.release, unrelated: (index) => ({ id: 900 + index, tag_name: `v8.${index}.0`, draft: false, prerelease: false }), error: /more than one across pages/ }
+    ];
+    for (const scenario of cases) {
+        const fixture = resolverQueue({ environment, mode: "tag-push" });
+        const records = [scenario.matching(fixture), ...Array.from({ length: 99 }, (_, index) => scenario.unrelated(index))];
+        fixture.steps[scenario.pageIndex].stdout = JSON.stringify({ count: 100, items: records });
+        t.throws(() => resolvePublicationIdentity({ environment, event: {}, runner: scriptedRunner(t, fixture.steps) }), { message: scenario.error });
+    }
+    const { steps, release } = resolverQueue({ environment, mode: "tag-push" });
+    steps[13].stdout = JSON.stringify({ count: 100, items: [release, ...Array.from({ length: 99 }, (_, index) => ({ id: 500 + index, tag_name: `v8.${index}.0`, draft: false, prerelease: false }))] });
+    steps.push({ command: "gh", args: ["api", "--method", "GET", "repos/scramjetorg/transform-hub/releases?per_page=100&page=3", "--jq", 'if type != "array" then error("Expected GitHub collection array") else {count: length, items: map({id,tag_name,draft,prerelease})} end'], environment, error: Object.assign(new Error("later page failed"), { code: "EHOSTUNREACH", stdout: "", stderr: "SENSITIVE RESPONSE" }) });
+    t.throws(() => resolvePublicationIdentity({ environment, event: {}, runner: scriptedRunner(t, steps) }), { message: /GitHub API GET repos\/scramjetorg\/transform-hub\/releases\?per_page=100&page=3 failed: code=EHOSTUNREACH/ });
+});
+
+test("projected GitHub metadata stays below the default subprocess buffer and labels safe failures", (t) => {
+    const fullMetadataEmitter = `const rows=Array.from({length:100},(_,id)=>({id,tag_name:'v2.3.0',draft:false,prerelease:false,body:'x'.repeat(25000)}));process.stdout.write(JSON.stringify(rows));`;
+    let fullError;
+    try { execFileSync(process.execPath, ["-e", fullMetadataEmitter], { encoding: "utf8" }); }
+    catch (error) { fullError = error; }
+    t.is(fullError?.code, "ENOBUFS");
+    t.true(Buffer.byteLength(fullError.stdout) >= 1024 * 1024);
+    const projectedEmitter = `const rows=Array.from({length:100},(_,id)=>({id,tag_name:'v2.3.0',draft:false,prerelease:false,body:'x'.repeat(25000)}));process.stdout.write(JSON.stringify({count:rows.length,items:rows.map(({id,tag_name,draft,prerelease})=>({id,tag_name,draft,prerelease}))}));`;
+    const projectedOutput = execFileSync(process.execPath, ["-e", projectedEmitter], { encoding: "utf8" });
+    t.true(Buffer.byteLength(projectedOutput) < 1024 * 1024);
+    t.is(JSON.parse(projectedOutput).count, 100);
+
+    const environment = { GITHUB_REPOSITORY: DEFAULT_REPOSITORY, GITHUB_EVENT_NAME: "push", GITHUB_REF: "refs/tags/v2.2.0", GITHUB_REF_PROTECTED: "true", GITHUB_SHA: SHA, GH_TOKEN: "fixture-only" };
+    const { steps } = resolverQueue({ environment, mode: "tag-push" });
+    const tokenSentinel = "GH_TOKEN_SENTINEL_MUST_NOT_LEAK";
+    const runner = (command, args, options) => {
+        const step = steps.shift();
+        t.truthy(step);
+        t.is(command, step.command);
+        t.deepEqual(args, step.args);
+        t.deepEqual(options, { encoding: "utf8", env: environment });
+        if (command !== "gh") return step.stdout;
+        t.true(args.includes("--jq"));
+        t.false(args.includes("--paginate"));
+        t.false(args.includes("--slurp"));
+        if (step.args[3].endsWith("page=1")) {
+            const emitProjected = args.at(-1).includes("number")
+                ? `const rows=Array.from({length:100},(_,number)=>({number,merged_at:null,merge_commit_sha:null,base:{ref:'maintenance',repo:{full_name:'${DEFAULT_REPOSITORY}'}},head:{ref:'maintenance',sha:'${"d".repeat(40)}',repo:{full_name:'${DEFAULT_REPOSITORY}'}},body:'x'.repeat(25000)}));process.stdout.write(JSON.stringify({count:rows.length,items:rows.map(({number,merged_at,merge_commit_sha,base,head})=>({number,merged_at,merge_commit_sha,base,head}))}));`
+                : `const rows=Array.from({length:100},(_,id)=>({id,tag_name:'v8.'+id+'.0',draft:false,prerelease:false,body:'x'.repeat(25000)}));process.stdout.write(JSON.stringify({count:rows.length,items:rows.map(({id,tag_name,draft,prerelease})=>({id,tag_name,draft,prerelease}))}));`;
+            return execFileSync(process.execPath, ["-e", emitProjected], { encoding: "utf8" });
+        }
+        return execFileSync(process.execPath, ["-e", `process.stdout.write(${JSON.stringify(step.stdout)})`], { encoding: "utf8" });
+    };
+    resolvePublicationIdentity({ environment, event: {}, runner });
+    t.is(steps.length, 0);
+
+    const { steps: failedSteps } = resolverQueue({ environment, mode: "tag-push" });
+    const apiError = Object.assign(new Error(`${tokenSentinel} raw stderr must not escape`), { code: "ENOBUFS", status: null, signal: "SIGTERM", stdout: Buffer.alloc(17), stderr: Buffer.from(tokenSentinel) });
+    failedSteps[8].error = apiError;
+    const failureRunner = scriptedRunner(t, failedSteps);
+    let wrapped;
+    try { resolvePublicationIdentity({ environment, event: {}, runner: failureRunner }); }
+    catch (error) { wrapped = error; }
+    t.regex(wrapped.message, /GitHub API GET repos\/scramjetorg\/transform-hub\/commits\/.*\/pulls\?per_page=100&page=1 failed: code=ENOBUFS status=null signal=SIGTERM stdoutBytes=17 stderrBytes=/);
+    t.false(wrapped.message.includes(tokenSentinel));
+});
+
 test("publication context validation rejects malformed input before git or GitHub calls", (t) => {
     let calls = 0;
     const environment = { GITHUB_REPOSITORY: DEFAULT_REPOSITORY, GITHUB_EVENT_NAME: "workflow_dispatch", GITHUB_REF: "refs/heads/main", GITHUB_REF_PROTECTED: "true", GITHUB_SHA: SHA, GH_TOKEN: "fixture-only" };
@@ -227,18 +289,24 @@ test("publication context validation rejects malformed input before git or GitHu
     t.is(calls, 0);
     t.throws(() => resolvePublicationIdentity({ environment: { ...environment, GITHUB_REF_PROTECTED: "false" }, event: { inputs: {} }, runner: () => calls++ }), { message: /protected/ });
     t.is(calls, 0);
+    for (const checksum of [null, true, 7, "   ", "not-a-digest"]) {
+        t.throws(() => resolvePublicationIdentity({ environment, event: { inputs: { stable_tag: "v2.2.0", expected_tag_sha: "b".repeat(40), expected_bundle_checksum: checksum } }, runner: () => calls++ }), { message: /optional sha256 digest/ });
+        t.is(calls, 0);
+    }
 });
 
-test("public recovery finalization verifies assets before one metadata read and never patches", async (t) => {
+test("public recovery finalization verifies assets with optional pin before metadata read and never patches", async (t) => {
     const { bundle, root } = createVerifiedBundle(t);
     const assetsJsonPath = `${root}-assets.json`;
     t.teardown(() => rmSync(assetsJsonPath, { force: true }));
     writeFileSync(assetsJsonPath, JSON.stringify([ ...bundle.tarballs.map((item, id) => ({ id: id + 1, name: item.name })), { id: 39, name: "manifest.json" }, { id: 40, name: "SHA256SUMS" } ]));
     const env = { GH_TOKEN: "fixture-only" };
-    const steps = [{ command: "gh", args: ["api", "--method", "GET", "repos/scramjetorg/transform-hub/releases/123"], environment: env, stdout: JSON.stringify({ id: 123, tag_name: "v2.2.0", draft: false, prerelease: false }) }];
+    const steps = [0, 1].map(() => ({ command: "gh", args: ["api", "--method", "GET", "repos/scramjetorg/transform-hub/releases/123", "--jq", "{id,tag_name,draft,prerelease}"], environment: env, stdout: JSON.stringify({ id: 123, tag_name: "v2.2.0", draft: false, prerelease: false }) }));
     const identity = { format: INVOCATION_FORMAT, mode: "recovery", repository: DEFAULT_REPOSITORY, executionSha: "c".repeat(40), tag: "v2.2.0", tagObjectSha: "d".repeat(40), tagCommitSha: "e".repeat(40), version: "2.2.0", branch: "release/2.2.0", releaseId: "123", releaseDraft: false, prNumber: "456", candidateHead: SHA, candidateTree: "b".repeat(40), tagTree: "b".repeat(40), expectedBundleChecksum: bundle.outerChecksum };
-    const result = await finalizeRelease({ identity, bundle, bundleDir: root, assetsJsonPath, environment: env, runner: scriptedRunner(t, steps) });
-    t.deepEqual(result, { releaseId: "123", status: "already-public" });
+    for (const checksum of [null, bundle.outerChecksum]) {
+        const result = await finalizeRelease({ identity: { ...identity, expectedBundleChecksum: checksum }, bundle, bundleDir: root, assetsJsonPath, environment: env, runner: scriptedRunner(t, steps) });
+        t.deepEqual(result, { releaseId: "123", status: "already-public" });
+    }
     t.is(steps.length, 0);
 });
 
@@ -250,8 +318,8 @@ test("normal tag finalization patches a verified draft once and validates the pu
     const environment = { GH_TOKEN: "fixture-only" };
     const endpoint = "repos/scramjetorg/transform-hub/releases/123";
     const steps = [
-        { command: "gh", args: ["api", "--method", "GET", endpoint], environment, stdout: JSON.stringify({ id: 123, tag_name: "v2.2.0", draft: true, prerelease: false }) },
-        { command: "gh", args: ["api", "--method", "PATCH", endpoint, "-F", "draft=false"], environment, stdout: JSON.stringify({ id: 123, tag_name: "v2.2.0", draft: false, prerelease: false }) }
+        { command: "gh", args: ["api", "--method", "GET", endpoint, "--jq", "{id,tag_name,draft,prerelease}"], environment, stdout: JSON.stringify({ id: 123, tag_name: "v2.2.0", draft: true, prerelease: false }) },
+        { command: "gh", args: ["api", "--method", "PATCH", endpoint, "--jq", "{id,tag_name,draft,prerelease}", "-F", "draft=false"], environment, stdout: JSON.stringify({ id: 123, tag_name: "v2.2.0", draft: false, prerelease: false }) }
     ];
     const identity = { format: INVOCATION_FORMAT, mode: "tag-push", repository: DEFAULT_REPOSITORY, executionSha: SHA, tag: "v2.2.0", tagObjectSha: "c".repeat(40), tagCommitSha: SHA, version: "2.2.0", branch: "release/2.2.0", releaseId: "123", releaseDraft: true, prNumber: "456", candidateHead: SHA, candidateTree: "b".repeat(40), tagTree: "b".repeat(40), expectedBundleChecksum: null };
     const result = await finalizeRelease({ identity, bundle, bundleDir: root, assetsJsonPath, environment, runner: scriptedRunner(t, steps) });
@@ -301,7 +369,7 @@ test("finalization enforces public/draft state transitions and rejects unexpecte
         const runner = (command, args) => {
             calls++;
             t.is(command, "gh");
-            t.deepEqual(args, ["api", "--method", "GET", endpoint]);
+            t.deepEqual(args, ["api", "--method", "GET", endpoint, "--jq", "{id,tag_name,draft,prerelease}"]);
             return JSON.stringify(metadata);
         };
         await t.throwsAsync(() => finalizeRelease({ identity: { ...identity, releaseDraft: false }, bundle, bundleDir: root, assetsJsonPath, environment: { GH_TOKEN: "fixture-only" }, runner }), { message: /release|prerelease/i });
@@ -339,10 +407,10 @@ test("asset downloader paginates once and streams binary assets into nested bund
     const runner = (command, args, options) => {
         t.is(command, "gh");
         t.deepEqual(options.env, environment);
-        if (args[0] === "api" && args.includes("--slurp")) {
+        if (args[0] === "api" && args.includes("--jq")) {
             listCalls++;
-            t.deepEqual(args, ["api", "--method", "GET", "repos/scramjetorg/transform-hub/releases/123/assets", "--paginate", "--slurp"]);
-            return JSON.stringify([assets.slice(0, 10), assets.slice(10)]);
+            t.deepEqual(args, ["api", "--method", "GET", "repos/scramjetorg/transform-hub/releases/123/assets?per_page=100&page=1", "--jq", 'if type != "array" then error("Expected GitHub collection array") else {count: length, items: map({id,name})} end']);
+            return JSON.stringify({ count: assets.length, items: assets.map(({ id, name }) => ({ id, name })) });
         }
         downloadCalls++;
         const item = assets.find((asset) => args[3] === `repos/scramjetorg/transform-hub/releases/assets/${asset.id}`);
@@ -356,9 +424,30 @@ test("asset downloader paginates once and streams binary assets into nested bund
     t.is(result.assetCount, 40);
     t.is(listCalls, 1);
     t.is(downloadCalls, 40);
-    t.deepEqual(JSON.parse(readFileSync(assetsJsonPath, "utf8")), assets);
+    t.deepEqual(JSON.parse(readFileSync(assetsJsonPath, "utf8")), assets.map(({ id, name }) => ({ id, name })));
     t.deepEqual([...readFileSync(join(root, "manifest.json"))], [255, assets[0].id & 0xff]);
     t.deepEqual([...readFileSync(join(root, "tarballs", "package-0.tgz"))], [255, assets[2].id & 0xff]);
+});
+
+test("asset downloader rejects a forty-first asset before cleanup or download", (t) => {
+    const parent = mkdtempSync(join(tmpdir(), "release-download-overflow-"));
+    const root = join(parent, "bundle");
+    mkdirSync(root);
+    const sentinel = join(root, "preserve.txt");
+    writeFileSync(sentinel, "not cleaned before inventory validation");
+    const environment = { GH_TOKEN: "fixture-only" };
+    const assets = Array.from({ length: 41 }, (_, index) => ({ id: index + 1, name: index < 2 ? (index === 0 ? "manifest.json" : "SHA256SUMS") : `package-${index}.tgz` }));
+    let calls = 0;
+    const runner = (_command, args) => {
+        calls++;
+        t.true(args.includes("--jq"));
+        return JSON.stringify({ count: assets.length, items: assets });
+    };
+    const identity = { format: INVOCATION_FORMAT, mode: "recovery", repository: DEFAULT_REPOSITORY, executionSha: "a".repeat(40), tag: "v2.2.0", tagObjectSha: "c".repeat(40), tagCommitSha: "b".repeat(40), version: "2.2.0", branch: "release/2.2.0", releaseId: "123", releaseDraft: false, prNumber: "456", candidateHead: "d".repeat(40), candidateTree: "e".repeat(40), tagTree: "e".repeat(40), expectedBundleChecksum: null };
+    t.throws(() => downloadReleaseAssets({ identity, bundleDir: root, assetsJsonPath: join(parent, "assets.json"), environment, runner }), { message: /exceeds the complete release boundary/ });
+    t.is(calls, 1);
+    t.is(readFileSync(sentinel, "utf8"), "not cleaned before inventory validation");
+    rmSync(parent, { recursive: true, force: true });
 });
 
 test("compatible wave validation preserves dependency ordering and boundary rejection", (t) => {

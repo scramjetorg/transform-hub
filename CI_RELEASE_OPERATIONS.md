@@ -20,7 +20,7 @@ removed; `security-check.yml` is retained.
 | `release-candidate.yml` | Same-repository `release/**` pull requests to `main` | `Release / candidate validation and draft` | Validates release candidates, builds production dist once, maintains the immutable draft release bundle, then downloads and verifies that draft with the producer's release-app token and runs four sequential tarball BDD partitions in the same job. |
 | `release-merge.yml` | Push to `main` | `Complete stable release` | Resolves and verifies the merged release PR's draft bundle, reconstructs `devel`, and creates the tag only after binding checks. |
 | `release-start.yml` | Manual dispatch on `devel` | `Start stable release` | Aligns the first `2.2.0-devel` baseline into `release/2.2.0` and opens the release PR. |
-| `main-release.yml` | Push of `v*.*.*` tag; manual recovery dispatch on protected `main` | `Publish stable tag` | Publishes verified GitHub tarballs to npm using production OIDC; recovery binds protected-main invocation to a recorded historical public release. |
+| `main-release.yml` | Push of `v*.*.*` tag; manual recovery dispatch on protected `main` | `Publish stable tag` | A read-only admission job rejects wrong refs before the OIDC-capable publisher; recovery uniquely discovers the merged PR/public release and optionally binds a supplied historical outer checksum. |
 
 ### Audit outcome and intentional overlap
 
@@ -50,7 +50,10 @@ never cancelled into a partial release.
   package artifact is handed between unrelated jobs.
 - The sole durable release handoff is the draft GitHub Release. Its asset set is
   exactly 40 assets: `manifest.json`, `SHA256SUMS`, and the 38 recorded package tarballs;
-  extra, missing, duplicate, unsafe, or changed assets fail closed.
+  extra, missing, duplicate, unsafe, or assets that mismatch the manifest,
+  SHA256SUMS, tarball, or embedded-package checks fail closed. An optional
+  external `outerChecksum` pin additionally binds the historical manifest bytes;
+  without it, historical tarball bytes are not independently pinned.
 - The candidate workflow builds production dist once, records the release
   identity and package checksums, and replaces the draft asset set for the
   release PR. The same candidate job then uses its existing release-app token
@@ -66,6 +69,9 @@ never cancelled into a partial release.
   tarballs in release-wave order, waiting 10 seconds only between waves.
   Existing npm versions are reused only when name, version, identity digest, and
   final package checksum match exactly; mismatches fail closed.
+  Recovery requires only the stable tag and peeled tag SHA; it discovers the
+  merged PR and exact public release uniquely. The manifest outer-checksum input
+  is optional, not an assertion that bytes have an external historical pin.
 - Do not upload secrets, scanner findings, `node_modules`, or unrelated files as
   release assets. The manifest is the canonical source/package/toolchain record.
 

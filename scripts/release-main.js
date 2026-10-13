@@ -21,6 +21,10 @@ const REPOSITORY_API_PATH = "repos/scramjetorg/transform-hub";
 const RELEASES_ENDPOINT = `${REPOSITORY_API_PATH}/releases`;
 const COMMIT_PULLS_ENDPOINT = `${REPOSITORY_API_PATH}/commits`;
 const RELEASE_ASSET_ENDPOINT = `${RELEASES_ENDPOINT}/assets`;
+const DEFAULT_GITHUB_PAGE_SIZE = 100;
+const RELEASE_METADATA_PROJECTION = "{id,tag_name,draft,prerelease}";
+const PR_METADATA_PROJECTION = "{number,merged_at,merge_commit_sha,base:{ref:.base.ref,repo:{full_name:.base.repo.full_name}},head:{ref:.head.ref,sha:.head.sha,repo:{full_name:.head.repo.full_name}}}";
+const ASSET_METADATA_PROJECTION = "{id,name}";
 const SHA = /^[a-f0-9]{40}$/i;
 const DIGEST = /^sha256:[a-f0-9]{64}$/i;
 const SAFE_NAME = /^[a-z0-9@._+/-]+$/i;
@@ -56,21 +60,53 @@ function assertPositiveId(value, label) {
         throw new Error(`${label} must be a canonical positive safe integer.`);
     return value;
 }
-function githubJson(endpoint, { environment, runner, paginate = false, method = "GET", fields = [] }) {
+function githubFailure(endpoint, method, error) {
+    const byteCount = (value) => (Buffer.isBuffer(value) ? value.length : typeof value === "string" ? Buffer.byteLength(value) : 0);
+    return new Error(
+        `GitHub API ${method} ${endpoint} failed: code=${error?.code || "nonzero-exit"} status=${error?.status ?? "null"} signal=${error?.signal ?? "null"} stdoutBytes=${byteCount(error?.stdout)} stderrBytes=${byteCount(error?.stderr)}`,
+        { cause: error }
+    );
+}
+function githubJson(endpoint, { environment, runner, method = "GET", fields = [], jq }) {
     if (typeof environment?.GH_TOKEN !== "string" || !environment.GH_TOKEN) throw new Error("GH_TOKEN is required for GitHub API access.");
-    const args = ["api", "--method", method, endpoint];
-    if (paginate) args.push("--paginate", "--slurp");
+    if (typeof jq !== "string" || !jq) throw new Error("A static jq projection is required for GitHub API metadata.");
+    const args = ["api", "--method", method, endpoint, "--jq", jq];
     for (const field of fields) args.push("-F", field);
-    const output = runner("gh", args, { encoding: "utf8", env: environment });
+    let output;
+    try {
+        output = runner("gh", args, { encoding: "utf8", env: environment });
+    } catch (error) {
+        throw githubFailure(endpoint, method, error);
+    }
     let parsed;
     try {
         parsed = JSON.parse(String(output));
     } catch {
-        throw new Error(`GitHub API returned invalid JSON for ${endpoint}.`);
+        throw new Error(`GitHub API ${method} ${endpoint} returned invalid projected JSON.`);
     }
-    if (!paginate) return parsed;
-    if (!Array.isArray(parsed) || parsed.some((page) => !Array.isArray(page))) throw new Error(`GitHub paginated response for ${endpoint} must be an array of pages.`);
-    return parsed.flat();
+    return parsed;
+}
+function readPaginated(endpoint, { environment, runner, projection, keep, maxItems, overflowMessage }) {
+    const retained = [];
+    for (let page = 1; ; page++) {
+        const pageEndpoint = `${endpoint}?per_page=${DEFAULT_GITHUB_PAGE_SIZE}&page=${page}`;
+        const jq = `if type != "array" then error("Expected GitHub collection array") else {count: length, items: map(${projection})} end`;
+        const result = githubJson(pageEndpoint, { environment, runner, jq });
+        if (!result || typeof result !== "object" || !Number.isInteger(result.count) || result.count < 0 || result.count > DEFAULT_GITHUB_PAGE_SIZE || !Array.isArray(result.items) || result.items.length !== result.count)
+            throw new Error(`GitHub API GET ${pageEndpoint} returned an invalid projected page envelope.`);
+        for (const row of result.items) {
+            if (!keep(row)) continue;
+            if (retained.length >= maxItems) throw new Error(overflowMessage);
+            retained.push(row);
+        }
+        if (result.count < DEFAULT_GITHUB_PAGE_SIZE) return retained;
+    }
+}
+function matchesMergedReleasePr(pr, expected) {
+    return pr && typeof pr === "object" && typeof pr.merged_at === "string" && pr.merged_at.length > 0 &&
+        typeof pr.merge_commit_sha === "string" && SHA.test(pr.merge_commit_sha) && pr.merge_commit_sha.toLowerCase() === expected.tagCommitSha &&
+        pr.base?.ref === DEFAULT_MAIN_BRANCH && pr.base?.repo?.full_name === expected.repository &&
+        pr.head?.repo?.full_name === expected.repository && pr.head?.ref === releaseBranch(expected.version);
 }
 function selectExactRelease(releases, expected) {
     if (!Array.isArray(releases)) throw new Error("GitHub releases response must be an array.");
@@ -90,12 +126,7 @@ function selectExactMergedReleasePr(pulls, expected) {
     const tagCommitSha = assertSha(expected.tagCommitSha, "tag commit SHA");
     if (expected.repository !== DEFAULT_REPOSITORY) throw new Error(`Release PR repository must be ${DEFAULT_REPOSITORY}.`);
     if (!Array.isArray(pulls)) throw new Error("GitHub pull request response must be an array.");
-    const matches = pulls.filter((pr) =>
-        pr && typeof pr === "object" && typeof pr.merged_at === "string" && pr.merged_at.length > 0 &&
-        typeof pr.merge_commit_sha === "string" && SHA.test(pr.merge_commit_sha) && pr.merge_commit_sha.toLowerCase() === tagCommitSha &&
-        pr.base?.ref === DEFAULT_MAIN_BRANCH && pr.base?.repo?.full_name === expected.repository &&
-        pr.head?.repo?.full_name === expected.repository && pr.head?.ref === releaseBranch(version)
-    );
+    const matches = pulls.filter((pr) => matchesMergedReleasePr(pr, { repository: expected.repository, version, tagCommitSha }));
     if (matches.length !== 1) throw new Error(`Expected exactly one merged release PR for ${version}; found ${matches.length}.`);
     const pr = matches[0];
     const number = assertPositiveId(pr.number, "Release PR number");
@@ -114,8 +145,6 @@ function resolvePublicationIdentity({ environment = process.env, event, runner =
     let tag;
     let version;
     let expectedTagSha;
-    let expectedReleaseId;
-    let expectedPrNumber;
     let expectedBundleChecksum = null;
     if (eventName === "push") {
         const prefix = "refs/tags/";
@@ -129,17 +158,17 @@ function resolvePublicationIdentity({ environment = process.env, event, runner =
         if (environment.GITHUB_REF !== "refs/heads/main") throw new Error("Recovery dispatch is allowed only on refs/heads/main.");
         const inputs = invocation?.inputs;
         if (!inputs || typeof inputs !== "object") throw new Error("Recovery dispatch inputs are required.");
-        for (const name of ["stable_tag", "expected_tag_sha", "release_id", "release_pr", "expected_bundle_checksum"])
+        for (const name of ["stable_tag", "expected_tag_sha"])
             if (typeof inputs[name] !== "string") throw new Error(`Recovery input ${name} must be a string.`);
         tag = inputs.stable_tag;
         if (!tag.startsWith("v")) throw new Error("Recovery stable_tag must use canonical vX.Y.Z form.");
         version = stableVersion(tag.slice(1));
         if (tag !== `v${version}`) throw new Error("Recovery stable_tag is not canonical.");
         expectedTagSha = assertSha(inputs.expected_tag_sha, "expected tag SHA");
-        expectedReleaseId = assertPositiveId(inputs.release_id, "release_id");
-        expectedPrNumber = assertPositiveId(inputs.release_pr, "release_pr");
-        if (!DIGEST.test(inputs.expected_bundle_checksum)) throw new Error("expected_bundle_checksum must be a sha256 digest.");
-        expectedBundleChecksum = inputs.expected_bundle_checksum.toLowerCase();
+        if (inputs.expected_bundle_checksum !== undefined && inputs.expected_bundle_checksum !== "") {
+            if (typeof inputs.expected_bundle_checksum !== "string" || !DIGEST.test(inputs.expected_bundle_checksum)) throw new Error("expected_bundle_checksum must be an optional sha256 digest.");
+            expectedBundleChecksum = inputs.expected_bundle_checksum.toLowerCase();
+        }
         mode = "recovery";
     } else throw new Error(`Unsupported publication event: ${String(eventName)}.`);
     if (typeof environment.GH_TOKEN !== "string" || !environment.GH_TOKEN) throw new Error("GH_TOKEN is required for publication identity resolution.");
@@ -165,14 +194,22 @@ function resolvePublicationIdentity({ environment = process.env, event, runner =
     catch { throw new Error("Tagged commit package.json is not valid JSON."); }
     requireMatch(packageJson.version, version, "Tagged package version");
     const tagTree = assertTree(git(["rev-parse", "--verify", `${tagCommitSha}^{tree}`]));
-    const pulls = githubJson(`${COMMIT_PULLS_ENDPOINT}/${tagCommitSha}/pulls`, { environment, runner, paginate: true });
-    const pr = selectExactMergedReleasePr(pulls, { repository: DEFAULT_REPOSITORY, version, tagCommitSha, ...(expectedPrNumber ? { prNumber: expectedPrNumber } : {}) });
+    const pulls = readPaginated(`${COMMIT_PULLS_ENDPOINT}/${tagCommitSha}/pulls`, {
+        environment, runner, projection: PR_METADATA_PROJECTION,
+        keep: (row) => matchesMergedReleasePr(row, { repository: DEFAULT_REPOSITORY, version, tagCommitSha }), maxItems: 1,
+        overflowMessage: `Expected exactly one merged release PR for ${version}; found more than one across pages.`
+    });
+    const pr = selectExactMergedReleasePr(pulls, { repository: DEFAULT_REPOSITORY, version, tagCommitSha });
     const candidateHead = assertSha(pr.head.sha, "candidate head SHA");
     runner("git", ["fetch", "--no-tags", DEFAULT_REMOTE, candidateHead], { encoding: "utf8", env: environment });
     const candidateTree = assertTree(git(["rev-parse", "--verify", `${candidateHead}^{tree}`]));
     requireMatch(candidateTree, tagTree, "Candidate/tag tree");
-    const releases = githubJson(RELEASES_ENDPOINT, { environment, runner, paginate: true });
-    const release = selectExactRelease(releases, { tag, ...(expectedReleaseId ? { releaseId: expectedReleaseId } : {}), requirePublic: mode === "recovery" });
+    const releases = readPaginated(RELEASES_ENDPOINT, {
+        environment, runner, projection: RELEASE_METADATA_PROJECTION,
+        keep: (row) => row?.tag_name === tag, maxItems: 1,
+        overflowMessage: `Expected exactly one GitHub release for ${tag}; found more than one across pages.`
+    });
+    const release = selectExactRelease(releases, { tag, requirePublic: mode === "recovery" });
     return {
         format: INVOCATION_FORMAT, mode, repository: DEFAULT_REPOSITORY, executionSha, tag,
         tagObjectSha, tagCommitSha, version, branch: releaseBranch(version), releaseId: assertPositiveId(release.id, "GitHub release ID"),
@@ -198,9 +235,10 @@ function publicationBindings(identity) {
     if (identity.mode === "tag-push") {
         if (executionSha !== tagCommitSha || identity.expectedBundleChecksum !== null) throw new Error("Tag-push publication identity has invalid commit or checksum bindings.");
     } else {
-        if (identity.releaseDraft || typeof identity.expectedBundleChecksum !== "string" || !DIGEST.test(identity.expectedBundleChecksum))
-            throw new Error("Recovery publication identity requires a public release and pinned bundle checksum.");
-        expectedBundleChecksum = identity.expectedBundleChecksum.toLowerCase();
+        if (identity.releaseDraft) throw new Error("Recovery publication identity requires a public release.");
+        if (identity.expectedBundleChecksum !== null && (typeof identity.expectedBundleChecksum !== "string" || !DIGEST.test(identity.expectedBundleChecksum)))
+            throw new Error("Recovery publication identity checksum must be null or a sha256 digest.");
+        if (typeof identity.expectedBundleChecksum === "string") expectedBundleChecksum = identity.expectedBundleChecksum.toLowerCase();
     }
     return { expectedVersion: version, expectedBranch: branch, expectedCandidateHead: candidateHead, expectedCandidateTree: candidateTree, expectedMainTree: tagTree, expectedRepository: identity.repository, ...(expectedBundleChecksum ? { expectedBundleChecksum } : {}) };
 }
@@ -211,7 +249,10 @@ function downloadReleaseAssets({ identity, bundleDir, assetsJsonPath, environmen
     const assetsPath = resolve(assetsJsonPath);
     const assetsRelative = relative(root, assetsPath);
     if (!assetsRelative || (assetsRelative !== ".." && !assetsRelative.startsWith(`..${sep}`))) throw new Error("Assets JSON path must be outside the bundle directory.");
-    const assets = githubJson(`${RELEASES_ENDPOINT}/${assertPositiveId(identity.releaseId, "release ID")}/assets`, { environment, runner, paginate: true });
+    const assets = readPaginated(`${RELEASES_ENDPOINT}/${assertPositiveId(identity.releaseId, "release ID")}/assets`, {
+        environment, runner, projection: ASSET_METADATA_PROJECTION, keep: () => true, maxItems: INCLUDED_PACKAGES.size + 2,
+        overflowMessage: "Release asset inventory exceeds the complete release boundary."
+    });
     const expectedCount = INCLUDED_PACKAGES.size + 2;
     if (assets.length !== expectedCount) throw new Error(`Expected ${expectedCount} release assets; found ${assets.length}.`);
     const ids = new Set(); const names = new Set(); let manifests = 0; let sums = 0; let tarballs = 0;
@@ -237,7 +278,12 @@ function downloadReleaseAssets({ identity, bundleDir, assetsJsonPath, environmen
         const destination = asset.name === "manifest.json" || asset.name === "SHA256SUMS" ? join(root, asset.name) : join(root, "tarballs", asset.name);
         const fd = openSync(destination, "w");
         try {
-            runner("gh", ["api", "--method", "GET", `${RELEASE_ASSET_ENDPOINT}/${assertPositiveId(asset.id, "Release asset ID")}`, "--header", "Accept: application/octet-stream"], { env: environment, stdio: ["ignore", fd, "pipe"] });
+            const endpoint = `${RELEASE_ASSET_ENDPOINT}/${assertPositiveId(asset.id, "Release asset ID")}`;
+            try {
+                runner("gh", ["api", "--method", "GET", endpoint, "--header", "Accept: application/octet-stream"], { env: environment, stdio: ["ignore", fd, "pipe"] });
+            } catch (error) {
+                throw githubFailure(endpoint, "GET", error);
+            }
         } finally { closeSync(fd); }
     }
     return { bundleDir: root, assetsJsonPath: assetsPath, assetCount: assets.length };
@@ -246,11 +292,11 @@ async function finalizeRelease({ identity, bundle, bundleDir, assetsJsonPath, en
     const bindings = publicationBindings(identity);
     await verifyBundle({ bundle, bundleDir, assetsJsonPath, ...bindings });
     const endpoint = `${RELEASES_ENDPOINT}/${assertPositiveId(identity.releaseId, "release ID")}`;
-    const fresh = githubJson(endpoint, { environment, runner });
+    const fresh = githubJson(endpoint, { environment, runner, jq: RELEASE_METADATA_PROJECTION });
     const selected = selectExactRelease([fresh], { tag: identity.tag, releaseId: identity.releaseId, requirePublic: identity.mode === "recovery" || !identity.releaseDraft });
     if (!selected.draft) return { releaseId: identity.releaseId, status: "already-public" };
     if (identity.mode !== "tag-push" || !identity.releaseDraft) throw new Error("Only a normal tag-push may finalize its originally draft release.");
-    const patched = githubJson(endpoint, { environment, runner, method: "PATCH", fields: ["draft=false"] });
+    const patched = githubJson(endpoint, { environment, runner, method: "PATCH", fields: ["draft=false"], jq: RELEASE_METADATA_PROJECTION });
     selectExactRelease([patched], { tag: identity.tag, releaseId: identity.releaseId, requirePublic: true });
     return { releaseId: identity.releaseId, status: "published" };
 }
@@ -708,7 +754,7 @@ async function main() {
         const identity = resolvePublicationIdentity();
         const output = option(args, "--output");
         writeFileSync(output, `${JSON.stringify(identity, null, 2)}\n`);
-        console.log(`[release-main] INFO resolved mode=${identity.mode} repository=${identity.repository} execution=${identity.executionSha} tag=${identity.tag} tagObject=${identity.tagObjectSha} tagCommit=${identity.tagCommitSha} pr=${identity.prNumber} candidate=${identity.candidateHead} candidateTree=${identity.candidateTree} tagTree=${identity.tagTree} release=${identity.releaseId} draft=${identity.releaseDraft} checksum=${identity.expectedBundleChecksum}`);
+        console.log(`[release-main] INFO resolved mode=${identity.mode} repository=${identity.repository} execution=${identity.executionSha} tag=${identity.tag} tagObject=${identity.tagObjectSha} tagCommit=${identity.tagCommitSha} pr=${identity.prNumber} candidate=${identity.candidateHead} candidateTree=${identity.candidateTree} tagTree=${identity.tagTree} release=${identity.releaseId} draft=${identity.releaseDraft} checksum=${identity.expectedBundleChecksum || "not-supplied"}`);
     } else if (command === "download-assets") {
         const result = downloadReleaseAssets({ identity: JSON.parse(readFileSync(option(args, "--identity"), "utf8")), bundleDir: option(args, "--bundle"), assetsJsonPath: option(args, "--assets-json") });
         console.log(`[release-main] INFO downloaded ${result.assetCount} assets to ${result.bundleDir}; inventory=${result.assetsJsonPath}`);
