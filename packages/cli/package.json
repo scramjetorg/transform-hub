@@ -59,6 +59,7 @@
       "**/*.spec.ts"
     ],
     "require": [
+      "../../scripts/lib/ava-cli-test-isolation.cjs",
       "../../scripts/lib/tsx-cjs-register.cjs"
     ],
     "typescript": {
