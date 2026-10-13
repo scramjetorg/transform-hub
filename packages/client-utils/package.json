@@ -19,7 +19,7 @@
     "@scramjet/utility": "^2.3.1-devel",
     "@types/node-fetch": "^2.6.12",
     "abort-controller": "^3.0.0",
-    "n-readlines": "^1.0.1",
+    "n-readlines": "^3.4.1",
     "node-fetch": "^2.6.7",
     "normalize-url": "4",
     "scramjet": "^4.37.0"
