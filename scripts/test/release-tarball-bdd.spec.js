@@ -111,6 +111,9 @@ test("Docker tarball mode mounts immutable packages and writable BDD fixtures", 
     t.true(source.includes("SCRAMJET_SPAWN_TS="));
     t.true(source.includes("NODE_PATH="));
     t.true(source.includes("SCRAMJET_TARBALL_BDD_ROOT=/work"));
+    t.true(source.includes('"SCRAMJET_HOME"'));
+    t.true(source.includes('"SCRAMJET_BDD_CONFIG_PATH"'));
+    t.true(source.includes('"SCRAMJET_BDD_ARTIFACT_ROOT"'));
     t.true(source.includes('name === "PACKAGES_DIR"'));
     t.true(source.includes("inner command supplies only runner-prepared writable fixture paths"));
 });
