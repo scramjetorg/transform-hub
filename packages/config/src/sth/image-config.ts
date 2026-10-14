@@ -1,8 +1,8 @@
 export const imageConfig = {
-    prerunner: "scramjetorg/pre-runner:2.3.1",
+    prerunner: "scramjetorg/pre-runner:2.3.2",
     runner: {
-        node: "scramjetorg/runner:2.3.1",
-        python3: "scramjetorg/runner-py:2.3.1",
-        bun: "scramjetorg/runner-bun:2.3.1"
+        node: "scramjetorg/runner:2.3.2",
+        python3: "scramjetorg/runner-py:2.3.2",
+        bun: "scramjetorg/runner-bun:2.3.2"
     }
 };
