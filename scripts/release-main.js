@@ -139,7 +139,6 @@ function resolvePublicationIdentity({ environment = process.env, event, runner =
     const invocation = event === undefined ? JSON.parse(readFileSync(environment.GITHUB_EVENT_PATH, "utf8")) : event;
     const executionSha = assertSha(environment.GITHUB_SHA, "execution SHA");
     if (environment.GITHUB_REPOSITORY !== DEFAULT_REPOSITORY) throw new Error(`Publication is restricted to ${DEFAULT_REPOSITORY}.`);
-    if (environment.GITHUB_REF_PROTECTED !== "true") throw new Error("Publication requires a protected Git ref.");
     const eventName = environment.GITHUB_EVENT_NAME;
     let mode;
     let tag;
@@ -156,6 +155,7 @@ function resolvePublicationIdentity({ environment = process.env, event, runner =
         mode = "tag-push";
     } else if (eventName === "workflow_dispatch") {
         if (environment.GITHUB_REF !== "refs/heads/main") throw new Error("Recovery dispatch is allowed only on refs/heads/main.");
+        if (environment.GITHUB_REF_PROTECTED !== "true") throw new Error("Recovery dispatch requires a protected Git ref.");
         const inputs = invocation?.inputs;
         if (!inputs || typeof inputs !== "object") throw new Error("Recovery dispatch inputs are required.");
         for (const name of ["stable_tag", "expected_tag_sha"])

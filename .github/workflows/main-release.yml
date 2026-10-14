@@ -45,6 +45,10 @@ jobs:
               echo "::error::Recovery dispatch must run on refs/heads/main; observed ref=$RELEASE_REF. No production/OIDC job was admitted."
               exit 1
             fi
+            if [[ "${RELEASE_REF_PROTECTED:-}" != "true" ]]; then
+              echo "::error::Recovery dispatch requires protected main; observed ref=$RELEASE_REF. No production/OIDC job was admitted."
+              exit 1
+            fi
           elif [[ "$RELEASE_EVENT_NAME" == "push" ]]; then
             if [[ ! "$RELEASE_REF" =~ ^refs/tags/v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
               echo "::error::Stable publication requires a canonical stable version tag; observed ref=$RELEASE_REF."
@@ -54,14 +58,10 @@ jobs:
             echo "::error::Unsupported publication event; observed event=$RELEASE_EVENT_NAME."
             exit 1
           fi
-          if [[ "${RELEASE_REF_PROTECTED:-}" != "true" ]]; then
-            echo "::error::Publication requires a protected Git ref; observed ref=$RELEASE_REF."
-            exit 1
-          fi
           echo "Admitted publication event=$RELEASE_EVENT_NAME ref=$RELEASE_REF"
   publish:
     needs: admission
-    if: ${{ needs.admission.result == 'success' && github.repository == 'scramjetorg/transform-hub' && github.ref_protected && ((github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')) || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')) }}
+    if: ${{ needs.admission.result == 'success' && github.repository == 'scramjetorg/transform-hub' && ((github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')) || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && github.ref_protected)) }}
     runs-on: ubuntu-24.04
     environment: production
     permissions:

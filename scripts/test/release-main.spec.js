@@ -169,9 +169,9 @@ test("recovery identity resolves a pinned historical tag against protected curre
     }
 });
 
-test("tag-push identity accepts an exact tag and either a draft or public release", (t) => {
-    for (const releaseDraft of [true, false]) {
-        const environment = { GITHUB_REPOSITORY: DEFAULT_REPOSITORY, GITHUB_EVENT_NAME: "push", GITHUB_REF: "refs/tags/v2.2.0", GITHUB_REF_PROTECTED: "true", GITHUB_SHA: SHA, GH_TOKEN: "fixture-only" };
+test("tag-push identity accepts any tag protection flag and either a draft or public release", (t) => {
+    for (const releaseDraft of [true, false]) for (const protectedRef of ["true", "false", "", undefined]) {
+        const environment = { GITHUB_REPOSITORY: DEFAULT_REPOSITORY, GITHUB_EVENT_NAME: "push", GITHUB_REF: "refs/tags/v2.2.0", ...(protectedRef === undefined ? {} : { GITHUB_REF_PROTECTED: protectedRef }), GITHUB_SHA: SHA, GH_TOKEN: "fixture-only" };
         const { steps, execution } = resolverQueue({ environment, mode: "tag-push", releaseDraft });
         const identity = resolvePublicationIdentity({ environment, event: {}, runner: scriptedRunner(t, steps) });
         t.is(identity.mode, "tag-push");
@@ -189,11 +189,11 @@ test("resolver fails closed before later GitHub operations when commit or releas
         { name: "tag commit", index: 5, stdout: `${"f".repeat(40)}\n`, error: /Tag commit mismatch/ },
         { name: "tag ancestry", mode: "recovery", index: 6, errorValue: Object.assign(new Error("not an ancestor"), { code: 1 }), error: /not an ancestor/ },
         { name: "tag package version", index: 6, stdout: JSON.stringify({ version: "2.3.0" }), error: /Tagged package version mismatch/ },
-        { name: "candidate tree", index: 11, stdout: `${"f".repeat(40)}\n`, error: /Candidate\/tag tree mismatch/, noReleaseList: true }
+        { name: "candidate tree", index: 11, stdout: `${"f".repeat(40)}\n`, error: /Candidate\/tag tree mismatch/, noReleaseList: true, protectedRef: "false" }
     ];
     for (const scenario of scenarios) {
         const mode = scenario.mode || "tag-push";
-        const environment = { GITHUB_REPOSITORY: DEFAULT_REPOSITORY, GITHUB_EVENT_NAME: mode === "recovery" ? "workflow_dispatch" : "push", GITHUB_REF: mode === "recovery" ? "refs/heads/main" : "refs/tags/v2.2.0", GITHUB_REF_PROTECTED: "true", GITHUB_SHA: SHA, GH_TOKEN: "fixture-only" };
+        const environment = { GITHUB_REPOSITORY: DEFAULT_REPOSITORY, GITHUB_EVENT_NAME: mode === "recovery" ? "workflow_dispatch" : "push", GITHUB_REF: mode === "recovery" ? "refs/heads/main" : "refs/tags/v2.2.0", GITHUB_REF_PROTECTED: scenario.protectedRef || "true", GITHUB_SHA: SHA, GH_TOKEN: "fixture-only" };
         const { steps } = resolverQueue({ environment, mode });
         steps[scenario.index].stdout = scenario.stdout;
         if (scenario.errorValue) steps[scenario.index].error = scenario.errorValue;
@@ -288,6 +288,9 @@ test("publication context validation rejects malformed input before git or GitHu
     t.throws(() => resolvePublicationIdentity({ environment, event: { inputs: { stable_tag: "v2.2.0" } }, runner: () => calls++ }), { message: /expected_tag_sha/ });
     t.is(calls, 0);
     t.throws(() => resolvePublicationIdentity({ environment: { ...environment, GITHUB_REF_PROTECTED: "false" }, event: { inputs: {} }, runner: () => calls++ }), { message: /protected/ });
+    t.throws(() => resolvePublicationIdentity({ environment: { ...environment, GITHUB_REF_PROTECTED: "" }, event: { inputs: {} }, runner: () => calls++ }), { message: /protected/ });
+    t.throws(() => resolvePublicationIdentity({ environment: { ...environment, GITHUB_REF_PROTECTED: undefined }, event: { inputs: {} }, runner: () => calls++ }), { message: /protected/ });
+    t.throws(() => resolvePublicationIdentity({ environment: { ...environment, GITHUB_REF: "refs/heads/feature/recovery" }, event: { inputs: {} }, runner: () => calls++ }), { message: /only on refs\/heads\/main/ });
     t.is(calls, 0);
     for (const checksum of [null, true, 7, "   ", "not-a-digest"]) {
         t.throws(() => resolvePublicationIdentity({ environment, event: { inputs: { stable_tag: "v2.2.0", expected_tag_sha: "b".repeat(40), expected_bundle_checksum: checksum } }, runner: () => calls++ }), { message: /optional sha256 digest/ });

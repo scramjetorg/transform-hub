@@ -22,6 +22,21 @@ removed; `security-check.yml` is retained.
 | `release-start.yml` | Manual dispatch on `devel` | `Start stable release` | Aligns the first `2.2.0-devel` baseline into `release/2.2.0` and opens the release PR. |
 | `main-release.yml` | Push of `v*.*.*` tag; manual recovery dispatch on protected `main` | `Publish stable tag` | A read-only admission job rejects wrong refs before the OIDC-capable publisher; recovery uniquely discovers the merged PR/public release and optionally binds a supplied historical outer checksum. |
 
+The PR validation job emits a preliminary context/admission report to both the
+job log and step summary before workspace setup. Trusted same-repository
+`release/X.Y.Z` → `main` PRs must have the matching canonical package version
+and exact event-head checkout, but their branch head is not required to descend
+from current `main` or `devel` (the `main` merge can use squash history and
+stable release branches may contain maintenance commits). This is admission
+only: the release-candidate workflow independently performs alignment, builds
+once, and verifies the downloaded immutable candidate bundle and complete
+tarball BDD suite before merge/tag handoff. The four rebuilding BDD jobs remain
+deferred in ordinary PR validation and are not reported as passing there.
+PRs targeting `devel` still must contain the current `origin/devel` base; their
+release-freeze check reports an unavailable GitHub PR query separately from an
+active release freeze. Fork, ordinary PR, and merge-queue validation retain
+their existing routing.
+
 ### Audit outcome and intentional overlap
 
 The release handoff is deliberately linear: `release-start.yml` creates the
@@ -100,12 +115,12 @@ or scanner bypass, follow [SECURITY.md](SECURITY.md).
 
 The repository cannot prove GitHub required workflows/rulesets, protected
 production-environment approvals, npm trusted publishers/OIDC configuration,
-tag protection, registry retention, Actionlint, or Zizmor. Operators must
+registry retention, Actionlint, or Zizmor. Operators must
 validate those controls in their respective services before enabling live
 publication. The production environment must permit trusted tag releases and, if
 recovery is enabled, protected-main recovery dispatches; both require approval
 before OIDC issuance. The workflow independently requires protected main and
 recorded historical-tag ancestry for recovery. The `main` ruleset must
-require the release candidate and merge checks, and tag protection must prevent
-unreviewed tag creation or movement. These remote controls complement the
-workflow's explicit tag-to-main SHA and release-bundle binding checks.
+require the release candidate and merge checks. Ordinary stable-tag publication
+does not require tag protection; explicit tag-to-main SHA and release-bundle
+binding checks remain enforced by the workflow.

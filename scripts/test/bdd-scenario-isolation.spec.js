@@ -40,6 +40,8 @@ function scenarioEnvironment(root) {
         SCRAMJET_BDD_RUN_ID: "scenario-isolation-test",
         SCRAMJET_BDD_CHUNK_ID: `chunk-${process.pid}`,
         SCRAMJET_BDD_ARTIFACT_ROOT: root,
+        SCRAMJET_HOME: path.join(root, "host-home"),
+        SCRAMJET_BDD_CONFIG_PATH: path.join(root, "host-config.json"),
     };
 }
 
@@ -178,8 +180,12 @@ test("scenario isolation creates an owner-scoped HOME, profile, config, artifact
         t.true(artifactPath.startsWith(isolation.artifactsDir));
         t.true(Number.isInteger(port) && port > 0);
         t.is(env.HOME, isolation.home);
+        t.is(env.SCRAMJET_HOME, isolation.home);
         t.is(env.SCRAMJET_BDD_CONFIG_PATH, isolation.configPath);
         t.is(env.CUSTOM, "value");
+        const hostileOverrides = isolation.environment({ SCRAMJET_HOME: "/host/home", SCRAMJET_BDD_CONFIG_PATH: "/host/config.json" });
+        t.is(hostileOverrides.SCRAMJET_HOME, isolation.home);
+        t.is(hostileOverrides.SCRAMJET_BDD_CONFIG_PATH, isolation.configPath);
 
         isolation.ownChild({ pid: 123 }, "fixture-child");
         isolation.ownContainer("fixture-container", "fixture-container", async () => {});

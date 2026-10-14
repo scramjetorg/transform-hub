@@ -17,3 +17,8 @@ test("release branch admission is exact", (t) => {
     t.true(flow.assertReleaseBranch("release/2.0.0", "2.0.0"));
     t.throws(() => flow.assertReleaseBranch("release/2.0.1", "2.0.0"), { message: /does not match/ });
 });
+
+test("stable release parsing rejects non-canonical versions and branch suffixes", (t) => {
+    for (const version of ["02.3.1", "2.3", "2.3.1-devel", "2.3.1\n"]) t.throws(() => flow.stableVersion(version));
+    t.throws(() => flow.assertReleaseBranch("release/2.3.1-hotfix", "2.3.1"), { message: /does not match/ });
+});

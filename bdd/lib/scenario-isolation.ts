@@ -263,6 +263,7 @@ export function createScenarioIsolation(lifecycle: ScenarioLifecycle, environmen
             ...ownershipEnv(ownership, environment),
             ...overrides,
             HOME: home,
+            SCRAMJET_HOME: home,
             SCRAMJET_BDD_CONFIG_PATH: configPath,
         }),
         writeProfile: (name, value, activeProfile = name) => {

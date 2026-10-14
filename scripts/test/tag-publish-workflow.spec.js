@@ -38,7 +38,7 @@ test("stable publication workflow has narrow inputs and explicit read-only admis
     t.false(dispatch.includes("release_id"));
     t.false(dispatch.includes("release_pr"));
     t.true(source.includes("needs: admission"));
-    t.true(source.includes("needs.admission.result == 'success' && github.repository == 'scramjetorg/transform-hub' && github.ref_protected"));
+    t.true(source.includes("needs.admission.result == 'success' && github.repository == 'scramjetorg/transform-hub' && ((github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')) || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && github.ref_protected))"));
     t.true(source.includes("environment: production"));
     t.true(source.includes("id-token: write"));
     t.true(source.includes("contents: write"));
@@ -68,13 +68,15 @@ test("stable publication workflow has narrow inputs and explicit read-only admis
     t.true(source.includes('test "$(npm --version)" = "11.19.0"'));
 });
 
-test("read-only admission gives actionable protected-main and stable-tag decisions", (t) => {
+test("read-only admission requires protected main for recovery but accepts ordinary stable tags", (t) => {
     const source = readFileSync(resolve(__dirname, "../../.github/workflows/main-release.yml"), "utf8");
     const script = admissionScript(source);
     const successMain = runAdmission(script, { event: "workflow_dispatch", ref: "refs/heads/main", protectedRef: "true" });
     t.is(successMain.status, 0, successMain.stderr);
-    const successTag = runAdmission(script, { event: "push", ref: "refs/tags/v2.3.0", protectedRef: "true" });
-    t.is(successTag.status, 0, successTag.stderr);
+    for (const protectedRef of ["true", "false", "", undefined]) {
+        const successTag = runAdmission(script, { event: "push", ref: "refs/tags/v2.3.0", protectedRef });
+        t.is(successTag.status, 0, successTag.stderr);
+    }
     for (const protectedRef of ["true", "false"]) {
         const branch = runAdmission(script, { event: "workflow_dispatch", ref: "refs/heads/feature/recovery", protectedRef });
         t.not(branch.status, 0);
@@ -83,6 +85,6 @@ test("read-only admission gives actionable protected-main and stable-tag decisio
     for (const protectedRef of [undefined, "", "false"]) {
         const unprotected = runAdmission(script, { event: "workflow_dispatch", ref: "refs/heads/main", protectedRef });
         t.not(unprotected.status, 0);
-        t.regex(unprotected.stdout, /::error::Publication requires a protected Git ref; observed ref=refs\/heads\/main\./);
+        t.regex(unprotected.stdout, /::error::Recovery dispatch requires protected main; observed ref=refs\/heads\/main\./);
     }
 });

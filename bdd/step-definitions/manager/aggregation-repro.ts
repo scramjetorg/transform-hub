@@ -13,7 +13,7 @@
  *   AGGREGATION_REPRO_BASE_PORT – optional fixed MM port (defaults to a free port)
  */
 
-import { Given, When, Then, After } from "@cucumber/cucumber";
+import { Given, When, Then, Before, After } from "@cucumber/cucumber";
 import { strict as assert } from "assert";
 import { ChildProcess, spawn } from "child_process";
 import { X509Certificate } from "crypto";
@@ -32,6 +32,7 @@ import { disposeClient } from "./common";
 import { isSuccessfulReadinessResponse, isTransientReadinessStatus } from "../../lib/readiness-contract";
 import { resolvePublishedBin } from "../../lib/published-artifacts";
 import { publishedSourceEntry } from "../../lib/published-modules";
+const { createManagerLifecycleLog, safeEndpointOutcome, readinessTimeoutError } = require("../../lib/manager-lifecycle-log.js");
 const { getOwnership, ensureOwnershipPaths } = require("../../lib/ownership.js");
 
 const freeport = promisify(require("freeport"));
@@ -39,6 +40,10 @@ const ownership = getOwnership(process.env);
 ensureOwnershipPaths(ownership);
 
 const FIXTURE_ROOT = "bdd/fixtures/manager-aggregation";
+
+Before({ tags: "@aggregation-repro-cleanup" }, function(this: CustomWorld, scenario: any) {
+    this.resources.managerLifecycleScenario = scenario?.pickle?.name || "unknown scenario";
+});
 
 function aggregationProcesses(world: CustomWorld): ChildProcess[] {
     if (!world.resources.aggProcesses) {
@@ -48,16 +53,41 @@ function aggregationProcesses(world: CustomWorld): ChildProcess[] {
     return world.resources.aggProcesses;
 }
 
+function managerLifecycleLog(world: CustomWorld): any {
+    if (!world.resources.managerLifecycleLog) world.resources.managerLifecycleLog = createManagerLifecycleLog({ world });
+    return world.resources.managerLifecycleLog;
+}
+
+function managerProcesses(world: CustomWorld): Array<{ role: string; name: string; child?: ChildProcess }> {
+    const processes: Array<{ role: string; name: string; child?: ChildProcess }> = [];
+    if (world.resources.aggMMProcess) processes.push({ role: "MultiManager", name: "aggregation MultiManager", child: world.resources.aggMMProcess });
+    const hubs = world.resources.aggHubs as Record<string, { process?: ChildProcess }> | undefined;
+    for (const [name, hub] of Object.entries(hubs || {})) {
+        if (hub.process) processes.push({ role: "Hub", name, child: hub.process });
+    }
+    return processes;
+}
+
+function observedHubStates(world: CustomWorld, hubs: any[]): Array<{ id: string; name: string; pid?: number; active: boolean }> {
+    const ownedHubs = world.resources.aggHubs as Record<string, { process?: ChildProcess; id?: string }> | undefined;
+    return hubs.map(hub => {
+        const id = String(hub.id || "unknown");
+        const owner = Object.entries(ownedHubs || {}).find(([name, value]) => name === id || value.id === id);
+        return { id, name: owner?.[0] || id, pid: owner?.[1].process?.pid, active: hub.isConnectionActive === true };
+    });
+}
+
 async function waitForGetFailure(baseUrl: string, endpoint: string, timeoutMs = 10_000): Promise<void> {
     const client = new ClientUtils(baseUrl);
     const deadline = Date.now() + timeoutMs;
-    let lastResponse: unknown;
+    let responded = false;
     let lastError: Error | undefined;
 
     try {
         while (Date.now() < deadline) {
             try {
-                lastResponse = await client.get(endpoint);
+                await client.get(endpoint);
+                responded = true;
             } catch (error) {
                 lastError = error as Error;
                 return;
@@ -66,10 +96,7 @@ async function waitForGetFailure(baseUrl: string, endpoint: string, timeoutMs = 
             await sleep(50);
         }
 
-        throw new Error(
-            `Timed out waiting for ${baseUrl}/${endpoint} to stop responding; ` +
-            `last response: ${JSON.stringify(lastResponse)}; last error: ${lastError?.message || "none"}`
-        );
+        throw readinessTimeoutError(endpoint, lastError, responded);
     } finally {
         client.dispose();
     }
@@ -380,7 +407,6 @@ async function waitForGet(baseUrl: string, endpoint: string, timeoutMs = 20_000)
     const client = new ClientUtils(baseUrl);
     const deadline = Date.now() + timeoutMs;
     let lastError: Error | undefined;
-    let lastStatus: unknown;
 
     try {
         while (Date.now() < deadline) {
@@ -389,16 +415,12 @@ async function waitForGet(baseUrl: string, endpoint: string, timeoutMs = 20_000)
                 return;
             } catch (error) {
                 lastError = error as Error;
-                lastStatus = (error as any)?.status ?? (error as any)?.response?.status;
                 if (!isExpectedReadinessError(error)) throw error;
                 await sleep(50);
             }
         }
 
-        throw new Error(
-            `Timed out waiting for ${baseUrl}/${endpoint}; last status: ${lastStatus ?? "none"}; ` +
-            `last error: ${lastError?.message || "no response"}`
-        );
+        throw readinessTimeoutError(endpoint, lastError);
     } finally {
         client.dispose();
     }
@@ -689,7 +711,14 @@ Given("an isolated MultiManager aggregation stack", { timeout: 30000 }, async fu
     this.resources.aggVerser2Port = verser2Port;
     this.resources.aggVerser2PublicUrl = verser2PublicUrl;
 
-    await waitForGet(this.resources.aggMMApiBase, "version", 20_000);
+    const diagnostics = managerLifecycleLog(this);
+    try {
+        await waitForGet(this.resources.aggMMApiBase, "version", 20_000);
+        diagnostics.apiReady(managerId, proc.pid);
+    } catch (error) {
+        diagnostics.failure({ managerId, operation: "wait for initial MultiManager API readiness", endpoint: (error as any)?.managerEndpointName || "version", unmetCondition: "MultiManager API did not become ready", endpointOutcome: { error }, processes: managerProcesses(this), lifecycle: this.scenarioLifecycle });
+        throw error;
+    }
 
     const mmClient = this.resources.aggMMClient as MultiManagerClient;
     const managerConfig = {
@@ -706,9 +735,15 @@ Given("an isolated MultiManager aggregation stack", { timeout: 30000 }, async fu
         },
     };
 
-    const response = await mmClient.startManager(managerConfig as any);
-
-    assert.ok(response, "Expected Manager to be started");
+    let response: any;
+    try {
+        response = await mmClient.startManager(managerConfig as any);
+        assert.ok(response, "Expected Manager to be started");
+        diagnostics.managerStarted(managerId, proc.pid);
+    } catch (error) {
+        diagnostics.failure({ managerId, operation: "start initial Manager", endpoint: "Manager start", unmetCondition: "MultiManager did not accept Manager start", endpointOutcome: { error }, processes: managerProcesses(this), lifecycle: this.scenarioLifecycle });
+        throw error;
+    }
 
     // Fetch verser2 trust material
     const client = new ClientUtils(this.resources.aggMMApiBase);
@@ -926,20 +961,69 @@ Given("I wait for hubs to register with the Manager", { timeout: 15000 }, async 
     const client = new ClientUtils((this.resources.aggMMClient as MultiManagerClient).apiBase);
     const managerId = this.resources.aggManagerId as string;
     const expectedHubCount = this.resources.aggHubCount || 0;
+    const expectedHubNames = Object.keys((this.resources.aggHubs as Record<string, unknown>) || {});
+    const diagnostics = managerLifecycleLog(this);
+    const wait = diagnostics.waitingForHubs(managerId, expectedHubNames, expectedHubCount);
     const deadline = Date.now() + 12_000;
     let lastResponse: unknown;
     let lastSequences: unknown;
     let lastInstances: unknown;
+    let lastHttpStatus: number | undefined;
+    let lastTransportErrorCode: string | undefined;
+    let lastClientErrorCode: string | undefined;
+    let lastEndpoint = "list";
+    let unmetCondition = `fewer than ${expectedHubCount} hubs are registered`;
+    let failureLogged = false;
+
+    const logFailure = (operation: string, error?: unknown) => {
+        if (failureLogged) return;
+        failureLogged = true;
+        const observed = Array.isArray(lastResponse) ? lastResponse : [];
+        diagnostics.failure({
+            operation,
+            managerId,
+            endpoint: lastEndpoint,
+            unmetCondition,
+            endpointOutcome: { status: lastHttpStatus, error, transportCode: lastTransportErrorCode, clientCode: lastClientErrorCode },
+            processes: managerProcesses(this),
+            lifecycle: this.scenarioLifecycle,
+            registration: {
+                expectedHubCount: wait.expectedHubCount,
+                expectedHubNames: wait.expectedHubNames,
+                observedHubs: observedHubStates(this, observed),
+                sequenceCount: Array.isArray(lastSequences) ? lastSequences.length : "NOT QUERIED",
+                instanceCount: Array.isArray(lastInstances) ? lastInstances.length : "NOT QUERIED",
+                attempts: wait.attempts,
+                elapsedMs: Date.now() - wait.startedAt,
+                lastHttpStatus,
+                lastTransportErrorCode,
+                lastClientErrorCode,
+            },
+        });
+    };
 
     try {
         while (Date.now() < deadline) {
+            wait.attempts++;
             try {
+                lastEndpoint = "list";
                 lastResponse = await client.get<any>(`cpm/${managerId}/api/v1/list`);
             } catch (error) {
-                if (!isExpectedReadinessError(error)) throw error;
+                const outcome = safeEndpointOutcome(error);
+                lastHttpStatus = outcome.status ?? undefined;
+                lastTransportErrorCode = outcome.transportCode ?? undefined;
+                lastClientErrorCode = outcome.clientCode ?? undefined;
+                if (!isExpectedReadinessError(error)) {
+                    unmetCondition = "hub list request failed";
+                    logFailure("GET Manager list", error);
+                    throw error;
+                }
                 await sleep(50);
                 continue;
             }
+            lastHttpStatus = 200;
+            lastTransportErrorCode = undefined;
+            lastClientErrorCode = undefined;
 
             const hubs = Array.isArray(lastResponse) ? lastResponse : [];
 
@@ -951,31 +1035,59 @@ Given("I wait for hubs to register with the Manager", { timeout: 15000 }, async 
                 const allActive = hubs.every((h: any) => h.isConnectionActive === true);
 
                 if (allActive) {
+                    unmetCondition = `waiting for at least ${expectedHubCount} Manager sequences and instances`;
                     try {
+                        lastEndpoint = "all_sequences";
                         lastSequences = await client.get<any>(`cpm/${managerId}/api/v1/all_sequences`);
+                        lastHttpStatus = 200;
+                        lastEndpoint = "instances";
                         lastInstances = await client.get<any>(`cpm/${managerId}/api/v1/instances`);
+                        lastHttpStatus = 200;
                         const sequences = Array.isArray(lastSequences) ? lastSequences : [];
                         const instances = Array.isArray(lastInstances) ? lastInstances : [];
-                        if (sequences.length >= expectedHubCount && instances.length >= expectedHubCount) return;
+                        if (sequences.length >= expectedHubCount && instances.length >= expectedHubCount) {
+                            diagnostics.hubRegistrationComplete(managerId, wait, {
+                                observedHubs: observedHubStates(this, hubs),
+                                sequenceCount: sequences.length,
+                                instanceCount: instances.length,
+                                lastHttpStatus,
+                                lastTransportErrorCode,
+                                lastClientErrorCode,
+                            });
+                            return;
+                        }
+                        if (sequences.length < expectedHubCount) {
+                            unmetCondition = `Manager sequence count ${sequences.length} is below expected count ${expectedHubCount}`;
+                        } else if (instances.length < expectedHubCount) {
+                            unmetCondition = `Manager instance count ${instances.length} is below expected count ${expectedHubCount}`;
+                        }
                     } catch (error) {
-                        if (!isExpectedReadinessError(error)) throw error;
+                        const outcome = safeEndpointOutcome(error);
+                        lastHttpStatus = outcome.status ?? undefined;
+                        lastTransportErrorCode = outcome.transportCode ?? undefined;
+                        lastClientErrorCode = outcome.clientCode ?? undefined;
+                        if (!isExpectedReadinessError(error)) {
+                            unmetCondition = `Manager ${lastEndpoint} request failed`;
+                            logFailure("GET Manager inventory", error);
+                            throw error;
+                        }
                     }
+                } else {
+                    unmetCondition = "one or more registered Hubs do not have an active route";
                 }
+            } else {
+                unmetCondition = `registered Hub count ${hubs.length} is below expected count ${expectedHubCount}`;
             }
 
             await sleep(50);
         }
 
-        const activeInfo = (Array.isArray(lastResponse) ? lastResponse : [])
-            .map((h: any) => `${h.id}:isConnectionActive=${h.isConnectionActive}`)
-            .join("; ");
-
-        assert.fail(
-            `Expected ${expectedHubCount} hubs to register with active routes, ` +
-            `last response: ${JSON.stringify(lastResponse)}. ` +
-            `Active states: ${activeInfo}; last sequences: ${JSON.stringify(lastSequences)}; ` +
-            `last instances: ${JSON.stringify(lastInstances)}`
-        );
+        const error = new Error(`Expected ${expectedHubCount} Hubs to register with active routes and inventory before the readiness deadline.`);
+        logFailure("Wait for Hub registration");
+        assert.fail(error.message);
+    } catch (error) {
+        logFailure("Wait for Hub registration", error);
+        throw error;
     } finally {
         client.dispose();
     }
@@ -1280,49 +1392,61 @@ When("the aggregation Manager is restarted", { timeout: 30000 }, async function 
     const client = new ClientUtils(mmClient.apiBase);
     const managerId = this.resources.aggManagerId as string;
     const oldManagerClient = this.resources.aggManagerClient;
+    const diagnostics = managerLifecycleLog(this);
+    const mmProcess = this.resources.aggMMProcess as ChildProcess | undefined;
+    let operation = "request Manager stop";
+    let endpoint = "Manager stop";
 
-    // Stop the Manager via MultiManager API.
-    await client.post(
-        `cpm/${managerId}/stop`,
-        undefined,
-        { headers: { "content-type": "application/json" } }
-    );
-
-    // Wait for Manager to be removed from the store.
-    const stopDeadline = Date.now() + 10_000;
-    let stopped = false;
-
-    while (Date.now() < stopDeadline) {
-        const managers = await client.get<any[]>("list");
-
-        if (Array.isArray(managers) && !managers.some((m: any) => m.id === managerId)) {
-            stopped = true;
-            break;
-        }
-
-        await sleep(50);
-    }
-
-    assert.ok(stopped, `Expected Manager ${managerId} to stop before restart`);
-
-    // Start Manager again with the same configuration (store the config for reuse).
-    const managerConfig = this.resources.aggManagerConfig || {
-        id: managerId,
-        verser2: {
-            localBroker: {
-                peerId: `manager.${managerId}.broker`,
-                routeDomain: `manager.${managerId}.scramjet.internal`,
-            },
-            localGuest: {
-                peerId: `manager.${managerId}.guest`,
-                routeDomain: `manager.${managerId}.scramjet.internal`,
-            },
-        },
-    };
+    diagnostics.restartRequested("Manager", managerId, mmProcess?.pid);
 
     try {
+        // Stop the Manager via MultiManager API.
+        await client.post(
+            `cpm/${managerId}/stop`,
+            undefined,
+            { headers: { "content-type": "application/json" } }
+        );
+
+        // Wait for Manager to be removed from the store.
+        operation = "wait for Manager removal";
+        endpoint = "list";
+        const stopDeadline = Date.now() + 10_000;
+        let stopped = false;
+
+        while (Date.now() < stopDeadline) {
+            const managers = await client.get<any[]>("list");
+
+            if (Array.isArray(managers) && !managers.some((m: any) => m.id === managerId)) {
+                stopped = true;
+                break;
+            }
+
+            await sleep(50);
+        }
+
+        assert.ok(stopped, `Expected Manager ${managerId} to stop before restart`);
+        diagnostics.stopped("Manager", managerId, mmProcess?.pid);
+
+        // Start Manager again with the same configuration (store the config for reuse).
+        const managerConfig = this.resources.aggManagerConfig || {
+            id: managerId,
+            verser2: {
+                localBroker: {
+                    peerId: `manager.${managerId}.broker`,
+                    routeDomain: `manager.${managerId}.scramjet.internal`,
+                },
+                localGuest: {
+                    peerId: `manager.${managerId}.guest`,
+                    routeDomain: `manager.${managerId}.scramjet.internal`,
+                },
+            },
+        };
+
+        operation = "start Manager";
+        endpoint = "Manager start";
         const response = await mmClient.startManager(managerConfig as any);
         assert.ok(response, "Expected Manager to be restarted");
+        diagnostics.managerStarted(managerId, mmProcess?.pid);
         disposeClient(oldManagerClient);
         this.resources.aggManagerClient = response;
 
@@ -1330,9 +1454,12 @@ When("the aggregation Manager is restarted", { timeout: 30000 }, async function 
         try {
             const trustMaterial = await client.get<any>(`verser2/trust/${managerId}`);
             if (trustMaterial?.ca) this.resources.aggVerser2CA = trustMaterial.ca;
-        } catch (e) {
-            console.log("Note: could not fetch verser2 trust material:", (e as Error).message);
+        } catch {
+            // Keep the previous trust material; existing assertions determine whether it remains usable.
         }
+    } catch (error) {
+        diagnostics.failure({ managerId, operation, endpoint, unmetCondition: `${operation} did not complete`, endpointOutcome: { error }, processes: managerProcesses(this), lifecycle: this.scenarioLifecycle });
+        throw error;
     } finally {
         client.dispose();
     }
@@ -1346,6 +1473,7 @@ When("the aggregation MultiManager process is restarted", { timeout: 45000 }, as
     const mmApiBase = this.resources.aggMMApiBase as string;
     const managerId = this.resources.aggManagerId as string;
     const oldManagerClient = this.resources.aggManagerClient;
+    const diagnostics = managerLifecycleLog(this);
     const managerConfig = this.resources.aggManagerConfig || {
         id: managerId,
         verser2: {
@@ -1365,37 +1493,56 @@ When("the aggregation MultiManager process is restarted", { timeout: 45000 }, as
     assert.ok(mmOptions, "Expected aggregation MultiManager options to be stored");
     assert.ok(mmEnv, "Expected aggregation MultiManager environment to be stored");
 
-    await this.scenarioLifecycle.stop(oldProcess);
-    await waitForGetFailure(mmApiBase, "version", 10_000);
-
-    disposeClient(this.resources.aggMMClient);
-
-    const proc = await spawnProcess(cmd, mmOptions, undefined, 15_000, mmEnv, this.scenarioLifecycle);
-
-    this.resources.aggMMProcess = proc;
-    this.resources.aggMMClient = new MultiManagerClient(mmApiBase);
-
-    await waitForGet(mmApiBase, "version", 20_000);
-
-    const mmClient = this.resources.aggMMClient as MultiManagerClient;
-    const response = await mmClient.startManager(managerConfig as any);
-
-    assert.ok(response, "Expected Manager to be started after MultiManager restart");
-
-    disposeClient(oldManagerClient);
-    this.resources.aggManagerClient = response;
-
-    const client = new ClientUtils(mmApiBase);
+    let operation = "stop MultiManager";
+    let endpoint = "MultiManager process";
+    diagnostics.restartRequested("MultiManager", managerId, oldProcess.pid);
     try {
-        const trustMaterial = await client.get<any>(`verser2/trust/${managerId}`);
+        await this.scenarioLifecycle.stop(oldProcess);
+        diagnostics.stopped("MultiManager", managerId, oldProcess.pid);
+        operation = "wait for MultiManager API to stop";
+        endpoint = "version";
+        await waitForGetFailure(mmApiBase, "version", 10_000);
 
-        if (trustMaterial?.ca) {
-            this.resources.aggVerser2CA = trustMaterial.ca;
+        disposeClient(this.resources.aggMMClient);
+
+        operation = "start MultiManager";
+        endpoint = "MultiManager process";
+        const proc = await spawnProcess(cmd, mmOptions, undefined, 15_000, mmEnv, this.scenarioLifecycle);
+
+        this.resources.aggMMProcess = proc;
+        this.resources.aggMMClient = new MultiManagerClient(mmApiBase);
+
+        operation = "wait for MultiManager API readiness";
+        endpoint = "version";
+        await waitForGet(mmApiBase, "version", 20_000);
+        diagnostics.apiReady(managerId, proc.pid);
+
+        const mmClient = this.resources.aggMMClient as MultiManagerClient;
+        operation = "start Manager after MultiManager restart";
+        endpoint = "Manager start";
+        const response = await mmClient.startManager(managerConfig as any);
+
+        assert.ok(response, "Expected Manager to be started after MultiManager restart");
+        diagnostics.managerStarted(managerId, proc.pid);
+
+        disposeClient(oldManagerClient);
+        this.resources.aggManagerClient = response;
+
+        const client = new ClientUtils(mmApiBase);
+        try {
+            const trustMaterial = await client.get<any>(`verser2/trust/${managerId}`);
+
+            if (trustMaterial?.ca) {
+                this.resources.aggVerser2CA = trustMaterial.ca;
+            }
+        } catch {
+            // The subsequent Hub registration checks distinguish usable retained trust.
+        } finally {
+            client.dispose();
         }
-    } catch {
-        // Keep the previous trust material; reconnect assertions below prove whether it is still usable.
-    } finally {
-        client.dispose();
+    } catch (error) {
+        diagnostics.failure({ managerId, operation, endpoint, unmetCondition: `${operation} did not complete`, endpointOutcome: { error }, processes: managerProcesses(this), lifecycle: this.scenarioLifecycle });
+        throw error;
     }
 });
 

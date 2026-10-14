@@ -6,6 +6,7 @@ import { configEnv, ProfileConfigEntity } from "../../types";
 import { profileConfigDefault, validateProfileEntry, validateProfileKeysSize } from "./commonProfileConfig";
 import { Verser2ProfileConfig } from "../../types";
 import { resolveVerser2ProfileEnvironment, validateVerser2Profile } from "./verser2Profile";
+import { writeCliConfigAtomically } from "./writeCliConfigAtomically";
 
 
 // Profile configuration class. Represents configuration that can be maniupulated by user.
@@ -150,6 +151,10 @@ export default class ProfileConfig extends ConfigFileDefault<ProfileConfigEntity
 
     protected validateEntry(key: string, value: any): boolean | null {
         return validateProfileEntry(key, value);
+    }
+
+    protected createIfNotExistAndWrite(value: any): boolean {
+        return writeCliConfigAtomically(this.file.path, value);
     }
 
     private persistCandidate(candidate: any): boolean {
