@@ -25,8 +25,21 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          count="$(gh pr list --repo "$GITHUB_REPOSITORY" --base main --state open --json headRefName,headRepository --jq "[.[] | select(.headRefName | startswith(\"release/\")) | select(.headRepository.fullName == \"$GITHUB_REPOSITORY\")] | length")"
-          test "$count" = 0 || { echo "A release PR is open; devel is frozen." >&2; exit 1; }
+          if ! count="$(gh pr list --repo "$GITHUB_REPOSITORY" --base main --state open --json headRefName,headRepository --jq "[.[] | select(.headRefName | startswith(\"release/\")) | select(.headRepository.fullName == \"$GITHUB_REPOSITORY\")] | length" 2>/dev/null)"; then
+            message="FAIL: devel release-freeze status unavailable because the GitHub PR query failed."
+            echo "$message Corrective action: Inspect GitHub CLI/API access and rerun the PR check." >&2
+            printf '%s\n\n' "- $message" "  - Corrective action: Inspect GitHub CLI/API access and rerun the PR check." >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          if [[ "$count" != 0 ]]; then
+            message="FAIL: devel is frozen by $count trusted open release PR(s)."
+            echo "$message Corrective action: Wait until the release PR is merged or closed." >&2
+            printf '%s\n\n' "- $message" "  - Corrective action: Wait until the release PR is merged or closed." >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          message="PASS: devel release-freeze check found no trusted open release PR."
+          echo "$message"
+          printf '%s\n\n' "- $message" >> "$GITHUB_STEP_SUMMARY"
 
   validation:
     name: CI / full validation
@@ -40,6 +53,14 @@ jobs:
           persist-credentials: false
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha || github.sha }}
+      - name: Preliminary CI diagnostics
+        env:
+          RELEASE_BASE_REF: ${{ github.event.pull_request.base.ref }}
+          RELEASE_HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          RELEASE_HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
+          RELEASE_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          RELEASE_PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: node scripts/lib/release-check-report.js pr
       - name: Verify devel PR is up to date
         if: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'devel' }}
         run: git merge-base --is-ancestor origin/devel HEAD
@@ -49,11 +70,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          branch="${{ github.event.pull_request.head.ref }}"
-          version="$(node -p "require('./package.json').version")"
-          test "$version" = "${branch#release/}"
-          git merge-base --is-ancestor origin/main HEAD
-          git merge-base --is-ancestor origin/devel HEAD
+          echo "PASS: trusted release PR event/repository/base routing was confirmed by Preliminary CI diagnostics."
+          echo "PASS: canonical version/branch and exact event-head checkout were confirmed by Preliminary CI diagnostics."
       - uses: ./.github/actions/setup-workspace
         with:
           cache-mode: restore-only

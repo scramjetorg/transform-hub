@@ -194,6 +194,15 @@ const shellEscape = (arg) => `'${String(arg).replace(/'/g, "'\\''")}'`;
 
 const ENV_ALLOWLIST_EXACT = new Set(["NO_HOST", "TEST_REPORT", "DEVELOPMENT", "PACKAGES_DIR", "SCP_ENV_VALUE", "CI"]);
 const ENV_ALLOWLIST_PREFIXES = ["SCRAMJET_", "BDD_"];
+const RUNNER_OWNED_CONTAINER_ENV = new Set([
+    "SCRAMJET_HOME",
+    "SCRAMJET_BDD_RUN_ID",
+    "SCRAMJET_BDD_CHUNK_ID",
+    "SCRAMJET_BDD_FEATURE_PATHS",
+    "SCRAMJET_BDD_OWNER",
+    "SCRAMJET_BDD_ARTIFACT_ROOT",
+    "SCRAMJET_BDD_CONFIG_PATH",
+]);
 
 const collectEnvForwardArgs = () => {
     const out = [];
@@ -204,6 +213,8 @@ const collectEnvForwardArgs = () => {
         if (typeof value !== "string") {
             continue;
         }
+
+        if (RUNNER_OWNED_CONTAINER_ENV.has(name)) continue;
 
         // The checkout's ../packages path is never a valid tarball-mode input.
         // The inner command supplies only runner-prepared writable fixture paths.
@@ -251,6 +262,8 @@ dockerRunArgs.push(
     tarballRootMode ? "/repo" : "/work",
     "-e",
     "HOME=/work-tmp",
+    "-e",
+    "SCRAMJET_HOME=/work-tmp",
     "-e",
     "TMPDIR=/work-tmp",
     "-e",

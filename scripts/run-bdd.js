@@ -151,6 +151,10 @@ const childEnv = {
 	NODE_OPTIONS: bddNodeOptions(),
 	SCRAMJET_BDD_INVOCATION_STARTED_AT_EPOCH_MS: String(invocationStartedAtEpochMs),
 };
+const cliHomeDir = fs.mkdtempSync(resolve(os.tmpdir(), `scramjet-bdd-cli-home-${process.pid}-`));
+childEnv.SCRAMJET_HOME = cliHomeDir;
+childEnv.SCRAMJET_BDD_CONFIG_PATH = resolve(cliHomeDir, "bdd-config.json");
+childEnv.SCRAMJET_BDD_ARTIFACT_ROOT = resolve(cliHomeDir, "artifacts");
 
 const outputDir = parsedOptions.mode === "full" ? null : fs.mkdtempSync(resolve(os.tmpdir(), "bdd-direct-"));
 const timingEventsFile = outputDir ? resolve(outputDir, "timing.events.jsonl") : null;
@@ -173,16 +177,21 @@ const runPhases = outputDir ? [{
 const cucumberStartedAtEpochMs = Date.now();
 const startedAt = process.hrtime.bigint();
 
-const result = spawnSync(process.execPath, [
-	...bddNodeArgs(),
-	cucumberCli,
-	...directArgs,
-], {
-	cwd: bddDir,
-	stdio: parsedOptions.mode === "full" ? "inherit" : "pipe",
-	encoding: "utf8",
-	env: childEnv,
-});
+let result;
+try {
+	result = spawnSync(process.execPath, [
+		...bddNodeArgs(),
+		cucumberCli,
+		...directArgs,
+	], {
+		cwd: bddDir,
+		stdio: parsedOptions.mode === "full" ? "inherit" : "pipe",
+		encoding: "utf8",
+		env: childEnv,
+	});
+} finally {
+	fs.rmSync(cliHomeDir, { recursive: true, force: true });
+}
 
 // Post-run: leak detection.
 let exitCode = result.status === null ? 1 : result.status;

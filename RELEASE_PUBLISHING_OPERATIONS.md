@@ -76,7 +76,7 @@ Use npm trusted publishing/OIDC only: do not create an `NPM_TOKEN`, automation t
 Create a repository environment named exactly `production` and attach it only to
 the active `main-release.yml` publish job. Operators must:
 
-1. Restrict deployment to protected production tag pushes (`vX.Y.Z`) and the explicit recovery exception: `workflow_dispatch` on protected `main` from the trusted repository. A separate read-only admission job reports a clear failure on a wrong branch before the publisher can be admitted; it has no environment, token, checkout, or OIDC permission. The publisher independently proves the dispatch SHA equals current `origin/main`, the historical tag commit is its ancestor, and the uniquely discovered merged same-repository release PR head/tree matches the immutable bundle. Recovery is public-release-only and requires `stable_tag` and `expected_tag_sha`; release ID and PR are discovered uniquely. `expected_bundle_checksum` is optional; when supplied it must match the manifest's outer checksum. Do not permit devel, feature branches, pull requests, or forks.
+1. Restrict deployment to ordinary stable tag pushes (`vX.Y.Z`) and the explicit recovery exception: `workflow_dispatch` on protected `main` from the trusted repository. Ordinary tag publication does not require GitHub's ref-protection flag; tag-to-current-main SHA and immutable release-bundle checks remain mandatory. A separate read-only admission job reports a clear failure on a wrong recovery branch or unprotected main before the publisher can be admitted; it has no environment, token, checkout, or OIDC permission. The publisher independently proves the dispatch SHA equals current `origin/main`, the historical tag commit is its ancestor, and the uniquely discovered merged same-repository release PR head/tree matches the immutable bundle. Recovery is public-release-only and requires `stable_tag` and `expected_tag_sha`; release ID and PR are discovered uniquely. `expected_bundle_checksum` is optional; when supplied it must match the manifest's outer checksum. Do not permit devel, feature branches, pull requests, or forks.
    Ordinary stable-tag pushes remain bound to the tag commit being exactly the current `origin/main` commit; the historical-ancestor exception applies only to recovery dispatches.
 2. Require approval from the designated release-maintainers team before OIDC issuance. Require at least two reviewers where supported and prevent self-review.
 3. Disable routine administrator/environment-protection bypass. Emergency bypass is an audited organization incident action, never a workflow input.
@@ -105,13 +105,13 @@ Only the protected npm publish job may request `id-token: write`; all other jobs
 | Issuer | `https://token.actions.githubusercontent.com` |
 | Audience | `npm:registry.npmjs.org` |
 | `repository` / `repository_owner` | `scramjetorg/transform-hub` / `scramjetorg` |
-| Normal tag push `event_name` / `ref` / `ref_protected` | `push` / `refs/tags/vX.Y.Z` / `true` |
+| Normal tag push `event_name` / `ref` | `push` / `refs/tags/vX.Y.Z` |
 | Normal tag push `workflow_ref` | `scramjetorg/transform-hub/.github/workflows/main-release.yml@refs/tags/vX.Y.Z` |
 | Recovery `event_name` / `ref` / `ref_protected` | `workflow_dispatch` / `refs/heads/main` / `true` |
 | Recovery `workflow_ref` | `scramjetorg/transform-hub/.github/workflows/main-release.yml@refs/heads/main` |
 | `sub` with the production environment | `repo:scramjetorg/transform-hub:environment:production` |
 
-With an environment, GitHub uses the environment form of `sub`, not the ref form. Therefore the protected tag or protected-main recovery admission, the workflow's current-main/tag ancestry checks, merged-PR/tree binding, and mode-specific `workflow_ref` are jointly required. npm's registration constrains the provider/repository/workflow; GitHub controls enforce protected production approval. Operators must separately allow protected `main` in production environment eligibility for recovery; this repository does not prove that remote setting.
+With an environment, GitHub uses the environment form of `sub`, not the ref form. Therefore tag/main admission, the workflow's current-main/tag ancestry checks, merged-PR/tree binding, and mode-specific `workflow_ref` are jointly required. npm's registration constrains the provider/repository/workflow; GitHub controls enforce protected production approval. Operators must separately allow protected `main` in production environment eligibility for recovery; this repository does not prove that remote setting. Ordinary stable-tag publication does not require tag protection; the workflow still enforces tag-to-current-main SHA and bundle bindings.
 
 ## Failure and recovery
 

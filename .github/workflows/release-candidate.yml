@@ -28,6 +28,14 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
           persist-credentials: false
+      - name: Preliminary release candidate diagnostics
+        env:
+          RELEASE_BASE_REF: ${{ github.event.pull_request.base.ref }}
+          RELEASE_HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          RELEASE_HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
+          RELEASE_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          RELEASE_PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: node scripts/lib/release-check-report.js candidate
       - uses: ./.github/actions/setup-workspace
         with:
           cache-mode: restore-only

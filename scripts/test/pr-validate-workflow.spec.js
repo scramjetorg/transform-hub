@@ -12,8 +12,12 @@ test("PR workflow is read-only, branch-keyed, cancellable, and has no release pu
     t.true(source.includes("cancel-in-progress: true"));
     t.true(source.includes("Verify devel PR is up to date"));
     t.true(source.includes("Verify release PR admission"));
-    t.true(source.includes("merge-base --is-ancestor origin/main HEAD"));
+    t.true(source.includes("release-check-report.js pr"));
+    t.true(source.includes("devel is frozen by $count trusted open release PR(s)"));
+    t.true(source.includes("devel release-freeze status unavailable because the GitHub PR query failed"));
+    t.false(source.includes("merge-base --is-ancestor origin/main HEAD"));
     t.true(source.includes("merge-base --is-ancestor origin/devel HEAD"));
+    t.true(source.includes("Preliminary CI diagnostics"));
     t.true(source.includes("BDD"));
     t.false(source.includes("release-prerelease"));
     t.false(source.includes("docker/build-push-action"));
@@ -35,6 +39,7 @@ test("devel freeze query counts only canonical release PRs without unsupported g
 test("validation performs dependency-free admission before setup and alignment after setup", (t) => {
     const source = readFileSync(resolve(__dirname, "../../.github/workflows/pr-validate.yml"), "utf8");
     const validation = source.slice(source.indexOf("  validation:\n"), source.indexOf("\n\n  bdd-core-node:"));
+    const preliminary = validation.indexOf("name: Preliminary CI diagnostics");
     const releaseAdmission = validation.indexOf("name: Verify release PR admission");
     const workspaceSetup = validation.indexOf("uses: ./.github/actions/setup-workspace");
     const releaseAlignment = validation.indexOf("name: Verify release PR alignment");
@@ -42,13 +47,14 @@ test("validation performs dependency-free admission before setup and alignment a
     const lockfile = validation.indexOf("name: Lockfile");
     const admission = validation.slice(releaseAdmission, workspaceSetup);
 
-    t.true(releaseAdmission >= 0);
+    t.true(preliminary >= 0);
+    t.true(releaseAdmission > preliminary);
     t.true(workspaceSetup > releaseAdmission);
     t.true(releaseAlignment > workspaceSetup);
     t.true(releaseAlignCheck > releaseAlignment);
     t.true(releaseAlignment < lockfile);
-    t.true(admission.includes("merge-base --is-ancestor origin/main HEAD"));
-    t.true(admission.includes("merge-base --is-ancestor origin/devel HEAD"));
+    t.false(admission.includes("merge-base --is-ancestor origin/main HEAD"));
+    t.false(admission.includes("merge-base --is-ancestor origin/devel HEAD"));
     t.false(admission.includes("release:align:check"));
     t.true(validation.includes('version="$(node -p "require(\'./package.json\').version")"'));
 });
@@ -84,6 +90,19 @@ test("canonical trusted release PRs defer only the four workspace-rebuilding BDD
     t.true(source.includes("needs: [validation]"));
     t.true(source.includes("npm run test:packages:ci"));
     t.true(source.includes("npm run build:packages"));
+});
+
+test("release candidate emits dependency-free diagnostics before setup and release-app token minting", (t) => {
+    const source = readFileSync(resolve(__dirname, "../../.github/workflows/release-candidate.yml"), "utf8");
+    const checkout = source.indexOf("ref: ${{ github.event.pull_request.head.sha }}");
+    const diagnostics = source.indexOf("name: Preliminary release candidate diagnostics");
+    const setup = source.indexOf("uses: ./.github/actions/setup-workspace");
+    const token = source.indexOf("name: Mint release app token");
+
+    t.true(checkout >= 0 && checkout < diagnostics);
+    t.true(diagnostics < setup && setup < token);
+    t.true(source.includes("run: node scripts/lib/release-check-report.js candidate"));
+    t.true(source.includes("RELEASE_HEAD_SHA: ${{ github.event.pull_request.head.sha }}"));
 });
 
 test("package tests and builds provision the pinned Bun runtime first", (t) => {
