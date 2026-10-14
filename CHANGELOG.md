@@ -2,7 +2,18 @@
 
 This is the changelog for Scramjet Transform Hub. It holds only notable commits, others are grouped without commit info.
 
-## [2.3.0] - Current release
+## [2.3.2] - Current release
+
+### Changed
+
+- Updated dependencies with compatible security and maintenance fixes.
+- Added `SCRAMJET_HOME` support to select CLI configuration and session storage independently of the user's home directory.
+
+### Fixed
+
+- Prevented partial JSON reads during concurrent CLI commands by writing profile and global configuration files atomically.
+
+## [2.3.0]
 
 ### Features
 - Added instance-owned runtime manifest publication and retrieval through HubClient v2, with per-instance revisions and audited publication, update, and removal changes.
