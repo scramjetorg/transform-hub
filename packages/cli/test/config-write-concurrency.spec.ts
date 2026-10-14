@@ -8,7 +8,9 @@ import { writeCliConfigAtomically } from "../src/lib/config/writeCliConfigAtomic
 
 const { createAvaMemoryGuard } = require("../../../scripts/lib/ava-memory-guard");
 const test: typeof baseTest = createAvaMemoryGuard(baseTest);
-const cliArtifact = path.resolve(__dirname, "../../../dist/cli/bin/index.js");
+const stagedCli = require.resolve("../src/bin/index");
+const stagedPackageDir = path.resolve(__dirname, "..");
+const tsxRegister = path.resolve(__dirname, "../../../scripts/lib/tsx-cjs-register.cjs");
 
 const waitForFile = (filename: string, timeout = 10000) => {
     let timer: NodeJS.Timeout | undefined;
@@ -29,13 +31,58 @@ const waitForFile = (filename: string, timeout = 10000) => {
     return { promise, cancel: () => cancel() };
 };
 
-const runCli = (args: string[], env: NodeJS.ProcessEnv) => new Promise<{ code: number | null; output: string }>(resolve => {
-    const child = spawn(process.execPath, [cliArtifact, ...args], { cwd: path.dirname(cliArtifact), env, stdio: ["ignore", "pipe", "pipe"] });
+type ChildResult = { code: number | null; signal: NodeJS.Signals | null; output: string; launchError?: Error };
+type ChildRun = { child?: ReturnType<typeof spawn>; completion: Promise<ChildResult>; role: string; executable: string; cwd: string };
+
+const startCli = (role: string, executable: string, args: string[], cwd: string, env: NodeJS.ProcessEnv): ChildRun => {
+    let child: ReturnType<typeof spawn> | undefined;
+    let launchError: Error | undefined;
     let output = "";
-    child.stdout.on("data", chunk => output += chunk);
-    child.stderr.on("data", chunk => output += chunk);
-    child.once("exit", code => resolve({ code, output }));
-});
+    let timeout: NodeJS.Timeout | undefined;
+    const completion = new Promise<ChildResult>(resolve => {
+        const settle = (code: number | null, signal: NodeJS.Signals | null) => {
+            if (timeout) clearTimeout(timeout);
+            resolve({ code, signal, output, launchError });
+        };
+        try {
+            child = spawn(executable, args, { cwd, env, stdio: ["ignore", "pipe", "pipe"] });
+            child.stdout?.on("data", chunk => output += chunk);
+            child.stderr?.on("data", chunk => output += chunk);
+            child.on("error", error => { launchError = error; });
+            child.once("close", settle);
+            timeout = setTimeout(() => child?.kill(), 30000);
+        } catch (error) {
+            launchError = error as Error;
+            settle(null, null);
+        }
+    });
+    return { child, completion, role, executable, cwd };
+};
+
+const requireSuccessfulExit = (result: ChildResult, run: ChildRun) => {
+    if (result.launchError || result.code !== 0) {
+        throw new Error(`${run.role} failed (executable=${run.executable}, cwd=${run.cwd}, code=${result.code}, signal=${result.signal}): ${result.launchError ?? result.output}`);
+    }
+};
+
+const stopCli = async (run: ChildRun, timeoutMs = 3000) => {
+    if (!run.child || run.child.exitCode !== null || run.child.signalCode !== null) return run.completion;
+    run.child.kill();
+    let timeout: NodeJS.Timeout | undefined;
+    try {
+        return await Promise.race([
+            run.completion,
+            new Promise<ChildResult>(resolve => {
+                timeout = setTimeout(() => {
+                    run.child?.kill("SIGKILL");
+                    resolve({ code: null, signal: "SIGKILL", output: "child did not close after termination request" });
+                }, timeoutMs);
+            }),
+        ]);
+    } finally {
+        if (timeout) clearTimeout(timeout);
+    }
+};
 
 test("two initialized CLI processes never observe a partial config during persistence", async t => {
     const directory = fs.mkdtempSync(path.join(os.tmpdir(), "scramjet-cli-process-race-"));
@@ -65,6 +112,19 @@ fs.renameSync = function(from, to) {
   return originalRename.call(this, from, to);
 };
 `);
+    const noBuiltCliPreload = path.join(directory, "forbid-built-cli.cjs");
+    fs.writeFileSync(noBuiltCliPreload, `
+const Module = require("module");
+const originalResolveFilename = Module._resolveFilename;
+Module._resolveFilename = function(request, parent, isMain, options) {
+  const resolved = originalResolveFilename.call(this, request, parent, isMain, options);
+  if (String(resolved).includes("/dist/cli/") || String(resolved).includes("/packages/cli/dist/")) {
+    throw new Error("CLI child unexpectedly resolved a built CLI artifact: " + resolved);
+  }
+  return resolved;
+};
+`);
+    t.true(stagedCli.includes(`${path.sep}.ava-cli${path.sep}src${path.sep}bin${path.sep}index`), `CLI entry must resolve from AVA's staged package: ${stagedCli}`);
 
     const scenarios = [
         { name: "default profile", target: defaultProfile, command: ["config", "set", "apiUrl", "http://127.0.0.1:8123/api/v1"], readArgs: ["-c", selected, "config", "print"], expected: { apiUrl: "http://127.0.0.1:8123/api/v1" } },
@@ -78,32 +138,63 @@ fs.renameSync = function(from, to) {
         const paused = path.join(directory, `${scenario.name.replaceAll(" ", "-")}.paused`);
         const release = path.join(directory, `${scenario.name.replaceAll(" ", "-")}.release`);
         const env = { ...process.env, SCRAMJET_HOME: home, CLI_ATOMIC_TARGET: scenario.target, CLI_ATOMIC_PAUSED: paused, CLI_ATOMIC_RELEASE: release };
-        const first = spawn(process.execPath, ["--require", preload, cliArtifact, ...scenario.command], { cwd: path.dirname(cliArtifact), env, stdio: ["ignore", "pipe", "pipe"] });
-        let firstOutput = "";
-        let firstError: Error | undefined;
-        first.on("error", error => firstError = error);
-        first.stdout.on("data", chunk => firstOutput += chunk);
-        first.stderr.on("data", chunk => firstOutput += chunk);
-        const firstExit = new Promise<{ code: number | null; signal: NodeJS.Signals | null }>(resolve => first.once("exit", (code, signal) => resolve({ code, signal })));
+        const writer = startCli("writer", process.execPath,
+            ["--require", tsxRegister, "--require", noBuiltCliPreload, "--require", preload, stagedCli, ...scenario.command],
+            stagedPackageDir, { ...env, NODE_OPTIONS: "" });
         let didPause = false;
+        let scenarioFailure: unknown;
+        let writerResult: ChildResult | undefined;
         const markerWait = waitForFile(paused);
         try {
-            await Promise.race([markerWait.promise, firstExit.then(exit => { throw new Error(`${scenario.name} writer for ${scenario.target} exited before pausing (${exit.code ?? exit.signal}): ${firstError ?? firstOutput}`); })]);
+            await Promise.race([markerWait.promise, writer.completion.then(result => {
+                throw new Error(`${scenario.name} writer for ${scenario.target} exited before pausing (code=${result.code}, signal=${result.signal}, executable=${writer.executable}, cwd=${writer.cwd}): ${result.launchError ?? result.output}`);
+            })]);
             didPause = true;
             t.is(fs.readFileSync(scenario.target, "utf8"), before, `${scenario.name}: destination remains the complete old JSON while rename is paused`);
-            const second = await runCli(scenario.readArgs, { ...env, NODE_OPTIONS: "" });
-            t.is(second.code, 0, `${scenario.name}: concurrent CLI startup/read succeeds: ${second.output}`);
+            const reader = startCli("reader", process.execPath, ["--require", tsxRegister, "--require", noBuiltCliPreload, stagedCli, ...scenario.readArgs],
+                stagedPackageDir, { ...env, NODE_OPTIONS: "" });
+            const second = await reader.completion;
+            requireSuccessfulExit(second, reader);
             t.notThrows(() => JSON.parse(fs.readFileSync(scenario.target, "utf8")), `${scenario.name}: old destination remains parseable`);
+        } catch (error) {
+            scenarioFailure = error;
         } finally {
             markerWait.cancel();
             fs.writeFileSync(release, "release");
-            if (!didPause && first.exitCode === null) first.kill();
-            const exit = await firstExit;
-            if (didPause) t.is(exit.code, 0, `${scenario.name}: writer exits successfully (${exit.signal ?? "no signal"}): ${firstOutput}`);
+            writerResult = didPause ? await writer.completion : await stopCli(writer);
         }
+        if (scenarioFailure) throw scenarioFailure;
+        if (didPause && writerResult) requireSuccessfulExit(writerResult, writer);
         t.deepEqual(fs.readdirSync(path.dirname(scenario.target)).filter(name => name.includes(".tmp-")), [], `${scenario.name}: no temporary files remain`);
         t.deepEqual(JSON.parse(fs.readFileSync(scenario.target, "utf8")), { ...JSON.parse(before), ...scenario.expected }, `${scenario.name}: intended mutation is persisted`);
       }
+    } finally {
+        fs.rmSync(directory, { recursive: true, force: true });
+    }
+});
+
+test("CLI child launcher settles for missing cwd, executable, and script", async t => {
+    const directory = fs.mkdtempSync(path.join(os.tmpdir(), "scramjet-cli-child-launch-"));
+    try {
+        const missingCwd = startCli("missing-cwd", process.execPath, ["--version"], path.join(directory, "missing-cwd"), { ...process.env, NODE_OPTIONS: "" });
+        const cwdResult = await missingCwd.completion;
+        t.truthy(cwdResult.launchError);
+        t.regex(String(cwdResult.launchError), /ENOENT/);
+
+        const missingExecutable = startCli("missing-executable", path.join(directory, "no-node"), [], directory, process.env);
+        const executableResult = await missingExecutable.completion;
+        t.truthy(executableResult.launchError);
+        t.regex(String(executableResult.launchError), /ENOENT/);
+
+        const missingScript = path.join(directory, "missing-script.js");
+        const missingScriptRun = startCli("missing-script", process.execPath, [missingScript], directory, { ...process.env, NODE_OPTIONS: "" });
+        const scriptResult = await missingScriptRun.completion;
+        t.falsy(scriptResult.launchError);
+        t.not(isNaN(scriptResult.code as number));
+        t.not(scriptResult.code, 0);
+        t.is(missingCwd.child?.exitCode, -2);
+        t.is(missingExecutable.child?.exitCode, -2);
+        t.not(missingScriptRun.child?.exitCode, null);
     } finally {
         fs.rmSync(directory, { recursive: true, force: true });
     }
