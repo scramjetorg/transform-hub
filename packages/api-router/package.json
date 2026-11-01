@@ -19,7 +19,7 @@
     "@scramjet/api-types": "^2.3.3-devel",
     "@scramjet/config": "^2.3.3-devel",
     "@scramjet/runtime-types": "^2.3.3-devel",
-    "zod": "^3.25.67"
+    "zod": "^4.6.6"
   },
   "devDependencies": {
     "@ava/typescript": "^7.0.0",
