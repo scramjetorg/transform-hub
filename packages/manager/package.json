@@ -40,7 +40,7 @@
     "rereadable-stream": "^1.4.13",
     "scramjet": "^4.37.0",
     "selfsigned": "^5.5.0",
-    "zod": "^3.25.67"
+    "zod": "^4.6.6"
   },
   "devDependencies": {
     "@ava/typescript": "^7.0.0",
