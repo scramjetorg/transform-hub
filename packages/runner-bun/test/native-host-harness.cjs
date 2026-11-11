@@ -8,8 +8,28 @@ const net = require("node:net");
 const { spawn } = require("node:child_process");
 
 const PACKAGE_ROOT = path.resolve(__dirname, "..");
+const WORKSPACE_ROOT = path.resolve(PACKAGE_ROOT, "../..");
 const NODE_RUNNER = path.resolve(PACKAGE_ROOT, "../runner-node/src/bin/runner-node.ts");
+const BUN_FD_STREAMS = path.resolve(PACKAGE_ROOT, "src/fd-streams.ts");
 const CODE = { READY: 3014, DECLARE: 3015, MANIFEST_RESULT: 4006, STOP: 4001, KILL: 4002, EVENT: 5001 };
+
+function findScramjetPackageRoot() {
+    const entry = fs.realpathSync(require.resolve("scramjet", { paths: [PACKAGE_ROOT] }));
+    let current = path.dirname(entry);
+    while (current !== path.dirname(current)) {
+        const manifestPath = path.join(current, "package.json");
+        if (fs.existsSync(manifestPath) && JSON.parse(fs.readFileSync(manifestPath, "utf8")).name === "scramjet") {
+            const realRoot = fs.realpathSync(current);
+            const relative = path.relative(WORKSPACE_ROOT, realRoot);
+            assert.ok(relative && !relative.startsWith("..") && !path.isAbsolute(relative), `scramjet must resolve inside this worktree, got ${realRoot}`);
+            return realRoot;
+        }
+        current = path.dirname(current);
+    }
+    throw new Error(`Could not find the local scramjet package root for ${entry}`);
+}
+
+const SCRAMJET_PACKAGE_ROOT = findScramjetPackageRoot();
 
 function parseOptions(args) {
     return Object.fromEntries(args.filter(arg => arg.startsWith("--") && arg.includes("="))
@@ -35,10 +55,39 @@ function identityAssertions(records, runtime, expectedPid) {
     }
 }
 
-function sequenceSource({ markerPath, exportForm, behavior, output }) {
+function sequenceSource({ markerPath, exportForm, behavior, output, chainType }) {
+    const chainImports = chainType ? 'const { DataStream, StringStream, BufferStream } = require("scramjet");' : "";
+    const moduleRecord = chainType ? 'record("module", { scramjetPath: require.resolve("scramjet") });' : 'record("module");';
+    const chainFunctions = chainType ? `
+function first(input, ...args) {
+  record("chain-first", { args, inputIsStream: !!input && typeof input.on === "function" });
+  return DataStream.from([{ step: "first", argument: args[0] }]);
+}
+async function main(input, ...args) {
+  const chainValues = [];
+  for await (const value of input) chainValues.push(value);
+  record("main", { args, chainValues, sameContext: true });
+  if (${JSON.stringify(chainType)} === "generic") return DataStream.from([{ step: "second", argument: args[0], chainValues }]);
+  if (${JSON.stringify(chainType)} === "string") return StringStream.from(["chain:", args[0], ":done"]);
+  return BufferStream.from([Buffer.from([0, 255, 1])]);
+}
+` : `
+function main(input, ...args) {
+  if (!initializedContext) initializedContext = this;
+  if (!callbackRegistered) { this.on("native-bun-probe", onProbe); callbackRegistered = true; }
+  record("main", { args, inputIsStream: !!input && typeof input.on === "function", sameContext: this === initializedContext });
+  ${behavior === "main-sync-throw" ? 'throw new Error("fixture-main-sync");' : ""}
+  ${behavior === "main-async-reject" ? 'return Promise.reject(new Error("fixture-main-async"));' : ""}
+  if (${JSON.stringify(behavior)} === "declaration") return "declared";
+  if (["init-block-stop", "init-block-kill", "init-block-eof"].includes(${JSON.stringify(behavior)})) return new Promise(() => {});
+  return new Promise(resolve => { finish = resolve; });
+}
+`;
+    const arrayValue = chainType ? "[first, main]" : "[main]";
     return `
 const fs = require("node:fs");
 const { Readable } = require("node:stream");
+${chainImports}
 const marker = ${JSON.stringify(markerPath)};
 const identity = () => ({ pid: process.pid, execPath: process.execPath, bunVersion: process.versions.bun || null });
 const record = (stage, extra = {}) => {
@@ -46,7 +95,7 @@ const record = (stage, extra = {}) => {
   prior.push({ stage, ...identity(), ...extra });
   fs.writeFileSync(marker, JSON.stringify(prior));
 };
-record("module");
+${moduleRecord}
 let finish;
 let initializedContext;
 let callbackRegistered = false;
@@ -71,21 +120,12 @@ function initialize(context) {
   context.on("native-bun-probe", onProbe);
   callbackRegistered = true;
 }
-function main(input, ...args) {
-  if (!initializedContext) initializedContext = this;
-  if (!callbackRegistered) { this.on("native-bun-probe", onProbe); callbackRegistered = true; }
-  record("main", { args, inputIsStream: !!input && typeof input.on === "function", sameContext: this === initializedContext });
-  ${behavior === "main-sync-throw" ? 'throw new Error("fixture-main-sync");' : ""}
-  ${behavior === "main-async-reject" ? 'return Promise.reject(new Error("fixture-main-async"));' : ""}
-  if (${JSON.stringify(behavior)} === "declaration") return "declared";
-  if (["init-block-stop", "init-block-kill", "init-block-eof"].includes(${JSON.stringify(behavior)})) return new Promise(() => {});
-  return new Promise(resolve => { finish = resolve; });
-}
+${chainFunctions}
 switch (${JSON.stringify(exportForm)}) {
   case "function": main.initialize = initialize; module.exports = main; break;
-  case "array": module.exports = [main]; module.exports.initialize = initialize; break;
+  case "array": module.exports = ${arrayValue}; module.exports.initialize = initialize; break;
   case "default-function": module.exports = { default: main, initialize }; break;
-  case "default-array": module.exports = { default: [main], initialize }; break;
+  case "default-array": module.exports = { default: ${arrayValue}, initialize }; break;
   default: throw new Error("unknown export form");
 }
 `;
@@ -96,6 +136,10 @@ async function runHosted(options) {
     const sequencePath = path.join(temp, "sequence");
     const markerPath = path.join(temp, "author.json");
     fs.mkdirSync(sequencePath);
+    if (options.chainType) {
+        fs.mkdirSync(path.join(sequencePath, "node_modules"), { recursive: true });
+        fs.symlinkSync(SCRAMJET_PACKAGE_ROOT, path.join(sequencePath, "node_modules", "scramjet"), process.platform === "win32" ? "junction" : "dir");
+    }
     fs.writeFileSync(path.join(sequencePath, "package.json"), JSON.stringify({ main: "index.js" }));
     if (options.behavior === "missing-import") {
         fs.writeFileSync(path.join(sequencePath, "index.js"), 'require("./missing-module");');
@@ -104,7 +148,8 @@ async function runHosted(options) {
             markerPath,
             exportForm: options.export || "default-function",
             behavior: options.behavior || "success",
-            output: options.output || "binary"
+            output: options.output || "binary",
+            chainType: options.chainType
         }));
     }
 
@@ -285,26 +330,50 @@ async function runHosted(options) {
 
         const records = fs.existsSync(markerPath) ? JSON.parse(fs.readFileSync(markerPath, "utf8")) : [];
         if (options.nodeBin === "invalid") {
-            assert.deepEqual(records, [], "invalid NODE_BIN must fail before loading author code");
-        } else {
-            const shimRecord = pidFile && fs.existsSync(pidFile) ? JSON.parse(fs.readFileSync(pidFile, "utf8")) : undefined;
-            const runtimePid = records[0]?.pid ?? shimRecord?.pid ?? child.pid;
-            const artifactAbsent = runtimePid === child.pid ? outerArtifactAbsent : shimRecord?.pid === runtimePid && shimRecord.artifactAbsent;
-            assert.equal(artifactAbsent, true, `exit artifact for runtime PID ${runtimePid} existed before this test launched it`);
-            const exitPath = `/tmp/runner-${runtimePid}`;
-            ownedExitArtifacts.add(exitPath);
-            assert.equal(fs.readFileSync(exitPath, "utf8"), String(outcome.code), `exit artifact ${exitPath} did not match observed exit`);
+            assert.deepEqual(records.map(record => record.stage), ["module", "initialize", "main", "callback"], "native Bun must run the author sequence without NODE_BIN");
+            identityAssertions(records, "bun", child.pid);
         }
-        if (["success", "declaration"].includes(behavior)) {
+        const shimRecord = pidFile && fs.existsSync(pidFile) ? JSON.parse(fs.readFileSync(pidFile, "utf8")) : undefined;
+        const runtimePid = records[0]?.pid ?? shimRecord?.pid ?? child.pid;
+        const artifactAbsent = runtimePid === child.pid ? outerArtifactAbsent : shimRecord?.pid === runtimePid && shimRecord.artifactAbsent;
+        assert.equal(artifactAbsent, true, `exit artifact for runtime PID ${runtimePid} existed before this test launched it`);
+        const exitPath = `/tmp/runner-${runtimePid}`;
+        ownedExitArtifacts.add(exitPath);
+        assert.equal(fs.readFileSync(exitPath, "utf8"), String(outcome.code), `exit artifact ${exitPath} did not match observed exit`);
+        if (["success", "declaration", "chain"].includes(behavior)) {
             const hasInitializer = !["function", "array"].includes(options.export || "default-function");
-            const expectedStages = behavior === "declaration"
+            const expectedStages = behavior === "chain"
+                ? options.export === "array"
+                    ? ["module", "chain-first", "main"]
+                    : ["module", "initialize", "chain-first", "main"]
+                : behavior === "declaration"
                 ? ["module", "initialize", "declaration", "callback", "main"]
                 : hasInitializer ? ["module", "initialize", "main", "callback"] : ["module", "main", "callback"];
             assert.deepEqual(records.map(record => record.stage), expectedStages);
             if (options.identity) identityAssertions(records, options.identity, child.pid);
             else assert.equal(records.every(record => record.pid === records[0].pid), true, "author callbacks changed process");
             const mainRecord = records.find(record => record.stage === "main");
-            assert.equal(mainRecord.sameContext, true);
+            if (behavior === "chain") {
+                const firstRecord = records.find(record => record.stage === "chain-first");
+                assert.deepEqual(firstRecord.args, ["expected-arg"]);
+                assert.equal(firstRecord.inputIsStream, true);
+                assert.deepEqual(mainRecord.args, ["expected-arg"]);
+                assert.deepEqual(mainRecord.chainValues, [{ step: "first", argument: "expected-arg" }]);
+                const scramjetPath = fs.realpathSync(records[0].scramjetPath);
+                const localPath = path.relative(WORKSPACE_ROOT, scramjetPath);
+                assert.ok(localPath && !localPath.startsWith("..") && !path.isAbsolute(localPath), `sequence resolved scramjet outside this worktree: ${scramjetPath}`);
+                if (options.chainType === "generic") {
+                    const lines = Buffer.concat(output).toString("utf8").trim().split(/\r?\n/);
+                    assert.deepEqual(lines.map(line => JSON.parse(line)), [{ step: "second", argument: "expected-arg", chainValues: [{ step: "first", argument: "expected-arg" }] }]);
+                } else if (options.chainType === "string") {
+                    assert.deepEqual(Buffer.concat(output), Buffer.from("chain:expected-arg:done"));
+                } else {
+                    assert.deepEqual(Buffer.concat(output), Buffer.from([0, 255, 1]));
+                }
+                assert.equal(outputEnded, true, "chained stream output did not flush and close before child exit");
+            } else {
+                assert.equal(mainRecord.sameContext, true);
+            }
             if (behavior === "success") {
                 assert.deepEqual(mainRecord.args, ["expected-arg"]);
                 assert.equal(mainRecord.inputIsStream, true);
@@ -318,7 +387,7 @@ async function runHosted(options) {
                 assert.ok(monitorCodes.indexOf(CODE.READY) >= 0);
                 assert.ok(monitorCodes.indexOf(3012) > monitorCodes.indexOf(CODE.READY), "PANG must follow READY");
                 assert.equal(monitorCodes.at(-1), 3011, "SEQUENCE_COMPLETED must be the terminal monitor frame");
-            } else {
+            } else if (behavior === "declaration") {
                 assert.equal(records.find(record => record.stage === "declaration").revision, "rev-native");
             }
         } else if (behavior === "init-sync-throw" || behavior === "init-async-reject") {
@@ -344,7 +413,7 @@ async function runHosted(options) {
                 assert.ok(stoppedIndex > aliveIndex, "SEQUENCE_STOPPED must follow keepalive only after terminal STOP");
             }
         }
-        return { code: outcome.code, signal: outcome.signal, records, stderr, output: Buffer.concat(output).toString("hex"), monitorCodes: monitorFrames.map(([code]) => code) };
+        return { code: outcome.code, signal: outcome.signal, records, stderr, output: Buffer.concat(output).toString("hex"), outputEnded, monitorCodes: monitorFrames.map(([code]) => code) };
     } finally {
         if (timer) clearInterval(timer);
         if (child && child.exitCode === null && child.signalCode === null) {

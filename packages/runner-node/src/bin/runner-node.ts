@@ -88,10 +88,11 @@ export function resolveCompletionExitTimeout(context: { exitTimeout?: number }, 
 }
 
 function logRuntimeError(logger: ObjLogger, phase: "sequence-load" | "instance-runtime", bootConfig: RunnerNodeBootConfig, error: unknown): void {
-    const message = `STH runtime error phase=${phase} runtime=node sequenceId=${bootConfig.sequenceInfo?.id} instanceId=${bootConfig.instanceId} error=${formatErrorMessage(error)}`;
+    const runtime = typeof process.versions.bun === "string" ? "bun" : "node";
+    const message = `STH runtime error phase=${phase} runtime=${runtime} sequenceId=${bootConfig.sequenceInfo?.id} instanceId=${bootConfig.instanceId} error=${formatErrorMessage(error)}`;
     const details = {
         phase,
-        runtime: "node",
+        runtime,
         sequenceId: bootConfig.sequenceInfo?.id,
         instanceId: bootConfig.instanceId,
         sequencePath: bootConfig.sequencePath,
@@ -103,10 +104,10 @@ function logRuntimeError(logger: ObjLogger, phase: "sequence-load" | "instance-r
 }
 
 export async function bootstrap(overrides: BootstrapOverrides = {}): Promise<number> {
-    const bootConfigPath = parseBootConfigPathFromArgv(process.argv);
-    const bootConfig = readBootConfig(bootConfigPath);
-    const streams = createFdStreams();
-    const logger = new ObjLogger(`runner-node:${bootConfig.instanceId ?? "unknown"}`, {}, bootConfig.logLevel ?? "DEBUG");
+    const bootConfig = overrides.bootConfig ?? readBootConfig(parseBootConfigPathFromArgv(process.argv));
+    const streams = overrides.createFdStreams ? overrides.createFdStreams() : createFdStreams();
+    const runtime = typeof process.versions.bun === "string" ? "bun" : "node";
+    const logger = new ObjLogger(`runner-${runtime}:${bootConfig.instanceId ?? "unknown"}`, {}, bootConfig.logLevel ?? "DEBUG");
 
     const loader = overrides.loadSequence ?? loadSequenceModule;
     let sequenceFns: ResolvedSequenceFunctions;

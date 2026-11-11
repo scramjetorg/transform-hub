@@ -7,7 +7,11 @@ const HARNESS = resolve(import.meta.dir, "native-host-harness.cjs");
 function runHarness(options = {}) {
     const args = Object.entries(options).map(([key, value]) => `--${key}=${value}`);
     return new Promise((resolveResult, reject) => {
-        const child = spawn("node", [HARNESS, ...args], { stdio: ["ignore", "pipe", "pipe"], timeout: 20000 });
+        const child = spawn("node", [HARNESS, ...args], {
+            stdio: ["ignore", "pipe", "pipe"],
+            timeout: 20000,
+            env: { ...process.env, BUN_BIN: process.execPath },
+        });
         let stdout = "";
         let stderr = "";
         child.stdout.setEncoding("utf8").on("data", chunk => { stdout += chunk; });
@@ -60,6 +64,23 @@ for (const [label, options] of [
             const evidence = await expectHarnessSuccess({ runner, nodeBin: "shim", ...options });
             expect(evidence.records.map(record => record.stage)).toEqual(["module", "initialize", "main", "callback"]);
         });
+    }
+}
+
+for (const exportForm of ["array", "default-array"]) {
+    for (const chainType of ["generic", "string", "buffer"]) {
+        for (const runner of ["node", "bun"]) {
+            test(`${runner} hosted ${exportForm} chains multiple functions with ${chainType} Scramjet stream semantics`, { timeout: 20000 }, async () => {
+                const evidence = await expectHarnessSuccess({ runner, nodeBin: "shim", export: exportForm, behavior: "chain", chainType, identity: runner });
+                const expectedStages = exportForm === "array"
+                    ? ["module", "chain-first", "main"]
+                    : ["module", "initialize", "chain-first", "main"];
+                expect(evidence.records.map(record => record.stage)).toEqual(expectedStages);
+                expect(evidence.records.find(record => record.stage === "chain-first").args).toEqual(["expected-arg"]);
+                expect(evidence.records.find(record => record.stage === "main").chainValues).toEqual([{ step: "first", argument: "expected-arg" }]);
+                expect(evidence.outputEnded).toBe(true);
+            });
+        }
     }
 }
 

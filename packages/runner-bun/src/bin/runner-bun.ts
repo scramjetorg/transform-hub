@@ -1,147 +1,98 @@
 #!/usr/bin/env bun
 
-import { spawn } from "child_process";
-import { existsSync, readFileSync } from "fs";
-import { dirname, resolve } from "path";
-import { parseBootConfigPathFromArgv, readBootConfig, RunnerBunBootConfig } from "../boot-config";
+import { RunnerExitCode } from "@scramjet/symbols";
+import {
+    bootstrap as bootstrapRunnerNode,
+    legacyExitFilePath,
+    writeLegacyExitFileSecure,
+} from "@scramjet/runner-node";
+import type { RunnerNodeBootConfig, RunnerNodeFdStreams } from "@scramjet/runner-node";
+import { parseBootConfigPathFromArgv, readBootConfig } from "../boot-config";
+import { createBunFdStreams } from "../fd-streams";
+import { assertSupportedBunVersion } from "../runtime-version";
 
-interface RunnerNodeEntry {
-    entry: string;
-    needsTypeScriptSourceLoader: boolean;
+const LEGACY_RUNTIME_ENV_VARS = ["SEQUENCE_PATH", "SEQUENCE_INFO", "RUNNER_CONNECT_INFO"] as const;
+
+function clearLegacyRuntimeEnvironment(): void {
+    for (const name of LEGACY_RUNTIME_ENV_VARS) delete process.env[name];
 }
 
-function resolveRunnerNodeEntry(): RunnerNodeEntry {
-    const pkgJson = require.resolve("@scramjet/runner-node/package.json");
-    const pkgRoot = dirname(pkgJson);
-    const srcEntry = resolve(pkgRoot, "src/bin/runner-node.ts");
-
-    try {
-        const pkg = JSON.parse(readFileSync(pkgJson, "utf8"));
-
-        if (typeof pkg.main === "string" && pkg.main.includes("src/") && existsSync(srcEntry)) {
-            return { entry: srcEntry, needsTypeScriptSourceLoader: true };
-        }
-    } catch {
-        // Fall through to compiled/source probing.
-    }
-
-    // Published/prebuilt workspace packages expose the compiled bin directly
-    // from their package root (`dist/runner-node/bin/...`), while a source
-    // checkout may resolve the package root to `packages/runner-node`.
-    const compiledCandidates = [resolve(pkgRoot, "bin/runner-node.js"), resolve(pkgRoot, "dist/bin/runner-node.js")];
-
-    for (const compiled of compiledCandidates) {
-        if (existsSync(compiled)) return { entry: compiled, needsTypeScriptSourceLoader: false };
-    }
-
-    if (existsSync(srcEntry)) {
-        return { entry: srcEntry, needsTypeScriptSourceLoader: true };
-    }
-
-    throw new Error(`runner-bun: cannot resolve runner-node entry under ${pkgRoot}`);
-}
-
-function runRunnerNode(bootConfigPath: string): Promise<number> {
-    const resolved = resolveRunnerNodeEntry();
-    const env: NodeJS.ProcessEnv = { ...process.env };
-
-    delete env.SEQUENCE_PATH;
-    delete env.SEQUENCE_INFO;
-    delete env.RUNNER_CONNECT_INFO;
-
-    if (resolved.needsTypeScriptSourceLoader) {
-        env.NODE_OPTIONS = [env.NODE_OPTIONS, `--require ${require.resolve("tsx/cjs")}`].filter(Boolean).join(" ");
-    }
-
-    const child = spawn(process.env.NODE_BIN || "node", [resolved.entry, bootConfigPath], {
-        env,
-        stdio: ["inherit", "inherit", "inherit", "ipc", "inherit", "inherit"]
+function writeExitArtifact(code: number): void {
+    writeLegacyExitFileSecure(legacyExitFilePath(process.pid), code, {
+        warn: (...args: unknown[]) => console.warn("runner-bun: exit artifact write skipped", ...args),
     });
+}
 
-    return new Promise((resolveCode, reject) => {
-        const forwardSignal = (signal: NodeJS.Signals) => {
-            child.kill(signal);
-        };
-        const cleanupSignals = () => {
-            process.off("SIGINT", forwardSignal);
-            process.off("SIGTERM", forwardSignal);
-        };
-
-        process.on("SIGINT", forwardSignal);
-        process.on("SIGTERM", forwardSignal);
-        child.once("error", (error) => {
-            cleanupSignals();
-            reject(error);
+async function flushMonitoring(streams: RunnerNodeFdStreams): Promise<void> {
+    const output = streams.monitoringOut;
+    if (!output.destroyed && !output.writableFinished) {
+        await new Promise<void>(resolve => {
+            const finish = () => {
+                output.off("finish", finish);
+                output.off("error", finish);
+                resolve();
+            };
+            output.once("finish", finish);
+            output.once("error", finish);
+            if (!output.writableEnded) output.end();
         });
-        child.once("close", (code, signal) => {
-            cleanupSignals();
-            if (typeof code === "number") {
-                resolveCode(code);
-                return;
-            }
-
-            reject(new Error(`runner-bun: delegated runner-node exited by signal ${signal ?? "unknown"}`));
-        });
-    });
-}
-
-function serializeError(error: unknown): unknown {
-    if (!(error instanceof Error)) return error;
-
-    const data = (error as Error & { data?: unknown }).data;
-
-    return {
-        name: error.name,
-        message: error.message,
-        stack: error.stack,
-        data: serializeError(data)
-    };
-}
-
-function formatErrorMessage(error: unknown): string {
-    if (error instanceof Error) return error.message;
-    if (typeof error === "string") return error;
-    return JSON.stringify(error);
-}
-
-function logRuntimeError(phase: "sequence-load" | "instance-runtime", bootConfig: RunnerBunBootConfig, error: unknown): void {
-    console.error(`STH runtime error phase=${phase} runtime=bun sequenceId=${bootConfig.sequenceInfo?.id} instanceId=${bootConfig.instanceId} error=${formatErrorMessage(error)}`, {
-        phase,
-        runtime: "bun",
-        sequenceId: bootConfig.sequenceInfo?.id,
-        instanceId: bootConfig.instanceId,
-        sequencePath: bootConfig.sequencePath,
-        error: serializeError(error)
-    });
+    }
+    if (!streams.controlIn.destroyed) streams.controlIn.destroy();
 }
 
 export async function bootstrap(): Promise<number> {
-    const bootConfigPath = parseBootConfigPathFromArgv(process.argv);
-
-    // Validate with Bun-specific error messages before delegating to the
-    // protocol-compatible Node runtime implementation. This keeps runner-bun's
-    // boot contract explicit while allowing Bun to execute the TS runtime entry.
-    const bootConfig = readBootConfig(bootConfigPath);
-
-    if (bootConfig.instancesServerPort === undefined || bootConfig.instancesServerHost === undefined) {
-        throw new Error("runner-bun: host channels are required; Bun sequences must run through the supported hosted runner path");
+    if (typeof process.versions.bun !== "string") {
+        console.error("runner-bun failed: this entrypoint must execute under Bun");
+        writeExitArtifact(1);
+        return 1;
+    }
+    try {
+        assertSupportedBunVersion(process.versions.bun);
+    } catch (error) {
+        console.error("runner-bun failed:", error instanceof Error ? error.message : error);
+        writeExitArtifact(1);
+        return 1;
     }
 
+    let bootConfig;
+    let streams: RunnerNodeFdStreams | undefined;
+    let sharedBootstrapStarted = false;
+
     try {
-        return await runRunnerNode(bootConfigPath);
-    } catch (err) {
-        logRuntimeError("instance-runtime", bootConfig, err);
-        throw err;
+        bootConfig = readBootConfig(parseBootConfigPathFromArgv(process.argv));
+        if (bootConfig.instancesServerPort === undefined || bootConfig.instancesServerHost === undefined) {
+            throw new Error("runner-bun: host channels are required; Bun sequences must run through the supported hosted runner path");
+        }
+
+        clearLegacyRuntimeEnvironment();
+        streams = createBunFdStreams();
+        sharedBootstrapStarted = true;
+        return await bootstrapRunnerNode({
+            bootConfig: bootConfig as unknown as RunnerNodeBootConfig,
+            createFdStreams: () => streams!,
+        });
+    } catch (error) {
+        console.error("runner-bun failed:", error instanceof Error ? (error.stack ?? error.message) : error);
+        if (streams) await flushMonitoring(streams);
+
+        const exitCode = sharedBootstrapStarted ? RunnerExitCode.SEQUENCE_FAILED_DURING_EXECUTION : 1;
+        writeExitArtifact(exitCode);
+        return exitCode;
+    } finally {
+        if (streams && !streams.controlIn.destroyed) streams.controlIn.destroy();
     }
 }
 
 if (require.main === module) {
     bootstrap()
-        .then((code) => {
+        .then(code => {
             process.exitCode = code;
+            process.exit(code);
         })
-        .catch((err) => {
-            console.error("runner-bun failed:", err instanceof Error ? (err.stack ?? err.message) : err);
-            process.exitCode = 1;
+        .catch(error => {
+            console.error("runner-bun failed:", error instanceof Error ? (error.stack ?? error.message) : error);
+            const code = RunnerExitCode.SEQUENCE_FAILED_DURING_EXECUTION;
+            writeExitArtifact(code);
+            process.exit(code);
         });
 }

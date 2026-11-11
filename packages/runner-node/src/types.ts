@@ -88,6 +88,10 @@ export interface BuildAppContextResult {
 }
 
 export interface BootstrapOverrides {
+    /** Use an already-validated boot configuration instead of rereading argv. */
+    bootConfig?: RunnerNodeBootConfig;
+    /** Replace the Node fd wrappers while retaining the shared runtime bootstrap. */
+    createFdStreams?: () => RunnerNodeFdStreams;
     loadSequence?: (sequencePath: string) => ResolvedSequenceFunctions;
 }
 
