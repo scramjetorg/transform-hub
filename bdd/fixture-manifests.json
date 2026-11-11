@@ -46,6 +46,7 @@
     "appcontext-rpc-add",
     "appcontext-storage",
     "appcontext-v2-clients",
-    "bun-bdd-appcontext-hosted"
+    "bun-bdd-appcontext-hosted",
+    "node-bdd-appcontext-hosted"
   ]
 }

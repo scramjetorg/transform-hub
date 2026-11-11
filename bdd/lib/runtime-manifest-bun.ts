@@ -20,6 +20,7 @@ type FixtureProvenance = {
 	ppid: number;
 	execPath: string;
 	nodeVersion: string;
+	bunVersion: string | null;
 	argv1: string | null;
 	declaredEngines: { bun?: string };
 	productModulePaths: { runnerNode: string | null; restApi2: string | null; apiRouter: string | null };
@@ -81,16 +82,17 @@ function processLineage(pid: number, hostPid: number): Array<{ pid: number; exec
 function assertProvenance(provenance: FixtureProvenance, artifacts: ManifestProofArtifacts, fixture: string, hostPid: number): void {
 	assert.ok(provenance?.pid > 0 && provenance?.ppid > 0, `${fixture} must report process identity`);
 	assert.equal(provenance.declaredEngines?.bun, "1", `${fixture} must declare the Bun engine`);
-	assert.equal(provenance.execPath, process.execPath, `${fixture} did not report its actual Node execution`);
-	assert.ok(String(provenance.nodeVersion || "").startsWith("v"), `${fixture} must report Node runtime evidence`);
+	assert.ok(provenance.bunVersion, `${fixture} is missing process.versions.bun; the Bun-selected sequence ran in Node`);
+	assert.ok(String(provenance.nodeVersion || "").startsWith("v"), `${fixture} must report its Node-compatibility version`);
+	assert.ok(typeof provenance.execPath === "string" && provenance.execPath.length > 0, `${fixture} must report its executable`);
 	const products = provenance.productModulePaths;
 	for (const [name, packageName] of [["runnerNode", "@scramjet/runner-node"], ["restApi2", "@scramjet/rest-api2"], ["apiRouter", "@scramjet/api-router"]] as const) {
 		const path = products[name];
 		assert.ok(typeof path === "string", `${fixture} did not report ${name}`);
 		assertManifestProductPath(artifacts, packageName, path, `${fixture} ${name}`);
 	}
-	assert.ok(typeof provenance.argv1 === "string", `${fixture} did not report the selected Node runtime entry`);
-	assertManifestProductPath(artifacts, "@scramjet/runner-node", provenance.argv1, `${fixture} Node runtime entry`);
+	assert.ok(typeof provenance.argv1 === "string", `${fixture} did not report its selected runtime entry`);
+	assertManifestProductPath(artifacts, "@scramjet/runner-bun", provenance.argv1, `${fixture} Bun runtime entry`);
 	const restApi2Path = products.restApi2;
 	const apiRouterPath = products.apiRouter;
 	assert.ok(typeof restApi2Path === "string" && typeof apiRouterPath === "string", `${fixture} is missing selected client/router module paths`);
@@ -98,6 +100,9 @@ function assertProvenance(provenance: FixtureProvenance, artifacts: ManifestProo
 	assert.equal(realpathSync(apiRouterPath), realpathSync(artifacts.modules.apiRouter));
 
 	const lineage = processLineage(provenance.pid, hostPid);
+	assert.equal(lineage[0]?.pid, provenance.pid, `${fixture} PID must be the actual sequence process`);
+	assert.equal(lineage[0]?.executable, realpathSync(provenance.execPath), `${fixture} executable must match its PID`);
+	assert.ok(/(?:^|\/)bun(?:\.exe)?$/.test(lineage[0]?.executable || ""), `${fixture} PID does not execute Bun: ${lineage[0]?.executable}`);
 	const selectedEntry = (packageName: string) => lineage.find(item => {
 		if (!item.entry) return false;
 		try { assertManifestProductPath(artifacts, packageName, item.entry, `${fixture} ancestry entry`); return true; }
@@ -107,7 +112,7 @@ function assertProvenance(provenance: FixtureProvenance, artifacts: ManifestProo
 	const nodeEntry = selectedEntry("@scramjet/runner-node");
 	const outerEntry = selectedEntry("@scramjet/runner");
 	assert.ok(bunEntry, `${fixture} parent chain lacks selected Bun wrapper entry`);
-	assert.ok(nodeEntry, `${fixture} parent chain lacks selected Node runtime entry`);
+	assert.ok(!nodeEntry, `${fixture} unexpectedly launched a Node runtime process below the Bun wrapper`);
 	assert.ok(outerEntry && outerEntry.entry.includes("start-runner"), `${fixture} parent chain lacks selected outer runner entry`);
 	const reportedLineage = lineage.filter(item => item.pid === hostPid || item.entry || /(?:^|\/)(?:node|bun)$/.test(item.executable));
 	console.log(`[runtime-manifest-bun.provenance] ${JSON.stringify(reportedLineage.map(item => ({ pid: item.pid, executable: item.executable, ...(item.entry ? { entry: item.entry } : {}) })))}`);
@@ -211,5 +216,5 @@ export async function runBunManifestProof(world: ProofWorld): Promise<void> {
 
 	if (world.resources.runtimeManifestCleanupStarted) return;
 	world.resources.runtimeManifestProofComplete = true;
-	console.log(`[runtime-manifest-bun] sequence=${producerSequence.id} producer=${producer.id}:${receipt.revision} consumer=${consumer.id} audit=published declaredEngine=bun actualRuntime=node`);
+	console.log(`[runtime-manifest-bun] sequence=${producerSequence.id} producer=${producer.id}:${receipt.revision} consumer=${consumer.id} audit=published declaredEngine=bun actualRuntime=bun`);
 }

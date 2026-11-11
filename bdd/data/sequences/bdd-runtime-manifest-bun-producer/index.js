@@ -100,6 +100,7 @@ function provenance() {
         argv1: process.argv[1] || null,
         execPath: process.execPath,
         nodeVersion: process.version,
+        bunVersion: process.versions.bun || null,
         productModulePaths: {
             runnerNode: packageModulePath("runner-node"),
             restApi2: packageModulePath("rest-api2"),

@@ -66,6 +66,43 @@ When("I send GET request to instance endpoint {string}", { timeout: 10000 }, asy
     this.resources.appcontextExposeResponse = response;
 });
 
+When("I verify the hosted {string} author identity through raw RPC", { timeout: 10000 }, async function (this: CustomWorld, expectedRuntime: string) {
+    const instance = this.resources.instance;
+    assert.ok(instance, "No active instance");
+    const info = await instance.getInfo();
+    const instanceId = info?.id ?? (instance as any).id;
+    assert.ok(instanceId, "Active instance has no id");
+    const apiBase = (process.env.LOCAL_HOST_BASE_URL || "http://127.0.0.1:8000/api/v1").replace(/\/+$/, "");
+    const url = `${apiBase}/instance/${encodeURIComponent(instanceId)}/rpc/identity`;
+    const requestBody = JSON.stringify({ token: "hosted-parity-token" });
+    const response = await new Promise<{ status: number; body: string }>((resolve, reject) => {
+        const req = http.request(url, { method: "POST", agent: false, headers: { "content-type": "application/json", "content-length": Buffer.byteLength(requestBody) } }, res => {
+            let body = "";
+            res.on("data", (chunk: Buffer) => { body += chunk.toString("utf8"); });
+            res.on("end", () => resolve({ status: res.statusCode ?? 0, body }));
+            res.on("error", reject);
+        });
+        req.on("error", reject);
+        req.setTimeout(5000, () => req.destroy(new Error(`Request to ${url} timed out`)));
+        req.end(requestBody);
+    });
+    assert.equal(response.status, 200, `Expected raw RPC status 200, got ${response.status}: ${response.body}`);
+    const payload = JSON.parse(response.body);
+    assert.deepEqual(payload.stages.map((stage: any) => stage.stage), ["load", "initialize", "main", "callback", "http"]);
+    assert.ok(payload.stages[1].declaration, "Initialization-time API declaration was not returned");
+    assert.equal(payload.stages[2].argument, "hosted-parity-token", "Sequence argument was not delivered to main");
+    assert.ok(payload.stages[2].contextConfig && typeof payload.stages[2].contextConfig === "object", "AppContext config was not available in main");
+    const pids = new Set(payload.stages.map((stage: any) => stage.pid));
+    assert.equal(pids.size, 1, `Sequence author lifecycle stages ran in different processes: ${response.body}`);
+    for (const stage of payload.stages) {
+        assert.ok(Number.isInteger(stage.pid) && stage.pid > 0, `Process id missing at ${stage.stage}`);
+        assert.equal(stage.runtime, expectedRuntime, `Expected native ${expectedRuntime} at ${stage.stage}; got ${stage.runtime} (${stage.version})`);
+        assert.equal(typeof stage.version, "string");
+        assert.ok(stage.version.length > 0, `Runtime version missing at ${stage.stage}`);
+    }
+    this.resources.appcontextBunIdentity = payload;
+});
+
 /**
  * Assert that the last exposed API response has a specific status code.
  */
