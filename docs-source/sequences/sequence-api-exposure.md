@@ -6,6 +6,70 @@ title: Exposing a sequence HTTP API
 
 # Exposing a sequence HTTP API
 
+## Raw HTTP handlers from a sequence
+
+A sequence receives its API as `this.api` in JavaScript or `context.api` in Python; it does not receive an `app` property. In hosted Node and Bun sequences, register a raw route with a method alias and a Node-style request handler:
+
+```js
+module.exports = async function sequence() {
+    this.api.create("/add", async (request, response) => {
+        const chunks = [];
+        for await (const chunk of request) chunks.push(chunk);
+        const { a, b } = JSON.parse(Buffer.concat(chunks).toString("utf8"));
+        response.writeHead(200, { "content-type": "application/json" });
+        response.end(JSON.stringify({ result: a + b }));
+    });
+    await new Promise(() => undefined);
+};
+```
+
+The raw method aliases follow HTTP method names: `create` registers POST, `read` GET, and `update` PUT. The `delete`, `head`, `patch`, `options`, `connect`, and `trace` methods register their correspondingly named HTTP methods. `all` matches all HTTP methods; it is not an HTTP `ALL` verb. Handlers receive the raw HTTP request, response, and optional `next`; they must read and parse request data and write/serialize the response themselves. This API does not automatically parse bodies or serialize handler results. In particular, `api.get` is a separate JSON/control helper, not the raw GET alias (`api.read`).
+
+Python exposes an ASGI application instead. Attach it with `context.api.use(app)`; its callable accepts ASGI `scope`, `receive`, and `send`, not Node request/response arguments:
+
+```python
+import asyncio
+import json
+
+
+async def app(scope, receive, send):
+    if scope["type"] != "http" or scope["path"] != "/add" or scope["method"] != "POST":
+        await send({"type": "http.response.start", "status": 404, "headers": []})
+        await send({"type": "http.response.body", "body": b""})
+        return
+
+    request_body = bytearray()
+    while True:
+        request = await receive()
+        if request["type"] == "http.disconnect":
+            return
+        if request["type"] != "http.request":
+            continue
+        request_body.extend(request.get("body", b""))
+        if not request.get("more_body", False):
+            break
+
+    payload = json.loads(request_body)
+    body = json.dumps({"result": payload["a"] + payload["b"]}).encode()
+    await send({
+        "type": "http.response.start",
+        "status": 200,
+        "headers": [(b"content-type", b"application/json")],
+    })
+    await send({"type": "http.response.body", "body": body})
+
+
+def main(context, input_stream, *args):
+    context.api.use(app)
+
+    async def run():
+        await asyncio.Event().wait()
+
+    return run()
+```
+
+The hosted Bun runtime currently uses the Node wrapper, so the JavaScript raw-handler example applies to both Node and Bun. To call a registered `/add` route, send an ordinary HTTP POST to `/api/v1/instance/{id}/rpc/add` with JSON `{"a":2,"b":3}`; the example responds with `{"result":5}`. This is a regular HTTP request/response, not JSON-RPC. Hosted Python, Node, and Bun examples are covered by `APPCONTEXT-003-rpc-add`.
+
 ## Readiness before exposure
 
 Use `this.api.use(path, handler)` for a sequence-local HTTP surface. Validate packaged resources and required configuration before registering routes or entering a long-running stream/promise. The listener is deferred until validation succeeds. On validation failure, emit structured diagnostics, leave no route listener active, and end the instance as errored; callers must start a fresh instance.

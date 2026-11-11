@@ -22,6 +22,7 @@
   ],
   "python-bdd": [
     "python-bdd-appcontext-hosted",
+    "python-bdd-appcontext-rpc-add",
     "python-bdd-chunk-lengths",
     "python-bdd-exception",
     "python-bdd-gen-async",
@@ -42,6 +43,7 @@
     "appcontext-exposed-api",
     "appcontext-legacy-clients",
     "appcontext-lifecycle",
+    "appcontext-rpc-add",
     "appcontext-storage",
     "appcontext-v2-clients",
     "bun-bdd-appcontext-hosted"
