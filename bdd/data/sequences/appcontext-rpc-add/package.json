@@ -1,0 +1,7 @@
+{
+  "name": "@scramjet/test-appcontext-rpc-add",
+  "version": "0.1.0",
+  "private": true,
+  "main": "index.js",
+  "exposePath": "/"
+}

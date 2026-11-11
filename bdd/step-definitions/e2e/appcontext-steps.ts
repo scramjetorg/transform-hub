@@ -2,7 +2,10 @@ import { Then, When } from "@cucumber/cucumber";
 import { strict as assert } from "assert";
 import { CustomWorld } from "../world";
 import http from "http";
+import { createReadStream } from "fs";
 import { isTransientReadinessStatus } from "../../lib/readiness-contract";
+import { HostClient } from "@scramjet/api-client";
+const { createAppContextRpcFixture } = require("../../lib/appcontext-rpc-fixture.js");
 
 /**
  * AppContext-specific step definitions for BDD fixture validation.
@@ -84,4 +87,46 @@ Then("response body contains {string}", async function (this: CustomWorld, expec
         response.body.includes(expectedText),
         `Response body does not contain "${expectedText}". Body: ${response.body}`
     );
+});
+
+When("I upload the AppContext RPC fixture for runtime {string}", { timeout: 30000 }, async function (this: CustomWorld, runtime: string) {
+    const isolation = this.scenarioIsolation;
+    assert.ok(isolation, "ScenarioIsolation must be available to package the RPC fixture");
+    const fixture = await createAppContextRpcFixture(isolation, runtime);
+    const temporaryClient = this.resources.hostClient ? undefined : new HostClient(process.env.LOCAL_HOST_BASE_URL || "http://127.0.0.1:8000/api/v1");
+    try {
+        this.resources.sequence = await (this.resources.hostClient || temporaryClient!).sendSequence(createReadStream(fixture.archivePath));
+    } finally {
+        temporaryClient?.dispose();
+    }
+});
+
+When("I send POST JSON to instance RPC endpoint {string}", { timeout: 10000 }, async function (this: CustomWorld, endpointPath: string) {
+    const instance = this.resources.instance;
+    assert.ok(instance, "No active instance");
+    const info = await instance.getInfo();
+    const apiBase = (process.env.LOCAL_HOST_BASE_URL || "http://127.0.0.1:8000/api/v1").replace(/\/+$/, "");
+    const url = new URL(`${apiBase}/instance/${info.id}/rpc${endpointPath.startsWith("/") ? "" : "/"}${endpointPath}`);
+    const payload = JSON.stringify({ a: 2, b: 3 });
+    const response = await new Promise<{ status: number; contentType: string | undefined; body: string }>((resolve, reject) => {
+        const req = http.request(url, { method: "POST", headers: { "content-type": "application/json", "content-length": Buffer.byteLength(payload) }, timeout: 5000 }, (res) => {
+            let body = "";
+            res.setEncoding("utf8");
+            res.on("data", chunk => { body += chunk; });
+            res.on("end", () => resolve({ status: res.statusCode ?? 0, contentType: res.headers["content-type"], body }));
+            res.on("error", reject);
+        });
+        req.on("timeout", () => req.destroy(new Error(`Request to ${url} timed out`)));
+        req.on("error", reject);
+        req.end(payload);
+    });
+    this.resources.appcontextRpcResponse = response;
+});
+
+Then("AppContext RPC response is exactly successful JSON", function (this: CustomWorld) {
+    const response = this.resources.appcontextRpcResponse;
+    assert.ok(response, "No AppContext RPC response captured");
+    assert.equal(response.status, 200);
+    assert.equal(response.contentType, "application/json");
+    assert.deepEqual(JSON.parse(response.body), { result: 5 });
 });
