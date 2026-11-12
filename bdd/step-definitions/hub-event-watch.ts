@@ -2,7 +2,7 @@ import { After, Given, Then, When } from "@cucumber/cucumber";
 import { strict as assert } from "node:assert";
 import type { CustomWorld } from "./world";
 import { closeManifestHost, startManifestHost } from "../lib/runtime-manifest-host";
-import { prepareAuthenticatedNativeCleanup, proveAuthenticatedNativeCleanup, proveExternalHttpCleanup, proveHostedBunDelegatedWatch, proveHostedConfiguredCpmHealthCycle, proveHostedMissingRequiredStartupHealth, proveHostedNativeHealthyIdleRelay, proveHostedNativeRelayFault, proveHostedNodeCleanup, proveHostedNodeMutationRevisionSnapshot, proveHostedNodeSnapshots, proveHostedRequiredStartupReadinessAndRestart, proveHostedTwoInstanceManifestRevisions, startHostedConfiguredCpmHub, startHostedHealthyIdleRelay, verifyHubWatchSnapshots } from "../lib/hub-event-watch";
+import { prepareAuthenticatedNativeCleanup, proveAuthenticatedNativeCleanup, proveExternalHttpCleanup, proveHostedBunNativeWatch, proveHostedConfiguredCpmHealthCycle, proveHostedMissingRequiredStartupHealth, proveHostedNativeHealthyIdleRelay, proveHostedNativeRelayFault, proveHostedNodeCleanup, proveHostedNodeMutationRevisionSnapshot, proveHostedNodeSnapshots, proveHostedRequiredStartupReadinessAndRestart, proveHostedTwoInstanceManifestRevisions, startHostedConfiguredCpmHub, startHostedHealthyIdleRelay, verifyHubWatchSnapshots } from "../lib/hub-event-watch";
 
 type WatchWorld = CustomWorld & { resources: CustomWorld["resources"] & { hubWatchSnapshots?: Record<string, any> } };
 
@@ -184,14 +184,13 @@ Given("an isolated DEBUG built Hub for hosted Node watch cleanup", async functio
     });
 });
 
-Given("an isolated DEBUG built Hub for Bun-declared Node-delegated watch smoke", async function(this: WatchWorld) {
+Given("an isolated DEBUG built Hub for native Bun watch smoke", async function(this: WatchWorld) {
     await startManifestHost(this, "built", config => {
         config.logLevel = "DEBUG";
         config.logColors = false;
         config.runnerEnvs = {
             ...config.runnerEnvs,
-            BUN_BIN: "/opt/bun/bin/bun",
-            NODE_BIN: process.execPath
+            BUN_BIN: "/opt/bun/bin/bun"
         };
     });
 });
@@ -266,17 +265,20 @@ Then("sequence watch events and snapshots retain both instance-owned manifests i
     assert.ok(proof.instanceIds[0] !== proof.instanceIds[1]);
 });
 
-When("an uploaded Bun-declared observer proves Node-delegated watch abort cleanup", async function(this: WatchWorld) {
-    this.resources.hubWatchBunDelegationProof = await proveHostedBunDelegatedWatch(this);
+When("an uploaded native Bun observer proves watch abort cleanup", async function(this: WatchWorld) {
+    this.resources.hubWatchBunNativeProof = await proveHostedBunNativeWatch(this);
 });
 
-Then("the Bun-declared observer is proven Node-delegated and its real watch is released", function(this: WatchWorld) {
-    assert.equal(this.resources.hubWatchBunDelegationProof?.outcome, "AbortError");
-    assert.ok(this.resources.hubWatchBunDelegationProof?.acquiredId, "missing actual DEBUG-acquired server watch ID");
-    assert.equal(this.resources.hubWatchBunDelegationProof?.releasedId, this.resources.hubWatchBunDelegationProof?.acquiredId);
-    assert.equal(this.resources.hubWatchBunDelegationProof?.probeStatus, 200);
-    assert.equal(this.resources.hubWatchBunDelegationProof?.declaredEngine, "1");
-    assert.equal(this.resources.hubWatchBunDelegationProof?.runtime, "node");
+Then("the native Bun observer is proven and its real watch is released", function(this: WatchWorld) {
+    const proof = this.resources.hubWatchBunNativeProof;
+    assert.equal(proof?.outcome, "AbortError");
+    assert.ok(proof?.acquiredId, "missing actual DEBUG-acquired server watch ID");
+    assert.equal(proof?.releasedId, proof?.acquiredId);
+    assert.equal(proof?.probeStatus, 200);
+    assert.equal(proof?.declaredEngine, "1");
+    assert.equal(proof?.runtime, "bun");
+    assert.ok(proof?.bunVersion, "native Bun version evidence is missing");
+    assert.ok(proof?.pid > 0, "native Bun author PID evidence is missing");
 });
 
 When("the real Host skips a missing required startup sequence and a hosted observer reads health", async function(this: WatchWorld) {

@@ -61,12 +61,12 @@ Scramjet Transform Hub is a TypeScript monorepo for supervising sequence deploym
 | `packages/runner/src/` | Runner launcher and runtime-executor plumbing for outer startup, host client mediation, runtime selection, and child-process helpers. | [View Map](packages/runner/src/codemap.md) |
 | `packages/runner/src/bin/` | Outer runner entrypoint for adapter env validation, boot config writing, child runtime selection, and host stdio/control/monitoring streams. | [View Map](packages/runner/src/bin/codemap.md) |
 | `packages/runner/src/executor/` | Child-process runtime executors and launch helpers for Node, Bun, and Python. | [View Map](packages/runner/src/executor/codemap.md) |
-| `packages/runner-node/` | Node sequence runtime that owns boot-config parsing, host channel setup, lifecycle control, and sequence execution. | [View Map](packages/runner-node/codemap.md) |
-| `packages/runner-node/src/` | Core Node runtime implementation: boot config, fd streams, host client, contexts, handshake, lifecycle, and sequence execution. | [View Map](packages/runner-node/src/codemap.md) |
+| `packages/runner-node/` | Shared Node-compatible sequence runtime: standalone Node execution and in-process bootstrap reuse by supported Bun. | [View Map](packages/runner-node/codemap.md) |
+| `packages/runner-node/src/` | Shared sequence implementation: boot config, host channels, contexts, handshake, lifecycle, and sequence execution, called under Node or Bun. | [View Map](packages/runner-node/src/codemap.md) |
 | `packages/runner-node/src/bin/` | Executable entrypoint for the Node runtime. | [View Map](packages/runner-node/src/bin/codemap.md) |
-| `packages/runner-bun/` | Bun sequence runtime wrapper for boot-config validation and hosted Node runtime delegation. | [View Map](packages/runner-bun/codemap.md) |
-| `packages/runner-bun/src/` | Bun runtime helpers for boot config parsing/validation, runtime constants, and bootstrap delegation logic. | [View Map](packages/runner-bun/src/codemap.md) |
-| `packages/runner-bun/src/bin/` | Executable Bun runtime entrypoint that validates hosted boot config and hands off to Node runtime bootstrap. | [View Map](packages/runner-bun/src/bin/codemap.md) |
+| `packages/runner-bun/` | Native Bun sequence runtime for hosted Bun-selected sequences; reuses the shared runner bootstrap in-process and requires Bun 1.4.2+. | [View Map](packages/runner-bun/codemap.md) |
+| `packages/runner-bun/src/` | Bun boot-config/runtime-version validation and inherited-fd streams for native sequence execution. | [View Map](packages/runner-bun/src/codemap.md) |
+| `packages/runner-bun/src/bin/` | Bun entrypoint that validates hosted boot config and invokes the shared runner-node bootstrap in the Bun process. | [View Map](packages/runner-bun/codemap.md) |
 | `packages/runner-python/` | Python sequence runtime and parity reference for host-channel connection, control/monitoring codecs, context, lifecycle, and sequence loading. | [View Map](packages/runner-python/codemap.md) |
 | `packages/sequence-test/` | Supported sequence testing harness for scoped local fixture/hub-harness/AppContext validation with fixtures, fake instance transport, hub mocks, captures, and assertions (not a full Hub/runner parity replacement). | [View Map](packages/sequence-test/codemap.md) |
 | `packages/sequence-test/src/` | Implementation layer for test harness primitives: runner launch plans, fake transport, hub simulation, fixtures, captures, input drivers, and request helpers. | [View Map](packages/sequence-test/src/codemap.md) |

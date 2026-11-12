@@ -2091,10 +2091,10 @@ export async function proveHostedTwoInstanceManifestRevisions(world: WatchWorld)
     }
 }
 
-/** One real-container Bun-declared smoke: Bun starts the wrapper, which delegates the observer to Node. */
-export async function proveHostedBunDelegatedWatch(world: WatchWorld): Promise<Record<string, any>> {
+/** A real-container native Bun observer proves Hub watch cancellation and process provenance. */
+export async function proveHostedBunNativeWatch(world: WatchWorld): Promise<Record<string, any>> {
     const state = world.resources.runtimeManifestHost;
-    assert.ok(state, "The configured DEBUG built Host must run before Bun-delegation proof");
+    assert.ok(state, "The configured DEBUG built Host must run before native Bun watch proof");
     assert.ok(state.child.pid, "Owned Host process id is required for process ancestry verification");
     const runId = randomUUID();
     const { HostClient } = require(state.artifacts.modules.apiClient) as { HostClient: typeof HostClientType };
@@ -2121,7 +2121,7 @@ export async function proveHostedBunDelegatedWatch(world: WatchWorld): Promise<R
             if (found) return found;
             await new Promise(resolve => setTimeout(resolve, 30));
         }
-        assert.fail(`Timed out waiting for Bun-declared observer record on ${watchId}`);
+        assert.fail(`Timed out waiting for native Bun observer record on ${watchId}`);
     };
     try {
         const archive = resolveFixturePackagePath("data/sequences/bdd-packages/hub-event-watch-bun-observer.tar.gz");
@@ -2130,22 +2130,38 @@ export async function proveHostedBunDelegatedWatch(world: WatchWorld): Promise<R
         const { resolvePublishedModule } = require("./published-artifacts") as typeof import("./published-artifacts");
         const selectedModulePaths = Object.fromEntries(["host", "runner", "runner-bun", "runner-node", "rest-api2", "api-router", "adapter-process", "hub-state"].map(name => [name, resolvePublishedModule(`@scramjet/${name}`, { workspaceRoot: state.artifacts.workspaceRoot })]));
         observer = await uploaded.start({ appConfig: { runId, selectedModulePaths }, args: [] });
-        const ready = eventData<{ runId: string; provenance: Record<string, any> }>(await observer.getEvent("hub-watch-observer-ready"));
+        const mainEvidencePromise = observer.getEvent("hub-watch-observer-main");
+        const ready = eventData<{ runId: string; loadedProvenance: Record<string, any>; provenance: Record<string, any> }>(await observer.getEvent("hub-watch-observer-ready"));
         assert.equal(ready.runId, runId);
         const provenance = ready.provenance;
         assert.equal(provenance.declaredEngines?.bun, "1");
-        assert.equal(provenance.runtime, "node", "Bun-declared smoke must report the actual Node-delegated runtime");
-        assert.equal(provenance.execPath, process.execPath, "Node delegation must use the container's actual Node executable");
-        assert.ok(provenance.nodeVersion?.startsWith("v"), "inner Node version is required");
-        assert.equal(provenance.bunExecutable, "/opt/bun/bin/bun", "Bun version must be read from the image-owned executable");
+        const imageBunExecutable = realpathSync("/opt/bun/bin/bun");
         const imageBunVersion = execFileSync("/opt/bun/bin/bun", ["--version"], { encoding: "utf8" }).trim();
-        assert.equal(provenance.bunVersion, imageBunVersion, "the Bun-declared observer must report the supported BDD image's actual Bun version");
+        const assertNativeStage = (identity: Record<string, any>, stage: string) => {
+            assert.ok(identity && typeof identity === "object", `${stage} runtime identity evidence is missing`);
+            assert.equal(identity.stage, stage, `${stage} identity stage is missing`);
+            assert.ok(identity.pid > 0, `${stage} identity must report the author process PID`);
+            assert.equal(identity.runtime, "bun", `${stage} must execute under Bun`);
+            assert.equal(identity.bunVersion, imageBunVersion, `${stage} must report the supported BDD image's actual Bun version`);
+            assert.equal(realpathSync(identity.execPath), imageBunExecutable, `${stage} PID must execute the image-owned Bun binary`);
+            assert.ok(identity.nodeVersion?.startsWith("v"), `${stage} must include Bun's Node-compatibility version`);
+        };
+        assertNativeStage(ready.loadedProvenance, "load");
+        assertNativeStage(provenance, "initialize");
+        assert.equal(ready.loadedProvenance.pid, provenance.pid, "module load and initialize must run in one Bun process");
+        assert.ok(typeof provenance.argv1 === "string" && provenance.argv1.length > 0, "initialize provenance must identify the selected Bun entry");
+        assertManifestProductPath(state.artifacts, "@scramjet/runner-bun", provenance.argv1, "native Bun argv entry");
         for (const name of ["host", "runner", "runner-bun", "runner-node", "rest-api2", "api-router", "adapter-process", "hub-state"]) {
             const selected = provenance.productModulePaths?.[name];
-            assert.ok(selected, `Bun-declared fixture omitted selected ${name} module path`);
-            assertManifestProductPath(state.artifacts, `@scramjet/${name}`, selected, `Bun-declared fixture ${name}`);
+            assert.ok(selected, `native Bun fixture omitted selected ${name} module path`);
+            assertManifestProductPath(state.artifacts, `@scramjet/${name}`, selected, `native Bun fixture ${name}`);
         }
+        assertManifestProductPath(state.artifacts, "@scramjet/runner-node", provenance.productModulePaths["runner-node"], "shared runner-node module");
         assert.ok(provenance.productModulePaths.fixture?.endsWith("/index.js"), "fixture path must identify its uploaded entry");
+        const mainEvidence = eventData<{ runId: string; provenance: Record<string, any> }>(await mainEvidencePromise);
+        assert.equal(mainEvidence.runId, runId);
+        assertNativeStage(mainEvidence.provenance, "main");
+        assert.equal(mainEvidence.provenance.pid, provenance.pid, "initialize and main must run in the same Bun process");
 
         const watchId = `${runId}-bun-abort`;
         const openId = randomUUID();
@@ -2163,6 +2179,9 @@ export async function proveHostedBunDelegatedWatch(world: WatchWorld): Promise<R
         const terminalId = randomUUID();
         await command({ action: "abort", watchId, commandId: terminalId });
         const terminal = await waitFor(watchId, record => record.type === "closed" && record.commandId === terminalId);
+        assertNativeStage(terminal.provenance, "callback");
+        assert.equal(terminal.provenance.pid, provenance.pid, "initialize and event callbacks must run in the same Bun process");
+        assert.equal(terminal.provenance.execPath, provenance.execPath);
         assert.equal(terminal.actualState, "aborted");
         assert.equal(terminal.pendingRead?.kind, "error");
         assert.equal(terminal.pendingRead?.error?.name, "AbortError");
@@ -2177,22 +2196,22 @@ export async function proveHostedBunDelegatedWatch(world: WatchWorld): Promise<R
         assert.equal(finished.commandId, finishId);
         const lineage = provenance.processLineage as Array<{ pid: number; executable: string; entry: string }>;
         assert.ok(Array.isArray(lineage) && lineage.some(item => item.pid === state.child.pid), "observer process ancestry must reach the owned Host");
-        assert.ok(lineage.some(item => item.executable.includes("/opt/bun/bin/bun")), "owned observer ancestry must include the real container Bun executable");
+        assert.equal(lineage[0]?.pid, provenance.pid, "Bun observer PID must lead its process lineage");
+        assert.equal(lineage[0]?.executable, imageBunExecutable, "Bun observer lineage must begin at the image-owned Bun executable");
+        assert.ok(lineage[0]?.entry, "Bun observer PID must report its selected runtime entry");
+        assert.equal(realpathSync(lineage[0].entry), realpathSync(provenance.argv1), "the same Bun PID must execute the selected runner-bun entry");
         const selectedEntry = (packageName: string) => lineage.find(item => {
             if (!item.entry) return false;
-            try { assertManifestProductPath(state.artifacts, packageName, item.entry, "Bun-declared process ancestry"); return true; }
+            try { assertManifestProductPath(state.artifacts, packageName, item.entry, "native Bun process ancestry"); return true; }
             catch { return false; }
         });
-        assert.ok(selectedEntry("@scramjet/runner-bun"), "ancestry must include selected runner-bun entry");
-        assert.ok(selectedEntry("@scramjet/runner-node"), "ancestry must include selected runner-node entry");
+        assert.ok(selectedEntry("@scramjet/runner-bun"), "ancestry must include the selected Bun entry");
+        assert.equal(selectedEntry("@scramjet/runner-node"), undefined, "native Bun author execution must not have a Node runner process below Bun");
         const outerRunnerEntry = selectedEntry("@scramjet/runner");
-        assert.ok(outerRunnerEntry?.entry.includes("start-runner"), "ancestry must include selected outer runner entry");
-        assert.equal(lineage[0].pid, provenance.pid);
-        assert.equal(lineage[0].executable, realpathSync(provenance.execPath), "observer PID must execute the reported Node binary");
-        assertManifestProductPath(state.artifacts, "@scramjet/runner-node", lineage[0].entry, "Bun observer delegated Node runtime");
-        console.log(`[hub-event-watch-bun.provenance] ${JSON.stringify({ declaredEngine: provenance.declaredEngines.bun, runtime: provenance.runtime, nodeVersion: provenance.nodeVersion, bunExecutable: provenance.bunExecutable, bunVersion: provenance.bunVersion, selectedModules: provenance.productModulePaths, lineage })}`);
-        world.resources.hubWatchBunDelegationProof = { outcome: "AbortError", acquiredId, releasedId: acquiredId, probeStatus: probe.status, declaredEngine: provenance.declaredEngines.bun, runtime: provenance.runtime };
-        return world.resources.hubWatchBunDelegationProof;
+        assert.ok(outerRunnerEntry?.entry.includes("start-runner"), "ancestry must include the selected outer Node coordinator entry");
+        console.log(`[hub-event-watch-bun.provenance] ${JSON.stringify({ declaredEngine: provenance.declaredEngines.bun, runtime: provenance.runtime, bunVersion: provenance.bunVersion, execPath: provenance.execPath, pid: provenance.pid, selectedModules: provenance.productModulePaths, lineage })}`);
+        world.resources.hubWatchBunNativeProof = { outcome: "AbortError", acquiredId, releasedId: acquiredId, probeStatus: probe.status, declaredEngine: provenance.declaredEngines.bun, runtime: provenance.runtime, bunVersion: provenance.bunVersion, pid: provenance.pid };
+        return world.resources.hubWatchBunNativeProof;
     } finally {
         if (observer) {
             try { await command({ action: "finish", commandId: randomUUID() }); } catch { /* preserve primary assertion */ }

@@ -1,7 +1,7 @@
 import { ClientUtilsBase } from "./client-utils";
 import { HttpClientNode as HttpClient, SendStreamOptions } from "./types";
 import { normalizeUrl } from "@scramjet/utility";
-import * as nodefetch from "node-fetch";
+import type * as nodefetch from "node-fetch";
 import http from "http";
 import https from "https";
 
@@ -11,12 +11,28 @@ type AgentFetch = ((req: nodefetch.RequestInfo, init?: nodefetch.RequestInit) =>
     dispose: () => void;
 };
 
+type FetchFunction = typeof nodefetch.default;
+
+function selectRuntimeFetch(): FetchFunction {
+    const modulePath = typeof process.versions.bun === "string"
+        ? require.resolve("node-fetch/lib/index.js")
+        : require.resolve("node-fetch");
+    const loaded = require(modulePath) as { default?: FetchFunction } | FetchFunction;
+    const fetcher = typeof loaded === "function" ? loaded : loaded.default;
+    if (typeof fetcher !== "function") {
+        throw new Error(`Unable to load a fetch implementation from ${modulePath}`);
+    }
+    return fetcher;
+}
+
+const runtimeFetch = selectRuntimeFetch();
+
 const nodeFetchWithHttps = (ca?: string | Buffer): AgentFetch => {
     const httpAgent = new http.Agent({ keepAlive: true });
     const httpsAgent = new https.Agent({ keepAlive: true, ca });
     const fetcher = ((req: nodefetch.RequestInfo, init?: nodefetch.RequestInit): Promise<nodefetch.Response> => {
         if (typeof req === "string") {
-            return nodefetch.default(req, {
+            return runtimeFetch(req, {
                 ...init,
                 agent: (url) => url.protocol === "http:"
                     ? httpAgent
@@ -62,7 +78,7 @@ export class ClientUtilsCustomAgent extends ClientUtilsBase implements HttpClien
         super(
             apiBase,
             (req: nodefetch.RequestInfo, init?: nodefetch.RequestInit): Promise<nodefetch.Response> => {
-                return nodefetch.default(req, {
+                return runtimeFetch(req, {
                     ...init,
                     agent
                 });
@@ -75,12 +91,13 @@ export class ClientUtilsCustomAgent extends ClientUtilsBase implements HttpClien
     }
 }
 
-export { ClientError, ClientErrorCode } from "./client-error";
-export { RequestLogger, Headers, RequestConfig, HttpMethod } from "./types";
+export { ClientError } from "./client-error";
+export type { ClientErrorCode } from "./client-error";
+export type { RequestLogger, Headers, RequestConfig, HttpMethod } from "./types";
 
 export interface ClientProvider {
     client: HttpClient;
 }
 
-export { HttpClient };
-export { SendStreamOptions };
+export type { HttpClient };
+export type { SendStreamOptions };

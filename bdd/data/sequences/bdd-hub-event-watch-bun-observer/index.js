@@ -1,11 +1,24 @@
 const fixturePackage = require("./package.json");
 let resolveObserve;
 const observerCompletion = new Promise((resolve) => { resolveObserve = resolve; });
+let emitMainProvenance = () => undefined;
 
-function provenance(contextSelectedModules = {}) {
+function runtimeIdentity(stage) {
+    return {
+        stage,
+        pid: process.pid,
+        ppid: process.ppid,
+        execPath: process.execPath,
+        nodeVersion: process.version,
+        bunVersion: process.versions.bun || null,
+        runtime: process.versions.bun ? "bun" : "node",
+    };
+}
+
+const loadedProvenance = runtimeIdentity("load");
+
+function provenance(contextSelectedModules = {}, stage = "callback") {
     const fs = require("node:fs");
-    const bunExecutable = fs.realpathSync("/opt/bun/bin/bun");
-    const bunVersion = require("node:child_process").execFileSync(bunExecutable, ["--version"], { encoding: "utf8" }).trim();
     const paths = Object.keys(require.cache || {}).map((path) => path.replace(/\\/g, "/"));
     const modulePath = (name) => paths.find((path) => path.includes(`/dist/${name}/`) || path.includes(`/packages/${name}/`) || path.includes(`/node_modules/@scramjet/${name}/`)) || null;
     const processLineage = [];
@@ -23,19 +36,14 @@ function provenance(contextSelectedModules = {}) {
         if (!parent) break;
         pid = Number(parent[1]);
     }
+    const selectedNames = ["host", "runner", "runner-bun", "runner-node", "rest-api2", "api-router", "adapter-process", "hub-state"];
     return {
+        ...runtimeIdentity(stage),
         declaredEngines: fixturePackage.engines,
-        pid: process.pid,
-        ppid: process.ppid,
-        execPath: process.execPath,
-        nodeVersion: process.version,
-        bunExecutable,
-        bunVersion,
-        runtime: "node",
         argv1: process.argv[1] || null,
         processLineage,
         productModulePaths: {
-            ...Object.fromEntries(["host", "runner", "runner-bun", "runner-node", "rest-api2", "api-router", "adapter-process", "hub-state"].map((name) => {
+            ...Object.fromEntries(selectedNames.map((name) => {
                 const entry = processLineage.find((item) => item.entry.includes(`/dist/${name}/`))?.entry;
                 const resolved = modulePath(name);
                 return [name, entry || resolved || contextSelectedModules[name] || null];
@@ -55,7 +63,7 @@ async function initialize() {
     let finished = false;
     context.exitTimeout = 0;
     const record = (type, fields = {}) => {
-        const value = { runId: config.runId, type, ...fields, provenance: provenance(contextSelectedModules) };
+        const value = { runId: config.runId, type, ...fields, provenance: provenance(contextSelectedModules, "callback") };
         history.push(value);
         context.emit("hub-watch-observation", value);
         return value;
@@ -118,8 +126,20 @@ async function initialize() {
             }
         })().catch((error) => context.logger.error("hub-watch observer action failed", { name: error?.name || "Error", code: error?.code || null }));
     });
-    context.emit("hub-watch-observer-ready", { runId: config.runId, provenance: provenance(contextSelectedModules) });
+    const initializationProvenance = provenance(contextSelectedModules, "initialize");
+    emitMainProvenance = () => context.emit("hub-watch-observer-main", {
+        runId: config.runId,
+        provenance: provenance(contextSelectedModules, "main")
+    });
+    context.emit("hub-watch-observer-ready", {
+        runId: config.runId,
+        loadedProvenance,
+        provenance: initializationProvenance
+    });
 }
 
-async function observe() { await observerCompletion; }
+async function observe() {
+    emitMainProvenance();
+    await observerCompletion;
+}
 module.exports = { initialize, default: observe };

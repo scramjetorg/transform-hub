@@ -23,7 +23,7 @@ Input → function1 → function2 → … → functionN → Output
 | Runtime | Identifier | Engine key in package.json |
 |---------|-----------|---------------------------|
 | Node.js 18+ | `node` | `engines.node` |
-| Bun 1.x | `bun` | `engines.bun` |
+| Bun 1.4.2+ | `bun` | `engines.bun` |
 | Python 3.9+ | `python3` | `engines.python3` |
 
 The platform auto-detects the runtime by inspecting `package.json` engine keys via `selectRuntimeKind()` from `@scramjet/symbols`. Resolution priority is `node` → `bun` → `python3`.
@@ -67,9 +67,9 @@ export default [
 
 ### Bun sequences
 
-Bun sequences use the same canonical `SequenceAppContext` surface from `@scramjet/sequence-types` as Node sequences. The supported Bun wrapper always enters through the hosted runner path and delegates the host-connected execution to the Node runtime, so health, lifecycle, logging, events, Hub/Space clients, local storage, and API exposure have the Node-equivalent contract. There is no separate author-visible direct/headless Bun mode.
+Bun sequences require Bun 1.4.2 or newer and use the same canonical `SequenceAppContext` surface from `@scramjet/sequence-types` as Node sequences. Hosted sequence code executes in the selected Bun process using Bun's Node-compatible APIs and the shared runner runtime; the Bun runner does not start a Node child to run the sequence. The outer Hub/runner coordinator may still be Node-based. There is no separate author-visible direct/headless Bun mode, and this does not promise compatibility with arbitrary Node packages or native addons.
 
-Use the same context-aware sequence shape as the Node example above and package the sequence with `"engines": { "bun": ">=1.0" }`.
+Use the same context-aware sequence shape as the Node example above and package the sequence with `"engines": { "bun": ">=1.4.2" }`.
 
 
 ### Python sequences

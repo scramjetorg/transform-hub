@@ -1,11 +1,11 @@
 # Bun runtime image whose actual ENTRYPOINT is the outer Node-based
-# packages/runner. The outer runner starts in the container, then spawns
-# runner-bun via `bun <runner-bun-entry> <bootConfigPath>`.
+# packages/runner. The outer coordinator starts in the container, then starts
+# runner-bun via `bun <runner-bun-entry> <bootConfigPath>`; Bun runs sequence code.
 #
 # Build context must be the repository root, e.g.:
 #   docker build -f packages/runner-bun/Dockerfile -t scramjetorg/runner-bun:dev .
 
-FROM oven/bun:1-slim AS target
+FROM oven/bun:1.4.2-slim AS target
 
 ENV PACKAGE_DIR=/package \
     HUB_DIR=/opt/transform-hub \

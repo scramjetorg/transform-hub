@@ -6,11 +6,11 @@ title: Declare and retrieve an instance runtime manifest
 
 # Declare and retrieve an instance runtime manifest
 
-A runtime manifest is public descriptive metadata for one running instance on current hosted Node, Python, and Bun (through the Bun wrapper's Node delegation). It is not part of the older exported `@scramjet/runner` API. Each instance publishes its own declaration: two instances of the same sequence can describe different inputs, outputs, RPC procedures, and topics. A manifest does not make an instance callable or available; check live instance inventory separately.
+A runtime manifest is public descriptive metadata for one running instance on current hosted Node, Python, and Bun (Bun 1.4.2+ executes the sequence natively in the Bun process). It is not part of the older exported `@scramjet/runner` API. Each instance publishes its own declaration: two instances of the same sequence can describe different inputs, outputs, RPC procedures, and topics. A manifest does not make an instance callable or available; check live instance inventory separately.
 
 ## Declare metadata from a sequence
 
-Node sequences can type the declaration API with `ManifestSequenceAppContext`. The ordinary `SequenceAppContext` and existing application aliases remain unchanged; use the manifest-capable context for current hosted Node and Node-delegated Bun sequences.
+Node and Bun sequences can type the declaration API with `ManifestSequenceAppContext`. The ordinary `SequenceAppContext` and existing application aliases remain unchanged; use the manifest-capable context for current hosted Node and native Bun sequences.
 
 ```typescript
 import type { AppConfig } from "@scramjet/runtime-types";
@@ -83,7 +83,7 @@ Manifest declaration is available to hosted Python whether or not HTTP/ASGI expo
 
 ## Read manifests through HubClient v2
 
-Current hosted Node/Bun sequences use the injected HubClient v2 view:
+Current hosted Node/Bun sequences use the injected HubClient v2 view through their configured runtime transport:
 
 ```typescript
 const instanceResponse = await this.hubClient().instance(instanceId).manifest();
@@ -137,7 +137,7 @@ The current publication belongs to its running instance and is removed when that
 The following linked files are repository sources for coordinated BDD proof fixtures, not drop-in applications. Their `runId`, `producerSequenceId`, `producerInstanceIds`, and `refresh`/`finish` actions coordinate the test harness; they are not requirements of the declaration API. The simple language examples above show the standalone declaration and read calls.
 
 - Repository source: [Node producer](https://github.com/scramjetorg/transform-hub/blob/HEAD/bdd/data/sequences/bdd-runtime-manifest-node-producer/index.js) and [Node consumer](https://github.com/scramjetorg/transform-hub/blob/HEAD/bdd/data/sequences/bdd-runtime-manifest-node-consumer/index.js)
-- Repository source: [Bun-selected producer](https://github.com/scramjetorg/transform-hub/blob/HEAD/bdd/data/sequences/bdd-runtime-manifest-bun-producer/index.js) and [Bun-selected consumer](https://github.com/scramjetorg/transform-hub/blob/HEAD/bdd/data/sequences/bdd-runtime-manifest-bun-consumer/index.js). These fixtures exercise the current Bun wrapper's Node delegation, not native Bun execution.
+- Repository source: [Bun-selected producer](https://github.com/scramjetorg/transform-hub/blob/HEAD/bdd/data/sequences/bdd-runtime-manifest-bun-producer/index.js) and [Bun-selected consumer](https://github.com/scramjetorg/transform-hub/blob/HEAD/bdd/data/sequences/bdd-runtime-manifest-bun-consumer/index.js). Hosted conformance verifies author code executes in Bun and uses the configured Hub transport; it does not claim compatibility with arbitrary Node packages or native addons.
 - Repository source: [Python producer](https://github.com/scramjetorg/transform-hub/blob/HEAD/bdd/data/sequences/python-bdd-runtime-manifest-producer/main.py) and [Python consumer](https://github.com/scramjetorg/transform-hub/blob/HEAD/bdd/data/sequences/python-bdd-runtime-manifest-consumer/main.py)
 
 These fixtures are distinct from the earlier disposable EVENT/getEvent proof.

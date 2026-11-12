@@ -2,25 +2,25 @@
 
 ## Responsibility
 
-Bun runtime facade package for the outer runner. Validates Bun boot config (including `verser2Runtime` block), requires the hosted runner path (throws if host coordinates are absent), and delegates execution to `runner-node`. The `verser2Runtime` block is validated and forwarded to the Node delegate; Bun itself no longer instantiates verser2 guest/broker connectivity.
+Native Bun sequence runtime for adapter-launched hosted Bun sequences. Requires Bun 1.4.2+, validates boot config (including `verser2Runtime`), and invokes the shared `runner-node` bootstrap in the same process with Bun-specific fd4/fd5 streams. Sequence author code executes under Bun; no Node child or `NODE_BIN` fallback is used. The outer Hub/runner coordinator may remain Node-based.
 
 ## Design / Patterns
 
-- **Single supported execution path**: host channels are required and Bun delegates the sequence to `runner-node` for the complete AppContext contract. Direct/headless sequence invocation in Bun is rejected at startup.
-- **Verser2 runtime block passthrough**: `verser2Runtime` config is validated by the Bun boot-config parser but only forwarded to Node's delegate — Bun does not use verser2 helpers locally anymore.
-- **Strict contract reuse**: Bun runtime reads/writes the same boot config shape as Node (including `verser2Runtime`), reuses the same monitoring/control semantics.
-- **Runtime resolution strategy**: resolves bundled or source `runner-node` entry dynamically for source-tree and package usage.
+- **Single supported execution path**: host channels are required. Bun executes the sequence natively while reusing the shared bootstrap and complete AppContext contract; direct/headless invocation is rejected.
+- **Bun-compatible host transport**: the shared runner constructs the verser2 Broker/Agent under Bun; runner-bun supplies validated verser2 config and the supported node-fetch Agent implementation.
+- **Strict contract reuse**: Bun passes the validated boot config and a Bun-specific fd stream factory into the shared bootstrap, preserving control, monitoring, lifecycle, and output behavior.
+- **Runtime floor**: Bun 1.4.2 or newer is required for Agent-aware routed Hub/Space requests.
 - **Bun-native test runner**: uses `bun:test` (not AVA) with `mock.module()` for module mocking and native TypeScript support.
-- **Legacy env var isolation**: explicitly deletes `SEQUENCE_PATH`, `SEQUENCE_INFO`, `RUNNER_CONNECT_INFO` from process env before delegation to prevent contamination.
+- **Legacy env var isolation**: explicitly deletes `SEQUENCE_PATH`, `SEQUENCE_INFO`, `RUNNER_CONNECT_INFO` before entering the shared bootstrap to prevent contamination.
 
 ## Data & Control Flow
 
-`bin/runner-bun.ts` reads `argv[2]`, validates boot config (including `verser2Runtime`), requires host coordinates (throws if absent), then spawns Node with the resolved `runner-node` entry and forwarded boot-config path. It uses `stdio: [inherit, inherit, inherit, ipc, inherit, inherit]` and therefore exposes the same hosted AppContext behavior as Node.
+`bin/runner-bun.ts` verifies Bun 1.4.2+, reads `argv[2]`, validates boot config and hosted coordinates, clears legacy sequence env vars, then calls the exported `@scramjet/runner-node.bootstrap()` in-process with the config and `createBunFdStreams()`. fd4 is bridged from `Bun.file(4).stream()` to a Node Readable; fd5 is a flushed Writable. fd3 remains reserved for process IPC.
 
-Monitoring and exit behavior follows Node's status model; Bun acts as an execution decision layer only.
+Shared lifecycle and monitoring retain the Node runner's protocol semantics. Runtime identity and exit artifacts use the actual Bun process PID. Bun's built-in Node compatibility is used for the supported shared runtime surface; this is not a claim that arbitrary Node packages or native addons work.
 
 ## Integration Points
 
-Depends on boot-config contract and parser from `@scramjet/runner-bun`, delegate contract to `@scramjet/runner-node`, and runtime symbols/messaging shared with the outer runner stack. Verser2 runtime symbols (`BunSequenceApiExposure`, `createBunHubFetch`, `createBunSequenceGuest`, `startBunSequenceGuest`) remain exported from the package `index.ts` for external consumers but are no longer used by the Bun entrypoint.
+Depends on the boot-config parser from `@scramjet/runner-bun`, the in-process bootstrap contract from `@scramjet/runner-node`, runtime symbols/messaging, Bun's `Bun.file` Web stream, and installed node-fetch used with verser2 Agents. Existing Verser2 helper exports remain available; the entrypoint does not spawn another runtime process.
 
-Tests cover boot-config parity, hosted-delegation rejection of headless config, and boot-config validation (including verser2 block).
+Tests cover boot-config validation, native Bun process identity, Node-compatible sequence behavior, fd4/fd5 framing and lifecycle, Agent routing, and rejection of unsupported Bun versions.

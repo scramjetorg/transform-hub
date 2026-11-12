@@ -16,9 +16,39 @@ function requiredConsumerConfig(context) {
 }
 
 function provenance() {
-    const loadedPaths = Object.keys(require.cache || {}).map((path) => path.replace(/\\/g, "/"));
-    const packageModulePath = (name) =>
-        loadedPaths.find((path) => path.includes(`/packages/${name}/`) || path.includes(`/dist/${name}/`) || path.includes(`/node_modules/@scramjet/${name}/`)) || null;
+    const fs = require("node:fs");
+    const path = require("node:path");
+    const cacheSnapshot = Object.keys(require.cache || []).map((file) => {
+        try { return fs.realpathSync(file); } catch { return null; }
+    }).filter(Boolean);
+    const packageModulePath = (name) => {
+        const roots = new Set();
+        for (const file of cacheSnapshot) {
+            const parts = file.split(path.sep);
+            for (let index = 0; index < parts.length; index++) {
+                if ((parts[index] === "packages" || parts[index] === "dist") && parts[index + 1] === name) {
+                    roots.add(path.resolve(path.sep, ...parts.slice(0, index + 2)));
+                }
+                if (parts[index] === "node_modules" && parts[index + 1] === "@scramjet" && parts[index + 2] === name) {
+                    roots.add(path.resolve(path.sep, ...parts.slice(0, index + 3)));
+                }
+            }
+        }
+        if (roots.size !== 1) return null;
+
+        const [root] = roots;
+        try {
+            const manifestPath = path.join(root, "package.json");
+            const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+            if (manifest.name !== `@scramjet/${name}` || typeof manifest.main !== "string") return null;
+            const entry = fs.realpathSync(path.resolve(root, manifest.main));
+            const relativeEntry = path.relative(root, entry);
+            if (relativeEntry === ".." || relativeEntry.startsWith(`..${path.sep}`) || path.isAbsolute(relativeEntry) || !fs.statSync(entry).isFile()) return null;
+            return cacheSnapshot.includes(entry) ? entry : null;
+        } catch {
+            return null;
+        }
+    };
     return {
         declaredEngines: fixturePackage.engines,
         pid: process.pid,
@@ -26,6 +56,7 @@ function provenance() {
         argv1: process.argv[1] || null,
         execPath: process.execPath,
         nodeVersion: process.version,
+        bunVersion: process.versions.bun || null,
         productModulePaths: {
             runnerNode: packageModulePath("runner-node"),
             restApi2: packageModulePath("rest-api2"),

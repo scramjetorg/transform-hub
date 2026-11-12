@@ -34,7 +34,7 @@ Scramjet Transform Hub is a TypeScript monorepo for supervising sequence deploym
 - Node.js 18+ (20+ recommended)
 - npm 11+ (CI pins 11.19.0)
 - Python 3.9+ (for Python sequence development)
-- Bun 1.x (for Bun sequence development)
+- Bun 1.4.2+ (minimum supported Bun sequence runtime)
 
 ### Clone and install
 
@@ -109,6 +109,8 @@ npm run test:packages:phase-final
 
 Package tests use **AVA** with `tsx/cjs` and match `**/*.spec.ts`. Tests run through `scripts/run-ava.js`, which defaults to `NODE_OPTIONS="--max-old-space-size=2048"`, JIT with WASM caps of 8192 pages and 256 MB committed code/code space, and tsx runtime transpilation. Set `SCRAMJET_AVA_TYPECHECK=1` to make diagnostics from the runner's staged TypeScript compilation fatal; tsx does not typecheck. The local j4 and GitHub j2 limits are aggregate-RSS budgets, not `ulimit -v` caps: AVA worker-thread isolates reserve substantial virtual address space. `SCRAMJET_TEST_PROFILE=fast` uses 16 AVA workers and an 8 MiB concurrent-mode budget; it does not enable unsound concurrent per-test GC measurement. `SCRAMJET_TEST_PROFILE=phase-final` serializes packages and AVA and enables the existing strict 524288-byte guard without raising timeouts, thresholds, skips, or allowances. Set `SCRAMJET_AVA_JITLESS=1` for explicit opt-in. Source TypeScript builds remain the correctness gate. The cross-package runner completes every selected package and reports a nonzero result after collecting failures; use `--fail-fast` (or `SCRAMJET_RUN_SCRIPT_FAIL_FAST=1`) only when early stopping is desired.
 
+**Bun test exception:** `packages/runner-bun` uses `bun:test`, not AVA. Run it with `npm run test -w packages/runner-bun` and Bun 1.4.2 or newer on `PATH`; this suite exercises native Bun sequence execution and its Agent-aware host transport.
+
 ### BDD integration tests
 
 BDD tests use Cucumber.js with scenarios in `bdd/`. They require built packages and Docker images:
@@ -137,6 +139,8 @@ npm run test:bdd
 ```
 
 BDD memory checks default to a 200 MiB child-process RSS delta and a 1 GiB Docker working-set delta. Docker execution remains capped at 1536m memory and 2 CPUs with its existing 600000 ms timeout.
+
+PR validation runs the selected source-based BDD smoke and regression jobs after package validation. The release-candidate workflow is a separate eligible path for trusted same-repository `release/**` pull requests to `main`: it builds the release distribution, creates and verifies the release bundle, downloads the tarballs into an isolated root, then runs the complete downloaded-tarball BDD suite serially with `node scripts/run-bdd-modes.js --mode=all --schedule=serial -- --fail-fast`. The PR smoke jobs do not substitute for this release-candidate tarball run.
 
 BDD environment variables:
 

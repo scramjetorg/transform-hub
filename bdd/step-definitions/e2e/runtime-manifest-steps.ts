@@ -103,7 +103,7 @@ When("the hosted Python producer and Node consumer prove manifest update and rej
     await runPythonNodeManifestProof(this);
 });
 
-When("the hosted Bun-selected fixtures prove delegated manifest retrieval", async function(this: RuntimeManifestWorld) {
+When("the hosted Bun-selected fixtures prove native Bun manifest retrieval", async function(this: RuntimeManifestWorld) {
     await runBunManifestProof(this);
 });
 

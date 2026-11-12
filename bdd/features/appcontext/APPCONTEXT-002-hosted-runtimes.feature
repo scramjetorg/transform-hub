@@ -1,8 +1,9 @@
-@ci-appcontext
+@ci-appcontext @starts-host
 Feature: Hosted runtime AppContext channels
   These scenarios use real Hub instance channels rather than wrapper fakes.
 
   Background:
+    When hub process is started with random ports and parameters "--runtime-adapter=process"
     Given host is running
 
   @ci-instance-python
@@ -23,10 +24,29 @@ Feature: Hosted runtime AppContext channels
       """
     And host is still running
 
+  @ci-instance-node
+  Scenario: APPCONTEXT-002 TC-002 Hosted Node covers channels and routing
+    When find and upload sequence "node-bdd-appcontext-hosted.tar.gz"
+    And instance started with arguments "hosted-parity-token"
+    And keep instance streams "log"
+    Then "stdout" contains "hosted-node-appcontext"
+    And "log" contains "hosted-node-appcontext-log"
+    And instance health is "true"
+    When I send GET request to instance endpoint "/node/health"
+    Then response status is 200
+    And response body contains "node"
+    When send event "hosted-node-event" to instance with message "ping"
+    Then instance emits event "hosted-node-response" with body
+      """
+      {"body":"ping"}
+      """
+    When I verify the hosted "node" author identity through raw RPC
+    And host is still running
+
   @ci-instance-node @requires-bun
-  Scenario: APPCONTEXT-002 TC-002 Hosted Bun delegates through host channels
+  Scenario: APPCONTEXT-002 TC-003 Hosted Bun exposes author-side runtime identity through host channels
     When find and upload sequence "bun-bdd-appcontext-hosted.tar.gz"
-    And instance started
+    And instance started with arguments "hosted-parity-token"
     And keep instance streams "log"
     Then "stdout" contains "hosted-bun-appcontext"
     And "log" contains "hosted-bun-appcontext-log"
@@ -39,4 +59,5 @@ Feature: Hosted runtime AppContext channels
       """
       {"body":"ping"}
       """
+    When I verify the hosted "bun" author identity through raw RPC
     And host is still running
