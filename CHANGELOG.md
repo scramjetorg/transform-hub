@@ -2,6 +2,11 @@
 
 This is the changelog for Scramjet Transform Hub. It holds only notable commits, others are grouped without commit info.
 
+## [Unreleased]
+
+### Changed
+- Bun-selected hosted sequences now execute in the Bun process using the shared Node-compatible runner runtime; Bun 1.4.2 or newer is required.
+
 ## [2.3.2] - Current release
 
 ### Changed

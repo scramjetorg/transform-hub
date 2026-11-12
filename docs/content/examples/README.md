@@ -13,6 +13,7 @@
 - [local-object-filter-to-consumer.md](local-object-filter-to-consumer.md)
 - [mcp-bridged-job-status.md](mcp-bridged-job-status.md)
 - [python-log-processor.md](python-log-processor.md)
+- [runtime-manifest.md](runtime-manifest.md)
 - [simple-transform.md](simple-transform.md)
 - [source-side-data-summary.md](source-side-data-summary.md)
 - [tested-incremental-log-aggregator.md](tested-incremental-log-aggregator.md)

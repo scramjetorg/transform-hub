@@ -5,8 +5,8 @@ import { ClientUtilsCustomAgent } from "../../client-utils/src/index.ts";
 import { createVerserBroker } from "@signicode/verser2-guest-node";
 
 const MINIMUM_BUN = "1.4.2";
-const SYNTHETIC_DOMAIN = "phase2-route.invalid";
-const TARGET_ID = "phase2.synthetic.target";
+const SYNTHETIC_DOMAIN = "agent-route.invalid";
+const TARGET_ID = "agent.synthetic.target";
 
 async function runtimeVersionGuard() {
     const { assertSupportedBunVersion } = await import("../src/runtime-version.ts");
@@ -16,8 +16,8 @@ async function runtimeVersionGuard() {
 
 function makeBroker({ advertise = true, respond } = {}) {
     const broker = createVerserBroker({
-        hostUrl: "https://phase2-broker.invalid",
-        brokerId: `phase2-test-${randomUUID()}`,
+        hostUrl: "https://agent-broker.invalid",
+        brokerId: `agent-test-${randomUUID()}`,
     });
     if (advertise) {
         // Seed the real Broker's route table with a synthetic advertised route.
@@ -114,7 +114,7 @@ test("Bun hosted HubClient fetch routes through the real Verser Broker Agent for
         const result = await withTimeout(client.post(
             "rpc/math/add?source=sequence",
             { a: 4, b: 5 },
-            { headers: { "x-phase2-case": "agent-fetch" } },
+            { headers: { "x-agent-case": "agent-fetch" } },
             { parse: "json", json: true },
         ), "routed ClientUtils POST");
 
@@ -128,7 +128,7 @@ test("Bun hosted HubClient fetch routes through the real Verser Broker Agent for
         expect(captures[0].routeDomain).toBe(SYNTHETIC_DOMAIN);
         expect(captures[0].method).toBe("POST");
         expect(captures[0].path).toBe("/api/v1/rpc/math/add?source=sequence");
-        expect(headerValue(captures[0].headers, "x-phase2-case")).toBe("agent-fetch");
+        expect(headerValue(captures[0].headers, "x-agent-case")).toBe("agent-fetch");
         expect(headerValue(captures[0].headers, "content-type")).toBe("application/json");
         expect(captures[0].body).toBe(JSON.stringify({ a: 4, b: 5 }));
     } finally {
@@ -180,7 +180,7 @@ test("Bun ClientUtils streaming response preserves Broker body chunks and cancel
         const pending = client.get("rpc/pending", { signal: controller.signal });
         await withTimeout(pendingObserved, "Broker request observation");
         expect(pendingRequest.targetId).toBe(TARGET_ID);
-        controller.abort(new Error("phase2 abort"));
+        controller.abort(new Error("agent abort"));
         await expect(withTimeout(pending, "aborted ClientUtils request")).rejects.toThrow();
         expect(pendingRequest.signal.aborted).toBe(true);
     } finally {

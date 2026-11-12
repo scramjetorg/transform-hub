@@ -29,10 +29,11 @@ Feature: Abortable Hub event watch
     When an uploaded hosted Node observer proves abort, repeated close and for-await break cleanup
     Then each hosted Node cancellation releases its real subscription and the observer control watch stays usable
 
-  Scenario: REALCONTAINER Bun-declared observer delegates a real watch to Node
-    Given an isolated DEBUG built Hub for Bun-declared Node-delegated watch smoke
-    When an uploaded Bun-declared observer proves Node-delegated watch abort cleanup
-    Then the Bun-declared observer is proven Node-delegated and its real watch is released
+  @requires-bun
+  Scenario: REALCONTAINER native Bun observer aborts a real watch
+    Given an isolated DEBUG built Hub for native Bun watch smoke
+    When an uploaded native Bun observer proves watch abort cleanup
+    Then the native Bun observer is proven and its real watch is released
 
   Scenario: Authenticated external NATIVE live cleanup preserves its shared control Agent
     Given an isolated DEBUG built Hub with authenticated native control ingress

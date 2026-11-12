@@ -16,6 +16,7 @@ Feature: Instance-owned runtime manifests through HubClient v2
 
   @source
   @starts-host
+  @requires-bun
   Scenario: Bun-selected producer and consumer execute in Bun
     Given an isolated source runtime-manifest Host
     When the hosted Bun-selected fixtures prove native Bun manifest retrieval
@@ -37,6 +38,7 @@ Feature: Instance-owned runtime manifests through HubClient v2
 
   @built
   @starts-host
+  @requires-bun
   Scenario: Bun-selected producer and consumer execute in Bun
     Given an isolated built runtime-manifest Host
     When the hosted Bun-selected fixtures prove native Bun manifest retrieval

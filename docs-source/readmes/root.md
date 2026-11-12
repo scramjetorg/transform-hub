@@ -50,8 +50,8 @@ si sequence deploy sequence.tar.gz
 ```
 
 Requirements:
-- **Node.js >= 18** for the Hub and Node sequences
-- **Bun >= 1.0** for Bun sequences
+- **Node.js >= 18** for the Hub/outer runner coordinator and Node sequences (Node remains installed in the Bun runner image for the coordinator)
+- **Bun >= 1.4.2** for Bun sequences; sequence code runs in Bun and does not start a Node child
 - **Python >= 3.9** for Python sequences
 - **Docker** for Docker adapter deployments
 

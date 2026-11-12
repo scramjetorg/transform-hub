@@ -61,7 +61,7 @@ The `package.json` is the primary metadata source. Minimal example:
 At least one of `engines.node`, `engines.bun`, or `engines.python3` must be present. The platform selects the runtime using (in order):
 
 1. `engines.node` → Node.js runtime via `runner-node`
-2. `engines.bun` → Bun runtime via `runner-bun` (delegates to Node when host channels needed)
+2. `engines.bun` → native Bun sequence runtime via `runner-bun` (Bun 1.4.2+; host channels are required)
 3. `engines.python3` → Python runtime via `runner-python`
 
 ## Deploying a sequence

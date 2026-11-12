@@ -260,7 +260,8 @@ test("AppContext guides name the canonical type and intentional runtime limits",
     t.regex(writing, /@scramjet\/sequence-types/);
     t.regex(writing, /hubClient\(\)/);
     t.regex(writing, /spaceClient\(\)/);
-    t.regex(parity, /Hosted Bun delegates to Node|Node delegation/);
+    t.regex(parity, /Supported Bun\s+\(Bun 1\.4\.2\+\) executes sequence code in the Bun process/);
+    t.regex(parity, /no Node child runs the sequence/);
     t.regex(parity, /Unsupported/);
     t.regex(parity, /generic Python REST SDK/);
 });

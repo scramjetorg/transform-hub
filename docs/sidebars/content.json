@@ -287,6 +287,13 @@
     "output": "examples/python-log-processor.md"
   },
   {
+    "id": "example-runtime-manifest",
+    "title": "Declare and retrieve an instance runtime manifest",
+    "slug": "/examples/runtime-manifest",
+    "source": "docs-source/examples/runtime-manifest.md",
+    "output": "examples/runtime-manifest.md"
+  },
+  {
     "id": "examples-simple-transform",
     "title": "Simple data transform sequence",
     "slug": "/examples/simple-transform",
